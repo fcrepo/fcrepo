@@ -1,6 +1,6 @@
 package org.fcrepo.observer;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
