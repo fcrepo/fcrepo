@@ -3,13 +3,10 @@ package org.fcrepo;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
-import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration("/spring-test/master.xml")
 public abstract class AbstractResourceTest extends AbstractTest {
-
-	protected Logger logger;
 
 	protected static final int SERVER_PORT = 8080;
 	protected static final String HOSTNAME = "localhost";
