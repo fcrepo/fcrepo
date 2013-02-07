@@ -22,6 +22,7 @@
 	<modules>
 		<module>kernel</module>
 		<module>audit</module>
+		<module>webapp</module>
 	</modules>
 
 
@@ -44,6 +45,12 @@
 			<dependency>
 				<groupId>org.fcrepo.modeshape</groupId>
 				<artifactId>kernel</artifactId>
+				<version>${fcrepo.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.fcrepo.modeshape</groupId>
+				<artifactId>audit</artifactId>
 				<version>${fcrepo.version}</version>
 				<scope>provided</scope>
 			</dependency>
