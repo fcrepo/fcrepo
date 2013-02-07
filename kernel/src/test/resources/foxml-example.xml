@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<foxml:digitalObject VERSION="1.1" PID="fedora-system:ContentModel-3.0" xmlns:foxml="info:fedora/fedora-system:def/foxml#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="info:fedora/fedora-system:def/foxml# http://www.fedora.info/definitions/1/0/foxml1-1.xsd">
+<foxml:objectProperties>
+<foxml:property NAME="info:fedora/fedora-system:def/model#state" VALUE="Active"/>
+<foxml:property NAME="info:fedora/fedora-system:def/model#label" VALUE="Content Model Object for Content Model Objects"/>
+<foxml:property NAME="info:fedora/fedora-system:def/model#ownerId" VALUE="fedoraAdmin"/>
+<foxml:property NAME="info:fedora/fedora-system:def/model#createdDate" VALUE="2008-07-02T05:09:43.796Z"/>
+<foxml:property NAME="info:fedora/fedora-system:def/view#lastModifiedDate" VALUE="2012-11-13T21:45:14.932Z"/>
+</foxml:objectProperties>
+<foxml:datastream ID="DC" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="DC1.0" LABEL="Dublin Core Record for this object" CREATED="2008-07-02T05:09:44.015Z" MIMETYPE="text/xml" FORMAT_URI="http://www.openarchives.org/OAI/2.0/oai_dc/" SIZE="343">
+<foxml:xmlContent>
+<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+  <dc:title>Content Model Object for Content Model Objects</dc:title>
+  <dc:identifier>fedora-system:ContentModel-3.0</dc:identifier>
+</oai_dc:dc>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="RELS-EXT" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="RELS-EXT1.0" LABEL="RDF Statements about this object" CREATED="2008-07-02T05:09:44.015Z" MIMETYPE="application/rdf+xml" FORMAT_URI="info:fedora/fedora-system:FedoraRELSExt-1.0" SIZE="442">
+<foxml:xmlContent>
+<rdf:RDF xmlns:fedora-model="info:fedora/fedora-system:def/model#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                    <rdf:Description rdf:about="info:fedora/fedora-system:ContentModel-3.0">
+                        <fedora-model:hasModel rdf:resource="info:fedora/fedora-system:ContentModel-3.0"></fedora-model:hasModel>
+                    </rdf:Description>
+                </rdf:RDF>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="ONTOLOGY" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="ONTOLOGY1.0" LABEL="Class declaration for this content model" CREATED="2012-11-13T21:45:14.932Z" MIMETYPE="application/rdf+xml" FORMAT_URI="info:fedora/fedora-system:FedoraOntology-1.0" SIZE="1298">
+<foxml:xmlContent>
+<rdf:RDF xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+                    <owl:Class rdf:about="info:fedora/fedora-system:ContentModel-3.0#class">
+                        <rdfs:subClassOf>
+                            <owl:Restriction>
+                                <owl:onProperty rdf:resource="info:fedora/fedora-system:def/model#hasService"></owl:onProperty>
+                                <owl:allValuesFrom rdf:resource="info:fedora/fedora-system:ServiceDefinition-3.0#class"></owl:allValuesFrom>
+                            </owl:Restriction>
+                        </rdfs:subClassOf>
+                    </owl:Class>
+                    <owl:Class rdf:about="info:fedora/fedora-system:ContentModel-3.0#datastreams/RELS-EXT/class"></owl:Class>
+                    <owl:Class rdf:about="info:fedora/fedora-system:ContentModel-3.0#datastreams/DS-COMPOSITE-MODEL/class"></owl:Class>
+                    <owl:Class rdf:about="info:fedora/fedora-system:ContentModel-3.0#datastreams/ONTOLOGY/class"></owl:Class>
+                    <owl:ObjectProperty rdf:about="info:fedora/fedora-system:def/model#hasService"></owl:ObjectProperty>
+                </rdf:RDF>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="DS-COMPOSITE-MODEL" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="DS-COMPOSITE-MODEL1.0" LABEL="Datastream Composite Model" CREATED="2008-07-02T05:09:44.015Z" MIMETYPE="text/xml" FORMAT_URI="info:fedora/fedora-system:FedoraDSCompositeModel-1.0" SIZE="1163">
+<foxml:xmlContent>
+<dsCompositeModel xmlns="info:fedora/fedora-system:def/dsCompositeModel#">
+                    <dsTypeModel ID="RELS-EXT">
+                        <form FORMAT_URI="info:fedora/fedora-system:FedoraRELSExt-1.0" MIME="application/rdf+xml"></form>
+                    </dsTypeModel>
+                    <dsTypeModel ID="DS-COMPOSITE-MODEL" optional="true">
+                        <form FORMAT_URI="info:fedora/fedora-system:FedoraDSCompositeModel-1.0" MIME="text/xml"></form>
+                        <extension name="SCHEMA">
+                            <reference type="datastream" value="DS-COMPOSITE-MODEL-SCHEMA"></reference>
+                        </extension>
+                    </dsTypeModel>
+                    <dsTypeModel ID="ONTOLOGY" optional="true">
+                        <form FORMAT_URI="info:fedora/fedora-system:FedoraOntology-1.0" MIME="application/rdf+xml"></form>
+                        <extension name="SCHEMA">
+                            <reference type="datastream" value="RDF-SCHEMA"></reference>
+                        </extension>
+                    </dsTypeModel>
+                </dsCompositeModel>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="DS-COMPOSITE-MODEL-SCHEMA" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="DS-COMPOSITE-MODEL-SCHEMA1.0" LABEL="OAI DC xml schema" CREATED="2012-11-13T21:45:14.932Z" MIMETYPE="text/xml" SIZE="2534">
+<foxml:xmlContent>
+<xsd:schema xmlns="info:fedora/fedora-system:def/dsCompositeModel#" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="info:fedora/fedora-system:def/dsCompositeModel#" elementFormDefault="qualified" attributeFormDefault="unqualified">
+                    <xsd:element name="dsCompositeModel">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element minOccurs="0" maxOccurs="unbounded" ref="dsTypeModel"></xsd:element>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="dsTypeModel">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element minOccurs="0" maxOccurs="unbounded" ref="form"></xsd:element>
+                                <xsd:element minOccurs="0" maxOccurs="unbounded" ref="extension"></xsd:element>
+                            </xsd:sequence>
+                            <xsd:attribute name="ID" use="required"></xsd:attribute>
+                            <xsd:attribute name="optional" use="optional" type="xsd:boolean"></xsd:attribute>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="extension">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:any namespace="##any" processContents="skip" minOccurs="0" maxOccurs="unbounded"></xsd:any>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" use="required"></xsd:attribute>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="form">
+                        <xsd:complexType>
+                            <xsd:attribute name="FORMAT_URI" use="optional" type="xsd:anyURI"></xsd:attribute>
+                            <xsd:attribute name="MIME" use="optional"></xsd:attribute>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="reference">
+                        <xsd:complexType>
+                            <xsd:attribute name="type"></xsd:attribute>
+                            <xsd:attribute name="datastream"></xsd:attribute>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:schema>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="RDF-SCHEMA" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="RDF-SCHEMA1.0" LABEL="RDF xml schema" CREATED="2012-11-13T21:45:14.932Z" MIMETYPE="text/xml" SIZE="1217">
+<foxml:xmlContent>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+                    <xs:import namespace="http://www.w3.org/2002/07/owl#" schemaLocation="$THIS$/OWL-SCHEMA"></xs:import>
+                    <xs:element xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" name="RDF" type="rdf:RDFType"></xs:element>
+
+                    <xs:attribute name="resource" type="xs:anyURI"></xs:attribute>
+                    <xs:attribute name="about" type="xs:anyURI"></xs:attribute>
+                    <xs:attribute name="datatype" type="xs:anyURI"></xs:attribute>
+                    <xs:complexType name="RDFType">
+                        <xs:sequence>
+                            <xs:element xmlns:owl="http://www.w3.org/2002/07/owl#" ref="owl:Class" minOccurs="1" maxOccurs="unbounded"></xs:element>
+                            <xs:element xmlns:owl="http://www.w3.org/2002/07/owl#" ref="owl:ObjectProperty" minOccurs="0" maxOccurs="unbounded"></xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+
+                </xs:schema>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="OWL-SCHEMA" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="OWL-SCHEMA1.0" LABEL="OWL xml schema" CREATED="2012-11-13T21:45:14.932Z" MIMETYPE="text/xml" SIZE="3940">
+<foxml:xmlContent>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://www.w3.org/2002/07/owl#">
+
+                    <xs:import namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" schemaLocation="$THIS$/RDF-SCHEMA"></xs:import>
+
+                    <xs:import namespace="http://www.w3.org/2000/01/rdf-schema#" schemaLocation="$THIS$/RDFS-SCHEMA"></xs:import>
+
+                    <xs:element xmlns:owl="http://www.w3.org/2002/07/owl#" name="Class" type="owl:ClassType"></xs:element>
+
+                    <xs:element xmlns:owl="http://www.w3.org/2002/07/owl#" name="Restriction" type="owl:RestrictionType"></xs:element>
+
+                    <xs:element xmlns:owl="http://www.w3.org/2002/07/owl#" name="ObjectProperty" type="owl:ObjectPropertyType"></xs:element>
+
+                    <xs:complexType name="onPropertyType">
+                        <xs:simpleContent>
+                            <xs:extension base="xs:anyURI">
+                                <xs:attribute ref="rdf:resource" use="required"></xs:attribute>
+                            </xs:extension>
+                        </xs:simpleContent>
+                    </xs:complexType>
+                    <xs:complexType name="ClassType">
+                        <xs:sequence>
+                            <xs:element ref="rdfs:subClassOf" maxOccurs="unbounded" minOccurs="0"></xs:element>
+                        </xs:sequence>
+                        <xs:attribute ref="rdf:about" use="required"></xs:attribute>
+                    </xs:complexType>
+                    <xs:complexType name="ObjectPropertyType">
+                        <xs:simpleContent>
+                            <xs:extension base="xs:anyURI">
+                                <xs:attribute ref="rdf:about" use="required"></xs:attribute>
+                            </xs:extension>
+                        </xs:simpleContent>
+                    </xs:complexType>
+                    <xs:complexType name="RestrictionType">
+                        <xs:sequence>
+                            <xs:element type="owl:onPropertyType" name="onProperty" minOccurs="1" maxOccurs="1"></xs:element>
+                            <xs:choice minOccurs="1" maxOccurs="1">
+                                <xs:element type="owl:ValuesFromType" name="allValuesFrom"></xs:element>
+                                <xs:element type="owl:ValuesFromType" name="someValuesFrom"></xs:element>
+                                <xs:element type="owl:cardinalityType" name="minCardinality"></xs:element>
+                                <xs:element type="owl:cardinalityType" name="maxCardinality"></xs:element>
+                                <xs:element type="owl:cardinalityType" name="cardinality"></xs:element>
+                            </xs:choice>
+                        </xs:sequence>
+                    </xs:complexType>
+                    <xs:complexType name="ValuesFromType">
+                        <xs:simpleContent>
+                            <xs:extension base="xs:string">
+                                <xs:attribute ref="rdf:resource" use="required"></xs:attribute>
+                            </xs:extension>
+                        </xs:simpleContent>
+                    </xs:complexType>
+                    <xs:complexType name="cardinalityType">
+                        <xs:simpleContent>
+                            <xs:extension base="xs:anyURI">
+                                <xs:attribute ref="rdf:datatype" fixed="http://www.w3.org/2001/XMLSchema#integer" use="required"></xs:attribute>
+                            </xs:extension>
+                        </xs:simpleContent>
+                    </xs:complexType>
+
+                </xs:schema>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+<foxml:datastream ID="RDFS-SCHEMA" STATE="A" CONTROL_GROUP="X" VERSIONABLE="false">
+<foxml:datastreamVersion ID="RDFS-SCHEMA1.0" LABEL="OWL xml schema" CREATED="2012-11-13T21:45:14.932Z" MIMETYPE="text/xml" SIZE="793">
+<foxml:xmlContent>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://www.w3.org/2000/01/rdf-schema#">
+
+                    <xs:import namespace="http://www.w3.org/2002/07/owl#" schemaLocation="$THIS$/OWL-SCHEMA"></xs:import>
+                    <xs:element name="subClassOf" type="rdfs:subClassOfType"></xs:element>
+
+                    <xs:complexType name="subClassOfType">
+                        <xs:sequence>
+                            <xs:element ref="owl:Restriction"></xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:schema>
+</foxml:xmlContent>
+</foxml:datastreamVersion>
+</foxml:datastream>
+</foxml:digitalObject>

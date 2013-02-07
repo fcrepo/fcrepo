@@ -1,0 +1,9 @@
+target/
+.classpath
+.settings/
+.project
+.metadata
+ActiveMQ/
+FedoraRepository/
+indexes/
+ObjectStore/
