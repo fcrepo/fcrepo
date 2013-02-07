@@ -13,14 +13,6 @@
 
 	<name>ModeShape prototype kernel</name>
 
-	<properties>
-		<endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<netbeans.hint.deploy.server>gfv3ee6</netbeans.hint.deploy.server>
-		<netbeans.hint.j2eeVersion>1.6</netbeans.hint.j2eeVersion>
-		
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
@@ -122,7 +114,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			</dependency>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.abdera</groupId>
 			<artifactId>abdera-parser</artifactId>
@@ -143,79 +135,9 @@
 			<artifactId>rome</artifactId>
 			<version>1.0</version>
 		</dependency>
-
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
-		<pluginManagement>
-			<!--This plugin's configuration is used to store Eclipse m2e settings 
-				only. It has no influence on the Maven build itself. -->
-			<plugins>
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.apache.maven.plugins</groupId>
-										<artifactId>maven-dependency-plugin</artifactId>
-										<versionRange>[2.1,)</versionRange>
-										<goals>
-											<goal>copy</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<execute />
-									</action>
-								</pluginExecution>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.scala-tools</groupId>
-										<artifactId>maven-scala-plugin</artifactId>
-										<versionRange>[2.15.2,)</versionRange>
-										<goals>
-											<goal>add-source</goal>
-											<goal>compile</goal>
-											<goal>testCompile</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<execute />
-									</action>
-								</pluginExecution>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											org.codehaus.enunciate
-										</groupId>
-										<artifactId>
-											maven-enunciate-cxf-plugin
-										</artifactId>
-										<versionRange>
-											[1.26.2,)
-										</versionRange>
-										<goals>
-											<goal>docs</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<execute />
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-
 		<plugins>
 
 			<plugin>
@@ -263,14 +185,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>2.1.1</version>
-				<configuration>
-					<failOnMissingWebXml>false</failOnMissingWebXml>
-				</configuration>
-			</plugin>
+			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>

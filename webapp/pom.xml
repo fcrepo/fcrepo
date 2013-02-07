@@ -27,6 +27,10 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+			</plugin>
+			<plugin>
 				<groupId>org.mortbay.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
 				<version>8.1.9.v20130131</version>
@@ -35,8 +39,6 @@
 					<webApp>
 						<contextPath>/</contextPath>
 					</webApp>
-					<stopKey>stop</stopKey>
-					<stopPort>9999</stopPort>
 				</configuration>
 			</plugin>
 		</plugins>
