@@ -1,6 +1,7 @@
 package org.fcrepo.modeshape.observer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
@@ -24,17 +25,19 @@ import org.apache.abdera.model.Entry;
 import org.apache.abdera.parser.ParseException;
 import org.apache.abdera.parser.Parser;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.fcrepo.modeshape.AbstractTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.modeshape.common.SystemFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({ "/spring-test/eventing.xml", "/spring-test/repo.xml" })
-public class AtomJMSTest extends AbstractTest implements MessageListener {
+public class AtomJMSTest implements MessageListener {
 
 	@Inject
 	private Repository repository;
@@ -84,12 +87,9 @@ public class AtomJMSTest extends AbstractTest implements MessageListener {
 					new ByteArrayInputStream(tMessage.getText().getBytes(
 							"UTF-8"))).getRoot();
 			logger.debug("Parsed Entry: " + entry.toString());
-		} catch (ParseException e) {
-			throw new SystemFailureException(e);
-		} catch (JMSException e) {
-			throw new SystemFailureException(e);
-		} catch (UnsupportedEncodingException e) {
-			throw new SystemFailureException(e);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
 		}
 
 	}

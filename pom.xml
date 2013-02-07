@@ -26,6 +26,7 @@
 		<module>kernel</module>
 		<module>audit</module>
 		<module>webapp</module>
+		<module>jms</module>
 	</modules>
 
 	<dependencyManagement>
@@ -59,6 +60,11 @@
 				<artifactId>jcr</artifactId>
 				<version>2.0</version>
 				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>javax.inject</groupId>
+				<artifactId>javax.inject</artifactId>
+				<version>1</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.guava</groupId>
