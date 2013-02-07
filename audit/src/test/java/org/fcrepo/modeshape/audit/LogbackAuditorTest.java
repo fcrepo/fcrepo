@@ -1,4 +1,4 @@
-package org.fcrepo.modeshape.modules.audit;
+package org.fcrepo.modeshape.audit;
 
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;

@@ -7,3 +7,5 @@ ActiveMQ/
 FedoraRepository/
 indexes/
 ObjectStore/
+*/.cache
+.cache

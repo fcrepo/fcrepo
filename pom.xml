@@ -12,6 +12,11 @@
 
 	<properties>
 		<fcrepo.version>1.0-SNAPSHOT</fcrepo.version>
+
+		<modeshape.version>3.1.1.Final</modeshape.version>
+		<cxf.version>2.7.2</cxf.version>
+		<activemq.version>5.7.0</activemq.version>
+		<enunciate.version>1.26.2</enunciate.version>
 	</properties>
 
 	<modules>
@@ -24,10 +29,35 @@
 
 	<dependencyManagement>
 		<dependencies>
+
+			<!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
+				section defaults for all of the modules we might need, but we still have 
+				to include in the "dependencies" section the modules we DO need. The benefit 
+				is that we don't have to specify the versions of any of those modules. -->
+			<dependency>
+				<groupId>org.modeshape.bom</groupId>
+				<artifactId>modeshape-bom-embedded</artifactId>
+				<version>${modeshape.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 			<dependency>
 				<groupId>org.fcrepo.modeshape</groupId>
 				<artifactId>kernel</artifactId>
 				<version>${fcrepo.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>javax.jcr</groupId>
+				<artifactId>jcr</artifactId>
+				<version>2.0</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>13.0.1</version>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.osgi</groupId>
@@ -35,6 +65,19 @@
 				<version>5.0.0</version>
 				<scope>provided</scope>
 			</dependency>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.11</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>1.9.5</version>
+				<scope>test</scope>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
@@ -63,4 +106,26 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<repositories>
+		<repository>
+			<id>jboss-public-repository-group</id>
+			<name>JBoss Public Maven Repository Group</name>
+			<url> http://repository.jboss.org/nexus/content/groups/public/ </url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>maven2-repository.dev.java.net</id>
+			<name>Java.net Repository for Maven</name>
+			<url>http://download.java.net/maven/2/</url>
+		</repository>
+	</repositories>
+
 </project>
