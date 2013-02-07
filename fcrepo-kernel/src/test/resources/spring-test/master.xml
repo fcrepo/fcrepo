@@ -3,12 +3,11 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
-
-    <!-- Master context for the application. -->
-
-    <import resource="classpath:/spring/repo.xml"/>
-    <import resource="classpath:/spring/rest.xml"/>
-    <import resource="classpath:/spring/eventing.xml"/>
-    <import resource="classpath:/spring/indexer.xml"/>
-
+    
+    <!-- Master context for the test application. -->
+    
+    <import resource="classpath:/spring-test/repo.xml"/>
+    <import resource="classpath:/spring-test/rest.xml"/>
+    <import resource="classpath:/spring-test/eventing.xml"/>
+    
 </beans>

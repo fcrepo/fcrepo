@@ -12,9 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.junit.Test;
-import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration({ "/spring-test/rest.xml", "/spring-test/repo.xml" })
 public class FedoraIdentifiersTest extends AbstractResourceTest {
 
 	@Test

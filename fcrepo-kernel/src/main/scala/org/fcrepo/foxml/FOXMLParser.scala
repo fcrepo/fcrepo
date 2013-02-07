@@ -1,4 +1,4 @@
-package org.fcrepo.modeshape.foxml
+package org.fcrepo.foxml
 
 import java.io.ByteArrayInputStream
 import java.io.InputStream

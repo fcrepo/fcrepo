@@ -22,17 +22,17 @@
     <bean class="org.codehaus.jackson.map.ObjectMapper"/>
 
     <!-- Mints PIDs-->
-    <bean class="org.fcrepo.modeshape.identifiers.UUIDPidMinter"/>
+    <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
     <jaxrs:server address="/rest">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.modeshape.FedoraRepository"/>
-            <bean class="org.fcrepo.modeshape.FedoraDatastreams"/>
-            <bean class="org.fcrepo.modeshape.FedoraIdentifiers"/>
-            <bean class="org.fcrepo.modeshape.FedoraNamespaces"/>
-            <bean class="org.fcrepo.modeshape.FedoraObjects"/>
-            <bean class="org.fcrepo.modeshape.foxml.FedoraOXML"/>
-            <bean class="org.fcrepo.modeshape.indexer.DublinCore" />
+            <bean class="org.fcrepo.FedoraRepository"/>
+            <bean class="org.fcrepo.FedoraDatastreams"/>
+            <bean class="org.fcrepo.FedoraIdentifiers"/>
+            <bean class="org.fcrepo.FedoraNamespaces"/>
+            <bean class="org.fcrepo.FedoraObjects"/>
+            <bean class="org.fcrepo.foxml.FedoraOXML"/>
+            <bean class="org.fcrepo.indexer.DublinCore" />
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
             <entry key="json" value="application/json"/>

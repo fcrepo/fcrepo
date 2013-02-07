@@ -6,7 +6,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration("/spring-test/jetty.xml")
+@ContextConfiguration("/spring-test/master.xml")
 public abstract class AbstractResourceTest extends AbstractTest {
 
 	protected Logger logger;
@@ -14,7 +14,7 @@ public abstract class AbstractResourceTest extends AbstractTest {
 	protected static final int SERVER_PORT = 8080;
 	protected static final String HOSTNAME = "localhost";
 	protected static final String serverAddress = "http://" + HOSTNAME + ":"
-			+ SERVER_PORT + "/";
+			+ SERVER_PORT + "/rest/";
 
 	protected final HttpClient client = new HttpClient();
 

@@ -11,9 +11,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.junit.Test;
-import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration({ "/spring-test/rest.xml", "/spring-test/repo.xml" })
 public class FedoraDatastreamsTest extends AbstractResourceTest {
 
 	private static final String faulkner1 = "The past is never dead. It's not even past.";

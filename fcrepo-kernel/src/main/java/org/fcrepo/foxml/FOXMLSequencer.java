@@ -7,7 +7,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.modeshape.foxml.FOXMLParser;
+import org.fcrepo.foxml.FOXMLParser;
 import org.modeshape.common.i18n.TextI18n;
 import org.modeshape.common.logging.Logger;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;

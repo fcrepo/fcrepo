@@ -1,4 +1,4 @@
-package org.fcrepo.observer;
+/*package org.fcrepo.observer;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -31,3 +31,4 @@ public class RSSTest extends AbstractResourceTest {
 
 	}
 }
+*/

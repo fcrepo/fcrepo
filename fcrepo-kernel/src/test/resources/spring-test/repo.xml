@@ -11,7 +11,7 @@
     <context:annotation-config/>
 
     <bean name="modeshapeRepofactory"
-        class="org.fcrepo.modeshape.spring.ModeShapeRepositoryFactoryBean"/>
+        class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean"/>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
