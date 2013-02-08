@@ -11,7 +11,7 @@
   <artifactId>fcrepo-kernel</artifactId>
   <packaging>jar</packaging>
 
-  <name>ModeShape prototype kernel</name>
+  <name>fcrepo kernel</name>
 
   <dependencies>
     <dependency>
@@ -163,9 +163,7 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.1</version>
         <executions>
           <execution>
             <phase>validate</phase>
