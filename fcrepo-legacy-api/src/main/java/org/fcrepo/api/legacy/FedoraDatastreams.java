@@ -7,6 +7,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -191,7 +192,7 @@ public class FedoraDatastreams extends AbstractResource {
 			final MediaType contentType, final InputStream requestBodyStream,
 			final Session session) throws RepositoryException, IOException {
 
-		Long oldObjectSize = FedoraObjects.getObjectSize(session.getNode("/objects/" + pid));
+		Long oldObjectSize = getObjectSize(session.getNode("/objects/" + pid));
 		logger.debug("Attempting to add datastream node at path: " + dsPath);
 		Boolean created = false;
 		if (!session.nodeExists(dsPath)) {
@@ -246,7 +247,7 @@ public class FedoraDatastreams extends AbstractResource {
 			 * properties which contribute to the footprint of this resource
 			 */
 			updateRepositorySize(
-					FedoraObjects.getObjectSize(session.getNode("/objects/" + pid))
+					getObjectSize(session.getNode("/objects/" + pid))
 							- oldObjectSize, session);
 			// now we save again to persist the repo size
 			session.save();
