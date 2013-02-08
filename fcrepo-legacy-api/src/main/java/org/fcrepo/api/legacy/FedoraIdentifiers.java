@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.DiscreteDomains.integers;
@@ -16,6 +16,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.NextPid;
 
 import com.google.common.base.Function;

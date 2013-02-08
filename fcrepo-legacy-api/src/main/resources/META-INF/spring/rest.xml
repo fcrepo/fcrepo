@@ -19,11 +19,11 @@
 
     <jaxrs:server address="/rest">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.FedoraRepository"/>
-            <bean class="org.fcrepo.FedoraDatastreams"/>
-            <bean class="org.fcrepo.FedoraIdentifiers"/>
-            <bean class="org.fcrepo.FedoraNamespaces"/>
-            <bean class="org.fcrepo.FedoraObjects"/>
+            <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
+            <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
+            <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
+            <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
+            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
             <bean class="org.fcrepo.foxml.FedoraOXML"/>
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>

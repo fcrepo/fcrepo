@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.fcrepo.AbstractResourceTest;
 import org.junit.Test;
 
 public class FedoraRepositoryTest extends AbstractResourceTest {
@@ -37,9 +38,9 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
 		final String description = method.getResponseBodyAsString();
 		logger.debug("Found the repository description:\n" + description);
 		assertTrue(
-				"Failed to find a proper repo version",
-				compile("<repositoryVersion>.*?</repositoryVersion>").matcher(
-						description).find());
+                "Failed to find a proper repo version",
+                compile("<repositoryVersion>.*?</repositoryVersion>").matcher(
+                        description).find());
 	}
 
 	@Test
@@ -75,6 +76,6 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
 		logger.debug("Old size was: " + oldSize + " and new size was: "
 				+ newSize);
 		assertTrue("No increment in size occurred when we expected one!",
-				oldSize < newSize);
+                oldSize < newSize);
 	}
 }

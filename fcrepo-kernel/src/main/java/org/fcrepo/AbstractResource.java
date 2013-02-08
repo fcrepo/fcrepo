@@ -43,7 +43,7 @@ public abstract class AbstractResource extends Constants {
 	 * Useful for constructing URLs
 	 */
 	@Context
-	UriInfo uriInfo;
+	protected UriInfo uriInfo;
 
 	/**
 	 * Jackson JSON mapper. Should eventually be replaced by the use of proper

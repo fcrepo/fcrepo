@@ -36,6 +36,7 @@
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-dc</module>
+    <module>fcrepo-legacy-api</module>
   </modules>
 
   <dependencyManagement>

@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -10,6 +10,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.fcrepo.AbstractResourceTest;
 import org.junit.Test;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
@@ -60,7 +61,7 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 				.getResponseBodyAsString();
 		logger.debug("Retrieved mutated datastream content: " + response);
 		assertTrue("Datastream didn't accept mutation!", compile(faulkner1)
-				.matcher(response).find());
+                .matcher(response).find());
 	}
 
 	@Test
@@ -122,7 +123,7 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 				+ "objects/testfoo/datastreams/testfoozle/content");
 		assertEquals(200, client.executeMethod(method_test_get));
 		assertEquals("Got the wrong content back!", "marbles for everyone",
-				method_test_get.getResponseBodyAsString());
+                method_test_get.getResponseBodyAsString());
 	}
 
 	@Test
@@ -146,9 +147,9 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 		assertEquals(200, client.executeMethod(getDSesMethod));
 		final String response = getDSesMethod.getResponseBodyAsString();
 		assertTrue("Didn't find the first datastream!",
-				compile("dsid=\"testfoozle\"", DOTALL).matcher(response).find());
+                compile("dsid=\"testfoozle\"", DOTALL).matcher(response).find());
 		assertTrue("Didn't find the second datastream!",
-				compile("dsid=\"testfoozle2\"", DOTALL).matcher(response)
-						.find());
+                compile("dsid=\"testfoozle2\"", DOTALL).matcher(response)
+                        .find());
 	}
 }

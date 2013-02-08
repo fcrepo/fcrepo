@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static com.google.common.collect.ImmutableSet.builder;
 import static java.util.Collections.singletonList;
@@ -7,7 +7,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.FedoraObjects.getObjectSize;
+import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -37,6 +37,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.DatastreamHistory;
 import org.fcrepo.jaxb.responses.DatastreamProfile;
 import org.fcrepo.jaxb.responses.ObjectDatastreams;
