@@ -15,7 +15,17 @@ public class FedoraObjectsTest extends AbstractResourceTest {
 	public void testIngest() throws Exception {
 		PostMethod method = postObjMethod("asdf");
 		assertEquals(201, client.executeMethod(method));
+        String response = method.getResponseBodyAsString();
+        assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(response).find());
 	}
+
+    @Test
+    public void testIngestWithNew() throws Exception {
+        PostMethod method = postObjMethod("new");
+        assertEquals(201, client.executeMethod(method));
+        String response = method.getResponseBodyAsString();
+        assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(response).find());
+    }
 
 	@Test
 	public void testGetObjectInXML() throws Exception {

@@ -84,7 +84,7 @@ public class FedoraObjects extends AbstractResource {
 			session.save();
 			session.logout();
 			logger.debug("Finished ingest with pid: " + pid);
-			return created(uriInfo.getAbsolutePath()).build();
+			return created(uriInfo.getAbsolutePath()).entity(pid).build();
 		} else {
 			session.logout();
 			return four03;
