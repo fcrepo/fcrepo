@@ -19,7 +19,7 @@
     </bean>
 
     <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean">
-        <property name="config" value="classpath:/spring/activemq.xml"/>
+        <property name="config" value="classpath:/META-INF/spring/activemq.xml"/>
         <property name="start" value="true"/>
     </bean>
 

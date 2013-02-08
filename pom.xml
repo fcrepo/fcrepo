@@ -107,6 +107,16 @@
         <artifactId>spring-context</artifactId>
         <version>${spring.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-core</artifactId>
+        <version>5.2.0.Final</version>
+    	  </dependency>
+    	  <dependency>
+        <groupId>org.jgroups</groupId>
+        <artifactId>jgroups</artifactId>
+        <version>3.2.6.Final</version>
+      </dependency>
     </dependencies>
 
   </dependencyManagement>

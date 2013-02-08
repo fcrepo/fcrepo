@@ -1,4 +1,4 @@
-package org.fcrepo.modeshape.observer;
+package org.fcrepo.observer;
 
 import static com.google.common.collect.Iterables.any;
 import static javax.jcr.observation.Event.NODE_ADDED;
