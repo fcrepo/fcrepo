@@ -12,12 +12,14 @@
 
     <import resource="classpath:META-INF/cxf/cxf.xml"/>
 
+  <context:property-placeholder/>
+
     <!-- Context that houses JAX-RS Resources that compose the API
         as well as some utility gear. -->
 
     <context:annotation-config/>
 
-    <jaxrs:server address="http://localhost:8080/rest" >
+    <jaxrs:server address="http://localhost:${test.port:8080}/rest" >
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
             <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
