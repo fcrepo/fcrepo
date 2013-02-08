@@ -1,4 +1,4 @@
-package org.fcrepo.indexer.dublincore;
+package org.fcrepo.generator.dublincore;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;

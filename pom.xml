@@ -9,13 +9,14 @@
   <name>Fedora Commons Repository</name>
   <description>Parent project for fcrepo</description>
 
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <modeshape.version>3.1.1.Final</modeshape.version>
     <cxf.version>2.7.2</cxf.version>
     <activemq.version>5.7.0</activemq.version>
+    <spring.version>3.2.0.RELEASE</spring.version>
+		
     <enunciate.version>1.26.2</enunciate.version>
     <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
@@ -31,62 +32,78 @@
     <module>fcrepo-dc</module>
   </modules>
 
-  <dependencyManagement>
-    <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
-        section defaults for all of the modules we might need, but we still have to include 
-        in the "dependencies" section the modules we DO need. The benefit is that we don't 
-        have to specify the versions of any of those modules. -->
-      <dependency>
-        <groupId>org.modeshape.bom</groupId>
-        <artifactId>modeshape-bom-embedded</artifactId>
-        <version>${modeshape.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>javax.jcr</groupId>
-        <artifactId>jcr</artifactId>
-        <version>2.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>javax.inject</groupId>
-        <artifactId>javax.inject</artifactId>
-        <version>1</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>13.0.1</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.osgi</groupId>
-        <artifactId>org.osgi.core</artifactId>
-        <version>5.0.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.11</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>1.9.5</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-test</artifactId>
-        <version>3.2.0.RELEASE</version>
-        <scope>test</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+	<dependencyManagement>
+		<dependencies>
+			<!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
+				section defaults for all of the modules we might need, but we still have 
+				to include in the "dependencies" section the modules we DO need. The benefit 
+				is that we don't have to specify the versions of any of those modules. -->
+			<dependency>
+				<groupId>org.modeshape.bom</groupId>
+				<artifactId>modeshape-bom-embedded</artifactId>
+				<version>${modeshape.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>javax.jcr</groupId>
+				<artifactId>jcr</artifactId>
+				<version>2.0</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>javax.inject</groupId>
+				<artifactId>javax.inject</artifactId>
+				<version>1</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>13.0.1</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.osgi</groupId>
+				<artifactId>org.osgi.core</artifactId>
+				<version>5.0.0</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.11</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>1.9.5</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-test</artifactId>
+				<version>${spring.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-web</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+		</dependencies>
+
+	</dependencyManagement>
 
   <build>
     <pluginManagement>

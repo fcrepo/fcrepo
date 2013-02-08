@@ -1,4 +1,4 @@
-package org.fcrepo.indexer;
+package org.fcrepo.generator;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;

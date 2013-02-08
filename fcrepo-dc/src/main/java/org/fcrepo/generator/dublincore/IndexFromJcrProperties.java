@@ -1,4 +1,4 @@
-package org.fcrepo.indexer.dublincore;
+package org.fcrepo.generator.dublincore;
 
 import javax.jcr.*;
 import java.io.ByteArrayInputStream;

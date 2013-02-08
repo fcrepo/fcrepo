@@ -1,4 +1,4 @@
-package org.fcrepo.indexer;
+package org.fcrepo.generator;
 
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
@@ -17,7 +17,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.indexer.dublincore.AbstractIndexer;
+import org.fcrepo.generator.dublincore.AbstractIndexer;
 
 @Path("/objects/{pid}")
 public class DublinCore extends AbstractResource {
