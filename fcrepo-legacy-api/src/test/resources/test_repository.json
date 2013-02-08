@@ -1,0 +1,39 @@
+{
+    "name" : "repo",
+    "jndiName" : "",
+    "workspaces" : {
+        "predefined" : ["fedora"],
+        "default" : "fedora",
+        "allowCreation" : true
+    },
+    "storage" : {
+        "cacheName" : "FedoraRepository",
+        "cacheConfiguration" : "test_infinispan_configuration.xml",
+        "binaryStorage" : {
+            "type" : "cache",
+            "dataCacheName" : "FedoraRepository",
+            "metadataCacheName" : "FedoraRepository"
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        },
+        "providers" : [
+            { "classname" : "servlet" }
+        ]
+    },
+    "sequencing" : {
+        "removeDerivedContentWithOriginal" : true,
+        
+        "sequencers" : {
+            "FOXML Eater" : {
+                "description" : "FOXML Files loaded under 'fedora:/foxml' and extracted into 'fedora:/'",
+                "classname" : "org.fcrepo.foxml.FOXMLSequencer",
+                "pathExpressions" : ["fedora:/foxml/(.*)/jcr:content[@jcr:data] => fedora:/$1"]
+            }
+        }
+    },
+	"node-types" : ["fedora-node-types.cnd"]
+}
