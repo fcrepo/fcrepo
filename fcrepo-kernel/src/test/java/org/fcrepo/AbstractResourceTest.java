@@ -8,7 +8,7 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration("/spring-test/master.xml")
 public abstract class AbstractResourceTest extends AbstractTest {
 
-	protected static final int SERVER_PORT = 8080;
+	protected static final int SERVER_PORT = Integer.parseInt(System.getProperty("test.port", "8080"));
 	protected static final String HOSTNAME = "localhost";
 	protected static final String serverAddress = "http://" + HOSTNAME + ":"
 			+ SERVER_PORT + "/rest/";
