@@ -1,0 +1,4 @@
+org.fcrepo
+org.fcrepo.generator
+org.fcrepo.modeshape.audit
+org.fcrepo.observer
