@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.DescribeRepository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;

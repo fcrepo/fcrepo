@@ -17,8 +17,8 @@
     <jaxrs:server address="http://localhost:8080">
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.generator.DublinCore"/>
-            <bean class="org.fcrepo.FedoraObjects"/>
-            <bean class="org.fcrepo.FedoraDatastreams"/>
+            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
+            <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
         </jaxrs:serviceBeans>
     </jaxrs:server>
 

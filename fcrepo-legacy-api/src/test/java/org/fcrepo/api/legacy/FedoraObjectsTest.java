@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertEquals;
@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.fcrepo.AbstractResourceTest;
 import org.junit.Test;
 
 public class FedoraObjectsTest extends AbstractResourceTest {

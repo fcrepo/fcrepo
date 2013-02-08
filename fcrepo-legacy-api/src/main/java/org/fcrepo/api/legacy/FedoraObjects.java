@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
@@ -6,7 +6,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.FedoraDatastreams.getContentSize;
+import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
 
 import java.io.IOException;
@@ -22,6 +22,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.ObjectProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
