@@ -17,7 +17,7 @@
 
     <bean class="org.springframework.core.io.ClassPathResource">
         <qualifier type="ModeShapeRepositoryConfiguration"/>
-        <constructor-arg type="String" value="my_repository.json"/>
+        <constructor-arg type="String" value="test_repository.json"/>
     </bean>
 
 

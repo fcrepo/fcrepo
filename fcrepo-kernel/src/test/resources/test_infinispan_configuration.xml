@@ -4,11 +4,6 @@
 
    <global>
       <!-- Defines the global settings shared by all caches -->
-      <transport>
-         <properties>
-            <property name="configurationFile" value="jgroups-tcp.xml"/>
-         </properties>
-      </transport>
    </global>
 
    <default>
@@ -16,12 +11,6 @@
          Defines the default behavior for all caches, including those created dynamically (e.g., when a 
          repository uses a cache that doesn't exist in this configuration). 
        -->
-      <clustering mode="distribution">
-         <sync/>
-         <l1 enabled="false" lifespan="0" onRehash="false"/>
-         <hash numOwners="1"/>
-         <stateTransfer fetchInMemoryState="true"/>
-      </clustering>
    </default>
 
    <namedCache name="FedoraRepository">
@@ -30,12 +19,6 @@
           use pessimistic locking, which is required whenever applications will be concurrently
           updating nodes within the same process. If you're not sure, use pessimistic locking.
        -->
-      <clustering mode="distribution">
-         <sync/>
-         <l1 enabled="false" lifespan="0" onRehash="false"/>
-         <hash numOwners="1"/>
-         <stateTransfer fetchInMemoryState="true"/>
-      </clustering>
       <transaction
          transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
          transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
@@ -47,7 +30,7 @@
  
           We can have multiple cache loaders, which get chained. But we'll define just one.
        -->
-      <loaders passivation="false" shared="true" preload="true">
+      <loaders passivation="false" shared="false" preload="true">
 
          <!-- 
             The 'fetchPersistentState' attribute applies when this cache joins the cluster; the value doesn't 
@@ -58,7 +41,7 @@
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
                <!-- We have to set the location where we want to store the data. -->
-               <property name="location" value="FedoraRepository/storage"/>
+               <property name="location" value="target/FedoraRepository/storage"/>
             </properties>
             <!-- This repository isn't clustered, so we could set up the SingletonStore.
              singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
