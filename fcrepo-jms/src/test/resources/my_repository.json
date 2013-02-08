@@ -6,29 +6,6 @@
         "default" : "fedora",
         "allowCreation" : true
     },
-    "clustering" : {
-        "clusterName" : "modeshape",
-        "channelConfiguration" : "${fcrepo.modeshape.jgroups.configuration:jgroups-modeshape.xml}"
-    },
-    "query" : {
-        "enabled" : true,
-        "rebuildUponStartup" : "if_missing",
-        "indexStorage" : {
-            "type" : "filesystem",
-            "location" : "${fcrepo.modeshape.index.location:indexes}",
-            "lockingStrategy" : "native",
-            "fileSystemAccessType" : "auto"
-        }
-    },
-    "storage" : {
-        "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "infinispan_configuration.xml",
-        "binaryStorage" : {
-            "type" : "cache",
-            "dataCacheName" : "FedoraRepository",
-            "metadataCacheName" : "FedoraRepository"
-        }
-    },
     "security" : {
         "anonymous" : {
             "roles" : ["readonly","readwrite","admin"],
@@ -38,16 +15,5 @@
             { "classname" : "servlet" }
         ]
     },
-    "sequencing" : {
-        "removeDerivedContentWithOriginal" : true,
-        
-        "sequencers" : {
-            "FOXML Eater" : {
-                "description" : "FOXML Files loaded under 'fedora:/foxml' and extracted into 'fedora:/'",
-                "classname" : "org.fcrepo.foxml.FOXMLSequencer",
-                "pathExpressions" : ["fedora:/foxml/(.*)/jcr:content[@jcr:data] => fedora:/$1"]
-            }
-        }
-    },
-"node-types" : ["fedora-node-types.cnd"]
+	"node-types" : ["fedora-node-types.cnd"]
 }
