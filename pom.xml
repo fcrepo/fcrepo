@@ -365,7 +365,7 @@
     <repository>
       <id>jboss-public-repository-group</id>
       <name>JBoss Public Maven Repository Group</name>
-      <url> http://repository.jboss.org/nexus/content/groups/public/ </url>
+      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
       <layout>default</layout>
       <releases>
         <enabled>true</enabled>
@@ -440,6 +440,16 @@
       <id>gh-pages</id>
       <url>gitsite:git@github.com/futures/${project_name}.git</url>
     </site>
+    <repository>
+      <id>fedora4lib-releases</id>
+      <name>fedora4lib Nexus Repo</name>
+      <url>http://maven.fedora4lib.org:8081/nexus/content/repositories/releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>fedora4lib-snapshots</id>
+      <name>fedora4lib Nexus Repo</name>
+      <url>http://maven.fedora4lib.org:8081/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
   </distributionManagement>
 
   <developers>
