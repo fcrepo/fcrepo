@@ -1,4 +1,4 @@
-package org.fcrepo;
+package org.fcrepo.api.legacy;
 
 import static com.google.common.collect.ImmutableSet.builder;
 import static java.util.Collections.singletonList;
@@ -7,7 +7,6 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -37,6 +36,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.DatastreamHistory;
 import org.fcrepo.jaxb.responses.DatastreamProfile;
 import org.fcrepo.jaxb.responses.ObjectDatastreams;
@@ -191,7 +191,7 @@ public class FedoraDatastreams extends AbstractResource {
 			final MediaType contentType, final InputStream requestBodyStream,
 			final Session session) throws RepositoryException, IOException {
 
-		Long oldObjectSize = getObjectSize(session.getNode("/objects/" + pid));
+		Long oldObjectSize = FedoraObjects.getObjectSize(session.getNode("/objects/" + pid));
 		logger.debug("Attempting to add datastream node at path: " + dsPath);
 		Boolean created = false;
 		if (!session.nodeExists(dsPath)) {
@@ -246,7 +246,7 @@ public class FedoraDatastreams extends AbstractResource {
 			 * properties which contribute to the footprint of this resource
 			 */
 			updateRepositorySize(
-					getObjectSize(session.getNode("/objects/" + pid))
+					FedoraObjects.getObjectSize(session.getNode("/objects/" + pid))
 							- oldObjectSize, session);
 			// now we save again to persist the repo size
 			session.save();

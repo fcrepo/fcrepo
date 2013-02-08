@@ -8,55 +8,18 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>fcrepo-kernel</artifactId>
+  <artifactId>fcrepo-legacy-api</artifactId>
   <packaging>jar</packaging>
 
-  <name>fcrepo kernel</name>
+  <name>fcrepo 3.x compatible REST API</name>
 
   <dependencies>
-    <dependency>
-      <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-jcr</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jgroups</groupId>
-      <artifactId>jgroups</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-jcr-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-web-jcr-rest</artifactId>
-      <version>${modeshape.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jboss.jbossts</groupId>
-      <artifactId>jbossjta</artifactId>
-    </dependency>
-
-    <!-- Logging: we'll use LogBack (which implements the SLF4J API); ModeShape knows 
-      what to do. -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-
-
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>2.10.0</version>
-    </dependency>
+      <dependency>
+          <groupId>org.fcrepo</groupId>
+          <artifactId>fcrepo-kernel</artifactId>
+          <version>${project.version}</version>
+          <scope>compile</scope>
+      </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-frontend-jaxrs</artifactId>
@@ -92,6 +55,11 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.codehaus.enunciate</groupId>
+      <artifactId>enunciate-cxf-rt</artifactId>
+      <version>${enunciate.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-rs-extension-providers</artifactId>
       <version>${cxf.version}</version>
@@ -101,10 +69,18 @@
       <artifactId>rome</artifactId>
       <version>1.0</version>
     </dependency>
+      <dependency>
+          <groupId>org.fcrepo</groupId>
+          <artifactId>fcrepo-kernel</artifactId>
+          <version>${project.version}</version>
+          <classifier>tests</classifier>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 
   <build>
     <plugins>
+
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
@@ -150,18 +126,7 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -188,6 +153,22 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.codehaus.enunciate</groupId>
+        <artifactId>maven-enunciate-cxf-plugin</artifactId>
+        <version>${enunciate.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>docs</goal>
+            </goals>
+            <configuration>
+              <configFile>${basedir}/src/main/enunciate/enunciate.xml</configFile>
+              <docsDir>${project.build.directory}/docs</docsDir>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
