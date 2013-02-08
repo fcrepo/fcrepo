@@ -11,7 +11,7 @@
   <artifactId>fcrepo-kernel</artifactId>
   <packaging>jar</packaging>
 
-  <name>ModeShape prototype kernel</name>
+  <name>fcrepo kernel</name>
 
   <dependencies>
     <dependency>

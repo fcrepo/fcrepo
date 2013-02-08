@@ -13,7 +13,7 @@
   <artifactId>fcrepo-audit</artifactId>
   <packaging>jar</packaging>
 
-  <name>Audit</name>
+  <name>fcrepo audit</name>
 
   <dependencies>
     <dependency>

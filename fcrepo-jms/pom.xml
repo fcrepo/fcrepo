@@ -7,9 +7,9 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-jms</artifactId>
+  <name>fcrepo jms</name>
 
   <dependencies>
-
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel</artifactId>
