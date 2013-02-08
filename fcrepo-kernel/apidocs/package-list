@@ -1,0 +1,7 @@
+org.fcrepo
+org.fcrepo.foxml
+org.fcrepo.identifiers
+org.fcrepo.jaxb.responses
+org.fcrepo.observer
+org.fcrepo.spring
+org.fcrepo.utils
