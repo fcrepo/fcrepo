@@ -13,14 +13,8 @@
     <!-- publishes events from the internal bus to JMS, in Atom format -->
     <bean class="org.fcrepo.observer.JMSTopicAtomPublisher"/>
 
-    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory"
-        depends-on="jmsBroker">
-        <property name="brokerURL" value="vm://localhost?create=false"/>
-    </bean>
-
-    <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean">
-        <property name="config" value="classpath:/META-INF/spring/activemq.xml"/>
-        <property name="start" value="true"/>
+    <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="vm://localhost?broker.persistent=false&amp;broker.useJmx=false&amp;broker.enableStatistics=false"/>
     </bean>
 
 </beans>
