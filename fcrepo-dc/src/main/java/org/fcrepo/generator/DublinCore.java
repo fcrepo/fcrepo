@@ -19,7 +19,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.generator.dublincore.AbstractIndexer;
 
-@Path("/objects/{pid}")
+@Path("/objects/{pid}/oai_dc")
 public class DublinCore extends AbstractResource {
 
 	@Resource
@@ -27,7 +27,6 @@ public class DublinCore extends AbstractResource {
 
 	@GET
 	@Produces(TEXT_XML)
-	@Path("/oai_dc")
 	public Response getObjectAsDublinCore(@PathParam("pid") final String pid)
 			throws RepositoryException {
 		final Session session = repo.login();
