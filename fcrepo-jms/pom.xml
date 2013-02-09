@@ -7,7 +7,10 @@
 		<version>4.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>fcrepo-jms</artifactId>
-	<name>fcrepo jms</name>
+	<name>fcrepo JMS</name>
+	<packaging>bundle</packaging>
+	
+	<description>Fedora event publication via JMS</description>
 
 	<dependencies>
 		<dependency>
@@ -63,4 +66,12 @@
 			<artifactId>spring-beans</artifactId>
 		</dependency>
 	</dependencies>
+	<build>
+	  <plugins>
+	    <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+        </plugin>
+	  </plugins>
+	</build>
 </project>

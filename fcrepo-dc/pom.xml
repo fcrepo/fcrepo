@@ -8,6 +8,10 @@
   </parent>
   <artifactId>fcrepo-dc</artifactId>
   <name>fcrepo dc</name>
+  
+  <packaging>bundle</packaging>
+
+  <description>Dublin Core generator</description>
 
   <dependencies>
     <dependency>
@@ -43,4 +47,13 @@
       <artifactId>spring-test</artifactId>
     </dependency>
   </dependencies>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>

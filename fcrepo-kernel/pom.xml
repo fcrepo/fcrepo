@@ -9,9 +9,11 @@
   </parent>
 
   <artifactId>fcrepo-kernel</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
 
   <name>fcrepo kernel</name>
+  
+  <description>The Fedora repository kernel</description>
 
   <dependencies>
     <dependency>
@@ -184,10 +186,10 @@
           </execution>
         </executions>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
-
-
-
 </project>

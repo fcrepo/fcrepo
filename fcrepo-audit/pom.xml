@@ -11,9 +11,11 @@
   </parent>
 
   <artifactId>fcrepo-audit</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
 
   <name>fcrepo audit</name>
+  
+  <description>Fedora audit</description>
 
   <dependencies>
     <dependency>
