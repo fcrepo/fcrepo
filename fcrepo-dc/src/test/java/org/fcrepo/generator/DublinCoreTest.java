@@ -7,80 +7,48 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.junit.BeforeClass;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/generator.xml", "/spring-test/repo.xml"})
-public class DublinCoreTest {
-
-    protected static final int SERVER_PORT = Integer.parseInt(System.getProperty("test.port", "8080"));
-
-    protected static final String HOSTNAME = "localhost";
-
-    protected static final String serverAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + "/";
-
-    protected final HttpClient client = new HttpClient();
-
-    protected static Logger logger;
-
-    @BeforeClass
-    public static void setLogger() {
-        logger = LoggerFactory.getLogger(DublinCoreTest.class);
-    }
+public class DublinCoreTest extends AbstractResourceTest {
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
-        PostMethod createObjMethod =
-                new PostMethod(serverAddress + "rest/objects/fdsa");
-        client.executeMethod(createObjMethod);
+        getStatus(postObjMethod("DublinCoreTest1"));
 
-        GetMethod getWorstCaseOaiMethod =
-                new GetMethod(serverAddress + "rest/objects/fdsa/oai_dc");
-        getWorstCaseOaiMethod.setRequestHeader("Accept", TEXT_XML);
-        int status = client.executeMethod(getWorstCaseOaiMethod);
-        assertEquals(200, status);
+        HttpGet getWorstCaseOaiMethod =
+                new HttpGet(serverAddress + "objects/DublinCoreTest1/oai_dc");
+        getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
+        HttpResponse response = client.execute(getWorstCaseOaiMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
 
-        final String response = getWorstCaseOaiMethod.getResponseBodyAsString();
+        final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Didn't find oai_dc!", compile("oai_dc", DOTALL).matcher(
-                response).find());
+                content).find());
 
         assertTrue("Didn't find dc:identifier!", compile("dc:identifier",
-                DOTALL).matcher(response).find());
+                DOTALL).matcher(content).find());
     }
 
     @Test
     public void testWellKnownPathOaiDc() throws Exception {
-        PostMethod createObjMethod =
-                new PostMethod(serverAddress + "rest/objects/lkjh");
-        client.executeMethod(createObjMethod);
+        client.execute(postObjMethod("DublinCoreTest2"));
+        client.execute(postDSMethod("DublinCoreTest2", "DC",
+                "marbles for everyone"));
 
-        PostMethod createDSMethod =
-                new PostMethod(serverAddress + "rest/objects/lkjh/datastreams/DC");
-
-        createDSMethod.setRequestEntity(new StringRequestEntity(
-                "marbles for everyone", null, null));
-
-        client.executeMethod(createDSMethod);
-
-        GetMethod getWorstCaseOaiMethod =
-                new GetMethod(serverAddress + "rest/objects/lkjh/oai_dc");
-        getWorstCaseOaiMethod.setRequestHeader("Accept", TEXT_XML);
-        int status = client.executeMethod(getWorstCaseOaiMethod);
-        assertEquals(200, status);
-
-        final String response = getWorstCaseOaiMethod.getResponseBodyAsString();
+        HttpGet getWorstCaseOaiMethod =
+                new HttpGet(serverAddress + "objects/DublinCoreTest2/oai_dc");
+        getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
+        HttpResponse response = client.execute(getWorstCaseOaiMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Didn't find our datastream!", compile(
-                "marbles for everyone", DOTALL).matcher(response).find());
+                "marbles for everyone", DOTALL).matcher(content).find());
     }
 }

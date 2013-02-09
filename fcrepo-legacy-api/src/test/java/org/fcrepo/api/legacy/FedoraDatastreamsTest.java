@@ -1,3 +1,4 @@
+
 package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
@@ -5,151 +6,145 @@ import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.fcrepo.AbstractResourceTest;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
 
-	private static final String faulkner1 = "The past is never dead. It's not even past.";
+    private static final String faulkner1 =
+            "The past is never dead. It's not even past.";
 
-	@Test
-	public void testGetDatastreams() throws Exception {
-		PostMethod pmethod = postObjMethod("asdf");
-		client.executeMethod(pmethod);
+    @Test
+    public void testGetDatastreams() throws Exception {
+        client.execute(postObjMethod("FedoraDatastreamsTest1"));
+        final HttpGet method =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest1/datastreams");
+        assertEquals(200, getStatus(method));
+    }
 
-		GetMethod method = new GetMethod(serverAddress
-				+ "objects/asdf/datastreams");
-		int status = client.executeMethod(method);
-		assertEquals(200, status);
-	}
+    @Test
+    public void testAddDatastream() throws Exception {
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest2");
+        assertEquals(201, getStatus(objMethod));
+        final HttpPost method =
+                postDSMethod("FedoraDatastreamsTest2", "zxc", "foo");
+        assertEquals(201, getStatus(method));
+    }
 
-	@Test
-	public void testAddDatastream() throws Exception {
-		PostMethod pmethod = postObjMethod("asdf");
-		client.executeMethod(pmethod);
+    @Test
+    public void testMutateDatastream() throws Exception {
+        final HttpPost createObjectMethod =
+                postObjMethod("FedoraDatastreamsTest3");
+        assertEquals("Couldn't create an object!", 201,
+                getStatus(createObjectMethod));
 
-		PostMethod method = postDSMethod("asdf", "zxc");
-		int status = client.executeMethod(method);
-		assertEquals(201, status);
-	}
+        final HttpPost createDataStreamMethod =
+                postDSMethod("FedoraDatastreamsTest3", "ds1", "foo");
+        assertEquals("Couldn't create a datastream!", 201,
+                getStatus(createDataStreamMethod));
 
-	@Test
-	public void testMutateDatastream() throws Exception {
-		PostMethod createObjectMethod = postObjMethod("asdf2");
-		Integer status = client.executeMethod(createObjectMethod);
-		assertEquals("Couldn't create an object!", (Integer) 201, status);
+        final HttpPut mutateDataStreamMethod =
+                putDSMethod("FedoraDatastreamsTest3", "ds1");
+        mutateDataStreamMethod.setEntity(new StringEntity(faulkner1, "UTF-8"));
+        assertEquals("Couldn't mutate a datastream!", 201,
+                getStatus(mutateDataStreamMethod));
 
-		PostMethod createDataStreamMethod = postDSMethod("asdf2", "vcxz");
-		status = client.executeMethod(createDataStreamMethod);
-		assertEquals("Couldn't create a datastream!", (Integer) 201, status);
+        final HttpGet retrieveMutatedDataStreamMethod =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest3/datastreams/ds1/content");
+        assertTrue("Datastream didn't accept mutation!", faulkner1
+                .equals(EntityUtils.toString(client.execute(
+                        retrieveMutatedDataStreamMethod).getEntity())));
+    }
 
-		PutMethod mutateDataStreamMethod = putDSMethod("asdf2", "vcxz");
-		mutateDataStreamMethod.setRequestEntity(new StringRequestEntity(
-				faulkner1, "text/plain", "UTF-8"));
-		status = client.executeMethod(mutateDataStreamMethod);
-		assertEquals("Couldn't mutate a datastream!", (Integer) 201, status);
+    @Test
+    public void testGetDatastream() throws Exception {
+        client.execute(postObjMethod("FedoraDatastreamsTest4"));
 
-		GetMethod retrieveMutatedDataStreamMethod = new GetMethod(serverAddress
-				+ "objects/asdf2/datastreams/vcxz/content");
-		client.executeMethod(retrieveMutatedDataStreamMethod);
-		String response = retrieveMutatedDataStreamMethod
-				.getResponseBodyAsString();
-		logger.debug("Retrieved mutated datastream content: " + response);
-		assertTrue("Datastream didn't accept mutation!", compile(faulkner1)
-                .matcher(response).find());
-	}
+        assertEquals(404, getStatus(new HttpGet(serverAddress +
+                "objects/FedoraDatastreamsTest4/datastreams/ds1")));
+        assertEquals(201, getStatus(postDSMethod("FedoraDatastreamsTest4",
+                "ds1", "foo")));
+        assertEquals(200, getStatus(new HttpGet(serverAddress +
+                "objects/FedoraDatastreamsTest4/datastreams/ds1")));
+    }
 
-	@Test
-	public void testGetDatastream() throws Exception {
-		PostMethod pmethod = postObjMethod("asdf");
-		client.executeMethod(pmethod);
+    @Test
+    public void testDeleteDatastream() throws Exception {
+        client.execute(postObjMethod("FedoraDatastreamsTest5"));
 
-		GetMethod method_test_get = new GetMethod(serverAddress
-				+ "objects/asdf/datastreams/poiu");
-		int status = client.executeMethod(method_test_get);
-		assertEquals(404, status);
+        final HttpPost method =
+                postDSMethod("FedoraDatastreamsTest5", "ds1", "foo");
+        assertEquals(201, getStatus(method));
 
-		PostMethod method = postDSMethod("asdf", "poiu");
-		status = client.executeMethod(method);
-		assertEquals(201, status);
+        final HttpGet method_2 =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest5/datastreams/ds1");
+        assertEquals(200, getStatus(method_2));
 
-		GetMethod method_2 = new GetMethod(serverAddress
-				+ "objects/asdf/datastreams/poiu");
-		status = client.executeMethod(method_2);
-		assertEquals(200, status);
-	}
+        final HttpDelete dmethod =
+                new HttpDelete(serverAddress +
+                        "objects/FedoraDatastreamsTest5/datastreams/ds1");
+        assertEquals(204, getStatus(dmethod));
 
-	@Test
-	public void testDeleteDatastream() throws Exception {
-		PostMethod pmethod = postObjMethod("asdf");
-		client.executeMethod(pmethod);
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest5/datastreams/ds1");
+        assertEquals(404, getStatus(method_test_get));
+    }
 
-		PostMethod method = postDSMethod("asdf", "lkjh");
-		int status = client.executeMethod(method);
-		assertEquals(201, status);
+    @Test
+    public void testGetDatastreamContent() throws Exception {
+        final HttpPost createObjMethod =
+                postObjMethod("FedoraDatastreamsTest6");
+        assertEquals(201, getStatus(createObjMethod));
 
-		GetMethod method_2 = new GetMethod(serverAddress
-				+ "objects/asdf/datastreams/lkjh");
-		status = client.executeMethod(method_2);
-		assertEquals(200, status);
+        final HttpPost createDSMethod =
+                postDSMethod("FedoraDatastreamsTest6", "ds1",
+                        "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest6/datastreams/ds1/content");
+        assertEquals(200, getStatus(method_test_get));
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertTrue("Got the wrong content back!", "marbles for everyone"
+                .equals(EntityUtils.toString(client.execute(method_test_get)
+                        .getEntity())));
+        logger.debug("Content was correct.");
+    }
 
-		DeleteMethod dmethod = new DeleteMethod(serverAddress
-				+ "objects/asdf/datastreams/lkjh");
-		status = client.executeMethod(dmethod);
-		assertEquals(204, status);
+    @Test
+    public void testMultipleDatastreams() throws Exception {
+        final HttpPost createObjMethod =
+                postObjMethod("FedoraDatastreamsTest7");
+        assertEquals(201, getStatus(createObjMethod));
 
-		GetMethod method_test_get = new GetMethod(serverAddress
-				+ "objects/asdf/datastreams/lkjh");
-		status = client.executeMethod(method_test_get);
-		assertEquals(404, status);
-	}
+        final HttpPost createDS1Method =
+                postDSMethod("FedoraDatastreamsTest7", "ds1",
+                        "marbles for everyone");
+        assertEquals(201, getStatus(createDS1Method));
+        final HttpPost createDS2Method =
+                postDSMethod("FedoraDatastreamsTest7", "ds2",
+                        "marbles for no one");
+        assertEquals(201, getStatus(createDS2Method));
 
-	@Test
-	public void testGetDatastreamContent() throws Exception {
-		final PostMethod createObjMethod = postObjMethod("testfoo");
-		client.executeMethod(createObjMethod);
-		assertEquals(201, client.executeMethod(createObjMethod));
-
-		final PostMethod createDSMethod = postDSMethod("testfoo", "testfoozle");
-		createDSMethod.setRequestEntity(new StringRequestEntity(
-				"marbles for everyone", null, null));
-		assertEquals(201, client.executeMethod(createDSMethod));
-		GetMethod method_test_get = new GetMethod(serverAddress
-				+ "objects/testfoo/datastreams/testfoozle/content");
-		assertEquals(200, client.executeMethod(method_test_get));
-		assertEquals("Got the wrong content back!", "marbles for everyone",
-                method_test_get.getResponseBodyAsString());
-	}
-
-	@Test
-	public void testMultipleDatastreams() throws Exception {
-		final PostMethod createObjMethod = postObjMethod("testfoo");
-		client.executeMethod(createObjMethod);
-		assertEquals(201, client.executeMethod(createObjMethod));
-
-		final PostMethod createDS1Method = postDSMethod("testfoo", "testfoozle");
-		createDS1Method.setRequestEntity(new StringRequestEntity(
-				"marbles for everyone", null, null));
-		assertEquals(201, client.executeMethod(createDS1Method));
-		final PostMethod createDS2Method = postDSMethod("testfoo",
-				"testfoozle2");
-		createDS2Method.setRequestEntity(new StringRequestEntity(
-				"marbles for no one", null, null));
-		assertEquals(201, client.executeMethod(createDS2Method));
-
-		final GetMethod getDSesMethod = new GetMethod(serverAddress
-				+ "objects/testfoo/datastreams");
-		assertEquals(200, client.executeMethod(getDSesMethod));
-		final String response = getDSesMethod.getResponseBodyAsString();
-		assertTrue("Didn't find the first datastream!",
-                compile("dsid=\"testfoozle\"", DOTALL).matcher(response).find());
-		assertTrue("Didn't find the second datastream!",
-                compile("dsid=\"testfoozle2\"", DOTALL).matcher(response)
-                        .find());
-	}
+        final HttpGet getDSesMethod =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest7/datastreams");
+        HttpResponse response = client.execute(getDSesMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+        assertTrue("Didn't find the first datastream!", compile("dsid=\"ds1\"",
+                DOTALL).matcher(content).find());
+        assertTrue("Didn't find the second datastream!", compile(
+                "dsid=\"ds2\"", DOTALL).matcher(content).find());
+    }
 }

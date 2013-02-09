@@ -97,11 +97,6 @@
       <artifactId>cxf-rt-rs-extension-providers</artifactId>
       <version>${cxf.version}</version>
     </dependency>
-    <dependency>
-      <groupId>rome</groupId>
-      <artifactId>rome</artifactId>
-      <version>1.0</version>
-    </dependency>
   </dependencies>
 
   <build>

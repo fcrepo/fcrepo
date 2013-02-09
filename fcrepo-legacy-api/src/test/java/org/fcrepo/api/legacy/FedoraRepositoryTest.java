@@ -1,3 +1,4 @@
+
 package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
@@ -8,74 +9,71 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Matcher;
 
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.fcrepo.AbstractResourceTest;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 public class FedoraRepositoryTest extends AbstractResourceTest {
 
-	@Test
-	public void testDescribeModeshape() throws Exception {
-		GetMethod method = new GetMethod(serverAddress + "describe/modeshape");
-		int status = client.executeMethod(method);
-		assertEquals(200, status);
-	}
+    @Test
+    public void testDescribeModeshape() throws Exception {
+        assertEquals(200, getStatus(new HttpGet(serverAddress +
+                "describe/modeshape")));
+    }
 
-	@Test
-	public void testGetObjects() throws Exception {
-		GetMethod method = new GetMethod(serverAddress + "objects");
-		int status = client.executeMethod(method);
-		assertEquals(200, status);
-	}
+    @Test
+    public void testGetObjects() throws Exception {
+        assertEquals(200, getStatus(new HttpGet(serverAddress + "objects")));
+    }
 
-	@Test
-	public void testDescribe() throws Exception {
-		GetMethod method = new GetMethod(serverAddress + "describe");
-		method.addRequestHeader("Accept", TEXT_XML);
-		int status = client.executeMethod(method);
-		assertEquals(200, status);
-		final String description = method.getResponseBodyAsString();
-		logger.debug("Found the repository description:\n" + description);
-		assertTrue(
-                "Failed to find a proper repo version",
-                compile("<repositoryVersion>.*?</repositoryVersion>").matcher(
-                        description).find());
-	}
+    @Test
+    public void testDescribe() throws Exception {
+        final HttpGet method = new HttpGet(serverAddress + "describe");
+        method.addHeader("Accept", TEXT_XML);
+        final HttpResponse response = client.execute(method);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String description = EntityUtils.toString(response.getEntity());
+        logger.debug("Found the repository description:\n" + description);
+        assertTrue("Failed to find a proper repo version", compile(
+                "<repositoryVersion>.*?</repositoryVersion>").matcher(
+                description).find());
+    }
 
-	@Test
-	public void testDescribeSize() throws Exception {
-		GetMethod describeMethod = new GetMethod(serverAddress + "describe");
-		describeMethod.addRequestHeader("Accept", TEXT_XML);
-		int status = client.executeMethod(describeMethod);
-		assertEquals(200, status);
-		String description = describeMethod.getResponseBodyAsString();
-		logger.debug("Found a repository description:\n" + description);
-		Matcher check = compile("<repositorySize>([0-9]+)</repositorySize>",
-				DOTALL).matcher(description);
-		Long oldSize = null;
-		while (check.find()) {
-			oldSize = new Long(check.group(1));
-		}
+    @Test
+    public void testDescribeSize() throws Exception {
+        final HttpGet describeMethod = new HttpGet(serverAddress + "describe");
+        describeMethod.addHeader("Accept", TEXT_XML);
+        HttpResponse response = client.execute(describeMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String description = EntityUtils.toString(response.getEntity());
+        logger.debug("Found a repository description:\n" + description);
+        final Matcher check =
+                compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)
+                        .matcher(description);
+        Long oldSize = null;
+        while (check.find()) {
+            oldSize = new Long(check.group(1));
+        }
 
-		PostMethod createObjMethod = postObjMethod("fdhgsldfhg");
-		assertEquals(201, client.executeMethod(createObjMethod));
+        assertEquals(201, getStatus(postObjMethod("fdhgsldfhg")));
 
-		GetMethod newDescribeMethod = new GetMethod(serverAddress + "describe");
-		newDescribeMethod.addRequestHeader("Accept", TEXT_XML);
-		status = client.executeMethod(newDescribeMethod);
-		assertEquals(200, status);
-		String newDescription = newDescribeMethod.getResponseBodyAsString();
-		logger.debug("Found another repository description:\n" + newDescription);
-		Matcher newCheck = compile("<repositorySize>([0-9]+)</repositorySize>",
-				DOTALL).matcher(newDescription);
-		Long newSize = null;
-		while (newCheck.find()) {
-			newSize = new Long(newCheck.group(1));
-		}
-		logger.debug("Old size was: " + oldSize + " and new size was: "
-				+ newSize);
-		assertTrue("No increment in size occurred when we expected one!",
+        HttpGet newDescribeMethod = new HttpGet(serverAddress + "describe");
+        newDescribeMethod.addHeader("Accept", TEXT_XML);
+        response = client.execute(describeMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String newDescription = EntityUtils.toString(response.getEntity());
+        logger.debug("Found another repository description:\n" + newDescription);
+        Matcher newCheck =
+                compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)
+                        .matcher(newDescription);
+        Long newSize = null;
+        while (newCheck.find()) {
+            newSize = new Long(newCheck.group(1));
+        }
+        logger.debug("Old size was: " + oldSize + " and new size was: " +
+                newSize);
+        assertTrue("No increment in size occurred when we expected one!",
                 oldSize < newSize);
-	}
+    }
 }
