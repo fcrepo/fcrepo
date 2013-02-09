@@ -32,6 +32,7 @@
             <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
             <bean class="org.fcrepo.foxml.FedoraOXML"/>
+            <bean class="org.fcrepo.generator.DublinCore" />
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
             <entry key="json" value="application/json"/>
