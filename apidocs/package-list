@@ -1,4 +1,5 @@
 org.fcrepo
+org.fcrepo.api.legacy
 org.fcrepo.foxml
 org.fcrepo.generator
 org.fcrepo.generator.dublincore
