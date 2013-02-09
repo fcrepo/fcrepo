@@ -37,6 +37,7 @@
     <module>fcrepo-jms</module>
     <module>fcrepo-dc</module>
     <module>fcrepo-legacy-api</module>
+    <module>fcrepo-sequencer-ruby-example</module>
   </modules>
 
   <dependencyManagement>
