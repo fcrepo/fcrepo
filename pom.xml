@@ -225,17 +225,24 @@
                 </pluginExecution>
                 <pluginExecution>
                   <pluginExecutionFilter>
-                    <groupId>
-                      org.codehaus.enunciate
-                    </groupId>
-                    <artifactId>
-                      maven-enunciate-cxf-plugin
-                    </artifactId>
-                    <versionRange>
-                      [1.26.2,)
-                    </versionRange>
+                    <groupId>org.codehaus.enunciate</groupId>
+                    <artifactId>maven-enunciate-cxf-plugin</artifactId>
+                    <versionRange>[1.26.2,)</versionRange>
                     <goals>
                       <goal>docs</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <execute />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <versionRange>(,2.1.0),(2.1.0,2.2.0),(2.2.0,)</versionRange>
+                    <goals>
+                      <goal>enforce</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
@@ -252,7 +259,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>3.0</version>
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
