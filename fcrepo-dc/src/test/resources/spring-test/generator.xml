@@ -12,9 +12,11 @@
 
     <import resource="classpath:META-INF/cxf/cxf.xml"/>
 
-    <context:annotation-config/>
+  <context:property-placeholder/>
 
-    <jaxrs:server address="http://localhost:8080">
+  <context:annotation-config/>
+
+    <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.generator.DublinCore"/>
             <bean class="org.fcrepo.api.legacy.FedoraObjects"/>

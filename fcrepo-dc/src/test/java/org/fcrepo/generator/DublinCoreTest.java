@@ -23,7 +23,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration({"/spring-test/generator.xml", "/spring-test/repo.xml"})
 public class DublinCoreTest {
 
-    protected static final int SERVER_PORT = 8080;
+    protected static final int SERVER_PORT = Integer.parseInt(System.getProperty("test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";
 
@@ -42,11 +42,11 @@ public class DublinCoreTest {
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
         PostMethod createObjMethod =
-                new PostMethod(serverAddress + "objects/fdsa");
+                new PostMethod(serverAddress + "rest/objects/fdsa");
         client.executeMethod(createObjMethod);
 
         GetMethod getWorstCaseOaiMethod =
-                new GetMethod(serverAddress + "objects/fdsa/oai_dc");
+                new GetMethod(serverAddress + "rest/objects/fdsa/oai_dc");
         getWorstCaseOaiMethod.setRequestHeader("Accept", TEXT_XML);
         int status = client.executeMethod(getWorstCaseOaiMethod);
         assertEquals(200, status);
@@ -62,11 +62,11 @@ public class DublinCoreTest {
     @Test
     public void testWellKnownPathOaiDc() throws Exception {
         PostMethod createObjMethod =
-                new PostMethod(serverAddress + "objects/lkjh");
+                new PostMethod(serverAddress + "rest/objects/lkjh");
         client.executeMethod(createObjMethod);
 
         PostMethod createDSMethod =
-                new PostMethod(serverAddress + "objects/lkjh/datastreams/DC");
+                new PostMethod(serverAddress + "rest/objects/lkjh/datastreams/DC");
 
         createDSMethod.setRequestEntity(new StringRequestEntity(
                 "marbles for everyone", null, null));
@@ -74,7 +74,7 @@ public class DublinCoreTest {
         client.executeMethod(createDSMethod);
 
         GetMethod getWorstCaseOaiMethod =
-                new GetMethod(serverAddress + "objects/lkjh/oai_dc");
+                new GetMethod(serverAddress + "rest/objects/lkjh/oai_dc");
         getWorstCaseOaiMethod.setRequestHeader("Accept", TEXT_XML);
         int status = client.executeMethod(getWorstCaseOaiMethod);
         assertEquals(200, status);
