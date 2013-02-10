@@ -65,4 +65,32 @@
         </jaxrs:providers>
     </jaxrs:server>
 
+
+  <jaxrs:server address="/merritt">
+    <jaxrs:serviceBeans>
+      <bean class="org.fcrepo.merritt.api.HelpService"/>
+      <bean class="org.fcrepo.merritt.api.StateService"/>
+      <bean class="org.fcrepo.merritt.api.ContentService"/>
+      <bean class="org.fcrepo.merritt.api.BagitService"/>
+    </jaxrs:serviceBeans>
+    <jaxrs:extensionMappings>
+      <entry key="json" value="application/json"/>
+      <entry key="xml" value="application/xml"/>
+    </jaxrs:extensionMappings>
+    <jaxrs:providers>
+      <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
+        <property name="marshallerProperties">
+          <util:map>
+            <entry key="jaxb.formatted.output">
+              <value type="java.lang.Boolean">true</value>
+            </entry>
+          </util:map>
+        </property>
+      </bean>
+      <bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+        <property name="ignoreNamespaces" value="true"/>
+      </bean>
+    </jaxrs:providers>
+  </jaxrs:server>
+
 </beans>
