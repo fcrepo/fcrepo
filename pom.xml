@@ -24,7 +24,6 @@
     <spring.version>3.2.0.RELEASE</spring.version>
 
     <enunciate.version>1.26.2</enunciate.version>
-    <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
       replacements of "fcrepo4" in child modules -->
     <project_name>fcrepo4</project_name>
@@ -267,16 +266,7 @@
     </pluginManagement>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-      
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-          <compilerArguments>
-            <endorseddirs>${endorsed.dir}</endorseddirs>
-          </compilerArguments>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
