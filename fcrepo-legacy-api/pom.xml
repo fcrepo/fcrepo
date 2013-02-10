@@ -10,17 +10,17 @@
 
   <artifactId>fcrepo-legacy-api</artifactId>
   <packaging>bundle</packaging>
-  
+
   <description>Fedora 3.x legacy API</description>
 
   <name>fcrepo 3.x compatible REST API</name>
 
   <dependencies>
-      <dependency>
-          <groupId>org.fcrepo</groupId>
-          <artifactId>fcrepo-kernel</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-frontend-jaxrs</artifactId>
@@ -58,6 +58,12 @@
       <groupId>org.codehaus.enunciate</groupId>
       <artifactId>enunciate-cxf-rt</artifactId>
       <version>${enunciate.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
@@ -86,7 +92,7 @@
   <build>
     <plugins>
 
-     <plugin>
+      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>

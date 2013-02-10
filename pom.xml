@@ -18,9 +18,10 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <modeshape.version>3.1.1.Final</modeshape.version>
-    <cxf.version>2.7.2</cxf.version>
     <activemq.version>5.7.0</activemq.version>
+    <cxf.version>2.7.2</cxf.version>
+    <modeshape.version>3.1.1.Final</modeshape.version>
+    <slf4j.version>1.7.2</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
 
     <enunciate.version>1.26.2</enunciate.version>
@@ -85,6 +86,12 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-web</artifactId>
         <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -106,7 +113,18 @@
         <artifactId>jgroups</artifactId>
         <version>3.2.6.Final</version>
       </dependency>
-      
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
       <!-- test gear -->
       <dependency>
         <groupId>junit</groupId>
@@ -125,15 +143,26 @@
         <artifactId>spring-test</artifactId>
         <version>${spring.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>4.2.3</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
-
   </dependencyManagement>
 
   <build>
@@ -165,6 +194,10 @@
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>2.7</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
@@ -249,7 +282,7 @@
                   <pluginExecutionFilter>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <versionRange>(,2.1.0),(2.1.0,2.2.0),(2.2.0,)</versionRange>
+                    <versionRange>[1.0.0,)</versionRange>
                     <goals>
                       <goal>enforce</goal>
                     </goals>
@@ -267,6 +300,33 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>commons-logging</exclude>
+                    <exclude>log4j:log4j</exclude>
+                    <exclude>org.slf4j:slf4j-jcl</exclude>
+                    <exclude>org.slf4j:slf4j-jdk14</exclude>
+                    <exclude>org.slf4j:slf4j-log4j12</exclude>
+                    <exclude>org.slf4j:slf4j-log4j13</exclude>
+                    <exclude>org.slf4j:slf4j-nop</exclude>
+                    <exclude>org.slf4j:slf4j-simple</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
