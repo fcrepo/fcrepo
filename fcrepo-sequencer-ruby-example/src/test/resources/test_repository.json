@@ -1,0 +1,39 @@
+{
+    "name" : "repo",
+    "jndiName" : "",
+    "workspaces" : {
+        "predefined" : ["fedora"],
+        "default" : "fedora",
+        "allowCreation" : true
+    },
+    "storage" : {
+        "cacheName" : "FedoraRepository",
+        "cacheConfiguration" : "test_infinispan_configuration.xml",
+        "binaryStorage" : {
+            "type" : "cache",
+            "dataCacheName" : "FedoraRepository",
+            "metadataCacheName" : "FedoraRepository"
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        },
+        "providers" : [
+            { "classname" : "servlet" }
+        ]
+    },
+    "sequencing" : {
+        "removeDerivedContentWithOriginal" : true,
+        
+        "sequencers" : {
+            "JRuby Visitor" : {
+                "description" : "Example fcrepo sequencer in JRuby'",
+                "classname" : "org.fcrepo.JrubyShimSequencer",
+                "pathExpressions" : ["fedora:/jruby/(.*)[jcr:content/@jcr:data] => fedora:/jruby/$1"]
+            }
+        }
+    },
+	"node-types" : ["fedora-node-types.cnd"]
+}
