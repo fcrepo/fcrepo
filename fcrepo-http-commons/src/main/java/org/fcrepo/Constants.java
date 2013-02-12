@@ -1,4 +1,4 @@
-package org.fcrepo.utils;
+package org.fcrepo;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;

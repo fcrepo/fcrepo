@@ -6,12 +6,9 @@
     <artifactId>fcrepo</artifactId>
     <version>4.0-SNAPSHOT</version>
   </parent>
-  <artifactId>fcrepo-dc</artifactId>
-  <name>fcrepo dc</name>
-
-  <packaging>bundle</packaging>
-
-  <description>Dublin Core generator</description>
+  <artifactId>fcrepo-http-commons</artifactId>
+  <name>Fedora HTTP Commons</name>
+  <description>HTTP (JAX-RS) resources and helpers.</description>
 
   <dependencies>
     <dependency>
@@ -19,42 +16,26 @@
       <artifactId>fcrepo-kernel</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-commons</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-legacy-api</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-frontend-jaxrs</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-transports-http-jetty</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-test</artifactId>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-extension-providers</artifactId>
     </dependency>
+
+    <!-- test gear -->
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
     </dependency>
+
   </dependencies>
 
   <build>

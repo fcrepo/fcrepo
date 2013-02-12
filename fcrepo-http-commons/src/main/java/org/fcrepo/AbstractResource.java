@@ -21,7 +21,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.fcrepo.identifiers.PidMinter;
-import org.fcrepo.utils.Constants;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;

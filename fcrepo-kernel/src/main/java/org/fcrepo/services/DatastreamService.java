@@ -1,8 +1,13 @@
 package org.fcrepo.services;
 
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Calendar;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -11,12 +16,10 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Calendar;
 
-import static org.modeshape.jcr.api.JcrConstants.*;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class DatastreamService {

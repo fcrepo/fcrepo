@@ -1,14 +1,13 @@
-package org.fcrepo.foxml
+package org.fcrepo.api.legacy.foxml
 
 import java.io.ByteArrayInputStream
 import java.io.InputStream
-import scala.language.postfixOps
 import scala.xml.XML
-
 import org.modeshape.common.logging.Logger
 import org.modeshape.jcr.api.JcrTools
-
 import javax.jcr.Node
+
+import scala.language.postfixOps
 
 class FOXMLParser {
 
@@ -47,7 +46,7 @@ class FOXMLParser {
         log.debug("Found content: \n" + latestVersion)
       } else {
         // insert placeholder
-    	  	latestVersion = "PLACEHOLDER"
+            latestVersion = "PLACEHOLDER"
       }
       val dsNode = jcrTools.uploadFile(objNode.getSession(), objNode.getPath() + "/" + dsId, new ByteArrayInputStream(latestVersion.getBytes))
       dsNode.addMixin("fedora:datastream")

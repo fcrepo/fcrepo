@@ -37,14 +37,16 @@
     <module>fcrepo-jms</module>
     <module>fcrepo-dc</module>
     <module>fcrepo-legacy-api</module>
+    <module>fcrepo-http-commons</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
-        section defaults for all of the modules we might need, but we still have to include 
-        in the "dependencies" section the modules we DO need. The benefit is that we don't 
-        have to specify the versions of any of those modules. -->
+      <!-- Import the ModeShape BOM for embedded usage. This adds to the 
+        "dependenciesManagement" section defaults for all of the modules we might 
+        need, but we still have to include in the "dependencies" section the modules 
+        we DO need. The benefit is that we don't have to specify the versions of 
+        any of those modules. -->
       <dependency>
         <groupId>org.modeshape.bom</groupId>
         <artifactId>modeshape-bom-embedded</artifactId>
@@ -79,6 +81,18 @@
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-transports-http-jetty</artifactId>
+        <version>${cxf.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+        <version>${cxf.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-rt-rs-extension-providers</artifactId>
         <version>${cxf.version}</version>
         <scope>test</scope>
       </dependency>

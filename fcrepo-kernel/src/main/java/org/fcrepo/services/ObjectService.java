@@ -1,18 +1,17 @@
 package org.fcrepo.services;
 
 
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Calendar;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.util.Calendar;
 
-import static javax.ws.rs.core.Response.created;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ObjectService {
 
