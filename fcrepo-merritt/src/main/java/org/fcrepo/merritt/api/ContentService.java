@@ -1,8 +1,16 @@
 package org.fcrepo.merritt.api;
 
 
-import org.apache.cxf.message.Attachment;
+import org.apache.commons.io.IOUtils;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +21,11 @@ import javax.jcr.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static javax.ws.rs.core.Response.*;
 import static org.modeshape.jcr.api.JcrConstants.*;
@@ -25,6 +35,21 @@ public class ContentService extends AbstractResource {
 
     final private Logger logger = LoggerFactory
             .getLogger(ContentService.class);
+
+    final private ObjectService objectService =  new ObjectService();
+    final private DatastreamService datastreamService =  new DatastreamService();
+
+    protected static HttpClient client;
+    protected static final PoolingClientConnectionManager connectionManager =
+            new PoolingClientConnectionManager();
+
+    static {
+        connectionManager.setMaxTotal(Integer.MAX_VALUE);
+        connectionManager.setDefaultMaxPerRoute(5);
+        connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
+        client = new DefaultHttpClient(connectionManager);
+    }
+
 
     @GET
     public Response getObjectContent(@PathParam("object") final String object_id) throws RepositoryException {
@@ -42,45 +67,38 @@ public class ContentService extends AbstractResource {
     }
 
     @POST
+    @Consumes("multipart/form-data")
     public Response addVersion(@PathParam("object") final String object_id,
-                               List<Attachment> atts) throws RepositoryException, IOException {
+                               @Multipart(value = "manifest", type = "text/checkm", required = false) InputStream manifest,
+                               @Multipart(value = "url", required = false) InputStream url
+                               ) throws RepositoryException, IOException {
         final Session session = repo.login();
         final String objPath = "/objects/" + object_id;
 
         boolean created = false;
         if (!session.nodeExists(objPath)) {
-            created = true;
-            final Node obj = jcrTools.findOrCreateNode(session, objPath, NT_RESOURCE);
-            obj.addMixin("fedora:object");
+            objectService.createObjectNode(session, objPath);
         }
 
-        if (session.hasPermission(objPath, "add_node")) {
+        if(manifest != null) {
+            datastreamService.createDatastreamNode(session, objPath + "/MANIFEST", new MediaType("text", "checkm"), manifest);
+        }
 
-            for(Attachment a : atts) {
+        if(url != null) {
+            final HttpGet manifestRequest =
+                    new HttpGet(IOUtils.toString(url, "UTF-8"));
+            String manifest_body = EntityUtils.toString(client.execute(manifestRequest)
+                    .getEntity());
 
-                final String dsPath = objPath + "/" + a.getId();
-                if (session.hasPermission(dsPath, "add_node")) {
+            InputStream is = new ByteArrayInputStream(manifest_body.getBytes());
 
-                    final Node ds = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
-                    ds.addMixin("fedora:datastream");
-                    final Node contentNode = jcrTools.findOrCreateChild(ds, JCR_CONTENT,
-                            NT_RESOURCE);
 
-                    Property dataProperty = contentNode.setProperty(JCR_DATA, session
-                            .getValueFactory().createBinary(a.getDataHandler().getInputStream()));
+            datastreamService.createDatastreamNode(session, objPath + "/MANIFEST", new MediaType("text", "checkm"), is);
+        }
 
-                }  else {
-                    session.logout();
-                    return four03;
-                }
 
-            }
             session.logout();
             return created(uriInfo.getAbsolutePath()).build();
-        } else {
-            session.logout();
-            return four03;
-        }
 
     }
 
