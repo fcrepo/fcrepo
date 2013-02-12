@@ -11,7 +11,7 @@ public class PathService {
 
 
     public String getObjectJcrNodePath(String pid) {
-        return "/objects/" + pid;
+        return "objects/" + pid;
     }
 
     public String getDatastreamJcrNodePath(String pid, String dsid) {
