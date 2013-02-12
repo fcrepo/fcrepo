@@ -57,10 +57,10 @@
       <artifactId>httpclient</artifactId>
     </dependency>
 
-  <!-- This dependency is for compile-time: it keeps this module independent 
-    of any given choice of JAX-RS implementation. It must be _after_ the test 
-    gear. Otherwise it will get loaded during test phase, but because this is 
-    just an API, the tests will not be able to execute. -->
+    <!-- This dependency is for compile-time: it keeps this module independent 
+      of any given choice of JAX-RS implementation. It must be _after_ the test 
+      gear. Otherwise it will get loaded during test phase, but because this is 
+      just an API, the tests will not be able to execute. -->
     <dependency>
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>
@@ -72,6 +72,10 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.enunciate</groupId>
+        <artifactId>maven-enunciate-cxf-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

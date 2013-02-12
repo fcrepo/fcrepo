@@ -109,11 +109,23 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-beans</artifactId>
         <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-context</artifactId>
         <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.infinispan</groupId>
@@ -187,6 +199,22 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.codehaus.enunciate</groupId>
+          <artifactId>maven-enunciate-cxf-plugin</artifactId>
+          <version>${enunciate.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>docs</goal>
+              </goals>
+              <configuration>
+                <configFile>${basedir}/src/main/enunciate/enunciate.xml</configFile>
+                <docsDir>${project.build.directory}/docs</docsDir>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
