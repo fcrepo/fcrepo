@@ -1,0 +1,40 @@
+REST API mapping between merritt & fedora
+
+Merritt source: 
+https://wiki.ucop.edu/download/attachments/16744547/Merritt-storage-service-latest.pdf
+
+------------------------------------------------------------------------------------------------------------------------------------
+Operation		Method	Merritt url				fcrepo-3.x url
+------------------------------------------------------------------------------------------------------------------------------------
+GET help 		GET	/help 					/objects
+
+GET service state 	GET	/state	(t=form)		  /describe
+
+GET node state		GET	/state/node 				/describe
+
+GET object state	GET	/state/node/object			/objects/{pid}         
+
+Get version state	GET*	/state/node/object/version		NA
+
+Get file state 		GET*	/state/node/object/version/file		/objects/{pid}/datastreams/{dsid}
+
+Get file state (by ver)	GET*	/state/node/object/version/file		TODO
+
+GET object		GET	/content/node/object		 TODO	
+
+Get version		GET	/content/node/object/version		NA
+
+GET file (last version)	GET	/content/node/object/file		/objects/{pid}/datastreams/{dsid}/content 
+
+GET file (any version)	GET	/content/node/object[/version]/file NA	
+
+Add version		POST*	/content/node/object			/objects/{pid}	create object
+			POST						/objects/{pid}/datastreams/{dsid}	create file (and object if none exists)
+			PUT						/objects/{pid}/datastreams/{dsid}	Add content to file
+
+DELETE object		DELETE	/content/node/object			/objects/{pid}
+
+DELETE version		DELETE	/content/node/object/version		NA
+
+Get Primary Identifier	GET	/primary/node/context/identifier	TODO
+------------------------------------------------------------------------------------------------------------------------------------
