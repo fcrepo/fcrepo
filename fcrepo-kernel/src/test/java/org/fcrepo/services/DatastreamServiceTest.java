@@ -1,5 +1,6 @@
 package org.fcrepo.services;
 
+import org.apache.tika.io.IOUtils;
 import org.fcrepo.AbstractTest;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -35,14 +36,23 @@ public class DatastreamServiceTest extends AbstractTest {
         session = repository.login();
 
         assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
-
-        System.out.println(session.getNode("/testDatastreamNode").getNode(JCR_CONTENT).getProperty(JCR_DATA).getString());
         assertEquals("asdf", session.getNode("/testDatastreamNode").getNode(JCR_CONTENT).getProperty(JCR_DATA).getString());
 
     }
 
     @Test
     public void testGetDatastreamContentInputStream() throws Exception {
+        Session session = repository.login();
+        InputStream is = new ByteArrayInputStream("asdf".getBytes());
 
+        Node n = new DatastreamService().createDatastreamNode(session, "testDatastreamNode", "application/octet-stream", is);
+
+        session.save();
+
+        session = repository.login();
+
+        InputStream contentInputStream = new DatastreamService().getDatastreamContentInputStream(session, "/testDatastreamNode");
+
+        assertEquals("asdf", IOUtils.toString(contentInputStream, "UTF-8"));
     }
 }
