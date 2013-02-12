@@ -15,6 +15,7 @@ import java.util.Calendar;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -80,5 +81,10 @@ public class DatastreamService {
                 ds.getParent().getName() + "/" + ds.getName()});
 
         return ds;
+    }
+
+    public InputStream getDatastreamContentInputStream(final Session session, final String dsPath) throws RepositoryException {
+        return session.getNode(dsPath).getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
+                .getStream();
     }
 }
