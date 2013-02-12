@@ -1,7 +1,13 @@
 # Fedora 4
 
-[Fedora Futures Wiki](https://wiki.duraspace.org/display/FF/Fedora+Futures+Home)
+System Requirements
+* Java 7
+* Maven 3
 
+
+[Fedora4Lib](http://fedora4lib.org)
+[JavaDocs](http://futures.github.com/fcrepo4)
+[Fedora Futures Wiki](https://wiki.duraspace.org/display/FF/Fedora+Futures+Home)
 [Use cases](https://wiki.duraspace.org/display/FF/Use+Cases)
 
 Technical goals:
@@ -13,3 +19,13 @@ Technical goals:
 
 Other goals:
 * straightforward API
+
+## Running fcrepo4
+
+```bash
+$ mvn install
+$ cd fcrepo-webapp
+$ MAVEN_OPTS="-Xmx512m" mvn jetty:run
+$ curl "http://localhost:8080/rest/describe"
+```
+
