@@ -4,6 +4,7 @@ package org.fcrepo.api.legacy;
 import static com.google.common.collect.ImmutableSet.builder;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.notAcceptable;
@@ -116,7 +117,7 @@ public class FedoraDatastreams extends AbstractResource {
 
         contentType =
                 contentType != null ? contentType
-                        : MediaType.APPLICATION_OCTET_STREAM_TYPE;
+                        : APPLICATION_OCTET_STREAM_TYPE;
         String dspath = "/objects/" + pid + "/" + dsid;
 
         if (!session.nodeExists("/objects/" + pid)) {
@@ -198,7 +199,7 @@ public class FedoraDatastreams extends AbstractResource {
         boolean created = session.nodeExists(dsPath);
 
         new DatastreamService().createDatastreamNode(session, dsPath,
-                contentType, requestBodyStream);
+                contentType.toString(), requestBodyStream);
 
         session.save();
         if (created) {

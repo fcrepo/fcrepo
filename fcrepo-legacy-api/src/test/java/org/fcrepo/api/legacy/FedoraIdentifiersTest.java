@@ -10,7 +10,6 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.httpclient.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
@@ -27,7 +26,7 @@ public class FedoraIdentifiersTest extends AbstractResourceTest {
     }
 
     @Test
-    public void testGetNextHasAPid() throws HttpException, IOException {
+    public void testGetNextHasAPid() throws IOException {
         HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=1");
         method.addHeader("Accepts", "text/xml");
         HttpResponse response = client.execute(method);
@@ -39,7 +38,7 @@ public class FedoraIdentifiersTest extends AbstractResourceTest {
     }
 
     @Test
-    public void testGetNextHasTwoPids() throws HttpException, IOException {
+    public void testGetNextHasTwoPids() throws IOException {
         HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=2");
         method.addHeader("Accepts", "text/xml");
         HttpResponse response = client.execute(method);

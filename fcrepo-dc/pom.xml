@@ -25,6 +25,7 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!-- test gear -->
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-legacy-api</artifactId>
@@ -32,20 +33,20 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-transports-http-jetty</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-extension-providers</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -54,6 +55,15 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
+    </dependency>
+
+  <!-- This dependency is for compile-time: it keeps this module independent 
+    of any given choice of JAX-RS implementation. It must be _after_ the test 
+    gear. Otherwise it will get loaded during test phase, but because this is 
+    just an API, the tests will not be able to execute. -->
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
     </dependency>
   </dependencies>
 

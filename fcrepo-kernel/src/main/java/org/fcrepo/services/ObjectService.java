@@ -1,5 +1,7 @@
+
 package org.fcrepo.services;
 
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
 import java.util.Calendar;
 
@@ -23,16 +25,17 @@ public class ObjectService {
 
     private JcrTools jcrTools = new JcrTools();
 
-    public Node createObjectNode(Session session, String path) throws RepositoryException {
-        final Node obj = jcrTools.findOrCreateNode(session, path, "nt:folder");
+    public Node createObjectNode(Session session, String path)
+            throws RepositoryException {
+        final Node obj = jcrTools.findOrCreateNode(session, path, NT_FOLDER);
         obj.addMixin("fedora:object");
         obj.addMixin("fedora:owned");
         obj.setProperty("fedora:ownerId", session.getUserID());
         obj.setProperty("jcr:lastModified", Calendar.getInstance());
-        obj.setProperty("dc:identifier", new String[]{obj.getIdentifier(), obj.getName()});
+        obj.setProperty("dc:identifier", new String[] {obj.getIdentifier(),
+                obj.getName()});
 
         return obj;
     }
-
 
 }

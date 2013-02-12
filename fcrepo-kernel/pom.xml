@@ -35,17 +35,6 @@
       <groupId>org.modeshape</groupId>
       <artifactId>modeshape-jcr-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-web-jcr-rest</artifactId>
-      <version>${modeshape.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
 
     <dependency>
       <groupId>org.jboss.jbossts</groupId>

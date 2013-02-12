@@ -41,9 +41,10 @@
                     </util:map>
                 </property>
             </bean>
-            <bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+
+            <!--<bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
                 <property name="ignoreNamespaces" value="true"/>
-            </bean>
+            </bean>-->
         </jaxrs:providers>
     </jaxrs:server>
 
