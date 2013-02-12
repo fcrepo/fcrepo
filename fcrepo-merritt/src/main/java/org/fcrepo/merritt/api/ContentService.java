@@ -3,12 +3,15 @@ package org.fcrepo.merritt.api;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.merritt.checkm.Entry;
+import org.fcrepo.merritt.checkm.Reader;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
@@ -28,11 +31,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static javax.ws.rs.core.Response.*;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.status;
 import static org.modeshape.jcr.api.JcrConstants.*;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
 @Path("/content/{node}/{object}")
 public class ContentService extends AbstractResource {
 
+    public static final MediaType TEXT_CHECKM = new MediaType("text", "checkm");
     final private Logger logger = LoggerFactory
             .getLogger(ContentService.class);
 
@@ -50,6 +57,7 @@ public class ContentService extends AbstractResource {
         client = new DefaultHttpClient(connectionManager);
     }
 
+    public static final String MANIFEST_PATH = "MANIFEST";
 
     @GET
     public Response getObjectContent(@PathParam("object") final String object_id) throws RepositoryException {
@@ -75,30 +83,46 @@ public class ContentService extends AbstractResource {
         final Session session = repo.login();
         final String objPath = "/objects/" + object_id;
 
+        if(manifest == null && url == null) {
+            return status(UNSUPPORTED_MEDIA_TYPE).build();
+        }
+
         boolean created = false;
         if (!session.nodeExists(objPath)) {
             objectService.createObjectNode(session, objPath);
         }
 
         if(manifest != null) {
-            datastreamService.createDatastreamNode(session, objPath + "/MANIFEST", new MediaType("text", "checkm"), manifest);
+            datastreamService.createDatastreamNode(session, objPath + "/" + MANIFEST_PATH, TEXT_CHECKM, manifest);
         }
 
         if(url != null) {
             final HttpGet manifestRequest =
                     new HttpGet(IOUtils.toString(url, "UTF-8"));
-            String manifest_body = EntityUtils.toString(client.execute(manifestRequest)
-                    .getEntity());
-
-            InputStream is = new ByteArrayInputStream(manifest_body.getBytes());
+            HttpResponse response = client.execute(manifestRequest);
 
 
-            datastreamService.createDatastreamNode(session, objPath + "/MANIFEST", new MediaType("text", "checkm"), is);
+            datastreamService.createDatastreamNode(session, objPath + "/" + MANIFEST_PATH, TEXT_CHECKM, response.getEntity().getContent());
+        }
+
+        Node manifest_node = session.getNode(objPath + "/" + MANIFEST_PATH);
+
+        final InputStream responseStream =
+                manifest_node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
+                        .getStream();
+
+        Reader manifestReader = new Reader(responseStream);
+
+        List<Entry> entries = manifestReader.getEntries();
+
+        for(Entry e : entries) {
+            final InputStream sis = e.getSourceInputStream();
+            datastreamService.createDatastreamNode(session, objPath + e.fileName, APPLICATION_OCTET_STREAM_TYPE, sis);
         }
 
 
-            session.logout();
-            return created(uriInfo.getAbsolutePath()).build();
+        session.logout();
+        return created(uriInfo.getAbsolutePath()).build();
 
     }
 
