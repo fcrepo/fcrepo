@@ -10,7 +10,6 @@ import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 import javax.jcr.*;
 import javax.jcr.nodetype.NodeType;
@@ -24,6 +23,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.ObjectProfile;
+import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,13 +67,8 @@ public class FedoraObjects extends AbstractResource {
 		final Session session = repo.login();
 
 		if (session.hasPermission("/objects/" + pid, "add_node")) {
-			final Node obj = jcrTools.findOrCreateNode(session, "/objects/"
-					+ pid, "nt:folder");
-			obj.addMixin("fedora:object");
-			obj.addMixin("fedora:owned");
-			obj.setProperty("fedora:ownerId", "Fedo Radmin");
-			obj.setProperty("jcr:lastModified", Calendar.getInstance());
-            obj.setProperty("dc:identifier", new String[] { obj.getIdentifier(), pid });
+            final Node obj = new ObjectService().createObjectNode(session, "/objects/" + pid);
+
 			session.save();
 			/*
 			 * we save before updating the repo size because the act of
