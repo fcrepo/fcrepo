@@ -1,5 +1,7 @@
 # Fedora 4
 
+[![Build Status](https://travis-ci.org/futures/fcrepo4.png?branch=master)](https://travis-ci.org/futures/fcrepo4)
+
 System Requirements
 * Java 7
 * Maven 3
