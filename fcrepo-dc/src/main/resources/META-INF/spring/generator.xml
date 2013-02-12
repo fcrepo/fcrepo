@@ -8,10 +8,7 @@
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-
     <context:annotation-config/>
-
-
 
     <util:list value-type="org.fcrepo.generator.dublincore.AbstractIndexer">
         <bean class="org.fcrepo.generator.dublincore.IndexFromWellKnownPath">

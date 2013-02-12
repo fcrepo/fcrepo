@@ -19,7 +19,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.fcrepo.identifiers.PidMinter;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Repository;
@@ -43,13 +42,6 @@ public abstract class AbstractResource extends Constants {
 	 */
 	@Context
 	protected UriInfo uriInfo;
-
-	/**
-	 * Jackson JSON mapper. Should eventually be replaced by the use of proper
-	 * JAX-RS Providers.
-	 */
-	@Inject
-	protected ObjectMapper mapper;
 
 	/**
 	 * The JCR repository at the heart of Fedora.

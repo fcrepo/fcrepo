@@ -41,6 +41,14 @@ import com.google.common.collect.ImmutableSet.Builder;
 @Path("/namespaces")
 public class FedoraNamespaces extends AbstractResource {
 
+    /**
+     * Creates a new namespace in the JCR for use in identifing objects.
+     * 
+     * @param prefix Prefix to use
+     * @param uri Uri to use
+     * @return 201
+     * @throws RepositoryException
+     */
     @POST
     @Path("/{prefix}")
     public Response registerObjectNamespace(@PathParam("prefix")
@@ -54,6 +62,13 @@ public class FedoraNamespaces extends AbstractResource {
         return created(uriInfo.getAbsolutePath()).build();
     }
 
+    /**
+     * Register multiple object namespaces.
+     * 
+     * @param nses A set of namespaces in JAXB-specified format.
+     * @return 201
+     * @throws RepositoryException
+     */
     @POST
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response registerObjectNamespaces(final NamespaceListing nses)
@@ -68,6 +83,13 @@ public class FedoraNamespaces extends AbstractResource {
         return created(uriInfo.getAbsolutePath()).build();
     }
 
+    /**
+     * Retrieve a namespace URI from a prefix.
+     * 
+     * @param prefix The prefix to search.
+     * @return A JAXB-specified format Namespace.
+     * @throws RepositoryException
+     */
     @GET
     @Path("/{prefix}")
     @Produces(APPLICATION_JSON)
@@ -89,6 +111,11 @@ public class FedoraNamespaces extends AbstractResource {
         }
     }
 
+    /**
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     */
     @GET
     @Produces({TEXT_XML, APPLICATION_JSON})
     public NamespaceListing getNamespaces() throws RepositoryException,

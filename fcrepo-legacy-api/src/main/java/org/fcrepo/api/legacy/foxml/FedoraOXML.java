@@ -1,9 +1,9 @@
+
 package org.fcrepo.api.legacy.foxml;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -30,8 +30,9 @@ public class FedoraOXML extends AbstractResource {
     @PUT
     @Path("/{filename}")
     @Consumes("text/xml")
-    public Response addFOXML(@PathParam("filename") final String filename,
-            InputStream foxml) throws RepositoryException, IOException {
+    public Response addFOXML(@PathParam("filename")
+    final String filename, InputStream foxml) throws RepositoryException,
+            IOException {
 
         final Session session = repo.login();
         if (session.hasPermission("/foxml", "add_node")) {
@@ -48,8 +49,8 @@ public class FedoraOXML extends AbstractResource {
 
     @GET
     @Path("/{filename}")
-    public Response getFOXML(@PathParam("filename") final String filename)
-            throws RepositoryException {
+    public Response getFOXML(@PathParam("filename")
+    final String filename) throws RepositoryException {
 
         final String foxmlpath = "/foxml" + filename;
 
@@ -57,8 +58,9 @@ public class FedoraOXML extends AbstractResource {
 
         if (session.nodeExists(foxmlpath)) {
             final Node foxmlfile = session.getNode(foxmlpath);
-            InputStream contentStream = foxmlfile.getNode("jcr:content")
-                    .getProperty("jcr:data").getBinary().getStream();
+            InputStream contentStream =
+                    foxmlfile.getNode("jcr:content").getProperty("jcr:data")
+                            .getBinary().getStream();
             session.logout();
             return Response.ok(contentStream, "text/xml").build();
         } else {
@@ -81,10 +83,8 @@ public class FedoraOXML extends AbstractResource {
             Node n = i.nextNode();
             b.put(n.getName(), n.getPath());
         }
-        String foxmls = mapper.writerWithType(Map.class).writeValueAsString(
-                b.build());
         session.logout();
-        return Response.ok().entity(foxmls).build();
+        return Response.ok().entity(b.build().toString()).build();
 
     }
 }

@@ -48,10 +48,6 @@
         </jaxrs:providers>
     </jaxrs:server>
 
-    <!-- Supports JSON output for API methods. Should be replaced with a properly-
-    configured JAX-RS Provider-->
-    <bean class="org.codehaus.jackson.map.ObjectMapper"/>
-
     <!-- Mints PIDs-->
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
