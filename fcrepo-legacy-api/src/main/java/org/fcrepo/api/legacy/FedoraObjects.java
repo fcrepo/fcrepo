@@ -1,3 +1,4 @@
+
 package org.fcrepo.api.legacy;
 
 import static com.google.common.collect.Collections2.transform;
@@ -11,6 +12,8 @@ import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
 
 import java.io.IOException;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.jcr.*;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.DELETE;
@@ -32,136 +35,147 @@ import com.google.common.base.Function;
 @Path("/objects")
 public class FedoraObjects extends AbstractResource {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(FedoraObjects.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(FedoraObjects.class);
 
-	@GET
-	public Response getObjects() throws RepositoryException {
-		final Session session = repo.login();
-		Node objects = session.getNode("/objects");
-		StringBuffer nodes = new StringBuffer();
+    private Session readOnlySession;
 
-		for (NodeIterator i = objects.getNodes(); i.hasNext();) {
-			Node n = i.nextNode();
-			nodes.append("Name: " + n.getName() + ", Path:" + n.getPath()
-					+ "\n");
-		}
-		session.logout();
-		return ok(nodes.toString()).build();
+    @PostConstruct
+    public void loginReadOnlySession() throws LoginException,
+            RepositoryException {
+        readOnlySession = repo.login();
+    }
 
-	}
+    @PreDestroy
+    public void logoutReadOnlySession() {
+        readOnlySession.logout();
+    }
 
-	@POST
-	@Path("/new")
-	public Response ingestAndMint() throws RepositoryException {
-		return ingest(pidMinter.mintPid());
-	}
+    @GET
+    public Response getObjects() throws RepositoryException {
 
-	@POST
-	@Path("/{pid}")
-	public Response ingest(@PathParam("pid") final String pid)
-			throws RepositoryException {
+        Node objects = readOnlySession.getNode("/objects");
+        StringBuffer nodes = new StringBuffer();
 
-		logger.debug("Attempting to ingest with pid: " + pid);
+        for (NodeIterator i = objects.getNodes(); i.hasNext();) {
+            Node n = i.nextNode();
+            nodes.append("Name: " + n.getName() + ", Path:" + n.getPath() +
+                    "\n");
+        }
+        return ok(nodes.toString()).build();
 
-		final Session session = repo.login();
+    }
 
-		if (session.hasPermission("/objects/" + pid, "add_node")) {
-            final Node obj = new ObjectService().createObjectNode(session, "/objects/" + pid);
+    @POST
+    @Path("/new")
+    public Response ingestAndMint() throws RepositoryException {
+        return ingest(pidMinter.mintPid());
+    }
 
-			session.save();
-			/*
-			 * we save before updating the repo size because the act of
-			 * persisting session state creates new system-curated nodes and
-			 * properties which contribute to the footprint of this resource
-			 */
-			updateRepositorySize(getObjectSize(obj), session);
-			// now we save again to persist the repo size
-			session.save();
-			session.logout();
-			logger.debug("Finished ingest with pid: " + pid);
-			return created(uriInfo.getAbsolutePath()).entity(pid).build();
-		} else {
-			session.logout();
-			return four03;
-		}
-	}
+    @POST
+    @Path("/{pid}")
+    public Response ingest(@PathParam("pid")
+    final String pid) throws RepositoryException {
 
-	@GET
-	@Path("/{pid}")
-	@Produces({ TEXT_XML, APPLICATION_JSON })
-	public Response getObject(@PathParam("pid") final String pid)
-			throws RepositoryException, IOException {
+        logger.debug("Attempting to ingest with pid: " + pid);
 
-		final Session session = repo.login();
+        final Session session = repo.login();
 
-		if (session.nodeExists("/objects/" + pid)) {
+        if (session.hasPermission("/objects/" + pid, "add_node")) {
+            final Node obj =
+                    new ObjectService().createObjectNode(session, "/objects/" +
+                            pid);
 
-			final Node obj = session.getNode("/objects/" + pid);
-			final ObjectProfile objectProfile = new ObjectProfile();
+            session.save();
+            /*
+             * we save before updating the repo size because the act of
+             * persisting session state creates new system-curated nodes and
+             * properties which contribute to the footprint of this resource
+             */
+            updateRepositorySize(getObjectSize(obj), session);
+            // now we save again to persist the repo size
+            session.save();
+            session.logout();
+            logger.debug("Finished ingest with pid: " + pid);
+            return created(uriInfo.getAbsolutePath()).entity(pid).build();
+        } else {
+            session.logout();
+            return four03;
+        }
+    }
 
-			objectProfile.pid = pid;
-			objectProfile.objLabel = obj.getName();
-			objectProfile.objOwnerId = obj.getProperty("fedora:ownerId")
-					.getString();
-			objectProfile.objCreateDate = obj.getProperty("jcr:created")
-					.getString();
-			objectProfile.objLastModDate = obj.getProperty("jcr:lastModified")
-					.getString();
-			objectProfile.objSize = getObjectSize(obj);
-			objectProfile.objItemIndexViewURL = uriInfo
-					.getAbsolutePathBuilder().path("datastreams").build();
-			objectProfile.objState = A;
-			objectProfile.objModels = transform(
-					copyOf(obj.getMixinNodeTypes()),
-					new Function<NodeType, String>() {
-						@Override
-						public String apply(NodeType type) {
-							return type.getName();
-						}
-					});
+    @GET
+    @Path("/{pid}")
+    @Produces({TEXT_XML, APPLICATION_JSON})
+    public Response getObject(@PathParam("pid")
+    final String pid) throws RepositoryException, IOException {
 
-			session.logout();
-			return ok(objectProfile).build();
-		} else {
-			session.logout();
-			return four04;
-		}
-	}
+        if (readOnlySession.nodeExists("/objects/" + pid)) {
 
-	@DELETE
-	@Path("/{pid}")
-	public Response deleteObject(@PathParam("pid") final String pid)
-			throws RepositoryException {
-		final Session session = repo.login();
-		final Node obj = session.getNode("/objects/" + pid);
-		updateRepositorySize(0L - getObjectSize(obj), session);
-		return deleteResource(obj);
-	}
+            final Node obj = readOnlySession.getNode("/objects/" + pid);
+            final ObjectProfile objectProfile = new ObjectProfile();
 
-	/**
-	 * @param obj
-	 * @return object size in bytes
-	 * @throws RepositoryException
-	 */
-	static Long getObjectSize(Node obj) throws RepositoryException {
-		return getNodePropertySize(obj) + getObjectDSSize(obj);
-	}
+            objectProfile.pid = pid;
+            objectProfile.objLabel = obj.getName();
+            objectProfile.objOwnerId =
+                    obj.getProperty("fedora:ownerId").getString();
+            objectProfile.objCreateDate =
+                    obj.getProperty("jcr:created").getString();
+            objectProfile.objLastModDate =
+                    obj.getProperty("jcr:lastModified").getString();
+            objectProfile.objSize = getObjectSize(obj);
+            objectProfile.objItemIndexViewURL =
+                    uriInfo.getAbsolutePathBuilder().path("datastreams")
+                            .build();
+            objectProfile.objState = A;
+            objectProfile.objModels =
+                    transform(copyOf(obj.getMixinNodeTypes()),
+                            new Function<NodeType, String>() {
 
-	/**
-	 * @param obj
-	 * @return object's datastreams' total size in bytes
-	 * @throws RepositoryException
-	 */
-	private static Long getObjectDSSize(Node obj) throws RepositoryException {
-		Long size = 0L;
-		NodeIterator i = obj.getNodes();
-		while (i.hasNext()) {
-			Node ds = i.nextNode();
-			size = size + getNodePropertySize(ds);
-			size = size + getContentSize(ds);
-		}
-		return size;
-	}
+                                @Override
+                                public String apply(NodeType type) {
+                                    return type.getName();
+                                }
+                            });
+            return ok(objectProfile).build();
+        } else {
+            return four04;
+        }
+    }
+
+    @DELETE
+    @Path("/{pid}")
+    public Response deleteObject(@PathParam("pid")
+    final String pid) throws RepositoryException {
+        final Session session = repo.login();
+        final Node obj = session.getNode("/objects/" + pid);
+        updateRepositorySize(0L - getObjectSize(obj), session);
+        return deleteResource(obj);
+    }
+
+    /**
+     * @param obj
+     * @return object size in bytes
+     * @throws RepositoryException
+     */
+    static Long getObjectSize(Node obj) throws RepositoryException {
+        return getNodePropertySize(obj) + getObjectDSSize(obj);
+    }
+
+    /**
+     * @param obj
+     * @return object's datastreams' total size in bytes
+     * @throws RepositoryException
+     */
+    private static Long getObjectDSSize(Node obj) throws RepositoryException {
+        Long size = 0L;
+        NodeIterator i = obj.getNodes();
+        while (i.hasNext()) {
+            Node ds = i.nextNode();
+            size = size + getNodePropertySize(ds);
+            size = size + getContentSize(ds);
+        }
+        return size;
+    }
 
 }

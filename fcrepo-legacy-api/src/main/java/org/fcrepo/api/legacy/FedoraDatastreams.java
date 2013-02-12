@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -53,6 +56,19 @@ public class FedoraDatastreams extends AbstractResource {
     final private Logger logger = LoggerFactory
             .getLogger(FedoraDatastreams.class);
 
+    private Session readOnlySession;
+
+    @PostConstruct
+    public void loginReadOnlySession() throws LoginException,
+            RepositoryException {
+        readOnlySession = repo.login();
+    }
+
+    @PreDestroy
+    public void logoutReadOnlySession() {
+        readOnlySession.logout();
+    }
+
     /**
      * Returns a list of datastreams for the object
      * 
@@ -70,23 +86,20 @@ public class FedoraDatastreams extends AbstractResource {
     public Response getDatastreams(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 
-        final Session session = repo.login();
-
-        if (session.nodeExists("/objects/" + pid)) {
+        if (readOnlySession.nodeExists("/objects/" + pid)) {
             final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
             final Builder<Datastream> datastreams = builder();
 
-            NodeIterator i = session.getNode("/objects/" + pid).getNodes();
+            NodeIterator i =
+                    readOnlySession.getNode("/objects/" + pid).getNodes();
             while (i.hasNext()) {
                 final Node ds = i.nextNode();
                 datastreams.add(new Datastream(ds.getName(), ds.getName(),
                         getDSMimeType(ds)));
             }
             objectDatastreams.datastreams = datastreams.build();
-            session.logout();
             return ok(objectDatastreams).build();
         } else {
-            session.logout();
             return four04;
         }
     }
@@ -238,21 +251,17 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException, IOException {
 
-        Session session = repo.login();
-
-        if (!session.nodeExists("/objects/" + pid)) {
+        if (!readOnlySession.nodeExists("/objects/" + pid)) {
             return four04;
         }
 
-        final Node obj = session.getNode("/objects/" + pid);
+        final Node obj = readOnlySession.getNode("/objects/" + pid);
 
         if (obj.hasNode(dsid)) {
             final Node ds = obj.getNode(dsid);
             final DatastreamProfile dsProfile = getDSProfile(ds);
-            session.logout();
             return ok(dsProfile).build();
         } else {
-            session.logout();
             return four04;
         }
     }
@@ -273,11 +282,10 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException {
 
-        final Session session = repo.login();
         final String dsPath = "/objects/" + pid + "/" + dsid;
 
-        if (session.nodeExists(dsPath)) {
-            final Node ds = session.getNode(dsPath);
+        if (readOnlySession.nodeExists(dsPath)) {
+            final Node ds = readOnlySession.getNode(dsPath);
             final String mimeType =
                     ds.hasProperty("fedora:contentType") ? ds.getProperty(
                             "fedora:contentType").getString()
@@ -285,10 +293,8 @@ public class FedoraDatastreams extends AbstractResource {
             final InputStream responseStream =
                     ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                             .getStream();
-            session.logout();
             return ok(responseStream, mimeType).build();
         } else {
-            session.logout();
             return four04;
         }
     }
@@ -314,19 +320,16 @@ public class FedoraDatastreams extends AbstractResource {
             final String pid, @PathParam("dsid")
             final String dsid) throws RepositoryException, IOException {
 
-        final Session session = repo.login();
         final String dsPath = "/objects/" + pid + "/" + dsid;
 
-        if (session.nodeExists(dsPath)) {
-            final Node ds = session.getNode(dsPath);
+        if (readOnlySession.nodeExists(dsPath)) {
+            final Node ds = readOnlySession.getNode(dsPath);
             final DatastreamHistory dsHistory =
                     new DatastreamHistory(singletonList(getDSProfile(ds)));
             dsHistory.dsID = dsid;
             dsHistory.pid = pid;
-            session.logout();
             return ok(dsHistory).build();
         } else {
-            session.logout();
             return four04;
         }
     }

@@ -7,7 +7,6 @@
     <!-- Master context for the test application. -->
     
     <import resource="classpath:/spring-test/repo.xml"/>
-    <import resource="classpath:/spring-test/rest.xml"/>
     <import resource="classpath:/spring-test/eventing.xml"/>
     
 </beans>

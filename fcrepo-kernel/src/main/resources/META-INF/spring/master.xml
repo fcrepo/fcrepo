@@ -7,7 +7,6 @@
     <!-- Master context for the application. -->
 
     <import resource="classpath:/META-INF/spring/repo.xml"/>
-    <import resource="classpath:/META-INF/spring/rest.xml"/>
     <import resource="classpath:/META-INF/spring/eventing.xml"/>
 
 </beans>

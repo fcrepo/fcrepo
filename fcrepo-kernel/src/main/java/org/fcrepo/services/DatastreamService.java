@@ -15,7 +15,6 @@ import java.util.Calendar;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -35,6 +34,8 @@ public class DatastreamService {
 
     private JcrTools jcrTools = new JcrTools();
 
+    private Session readOnlySession;
+
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
             final InputStream requestBodyStream) throws RepositoryException,
@@ -52,13 +53,13 @@ public class DatastreamService {
          * Property dataProperty = contentNode.setProperty(JCR_DATA,
          * requestBodyStream);
          * then the JCR would not block on the stream's completion, and we would
-         * return to the requestor before the mutation to the repo had actually
+         * return to the requester before the mutation to the repo had actually
          * completed. So instead we use createBinary(requestBodyStream), because
          * its contract specifies:
          * "The passed InputStream is closed before this method returns either
          * normally or because of an exception."
          * which lets us block and not return until the job is done! The simpler
-         * code may still be useful to us for an asychronous method that we
+         * code may still be useful to us for an asynchronous method that we
          * develop later.
          */
         Property dataProperty =
@@ -83,8 +84,9 @@ public class DatastreamService {
         return ds;
     }
 
-    public InputStream getDatastreamContentInputStream(final Session session, final String dsPath) throws RepositoryException {
-        return session.getNode(dsPath).getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
-                .getStream();
+    public InputStream getDatastreamContentInputStream(final Session session,
+            final String dsPath) throws RepositoryException {
+        return session.getNode(dsPath).getNode(JCR_CONTENT).getProperty(
+                JCR_DATA).getBinary().getStream();
     }
 }
