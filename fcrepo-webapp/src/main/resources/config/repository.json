@@ -44,7 +44,7 @@
         "sequencers" : {
             "FOXML Eater" : {
                 "description" : "FOXML Files loaded under 'fedora:/foxml' and extracted into 'fedora:/'",
-                "classname" : "org.fcrepo.foxml.FOXMLSequencer",
+                "classname" : "org.fcrepo.api.legacy.foxml.FOXMLSequencer",
                 "pathExpressions" : ["fedora:/foxml/(.*)/jcr:content[@jcr:data] => fedora:/$1"]
             }
         }

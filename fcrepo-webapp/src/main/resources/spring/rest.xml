@@ -31,7 +31,7 @@
             <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
             <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
-            <bean class="org.fcrepo.foxml.FedoraOXML"/>
+            <bean class="org.fcrepo.api.legacy.foxml.FedoraOXML"/>
             <bean class="org.fcrepo.generator.DublinCore" />
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
