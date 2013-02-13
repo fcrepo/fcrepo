@@ -1,6 +1,6 @@
 require 'java'
 # We ought to just have a classpath with this stuff:
-Dir.glob('lib/*.jar') { |f| require f }
+#Dir.glob('../../lib/*.jar') { |f| require f }
 
 java_import 'org.fcrepo.services.DatastreamService'
 java_import 'org.fcrepo.services.ObjectService'
@@ -9,22 +9,25 @@ java_import 'org.fcrepo.services.ObjectService'
 java_import 'org.springframework.context.ApplicationContext'
 java_import 'org.springframework.context.support.ClassPathXmlApplicationContext'
 
-module FedoraConnection
+class FedoraConnection
 
   attr_reader :repo
   def initialize
-    ctx = org.springframework.context.support.ClassPathXmlApplicationContext.new("spring-test/repo.xml");
-    @repo = ctx.getBean("modeshapeRepofactory")
-
-    createSampleObjects
-    # list
-    # @repo = nil
-
-    # ctx.stop
-    # ctx.close
+    spring_file = "config/repo.xml"
+    puts "Spring #{spring_file}"
+    @ctx = org.springframework.context.support.ClassPathXmlApplicationContext.new(spring_file)
+    @repo = @ctx.getBean("modeshapeRepofactory")
+    create_sample_objects
   end
 
-  def createSampleObjects 
+  def stop
+    @repo = nil
+
+    @ctx.destroy
+    @ctx.close
+  end
+
+  def create_sample_objects 
     session = @repo.login
     session.getWorkspace().getNamespaceRegistry().registerNamespace('foo', 'http://example.com/');
 
@@ -41,12 +44,11 @@ module FedoraConnection
     session = @repo.login
     objects = session.getNode("/objects")
     i = objects.getNodes()
+    vals = []
     begin 
-      n = i.nextNode()
-      puts n.getName() + " " + n.getPath()
+      vals << i.nextNode()
     end while i.hasNext()
-
-
     session.logout
+    vals
   end
 end
