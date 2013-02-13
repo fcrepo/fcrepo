@@ -38,6 +38,7 @@
 	 * See: http://dublincore.org/documents/dcmi-terms/#elements-identifier
 	 */
 	- dc:identifier (STRING) multiple COPY
+	- dc:title (STRING) COPY
 
 
 /*

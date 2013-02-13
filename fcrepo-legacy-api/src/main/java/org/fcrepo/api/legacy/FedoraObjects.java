@@ -1,24 +1,37 @@
 
 package org.fcrepo.api.legacy;
 
+import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
+import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.jcr.*;
+import javax.jcr.LoginException;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -27,6 +40,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.ObjectProfile;
 import org.fcrepo.services.ObjectService;
+import org.modeshape.common.SystemFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +84,31 @@ public class FedoraObjects extends AbstractResource {
     @Path("/new")
     public Response ingestAndMint() throws RepositoryException {
         return ingest(pidMinter.mintPid());
+    }
+
+    @PUT
+    @Path("/{pid}")
+    @Consumes({TEXT_XML, APPLICATION_JSON})
+    public Response modify(@PathParam("pid")
+    final String pid, final ObjectProfile objProfile)
+            throws RepositoryException {
+
+        final String objPath = "/objects/" + pid;
+        final Session session = repo.login();
+
+        if (!session.nodeExists(objPath)) {
+            session.logout();
+            return status(CONFLICT).entity("No such object").build();
+        }
+        final Node obj = session.getNode(objPath);
+        obj.setProperty(DC_TITLE, objProfile.objLabel);
+        if (objProfile.objModels != null)
+            for (String model : objProfile.objModels) {
+                obj.addMixin(model);
+            }
+        session.save();
+        session.logout();
+        return created(uriInfo.getAbsolutePath()).build();
     }
 
     @POST
@@ -116,7 +155,16 @@ public class FedoraObjects extends AbstractResource {
             final ObjectProfile objectProfile = new ObjectProfile();
 
             objectProfile.pid = pid;
-            objectProfile.objLabel = obj.getName();
+            if (obj.hasProperty(DC_TITLE)) {
+                Property dcTitle = obj.getProperty(DC_TITLE);
+                if (!dcTitle.isMultiple())
+                    objectProfile.objLabel =
+                            obj.getProperty(DC_TITLE).getString();
+                else {
+                    objectProfile.objLabel =
+                            on('/').join(map(dcTitle.getValues(), value2string));
+                }
+            }
             objectProfile.objOwnerId =
                     obj.getProperty("fedora:ownerId").getString();
             objectProfile.objCreateDate =
@@ -129,14 +177,7 @@ public class FedoraObjects extends AbstractResource {
                             .build();
             objectProfile.objState = A;
             objectProfile.objModels =
-                    transform(copyOf(obj.getMixinNodeTypes()),
-                            new Function<NodeType, String>() {
-
-                                @Override
-                                public String apply(NodeType type) {
-                                    return type.getName();
-                                }
-                            });
+                    map(obj.getMixinNodeTypes(), nodetype2string);
             return ok(objectProfile).build();
         } else {
             return four04;
@@ -178,4 +219,32 @@ public class FedoraObjects extends AbstractResource {
         return size;
     }
 
+    private Function<Value, String> value2string =
+            new Function<Value, String>() {
+
+                @Override
+                public String apply(Value v) {
+                    try {
+                        return v.getString();
+                    } catch (RepositoryException e) {
+                        throw new SystemFailureException(e);
+                    } catch (IllegalStateException e) {
+                        throw new SystemFailureException(e);
+                    }
+                }
+            };
+
+    private static <From, To> Collection<To> map(From[] input,
+            Function<From, To> f) {
+        return transform(copyOf(input), f);
+    }
+
+    private Function<NodeType, String> nodetype2string =
+            new Function<NodeType, String>() {
+
+                @Override
+                public String apply(NodeType type) {
+                    return type.getName();
+                }
+            };
 }
