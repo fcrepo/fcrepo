@@ -2,8 +2,6 @@ require 'java'
 
 java_import 'org.fcrepo.services.DatastreamService'
 java_import 'org.fcrepo.services.ObjectService'
-
-
 java_import 'org.springframework.context.ApplicationContext'
 java_import 'org.springframework.context.support.ClassPathXmlApplicationContext'
 
@@ -50,4 +48,13 @@ class FedoraConnection
     session.logout
     vals
   end
+
+  def get(id)
+    session = @repo.login
+    object = session.getNode("/objects/#{id}")
+    obj = FedoraObject.new(object)
+    session.logout
+    obj
+  end
+
 end

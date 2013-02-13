@@ -5,6 +5,6 @@ class AdminController < ApplicationController
   end
 
   def show
-    #@object = FedoraConnection.new.get(params[:id])
+    @object = FedoraConnection.new.get(params[:id])
   end
 end
