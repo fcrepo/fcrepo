@@ -38,7 +38,6 @@
     <module>fcrepo-dc</module>
     <module>fcrepo-legacy-api</module>
     <module>fcrepo-http-commons</module>
-    <module>fcrepo-standalone</module>
   </modules>
 
   <dependencyManagement>
