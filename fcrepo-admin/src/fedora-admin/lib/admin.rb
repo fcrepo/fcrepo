@@ -4,6 +4,8 @@ require 'java'
 Dir.glob('lib/*.jar') { |f| require f }
 
 java_import 'org.fcrepo.services.DatastreamService'
+java_import 'org.fcrepo.services.ObjectService'
+
 
 java_import 'org.springframework.context.ApplicationContext'
 java_import 'org.springframework.context.support.ClassPathXmlApplicationContext'
@@ -12,26 +14,36 @@ def main
   ctx = org.springframework.context.support.ClassPathXmlApplicationContext.new("spring-test/repo.xml");
   @repo = ctx.getBean("modeshapeRepofactory")
 
-  puts "Before list"
+  createSampleObjects
   list
-  puts "After list"
   @repo = nil
 
   ctx.stop
   ctx.close
 end
 
+def createSampleObjects 
+  session = @repo.login
+  session.getWorkspace().getNamespaceRegistry().registerNamespace('foo', 'http://example.com/');
+
+  pid = 'foo:1'
+  obj = ObjectService.new.createObjectNode(session, "/objects/" + pid);
+  pid = 'foo:2'
+  obj = ObjectService.new.createObjectNode(session, "/objects/" + pid);
+
+  session.save
+  session.logout
+end
+
 def list
-puts "In list"
   session = @repo.login
   objects = session.getNode("/objects")
-  puts "\nList of objects:"
-  objects.each do |o|
-  puts 
+  i = objects.getNodes()
+	begin 
+    n = i.nextNode()
+    puts n.getName() + " " + n.getPath()
+  end while i.hasNext()
 
-  end
-
-  puts "Done"
 
   session.logout
 end
