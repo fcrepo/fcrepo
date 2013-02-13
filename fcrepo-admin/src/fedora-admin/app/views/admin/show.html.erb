@@ -21,7 +21,10 @@
   </table>
 
   <h2>Datastreams:</h2>
+  <ul>
   <% @object.datastreams.each do |ds| %>
+    <li><%= link_to ds.name, fedora_object_datastream_path(@object, ds) %></li>
   <% end %>
+  </ul>
 </div>
 
