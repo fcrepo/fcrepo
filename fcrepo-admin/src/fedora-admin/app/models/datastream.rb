@@ -2,10 +2,11 @@ class Datastream
 
   extend ActiveModel::Naming
 
-  attr_reader :name
+  attr_reader :name, :created
 
-  def initialize(name)
+  def initialize(name, params={})
     @name = name
+    @created = params[:created]
   end
 
   def to_param
