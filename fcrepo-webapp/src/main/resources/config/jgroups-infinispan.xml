@@ -24,9 +24,9 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.2.xsd">
     <TCP
-            bind_addr="${jgroups.tcp.address:127.0.0.1}"
+            bind_addr="${jgroups.tcp.address:0.0.0.0}"
             bind_port="${jgroups.tcp.port:7800}"
-            loopback="true"
+            loopback="false"
             port_range="30"
             recv_buf_size="20m"
             send_buf_size="640k"
