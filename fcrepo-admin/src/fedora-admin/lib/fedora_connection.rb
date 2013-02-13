@@ -1,6 +1,4 @@
 require 'java'
-# We ought to just have a classpath with this stuff:
-#Dir.glob('../../lib/*.jar') { |f| require f }
 
 java_import 'org.fcrepo.services.DatastreamService'
 java_import 'org.fcrepo.services.ObjectService'
@@ -21,10 +19,11 @@ class FedoraConnection
   end
 
   def stop
+    $stderr.puts "Stopping fedora connection and spring..."
     @repo = nil
-
     @ctx.destroy
     @ctx.close
+    $stderr.puts "Stopped"
   end
 
   def create_sample_objects 
@@ -46,7 +45,7 @@ class FedoraConnection
     i = objects.getNodes()
     vals = []
     begin 
-      vals << i.nextNode()
+      vals << FedoraObject.new(i.nextNode())
     end while i.hasNext()
     session.logout
     vals
