@@ -11,6 +11,10 @@ end
 
 Dir.glob('lib/*.jar') { |f| require f }
 
+at_exit do
+  Spring.instance.stop
+end
+
 module FedoraAdmin
   class Application < Rails::Application
     # Settings in config/environments/* take precedence over those specified here.

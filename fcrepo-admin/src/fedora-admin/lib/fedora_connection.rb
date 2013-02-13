@@ -2,17 +2,12 @@ require 'java'
 
 java_import 'org.fcrepo.services.DatastreamService'
 java_import 'org.fcrepo.services.ObjectService'
-java_import 'org.springframework.context.ApplicationContext'
-java_import 'org.springframework.context.support.ClassPathXmlApplicationContext'
 
 class FedoraConnection
 
   attr_reader :repo
   def initialize
-    spring_file = "config/repo.xml"
-    puts "Spring #{spring_file}"
-    @ctx = org.springframework.context.support.ClassPathXmlApplicationContext.new(spring_file)
-    @repo = @ctx.getBean("modeshapeRepofactory")
+    @repo = Spring.instance.get('modeshapeRepofactory')
     create_sample_objects
   end
 
