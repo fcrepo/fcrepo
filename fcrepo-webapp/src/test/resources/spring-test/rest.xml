@@ -20,7 +20,7 @@
   <!-- Mints PIDs-->
   <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
-  <jaxrs:server address="http://localhost:8080/rest">
+  <jaxrs:server address="http://localhost:${test.port:8080}/rest">
     <jaxrs:serviceBeans>
       <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
       <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
