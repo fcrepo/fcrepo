@@ -12,6 +12,8 @@
 
   <import resource="classpath:META-INF/cxf/cxf.xml"/>
 
+  <context:property-placeholder/>
+
   <!-- Context that houses JAX-RS Resources that compose the API
       as well as som utility gear. -->
 
