@@ -10,8 +10,12 @@
 
     <context:annotation-config/>
  
-    <!-- publishes events from the internal bus to JMS, in Atom format -->
-    <bean class="org.fcrepo.observer.JMSTopicAtomPublisher"/>
+    <!-- publishes events from the internal bus to JMS -->
+    <bean class="org.fcrepo.observer.JMSTopicPublisher"/>
+    
+    <!-- translates events from the internal bus to JMS, in Atom format -->
+    <bean class="org.fcrepo.messaging.legacy.LegacyMethodEventFactory" />
+    
 
     <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory"
         depends-on="jmsBroker">
