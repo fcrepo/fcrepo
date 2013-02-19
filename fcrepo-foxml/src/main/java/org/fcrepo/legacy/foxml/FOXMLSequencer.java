@@ -1,4 +1,5 @@
-package org.fcrepo.api.legacy.foxml;
+
+package org.fcrepo.legacy.foxml;
 
 import java.io.IOException;
 
@@ -7,15 +8,14 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.api.legacy.foxml.FOXMLParser;
-import org.modeshape.common.i18n.TextI18n;
-import org.modeshape.common.logging.Logger;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.api.sequencer.Sequencer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FOXMLSequencer extends Sequencer {
 
-    private final Logger log = Logger.getLogger(FOXMLSequencer.class);
+    private final Logger log = LoggerFactory.getLogger(FOXMLSequencer.class);
 
     private FOXMLParser parser;
 
@@ -31,7 +31,7 @@ public class FOXMLSequencer extends Sequencer {
             parser.parse(inputProperty.getBinary().getStream(), outputNode);
             return true;
         } catch (Exception e) {
-            log.error(e, new TextI18n("Failed to sequence FOXML"));
+            log.error("Failed to parse FOXML!", e);
             return false;
         }
 
@@ -43,8 +43,8 @@ public class FOXMLSequencer extends Sequencer {
             IOException {
         // registerDefaultMimeTypes("text/xml");
         getLogger().debug(
-                "Initializing " + getClass().getCanonicalName() + "["
-                        + getName() + "]");
+                "Initializing " + getClass().getCanonicalName() + "[" +
+                        getName() + "]");
         parser = new FOXMLParser();
     }
 

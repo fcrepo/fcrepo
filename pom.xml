@@ -39,6 +39,7 @@
     <module>fcrepo-legacy-api</module>
     <module>fcrepo-http-commons</module>
     <module>fcrepo-rss</module>
+    <module>fcrepo-foxml</module>
   </modules>
 
   <dependencyManagement>

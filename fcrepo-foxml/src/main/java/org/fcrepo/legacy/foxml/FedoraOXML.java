@@ -1,5 +1,7 @@
 
-package org.fcrepo.api.legacy.foxml;
+package org.fcrepo.legacy.foxml;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,13 +21,14 @@ import javax.ws.rs.core.Response;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.fcrepo.AbstractResource;
+import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
 
 @Path("/foxml")
 public class FedoraOXML extends AbstractResource {
 
-    //private final Logger logger = Logger.getLogger(FedoraOXML.class);
+    private final Logger logger = getLogger(FedoraOXML.class);
 
     @PUT
     @Path("/{filename}")
@@ -37,6 +40,7 @@ public class FedoraOXML extends AbstractResource {
         final Session session = repo.login();
         if (session.hasPermission("/foxml", "add_node")) {
             final String foxmlpath = "/foxml/" + filename;
+            logger.debug("Received FOXML file with name: " + filename);
             jcrTools.uploadFile(session, foxmlpath, foxml);
             session.save();
             session.logout();

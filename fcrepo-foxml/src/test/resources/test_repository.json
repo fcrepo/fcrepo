@@ -6,23 +6,9 @@
         "default" : "fedora",
         "allowCreation" : true
     },
-    "clustering" : {
-        "clusterName" : "modeshape",
-        "channelConfiguration" : "${fcrepo.modeshape.jgroups.configuration:config/jgroups-modeshape.xml}"
-    },
-    "query" : {
-        "enabled" : true,
-        "rebuildUponStartup" : "if_missing",
-        "indexStorage" : {
-            "type" : "filesystem",
-            "location" : "${fcrepo.modeshape.index.location:indexes}",
-            "lockingStrategy" : "native",
-            "fileSystemAccessType" : "auto"
-        }
-    },
     "storage" : {
         "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "config/infinispan_configuration.xml",
+        "cacheConfiguration" : "test_infinispan_configuration.xml",
         "binaryStorage" : {
             "type" : "cache",
             "dataCacheName" : "FedoraRepository",
@@ -49,5 +35,5 @@
             }
         }
     },
-"node-types" : ["fedora-node-types.cnd"]
+	"node-types" : ["fedora-node-types.cnd"]
 }

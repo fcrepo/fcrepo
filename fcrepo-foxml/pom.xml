@@ -6,12 +6,11 @@
     <artifactId>fcrepo</artifactId>
     <version>4.0-SNAPSHOT</version>
   </parent>
-  <artifactId>fcrepo-rss</artifactId>
+  <artifactId>fcrepo-foxml</artifactId>
   <packaging>bundle</packaging>
 
-  <name>Fedora RSS Feed</name>
-  <description>Provides a simple RSS feed of repository events.</description>
-
+  <name>FOXML services</name>
+  <description>Services for accepting and parsing FOXML</description>
 
   <dependencies>
     <dependency>
@@ -23,6 +22,15 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-commons</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.10.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
 
     <!-- test gear -->
@@ -65,11 +73,6 @@
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>net.java.dev.rome</groupId>
-      <artifactId>rome</artifactId>
-      <version>1.0.0</version>
-    </dependency>
   </dependencies>
 
   <build>
@@ -78,7 +81,59 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <version>2.15.2</version>
+        <configuration>
+          <args>
+            <arg>-feature</arg>
+          </args>
+        </configuration>
+        <executions>
+          <execution>
+            <id>scala-compile-first</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>add-source</goal>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>scala-test-compile</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/main/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+
+  <repositories>
+    <repository>
+      <id>Scala Tools</id>
+      <url>https://oss.sonatype.org/content/groups/scala-tools/</url>
+    </repository>
+  </repositories>
 
 </project>
