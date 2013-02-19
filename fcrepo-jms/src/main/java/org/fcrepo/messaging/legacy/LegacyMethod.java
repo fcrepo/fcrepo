@@ -20,7 +20,6 @@ import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -29,6 +28,7 @@ import org.apache.abdera.Abdera;
 import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
 import org.apache.abdera.parser.Parser;
+import org.fcrepo.utils.FedoraTypesUtils;
 
 public class LegacyMethod {
 
@@ -73,9 +73,9 @@ public class LegacyMethod {
 
 	public LegacyMethod(Event jcrEvent, Node resource) throws RepositoryException {
 		this(newEntry());
-		NodeType [] nodeTypes = resource.getMixinNodeTypes();
-		boolean isDatastreamNode = testNodeTypes(nodeTypes, "fedora:datastream");
-		boolean isObjectNode = testNodeTypes(nodeTypes, "fedora:object") && !isDatastreamNode;
+		
+		boolean isDatastreamNode = FedoraTypesUtils.isFedoraDatastream.apply(resource);
+		boolean isObjectNode = FedoraTypesUtils.isFedoraObject.apply(resource) && !isDatastreamNode;
 
 		if (isDatastreamNode || isObjectNode) {
 			setMethodName(mapMethodName(jcrEvent, isObjectNode));
@@ -190,15 +190,6 @@ public class LegacyMethod {
 		String parm = (String)FEDORA_TYPES.get(methodName + ".parm");
 		String datatype = (String)FEDORA_TYPES.get(methodName + ".datatype");
 		return objectToString(returnVal, datatype);
-	}
-
-	private static boolean testNodeTypes(NodeType [] nodeTypes, String type) {
-		boolean result = false;
-		for (NodeType nt: nodeTypes) {
-			result |= type.equals(nt.getName());
-			if (result) break;
-		}
-		return result;
 	}
 
 	private static String objectToString(String obj, String xsdType) {
