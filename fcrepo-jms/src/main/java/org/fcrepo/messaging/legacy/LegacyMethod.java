@@ -9,17 +9,12 @@ import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -31,10 +26,9 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 
 import org.apache.abdera.Abdera;
-import org.apache.abdera.factory.Factory;
-import org.apache.abdera.parser.Parser;
 import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
+import org.apache.abdera.parser.Parser;
 
 public class LegacyMethod {
 
@@ -69,7 +63,7 @@ public class LegacyMethod {
 	
 	static {
 		try {
-			FEDORA_TYPES.load(LegacyMethod.class.getResourceAsStream("map.properties"));
+			FEDORA_TYPES.load(LegacyMethod.class.getResourceAsStream("/org/fcrepo/messaging/legacy/map.properties"));
 		} catch (IOException e) { // it's in the jar.
 			e.printStackTrace();
 		}
