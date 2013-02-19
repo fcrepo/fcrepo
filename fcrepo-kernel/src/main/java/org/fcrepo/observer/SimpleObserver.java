@@ -54,7 +54,7 @@ public class SimpleObserver implements EventListener {
 		for (Event e : filter(new Builder<Event>().addAll(events).build(),
 				eventFilter)) {
 			logger.debug("Putting event: " + e.toString() + " on the bus.");
-			eventBus.post(e);
+			eventBus.post(new FedoraEvent(e));
 		}
 	}
 

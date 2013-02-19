@@ -2,26 +2,21 @@
 package org.fcrepo.observer;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.LoginException;
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
-import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.fcrepo.messaging.legacy.LegacyMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,10 +49,11 @@ public class JMSTopicPublisher {
     private javax.jcr.Session session;
 
     @Subscribe
-    public void publishJCREvent(Event jcrEvent) throws JMSException,
+    public void publishJCREvent(Event fedoraEvent) throws JMSException,
             RepositoryException, IOException {
-
-        Message tm = eventFactory.getMessage(jcrEvent, session, jmsSession);
+        logger.debug("Received an event from the internal bus.");
+        Message tm = eventFactory.getMessage(fedoraEvent, session, jmsSession);
+        logger.debug("Transformed the event to a JMS message.");
         producer.send(tm);
 
         logger.debug("Put event: \n{}\n onto JMS.", tm.getJMSMessageID());

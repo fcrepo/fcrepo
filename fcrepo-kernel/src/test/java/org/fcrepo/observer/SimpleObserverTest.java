@@ -6,7 +6,6 @@ import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.observation.Event;
 
 import org.fcrepo.AbstractTest;
 import org.junit.After;
@@ -51,7 +50,7 @@ public class SimpleObserverTest extends AbstractTest {
 	}
 
 	@Subscribe
-	public void countMessages(Event e) {
+	public void countMessages(FedoraEvent e) {
 		eventBusMessageCount++;
 	}
 
