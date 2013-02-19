@@ -6,7 +6,7 @@
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-    <!-- Context that suports event management, including the internal
+    <!-- Context that supports event management, including the internal
     event bus (fedoraInternalEventBus) -->
 
     <context:annotation-config/>

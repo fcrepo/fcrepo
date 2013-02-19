@@ -37,6 +37,7 @@ import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
 import org.apache.abdera.parser.Parser;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.fcrepo.messaging.legacy.LegacyMethod;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -137,11 +138,13 @@ public class AtomJMSTest implements MessageListener {
         logger.debug("Received JMS message: " + message.toString());
         TextMessage tMessage = (TextMessage) message;
         try {
-            entry =
-                    (Entry) parser.parse(
-                            new ByteArrayInputStream(tMessage.getText()
-                                    .getBytes("UTF-8"))).getRoot();
-            logger.debug("Parsed Entry: " + entry.toString());
+        	if (LegacyMethod.canParse(message)){
+        		LegacyMethod legacy = new LegacyMethod(tMessage.getText());
+        		entry = legacy.getEntry();
+        		logger.debug("Parsed Entry: {}", entry.toString());
+        	} else {
+        		logger.warn("Could not parse message: {}", message);
+        	}
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
