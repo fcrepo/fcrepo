@@ -16,6 +16,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.DELETE;
@@ -39,7 +40,8 @@ import org.fcrepo.jaxb.responses.ObjectDatastreams;
 @Path("/objects/{pid}/datastreams")
 public class FedoraDatastreams extends AbstractResource {
 
-	final private FedoraService fedoraService = new FedoraService();
+	@Inject
+	private FedoraService fedoraService;
 
 	@PostConstruct
 	public void loginReadOnlySession() throws LoginException,
@@ -180,9 +182,9 @@ public class FedoraDatastreams extends AbstractResource {
 	public Response getDatastreamContent(@PathParam("pid")
 	final String pid, @PathParam("dsid")
 	final String dsid) throws RepositoryException {
-		try {
+		try { 
 			Map<String,Object> content = fedoraService.getDatastreamContent(pid, dsid);
-			return ok(content.get("stream"), (MediaType) content.get("mimeType")).build();
+			return ok(content.get("stream"), (String) content.get("mimeType")).build();
 		} catch (ObjectNotFoundException e) {
 			return four04;
 		}

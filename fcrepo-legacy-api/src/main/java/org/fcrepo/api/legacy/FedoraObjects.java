@@ -11,6 +11,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import java.io.IOException;
 import java.security.AccessControlException;
 
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -29,8 +30,8 @@ import org.fcrepo.jaxb.responses.ObjectProfile;
 
 @Path("/objects")
 public class FedoraObjects extends AbstractResource {
-
-	final private FedoraService fedoraService = new FedoraService();
+	@Inject
+	private FedoraService fedoraService;
 
 
     @GET
