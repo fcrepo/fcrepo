@@ -17,6 +17,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -38,6 +39,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.DatastreamHistory;
 import org.fcrepo.jaxb.responses.DatastreamProfile;
@@ -102,6 +105,42 @@ public class FedoraDatastreams extends AbstractResource {
         } else {
             return four04;
         }
+    }
+
+    @POST
+    @Path("/")
+    public Response addDatastreams(@PathParam("pid") final String pid, final List<Attachment> attachmentList) throws RepositoryException, IOException {
+
+        final Session session = repo.login();
+
+        Long oldObjectSize = getObjectSize(session.getNode("/objects/" + pid));
+
+
+        for(final Attachment a : attachmentList) {
+            final String dsid = a.getContentDisposition().getParameter("name");
+            final String dsPath = "/objects/" + pid + "/" + dsid;
+            if (session.hasPermission(dsPath, "add_node")) {
+                new DatastreamService().createDatastreamNode(session, dsPath,
+                        a.getDataHandler().getContentType(), a.getDataHandler().getInputStream());
+            }
+        }
+
+        session.save();
+
+        /*
+         * we save before updating the repo size because the act of
+         * persisting session state creates new system-curated nodes and
+         * properties which contribute to the footprint of this resource
+         */
+        updateRepositorySize(getObjectSize(session.getNode("/objects/" +
+                pid)) -
+                oldObjectSize, session);
+        // now we save again to persist the repo size
+        session.save();
+
+        session.logout();
+
+        return created(uriInfo.getAbsolutePath()).build();
     }
 
     /**

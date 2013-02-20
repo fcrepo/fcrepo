@@ -12,6 +12,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
@@ -146,5 +148,39 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 DOTALL).matcher(content).find());
         assertTrue("Didn't find the second datastream!", compile(
                 "dsid=\"ds2\"", DOTALL).matcher(content).find());
+    }
+
+
+    @Test
+    public void testAddMultipleDatastreams() throws Exception {
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest8");
+        assertEquals(201, getStatus(objMethod));
+        final HttpPost post =
+                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest8/datastreams/");
+
+        MultipartEntity multiPartEntity = new MultipartEntity();
+        multiPartEntity.addPart("ds1", new StringBody("asdfg"));
+        multiPartEntity.addPart("ds2", new StringBody("qwerty"));
+
+        post.setEntity(multiPartEntity);
+
+        HttpResponse postResponse = client.execute(post);
+
+        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+
+
+        final HttpGet getDSesMethod =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest8/datastreams");
+        HttpResponse response = client.execute(getDSesMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+        assertTrue("Didn't find the first datastream!", compile("dsid=\"ds1\"",
+                DOTALL).matcher(content).find());
+        assertTrue("Didn't find the second datastream!", compile(
+                "dsid=\"ds2\"", DOTALL).matcher(content).find());
+
+
+
     }
 }
