@@ -4,4 +4,8 @@ jdk:
 branches:
     only:
         - master
+notifications:
+  irc: "irc.freenode.org#duraspace-ff"
+  email:
+      - ff-tech@googlegroups.com
 
