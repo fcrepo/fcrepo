@@ -95,6 +95,7 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpmime</artifactId>
       <version>4.0.1</version>
+      <scope>test</scope>
       <exclusions>
         <exclusion>
           <groupId>commons-logging</groupId>
