@@ -12,10 +12,10 @@
     <logger name="org.apache.cxf" additivity="false" level="WARN">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="org.modeshape" additivity="false" level="DEBUG">
+    <logger name="org.modeshape" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <root additivity="false" level="DEBUG">
+    <root additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

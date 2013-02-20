@@ -1,3 +1,4 @@
+
 package org.fcrepo.generator;
 
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -8,6 +9,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -22,36 +24,32 @@ import org.fcrepo.generator.dublincore.AbstractIndexer;
 @Path("/objects/{pid}/oai_dc")
 public class DublinCore extends AbstractResource {
 
-	@Resource
-	List<AbstractIndexer> indexers;
+    @Resource
+    List<AbstractIndexer> indexers;
 
-	@GET
-	@Produces(TEXT_XML)
-	public Response getObjectAsDublinCore(@PathParam("pid") final String pid)
-			throws RepositoryException {
-		final Session session = repo.login();
+    @GET
+    @Produces(TEXT_XML)
+    public Response getObjectAsDublinCore(@PathParam("pid")
+    final String pid) throws RepositoryException {
+        final Session session = repo.login();
 
-		try {
-			if (session.nodeExists("/objects/" + pid)) {
-				final Node obj = session.getNode("/objects/" + pid);
+        try {
 
-				for (AbstractIndexer indexer : indexers) {
-					InputStream inputStream = indexer.getStream(obj);
+            final Node obj = session.getNode("/objects/" + pid);
 
-					if (inputStream != null) {
-						return ok(inputStream).build();
-					}
-				}
+            for (AbstractIndexer indexer : indexers) {
+                InputStream inputStream = indexer.getStream(obj);
 
-				return four04;
-			} else {
-				return four04;
-			}
+                if (inputStream != null) {
+                    return ok(inputStream).build();
+                }
+            }
+            // no indexers = no path for DC
+            throw new PathNotFoundException();
+        } finally {
+            session.logout();
+        }
 
-		} finally {
-			session.logout();
-		}
-
-	}
+    }
 
 }

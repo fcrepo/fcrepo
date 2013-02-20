@@ -1,3 +1,4 @@
+
 package org.fcrepo;
 
 import static com.google.common.collect.ImmutableSet.copyOf;
@@ -32,110 +33,111 @@ import org.slf4j.LoggerFactory;
  * @author ajs6f
  * 
  */
-public abstract class AbstractResource extends Constants {
+public abstract class AbstractResource {
 
-	final private Logger logger = LoggerFactory
-			.getLogger(AbstractResource.class);
+    final private Logger logger = LoggerFactory
+            .getLogger(AbstractResource.class);
 
-	/**
-	 * Useful for constructing URLs
-	 */
-	@Context
-	protected UriInfo uriInfo;
+    /**
+     * Useful for constructing URLs
+     */
+    @Context
+    protected UriInfo uriInfo;
 
-	/**
-	 * The JCR repository at the heart of Fedora.
-	 */
-	@Inject
-	protected Repository repo;
+    /**
+     * The JCR repository at the heart of Fedora.
+     */
+    @Inject
+    protected Repository repo;
 
-	/**
-	 * A resource that can mint new Fedora PIDs.
-	 */
-	@Inject
-	protected PidMinter pidMinter;
+    /**
+     * A resource that can mint new Fedora PIDs.
+     */
+    @Inject
+    protected PidMinter pidMinter;
 
-	/**
-	 * A convenience object provided by ModeShape for acting against the JCR
-	 * repository.
-	 */
-	final static protected JcrTools jcrTools = new JcrTools(true);
+    /**
+     * A convenience object provided by ModeShape for acting against the JCR
+     * repository.
+     */
+    final static protected JcrTools jcrTools = new JcrTools(true);
 
-	@PostConstruct
-	public void initialize() throws LoginException, NoSuchWorkspaceException,
-			RepositoryException {
+    @PostConstruct
+    public void initialize() throws LoginException, NoSuchWorkspaceException,
+            RepositoryException {
 
-		final Session session = repo.login();
-		session.getWorkspace().getNamespaceRegistry()
-				.registerNamespace("test", "info:fedora/test");
-		Node objects = jcrTools.findOrCreateNode(session, "/objects");
-		objects.setProperty("size", 0L);
-		session.save();
-		session.logout();
-	}
+        final Session session = repo.login();
+        session.getWorkspace().getNamespaceRegistry().registerNamespace("test",
+                "info:fedora/test");
+        Node objects = jcrTools.findOrCreateNode(session, "/objects");
+        objects.setProperty("size", 0L);
+        session.save();
+        session.logout();
+    }
 
-	protected synchronized Response deleteResource(final Node resource)
-			throws RepositoryException {
+    protected synchronized Response deleteResource(final Node resource)
+            throws RepositoryException {
 
-		logger.debug("Attempting to delete resource at path: "
-				+ resource.getPath());
-		final Session session = resource.getSession();
-		if (session.hasPermission(resource.getPath(), "remove")) {
-			resource.remove();
-			session.save();
-			session.logout();
-			return noContent().build();
-		} else {
-			return four03;
-		}
-	}
+        logger.debug("Attempting to delete resource at path: " +
+                resource.getPath());
+        final Session session = resource.getSession();
 
-	public static Long getNodePropertySize(Node node)
-			throws RepositoryException {
-		Long size = 0L;
-		PropertyIterator i = node.getProperties();
-		while (i.hasNext()) {
-			Property p = i.nextProperty();
-			if (p.isMultiple()) {
-				for (Value v : copyOf(p.getValues())) {
-					size = size + v.getBinary().getSize();
-				}
-			} else {
-				size = size + p.getBinary().getSize();
-			}
-		}
-		return size;
-	}
+        try {
+            resource.remove();
+            session.save();
+        } finally {
+            session.logout();
+        }
+        return noContent().build();
 
-	/**
-	 * Alter the total repository size.
-	 * 
-	 * @param change
-	 *            the amount by which to [de|in]crement the total repository
-	 *            size
-	 * @param session
-	 *            the javax.jcr.Session in which the originating mutation is
-	 *            occurring
-	 * @throws PathNotFoundException
-	 * @throws RepositoryException
-	 */
-	protected void updateRepositorySize(Long change, Session session)
-			throws PathNotFoundException, RepositoryException {
-		logger.debug("updateRepositorySize called with change quantity: "
-				+ change);
-		Property sizeProperty = session.getNode("/objects").getProperty("size");
-		Long previousSize = sizeProperty.getLong();
-		logger.debug("Previous repository size: " + previousSize);
-		synchronized (sizeProperty) {
-			sizeProperty.setValue(previousSize + change);
-			session.save();
-		}
-		logger.debug("Current repository size: " + sizeProperty.getLong());
-	}
+    }
 
-	protected Long getRepositorySize(Session session)
-			throws ValueFormatException, PathNotFoundException,
-			RepositoryException {
-		return session.getNode("/objects").getProperty("size").getLong();
-	}
+    public static Long getNodePropertySize(Node node)
+            throws RepositoryException {
+        Long size = 0L;
+        PropertyIterator i = node.getProperties();
+        while (i.hasNext()) {
+            Property p = i.nextProperty();
+            if (p.isMultiple()) {
+                for (Value v : copyOf(p.getValues())) {
+                    size = size + v.getBinary().getSize();
+                }
+            } else {
+                size = size + p.getBinary().getSize();
+            }
+        }
+        return size;
+    }
+
+    /**
+     * Alter the total repository size.
+     * 
+     * @param change
+     *            the amount by which to [de|in]crement the total repository
+     *            size
+     * @param session
+     *            the javax.jcr.Session in which the originating mutation is
+     *            occurring
+     * @throws PathNotFoundException
+     * @throws RepositoryException
+     */
+    protected void updateRepositorySize(Long change, Session session)
+            throws PathNotFoundException, RepositoryException {
+        logger.debug("updateRepositorySize called with change quantity: " +
+                change);
+        Property sizeProperty = session.getNode("/objects").getProperty("size");
+        Long previousSize = sizeProperty.getLong();
+        logger.debug("Previous repository size: " + previousSize);
+        synchronized (sizeProperty) {
+            sizeProperty.setValue(previousSize + change);
+            session.save();
+        }
+        logger.debug("Current repository size: " + sizeProperty.getLong());
+    }
+
+    protected Long getRepositorySize(Session session)
+            throws ValueFormatException, PathNotFoundException,
+            RepositoryException {
+        return session.getNode("/objects").getProperty("size").getLong();
+    }
 }

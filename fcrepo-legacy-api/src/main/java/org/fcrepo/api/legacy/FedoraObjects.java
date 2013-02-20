@@ -95,19 +95,21 @@ public class FedoraObjects extends AbstractResource {
 
         final String objPath = "/objects/" + pid;
         final Session session = repo.login();
-
-        if (!session.nodeExists(objPath)) {
-            session.logout();
-            return status(CONFLICT).entity("No such object").build();
-        }
-        final Node obj = session.getNode(objPath);
-        obj.setProperty(DC_TITLE, objProfile.objLabel);
-        if (objProfile.objModels != null)
-            for (String model : objProfile.objModels) {
-                obj.addMixin(model);
+        try {
+            if (!session.nodeExists(objPath)) {
+                session.logout();
+                return status(CONFLICT).entity("No such object").build();
             }
-        session.save();
-        session.logout();
+            final Node obj = session.getNode(objPath);
+            obj.setProperty(DC_TITLE, objProfile.objLabel);
+            if (objProfile.objModels != null)
+                for (String model : objProfile.objModels) {
+                    obj.addMixin(model);
+                }
+            session.save();
+        } finally {
+            session.logout();
+        }
         return created(uriInfo.getAbsolutePath()).build();
     }
 
@@ -119,8 +121,7 @@ public class FedoraObjects extends AbstractResource {
         logger.debug("Attempting to ingest with pid: " + pid);
 
         final Session session = repo.login();
-
-        if (session.hasPermission("/objects/" + pid, "add_node")) {
+        try {
             final Node obj =
                     new ObjectService().createObjectNode(session, "/objects/" +
                             pid);
@@ -134,12 +135,11 @@ public class FedoraObjects extends AbstractResource {
             updateRepositorySize(getObjectSize(obj), session);
             // now we save again to persist the repo size
             session.save();
-            session.logout();
             logger.debug("Finished ingest with pid: " + pid);
             return created(uriInfo.getAbsolutePath()).entity(pid).build();
-        } else {
+
+        } finally {
             session.logout();
-            return four03;
         }
     }
 
@@ -149,39 +149,32 @@ public class FedoraObjects extends AbstractResource {
     public Response getObject(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 
-        if (readOnlySession.nodeExists("/objects/" + pid)) {
+        final Node obj = readOnlySession.getNode("/objects/" + pid);
+        final ObjectProfile objectProfile = new ObjectProfile();
 
-            final Node obj = readOnlySession.getNode("/objects/" + pid);
-            final ObjectProfile objectProfile = new ObjectProfile();
-
-            objectProfile.pid = pid;
-            if (obj.hasProperty(DC_TITLE)) {
-                Property dcTitle = obj.getProperty(DC_TITLE);
-                if (!dcTitle.isMultiple())
-                    objectProfile.objLabel =
-                            obj.getProperty(DC_TITLE).getString();
-                else {
-                    objectProfile.objLabel =
-                            on('/').join(map(dcTitle.getValues(), value2string));
-                }
+        objectProfile.pid = pid;
+        if (obj.hasProperty(DC_TITLE)) {
+            Property dcTitle = obj.getProperty(DC_TITLE);
+            if (!dcTitle.isMultiple())
+                objectProfile.objLabel = obj.getProperty(DC_TITLE).getString();
+            else {
+                objectProfile.objLabel =
+                        on('/').join(map(dcTitle.getValues(), value2string));
             }
-            objectProfile.objOwnerId =
-                    obj.getProperty("fedora:ownerId").getString();
-            objectProfile.objCreateDate =
-                    obj.getProperty("jcr:created").getString();
-            objectProfile.objLastModDate =
-                    obj.getProperty("jcr:lastModified").getString();
-            objectProfile.objSize = getObjectSize(obj);
-            objectProfile.objItemIndexViewURL =
-                    uriInfo.getAbsolutePathBuilder().path("datastreams")
-                            .build();
-            objectProfile.objState = A;
-            objectProfile.objModels =
-                    map(obj.getMixinNodeTypes(), nodetype2string);
-            return ok(objectProfile).build();
-        } else {
-            return four04;
         }
+        objectProfile.objOwnerId =
+                obj.getProperty("fedora:ownerId").getString();
+        objectProfile.objCreateDate =
+                obj.getProperty("jcr:created").getString();
+        objectProfile.objLastModDate =
+                obj.getProperty("jcr:lastModified").getString();
+        objectProfile.objSize = getObjectSize(obj);
+        objectProfile.objItemIndexViewURL =
+                uriInfo.getAbsolutePathBuilder().path("datastreams").build();
+        objectProfile.objState = A;
+        objectProfile.objModels = map(obj.getMixinNodeTypes(), nodetype2string);
+        return ok(objectProfile).build();
+
     }
 
     @DELETE

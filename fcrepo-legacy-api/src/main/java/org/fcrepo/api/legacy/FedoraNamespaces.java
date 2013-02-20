@@ -25,7 +25,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.NamespaceListing;
 import org.fcrepo.jaxb.responses.NamespaceListing.Namespace;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
 /**
@@ -55,10 +54,13 @@ public class FedoraNamespaces extends AbstractResource {
     final String prefix, final String uri) throws RepositoryException {
 
         final Session session = repo.login();
-        final NamespaceRegistry r =
-                session.getWorkspace().getNamespaceRegistry();
-        r.registerNamespace(prefix, uri);
-        session.logout();
+        try {
+            final NamespaceRegistry r =
+                    session.getWorkspace().getNamespaceRegistry();
+            r.registerNamespace(prefix, uri);
+        } finally {
+            session.logout();
+        }
         return created(uriInfo.getAbsolutePath()).build();
     }
 
@@ -75,11 +77,14 @@ public class FedoraNamespaces extends AbstractResource {
             throws RepositoryException {
 
         final Session session = repo.login();
-        final NamespaceRegistry r =
-                session.getWorkspace().getNamespaceRegistry();
-        for (Namespace ns : nses.namespaces)
-            r.registerNamespace(ns.prefix, ns.uri.toString());
-        session.logout();
+        try {
+            final NamespaceRegistry r =
+                    session.getWorkspace().getNamespaceRegistry();
+            for (Namespace ns : nses.namespaces)
+                r.registerNamespace(ns.prefix, ns.uri.toString());
+        } finally {
+            session.logout();
+        }
         return created(uriInfo.getAbsolutePath()).build();
     }
 
@@ -100,14 +105,13 @@ public class FedoraNamespaces extends AbstractResource {
         final NamespaceRegistry r =
                 session.getWorkspace().getNamespaceRegistry();
 
-        if (ImmutableSet.copyOf(r.getPrefixes()).contains(prefix)) {
+        try {
             final Namespace ns =
                     new Namespace(prefix, URI.create(r.getURI(prefix)));
-            session.logout();
+
             return ok(ns).build();
-        } else {
+        } finally {
             session.logout();
-            return four04;
         }
     }
 
@@ -120,15 +124,18 @@ public class FedoraNamespaces extends AbstractResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     public NamespaceListing getNamespaces() throws RepositoryException,
             IOException {
-
-        final Session session = repo.login();
-        final NamespaceRegistry r =
-                session.getWorkspace().getNamespaceRegistry();
         final Builder<Namespace> b = builder();
-        for (final String prefix : r.getPrefixes()) {
-            b.add(new Namespace(prefix, URI.create(r.getURI(prefix))));
+        final Session session = repo.login();
+        try {
+            final NamespaceRegistry r =
+                    session.getWorkspace().getNamespaceRegistry();
+
+            for (final String prefix : r.getPrefixes()) {
+                b.add(new Namespace(prefix, URI.create(r.getURI(prefix))));
+            }
+        } finally {
+            session.logout();
         }
-        session.logout();
         return new NamespaceListing(b.build());
     }
 

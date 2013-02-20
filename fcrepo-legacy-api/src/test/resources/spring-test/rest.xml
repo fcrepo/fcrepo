@@ -12,14 +12,14 @@
 
     <import resource="classpath:META-INF/cxf/cxf.xml"/>
 
-  <context:property-placeholder/>
+    <context:property-placeholder/>
 
     <!-- Context that houses JAX-RS Resources that compose the API
         as well as some utility gear. -->
 
     <context:annotation-config/>
 
-    <jaxrs:server address="http://localhost:${test.port:8080}/rest" >
+    <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
             <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
@@ -32,6 +32,8 @@
             <entry key="xml" value="application/xml"/>
         </jaxrs:extensionMappings>
         <jaxrs:providers>
+            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
+            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
             <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
                 <property name="marshallerProperties">
                     <util:map>
@@ -41,7 +43,6 @@
                     </util:map>
                 </property>
             </bean>
-
             <!--<bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
                 <property name="ignoreNamespaces" value="true"/>
             </bean>-->

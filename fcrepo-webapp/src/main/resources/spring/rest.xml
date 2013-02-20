@@ -27,7 +27,6 @@
             <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
             <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
-            <bean class="org.fcrepo.api.legacy.foxml.FedoraOXML"/>
             <bean class="org.fcrepo.generator.DublinCore" />
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
@@ -35,6 +34,8 @@
             <entry key="xml" value="application/xml"/>
         </jaxrs:extensionMappings>
         <jaxrs:providers>
+            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
+            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
             <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
                 <property name="marshallerProperties">
                     <util:map>
