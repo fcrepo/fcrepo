@@ -13,6 +13,9 @@
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean"/>
 
+    <bean class="org.fcrepo.api.legacy.service.FedoraService"/>
+
+
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
     <bean class="org.springframework.core.io.ClassPathResource">
