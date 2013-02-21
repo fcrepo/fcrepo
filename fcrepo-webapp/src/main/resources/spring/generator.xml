@@ -10,14 +10,21 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
        http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
 
-	<import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
 
     <context:annotation-config/>
 
-	<jaxrs:server address="/oai">
+    <jaxrs:server address="/oai">
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.generator.DublinCore"/>
         </jaxrs:serviceBeans>
+        <jaxrs:providers>
+            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
+            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
+            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
+                <property name="showStackTrace" value="true"/>
+            </bean>
+        </jaxrs:providers>
     </jaxrs:server>
 
     <util:list id="indexers" value-type="org.fcrepo.generator.dublincore.AbstractIndexer">

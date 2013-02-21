@@ -34,6 +34,9 @@
         <jaxrs:providers>
             <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
             <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
+            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
+                <property name="showStackTrace" value="true"/>
+            </bean>
             <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
                 <property name="marshallerProperties">
                     <util:map>

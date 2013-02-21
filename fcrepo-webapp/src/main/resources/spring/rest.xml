@@ -11,7 +11,7 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
     <import resource="classpath:META-INF/cxf/cxf.xml"/>
- 
+
     <!-- Context that houses JAX-RS Resources that compose the API
         as well as som utility gear. -->
 
@@ -27,7 +27,7 @@
             <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
             <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
-            <bean class="org.fcrepo.generator.DublinCore" />
+            <bean class="org.fcrepo.generator.DublinCore"/>
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
             <entry key="json" value="application/json"/>
@@ -36,6 +36,9 @@
         <jaxrs:providers>
             <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
             <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
+            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
+                <property name="showStackTrace" value="true"/>
+            </bean>
             <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
                 <property name="marshallerProperties">
                     <util:map>
