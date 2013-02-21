@@ -187,7 +187,7 @@ public class LegacyMethod {
 	}
 
 	private static String getEntryContent(String methodName, String returnVal) {
-		String parm = (String)FEDORA_TYPES.get(methodName + ".parm");
+		//String parm = (String)FEDORA_TYPES.get(methodName + ".parm");
 		String datatype = (String)FEDORA_TYPES.get(methodName + ".datatype");
 		return objectToString(returnVal, datatype);
 	}
