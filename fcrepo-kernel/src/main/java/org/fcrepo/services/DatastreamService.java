@@ -1,6 +1,7 @@
 
 package org.fcrepo.services;
 
+import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
@@ -13,26 +14,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.Datastream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DatastreamService {
+public class DatastreamService extends JcrTools {
 
     private static final Logger logger = LoggerFactory
             .getLogger(DatastreamService.class);
 
     @Inject
     private Repository repo;
-
-    private JcrTools jcrTools = new JcrTools();
 
     private Session readOnlySession;
 
@@ -41,11 +44,11 @@ public class DatastreamService {
             final InputStream requestBodyStream) throws RepositoryException,
             IOException {
 
-        final Node ds = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
+        final Node ds = findOrCreateNode(session, dsPath, NT_FILE);
         ds.addMixin(FEDORA_DATASTREAM);
 
         final Node contentNode =
-                jcrTools.findOrCreateChild(ds, JCR_CONTENT, NT_RESOURCE);
+                findOrCreateChild(ds, JCR_CONTENT, NT_RESOURCE);
         logger.debug("Created content node at path: " + contentNode.getPath());
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -84,9 +87,52 @@ public class DatastreamService {
         return ds;
     }
 
-    public InputStream getDatastreamContentInputStream(final Session session,
-            final String dsPath) throws RepositoryException {
+    public static Node getDatastreamNode(final String pid, final String dsId)
+            throws PathNotFoundException, RepositoryException {
+        return getObjectNode(pid).getNode(dsId);
+    }
+
+    public static Datastream getDatastream(final String pid, final String dsId)
+            throws PathNotFoundException, RepositoryException {
+        return new Datastream(getObjectNode(pid).getNode(dsId));
+    }
+
+    public static InputStream getDatastreamContentInputStream(
+            final Session session, final String dsPath)
+            throws RepositoryException {
         return session.getNode(dsPath).getNode(JCR_CONTENT).getProperty(
                 JCR_DATA).getBinary().getStream();
+    }
+
+    public InputStream getDatastreamContentInputStream(final String dsPath)
+            throws RepositoryException {
+        return readOnlySession.getNode(dsPath).getNode(JCR_CONTENT)
+                .getProperty(JCR_DATA).getBinary().getStream();
+    }
+
+    public static InputStream getDatastreamContentInputStream(final Node node)
+            throws RepositoryException {
+        return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
+                .getStream();
+    }
+
+    public static InputStream getDatastreamContentInputStream(
+            final Datastream ds) throws RepositoryException {
+        return ds.getNode().getNode(JCR_CONTENT).getProperty(JCR_DATA)
+                .getBinary().getStream();
+    }
+
+    @PostConstruct
+    public void getSession() {
+        try {
+            readOnlySession = repo.login();
+        } catch (RepositoryException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @PreDestroy
+    public void logoutSession() {
+        readOnlySession.logout();
     }
 }

@@ -9,12 +9,12 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "objectDatastreams", namespace = "http://www.fedora.info/definitions/1/0/access/")
 public class ObjectDatastreams {
 
-	public Set<Datastream> datastreams;
+	public Set<DatastreamElement> datastreams;
 
 	@XmlType(name = "datastream")
-	public static class Datastream {
+	public static class DatastreamElement {
 
-		public Datastream(String dsid, String label, String mimeType) {
+		public DatastreamElement(String dsid, String label, String mimeType) {
 			this.dsid = dsid;
 			this.label = label;
 			this.mimeType = mimeType;
@@ -29,7 +29,7 @@ public class ObjectDatastreams {
 		@XmlAttribute
 		public String mimeType;
 
-		public Datastream() {
+		public DatastreamElement() {
 		}
 	}
 }
