@@ -10,7 +10,6 @@ import static org.junit.Assert.fail;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 
 import javax.inject.Inject;
