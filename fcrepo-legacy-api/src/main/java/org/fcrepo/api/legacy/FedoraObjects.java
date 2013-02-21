@@ -9,6 +9,7 @@ import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.services.ObjectService.createObjectNode;
+import static org.fcrepo.services.ObjectService.getObjectNames;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
@@ -53,20 +54,8 @@ public class FedoraObjects extends AbstractResource {
      */
     @GET
     public Response getObjects() throws RepositoryException {
-        final Session session = repo.login();
-        try {
-            Node objects = session.getNode(getObjectJcrNodePath(""));
-            StringBuffer nodes = new StringBuffer();
 
-            for (NodeIterator i = objects.getNodes(); i.hasNext();) {
-                Node n = i.nextNode();
-                nodes.append("Name: " + n.getName() + ", Path:" + n.getPath() +
-                        "\n");
-            }
-            return ok(nodes.toString()).build();
-        } finally {
-            session.logout();
-        }
+        return ok(getObjectNames().toString()).build();
 
     }
 
