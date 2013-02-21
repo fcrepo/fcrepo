@@ -35,9 +35,10 @@ public class ObjectService {
         return new FedoraObject(session, "/objects/" + name).getNode();
     }
 
-    public static Node getObjectNode(final String name)
+    public static Node getObjectNode(final String pid)
             throws PathNotFoundException, RepositoryException {
-        return readOnlySession.getNode("/objects/" + name);
+        logger.trace("Executing getObjectNode() with pid: " + pid);
+        return readOnlySession.getNode("/objects/" + pid);
     }
 
     @PostConstruct

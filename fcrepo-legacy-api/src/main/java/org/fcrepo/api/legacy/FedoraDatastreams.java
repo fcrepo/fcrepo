@@ -249,11 +249,13 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/{dsid}")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response getDatastream(@PathParam("pid")
+    public DatastreamProfile getDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
-    final String dsid) throws RepositoryException, IOException {
-
-        return ok(getDSProfile(getDatastreamNode(pid, dsid))).build();
+    final String dsId) throws RepositoryException, IOException {
+        logger.trace("Executing getDatastream() with dsId: " + dsId);
+        Node dsNode = getDatastreamNode(pid, dsId);
+        logger.debug("Retrieved dsNode: " + dsNode.getName());
+        return getDSProfile(dsNode);
 
     }
 
@@ -355,12 +357,17 @@ public class FedoraDatastreams extends AbstractResource {
 
     private DatastreamProfile getDSProfile(Node ds) throws RepositoryException,
             IOException {
+        logger.trace("Executing getDSProfile() with node: " + ds.getName());
         final DatastreamProfile dsProfile = new DatastreamProfile();
         dsProfile.dsID = ds.getName();
         dsProfile.pid = ds.getParent().getName();
-        dsProfile.dsLabel = ds.getName();
+        logger.trace("Retrieved datastream " + ds.getName() + "'s parent: " +
+                dsProfile.pid);
+        dsProfile.dsLabel = new Datastream(ds).getLabel();
+        logger.trace("Retrieved datastream " + ds.getName() + "'s label: " +
+                new Datastream(ds).getLabel());
         dsProfile.dsState = A;
-        dsProfile.dsMIME = getDSMimeType(ds);
+        dsProfile.dsMIME = new Datastream(ds).getMimeType();
         dsProfile.dsSize =
                 getNodePropertySize(ds) +
                         ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)

@@ -31,10 +31,9 @@ public class DatastreamServiceTest extends AbstractTest {
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
-        InputStream is = new ByteArrayInputStream("asdf".getBytes());
-
         createDatastreamNode(session, "testDatastreamNode",
-                "application/octet-stream", is);
+                "application/octet-stream", new ByteArrayInputStream("asdf"
+                        .getBytes()));
         session.save();
         session.logout();
         session = repository.login();
