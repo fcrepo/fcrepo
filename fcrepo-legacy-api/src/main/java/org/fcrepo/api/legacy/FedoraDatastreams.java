@@ -11,7 +11,6 @@ import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.DatastreamService.getDatastreamNode;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
@@ -197,7 +196,7 @@ public class FedoraDatastreams extends AbstractResource {
         final Session session = repo.login();
         contentType =
                 contentType != null ? contentType
-                        : MediaType.APPLICATION_OCTET_STREAM_TYPE;
+                        : APPLICATION_OCTET_STREAM_TYPE;
         String dspath = getDatastreamJcrNodePath(pid, dsid);
 
         return created(
@@ -256,9 +255,9 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsId) throws RepositoryException, IOException {
         logger.trace("Executing getDatastream() with dsId: " + dsId);
-        Node dsNode = getDatastreamNode(pid, dsId);
-        logger.debug("Retrieved dsNode: " + dsNode.getName());
-        return getDSProfile(dsNode);
+        Datastream ds = DatastreamService.getDatastream(pid, dsId);
+        logger.debug("Retrieved dsNode: " + ds.getNode().getName());
+        return getDSProfile(ds);
 
     }
 
@@ -287,7 +286,7 @@ public class FedoraDatastreams extends AbstractResource {
      * 
      * @param pid
      *            persistent identifier of the digital object
-     * @param dsid
+     * @param dsId
      *            datastream identifier
      * @return 200
      * @throws RepositoryException
@@ -301,12 +300,12 @@ public class FedoraDatastreams extends AbstractResource {
             public
             DatastreamHistory getDatastreamHistory(@PathParam("pid")
             final String pid, @PathParam("dsid")
-            final String dsid) throws RepositoryException, IOException {
+            final String dsId) throws RepositoryException, IOException {
 
-        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+        final Datastream ds = DatastreamService.getDatastream(pid, dsId);
         final DatastreamHistory dsHistory =
-                new DatastreamHistory(singletonList(getDSProfile(ds.getNode())));
-        dsHistory.dsID = dsid;
+                new DatastreamHistory(singletonList(getDSProfile(ds)));
+        dsHistory.dsID = dsId;
         dsHistory.pid = pid;
         return dsHistory;
     }
@@ -351,31 +350,30 @@ public class FedoraDatastreams extends AbstractResource {
     public Response deleteDatastream(@PathParam("pid")
     String pid, @PathParam("dsid")
     String dsid) throws RepositoryException {
-        final String dsPath = getDatastreamJcrNodePath(pid  ,  dsid);
+        final String dsPath = getDatastreamJcrNodePath(pid, dsid);
         final Session session = repo.login();
         final Node ds = session.getNode(dsPath);
         updateRepositorySize(0L - getDatastreamSize(ds), session);
         return deleteResource(ds);
     }
 
-    private DatastreamProfile getDSProfile(Node ds) throws RepositoryException,
-            IOException {
-        logger.trace("Executing getDSProfile() with node: " + ds.getName());
+    private DatastreamProfile getDSProfile(Datastream ds)
+            throws RepositoryException, IOException {
+        logger.trace("Executing getDSProfile() with node: " + ds.getDsId());
         final DatastreamProfile dsProfile = new DatastreamProfile();
-        dsProfile.dsID = ds.getName();
-        dsProfile.pid = ds.getParent().getName();
-        logger.trace("Retrieved datastream " + ds.getName() + "'s parent: " +
+        dsProfile.dsID = ds.getDsId();
+        dsProfile.pid = ds.getObject().getName();
+        logger.trace("Retrieved datastream " + ds.getDsId() + "'s parent: " +
                 dsProfile.pid);
-        dsProfile.dsLabel = new Datastream(ds).getLabel();
-        logger.trace("Retrieved datastream " + ds.getName() + "'s label: " +
-                new Datastream(ds).getLabel());
+        dsProfile.dsLabel = ds.getLabel();
+        logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
+                ds.getLabel());
         dsProfile.dsState = A;
-        dsProfile.dsMIME = new Datastream(ds).getMimeType();
+        dsProfile.dsMIME = ds.getMimeType();
         dsProfile.dsSize =
-                getNodePropertySize(ds) +
-                        ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)
-                                .getBinary().getSize();
-        dsProfile.dsCreateDate = ds.getProperty("jcr:created").getString();
+                getNodePropertySize(ds.getNode()) + ds.getContentSize();
+        dsProfile.dsCreateDate =
+                ds.getNode().getProperty("jcr:created").getString();
         return dsProfile;
     }
 

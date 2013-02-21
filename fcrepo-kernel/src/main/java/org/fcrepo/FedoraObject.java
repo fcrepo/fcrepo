@@ -24,7 +24,8 @@ public class FedoraObject extends JcrTools {
     }
 
     public FedoraObject(Session session, String path)
-            throws NoSuchNodeTypeException, VersionException, ConstraintViolationException, LockException, RepositoryException {
+            throws NoSuchNodeTypeException, VersionException,
+            ConstraintViolationException, LockException, RepositoryException {
         this.node = findOrCreateNode(session, path, NT_FOLDER);
         node.addMixin("fedora:object");
         node.addMixin("fedora:owned");
@@ -32,6 +33,10 @@ public class FedoraObject extends JcrTools {
         node.setProperty("jcr:lastModified", Calendar.getInstance());
         node.setProperty("dc:identifier", new String[] {node.getIdentifier(),
                 node.getName()});
+    }
+
+    public String getName() throws RepositoryException {
+        return node.getName();
     }
 
     public Node getNode() {

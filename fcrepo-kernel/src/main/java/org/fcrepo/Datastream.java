@@ -11,7 +11,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.InputStream;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFormatException;
@@ -37,19 +36,30 @@ public class Datastream {
         return node;
     }
 
-    public InputStream getContent() throws ValueFormatException,
-            PathNotFoundException, RepositoryException {
+    public InputStream getContent() throws RepositoryException {
         return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getStream();
     }
 
-    public String getMimeType() throws ValueFormatException,
-            PathNotFoundException, RepositoryException {
+    public long getContentSize() throws RepositoryException {
+        return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
+                .getSize();
+    }
+
+    public String getDsId() throws RepositoryException {
+        return node.getName();
+    }
+
+    public FedoraObject getObject() throws RepositoryException {
+        return new FedoraObject(node.getParent());
+    }
+
+    public String getMimeType() throws RepositoryException {
         return node.hasProperty("fedora:contentType") ? node.getProperty(
                 "fedora:contentType").getString() : "application/octet-stream";
     }
 
-    public String getLabel() throws PathNotFoundException, RepositoryException {
+    public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
 
             Property labels = node.getProperty(DC_TITLE);
