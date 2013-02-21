@@ -3,7 +3,7 @@ package org.fcrepo;
 
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
-import static org.fcrepo.services.ObjectService.createObjectNodeByName;
+import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -27,7 +27,7 @@ public class DatastreamTest extends AbstractTest {
     @Test
     public void testLabel() throws RepositoryException, IOException {
         Session session = repo.login();
-        createObjectNodeByName(session, "testObject");
+        createObjectNode(session, "testObject");
         Node dsNode =
                 createDatastreamNode(session,
                         "/objects/testObject/testDatastreamNode",

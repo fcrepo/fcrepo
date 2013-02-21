@@ -3,7 +3,7 @@ package org.fcrepo.services;
 
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
-import static org.fcrepo.services.ObjectService.createObjectNodeByName;
+import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -48,7 +48,7 @@ public class DatastreamServiceTest extends AbstractTest {
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         InputStream is = new ByteArrayInputStream("asdf".getBytes());
-        createObjectNodeByName(session, "testObject");
+        createObjectNode(session, "testObject");
         createDatastreamNode(session, "/objects/testObject/testDatastreamNode",
                 "application/octet-stream", is);
 

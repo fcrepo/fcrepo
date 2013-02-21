@@ -113,8 +113,7 @@ public class FedoraObjects extends AbstractResource {
 
         final Session session = repo.login();
         try {
-            final Node obj =
-                    createObjectNode(session, getObjectJcrNodePath(pid));
+            final Node obj = createObjectNode(session, pid);
             session.save();
             /*
              * we save before updating the repo size because the act of
