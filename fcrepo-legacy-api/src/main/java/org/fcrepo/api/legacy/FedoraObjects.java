@@ -10,14 +10,13 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
+import static org.fcrepo.services.ObjectService.createObjectNode;
+import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 
 import java.io.IOException;
 import java.util.Collection;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -37,7 +36,6 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.ObjectProfile;
-import org.fcrepo.services.ObjectService;
 import org.modeshape.common.SystemFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,31 +48,22 @@ public class FedoraObjects extends AbstractResource {
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraObjects.class);
 
-    private Session readOnlySession;
-
-    @PostConstruct
-    public void loginReadOnlySession() throws LoginException,
-            RepositoryException {
-        readOnlySession = repo.login();
-    }
-
-    @PreDestroy
-    public void logoutReadOnlySession() {
-        readOnlySession.logout();
-    }
-
     @GET
     public Response getObjects() throws RepositoryException {
+        final Session session = repo.login();
+        try {
+            Node objects = session.getNode("/objects");
+            StringBuffer nodes = new StringBuffer();
 
-        Node objects = readOnlySession.getNode("/objects");
-        StringBuffer nodes = new StringBuffer();
-
-        for (NodeIterator i = objects.getNodes(); i.hasNext();) {
-            Node n = i.nextNode();
-            nodes.append("Name: " + n.getName() + ", Path:" + n.getPath() +
-                    "\n");
+            for (NodeIterator i = objects.getNodes(); i.hasNext();) {
+                Node n = i.nextNode();
+                nodes.append("Name: " + n.getName() + ", Path:" + n.getPath() +
+                        "\n");
+            }
+            return ok(nodes.toString()).build();
+        } finally {
+            session.logout();
         }
-        return ok(nodes.toString()).build();
 
     }
 
@@ -89,7 +78,7 @@ public class FedoraObjects extends AbstractResource {
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
-        final String objPath = "/objects/" + pid;
+        /*final String objPath = "/objects/" + pid;
         final Session session = repo.login();
         try {
             final Node obj = session.getNode(objPath);
@@ -97,7 +86,7 @@ public class FedoraObjects extends AbstractResource {
             session.save();
         } finally {
             session.logout();
-        }
+        }*/
         return created(uriInfo.getAbsolutePath()).build();
     }
 
@@ -110,10 +99,7 @@ public class FedoraObjects extends AbstractResource {
 
         final Session session = repo.login();
         try {
-            final Node obj =
-                    new ObjectService().createObjectNode(session, "/objects/" +
-                            pid);
-
+            final Node obj = createObjectNode(session, "/objects/" + pid);
             session.save();
             /*
              * we save before updating the repo size because the act of
@@ -137,7 +123,7 @@ public class FedoraObjects extends AbstractResource {
     public Response getObject(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 
-        final Node obj = readOnlySession.getNode("/objects/" + pid);
+        final Node obj = getObjectNode(pid);
         final ObjectProfile objectProfile = new ObjectProfile();
 
         objectProfile.pid = pid;

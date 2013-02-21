@@ -20,5 +20,6 @@
         <constructor-arg type="String" value="test_repository.json"/>
     </bean>
 
+    <bean class="org.fcrepo.services.ObjectService"/>    
 
 </beans>

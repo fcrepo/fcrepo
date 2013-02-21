@@ -10,8 +10,7 @@
 
     <context:annotation-config/>
 
-    <bean name="modeshapeRepofactory"
-        class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean"/>
+    <bean name="modeshapeRepofactory" class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean"/>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
@@ -20,5 +19,6 @@
         <constructor-arg type="String" value="my_repository.json"/>
     </bean>
 
+    <bean class="org.fcrepo.services.ObjectService"/>
 
 </beans>

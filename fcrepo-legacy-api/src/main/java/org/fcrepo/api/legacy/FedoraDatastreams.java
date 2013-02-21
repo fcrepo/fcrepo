@@ -10,6 +10,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
+import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
@@ -18,9 +19,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -57,19 +55,6 @@ public class FedoraDatastreams extends AbstractResource {
     final private Logger logger = LoggerFactory
             .getLogger(FedoraDatastreams.class);
 
-    private Session readOnlySession;
-
-    @PostConstruct
-    public void loginReadOnlySession() throws LoginException,
-            RepositoryException {
-        readOnlySession = repo.login();
-    }
-
-    @PreDestroy
-    public void logoutReadOnlySession() {
-        readOnlySession.logout();
-    }
-
     /**
      * Returns a list of datastreams for the object
      * 
@@ -90,7 +75,7 @@ public class FedoraDatastreams extends AbstractResource {
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
         final Builder<Datastream> datastreams = builder();
 
-        NodeIterator i = readOnlySession.getNode("/objects/" + pid).getNodes();
+        NodeIterator i = getObjectNode(pid).getNodes();
         while (i.hasNext()) {
             final Node ds = i.nextNode();
             datastreams.add(new Datastream(ds.getName(), ds.getName(),
@@ -268,7 +253,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException, IOException {
 
-        final Node ds = readOnlySession.getNode("/objects/" + pid + "/" + dsid);
+        final Node ds = getObjectNode(pid).getNode(dsid);
         final DatastreamProfile dsProfile = getDSProfile(ds);
         return ok(dsProfile).build();
     }
@@ -289,7 +274,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException {
 
-        final Node ds = readOnlySession.getNode("/objects/" + pid + "/" + dsid);
+        final Node ds = getObjectNode(pid).getNode(dsid);
         final String mimeType =
                 ds.hasProperty("fedora:contentType") ? ds.getProperty(
                         "fedora:contentType").getString()
@@ -321,7 +306,7 @@ public class FedoraDatastreams extends AbstractResource {
             final String pid, @PathParam("dsid")
             final String dsid) throws RepositoryException, IOException {
 
-        final Node ds = readOnlySession.getNode("/objects/" + pid + "/" + dsid);
+        final Node ds = getObjectNode(pid).getNode(dsid);
         final DatastreamHistory dsHistory =
                 new DatastreamHistory(singletonList(getDSProfile(ds)));
         dsHistory.dsID = dsid;
