@@ -2,16 +2,20 @@ package org.fcrepo.services;
 
 import org.junit.Test;
 
+import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
+import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.junit.Assert.assertEquals;
 
 public class PathServiceTest {
     @Test
     public void testGetObjectJcrNodePath() throws Exception {
-        assertEquals("objects/test:123", new PathService().getObjectJcrNodePath("test:123"));
+        new PathService();
+        assertEquals("/objects/test:123", getObjectJcrNodePath("test:123"));
     }
 
     @Test
     public void testGetDatastreamJcrNodePath() throws Exception {
-        assertEquals("objects/test:123/asdf", new PathService().getDatastreamJcrNodePath("test:123", "asdf"));
+        new PathService();
+        assertEquals("/objects/test:123/asdf", getDatastreamJcrNodePath("test:123", "asdf"));
     }
 }

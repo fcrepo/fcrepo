@@ -13,6 +13,8 @@ import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastreamNode;
 import static org.fcrepo.services.ObjectService.getObjectNode;
+import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
+import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
@@ -72,7 +74,7 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public Response getDatastreams(@PathParam("pid")
+    public ObjectDatastreams getDatastreams(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
@@ -85,7 +87,7 @@ public class FedoraDatastreams extends AbstractResource {
                     getDSMimeType(ds)));
         }
         objectDatastreams.datastreams = datastreams.build();
-        return ok(objectDatastreams).build();
+        return objectDatastreams;
 
     }
 
@@ -98,12 +100,12 @@ public class FedoraDatastreams extends AbstractResource {
         final Session session = repo.login();
         try {
             Long oldObjectSize =
-                    getObjectSize(session.getNode("/objects/" + pid));
+                    getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
 
             for (final Attachment a : attachmentList) {
                 final String dsid =
                         a.getContentDisposition().getParameter("name");
-                final String dsPath = "/objects/" + pid + "/" + dsid;
+                final String dsPath = getDatastreamJcrNodePath(pid, dsid);
                 createDatastreamNode(session, dsPath, a.getDataHandler()
                         .getContentType(), a.getDataHandler().getInputStream());
 
@@ -115,8 +117,8 @@ public class FedoraDatastreams extends AbstractResource {
              * persisting session state creates new system-curated nodes and
              * properties which contribute to the footprint of this resource
              */
-            updateRepositorySize(getObjectSize(session.getNode("/objects/" +
-                    pid)) -
+            updateRepositorySize(getObjectSize(session
+                    .getNode(getObjectJcrNodePath(pid))) -
                     oldObjectSize, session);
             // now we save again to persist the repo size
             session.save();
@@ -154,7 +156,7 @@ public class FedoraDatastreams extends AbstractResource {
         contentType =
                 contentType != null ? contentType
                         : APPLICATION_OCTET_STREAM_TYPE;
-        String dspath = "/objects/" + pid + "/" + dsid;
+        String dspath = getDatastreamJcrNodePath(pid, dsid);
 
         if (!session.nodeExists(dspath)) {
             return created(
@@ -196,7 +198,7 @@ public class FedoraDatastreams extends AbstractResource {
         contentType =
                 contentType != null ? contentType
                         : MediaType.APPLICATION_OCTET_STREAM_TYPE;
-        String dspath = "/objects/" + pid + "/" + dsid;
+        String dspath = getDatastreamJcrNodePath(pid, dsid);
 
         return created(
                 addDatastreamNode(pid, dspath, contentType, requestBodyStream,
@@ -208,7 +210,8 @@ public class FedoraDatastreams extends AbstractResource {
             final MediaType contentType, final InputStream requestBodyStream,
             final Session session) throws RepositoryException, IOException {
 
-        Long oldObjectSize = getObjectSize(session.getNode("/objects/" + pid));
+        Long oldObjectSize =
+                getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
         logger.debug("Attempting to add datastream node at path: " + dsPath);
         try {
             boolean created = session.nodeExists(dsPath);
@@ -221,8 +224,8 @@ public class FedoraDatastreams extends AbstractResource {
                  * persisting session state creates new system-curated nodes and
                  * properties which contribute to the footprint of this resource
                  */
-                updateRepositorySize(getObjectSize(session.getNode("/objects/" +
-                        pid)) -
+                updateRepositorySize(getObjectSize(session
+                        .getNode(getObjectJcrNodePath(pid))) -
                         oldObjectSize, session);
                 // now we save again to persist the repo size
                 session.save();
@@ -296,7 +299,7 @@ public class FedoraDatastreams extends AbstractResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     // TODO implement this after deciding on a versioning model
             public
-            Response getDatastreamHistory(@PathParam("pid")
+            DatastreamHistory getDatastreamHistory(@PathParam("pid")
             final String pid, @PathParam("dsid")
             final String dsid) throws RepositoryException, IOException {
 
@@ -305,7 +308,7 @@ public class FedoraDatastreams extends AbstractResource {
                 new DatastreamHistory(singletonList(getDSProfile(ds.getNode())));
         dsHistory.dsID = dsid;
         dsHistory.pid = pid;
-        return ok(dsHistory).build();
+        return dsHistory;
     }
 
     /**
@@ -327,7 +330,7 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/{dsid}/history")
     @Produces(TEXT_XML)
     @Deprecated
-    public Response getDatastreamHistoryOld(@PathParam("pid")
+    public DatastreamHistory getDatastreamHistoryOld(@PathParam("pid")
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException, IOException {
         return getDatastreamHistory(pid, dsid);
@@ -348,7 +351,7 @@ public class FedoraDatastreams extends AbstractResource {
     public Response deleteDatastream(@PathParam("pid")
     String pid, @PathParam("dsid")
     String dsid) throws RepositoryException {
-        final String dsPath = "/objects/" + pid + "/" + dsid;
+        final String dsPath = getDatastreamJcrNodePath(pid  ,  dsid);
         final Session session = repo.login();
         final Node ds = session.getNode(dsPath);
         updateRepositorySize(0L - getDatastreamSize(ds), session);

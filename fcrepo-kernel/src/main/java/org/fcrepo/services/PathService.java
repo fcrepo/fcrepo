@@ -10,11 +10,11 @@ public class PathService {
             .getLogger(DatastreamService.class);
 
 
-    public String getObjectJcrNodePath(String pid) {
-        return "objects/" + pid;
+    public static String getObjectJcrNodePath(String pid) {
+        return "/objects/" + pid;
     }
 
-    public String getDatastreamJcrNodePath(String pid, String dsid) {
+    public static String getDatastreamJcrNodePath(String pid, String dsid) {
         return getObjectJcrNodePath(pid) + "/" + dsid;
     }
 }

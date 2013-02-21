@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 
 import org.modeshape.common.SystemFailureException;
@@ -32,7 +33,7 @@ public class FedoraTypesUtils {
             }
         }
     };
-    
+
     static public Predicate<Node> isFedoraDatastream = new Predicate<Node>() {
 
         @Override
@@ -56,8 +57,32 @@ public class FedoraTypesUtils {
                 }
             };
 
-    private static <From, To> Collection<To> map(From[] input,
+    public static Function<Value, String> value2string =
+            new Function<Value, String>() {
+
+                @Override
+                public String apply(Value v) {
+                    try {
+                        return v.getString();
+                    } catch (RepositoryException e) {
+                        throw new SystemFailureException(e);
+                    } catch (IllegalStateException e) {
+                        throw new SystemFailureException(e);
+                    }
+                }
+            };
+
+    public static <From, To> Collection<To> map(From[] input,
             Function<From, To> f) {
         return transform(copyOf(input), f);
     }
+
+    public static Function<NodeType, String> nodetype2string =
+            new Function<NodeType, String>() {
+
+                @Override
+                public String apply(NodeType type) {
+                    return type.getName();
+                }
+            };
 }

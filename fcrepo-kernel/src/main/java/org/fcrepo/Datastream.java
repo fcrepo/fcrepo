@@ -2,28 +2,22 @@
 package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
-import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
+import static org.fcrepo.utils.FedoraTypesUtils.map;
+import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.InputStream;
-import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
-
-import org.modeshape.common.SystemFailureException;
-
-import com.google.common.base.Function;
 
 public class Datastream {
 
@@ -72,23 +66,4 @@ public class Datastream {
         node.getSession().save();
     }
 
-    private Function<Value, String> value2string =
-            new Function<Value, String>() {
-
-                @Override
-                public String apply(Value v) {
-                    try {
-                        return v.getString();
-                    } catch (RepositoryException e) {
-                        throw new SystemFailureException(e);
-                    } catch (IllegalStateException e) {
-                        throw new SystemFailureException(e);
-                    }
-                }
-            };
-
-    private static <From, To> Collection<To> map(From[] input,
-            Function<From, To> f) {
-        return transform(copyOf(input), f);
-    }
 }
