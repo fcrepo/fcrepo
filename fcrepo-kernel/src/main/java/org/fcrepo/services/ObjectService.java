@@ -30,6 +30,11 @@ public class ObjectService {
         return new FedoraObject(session, path).getNode();
     }
 
+    public static Node createObjectNodeByName(final Session session,
+            final String name) throws RepositoryException {
+        return new FedoraObject(session, "/objects/" + name).getNode();
+    }
+
     public static Node getObjectNode(final String name)
             throws PathNotFoundException, RepositoryException {
         return readOnlySession.getNode("/objects/" + name);

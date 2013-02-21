@@ -10,6 +10,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
+import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastreamNode;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -103,9 +104,8 @@ public class FedoraDatastreams extends AbstractResource {
                 final String dsid =
                         a.getContentDisposition().getParameter("name");
                 final String dsPath = "/objects/" + pid + "/" + dsid;
-                new DatastreamService().createDatastreamNode(session, dsPath, a
-                        .getDataHandler().getContentType(), a.getDataHandler()
-                        .getInputStream());
+                createDatastreamNode(session, dsPath, a.getDataHandler()
+                        .getContentType(), a.getDataHandler().getInputStream());
 
             }
             session.save();
@@ -212,10 +212,8 @@ public class FedoraDatastreams extends AbstractResource {
         logger.debug("Attempting to add datastream node at path: " + dsPath);
         try {
             boolean created = session.nodeExists(dsPath);
-
-            new DatastreamService().createDatastreamNode(session, dsPath,
-                    contentType.toString(), requestBodyStream);
-
+            createDatastreamNode(session, dsPath, contentType.toString(),
+                    requestBodyStream);
             session.save();
             if (created) {
                 /*

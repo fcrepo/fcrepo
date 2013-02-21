@@ -1,7 +1,9 @@
 
 package org.fcrepo.services;
 
-import static org.fcrepo.services.DatastreamService.getDatastreamContentInputStream;
+import static org.fcrepo.services.DatastreamService.createDatastreamNode;
+import static org.fcrepo.services.DatastreamService.getDatastream;
+import static org.fcrepo.services.ObjectService.createObjectNodeByName;
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -16,6 +18,7 @@ import javax.jcr.Session;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.AbstractTest;
+import org.fcrepo.Datastream;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -25,15 +28,12 @@ public class DatastreamServiceTest extends AbstractTest {
     @Inject
     private Repository repository;
 
-    @Inject
-    private DatastreamService datastreamService;
-
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
         InputStream is = new ByteArrayInputStream("asdf".getBytes());
 
-        datastreamService.createDatastreamNode(session, "testDatastreamNode",
+        createDatastreamNode(session, "testDatastreamNode",
                 "application/octet-stream", is);
         session.save();
         session.logout();
@@ -49,18 +49,15 @@ public class DatastreamServiceTest extends AbstractTest {
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         InputStream is = new ByteArrayInputStream("asdf".getBytes());
-
-        datastreamService.createDatastreamNode(session, "testDatastreamNode",
+        createObjectNodeByName(session, "testObject");
+        createDatastreamNode(session, "/objects/testObject/testDatastreamNode",
                 "application/octet-stream", is);
 
         session.save();
         session.logout();
         session = repository.login();
-
-        InputStream contentInputStream =
-                getDatastreamContentInputStream(session, "/testDatastreamNode");
-
-        assertEquals("asdf", IOUtils.toString(contentInputStream, "UTF-8"));
+        final Datastream ds = getDatastream("testObject", "testDatastreamNode");
+        assertEquals("asdf", IOUtils.toString(ds.getContent(), "UTF-8"));
         session.logout();
     }
 }

@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -21,16 +20,12 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.generator.dublincore.AbstractIndexer;
-import org.fcrepo.services.ObjectService;
 
 @Path("/objects/{pid}/oai_dc")
 public class DublinCore extends AbstractResource {
 
     @Resource
     List<AbstractIndexer> indexers;
-
-    @Inject
-    ObjectService objectService;
 
     @GET
     @Produces(TEXT_XML)

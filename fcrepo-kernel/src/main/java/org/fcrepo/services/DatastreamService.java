@@ -29,7 +29,7 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DatastreamService extends JcrTools {
+public class DatastreamService {
 
     private static final Logger logger = LoggerFactory
             .getLogger(DatastreamService.class);
@@ -39,16 +39,18 @@ public class DatastreamService extends JcrTools {
 
     private Session readOnlySession;
 
-    public Node createDatastreamNode(final Session session,
+    private static JcrTools jcrTools = new JcrTools(false);
+
+    public static Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
             final InputStream requestBodyStream) throws RepositoryException,
             IOException {
 
-        final Node ds = findOrCreateNode(session, dsPath, NT_FILE);
+        final Node ds = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
         ds.addMixin(FEDORA_DATASTREAM);
 
         final Node contentNode =
-                findOrCreateChild(ds, JCR_CONTENT, NT_RESOURCE);
+                jcrTools.findOrCreateChild(ds, JCR_CONTENT, NT_RESOURCE);
         logger.debug("Created content node at path: " + contentNode.getPath());
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -95,29 +97,6 @@ public class DatastreamService extends JcrTools {
     public static Datastream getDatastream(final String pid, final String dsId)
             throws PathNotFoundException, RepositoryException {
         return new Datastream(getObjectNode(pid).getNode(dsId));
-    }
-
-    public static InputStream getDatastreamContentInputStream(
-            final Session session, final String dsPath)
-            throws RepositoryException {
-        return session.getNode(dsPath).getNode(JCR_CONTENT).getProperty(
-                JCR_DATA).getBinary().getStream();
-    }
-
-    public InputStream getDatastreamContentInputStream(final String dsPath)
-            throws RepositoryException {
-        return readOnlySession.getNode(dsPath).getNode(JCR_CONTENT)
-                .getProperty(JCR_DATA).getBinary().getStream();
-    }
-
-    public static InputStream getDatastreamContentInputStream(final Node node)
-            throws RepositoryException {
-        return new Datastream(node).getContent();
-    }
-
-    public static InputStream getDatastreamContentInputStream(
-            final Datastream ds) throws RepositoryException {
-        return ds.getContent();
     }
 
     @PostConstruct
