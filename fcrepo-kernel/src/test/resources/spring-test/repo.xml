@@ -21,5 +21,6 @@
     </bean>
 
     <bean class="org.fcrepo.services.ObjectService"/>    
-
+    <bean class="org.fcrepo.services.DatastreamService"/>    
+    
 </beans>

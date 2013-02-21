@@ -1,6 +1,11 @@
 
 package org.fcrepo;
 
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+
+import java.io.InputStream;
+
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -16,6 +21,11 @@ public class Datastream {
 
     public Node getNode() {
         return node;
+    }
+    
+    public InputStream getContent() throws ValueFormatException, PathNotFoundException, RepositoryException {
+        return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
+                .getStream();
     }
 
     public String getMimeType() throws ValueFormatException,

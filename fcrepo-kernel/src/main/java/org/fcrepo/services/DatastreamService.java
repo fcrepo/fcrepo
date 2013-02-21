@@ -112,14 +112,12 @@ public class DatastreamService extends JcrTools {
 
     public static InputStream getDatastreamContentInputStream(final Node node)
             throws RepositoryException {
-        return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
-                .getStream();
+        return new Datastream(node).getContent();
     }
 
     public static InputStream getDatastreamContentInputStream(
             final Datastream ds) throws RepositoryException {
-        return ds.getNode().getNode(JCR_CONTENT).getProperty(JCR_DATA)
-                .getBinary().getStream();
+        return ds.getContent();
     }
 
     @PostConstruct

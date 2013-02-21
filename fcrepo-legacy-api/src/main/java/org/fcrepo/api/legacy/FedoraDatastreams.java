@@ -10,7 +10,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
-import static org.fcrepo.services.DatastreamService.getDatastreamContentInputStream;
 import static org.fcrepo.services.DatastreamService.getDatastreamNode;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -199,7 +198,7 @@ public class FedoraDatastreams extends AbstractResource {
                         : MediaType.APPLICATION_OCTET_STREAM_TYPE;
         String dspath = "/objects/" + pid + "/" + dsid;
 
-        return Response.created(
+        return created(
                 addDatastreamNode(pid, dspath, contentType, requestBodyStream,
                         session)).build();
 
@@ -276,8 +275,8 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException {
 
-        final Datastream ds = DatastreamService.getDatastream(pid,dsid);
-        return ok(getDatastreamContentInputStream(ds), ds.getMimeType()).build();
+        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+        return ok(ds.getContent(), ds.getMimeType()).build();
     }
 
     /**
@@ -301,9 +300,9 @@ public class FedoraDatastreams extends AbstractResource {
             final String pid, @PathParam("dsid")
             final String dsid) throws RepositoryException, IOException {
 
-        final Node ds = getObjectNode(pid).getNode(dsid);
+        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
         final DatastreamHistory dsHistory =
-                new DatastreamHistory(singletonList(getDSProfile(ds)));
+                new DatastreamHistory(singletonList(getDSProfile(ds.getNode())));
         dsHistory.dsID = dsid;
         dsHistory.pid = pid;
         return ok(dsHistory).build();
