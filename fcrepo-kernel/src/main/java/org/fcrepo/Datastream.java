@@ -19,6 +19,12 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+/**
+ * Abstraction for Fedora datastreams.
+ * 
+ * @author ajs6f
+ *
+ */
 public class Datastream {
 
     Node node;

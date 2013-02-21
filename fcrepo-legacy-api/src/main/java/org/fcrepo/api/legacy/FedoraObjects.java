@@ -13,7 +13,7 @@ import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
-import static org.fcrepo.utils.FedoraTypesUtils.nodetype2string;
+import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 
 import java.io.IOException;
@@ -44,6 +44,13 @@ public class FedoraObjects extends AbstractResource {
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraObjects.class);
 
+    /**
+     * 
+     * Provides a serialized list of JCR names for all objects in the repo.
+     * 
+     * @return 200
+     * @throws RepositoryException
+     */
     @GET
     public Response getObjects() throws RepositoryException {
         final Session session = repo.login();
@@ -63,29 +70,51 @@ public class FedoraObjects extends AbstractResource {
 
     }
 
+    /**
+     * Creates a new object with a repo-chosen PID
+     * 
+     * @return 201
+     * @throws RepositoryException
+     */
     @POST
     @Path("/new")
     public Response ingestAndMint() throws RepositoryException {
         return ingest(pidMinter.mintPid());
     }
 
+    /**
+     * Does nothing yet-- must be improved to handle the FCREPO3 PUT to /objects/{pid}
+     * 
+     * @param pid
+     * @return 201
+     * @throws RepositoryException
+     */
     @PUT
     @Path("/{pid}")
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
-        /*final String objPath = "/objects/" + pid;
-        final Session session = repo.login();
-        try {
-            final Node obj = session.getNode(objPath);
-            // TODO do something with awful mess of fcrepo3 query params
-            session.save();
-        } finally {
-            session.logout();
-        }*/
+        /*
+         * final String objPath = "/objects/" + pid;
+         * final Session session = repo.login();
+         * try {
+         * final Node obj = session.getNode(objPath);
+         * // TODO do something with awful mess of fcrepo3 query params
+         * session.save();
+         * } finally {
+         * session.logout();
+         * }
+         */
         return created(uriInfo.getAbsolutePath()).build();
     }
 
+    /**
+     * Creates a new object.
+     * 
+     * @param pid
+     * @return 201
+     * @throws RepositoryException
+     */
     @POST
     @Path("/{pid}")
     public Response ingest(@PathParam("pid")
@@ -95,7 +124,8 @@ public class FedoraObjects extends AbstractResource {
 
         final Session session = repo.login();
         try {
-            final Node obj = createObjectNode(session, getObjectJcrNodePath(pid));
+            final Node obj =
+                    createObjectNode(session, getObjectJcrNodePath(pid));
             session.save();
             /*
              * we save before updating the repo size because the act of
@@ -113,6 +143,14 @@ public class FedoraObjects extends AbstractResource {
         }
     }
 
+    /**
+     * Returns an object profile.
+     * 
+     * @param pid
+     * @return 200
+     * @throws RepositoryException
+     * @throws IOException
+     */
     @GET
     @Path("/{pid}")
     @Produces({TEXT_XML, APPLICATION_JSON})
@@ -142,11 +180,18 @@ public class FedoraObjects extends AbstractResource {
         objectProfile.objItemIndexViewURL =
                 uriInfo.getAbsolutePathBuilder().path("datastreams").build();
         objectProfile.objState = A;
-        objectProfile.objModels = map(obj.getMixinNodeTypes(), nodetype2string);
+        objectProfile.objModels = map(obj.getMixinNodeTypes(), nodetype2name);
         return objectProfile;
 
     }
 
+    /**
+     * Deletes an object.
+     * 
+     * @param pid
+     * @return
+     * @throws RepositoryException
+     */
     @DELETE
     @Path("/{pid}")
     public Response deleteObject(@PathParam("pid")
