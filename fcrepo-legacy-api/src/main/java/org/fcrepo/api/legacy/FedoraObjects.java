@@ -8,8 +8,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
@@ -90,22 +88,12 @@ public class FedoraObjects extends AbstractResource {
     @Path("/{pid}")
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
-    final String pid, final ObjectProfile objProfile)
-            throws RepositoryException {
-
+    final String pid) throws RepositoryException {
         final String objPath = "/objects/" + pid;
         final Session session = repo.login();
         try {
-            if (!session.nodeExists(objPath)) {
-                session.logout();
-                return status(CONFLICT).entity("No such object").build();
-            }
             final Node obj = session.getNode(objPath);
-            obj.setProperty(DC_TITLE, objProfile.objLabel);
-            if (objProfile.objModels != null)
-                for (String model : objProfile.objModels) {
-                    obj.addMixin(model);
-                }
+            // TODO do something with awful mess of fcrepo3 query params
             session.save();
         } finally {
             session.logout();

@@ -116,11 +116,10 @@ public class FedoraDatastreams extends AbstractResource {
                 final String dsid =
                         a.getContentDisposition().getParameter("name");
                 final String dsPath = "/objects/" + pid + "/" + dsid;
-                if (session.hasPermission(dsPath, "add_node")) {
-                    new DatastreamService().createDatastreamNode(session,
-                            dsPath, a.getDataHandler().getContentType(), a
-                                    .getDataHandler().getInputStream());
-                }
+                new DatastreamService().createDatastreamNode(session, dsPath, a
+                        .getDataHandler().getContentType(), a.getDataHandler()
+                        .getInputStream());
+
             }
             session.save();
 
@@ -175,7 +174,6 @@ public class FedoraDatastreams extends AbstractResource {
                     addDatastreamNode(pid, dspath, contentType,
                             requestBodyStream, session)).build();
         } else {
-
             session.getNode(dspath).remove();
             session.save();
             return created(
