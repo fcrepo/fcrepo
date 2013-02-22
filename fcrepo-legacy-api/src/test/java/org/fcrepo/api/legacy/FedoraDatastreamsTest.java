@@ -3,6 +3,7 @@ package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -213,6 +214,39 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertTrue("Didn't find the first datastream!", compile("asdfg",
                 DOTALL).matcher(content).find());
         assertTrue("Didn't find the second datastream!", compile(
+                "qwerty", DOTALL).matcher(content).find());
+
+    }
+
+    @Test
+    public void testRetrieveFIlteredMultipartDatastreams() throws Exception {
+
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest10");
+        assertEquals(201, getStatus(objMethod));
+        final HttpPost post =
+                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest10/datastreams/");
+
+        MultipartEntity multiPartEntity = new MultipartEntity();
+        multiPartEntity.addPart("ds1", new StringBody("asdfg"));
+        multiPartEntity.addPart("ds2", new StringBody("qwerty"));
+
+        post.setEntity(multiPartEntity);
+
+        HttpResponse postResponse = client.execute(post);
+        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+
+
+        // TODO: we should actually evaluate the multipart response for the things we're expecting
+        final HttpGet getDSesMethod =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest10/datastreams/__content__?dsid=ds1");
+        HttpResponse response = client.execute(getDSesMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        assertTrue("Didn't find the first datastream!", compile("asdfg",
+                DOTALL).matcher(content).find());
+        assertFalse("Didn't expect to find the second datastream!", compile(
                 "qwerty", DOTALL).matcher(content).find());
 
     }
