@@ -19,6 +19,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -39,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.jaxb.responses.DatastreamHistory;
@@ -125,6 +127,28 @@ public class FedoraDatastreams extends AbstractResource {
         }
 
         return created(uriInfo.getAbsolutePath()).build();
+    }
+
+    @GET
+    @Path("/__content__")
+    @Produces("multipart/mixed")
+    public MultipartBody getDatastreamsContents(@PathParam("pid") final String pid) throws RepositoryException, IOException {
+
+        final Session session = repo.login();
+
+        List<Attachment> atts = new LinkedList<Attachment>();
+        try {
+            NodeIterator i = getObjectNode(pid).getNodes();
+            while (i.hasNext()) {
+                final Node n = i.nextNode();
+                final Datastream ds = DatastreamService.getDatastream(pid, n.getName());
+                atts.add(new Attachment(n.getName(), ds.getMimeType(), ds.getContent()));
+            }
+        } finally {
+            session.logout();
+        }
+
+        return new MultipartBody(atts, true);
     }
 
     /**
