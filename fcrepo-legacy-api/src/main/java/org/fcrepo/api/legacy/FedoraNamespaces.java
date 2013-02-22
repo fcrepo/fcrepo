@@ -5,6 +5,7 @@ import static com.google.common.collect.ImmutableSet.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import org.fcrepo.jaxb.responses.NamespaceListing;
 import org.fcrepo.jaxb.responses.NamespaceListing.Namespace;
 
 import com.google.common.collect.ImmutableSet.Builder;
+import javax.ws.rs.DELETE;
 
 /**
  * The purpose of this class is to allow clients to manipulate the JCR
@@ -89,6 +91,29 @@ public class FedoraNamespaces extends AbstractResource {
     }
 
     /**
+     * Unregisters a JCR namespace.
+     * 
+     * @param prefix Prefix to use
+     * @return 201
+     * @throws RepositoryException
+     */
+    @DELETE
+    @Path("/{prefix}")
+    public Response deleteObjectNamespace(@PathParam("prefix")
+    final String prefix) throws RepositoryException {
+
+        final Session session = repo.login();
+        try {
+            final NamespaceRegistry r =
+                    session.getWorkspace().getNamespaceRegistry();
+            r.unregisterNamespace(prefix);
+        } finally {
+            session.logout();
+        }
+        return noContent().build();
+    }
+
+    /**
      * Retrieve a namespace URI from a prefix.
      * 
      * @param prefix The prefix to search.
@@ -138,5 +163,4 @@ public class FedoraNamespaces extends AbstractResource {
         }
         return new NamespaceListing(b.build());
     }
-
 }
