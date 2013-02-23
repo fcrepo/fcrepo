@@ -99,7 +99,7 @@ header {
     @include background(linear_gradient(#77B9FB, #3782CD));
     border-radius:5px;
     @include box-shadow(inset rgba(#fff, 0.45) 0 1px 0, inset rgba(#000, 0.2) 0 -1px 0);
-    width:240px;
+    width:auto;
     
     &:before {
       content:'';
