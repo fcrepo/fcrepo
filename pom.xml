@@ -538,7 +538,7 @@
     </connection>
     <developerConnection>scm:git:git@github.com:futures/${project_name}.git
     </developerConnection>
-    <url>http://github.com/futures/${project_name}</url>
+    <url>https://github.com/futures/${project_name}</url>
   </scm>
 
   <prerequisites>
