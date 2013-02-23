@@ -1,0 +1,6 @@
+org.fcrepo
+org.fcrepo.identifiers
+org.fcrepo.observer
+org.fcrepo.services
+org.fcrepo.spring
+org.fcrepo.utils
