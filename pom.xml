@@ -21,8 +21,6 @@
     <activemq.version>5.7.0</activemq.version>
     <cxf.version>2.7.2</cxf.version>
     <modeshape.version>3.1.2.Final</modeshape.version>
-    <infinispan.version>5.2.1.Final</infinispan.version>
-    <jgroups.version>3.2.6.Final</jgroups.version>
     <slf4j.version>1.7.2</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
 
@@ -45,11 +43,10 @@
 
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the 
-        "dependenciesManagement" section defaults for all of the modules we might 
-        need, but we still have to include in the "dependencies" section the modules 
-        we DO need. The benefit is that we don't have to specify the versions of 
-        any of those modules. -->
+      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
+        section defaults for all of the modules we might need, but we still have to include 
+        in the "dependencies" section the modules we DO need. The benefit is that we don't 
+        have to specify the versions of any of those modules. -->
       <dependency>
         <groupId>org.modeshape.bom</groupId>
         <artifactId>modeshape-bom-embedded</artifactId>
@@ -133,12 +130,12 @@
       <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-core</artifactId>
-        <version>${infinispan.version}</version>
+        <version>5.2.0.Final</version>
       </dependency>
       <dependency>
         <groupId>org.jgroups</groupId>
         <artifactId>jgroups</artifactId>
-        <version>${jgroups.version}</version>
+        <version>3.2.6.Final</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -248,6 +245,24 @@
         <plugin>
           <artifactId>maven-enforcer-plugin</artifactId>
           <version>1.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.13</version>
+          <executions>
+            <execution>
+              <id>integration-test</id>
+              <goals>
+                <goal>integration-test</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>verify</id>
+              <goals>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>

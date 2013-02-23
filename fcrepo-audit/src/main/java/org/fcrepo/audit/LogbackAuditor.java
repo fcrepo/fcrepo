@@ -1,4 +1,4 @@
-package org.fcrepo.modeshape.audit;
+package org.fcrepo.audit;
 
 import static org.fcrepo.utils.EventType.getEventName;
 
@@ -17,14 +17,14 @@ import com.google.common.eventbus.Subscribe;
  */
 public class LogbackAuditor implements Auditor {
 
-	Logger logger = LoggerFactory.getLogger(LogbackAuditor.class);
-
-	/**
-     * 
+    /**
+     * Logger for this class.
      */
+    private Logger logger = LoggerFactory.getLogger(LogbackAuditor.class);
+
 	@Override
 	@Subscribe
-	public void recordEvent(Event e) throws RepositoryException {
+    public void recordEvent(final Event e) throws RepositoryException {
 		logger.info(e.getUserID() + " " + getEventName(e.getType()) + " "
 				+ e.getPath());
 	}

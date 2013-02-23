@@ -1,3 +1,4 @@
+
 package org.fcrepo.generator.dublincore;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -14,7 +15,7 @@ public class IndexFromWellKnownPath extends AbstractIndexer {
     private String wellKnownPath;
 
     @Override
-    public InputStream getStream(Node node) {
+    public InputStream getStream(final Node node) {
 
         try {
             return getContentInputStream(node);
@@ -25,11 +26,13 @@ public class IndexFromWellKnownPath extends AbstractIndexer {
         }
     }
 
-    private InputStream getContentInputStream(Node node) throws RepositoryException {
-        if(node.hasNode(this.wellKnownPath)) {
+    private InputStream getContentInputStream(final Node node)
+            throws RepositoryException {
+        if (node.hasNode(this.wellKnownPath)) {
             final Node dc = node.getNode(this.wellKnownPath);
 
-            Binary binary = dc.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
+            Binary binary =
+                    dc.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
 
             return binary.getStream();
         } else {

@@ -108,7 +108,7 @@ public class ObjectService {
     }
 
     @PostConstruct
-    public void getSession() {
+    public final void getSession() {
         try {
             readOnlySession = repo.login();
         } catch (RepositoryException e) {
@@ -117,7 +117,7 @@ public class ObjectService {
     }
 
     @PreDestroy
-    public void logoutSession() {
+    public final void logoutSession() {
         readOnlySession.logout();
     }
 
