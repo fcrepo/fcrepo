@@ -1,0 +1,7 @@
+org.fcrepo
+org.fcrepo.api.legacy
+org.fcrepo.audit
+org.fcrepo.generator
+org.fcrepo.observer
+org.fcrepo.services
+org.fcrepo.syndication

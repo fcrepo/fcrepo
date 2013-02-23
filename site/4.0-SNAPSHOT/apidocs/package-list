@@ -1,0 +1,14 @@
+org.fcrepo
+org.fcrepo.api.legacy
+org.fcrepo.audit
+org.fcrepo.exceptionhandlers
+org.fcrepo.generator
+org.fcrepo.generator.dublincore
+org.fcrepo.identifiers
+org.fcrepo.jaxb.responses
+org.fcrepo.messaging.legacy
+org.fcrepo.observer
+org.fcrepo.services
+org.fcrepo.spring
+org.fcrepo.syndication
+org.fcrepo.utils
