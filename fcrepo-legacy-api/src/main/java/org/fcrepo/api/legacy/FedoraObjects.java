@@ -18,6 +18,8 @@ import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -35,7 +37,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraObject;
+import org.fcrepo.jaxb.responses.DescribeRepository;
 import org.fcrepo.jaxb.responses.ObjectProfile;
+import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +62,37 @@ public class FedoraObjects extends AbstractResource {
 
         return ok(getObjectNames().toString()).build();
 
+    }
+
+    /**
+     * @return A Set of object names (identifiers)
+     * @throws RepositoryException
+     */
+    @GET
+    @Path("/calcSize")
+    public DescribeRepository calcRepoSize() throws RepositoryException {
+      Set<String> objectNames = ObjectService.getObjectNames();
+      Iterator<String> iterator = objectNames.iterator();
+      long size = 0;
+      while (iterator.hasNext()) {
+        FedoraObject object = ObjectService.getObject(iterator.next());
+        size += getObjectSize(object.getNode());
+      }
+      System.out.println(size);
+
+      final Session session = repo.login();
+      Property sizeProperty = session.getNode("/objects").getProperty("size");
+      synchronized (sizeProperty) {
+        // store the calculated (correct) size value to the object property
+        sizeProperty.setValue(size);
+        session.save();
+      }
+      logger.debug("Calculated repository size: " + sizeProperty.getLong());
+
+      DescribeRepository description = new DescribeRepository();
+      description.repositorySize = sizeProperty.getLong();
+      description.numberOfObjects = Long.valueOf(objectNames.size());
+      return description;
     }
 
     /**
