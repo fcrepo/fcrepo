@@ -1,4 +1,4 @@
-package org.fcrepo.modeshape.audit;
+package org.fcrepo.audit;
 
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -20,7 +20,6 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 
 import com.google.common.eventbus.EventBus;
-
 
 public class LogbackAuditorTest {
 
@@ -58,11 +57,12 @@ public class LogbackAuditorTest {
 
         verify(mockAppender).doAppend(
                 (ILoggingEvent) argThat(new ArgumentMatcher<Object>() {
-            @Override
-            public boolean matches(final Object argument) {
-                return ((LoggingEvent) argument).getFormattedMessage()
-                        .contains("jdoe node added /foo/bar");
-            }
-        }));
+
+                    @Override
+                    public boolean matches(final Object argument) {
+                        return ((LoggingEvent) argument).getFormattedMessage()
+                                .contains("jdoe node added /foo/bar");
+                    }
+                }));
     }
 }

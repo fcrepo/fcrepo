@@ -64,14 +64,15 @@ public class Datastream {
 
             Property labels = node.getProperty(DC_TITLE);
             String label;
-            if (!labels.isMultiple())
+            if (!labels.isMultiple()) {
                 label = node.getProperty(DC_TITLE).getString();
-            else {
+            } else {
                 label = on('/').join(map(labels.getValues(), value2string));
             }
             return label;
-        } else
+        } else {
             return "";
+        }
 
     }
 

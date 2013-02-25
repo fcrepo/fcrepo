@@ -1,4 +1,4 @@
-package org.fcrepo.modeshape.audit;
+package org.fcrepo.audit;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
@@ -12,6 +12,12 @@ import com.google.common.eventbus.Subscribe;
  */
 public interface Auditor {
 
+    /**
+     * 
+     * @param e The {@Event} to record.
+     * 
+     * @throws RepositoryException 
+     */
 	@Subscribe
-	public void recordEvent(Event e) throws RepositoryException;
+    void recordEvent(Event e) throws RepositoryException;
 }
