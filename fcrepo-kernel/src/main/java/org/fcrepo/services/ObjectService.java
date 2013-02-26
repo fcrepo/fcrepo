@@ -82,7 +82,7 @@ public class ObjectService {
 
     /**
      * @param pid
-     * @return A FedoraObject with the proferred PID
+     * @return A FedoraObject with the proffered PID
      * @throws RepositoryException
      */
     public static FedoraObject getObject(final String pid)

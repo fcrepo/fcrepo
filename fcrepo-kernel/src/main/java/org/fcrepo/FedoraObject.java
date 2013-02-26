@@ -15,6 +15,13 @@ import javax.jcr.version.VersionException;
 
 import org.modeshape.jcr.api.JcrTools;
 
+/**
+ * An abstraction that represents a Fedora Object backed by
+ * a JCR node.
+ * 
+ * @author ajs6f
+ *
+ */
 public class FedoraObject extends JcrTools {
 
     private Node node;
@@ -35,10 +42,17 @@ public class FedoraObject extends JcrTools {
                 node.getName()});
     }
 
+    /**
+     * @return The JCR name of the node that backs this object.
+     * @throws RepositoryException
+     */
     public String getName() throws RepositoryException {
         return node.getName();
     }
 
+    /**
+     * @return The JCR node that backs this object.
+     */
     public Node getNode() {
         return node;
     }

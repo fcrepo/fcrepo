@@ -1,6 +1,12 @@
 
 package org.fcrepo.utils;
 
+/**
+ * Convenience class with constants for commonly used JCR types.
+ * 
+ * @author ajs6f
+ *
+ */
 public class FedoraJcrTypes {
 
     public static final String FEDORA_DATASTREAM = "fedora:datastream";
