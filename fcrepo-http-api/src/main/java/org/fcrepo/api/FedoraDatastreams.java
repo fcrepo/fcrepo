@@ -1,5 +1,5 @@
 
-package org.fcrepo.api.legacy;
+package org.fcrepo.api;
 
 import static com.google.common.collect.ImmutableSet.builder;
 import static java.util.Collections.singletonList;
@@ -8,7 +8,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
+import static org.fcrepo.api.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.ObjectService.getObjectNode;
@@ -31,7 +31,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;

@@ -21,11 +21,11 @@
 
     <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
-            <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
-            <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
-            <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
-            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
+            <bean class="org.fcrepo.api.FedoraRepository"/>
+            <bean class="org.fcrepo.api.FedoraDatastreams"/>
+            <bean class="org.fcrepo.api.FedoraIdentifiers"/>
+            <bean class="org.fcrepo.api.FedoraNamespaces"/>
+            <bean class="org.fcrepo.api.FedoraObjects"/>
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
             <entry key="json" value="application/json"/>

@@ -20,7 +20,7 @@
     <!-- Mints PIDs-->
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
-    <jaxrs:server address="/rest">
+    <jaxrs:server address="/v3">
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
             <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
@@ -34,23 +34,33 @@
             <entry key="xml" value="application/xml"/>
         </jaxrs:extensionMappings>
         <jaxrs:providers>
-            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
-                <property name="showStackTrace" value="true"/>
-            </bean>
-            <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
-                <property name="marshallerProperties">
-                    <util:map>
-                        <entry key="jaxb.formatted.output">
-                            <value type="java.lang.Boolean">true</value>
-                        </entry>
-                    </util:map>
-                </property>
-            </bean>
-            <bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
-                <property name="ignoreNamespaces" value="true"/>
-            </bean>
+            <ref bean="pathNotFoundExceptionMapper"/>
+            <ref bean="accessControlExceptionMapper"/>
+            <ref bean="wildcardExceptionMapper"/>
+            <ref bean="jaxbElementProvider"/>
+            <ref bean="jsonProvider"/>
+        </jaxrs:providers>
+    </jaxrs:server>
+
+    <jaxrs:server address="/rest">
+        <jaxrs:serviceBeans>
+            <bean class="org.fcrepo.api.FedoraRepository"/>
+            <bean class="org.fcrepo.api.FedoraDatastreams"/>
+            <bean class="org.fcrepo.api.FedoraIdentifiers"/>
+            <bean class="org.fcrepo.api.FedoraNamespaces"/>
+            <bean class="org.fcrepo.api.FedoraObjects"/>
+            <bean class="org.fcrepo.generator.DublinCore"/>
+        </jaxrs:serviceBeans>
+        <jaxrs:extensionMappings>
+            <entry key="json" value="application/json"/>
+            <entry key="xml" value="application/xml"/>
+        </jaxrs:extensionMappings>
+        <jaxrs:providers>
+            <ref bean="pathNotFoundExceptionMapper"/>
+            <ref bean="accessControlExceptionMapper"/>
+            <ref bean="wildcardExceptionMapper"/>
+            <ref bean="jaxbElementProvider"/>
+            <ref bean="jsonProvider"/>
         </jaxrs:providers>
     </jaxrs:server>
 
@@ -65,4 +75,24 @@
         </jaxrs:providers>
     </jaxrs:server>
 
+    <bean name="pathNotFoundExceptionMapper"
+        class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
+    <bean name="accessControlExceptionMapper"
+        class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
+    <bean name="wildcardExceptionMapper"
+        class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
+        <property name="showStackTrace" value="true"/>
+    </bean>
+    <bean name="jaxbElementProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
+        <property name="marshallerProperties">
+            <util:map>
+                <entry key="jaxb.formatted.output">
+                    <value type="java.lang.Boolean">true</value>
+                </entry>
+            </util:map>
+        </property>
+    </bean>
+    <bean name="jsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+        <property name="ignoreNamespaces" value="true"/>
+    </bean>
 </beans>

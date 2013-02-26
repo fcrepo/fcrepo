@@ -1,0 +1,19 @@
+<!DOCTYPE html SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>{$objLabel}</title>
+    </head>
+    <body> You are examining the Fedora object with identifier: {$pid}. Would you like to kill it?
+            <button onmousedown="purgeObject();">DIE!</button>
+        <script type="application/javascript">
+            function purgeObject () {
+                var form = document.createElement('form');
+                form.setAttribute('method', 'delete');
+                form.setAttribute('action', '');
+                form.style.display = 'hidden';
+                document.body.appendChild(form)
+                form.submit();
+            }
+        </script>
+    </body>
+</html>

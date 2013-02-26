@@ -8,12 +8,12 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>fcrepo-legacy-api</artifactId>
+  <artifactId>fcrepo-http-api</artifactId>
   <packaging>bundle</packaging>
 
-  <description>Fedora 3.x legacy API</description>
+  <description>Fedora 4.x HTTP API</description>
 
-  <name>fcrepo 3.x compatible REST API</name>
+  <name>fcrepo 4.x HTTP API</name>
 
   <dependencies>
     <dependency>
@@ -28,7 +28,12 @@
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.googlecode.htmleasy</groupId>
+      <artifactId>htmleasy</artifactId>
+      <version>0.7</version>
+    </dependency>
+    
     <dependency>
       <groupId>org.codehaus.enunciate</groupId>
       <artifactId>enunciate-cxf-rt</artifactId>
@@ -112,4 +117,12 @@
       </plugin>
     </plugins>
   </build>
+
+  <repositories>
+    <repository>
+      <id>htmleasy</id>
+      <url>http://htmleasy-maven.googlecode.com/svn/trunk/</url>
+    </repository>
+  </repositories>
+
 </project>

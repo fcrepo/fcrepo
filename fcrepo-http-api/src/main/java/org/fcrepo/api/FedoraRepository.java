@@ -1,5 +1,5 @@
 
-package org.fcrepo.api.legacy;
+package org.fcrepo.api;
 
 import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;

@@ -1,12 +1,13 @@
 
-package org.fcrepo.api.legacy;
+package org.fcrepo.api;
 
 import static com.google.common.base.Joiner.on;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
+import static org.fcrepo.api.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.fcrepo.services.ObjectService.getObjectNames;
@@ -32,12 +33,15 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.ObjectProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.googlecode.htmleasy.ViewWith;
 
 @Path("/objects")
 public class FedoraObjects extends AbstractResource {
@@ -141,7 +145,8 @@ public class FedoraObjects extends AbstractResource {
      */
     @GET
     @Path("/{pid}")
-    @Produces({TEXT_XML, APPLICATION_JSON})
+    @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
+    @ViewWith("/views/objectProfile")
     public ObjectProfile getObject(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 

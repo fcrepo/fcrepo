@@ -1,5 +1,5 @@
 
-package org.fcrepo.api.legacy;
+package org.fcrepo.api;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.DiscreteDomains.integers;
