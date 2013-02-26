@@ -20,6 +20,8 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -29,6 +31,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -36,10 +39,12 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.jaxb.responses.DatastreamHistory;
@@ -126,6 +131,40 @@ public class FedoraDatastreams extends AbstractResource {
         }
 
         return created(uriInfo.getAbsolutePath()).build();
+    }
+
+    @GET
+    @Path("/__content__")
+    @Produces("multipart/mixed")
+    public MultipartBody getDatastreamsContents(@PathParam("pid") final String pid, @QueryParam("dsid") List<String> dsids) throws RepositoryException, IOException {
+
+        final Session session = repo.login();
+
+        if(dsids.isEmpty()) {
+            NodeIterator ni = getObjectNode(pid).getNodes();
+            while(ni.hasNext()) {
+                dsids.add(ni.nextNode().getName());
+            }
+        }
+
+        List<Attachment> atts = new LinkedList<Attachment>();
+        try {
+            Iterator<String> i = dsids.iterator();
+            while (i.hasNext()) {
+                final String dsid = i.next();
+
+                try {
+                    final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+                    atts.add(new Attachment(ds.getNode().getName(), ds.getMimeType(), ds.getContent()));
+                } catch(PathNotFoundException e) {
+
+                }
+            }
+        } finally {
+            session.logout();
+        }
+
+        return new MultipartBody(atts, true);
     }
 
     /**
