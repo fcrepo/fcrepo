@@ -61,6 +61,18 @@
             <ref bean="wildcardExceptionMapper"/>
             <ref bean="jaxbElementProvider"/>
             <ref bean="jsonProvider"/>
+            <bean class="org.apache.cxf.jaxrs.provider.XSLTJaxbProvider">
+                <property name="outMediaTemplates">
+                    <map>
+                        <entry key="text/html" value="classpath:/views/object.xslt"/>
+                    </map>
+                </property>
+                <!--
+                <property name="resolver">
+                    <bean class="org.apache.xml.resolver.helpers.BootstrapResolver"/>
+                </property>
+                -->
+            </bean>
         </jaxrs:providers>
     </jaxrs:server>
 

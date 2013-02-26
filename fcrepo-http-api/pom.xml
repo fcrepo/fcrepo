@@ -16,6 +16,7 @@
   <name>fcrepo 4.x HTTP API</name>
 
   <dependencies>
+
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel</artifactId>
@@ -28,12 +29,7 @@
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.googlecode.htmleasy</groupId>
-      <artifactId>htmleasy</artifactId>
-      <version>0.7</version>
-    </dependency>
-    
+
     <dependency>
       <groupId>org.codehaus.enunciate</groupId>
       <artifactId>enunciate-cxf-rt</artifactId>
