@@ -18,6 +18,13 @@ import org.modeshape.jcr.api.Repository;
 
 import com.google.common.base.Predicate;
 
+/**
+ * EventFilter that passes only events emitted from nodes with
+ * a Fedora JCR type.
+ * 
+ * @author ajs6f
+ *
+ */
 public class DefaultFilter implements EventFilter {
 
 	@Inject

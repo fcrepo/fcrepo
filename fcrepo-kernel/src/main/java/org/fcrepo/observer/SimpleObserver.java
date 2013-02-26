@@ -1,3 +1,4 @@
+
 package org.fcrepo.observer;
 
 import static com.google.common.collect.Collections2.filter;
@@ -17,45 +18,51 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.eventbus.EventBus;
 
+/**
+ * Simple JCR EventListener that filters JCR Events through a Fedora
+ * EventFilter and puts the resulting stream onto the internal
+ * Fedora EventBus as a stream of FedoraEvents.
+ * 
+ * @author ajs6f
+ *
+ */
 public class SimpleObserver implements EventListener {
 
-	final private Integer eventTypes = Event.NODE_ADDED + Event.NODE_REMOVED
-			+ Event.NODE_MOVED + Event.PROPERTY_ADDED + Event.PROPERTY_CHANGED
-			+ Event.PROPERTY_REMOVED;
+    final private Integer eventTypes = Event.NODE_ADDED + Event.NODE_REMOVED +
+            Event.NODE_MOVED + Event.PROPERTY_ADDED + Event.PROPERTY_CHANGED +
+            Event.PROPERTY_REMOVED;
 
-	@Inject
-	private Repository repository;
+    @Inject
+    private Repository repository;
 
-	@Inject
-	private EventBus eventBus;
+    @Inject
+    private EventBus eventBus;
 
-	@Inject
-	private EventFilter eventFilter;
+    @Inject
+    private EventFilter eventFilter;
 
-	final private Logger logger = LoggerFactory.getLogger(SimpleObserver.class);
+    final private Logger logger = LoggerFactory.getLogger(SimpleObserver.class);
 
-	@PostConstruct
-	public void buildListener() throws RepositoryException {
-		Session session = repository.login();
-		session.getWorkspace()
-				.getObservationManager()
-				.addEventListener(this, eventTypes, "/", true, null, null,
-						false);
-		session.save();
-		session.logout();
-	}
+    @PostConstruct
+    public void buildListener() throws RepositoryException {
+        Session session = repository.login();
+        session.getWorkspace().getObservationManager().addEventListener(this,
+                eventTypes, "/", true, null, null, false);
+        session.save();
+        session.logout();
+    }
 
-	// it's okay to suppress type-safety warning here,
-	// because we know that EventIterator only produces
-	// Events, like an Iterator<Event>
-	@SuppressWarnings("unchecked")
-	@Override
-	public void onEvent(EventIterator events) {
-		for (Event e : filter(new Builder<Event>().addAll(events).build(),
-				eventFilter)) {
-			logger.debug("Putting event: " + e.toString() + " on the bus.");
-			eventBus.post(new FedoraEvent(e));
-		}
-	}
+    // it's okay to suppress type-safety warning here,
+    // because we know that EventIterator only produces
+    // Events, like an Iterator<Event>
+    @SuppressWarnings("unchecked")
+    @Override
+    public void onEvent(EventIterator events) {
+        for (Event e : filter(new Builder<Event>().addAll(events).build(),
+                eventFilter)) {
+            logger.debug("Putting event: " + e.toString() + " on the bus.");
+            eventBus.post(new FedoraEvent(e));
+        }
+    }
 
 }

@@ -6,6 +6,14 @@ import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
+/**
+ * A very simple abstraction to prevent event-driven machinery
+ * downstream from the repository from relying directly on a JCR
+ * interface (Event).
+ * 
+ * @author ajs6f
+ *
+ */
 public class FedoraEvent implements Event {
 
     Event e;
