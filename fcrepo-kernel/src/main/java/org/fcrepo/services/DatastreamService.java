@@ -29,6 +29,12 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Service for creating and retrieving Datastreams without using the JCR API.
+ * 
+ * @author cbeer
+ *
+ */
 public class DatastreamService {
 
     private static final Logger logger = LoggerFactory

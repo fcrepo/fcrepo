@@ -19,7 +19,7 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
 /**
- * Abstraction for Fedora datastreams.
+ * Abstraction for a Fedora datastream backed by a JCR node.
  * 
  * @author ajs6f
  *
@@ -32,33 +32,60 @@ public class Datastream {
         this.node = n;
     }
 
+    /**
+     * @return The backing JCR node.
+     */
     public Node getNode() {
         return node;
     }
 
+    /**
+     * @return The InputStream of content associated with this datastream.
+     * @throws RepositoryException
+     */
     public InputStream getContent() throws RepositoryException {
         return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getStream();
     }
 
+    /**
+     * @return The size in bytes of content associated with this datastream.
+     * @throws RepositoryException
+     */
     public long getContentSize() throws RepositoryException {
         return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getSize();
     }
 
+    /**
+     * @return The ID of this datastream, unique within an object. Normally just the name of the backing JCR node.
+     * @throws RepositoryException
+     */
     public String getDsId() throws RepositoryException {
         return node.getName();
     }
 
+    /**
+     * @return the FedoraObject to which this datastream belongs.
+     * @throws RepositoryException
+     */
     public FedoraObject getObject() throws RepositoryException {
         return new FedoraObject(node.getParent());
     }
 
+    /**
+     * @return The MimeType of content associated with this datastream.
+     * @throws RepositoryException
+     */
     public String getMimeType() throws RepositoryException {
         return node.hasProperty("fedora:contentType") ? node.getProperty(
                 "fedora:contentType").getString() : "application/octet-stream";
     }
 
+    /**
+     * @return A label associated with this datastream. Normally stored in a String-valued dc:title property.
+     * @throws RepositoryException
+     */
     public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
 

@@ -21,6 +21,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet.Builder;
 
+/**
+ * Service for creating and retrieving FedoraObjects without using the JCR API.
+ * 
+ * @author cbeer
+ *
+ */
 public class ObjectService {
 
     private static final Logger logger = LoggerFactory

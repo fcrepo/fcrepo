@@ -1,5 +1,11 @@
 package org.fcrepo.utils;
 
+/**
+ * A convenient abstraction over JCR's integer-typed events.
+ * 
+ * @author ajs6f
+ *
+ */
 public enum EventType {
 	NODE_ADDED, NODE_REMOVED, PROPERTY_ADDED, PROPERTY_REMOVED, PROPERTY_CHANGED, NODE_MOVED, PERSIST;
 
@@ -25,6 +31,10 @@ public enum EventType {
 		}
 	}
 
+	/**
+	 * @param jcrEvent
+	 * @return A human-readable name for the type of this JCR event.
+	 */
 	public static String getEventName(final Integer jcrEvent) {
 
 		switch (getEventType(jcrEvent)) {
