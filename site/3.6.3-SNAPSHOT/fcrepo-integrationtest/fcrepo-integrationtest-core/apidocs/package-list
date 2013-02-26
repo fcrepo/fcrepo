@@ -1,0 +1,14 @@
+org.fcrepo.client
+org.fcrepo.client.utility.ingest
+org.fcrepo.server
+org.fcrepo.server.messaging
+org.fcrepo.server.resourceIndex
+org.fcrepo.server.storage.translation
+org.fcrepo.test
+org.fcrepo.test.api
+org.fcrepo.test.fesl.policy
+org.fcrepo.test.fesl.policyindex
+org.fcrepo.test.fesl.restapi
+org.fcrepo.test.fesl.util
+org.fcrepo.test.integration
+org.fcrepo.test.integration.cma

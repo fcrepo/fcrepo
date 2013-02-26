@@ -1,0 +1,8 @@
+org.fcrepo.server.security.xacml
+org.fcrepo.server.security.xacml.pdp
+org.fcrepo.server.security.xacml.pdp.data
+org.fcrepo.server.security.xacml.pdp.decorator
+org.fcrepo.server.security.xacml.pdp.finder
+org.fcrepo.server.security.xacml.pdp.finder.attribute
+org.fcrepo.server.security.xacml.pdp.finder.policy
+org.fcrepo.server.security.xacml.util

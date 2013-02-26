@@ -1,0 +1,1089 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>DOTranslationUtility xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../../apidocs/org/fcrepo/server/storage/translation/DOTranslationUtility.html">View Javadoc</a></div><pre>
+
+<a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">/*<em class="jxr_comment"> The contents of this file are subject to the license and copyright terms</em></em>
+<a class="jxr_linenumber" name="2" href="#2">2</a>   <em class="jxr_comment"> * detailed in the license directory at the root of the source tree (also</em>
+<a class="jxr_linenumber" name="3" href="#3">3</a>   <em class="jxr_comment"> * available online at <a href="http://fedora-commons.org/license/)." target="alexandria_uri">http://fedora-commons.org/license/).</a></em>
+<a class="jxr_linenumber" name="4" href="#4">4</a>   <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="5" href="#5">5</a>   <strong class="jxr_keyword">package</strong> org.fcrepo.server.storage.translation;
+<a class="jxr_linenumber" name="6" href="#6">6</a>   
+<a class="jxr_linenumber" name="7" href="#7">7</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.common.Models.CONTENT_MODEL_3_0;
+<a class="jxr_linenumber" name="8" href="#8">8</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.common.Models.FEDORA_OBJECT_3_0;
+<a class="jxr_linenumber" name="9" href="#9">9</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.common.Models.SERVICE_DEFINITION_3_0;
+<a class="jxr_linenumber" name="10" href="#10">10</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.common.Models.SERVICE_DEPLOYMENT_3_0;
+<a class="jxr_linenumber" name="11" href="#11">11</a>  
+<a class="jxr_linenumber" name="12" href="#12">12</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="13" href="#13">13</a>  <strong class="jxr_keyword">import</strong> java.io.InputStream;
+<a class="jxr_linenumber" name="14" href="#14">14</a>  <strong class="jxr_keyword">import</strong> java.io.InputStreamReader;
+<a class="jxr_linenumber" name="15" href="#15">15</a>  <strong class="jxr_keyword">import</strong> java.io.PrintWriter;
+<a class="jxr_linenumber" name="16" href="#16">16</a>  <strong class="jxr_keyword">import</strong> java.io.Reader;
+<a class="jxr_linenumber" name="17" href="#17">17</a>  <strong class="jxr_keyword">import</strong> java.io.StringWriter;
+<a class="jxr_linenumber" name="18" href="#18">18</a>  <strong class="jxr_keyword">import</strong> java.io.UnsupportedEncodingException;
+<a class="jxr_linenumber" name="19" href="#19">19</a>  <strong class="jxr_keyword">import</strong> java.nio.charset.Charset;
+<a class="jxr_linenumber" name="20" href="#20">20</a>  <strong class="jxr_keyword">import</strong> java.text.ParseException;
+<a class="jxr_linenumber" name="21" href="#21">21</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="22" href="#22">22</a>  <strong class="jxr_keyword">import</strong> java.util.Iterator;
+<a class="jxr_linenumber" name="23" href="#23">23</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="24" href="#24">24</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Pattern;
+<a class="jxr_linenumber" name="25" href="#25">25</a>  
+<a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.XMLEventReader;
+<a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.XMLInputFactory;
+<a class="jxr_linenumber" name="28" href="#28">28</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.XMLStreamException;
+<a class="jxr_linenumber" name="29" href="#29">29</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.events.Attribute;
+<a class="jxr_linenumber" name="30" href="#30">30</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.events.Characters;
+<a class="jxr_linenumber" name="31" href="#31">31</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.events.StartElement;
+<a class="jxr_linenumber" name="32" href="#32">32</a>  <strong class="jxr_keyword">import</strong> javax.xml.stream.events.XMLEvent;
+<a class="jxr_linenumber" name="33" href="#33">33</a>  
+<a class="jxr_linenumber" name="34" href="#34">34</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.common.Constants;
+<a class="jxr_linenumber" name="35" href="#35">35</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.common.Models;
+<a class="jxr_linenumber" name="36" href="#36">36</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.common.rdf.RDFName;
+<a class="jxr_linenumber" name="37" href="#37">37</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.common.xml.namespace.QName;
+<a class="jxr_linenumber" name="38" href="#38">38</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.Server;
+<a class="jxr_linenumber" name="39" href="#39">39</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.config.Parameter;
+<a class="jxr_linenumber" name="40" href="#40">40</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.config.ServerConfiguration;
+<a class="jxr_linenumber" name="41" href="#41">41</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.errors.ObjectIntegrityException;
+<a class="jxr_linenumber" name="42" href="#42">42</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.errors.StreamIOException;
+<a class="jxr_linenumber" name="43" href="#43">43</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.storage.types.AuditRecord;
+<a class="jxr_linenumber" name="44" href="#44">44</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.storage.types.Datastream;
+<a class="jxr_linenumber" name="45" href="#45">45</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.storage.types.DatastreamXMLMetadata;
+<a class="jxr_linenumber" name="46" href="#46">46</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.storage.types.DigitalObject;
+<a class="jxr_linenumber" name="47" href="#47">47</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.storage.types.Disseminator;
+<a class="jxr_linenumber" name="48" href="#48">48</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.server.utilities.StreamUtility;
+<a class="jxr_linenumber" name="49" href="#49">49</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.utilities.DateUtility;
+<a class="jxr_linenumber" name="50" href="#50">50</a>  <strong class="jxr_keyword">import</strong> org.slf4j.Logger;
+<a class="jxr_linenumber" name="51" href="#51">51</a>  <strong class="jxr_keyword">import</strong> org.slf4j.LoggerFactory;
+<a class="jxr_linenumber" name="52" href="#52">52</a>  
+<a class="jxr_linenumber" name="53" href="#53">53</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="54" href="#54">54</a>  <em class="jxr_javadoccomment"> * Utility methods for usage by digital object serializers and deserializers.</em>
+<a class="jxr_linenumber" name="55" href="#55">55</a>  <em class="jxr_javadoccomment"> * This class provides methods for detecting various forms of relative</em>
+<a class="jxr_linenumber" name="56" href="#56">56</a>  <em class="jxr_javadoccomment"> * repository URLs, which are URLs that point to the hostname and port of the</em>
+<a class="jxr_linenumber" name="57" href="#57">57</a>  <em class="jxr_javadoccomment"> * local repository. Methods will detect these kinds of URLS in datastream</em>
+<a class="jxr_linenumber" name="58" href="#58">58</a>  <em class="jxr_javadoccomment"> * location fields and in special cases of inline XML. Methods are available to</em>
+<a class="jxr_linenumber" name="59" href="#59">59</a>  <em class="jxr_javadoccomment"> * convert these URLS back and forth from relative URL syntax, to Fedora's</em>
+<a class="jxr_linenumber" name="60" href="#60">60</a>  <em class="jxr_javadoccomment"> * internal local URL syntax, and to absolute URL sytnax. This utility class</em>
+<a class="jxr_linenumber" name="61" href="#61">61</a>  <em class="jxr_javadoccomment"> * defines different "translation contexts" and the format of these relative</em>
+<a class="jxr_linenumber" name="62" href="#62">62</a>  <em class="jxr_javadoccomment"> * URLs will be set appropriately to the context. Currently defined translation</em>
+<a class="jxr_linenumber" name="63" href="#63">63</a>  <em class="jxr_javadoccomment"> * contexts are: 0=Deserialize XML into java object appropriate for in-memory</em>
+<a class="jxr_linenumber" name="64" href="#64">64</a>  <em class="jxr_javadoccomment"> * usage 1=Serialize java object to XML appropriate for "public" export</em>
+<a class="jxr_linenumber" name="65" href="#65">65</a>  <em class="jxr_javadoccomment"> * (absolute URLs) 2=Serialize java object to XML appropriate for move/migrate</em>
+<a class="jxr_linenumber" name="66" href="#66">66</a>  <em class="jxr_javadoccomment"> * to another repository 3=Serialize java object to XML appropriate for internal</em>
+<a class="jxr_linenumber" name="67" href="#67">67</a>  <em class="jxr_javadoccomment"> * storage&lt;/b&gt; &lt;/p&gt; The public "normalize*" methods in this class should be</em>
+<a class="jxr_linenumber" name="68" href="#68">68</a>  <em class="jxr_javadoccomment"> * called to make the right decisions about what conversions should occur for</em>
+<a class="jxr_linenumber" name="69" href="#69">69</a>  <em class="jxr_javadoccomment"> * what contexts. Other utility methods set default values for datastreams and</em>
+<a class="jxr_linenumber" name="70" href="#70">70</a>  <em class="jxr_javadoccomment"> * disseminators.</em>
+<a class="jxr_linenumber" name="71" href="#71">71</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="72" href="#72">72</a>  <em class="jxr_javadoccomment"> * @author Sandy Payette</em>
+<a class="jxr_linenumber" name="73" href="#73">73</a>  <em class="jxr_javadoccomment"> * @version $Id$</em>
+<a class="jxr_linenumber" name="74" href="#74">74</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="75" href="#75">75</a>  
+<a class="jxr_linenumber" name="76" href="#76">76</a>  @SuppressWarnings(<span class="jxr_string">"deprecation"</span>)
+<a class="jxr_linenumber" name="77" href="#77">77</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">abstract</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../../org/fcrepo/server/storage/translation/DOTranslationUtility.html">DOTranslationUtility</a>
+<a class="jxr_linenumber" name="78" href="#78">78</a>          <strong class="jxr_keyword">implements</strong> Constants {
+<a class="jxr_linenumber" name="79" href="#79">79</a>  
+<a class="jxr_linenumber" name="80" href="#80">80</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger logger =
+<a class="jxr_linenumber" name="81" href="#81">81</a>              LoggerFactory.getLogger(DOTranslationUtility.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="82" href="#82">82</a>  
+<a class="jxr_linenumber" name="83" href="#83">83</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="84" href="#84">84</a>  <em class="jxr_javadoccomment">     * DESERIALIZE_INSTANCE: Deserialize XML into a java object appropriate for</em>
+<a class="jxr_linenumber" name="85" href="#85">85</a>  <em class="jxr_javadoccomment">     * in-memory usage. This will make the value of relative repository URLs</em>
+<a class="jxr_linenumber" name="86" href="#86">86</a>  <em class="jxr_javadoccomment">     * appropriate for instantiations of the digital object in memory. For</em>
+<a class="jxr_linenumber" name="87" href="#87">87</a>  <em class="jxr_javadoccomment">     * External (E) and Redirected (R) datastreams, any URLs that are relative</em>
+<a class="jxr_linenumber" name="88" href="#88">88</a>  <em class="jxr_javadoccomment">     * to the local repository are converted to absolute URLs using the</em>
+<a class="jxr_linenumber" name="89" href="#89">89</a>  <em class="jxr_javadoccomment">     * currently configured hostname:port of the repository. To do this, the</em>
+<a class="jxr_linenumber" name="90" href="#90">90</a>  <em class="jxr_javadoccomment">     * dsLocation is searched for instances the Fedora local URL string</em>
+<a class="jxr_linenumber" name="91" href="#91">91</a>  <em class="jxr_javadoccomment">     * ("<a href="http://local.fedora.server" target="alexandria_uri">http://local.fedora.server</a>") which is the way Fedora internally keeps</em>
+<a class="jxr_linenumber" name="92" href="#92">92</a>  <em class="jxr_javadoccomment">     * track of instances of relative repository URLs. For Managed Content (M)</em>
+<a class="jxr_linenumber" name="93" href="#93">93</a>  <em class="jxr_javadoccomment">     * datastreams, the internal identifiers are instantiated as is. Also,</em>
+<a class="jxr_linenumber" name="94" href="#94">94</a>  <em class="jxr_javadoccomment">     * certain reserved inline XML datastreams (WSDL and SERVICE_PROFILE) are</em>
+<a class="jxr_linenumber" name="95" href="#95">95</a>  <em class="jxr_javadoccomment">     * searched for relative repository URLs and they are made absolute.</em>
+<a class="jxr_linenumber" name="96" href="#96">96</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="97" href="#97">97</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> DESERIALIZE_INSTANCE = 0;
+<a class="jxr_linenumber" name="98" href="#98">98</a>  
+<a class="jxr_linenumber" name="99" href="#99">99</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="100" href="#100">100</a> <em class="jxr_javadoccomment">     * SERIALIZE_EXPORT_PUBLIC: Serialize digital object to XML appropriate for</em>
+<a class="jxr_linenumber" name="101" href="#101">101</a> <em class="jxr_javadoccomment">     * "public" external use. This is context is appropriate when the exporting</em>
+<a class="jxr_linenumber" name="102" href="#102">102</a> <em class="jxr_javadoccomment">     * repository will continue to exist and will continue to support callback</em>
+<a class="jxr_linenumber" name="103" href="#103">103</a> <em class="jxr_javadoccomment">     * URLs for datastream content and disseminations. This gives a "public"</em>
+<a class="jxr_linenumber" name="104" href="#104">104</a> <em class="jxr_javadoccomment">     * export of an object in which all relative repository URLs AND internal</em>
+<a class="jxr_linenumber" name="105" href="#105">105</a> <em class="jxr_javadoccomment">     * identifiers are converted to absolute callback URLs. For External (E) and</em>
+<a class="jxr_linenumber" name="106" href="#106">106</a> <em class="jxr_javadoccomment">     * Redirected (R) datastreams, any URLs that are relative to the local</em>
+<a class="jxr_linenumber" name="107" href="#107">107</a> <em class="jxr_javadoccomment">     * repository are converted to absolute URLs using the currently configured</em>
+<a class="jxr_linenumber" name="108" href="#108">108</a> <em class="jxr_javadoccomment">     * hostname:port of the repository. For Managed Content (M) datastreams, the</em>
+<a class="jxr_linenumber" name="109" href="#109">109</a> <em class="jxr_javadoccomment">     * internal identifiers in dsLocation are converted to default dissemination</em>
+<a class="jxr_linenumber" name="110" href="#110">110</a> <em class="jxr_javadoccomment">     * URLs so they can serve as callbacks to the repository to obtain the</em>
+<a class="jxr_linenumber" name="111" href="#111">111</a> <em class="jxr_javadoccomment">     * internally managed content. Also, selected inline XML datastreams (i.e.,</em>
+<a class="jxr_linenumber" name="112" href="#112">112</a> <em class="jxr_javadoccomment">     * WSDL and SERVICE_PROFILE) are searched for relative repository URLs and</em>
+<a class="jxr_linenumber" name="113" href="#113">113</a> <em class="jxr_javadoccomment">     * they are made absolute.</em>
+<a class="jxr_linenumber" name="114" href="#114">114</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="115" href="#115">115</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> SERIALIZE_EXPORT_PUBLIC = 1;
+<a class="jxr_linenumber" name="116" href="#116">116</a> 
+<a class="jxr_linenumber" name="117" href="#117">117</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="118" href="#118">118</a> <em class="jxr_javadoccomment">     * SERIALIZE_EXPORT_MIGRATE: Serialize digital object to XML in a manner</em>
+<a class="jxr_linenumber" name="119" href="#119">119</a> <em class="jxr_javadoccomment">     * appropriate for migrating or moving objects from one repository to</em>
+<a class="jxr_linenumber" name="120" href="#120">120</a> <em class="jxr_javadoccomment">     * another. This context is appropriate when the local repository will NOT</em>
+<a class="jxr_linenumber" name="121" href="#121">121</a> <em class="jxr_javadoccomment">     * be available after objects have been migrated to a new repository. For</em>
+<a class="jxr_linenumber" name="122" href="#122">122</a> <em class="jxr_javadoccomment">     * External (E) and Redirected (R)datastreams, any URLs that are relative to</em>
+<a class="jxr_linenumber" name="123" href="#123">123</a> <em class="jxr_javadoccomment">     * the local repository will be expressed with the Fedora local URL syntax</em>
+<a class="jxr_linenumber" name="124" href="#124">124</a> <em class="jxr_javadoccomment">     * (which consists of the string "local.fedora.server" standing in place of</em>
+<a class="jxr_linenumber" name="125" href="#125">125</a> <em class="jxr_javadoccomment">     * the actual "hostname:port"). This enables a new repository to ingest the</em>
+<a class="jxr_linenumber" name="126" href="#126">126</a> <em class="jxr_javadoccomment">     * serialization and maintain the relative nature of the URLs (they will</em>
+<a class="jxr_linenumber" name="127" href="#127">127</a> <em class="jxr_javadoccomment">     * become relative to the *new* repository. Also, for Managed Content (M)</em>
+<a class="jxr_linenumber" name="128" href="#128">128</a> <em class="jxr_javadoccomment">     * datastreams, the internal identifiers in dsLocation are converted to</em>
+<a class="jxr_linenumber" name="129" href="#129">129</a> <em class="jxr_javadoccomment">     * default dissemination URLs. This enables the new repository to callback</em>
+<a class="jxr_linenumber" name="130" href="#130">130</a> <em class="jxr_javadoccomment">     * to the old repository to obtain the content bytestream to be stored in</em>
+<a class="jxr_linenumber" name="131" href="#131">131</a> <em class="jxr_javadoccomment">     * the new repository. Also, within selected inline XML datastreams (i.e.,</em>
+<a class="jxr_linenumber" name="132" href="#132">132</a> <em class="jxr_javadoccomment">     * WSDL and SERVICE_PROFILE) any URLs that are relative to the local</em>
+<a class="jxr_linenumber" name="133" href="#133">133</a> <em class="jxr_javadoccomment">     * repository will also be expressed with the Fedora local URL syntax.</em>
+<a class="jxr_linenumber" name="134" href="#134">134</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="135" href="#135">135</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> SERIALIZE_EXPORT_MIGRATE = 2;
+<a class="jxr_linenumber" name="136" href="#136">136</a> 
+<a class="jxr_linenumber" name="137" href="#137">137</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="138" href="#138">138</a> <em class="jxr_javadoccomment">     * SERIALIZE_STORAGE_INTERNAL: Serialize java object to XML appropriate for</em>
+<a class="jxr_linenumber" name="139" href="#139">139</a> <em class="jxr_javadoccomment">     * persistent storage in the repository, ensuring that any URLs that are</em>
+<a class="jxr_linenumber" name="140" href="#140">140</a> <em class="jxr_javadoccomment">     * relative to the local repository are stored with the Fedora local URL</em>
+<a class="jxr_linenumber" name="141" href="#141">141</a> <em class="jxr_javadoccomment">     * syntax. The Fedora local URL syntax consists of the string</em>
+<a class="jxr_linenumber" name="142" href="#142">142</a> <em class="jxr_javadoccomment">     * "local.fedora.server" standing in place of the actual "hostname:port" on</em>
+<a class="jxr_linenumber" name="143" href="#143">143</a> <em class="jxr_javadoccomment">     * the URL). Managed Content (M) datastreams are stored with internal</em>
+<a class="jxr_linenumber" name="144" href="#144">144</a> <em class="jxr_javadoccomment">     * identifiers in dsLocation. Also, within selected inline XML datastreams</em>
+<a class="jxr_linenumber" name="145" href="#145">145</a> <em class="jxr_javadoccomment">     * (i.e., WSDL and SERVICE_PROFILE) any URLs that are relative to the local</em>
+<a class="jxr_linenumber" name="146" href="#146">146</a> <em class="jxr_javadoccomment">     * repository will also be stored with the Fedora local URL syntax. Note</em>
+<a class="jxr_linenumber" name="147" href="#147">147</a> <em class="jxr_javadoccomment">     * that a view of the storage serialization can be obtained via the</em>
+<a class="jxr_linenumber" name="148" href="#148">148</a> <em class="jxr_javadoccomment">     * getObjectXML method of API-M.</em>
+<a class="jxr_linenumber" name="149" href="#149">149</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="150" href="#150">150</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> SERIALIZE_STORAGE_INTERNAL = 3;
+<a class="jxr_linenumber" name="151" href="#151">151</a> 
+<a class="jxr_linenumber" name="152" href="#152">152</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="153" href="#153">153</a> <em class="jxr_javadoccomment">     * SERIALIZE_EXPORT_ARCHIVE: Serialize digital object to XML in a manner</em>
+<a class="jxr_linenumber" name="154" href="#154">154</a> <em class="jxr_javadoccomment">     * appropriate for creating a stand alone archive of objects from a</em>
+<a class="jxr_linenumber" name="155" href="#155">155</a> <em class="jxr_javadoccomment">     * repository that will NOT be available after objects have been exported.</em>
+<a class="jxr_linenumber" name="156" href="#156">156</a> <em class="jxr_javadoccomment">     * For External (E) and Redirected (R)datastreams, any URLs that are</em>
+<a class="jxr_linenumber" name="157" href="#157">157</a> <em class="jxr_javadoccomment">     * relative to the local repository will be expressed with the Fedora local</em>
+<a class="jxr_linenumber" name="158" href="#158">158</a> <em class="jxr_javadoccomment">     * URL syntax (which consists of the string "local.fedora.server" standing</em>
+<a class="jxr_linenumber" name="159" href="#159">159</a> <em class="jxr_javadoccomment">     * in place of the actual "hostname:port"). This enables a new repository to</em>
+<a class="jxr_linenumber" name="160" href="#160">160</a> <em class="jxr_javadoccomment">     * ingest the serialization and maintain the relative nature of the URLs</em>
+<a class="jxr_linenumber" name="161" href="#161">161</a> <em class="jxr_javadoccomment">     * (they will become relative to the *new* repository. Also, for Managed</em>
+<a class="jxr_linenumber" name="162" href="#162">162</a> <em class="jxr_javadoccomment">     * Content (M) datastreams, the internal identifiers in dsLocation are</em>
+<a class="jxr_linenumber" name="163" href="#163">163</a> <em class="jxr_javadoccomment">     * converted to default dissemination URLs, and the contents of the URL's</em>
+<a class="jxr_linenumber" name="164" href="#164">164</a> <em class="jxr_javadoccomment">     * are included inline via base-64 encoding. This enables the new repository</em>
+<a class="jxr_linenumber" name="165" href="#165">165</a> <em class="jxr_javadoccomment">     * recreate the content bytestream to be stored in the new repository, when</em>
+<a class="jxr_linenumber" name="166" href="#166">166</a> <em class="jxr_javadoccomment">     * the original repository is no longer available. Also, within selected</em>
+<a class="jxr_linenumber" name="167" href="#167">167</a> <em class="jxr_javadoccomment">     * inline XML datastreams (i.e., WSDL and SERVICE_PROFILE) any URLs that are</em>
+<a class="jxr_linenumber" name="168" href="#168">168</a> <em class="jxr_javadoccomment">     * relative to the local repository will also be expressed with the Fedora</em>
+<a class="jxr_linenumber" name="169" href="#169">169</a> <em class="jxr_javadoccomment">     * local URL syntax.</em>
+<a class="jxr_linenumber" name="170" href="#170">170</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="171" href="#171">171</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> SERIALIZE_EXPORT_ARCHIVE = 4;
+<a class="jxr_linenumber" name="172" href="#172">172</a> 
+<a class="jxr_linenumber" name="173" href="#173">173</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="174" href="#174">174</a> <em class="jxr_javadoccomment">     * Deserialize or Serialize as is. This context doesn't attempt to do any</em>
+<a class="jxr_linenumber" name="175" href="#175">175</a> <em class="jxr_javadoccomment">     * conversion of URLs.</em>
+<a class="jxr_linenumber" name="176" href="#176">176</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="177" href="#177">177</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> AS_IS = 5;
+<a class="jxr_linenumber" name="178" href="#178">178</a> 
+<a class="jxr_linenumber" name="179" href="#179">179</a>     <em class="jxr_comment">// Fedora URL LOCALIZATION Pattern:</em>
+<a class="jxr_linenumber" name="180" href="#180">180</a>     <em class="jxr_comment">// Pattern that is used as the internal replacement syntax for URLs that</em>
+<a class="jxr_linenumber" name="181" href="#181">181</a>     <em class="jxr_comment">// refer back to the local repository.  This pattern virtualized the</em>
+<a class="jxr_linenumber" name="182" href="#182">182</a>     <em class="jxr_comment">// repository server address, so that if the host:port of the repository is</em>
+<a class="jxr_linenumber" name="183" href="#183">183</a>     <em class="jxr_comment">// changed, objects that have URLs that refer to the local repository won't break.</em>
+<a class="jxr_linenumber" name="184" href="#184">184</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Pattern s_fedoraLocalPattern =
+<a class="jxr_linenumber" name="185" href="#185">185</a>             Pattern.compile(<span class="jxr_string">"http://local.fedora.server/"</span>);
+<a class="jxr_linenumber" name="186" href="#186">186</a> 
+<a class="jxr_linenumber" name="187" href="#187">187</a>     <em class="jxr_comment">// Fedora Application Context Localization pattern</em>
+<a class="jxr_linenumber" name="188" href="#188">188</a>     <em class="jxr_comment">// Specifically refers to the current fedora application context (host:port/context)</em>
+<a class="jxr_linenumber" name="189" href="#189">189</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Pattern s_fedoraLocalAppContextPattern =
+<a class="jxr_linenumber" name="190" href="#190">190</a>             Pattern.compile(<span class="jxr_string">"http://local.fedora.server/fedora/"</span>);
+<a class="jxr_linenumber" name="191" href="#191">191</a> 
+<a class="jxr_linenumber" name="192" href="#192">192</a>     <em class="jxr_comment">// PATTERN FOR DEPRECATED METHOD (getItem of the Default Disseminator), for example:</em>
+<a class="jxr_linenumber" name="193" href="#193">193</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Pattern s_getItemPattern =
+<a class="jxr_linenumber" name="194" href="#194">194</a>             Pattern.compile(<span class="jxr_string">"/fedora-system:3/getItem&#92;&#92;?itemID="</span>);
+<a class="jxr_linenumber" name="195" href="#195">195</a> 
+<a class="jxr_linenumber" name="196" href="#196">196</a>     <em class="jxr_comment">// ABSOLUTE REPOSITORY URL Patterns:</em>
+<a class="jxr_linenumber" name="197" href="#197">197</a>     <em class="jxr_comment">// Patterns of how the protocol and repository server address may be encoded</em>
+<a class="jxr_linenumber" name="198" href="#198">198</a>     <em class="jxr_comment">// in a URL that points back to the local repository.</em>
+<a class="jxr_linenumber" name="199" href="#199">199</a> 
+<a class="jxr_linenumber" name="200" href="#200">200</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Pattern s_concreteLocalUrl;
+<a class="jxr_linenumber" name="201" href="#201">201</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Pattern s_concreteLocalUrlAppContext;
+<a class="jxr_linenumber" name="202" href="#202">202</a> 
+<a class="jxr_linenumber" name="203" href="#203">203</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Pattern s_concreteLocalUrlNoPort;
+<a class="jxr_linenumber" name="204" href="#204">204</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Pattern s_concreteLocalUrlAppContextNoPort;
+<a class="jxr_linenumber" name="205" href="#205">205</a> 
+<a class="jxr_linenumber" name="206" href="#206">206</a>     <em class="jxr_comment">// CALLBACK DISSEMINATION URL Pattern (for M datastreams in export files):</em>
+<a class="jxr_linenumber" name="207" href="#207">207</a>     <em class="jxr_comment">// Pattern of how protocol, repository server address, and path is encoded</em>
+<a class="jxr_linenumber" name="208" href="#208">208</a>     <em class="jxr_comment">// for a callback dissemination URL to the local repository.</em>
+<a class="jxr_linenumber" name="209" href="#209">209</a>     <em class="jxr_comment">// This is used for encoding datastream location URLs for Managed Content</em>
+<a class="jxr_linenumber" name="210" href="#210">210</a>     <em class="jxr_comment">// datastreams inside an export file.  Internal Fedora identifiers for</em>
+<a class="jxr_linenumber" name="211" href="#211">211</a>     <em class="jxr_comment">// the Managed Content datastreams are replaced with public callback URLS.</em>
+<a class="jxr_linenumber" name="212" href="#212">212</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> String s_localDissemUrlStart; <em class="jxr_comment">// "http://hostname:port/fedora/get/"</em>
+<a class="jxr_linenumber" name="213" href="#213">213</a> 
+<a class="jxr_linenumber" name="214" href="#214">214</a>     <em class="jxr_comment">// The actual host and port of the Fedora repository server</em>
+<a class="jxr_linenumber" name="215" href="#215">215</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> String s_hostInfo = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="216" href="#216">216</a> 
+<a class="jxr_linenumber" name="217" href="#217">217</a>     <em class="jxr_comment">// Host, port, and Fedora context</em>
+<a class="jxr_linenumber" name="218" href="#218">218</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> String s_hostContextInfo;
+<a class="jxr_linenumber" name="219" href="#219">219</a> 
+<a class="jxr_linenumber" name="220" href="#220">220</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> m_serverOnPort80 = false;
+<a class="jxr_linenumber" name="221" href="#221">221</a> 
+<a class="jxr_linenumber" name="222" href="#222">222</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> m_serverOnRedirectPort443 = false;
+<a class="jxr_linenumber" name="223" href="#223">223</a> 
+<a class="jxr_linenumber" name="224" href="#224">224</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> XMLInputFactory m_xmlInputFactory =
+<a class="jxr_linenumber" name="225" href="#225">225</a>             XMLInputFactory.newInstance();
+<a class="jxr_linenumber" name="226" href="#226">226</a> 
+<a class="jxr_linenumber" name="227" href="#227">227</a>     <em class="jxr_comment">// initialize static class with stuff that's used by all DO Serializerers</em>
+<a class="jxr_linenumber" name="228" href="#228">228</a>     <strong class="jxr_keyword">static</strong> {
+<a class="jxr_linenumber" name="229" href="#229">229</a>         <em class="jxr_comment">// get host port from system properties (for testing without server instance)</em>
+<a class="jxr_linenumber" name="230" href="#230">230</a>         String fedoraServerHost = System.getProperty(<span class="jxr_string">"fedora.hostname"</span>);
+<a class="jxr_linenumber" name="231" href="#231">231</a>         String fedoraServerPort = System.getProperty(<span class="jxr_string">"fedora.port"</span>);
+<a class="jxr_linenumber" name="232" href="#232">232</a>         String fedoraServerPortSSL = System.getProperty(<span class="jxr_string">"fedoraRedirectPort"</span>);
+<a class="jxr_linenumber" name="233" href="#233">233</a>         String fedoraAppServerContext =
+<a class="jxr_linenumber" name="234" href="#234">234</a>                 System.getProperty(<span class="jxr_string">"fedora.appServerContext"</span>);
+<a class="jxr_linenumber" name="235" href="#235">235</a> 
+<a class="jxr_linenumber" name="236" href="#236">236</a>         <strong class="jxr_keyword">if</strong> (fedoraServerPort != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="237" href="#237">237</a>             <strong class="jxr_keyword">if</strong> (fedoraServerPort.equals(<span class="jxr_string">"80"</span>)) {
+<a class="jxr_linenumber" name="238" href="#238">238</a>                 m_serverOnPort80 = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="239" href="#239">239</a>             }
+<a class="jxr_linenumber" name="240" href="#240">240</a>         }
+<a class="jxr_linenumber" name="241" href="#241">241</a>         <strong class="jxr_keyword">if</strong> (fedoraServerPortSSL != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="242" href="#242">242</a>             <strong class="jxr_keyword">if</strong> (fedoraServerPortSSL.equals(<span class="jxr_string">"443"</span>)) {
+<a class="jxr_linenumber" name="243" href="#243">243</a>                 m_serverOnRedirectPort443 = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="244" href="#244">244</a>             }
+<a class="jxr_linenumber" name="245" href="#245">245</a>         }
+<a class="jxr_linenumber" name="246" href="#246">246</a> 
+<a class="jxr_linenumber" name="247" href="#247">247</a>         <em class="jxr_comment">// otherwise, get host port from the server instance if they are null</em>
+<a class="jxr_linenumber" name="248" href="#248">248</a>         <strong class="jxr_keyword">if</strong> (fedoraServerHost == <strong class="jxr_keyword">null</strong> || fedoraServerPort == <strong class="jxr_keyword">null</strong>
+<a class="jxr_linenumber" name="249" href="#249">249</a>                 || fedoraAppServerContext == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="250" href="#250">250</a>             <em class="jxr_comment">// if fedoraServerHost or fedoraServerPort system properties</em>
+<a class="jxr_linenumber" name="251" href="#251">251</a>             <em class="jxr_comment">// are not defined, read them from server configuration</em>
+<a class="jxr_linenumber" name="252" href="#252">252</a>             <a href="../../../../../org/fcrepo/server/config/ServerConfiguration.html">ServerConfiguration</a> config = Server.getConfig();
+<a class="jxr_linenumber" name="253" href="#253">253</a>             fedoraServerHost =
+<a class="jxr_linenumber" name="254" href="#254">254</a>                     config.getParameter(<span class="jxr_string">"fedoraServerHost"</span>,Parameter.<strong class="jxr_keyword">class</strong>).getValue();
+<a class="jxr_linenumber" name="255" href="#255">255</a>             fedoraServerPort =
+<a class="jxr_linenumber" name="256" href="#256">256</a>                     config.getParameter(<span class="jxr_string">"fedoraServerPort"</span>,Parameter.<strong class="jxr_keyword">class</strong>).getValue();
+<a class="jxr_linenumber" name="257" href="#257">257</a>             fedoraAppServerContext =
+<a class="jxr_linenumber" name="258" href="#258">258</a>                     config.getParameter(<span class="jxr_string">"fedoraAppServerContext"</span>,Parameter.<strong class="jxr_keyword">class</strong>).getValue();
+<a class="jxr_linenumber" name="259" href="#259">259</a>             fedoraServerPortSSL =
+<a class="jxr_linenumber" name="260" href="#260">260</a>                     config.getParameter(<span class="jxr_string">"fedoraRedirectPort"</span>,Parameter.<strong class="jxr_keyword">class</strong>).getValue();
+<a class="jxr_linenumber" name="261" href="#261">261</a>             <strong class="jxr_keyword">if</strong> (fedoraServerPort.equals(<span class="jxr_string">"80"</span>)) {
+<a class="jxr_linenumber" name="262" href="#262">262</a>                 m_serverOnPort80 = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="263" href="#263">263</a>             }
+<a class="jxr_linenumber" name="264" href="#264">264</a>             <strong class="jxr_keyword">if</strong> (fedoraServerPortSSL.equals(<span class="jxr_string">"443"</span>)) {
+<a class="jxr_linenumber" name="265" href="#265">265</a>                 m_serverOnRedirectPort443 = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="266" href="#266">266</a>             }
+<a class="jxr_linenumber" name="267" href="#267">267</a>         }
+<a class="jxr_linenumber" name="268" href="#268">268</a>         <em class="jxr_comment">// set the currently configured host:port of the repository</em>
+<a class="jxr_linenumber" name="269" href="#269">269</a>         s_hostInfo = <span class="jxr_string">"http://"</span> + fedoraServerHost;
+<a class="jxr_linenumber" name="270" href="#270">270</a>         <strong class="jxr_keyword">if</strong> (!fedoraServerPort.equals(<span class="jxr_string">"80"</span>) &amp;&amp; !fedoraServerPort.equals(<span class="jxr_string">"443"</span>)) {
+<a class="jxr_linenumber" name="271" href="#271">271</a>             s_hostInfo = s_hostInfo + <span class="jxr_string">":"</span> + fedoraServerPort;
+<a class="jxr_linenumber" name="272" href="#272">272</a>         }
+<a class="jxr_linenumber" name="273" href="#273">273</a>         s_hostInfo = s_hostInfo + <span class="jxr_string">"/"</span>;
+<a class="jxr_linenumber" name="274" href="#274">274</a>         s_hostContextInfo = s_hostInfo + fedoraAppServerContext + <span class="jxr_string">"/"</span>;
+<a class="jxr_linenumber" name="275" href="#275">275</a> 
+<a class="jxr_linenumber" name="276" href="#276">276</a>         <em class="jxr_comment">// compile the pattern for public dissemination URLs at local server</em>
+<a class="jxr_linenumber" name="277" href="#277">277</a>         s_localDissemUrlStart = s_hostInfo + fedoraAppServerContext + <span class="jxr_string">"/get/"</span>;
+<a class="jxr_linenumber" name="278" href="#278">278</a> 
+<a class="jxr_linenumber" name="279" href="#279">279</a>         s_concreteLocalUrl =
+<a class="jxr_linenumber" name="280" href="#280">280</a>             Pattern.compile(<span class="jxr_string">"https?://(localhost|"</span> + fedoraServerHost
+<a class="jxr_linenumber" name="281" href="#281">281</a>                             + <span class="jxr_string">"):"</span> + fedoraServerPort + <span class="jxr_string">"/"</span>);
+<a class="jxr_linenumber" name="282" href="#282">282</a> 
+<a class="jxr_linenumber" name="283" href="#283">283</a>         s_concreteLocalUrlAppContext =
+<a class="jxr_linenumber" name="284" href="#284">284</a>             Pattern.compile(<span class="jxr_string">"https?://(localhost|"</span> + fedoraServerHost
+<a class="jxr_linenumber" name="285" href="#285">285</a>                             + <span class="jxr_string">"):"</span> + fedoraServerPort + <span class="jxr_string">"/("</span>
+<a class="jxr_linenumber" name="286" href="#286">286</a>                             + fedoraAppServerContext + <span class="jxr_string">"|fedora)/"</span>);
+<a class="jxr_linenumber" name="287" href="#287">287</a> 
+<a class="jxr_linenumber" name="288" href="#288">288</a>         s_concreteLocalUrlNoPort =
+<a class="jxr_linenumber" name="289" href="#289">289</a>             Pattern.compile(<span class="jxr_string">"https?://(localhost|"</span> + fedoraServerHost
+<a class="jxr_linenumber" name="290" href="#290">290</a>                             + <span class="jxr_string">")/"</span>);
+<a class="jxr_linenumber" name="291" href="#291">291</a> 
+<a class="jxr_linenumber" name="292" href="#292">292</a>         s_concreteLocalUrlAppContextNoPort =
+<a class="jxr_linenumber" name="293" href="#293">293</a>             Pattern.compile(<span class="jxr_string">"https?://(localhost|"</span> + fedoraServerHost
+<a class="jxr_linenumber" name="294" href="#294">294</a>                             + <span class="jxr_string">")/("</span> + fedoraAppServerContext + <span class="jxr_string">"|fedora)/"</span>);
+<a class="jxr_linenumber" name="295" href="#295">295</a>     }
+<a class="jxr_linenumber" name="296" href="#296">296</a> 
+<a class="jxr_linenumber" name="297" href="#297">297</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="298" href="#298">298</a> <em class="jxr_javadoccomment">     * Make URLs that are relative to the local Fedora repository ABSOLUTE URLs.</em>
+<a class="jxr_linenumber" name="299" href="#299">299</a> <em class="jxr_javadoccomment">     * First, see if any URLs are expressed in relative URL syntax (beginning</em>
+<a class="jxr_linenumber" name="300" href="#300">300</a> <em class="jxr_javadoccomment">     * with "fedora/get" or "fedora/search") and convert these to the special</em>
+<a class="jxr_linenumber" name="301" href="#301">301</a> <em class="jxr_javadoccomment">     * Fedora local URL syntax ("<a href="http://local.fedora.server/..." target="alexandria_uri">http://local.fedora.server/...</a>"). Then look for</em>
+<a class="jxr_linenumber" name="302" href="#302">302</a> <em class="jxr_javadoccomment">     * all URLs that contain the special Fedora local URL syntax and replace</em>
+<a class="jxr_linenumber" name="303" href="#303">303</a> <em class="jxr_javadoccomment">     * instances of this string with the actual host:port configured for the</em>
+<a class="jxr_linenumber" name="304" href="#304">304</a> <em class="jxr_javadoccomment">     * repository. This ensures that all forms of relative repository URLs are</em>
+<a class="jxr_linenumber" name="305" href="#305">305</a> <em class="jxr_javadoccomment">     * converted to proper absolute URLs that reference the hostname:port of the</em>
+<a class="jxr_linenumber" name="306" href="#306">306</a> <em class="jxr_javadoccomment">     * local Fedora repository. Examples:</em>
+<a class="jxr_linenumber" name="307" href="#307">307</a> <em class="jxr_javadoccomment">     * "<a href="http://local.fedora.server/fedora/get/demo:1/DS1" target="alexandria_uri">http://local.fedora.server/fedora/get/demo:1/DS1</a>" is converted to</em>
+<a class="jxr_linenumber" name="308" href="#308">308</a> <em class="jxr_javadoccomment">     * "<a href="http://myrepo.com:8080/fedora/get/demo:1/DS1" target="alexandria_uri">http://myrepo.com:8080/fedora/get/demo:1/DS1</a>" "fedora/get/demo:1/DS1" is</em>
+<a class="jxr_linenumber" name="309" href="#309">309</a> <em class="jxr_javadoccomment">     * converted to "<a href="http://myrepo.com:8080/fedora/get/demo:1/DS1" target="alexandria_uri">http://myrepo.com:8080/fedora/get/demo:1/DS1</a>"</em>
+<a class="jxr_linenumber" name="310" href="#310">310</a> <em class="jxr_javadoccomment">     * "<a href="http://local.fedora.server/fedora/get/demo:1/sdef:1/getFoo?in=" target="alexandria_uri">http://local.fedora.server/fedora/get/demo:1/sdef:1/getFoo?in=</a>"</em>
+<a class="jxr_linenumber" name="311" href="#311">311</a> <em class="jxr_javadoccomment">     * <a href="http://local.fedora.server/fedora/get/demo:2/DC" target="alexandria_uri">http://local.fedora.server/fedora/get/demo:2/DC</a>" is converted to</em>
+<a class="jxr_linenumber" name="312" href="#312">312</a> <em class="jxr_javadoccomment">     * "<a href="http://myrepo.com:8080/fedora/get/demo:1/sdef:1/getFoo?in=" target="alexandria_uri">http://myrepo.com:8080/fedora/get/demo:1/sdef:1/getFoo?in=</a>"</em>
+<a class="jxr_linenumber" name="313" href="#313">313</a> <em class="jxr_javadoccomment">     * <a href="http://myrepo.com:8080/fedora/get/demo:2/DC" target="alexandria_uri">http://myrepo.com:8080/fedora/get/demo:2/DC</a>"</em>
+<a class="jxr_linenumber" name="314" href="#314">314</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="315" href="#315">315</a> <em class="jxr_javadoccomment">     * @param m_xmlContent</em>
+<a class="jxr_linenumber" name="316" href="#316">316</a> <em class="jxr_javadoccomment">     * @return String with all relative repository URLs and Fedora local URLs</em>
+<a class="jxr_linenumber" name="317" href="#317">317</a> <em class="jxr_javadoccomment">     *         converted to absolute URL syntax.</em>
+<a class="jxr_linenumber" name="318" href="#318">318</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="319" href="#319">319</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String makeAbsoluteURLs(String input) {
+<a class="jxr_linenumber" name="320" href="#320">320</a>         String output = input;
+<a class="jxr_linenumber" name="321" href="#321">321</a> 
+<a class="jxr_linenumber" name="322" href="#322">322</a>         <em class="jxr_comment">// First pass: convert fedora app context URLs via variable substitution</em>
+<a class="jxr_linenumber" name="323" href="#323">323</a>         output =
+<a class="jxr_linenumber" name="324" href="#324">324</a>                 s_fedoraLocalAppContextPattern.matcher(output)
+<a class="jxr_linenumber" name="325" href="#325">325</a>                         .replaceAll(s_hostContextInfo);
+<a class="jxr_linenumber" name="326" href="#326">326</a> 
+<a class="jxr_linenumber" name="327" href="#327">327</a>         <em class="jxr_comment">// Second pass: convert non-fedora-app-context URLs via variable substitution</em>
+<a class="jxr_linenumber" name="328" href="#328">328</a>         output = s_fedoraLocalPattern.matcher(output).replaceAll(s_hostInfo);
+<a class="jxr_linenumber" name="329" href="#329">329</a> 
+<a class="jxr_linenumber" name="330" href="#330">330</a>         logger.debug(<span class="jxr_string">"makeAbsoluteURLs: input="</span> + input + <span class="jxr_string">", output="</span> + output);
+<a class="jxr_linenumber" name="331" href="#331">331</a>         <strong class="jxr_keyword">return</strong> output;
+<a class="jxr_linenumber" name="332" href="#332">332</a>     }
+<a class="jxr_linenumber" name="333" href="#333">333</a> 
+<a class="jxr_linenumber" name="334" href="#334">334</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="335" href="#335">335</a> <em class="jxr_javadoccomment">     * Detect all forms of URLs that point to the local Fedora repository and</em>
+<a class="jxr_linenumber" name="336" href="#336">336</a> <em class="jxr_javadoccomment">     * make sure they are encoded in the special Fedora local URL syntax</em>
+<a class="jxr_linenumber" name="337" href="#337">337</a> <em class="jxr_javadoccomment">     * (<a href="http://local.fedora.server/..." target="alexandria_uri">http://local.fedora.server/...</a>"). First, look for relative URLs that</em>
+<a class="jxr_linenumber" name="338" href="#338">338</a> <em class="jxr_javadoccomment">     * begin with "fedora/get" or "fedora/search" replaces instances of these</em>
+<a class="jxr_linenumber" name="339" href="#339">339</a> <em class="jxr_javadoccomment">     * string patterns with the special Fedora relative URL syntax. Then, look</em>
+<a class="jxr_linenumber" name="340" href="#340">340</a> <em class="jxr_javadoccomment">     * for absolute URLs that have a host:port equal to the host:port currently</em>
+<a class="jxr_linenumber" name="341" href="#341">341</a> <em class="jxr_javadoccomment">     * configured for the Fedora repository and replace host:port with the</em>
+<a class="jxr_linenumber" name="342" href="#342">342</a> <em class="jxr_javadoccomment">     * special string. The special Fedora relative URL string provides a</em>
+<a class="jxr_linenumber" name="343" href="#343">343</a> <em class="jxr_javadoccomment">     * consistent unique string be easily searched for and either converted back</em>
+<a class="jxr_linenumber" name="344" href="#344">344</a> <em class="jxr_javadoccomment">     * to an absolute URL or a relative URL to the repository. Examples:</em>
+<a class="jxr_linenumber" name="345" href="#345">345</a> <em class="jxr_javadoccomment">     * "<a href="http://myrepo.com:8080/fedora/get/demo:1/DS1" target="alexandria_uri">http://myrepo.com:8080/fedora/get/demo:1/DS1</a>" is converted to</em>
+<a class="jxr_linenumber" name="346" href="#346">346</a> <em class="jxr_javadoccomment">     * "<a href="http://local.fedora.server/fedora/get/demo:1/DS1" target="alexandria_uri">http://local.fedora.server/fedora/get/demo:1/DS1</a>"</em>
+<a class="jxr_linenumber" name="347" href="#347">347</a> <em class="jxr_javadoccomment">     * "https://myrepo.com:8443/fedora/get/demo:1/sdef:1/getFoo?in="</em>
+<a class="jxr_linenumber" name="348" href="#348">348</a> <em class="jxr_javadoccomment">     * <a href="http://myrepo.com:8080/fedora/get/demo:2/DC" target="alexandria_uri">http://myrepo.com:8080/fedora/get/demo:2/DC</a>" is converted to</em>
+<a class="jxr_linenumber" name="349" href="#349">349</a> <em class="jxr_javadoccomment">     * "<a href="http://local.fedora.server/fedora/get/demo:1/sdef:1/getFoo?in=" target="alexandria_uri">http://local.fedora.server/fedora/get/demo:1/sdef:1/getFoo?in=</a>"</em>
+<a class="jxr_linenumber" name="350" href="#350">350</a> <em class="jxr_javadoccomment">     * <a href="http://local.fedora.server/fedora/get/demo:2/DC" target="alexandria_uri">http://local.fedora.server/fedora/get/demo:2/DC</a>"</em>
+<a class="jxr_linenumber" name="351" href="#351">351</a> <em class="jxr_javadoccomment">     * "<a href="http://myrepo.com:8080/saxon..." target="alexandria_uri">http://myrepo.com:8080/saxon...</a>" (internal service in sDep WSDL) is</em>
+<a class="jxr_linenumber" name="352" href="#352">352</a> <em class="jxr_javadoccomment">     * converted to "<a href="http://local.fedora.server/saxon..." target="alexandria_uri">http://local.fedora.server/saxon...</a>"</em>
+<a class="jxr_linenumber" name="353" href="#353">353</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="354" href="#354">354</a> <em class="jxr_javadoccomment">     * @param input</em>
+<a class="jxr_linenumber" name="355" href="#355">355</a> <em class="jxr_javadoccomment">     * @return String with all forms of relative repository URLs converted to</em>
+<a class="jxr_linenumber" name="356" href="#356">356</a> <em class="jxr_javadoccomment">     *         the Fedora local URL syntax.</em>
+<a class="jxr_linenumber" name="357" href="#357">357</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="358" href="#358">358</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String makeFedoraLocalURLs(String input) {
+<a class="jxr_linenumber" name="359" href="#359">359</a>         String output = input;
+<a class="jxr_linenumber" name="360" href="#360">360</a> 
+<a class="jxr_linenumber" name="361" href="#361">361</a>         <em class="jxr_comment">// Detect any absolute URLs that refer to the local repository</em>
+<a class="jxr_linenumber" name="362" href="#362">362</a>         <em class="jxr_comment">// and convert them to the Fedora LOCALIZATION URL syntax</em>
+<a class="jxr_linenumber" name="363" href="#363">363</a>         <em class="jxr_comment">// (i.e., "http://local.fedora.server/...")\</em>
+<a class="jxr_linenumber" name="364" href="#364">364</a> 
+<a class="jxr_linenumber" name="365" href="#365">365</a>         <strong class="jxr_keyword">if</strong> (m_serverOnPort80 || m_serverOnRedirectPort443) {
+<a class="jxr_linenumber" name="366" href="#366">366</a>             output = s_concreteLocalUrlAppContextNoPort.matcher(output)
+<a class="jxr_linenumber" name="367" href="#367">367</a>                         .replaceAll(s_fedoraLocalAppContextPattern.pattern());
+<a class="jxr_linenumber" name="368" href="#368">368</a> 
+<a class="jxr_linenumber" name="369" href="#369">369</a>             output = s_concreteLocalUrlNoPort.matcher(output)
+<a class="jxr_linenumber" name="370" href="#370">370</a>                         .replaceAll(s_fedoraLocalPattern.pattern());
+<a class="jxr_linenumber" name="371" href="#371">371</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="372" href="#372">372</a>             output = s_concreteLocalUrlAppContext.matcher(output)
+<a class="jxr_linenumber" name="373" href="#373">373</a>                         .replaceAll(s_fedoraLocalAppContextPattern.pattern());
+<a class="jxr_linenumber" name="374" href="#374">374</a> 
+<a class="jxr_linenumber" name="375" href="#375">375</a>             output = s_concreteLocalUrl.matcher(output)
+<a class="jxr_linenumber" name="376" href="#376">376</a>                         .replaceAll(s_fedoraLocalPattern.pattern());
+<a class="jxr_linenumber" name="377" href="#377">377</a>         }
+<a class="jxr_linenumber" name="378" href="#378">378</a> 
+<a class="jxr_linenumber" name="379" href="#379">379</a>         logger.debug(<span class="jxr_string">"makeFedoraLocalURLs: input="</span> + input + <span class="jxr_string">", output="</span> + output);
+<a class="jxr_linenumber" name="380" href="#380">380</a>         <strong class="jxr_keyword">return</strong> output;
+<a class="jxr_linenumber" name="381" href="#381">381</a>     }
+<a class="jxr_linenumber" name="382" href="#382">382</a> 
+<a class="jxr_linenumber" name="383" href="#383">383</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="384" href="#384">384</a> <em class="jxr_javadoccomment">     * Utility method to detect instances of of dsLocation URLs that use a</em>
+<a class="jxr_linenumber" name="385" href="#385">385</a> <em class="jxr_javadoccomment">     * deprecated default disseminator method</em>
+<a class="jxr_linenumber" name="386" href="#386">386</a> <em class="jxr_javadoccomment">     * (/fedora/get/{PID}/fedora-system:3/getItem?itemID={DSID} and replace it</em>
+<a class="jxr_linenumber" name="387" href="#387">387</a> <em class="jxr_javadoccomment">     * with the new API-A-LITE syntax for getting a datastream</em>
+<a class="jxr_linenumber" name="388" href="#388">388</a> <em class="jxr_javadoccomment">     * (/fedora/get/{PID}/{DSID}</em>
+<a class="jxr_linenumber" name="389" href="#389">389</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="390" href="#390">390</a> <em class="jxr_javadoccomment">     * @param input</em>
+<a class="jxr_linenumber" name="391" href="#391">391</a> <em class="jxr_javadoccomment">     * @return</em>
+<a class="jxr_linenumber" name="392" href="#392">392</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="393" href="#393">393</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> String convertGetItemURLs(String input) {
+<a class="jxr_linenumber" name="394" href="#394">394</a>         String output = input;
+<a class="jxr_linenumber" name="395" href="#395">395</a> 
+<a class="jxr_linenumber" name="396" href="#396">396</a>         <em class="jxr_comment">// Detect the old default disseminator syntax for getting datastreams</em>
+<a class="jxr_linenumber" name="397" href="#397">397</a>         <em class="jxr_comment">// (i.e., getItem), and replace with new API-A-LITE syntax.</em>
+<a class="jxr_linenumber" name="398" href="#398">398</a> 
+<a class="jxr_linenumber" name="399" href="#399">399</a>         output = s_getItemPattern.matcher(input).replaceAll(<span class="jxr_string">"/"</span>);
+<a class="jxr_linenumber" name="400" href="#400">400</a>         logger.debug(<span class="jxr_string">"convertGetItemURLs: input="</span> + input + <span class="jxr_string">", output="</span> + output);
+<a class="jxr_linenumber" name="401" href="#401">401</a>         <strong class="jxr_keyword">return</strong> output;
+<a class="jxr_linenumber" name="402" href="#402">402</a>     }
+<a class="jxr_linenumber" name="403" href="#403">403</a> 
+<a class="jxr_linenumber" name="404" href="#404">404</a>     <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="405" href="#405">405</a> <em class="jxr_comment">     * Utility method to normalize the value of datastream location depending on</em>
+<a class="jxr_linenumber" name="406" href="#406">406</a> <em class="jxr_comment">     * the translation context. This is mainly to deal with External (E) and</em>
+<a class="jxr_linenumber" name="407" href="#407">407</a> <em class="jxr_comment">     * Redirected (R) datastream locations that are self-referential to the</em>
+<a class="jxr_linenumber" name="408" href="#408">408</a> <em class="jxr_comment">     * local repository (i.e., relative repository URLs) and with Managed</em>
+<a class="jxr_linenumber" name="409" href="#409">409</a> <em class="jxr_comment">     * Content (M) datastreams whose location is an internal identifier. @param</em>
+<a class="jxr_linenumber" name="410" href="#410">410</a> <em class="jxr_comment">     * PID The PID of the object that contains the datastream @param ds The</em>
+<a class="jxr_linenumber" name="411" href="#411">411</a> <em class="jxr_comment">     * datastream whose location is to be processed @param transContext Integer</em>
+<a class="jxr_linenumber" name="412" href="#412">412</a> <em class="jxr_comment">     * value indicating the serialization or deserialization context. Valid</em>
+<a class="jxr_linenumber" name="413" href="#413">413</a> <em class="jxr_comment">     * values are defined as constants in</em>
+<a class="jxr_linenumber" name="414" href="#414">414</a> <em class="jxr_comment">     * org.fcrepo.server.storage.translation.DOTranslationUtility:</em>
+<a class="jxr_linenumber" name="415" href="#415">415</a> <em class="jxr_comment">     * 0=DOTranslationUtility.DESERIALIZE_INSTANCE</em>
+<a class="jxr_linenumber" name="416" href="#416">416</a> <em class="jxr_comment">     * 1=DOTranslationUtility.SERIALIZE_EXPORT_PUBLIC</em>
+<a class="jxr_linenumber" name="417" href="#417">417</a> <em class="jxr_comment">     * 2=DOTranslationUtility.SERIALIZE_EXPORT_MIGRATE</em>
+<a class="jxr_linenumber" name="418" href="#418">418</a> <em class="jxr_comment">     * 3=DOTranslationUtility.SERIALIZE_STORAGE_INTERNAL</em>
+<a class="jxr_linenumber" name="419" href="#419">419</a> <em class="jxr_comment">     * 2=DOTranslationUtility.SERIALIZE_EXPORT_ARCHIVE @return</em>
+<a class="jxr_linenumber" name="420" href="#420">420</a> <em class="jxr_comment">     */</em>
+<a class="jxr_linenumber" name="421" href="#421">421</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a href="../../../../../org/fcrepo/server/storage/types/Datastream.html">Datastream</a> normalizeDSLocationURLs(String PID,
+<a class="jxr_linenumber" name="422" href="#422">422</a>                                                      <a href="../../../../../org/fcrepo/server/storage/types/Datastream.html">Datastream</a> origDS,
+<a class="jxr_linenumber" name="423" href="#423">423</a>                                                      <strong class="jxr_keyword">int</strong> transContext) {
+<a class="jxr_linenumber" name="424" href="#424">424</a>         <a href="../../../../../org/fcrepo/server/storage/types/Datastream.html">Datastream</a> ds = origDS.copy();
+<a class="jxr_linenumber" name="425" href="#425">425</a>         <strong class="jxr_keyword">if</strong> (transContext == AS_IS) {
+<a class="jxr_linenumber" name="426" href="#426">426</a>             <strong class="jxr_keyword">return</strong> ds;
+<a class="jxr_linenumber" name="427" href="#427">427</a>         }
+<a class="jxr_linenumber" name="428" href="#428">428</a>         <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.DESERIALIZE_INSTANCE) {
+<a class="jxr_linenumber" name="429" href="#429">429</a>             <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"E"</span>) || ds.DSControlGrp.equals(<span class="jxr_string">"R"</span>)) {
+<a class="jxr_linenumber" name="430" href="#430">430</a>                 <em class="jxr_comment">// MAKE ABSOLUTE REPO URLs</em>
+<a class="jxr_linenumber" name="431" href="#431">431</a>                 ds.DSLocation = makeAbsoluteURLs(ds.DSLocation);
+<a class="jxr_linenumber" name="432" href="#432">432</a>             }
+<a class="jxr_linenumber" name="433" href="#433">433</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_EXPORT_PUBLIC) {
+<a class="jxr_linenumber" name="434" href="#434">434</a>             <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"E"</span>) || ds.DSControlGrp.equals(<span class="jxr_string">"R"</span>)) {
+<a class="jxr_linenumber" name="435" href="#435">435</a>                 <em class="jxr_comment">// MAKE ABSOLUTE REPO URLs</em>
+<a class="jxr_linenumber" name="436" href="#436">436</a>                 ds.DSLocation = makeAbsoluteURLs(ds.DSLocation);
+<a class="jxr_linenumber" name="437" href="#437">437</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"M"</span>)) {
+<a class="jxr_linenumber" name="438" href="#438">438</a>                 <em class="jxr_comment">//if (!ds.DSLocation.startsWith("http://localhost:8080/fedora-demo")) {</em>
+<a class="jxr_linenumber" name="439" href="#439">439</a> 
+<a class="jxr_linenumber" name="440" href="#440">440</a>                 <em class="jxr_comment">// MAKE DISSEMINATION URLs</em>
+<a class="jxr_linenumber" name="441" href="#441">441</a>                 <strong class="jxr_keyword">if</strong> (ds.DSCreateDT == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="442" href="#442">442</a>                     ds.DSLocation =
+<a class="jxr_linenumber" name="443" href="#443">443</a>                             s_localDissemUrlStart + PID + <span class="jxr_string">"/"</span> + ds.DatastreamID;
+<a class="jxr_linenumber" name="444" href="#444">444</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="445" href="#445">445</a>                     ds.DSLocation =
+<a class="jxr_linenumber" name="446" href="#446">446</a>                             s_localDissemUrlStart
+<a class="jxr_linenumber" name="447" href="#447">447</a>                                     + PID
+<a class="jxr_linenumber" name="448" href="#448">448</a>                                     + <span class="jxr_string">"/"</span>
+<a class="jxr_linenumber" name="449" href="#449">449</a>                                     + ds.DatastreamID
+<a class="jxr_linenumber" name="450" href="#450">450</a>                                     + <span class="jxr_string">"/"</span>
+<a class="jxr_linenumber" name="451" href="#451">451</a>                                     + DateUtility
+<a class="jxr_linenumber" name="452" href="#452">452</a>                                             .convertDateToString(ds.DSCreateDT);
+<a class="jxr_linenumber" name="453" href="#453">453</a>                 }
+<a class="jxr_linenumber" name="454" href="#454">454</a>                 <em class="jxr_comment">//}</em>
+<a class="jxr_linenumber" name="455" href="#455">455</a>             }
+<a class="jxr_linenumber" name="456" href="#456">456</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_EXPORT_MIGRATE) {
+<a class="jxr_linenumber" name="457" href="#457">457</a>             <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"E"</span>) || ds.DSControlGrp.equals(<span class="jxr_string">"R"</span>)) {
+<a class="jxr_linenumber" name="458" href="#458">458</a>                 <em class="jxr_comment">// MAKE FEDORA LOCAL REPO URLs</em>
+<a class="jxr_linenumber" name="459" href="#459">459</a>                 ds.DSLocation = makeFedoraLocalURLs(ds.DSLocation);
+<a class="jxr_linenumber" name="460" href="#460">460</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"M"</span>)) {
+<a class="jxr_linenumber" name="461" href="#461">461</a>                 <em class="jxr_comment">// MAKE DISSEMINATION URLs</em>
+<a class="jxr_linenumber" name="462" href="#462">462</a>                 <strong class="jxr_keyword">if</strong> (ds.DSCreateDT == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="463" href="#463">463</a>                     ds.DSLocation =
+<a class="jxr_linenumber" name="464" href="#464">464</a>                             s_localDissemUrlStart + PID + <span class="jxr_string">"/"</span> + ds.DatastreamID;
+<a class="jxr_linenumber" name="465" href="#465">465</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="466" href="#466">466</a>                     ds.DSLocation =
+<a class="jxr_linenumber" name="467" href="#467">467</a>                             s_localDissemUrlStart
+<a class="jxr_linenumber" name="468" href="#468">468</a>                                     + PID
+<a class="jxr_linenumber" name="469" href="#469">469</a>                                     + <span class="jxr_string">"/"</span>
+<a class="jxr_linenumber" name="470" href="#470">470</a>                                     + ds.DatastreamID
+<a class="jxr_linenumber" name="471" href="#471">471</a>                                     + <span class="jxr_string">"/"</span>
+<a class="jxr_linenumber" name="472" href="#472">472</a>                                     + DateUtility
+<a class="jxr_linenumber" name="473" href="#473">473</a>                                             .convertDateToString(ds.DSCreateDT);
+<a class="jxr_linenumber" name="474" href="#474">474</a>                 }
+<a class="jxr_linenumber" name="475" href="#475">475</a>             }
+<a class="jxr_linenumber" name="476" href="#476">476</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_STORAGE_INTERNAL) {
+<a class="jxr_linenumber" name="477" href="#477">477</a>             <em class="jxr_comment">//String relativeLoc=ds.DSLocation;</em>
+<a class="jxr_linenumber" name="478" href="#478">478</a>             <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"E"</span>) || ds.DSControlGrp.equals(<span class="jxr_string">"R"</span>)) {
+<a class="jxr_linenumber" name="479" href="#479">479</a>                 <em class="jxr_comment">// MAKE FEDORA LOCAL REPO URLs</em>
+<a class="jxr_linenumber" name="480" href="#480">480</a>                 ds.DSLocation = makeFedoraLocalURLs(ds.DSLocation);
+<a class="jxr_linenumber" name="481" href="#481">481</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"M"</span>)) {
+<a class="jxr_linenumber" name="482" href="#482">482</a>                 <em class="jxr_comment">// MAKE INTERNAL IDENTIFIERS (PID+DSID+DSVersionID)</em>
+<a class="jxr_linenumber" name="483" href="#483">483</a>                 ds.DSLocation =
+<a class="jxr_linenumber" name="484" href="#484">484</a>                         PID + <span class="jxr_string">"+"</span> + ds.DatastreamID + <span class="jxr_string">"+"</span> + ds.DSVersionID;
+<a class="jxr_linenumber" name="485" href="#485">485</a>             }
+<a class="jxr_linenumber" name="486" href="#486">486</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_EXPORT_ARCHIVE) {
+<a class="jxr_linenumber" name="487" href="#487">487</a>             <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"E"</span>) || ds.DSControlGrp.equals(<span class="jxr_string">"R"</span>)) {
+<a class="jxr_linenumber" name="488" href="#488">488</a>                 <em class="jxr_comment">// MAKE FEDORA LOCAL REPO URLs</em>
+<a class="jxr_linenumber" name="489" href="#489">489</a>                 ds.DSLocation = makeFedoraLocalURLs(ds.DSLocation);
+<a class="jxr_linenumber" name="490" href="#490">490</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"M"</span>)) {
+<a class="jxr_linenumber" name="491" href="#491">491</a>                 <em class="jxr_comment">// MAKE DISSEMINATION URLs</em>
+<a class="jxr_linenumber" name="492" href="#492">492</a>                 <strong class="jxr_keyword">if</strong> (ds.DSCreateDT == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="493" href="#493">493</a>                     ds.DSLocation =
+<a class="jxr_linenumber" name="494" href="#494">494</a>                             s_localDissemUrlStart + PID + <span class="jxr_string">"/"</span> + ds.DatastreamID;
+<a class="jxr_linenumber" name="495" href="#495">495</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="496" href="#496">496</a>                     ds.DSLocation =
+<a class="jxr_linenumber" name="497" href="#497">497</a>                             s_localDissemUrlStart
+<a class="jxr_linenumber" name="498" href="#498">498</a>                                     + PID
+<a class="jxr_linenumber" name="499" href="#499">499</a>                                     + <span class="jxr_string">"/"</span>
+<a class="jxr_linenumber" name="500" href="#500">500</a>                                     + ds.DatastreamID
+<a class="jxr_linenumber" name="501" href="#501">501</a>                                     + <span class="jxr_string">"/"</span>
+<a class="jxr_linenumber" name="502" href="#502">502</a>                                     + DateUtility
+<a class="jxr_linenumber" name="503" href="#503">503</a>                                             .convertDateToString(ds.DSCreateDT);
+<a class="jxr_linenumber" name="504" href="#504">504</a>                 }
+<a class="jxr_linenumber" name="505" href="#505">505</a>             }
+<a class="jxr_linenumber" name="506" href="#506">506</a>         }
+<a class="jxr_linenumber" name="507" href="#507">507</a> 
+<a class="jxr_linenumber" name="508" href="#508">508</a>         <em class="jxr_comment">// In any event, look for the deprecated getItem method of the default disseminator</em>
+<a class="jxr_linenumber" name="509" href="#509">509</a>         <em class="jxr_comment">// (i.e., "/fedora-system:3/getItem?itemID=") and convert to new API-A-LITE syntax.</em>
+<a class="jxr_linenumber" name="510" href="#510">510</a>         <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equals(<span class="jxr_string">"E"</span>) || ds.DSControlGrp.equals(<span class="jxr_string">"R"</span>)) {
+<a class="jxr_linenumber" name="511" href="#511">511</a>             ds.DSLocation = convertGetItemURLs(ds.DSLocation);
+<a class="jxr_linenumber" name="512" href="#512">512</a>         }
+<a class="jxr_linenumber" name="513" href="#513">513</a> 
+<a class="jxr_linenumber" name="514" href="#514">514</a>         <strong class="jxr_keyword">return</strong> ds;
+<a class="jxr_linenumber" name="515" href="#515">515</a>     }
+<a class="jxr_linenumber" name="516" href="#516">516</a> 
+<a class="jxr_linenumber" name="517" href="#517">517</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="518" href="#518">518</a> <em class="jxr_javadoccomment">     * Utility method to normalize a chunk of inline XML depending on the</em>
+<a class="jxr_linenumber" name="519" href="#519">519</a> <em class="jxr_javadoccomment">     * translation context. This is mainly to deal with certain inline XML</em>
+<a class="jxr_linenumber" name="520" href="#520">520</a> <em class="jxr_javadoccomment">     * datastreams found in Service Deployment objects that may contain a</em>
+<a class="jxr_linenumber" name="521" href="#521">521</a> <em class="jxr_javadoccomment">     * service URL that references the host:port of the local Fedora server.</em>
+<a class="jxr_linenumber" name="522" href="#522">522</a> <em class="jxr_javadoccomment">     * This method will usually only ever be called to check WSDL and</em>
+<a class="jxr_linenumber" name="523" href="#523">523</a> <em class="jxr_javadoccomment">     * SERVICE_PROFILE inline XML datastream, but is of general utility for</em>
+<a class="jxr_linenumber" name="524" href="#524">524</a> <em class="jxr_javadoccomment">     * dealing with any datastreams that may contain URLs that reference the</em>
+<a class="jxr_linenumber" name="525" href="#525">525</a> <em class="jxr_javadoccomment">     * local Fedora server. However, it this method should be used sparingly,</em>
+<a class="jxr_linenumber" name="526" href="#526">526</a> <em class="jxr_javadoccomment">     * and only on inline XML datastreams where the impact of the conversions is</em>
+<a class="jxr_linenumber" name="527" href="#527">527</a> <em class="jxr_javadoccomment">     * well understood.</em>
+<a class="jxr_linenumber" name="528" href="#528">528</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="529" href="#529">529</a> <em class="jxr_javadoccomment">     * @param xml</em>
+<a class="jxr_linenumber" name="530" href="#530">530</a> <em class="jxr_javadoccomment">     *        a chunk of XML that's contents of an inline XML datastream</em>
+<a class="jxr_linenumber" name="531" href="#531">531</a> <em class="jxr_javadoccomment">     * @param transContext</em>
+<a class="jxr_linenumber" name="532" href="#532">532</a> <em class="jxr_javadoccomment">     *        Integer value indicating the serialization or deserialization</em>
+<a class="jxr_linenumber" name="533" href="#533">533</a> <em class="jxr_javadoccomment">     *        context. Valid values are defined as constants in</em>
+<a class="jxr_linenumber" name="534" href="#534">534</a> <em class="jxr_javadoccomment">     *        org.fcrepo.server.storage.translation.DOTranslationUtility:</em>
+<a class="jxr_linenumber" name="535" href="#535">535</a> <em class="jxr_javadoccomment">     *        0=DOTranslationUtility.DESERIALIZE_INSTANCE</em>
+<a class="jxr_linenumber" name="536" href="#536">536</a> <em class="jxr_javadoccomment">     *        1=DOTranslationUtility.SERIALIZE_EXPORT_PUBLIC</em>
+<a class="jxr_linenumber" name="537" href="#537">537</a> <em class="jxr_javadoccomment">     *        2=DOTranslationUtility.SERIALIZE_EXPORT_MIGRATE</em>
+<a class="jxr_linenumber" name="538" href="#538">538</a> <em class="jxr_javadoccomment">     *        3=DOTranslationUtility.SERIALIZE_STORAGE_INTERNAL</em>
+<a class="jxr_linenumber" name="539" href="#539">539</a> <em class="jxr_javadoccomment">     *        4=DOTranslationUtility.SERIALIZE_EXPORT_ARCHIVE</em>
+<a class="jxr_linenumber" name="540" href="#540">540</a> <em class="jxr_javadoccomment">     * @return the inline XML contents with appropriate conversions.</em>
+<a class="jxr_linenumber" name="541" href="#541">541</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="542" href="#542">542</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String normalizeInlineXML(String xml, <strong class="jxr_keyword">int</strong> transContext) {
+<a class="jxr_linenumber" name="543" href="#543">543</a>         <strong class="jxr_keyword">if</strong> (transContext == AS_IS) {
+<a class="jxr_linenumber" name="544" href="#544">544</a>             <strong class="jxr_keyword">return</strong> xml;
+<a class="jxr_linenumber" name="545" href="#545">545</a>         }
+<a class="jxr_linenumber" name="546" href="#546">546</a>         <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.DESERIALIZE_INSTANCE) {
+<a class="jxr_linenumber" name="547" href="#547">547</a>             <em class="jxr_comment">// MAKE ABSOLUTE REPO URLs</em>
+<a class="jxr_linenumber" name="548" href="#548">548</a>             <strong class="jxr_keyword">return</strong> makeAbsoluteURLs(xml);
+<a class="jxr_linenumber" name="549" href="#549">549</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_EXPORT_PUBLIC) {
+<a class="jxr_linenumber" name="550" href="#550">550</a>             <em class="jxr_comment">// MAKE ABSOLUTE REPO URLs</em>
+<a class="jxr_linenumber" name="551" href="#551">551</a>             <strong class="jxr_keyword">return</strong> makeAbsoluteURLs(xml);
+<a class="jxr_linenumber" name="552" href="#552">552</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_EXPORT_MIGRATE) {
+<a class="jxr_linenumber" name="553" href="#553">553</a>             <em class="jxr_comment">// MAKE FEDORA LOCAL REPO URLs</em>
+<a class="jxr_linenumber" name="554" href="#554">554</a>             <strong class="jxr_keyword">return</strong> makeFedoraLocalURLs(xml);
+<a class="jxr_linenumber" name="555" href="#555">555</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_STORAGE_INTERNAL) {
+<a class="jxr_linenumber" name="556" href="#556">556</a>             <em class="jxr_comment">// MAKE FEDORA LOCAL REPO URLs</em>
+<a class="jxr_linenumber" name="557" href="#557">557</a>             <strong class="jxr_keyword">return</strong> makeFedoraLocalURLs(xml);
+<a class="jxr_linenumber" name="558" href="#558">558</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (transContext == DOTranslationUtility.SERIALIZE_EXPORT_ARCHIVE) {
+<a class="jxr_linenumber" name="559" href="#559">559</a>             <em class="jxr_comment">// MAKE FEDORA LOCAL REPO URLs</em>
+<a class="jxr_linenumber" name="560" href="#560">560</a>             <strong class="jxr_keyword">return</strong> makeFedoraLocalURLs(xml);
+<a class="jxr_linenumber" name="561" href="#561">561</a>         }
+<a class="jxr_linenumber" name="562" href="#562">562</a>         <strong class="jxr_keyword">return</strong> xml;
+<a class="jxr_linenumber" name="563" href="#563">563</a>     }
+<a class="jxr_linenumber" name="564" href="#564">564</a> 
+<a class="jxr_linenumber" name="565" href="#565">565</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="566" href="#566">566</a> <em class="jxr_javadoccomment">     * Check for null values in attributes and set them to empty string so</em>
+<a class="jxr_linenumber" name="567" href="#567">567</a> <em class="jxr_javadoccomment">     * 'null' does not appear in XML attribute values. This helps in XML</em>
+<a class="jxr_linenumber" name="568" href="#568">568</a> <em class="jxr_javadoccomment">     * validation of required attributes. If 'null' is the attribute value then</em>
+<a class="jxr_linenumber" name="569" href="#569">569</a> <em class="jxr_javadoccomment">     * validation would incorrectly consider in a valid non-empty value. Also,</em>
+<a class="jxr_linenumber" name="570" href="#570">570</a> <em class="jxr_javadoccomment">     * we set some other default values here.</em>
+<a class="jxr_linenumber" name="571" href="#571">571</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="572" href="#572">572</a> <em class="jxr_javadoccomment">     * @param ds</em>
+<a class="jxr_linenumber" name="573" href="#573">573</a> <em class="jxr_javadoccomment">     *        The Datastream object to work on.</em>
+<a class="jxr_linenumber" name="574" href="#574">574</a> <em class="jxr_javadoccomment">     * @return The Datastream value with default set.</em>
+<a class="jxr_linenumber" name="575" href="#575">575</a> <em class="jxr_javadoccomment">     * @throws ObjectIntegrityException</em>
+<a class="jxr_linenumber" name="576" href="#576">576</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="577" href="#577">577</a> 
+<a class="jxr_linenumber" name="578" href="#578">578</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a href="../../../../../org/fcrepo/server/storage/types/Datastream.html">Datastream</a> setDatastreamDefaults(<a href="../../../../../org/fcrepo/server/storage/types/Datastream.html">Datastream</a> ds)
+<a class="jxr_linenumber" name="579" href="#579">579</a>             <strong class="jxr_keyword">throws</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a> {
+<a class="jxr_linenumber" name="580" href="#580">580</a> 
+<a class="jxr_linenumber" name="581" href="#581">581</a>         <strong class="jxr_keyword">if</strong> ((ds.DSMIME == <strong class="jxr_keyword">null</strong> || ds.DSMIME.equals(<span class="jxr_string">""</span>))
+<a class="jxr_linenumber" name="582" href="#582">582</a>                 &amp;&amp; ds.DSControlGrp.equalsIgnoreCase(<span class="jxr_string">"X"</span>)) {
+<a class="jxr_linenumber" name="583" href="#583">583</a>             ds.DSMIME = <span class="jxr_string">"text/xml"</span>;
+<a class="jxr_linenumber" name="584" href="#584">584</a>         }
+<a class="jxr_linenumber" name="585" href="#585">585</a> 
+<a class="jxr_linenumber" name="586" href="#586">586</a>         <strong class="jxr_keyword">if</strong> (ds.DSState == <strong class="jxr_keyword">null</strong> || ds.DSState.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="587" href="#587">587</a>             ds.DSState = <span class="jxr_string">"A"</span>;
+<a class="jxr_linenumber" name="588" href="#588">588</a>         }
+<a class="jxr_linenumber" name="589" href="#589">589</a> 
+<a class="jxr_linenumber" name="590" href="#590">590</a>         <em class="jxr_comment">// For METS backward compatibility</em>
+<a class="jxr_linenumber" name="591" href="#591">591</a>         <strong class="jxr_keyword">if</strong> (ds.DSInfoType == <strong class="jxr_keyword">null</strong> || ds.DSInfoType.equals(<span class="jxr_string">""</span>)
+<a class="jxr_linenumber" name="592" href="#592">592</a>                 || ds.DSInfoType.equalsIgnoreCase(<span class="jxr_string">"OTHER"</span>)) {
+<a class="jxr_linenumber" name="593" href="#593">593</a>             ds.DSInfoType = <span class="jxr_string">"UNSPECIFIED"</span>;
+<a class="jxr_linenumber" name="594" href="#594">594</a>         }
+<a class="jxr_linenumber" name="595" href="#595">595</a> 
+<a class="jxr_linenumber" name="596" href="#596">596</a>         <em class="jxr_comment">// LOOK! For METS backward compatibility:</em>
+<a class="jxr_linenumber" name="597" href="#597">597</a>         <em class="jxr_comment">// If we have a METS MDClass value, and DSFormatURI isn't already</em>
+<a class="jxr_linenumber" name="598" href="#598">598</a>         <em class="jxr_comment">// assigned, preserve MDClass and MDType in a DSFormatURI.</em>
+<a class="jxr_linenumber" name="599" href="#599">599</a>         <em class="jxr_comment">// Note that the system is taking over the DSFormatURI in this case.</em>
+<a class="jxr_linenumber" name="600" href="#600">600</a>         <em class="jxr_comment">// Therefore, if a client subsequently modifies the DSFormatURI</em>
+<a class="jxr_linenumber" name="601" href="#601">601</a>         <em class="jxr_comment">// this METS legacy informatin will be lost, in which case the inline</em>
+<a class="jxr_linenumber" name="602" href="#602">602</a>         <em class="jxr_comment">// datastream will default to amdSec/techMD in a subsequent METS export.</em>
+<a class="jxr_linenumber" name="603" href="#603">603</a>         <strong class="jxr_keyword">if</strong> (ds.DSControlGrp.equalsIgnoreCase(<span class="jxr_string">"X"</span>)) {
+<a class="jxr_linenumber" name="604" href="#604">604</a>             <strong class="jxr_keyword">if</strong> (((DatastreamXMLMetadata) ds).DSMDClass != 0
+<a class="jxr_linenumber" name="605" href="#605">605</a>                     &amp;&amp; ds.DSFormatURI == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="606" href="#606">606</a>                 String mdClassName = <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="607" href="#607">607</a>                 String mdType = ds.DSInfoType;
+<a class="jxr_linenumber" name="608" href="#608">608</a>                 String otherType = <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="609" href="#609">609</a>                 <strong class="jxr_keyword">if</strong> (((DatastreamXMLMetadata) ds).DSMDClass == 1) {
+<a class="jxr_linenumber" name="610" href="#610">610</a>                     mdClassName = <span class="jxr_string">"techMD"</span>;
+<a class="jxr_linenumber" name="611" href="#611">611</a>                 } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (((DatastreamXMLMetadata) ds).DSMDClass == 2) {
+<a class="jxr_linenumber" name="612" href="#612">612</a>                     mdClassName = <span class="jxr_string">"sourceMD"</span>;
+<a class="jxr_linenumber" name="613" href="#613">613</a>                 } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (((DatastreamXMLMetadata) ds).DSMDClass == 3) {
+<a class="jxr_linenumber" name="614" href="#614">614</a>                     mdClassName = <span class="jxr_string">"rightsMD"</span>;
+<a class="jxr_linenumber" name="615" href="#615">615</a>                 } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (((DatastreamXMLMetadata) ds).DSMDClass == 4) {
+<a class="jxr_linenumber" name="616" href="#616">616</a>                     mdClassName = <span class="jxr_string">"digiprovMD"</span>;
+<a class="jxr_linenumber" name="617" href="#617">617</a>                 } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (((DatastreamXMLMetadata) ds).DSMDClass == 5) {
+<a class="jxr_linenumber" name="618" href="#618">618</a>                     mdClassName = <span class="jxr_string">"descMD"</span>;
+<a class="jxr_linenumber" name="619" href="#619">619</a>                 }
+<a class="jxr_linenumber" name="620" href="#620">620</a>                 <strong class="jxr_keyword">if</strong> (!mdType.equals(<span class="jxr_string">"MARC"</span>) &amp;&amp; !mdType.equals(<span class="jxr_string">"EAD"</span>)
+<a class="jxr_linenumber" name="621" href="#621">621</a>                         &amp;&amp; !mdType.equals(<span class="jxr_string">"DC"</span>) &amp;&amp; !mdType.equals(<span class="jxr_string">"NISOIMG"</span>)
+<a class="jxr_linenumber" name="622" href="#622">622</a>                         &amp;&amp; !mdType.equals(<span class="jxr_string">"LC-AV"</span>) &amp;&amp; !mdType.equals(<span class="jxr_string">"VRA"</span>)
+<a class="jxr_linenumber" name="623" href="#623">623</a>                         &amp;&amp; !mdType.equals(<span class="jxr_string">"TEIHDR"</span>) &amp;&amp; !mdType.equals(<span class="jxr_string">"DDI"</span>)
+<a class="jxr_linenumber" name="624" href="#624">624</a>                         &amp;&amp; !mdType.equals(<span class="jxr_string">"FGDC"</span>)) {
+<a class="jxr_linenumber" name="625" href="#625">625</a>                     mdType = <span class="jxr_string">"OTHER"</span>;
+<a class="jxr_linenumber" name="626" href="#626">626</a>                     otherType = ds.DSInfoType;
+<a class="jxr_linenumber" name="627" href="#627">627</a>                 }
+<a class="jxr_linenumber" name="628" href="#628">628</a>                 ds.DSFormatURI =
+<a class="jxr_linenumber" name="629" href="#629">629</a>                         <span class="jxr_string">"info:fedora/fedora-system:format/xml.mets."</span>
+<a class="jxr_linenumber" name="630" href="#630">630</a>                                 + mdClassName + <span class="jxr_string">"."</span> + mdType + <span class="jxr_string">"."</span> + otherType;
+<a class="jxr_linenumber" name="631" href="#631">631</a>             }
+<a class="jxr_linenumber" name="632" href="#632">632</a>         }
+<a class="jxr_linenumber" name="633" href="#633">633</a>         <strong class="jxr_keyword">return</strong> ds;
+<a class="jxr_linenumber" name="634" href="#634">634</a>     }
+<a class="jxr_linenumber" name="635" href="#635">635</a> 
+<a class="jxr_linenumber" name="636" href="#636">636</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="637" href="#637">637</a> <em class="jxr_javadoccomment">     * Appends XML to a PrintWriter. Essentially, just appends all text content</em>
+<a class="jxr_linenumber" name="638" href="#638">638</a> <em class="jxr_javadoccomment">     * of the inputStream, trimming any leading and trailing whitespace. It does</em>
+<a class="jxr_linenumber" name="639" href="#639">639</a> <em class="jxr_javadoccomment">     * his in a streaming fashion, with resource consumption entirely comprised</em>
+<a class="jxr_linenumber" name="640" href="#640">640</a> <em class="jxr_javadoccomment">     * of fixed internal buffers.</em>
+<a class="jxr_linenumber" name="641" href="#641">641</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="642" href="#642">642</a> <em class="jxr_javadoccomment">     * @param in</em>
+<a class="jxr_linenumber" name="643" href="#643">643</a> <em class="jxr_javadoccomment">     *        InputStreaming containing serialized XML.</em>
+<a class="jxr_linenumber" name="644" href="#644">644</a> <em class="jxr_javadoccomment">     * @param writer</em>
+<a class="jxr_linenumber" name="645" href="#645">645</a> <em class="jxr_javadoccomment">     *        PrintWriter to write XML content to.</em>
+<a class="jxr_linenumber" name="646" href="#646">646</a> <em class="jxr_javadoccomment">     * @param encoding</em>
+<a class="jxr_linenumber" name="647" href="#647">647</a> <em class="jxr_javadoccomment">     *        Character set encoding.</em>
+<a class="jxr_linenumber" name="648" href="#648">648</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="649" href="#649">649</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendXMLStream(InputStream in,
+<a class="jxr_linenumber" name="650" href="#650">650</a>                                           PrintWriter writer,
+<a class="jxr_linenumber" name="651" href="#651">651</a>                                           String encoding)
+<a class="jxr_linenumber" name="652" href="#652">652</a>             <strong class="jxr_keyword">throws</strong> ObjectIntegrityException, UnsupportedEncodingException,
+<a class="jxr_linenumber" name="653" href="#653">653</a>             <a href="../../../../../org/fcrepo/server/errors/StreamIOException.html">StreamIOException</a> {
+<a class="jxr_linenumber" name="654" href="#654">654</a>         <strong class="jxr_keyword">if</strong> (in == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="655" href="#655">655</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Object's inline xml "</span>
+<a class="jxr_linenumber" name="656" href="#656">656</a>                     + <span class="jxr_string">"stream cannot be null."</span>);
+<a class="jxr_linenumber" name="657" href="#657">657</a>         }
+<a class="jxr_linenumber" name="658" href="#658">658</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="659" href="#659">659</a>             InputStreamReader chars =
+<a class="jxr_linenumber" name="660" href="#660">660</a>                     <strong class="jxr_keyword">new</strong> InputStreamReader(in, Charset.forName(encoding));
+<a class="jxr_linenumber" name="661" href="#661">661</a> 
+<a class="jxr_linenumber" name="662" href="#662">662</a>             <em class="jxr_comment">/*<em class="jxr_comment"> Content buffer */</em></em>
+<a class="jxr_linenumber" name="663" href="#663">663</a>             <strong class="jxr_keyword">char</strong>[] charBuf = <strong class="jxr_keyword">new</strong> <strong class="jxr_keyword">char</strong>[4096];
+<a class="jxr_linenumber" name="664" href="#664">664</a> 
+<a class="jxr_linenumber" name="665" href="#665">665</a>             <em class="jxr_comment">/*<em class="jxr_comment"> Beginning/ending whitespace buffer */</em></em>
+<a class="jxr_linenumber" name="666" href="#666">666</a>             <strong class="jxr_keyword">char</strong>[] wsBuf = <strong class="jxr_keyword">new</strong> <strong class="jxr_keyword">char</strong>[4096];
+<a class="jxr_linenumber" name="667" href="#667">667</a> 
+<a class="jxr_linenumber" name="668" href="#668">668</a>             <strong class="jxr_keyword">int</strong> len;
+<a class="jxr_linenumber" name="669" href="#669">669</a>             <strong class="jxr_keyword">int</strong> start;
+<a class="jxr_linenumber" name="670" href="#670">670</a>             <strong class="jxr_keyword">int</strong> end;
+<a class="jxr_linenumber" name="671" href="#671">671</a>             <strong class="jxr_keyword">int</strong> wsLen = 0;
+<a class="jxr_linenumber" name="672" href="#672">672</a>             <strong class="jxr_keyword">boolean</strong> atBeginning = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="673" href="#673">673</a>             <strong class="jxr_keyword">while</strong> ((len = chars.read(charBuf)) != -1) {
+<a class="jxr_linenumber" name="674" href="#674">674</a>                 start = 0;
+<a class="jxr_linenumber" name="675" href="#675">675</a>                 end = len - 1;
+<a class="jxr_linenumber" name="676" href="#676">676</a> 
+<a class="jxr_linenumber" name="677" href="#677">677</a>                 <em class="jxr_comment">/*<em class="jxr_comment"> Strip out any leading whitespace */</em></em>
+<a class="jxr_linenumber" name="678" href="#678">678</a>                 <strong class="jxr_keyword">if</strong> (atBeginning) {
+<a class="jxr_linenumber" name="679" href="#679">679</a>                     <strong class="jxr_keyword">while</strong> (start &lt; len) {
+<a class="jxr_linenumber" name="680" href="#680">680</a>                         <strong class="jxr_keyword">if</strong> (charBuf[start] &gt; 0x20) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="681" href="#681">681</a>                         start++;
+<a class="jxr_linenumber" name="682" href="#682">682</a>                     }
+<a class="jxr_linenumber" name="683" href="#683">683</a>                     <strong class="jxr_keyword">if</strong> (start &lt; len) atBeginning = false;
+<a class="jxr_linenumber" name="684" href="#684">684</a>                 }
+<a class="jxr_linenumber" name="685" href="#685">685</a> 
+<a class="jxr_linenumber" name="686" href="#686">686</a>                 <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="687" href="#687">687</a> <em class="jxr_comment">                 * Hold aside any whitespace at the end of the current chunk. If</em>
+<a class="jxr_linenumber" name="688" href="#688">688</a> <em class="jxr_comment">                 * we make it to the next chunk, then append our whitespace to</em>
+<a class="jxr_linenumber" name="689" href="#689">689</a> <em class="jxr_comment">                 * the buffer. Using this methodology, we may "trim" at most</em>
+<a class="jxr_linenumber" name="690" href="#690">690</a> <em class="jxr_comment">                 * {buffer length} characters from the end.</em>
+<a class="jxr_linenumber" name="691" href="#691">691</a> <em class="jxr_comment">                 */</em>
+<a class="jxr_linenumber" name="692" href="#692">692</a> 
+<a class="jxr_linenumber" name="693" href="#693">693</a>                 <strong class="jxr_keyword">if</strong> (wsLen &gt; 0) {
+<a class="jxr_linenumber" name="694" href="#694">694</a>                     <em class="jxr_comment">/*<em class="jxr_comment"> Commit previous ending whitespace */</em></em>
+<a class="jxr_linenumber" name="695" href="#695">695</a>                     writer.write(wsBuf, 0, wsLen);
+<a class="jxr_linenumber" name="696" href="#696">696</a>                     wsLen = 0;
+<a class="jxr_linenumber" name="697" href="#697">697</a>                 }
+<a class="jxr_linenumber" name="698" href="#698">698</a> 
+<a class="jxr_linenumber" name="699" href="#699">699</a>                 <strong class="jxr_keyword">while</strong> (end &gt; start) {
+<a class="jxr_linenumber" name="700" href="#700">700</a>                     <em class="jxr_comment">/*<em class="jxr_comment"> Buffer current ending whitespace */</em></em>
+<a class="jxr_linenumber" name="701" href="#701">701</a>                     <strong class="jxr_keyword">if</strong> (charBuf[end] &gt; 0x20) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="702" href="#702">702</a>                     wsBuf[wsLen] = charBuf[end];
+<a class="jxr_linenumber" name="703" href="#703">703</a>                     wsLen++;
+<a class="jxr_linenumber" name="704" href="#704">704</a>                     end--;
+<a class="jxr_linenumber" name="705" href="#705">705</a>                 }
+<a class="jxr_linenumber" name="706" href="#706">706</a> 
+<a class="jxr_linenumber" name="707" href="#707">707</a>                 <strong class="jxr_keyword">if</strong> (start &lt; len) {
+<a class="jxr_linenumber" name="708" href="#708">708</a>                     writer.write(charBuf, start, end + 1 - start);
+<a class="jxr_linenumber" name="709" href="#709">709</a>                 }
+<a class="jxr_linenumber" name="710" href="#710">710</a>             }
+<a class="jxr_linenumber" name="711" href="#711">711</a>         } <strong class="jxr_keyword">catch</strong> (UnsupportedEncodingException uee) {
+<a class="jxr_linenumber" name="712" href="#712">712</a>             <strong class="jxr_keyword">throw</strong> uee;
+<a class="jxr_linenumber" name="713" href="#713">713</a>         } <strong class="jxr_keyword">catch</strong> (IOException ioe) {
+<a class="jxr_linenumber" name="714" href="#714">714</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/StreamIOException.html">StreamIOException</a>(<span class="jxr_string">"Error reading from inline xml datastream."</span>);
+<a class="jxr_linenumber" name="715" href="#715">715</a>         } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="716" href="#716">716</a>             <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="717" href="#717">717</a>                 in.close();
+<a class="jxr_linenumber" name="718" href="#718">718</a>             } <strong class="jxr_keyword">catch</strong> (IOException closeProb) {
+<a class="jxr_linenumber" name="719" href="#719">719</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/StreamIOException.html">StreamIOException</a>(<span class="jxr_string">"Error closing read stream."</span>);
+<a class="jxr_linenumber" name="720" href="#720">720</a>             }
+<a class="jxr_linenumber" name="721" href="#721">721</a>         }
+<a class="jxr_linenumber" name="722" href="#722">722</a>     }
+<a class="jxr_linenumber" name="723" href="#723">723</a> 
+<a class="jxr_linenumber" name="724" href="#724">724</a>     <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="725" href="#725">725</a> <em class="jxr_comment">     * Certain serviceDeployment datastreams require special processing to</em>
+<a class="jxr_linenumber" name="726" href="#726">726</a> <em class="jxr_comment">     * fix/complete URLs and do variable substitution (such as replacing</em>
+<a class="jxr_linenumber" name="727" href="#727">727</a> <em class="jxr_comment">     * 'local.fedora.server' with fedora's baseURL)</em>
+<a class="jxr_linenumber" name="728" href="#728">728</a> <em class="jxr_comment">     */</em>
+<a class="jxr_linenumber" name="729" href="#729">729</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> normalizeDatastreams(<a href="../../../../../org/fcrepo/server/storage/types/DigitalObject.html">DigitalObject</a> obj,
+<a class="jxr_linenumber" name="730" href="#730">730</a>                                             <strong class="jxr_keyword">int</strong> transContext,
+<a class="jxr_linenumber" name="731" href="#731">731</a>                                             String characterEncoding)
+<a class="jxr_linenumber" name="732" href="#732">732</a>             <strong class="jxr_keyword">throws</strong> UnsupportedEncodingException {
+<a class="jxr_linenumber" name="733" href="#733">733</a>         <strong class="jxr_keyword">if</strong> (transContext == AS_IS) {
+<a class="jxr_linenumber" name="734" href="#734">734</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="735" href="#735">735</a>         }
+<a class="jxr_linenumber" name="736" href="#736">736</a>         <strong class="jxr_keyword">if</strong> (obj.hasContentModel( Models.SERVICE_DEPLOYMENT_3_0)) {
+<a class="jxr_linenumber" name="737" href="#737">737</a>             Iterator&lt;String&gt; datastreams = obj.datastreamIdIterator();
+<a class="jxr_linenumber" name="738" href="#738">738</a>             <strong class="jxr_keyword">while</strong> (datastreams.hasNext()) {
+<a class="jxr_linenumber" name="739" href="#739">739</a>                 String dsid = datastreams.next();
+<a class="jxr_linenumber" name="740" href="#740">740</a> 
+<a class="jxr_linenumber" name="741" href="#741">741</a>                 <strong class="jxr_keyword">if</strong> (dsid.equals(<span class="jxr_string">"WSDL"</span>) || dsid.equals(<span class="jxr_string">"SERVICE-PROFILE"</span>)) {
+<a class="jxr_linenumber" name="742" href="#742">742</a>                     <strong class="jxr_keyword">for</strong> (Datastream d : obj.datastreams(dsid)) {
+<a class="jxr_linenumber" name="743" href="#743">743</a>                         <strong class="jxr_keyword">if</strong> (!(d instanceof DatastreamXMLMetadata)) {
+<a class="jxr_linenumber" name="744" href="#744">744</a>                             logger.warn(obj.getPid()
+<a class="jxr_linenumber" name="745" href="#745">745</a>                                     + <span class="jxr_string">" : Refusing to normalize URLs in datastream "</span>
+<a class="jxr_linenumber" name="746" href="#746">746</a>                                     + dsid + <span class="jxr_string">" because it is not inline XML"</span>);
+<a class="jxr_linenumber" name="747" href="#747">747</a>                             <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="748" href="#748">748</a>                         }
+<a class="jxr_linenumber" name="749" href="#749">749</a> 
+<a class="jxr_linenumber" name="750" href="#750">750</a>                         <a href="../../../../../org/fcrepo/server/storage/types/DatastreamXMLMetadata.html">DatastreamXMLMetadata</a> xd = (DatastreamXMLMetadata) d;
+<a class="jxr_linenumber" name="751" href="#751">751</a>                         <strong class="jxr_keyword">if</strong> (logger.isDebugEnabled())
+<a class="jxr_linenumber" name="752" href="#752">752</a>                             logger.debug(obj.getPid() + <span class="jxr_string">" : normalising URLs in "</span>
+<a class="jxr_linenumber" name="753" href="#753">753</a>                                 + dsid);
+<a class="jxr_linenumber" name="754" href="#754">754</a>                         xd.xmlContent =
+<a class="jxr_linenumber" name="755" href="#755">755</a>                                 <a href="../../../../../org/fcrepo/server/storage/translation/DOTranslationUtility.html">DOTranslationUtility</a>
+<a class="jxr_linenumber" name="756" href="#756">756</a>                                         .normalizeInlineXML(<strong class="jxr_keyword">new</strong> String(xd.xmlContent,
+<a class="jxr_linenumber" name="757" href="#757">757</a>                                                                        <span class="jxr_string">"UTF-8"</span>),
+<a class="jxr_linenumber" name="758" href="#758">758</a>                                                             transContext)
+<a class="jxr_linenumber" name="759" href="#759">759</a>                                         .getBytes(characterEncoding);
+<a class="jxr_linenumber" name="760" href="#760">760</a>                         xd.DSSize = xd.xmlContent.length;
+<a class="jxr_linenumber" name="761" href="#761">761</a>                     }
+<a class="jxr_linenumber" name="762" href="#762">762</a>                 }
+<a class="jxr_linenumber" name="763" href="#763">763</a>             }
+<a class="jxr_linenumber" name="764" href="#764">764</a>         }
+<a class="jxr_linenumber" name="765" href="#765">765</a>     }
+<a class="jxr_linenumber" name="766" href="#766">766</a> 
+<a class="jxr_linenumber" name="767" href="#767">767</a>     @Deprecated
+<a class="jxr_linenumber" name="768" href="#768">768</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a href="../../../../../org/fcrepo/server/storage/types/Disseminator.html">Disseminator</a> setDisseminatorDefaults(<a href="../../../../../org/fcrepo/server/storage/types/Disseminator.html">Disseminator</a> diss)
+<a class="jxr_linenumber" name="769" href="#769">769</a>             <strong class="jxr_keyword">throws</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a> {
+<a class="jxr_linenumber" name="770" href="#770">770</a> 
+<a class="jxr_linenumber" name="771" href="#771">771</a>         <em class="jxr_comment">// Until future when we implement selective versioning,</em>
+<a class="jxr_linenumber" name="772" href="#772">772</a>         <em class="jxr_comment">// set default to true.</em>
+<a class="jxr_linenumber" name="773" href="#773">773</a>         diss.dissVersionable = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="774" href="#774">774</a> 
+<a class="jxr_linenumber" name="775" href="#775">775</a>         <strong class="jxr_keyword">if</strong> (diss.dissState == <strong class="jxr_keyword">null</strong> || diss.dissState.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="776" href="#776">776</a>             diss.dissState = <span class="jxr_string">"A"</span>;
+<a class="jxr_linenumber" name="777" href="#777">777</a>         }
+<a class="jxr_linenumber" name="778" href="#778">778</a>         <strong class="jxr_keyword">return</strong> diss;
+<a class="jxr_linenumber" name="779" href="#779">779</a>     }
+<a class="jxr_linenumber" name="780" href="#780">780</a> 
+<a class="jxr_linenumber" name="781" href="#781">781</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> String oneString(String[] idList) {
+<a class="jxr_linenumber" name="782" href="#782">782</a>         StringBuffer out = <strong class="jxr_keyword">new</strong> StringBuffer();
+<a class="jxr_linenumber" name="783" href="#783">783</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; idList.length; i++) {
+<a class="jxr_linenumber" name="784" href="#784">784</a>             <strong class="jxr_keyword">if</strong> (i &gt; 0) {
+<a class="jxr_linenumber" name="785" href="#785">785</a>                 out.append(' ');
+<a class="jxr_linenumber" name="786" href="#786">786</a>             }
+<a class="jxr_linenumber" name="787" href="#787">787</a>             out.append(idList[i]);
+<a class="jxr_linenumber" name="788" href="#788">788</a>         }
+<a class="jxr_linenumber" name="789" href="#789">789</a>         <strong class="jxr_keyword">return</strong> out.toString();
+<a class="jxr_linenumber" name="790" href="#790">790</a>     }
+<a class="jxr_linenumber" name="791" href="#791">791</a> 
+<a class="jxr_linenumber" name="792" href="#792">792</a>     <em class="jxr_javadoccomment">/**</em><em class="jxr_javadoccomment"> Reads the state attribute from a DigitalObject.</em>
+<a class="jxr_linenumber" name="793" href="#793">793</a> <em class="jxr_javadoccomment">     * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="794" href="#794">794</a> <em class="jxr_javadoccomment">     * Null or empty strings are interpteted as "Active".</em>
+<a class="jxr_linenumber" name="795" href="#795">795</a> <em class="jxr_javadoccomment">     * &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="796" href="#796">796</a> <em class="jxr_javadoccomment">     * @param obj Object that potentially contains object state data.</em>
+<a class="jxr_linenumber" name="797" href="#797">797</a> <em class="jxr_javadoccomment">     * @return String containing full state value (Active, Inactive, or Deleted)</em>
+<a class="jxr_linenumber" name="798" href="#798">798</a> <em class="jxr_javadoccomment">     * @throws ObjectIntegrityException thrown when the state cannot be parsed.</em>
+<a class="jxr_linenumber" name="799" href="#799">799</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="800" href="#800">800</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String getStateAttribute(<a href="../../../../../org/fcrepo/server/storage/types/DigitalObject.html">DigitalObject</a> obj) <strong class="jxr_keyword">throws</strong> ObjectIntegrityException {
+<a class="jxr_linenumber" name="801" href="#801">801</a> 
+<a class="jxr_linenumber" name="802" href="#802">802</a>             <strong class="jxr_keyword">if</strong> (obj.getState() == <strong class="jxr_keyword">null</strong> || obj.getState().equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="803" href="#803">803</a>                 <strong class="jxr_keyword">return</strong> MODEL.ACTIVE.localName;
+<a class="jxr_linenumber" name="804" href="#804">804</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="805" href="#805">805</a>                 <strong class="jxr_keyword">switch</strong> (obj.getState().charAt(0)) {
+<a class="jxr_linenumber" name="806" href="#806">806</a>                     <strong class="jxr_keyword">case</strong> 'D':
+<a class="jxr_linenumber" name="807" href="#807">807</a>                         <strong class="jxr_keyword">return</strong> MODEL.DELETED.localName;
+<a class="jxr_linenumber" name="808" href="#808">808</a>                     <strong class="jxr_keyword">case</strong> 'I':
+<a class="jxr_linenumber" name="809" href="#809">809</a>                         <strong class="jxr_keyword">return</strong> MODEL.INACTIVE.localName;
+<a class="jxr_linenumber" name="810" href="#810">810</a>                     <strong class="jxr_keyword">case</strong> 'A':
+<a class="jxr_linenumber" name="811" href="#811">811</a>                         <strong class="jxr_keyword">return</strong> MODEL.ACTIVE.localName;
+<a class="jxr_linenumber" name="812" href="#812">812</a>                     <strong class="jxr_keyword">default</strong>:
+<a class="jxr_linenumber" name="813" href="#813">813</a>                         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Could not determine "</span>
+<a class="jxr_linenumber" name="814" href="#814">814</a>                                                    + <span class="jxr_string">"state attribute from '"</span>
+<a class="jxr_linenumber" name="815" href="#815">815</a>                                                    + obj.getState() + <span class="jxr_string">"'"</span>);
+<a class="jxr_linenumber" name="816" href="#816">816</a>                 }
+<a class="jxr_linenumber" name="817" href="#817">817</a>             }
+<a class="jxr_linenumber" name="818" href="#818">818</a>     }
+<a class="jxr_linenumber" name="819" href="#819">819</a> 
+<a class="jxr_linenumber" name="820" href="#820">820</a>     <em class="jxr_javadoccomment">/**</em><em class="jxr_javadoccomment"> Parse and read the object state value from raw text.</em>
+<a class="jxr_linenumber" name="821" href="#821">821</a> <em class="jxr_javadoccomment">     * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="822" href="#822">822</a> <em class="jxr_javadoccomment">     * Reads a text representation of object state, and returns a "state code"</em>
+<a class="jxr_linenumber" name="823" href="#823">823</a> <em class="jxr_javadoccomment">     * abbreviation corresponding to that state.  Null or empty values are interpreted</em>
+<a class="jxr_linenumber" name="824" href="#824">824</a> <em class="jxr_javadoccomment">     * as "Active".</em>
+<a class="jxr_linenumber" name="825" href="#825">825</a> <em class="jxr_javadoccomment">     * &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="826" href="#826">826</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="827" href="#827">827</a> <em class="jxr_javadoccomment">     * XXX: It might clearer to nix state codes altogether and just use the full value</em>
+<a class="jxr_linenumber" name="828" href="#828">828</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="829" href="#829">829</a> <em class="jxr_javadoccomment">     * @param rawValue Raw string to parse.  May be null</em>
+<a class="jxr_linenumber" name="830" href="#830">830</a> <em class="jxr_javadoccomment">     * @return String containing the state code (A, D, or I)</em>
+<a class="jxr_linenumber" name="831" href="#831">831</a> <em class="jxr_javadoccomment">     * @throws ParseException thrown when state value cannot be determined</em>
+<a class="jxr_linenumber" name="832" href="#832">832</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="833" href="#833">833</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String readStateAttribute(String rawValue) <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="834" href="#834">834</a>         <strong class="jxr_keyword">if</strong> (MODEL.DELETED.looselyMatches(rawValue, <strong class="jxr_keyword">true</strong>)) {
+<a class="jxr_linenumber" name="835" href="#835">835</a>             <strong class="jxr_keyword">return</strong> <span class="jxr_string">"D"</span>;
+<a class="jxr_linenumber" name="836" href="#836">836</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (MODEL.INACTIVE.looselyMatches(rawValue, <strong class="jxr_keyword">true</strong>)) {
+<a class="jxr_linenumber" name="837" href="#837">837</a>             <strong class="jxr_keyword">return</strong> <span class="jxr_string">"I"</span>;
+<a class="jxr_linenumber" name="838" href="#838">838</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (MODEL.ACTIVE.looselyMatches(rawValue, <strong class="jxr_keyword">true</strong>)
+<a class="jxr_linenumber" name="839" href="#839">839</a>                     || rawValue == <strong class="jxr_keyword">null</strong>
+<a class="jxr_linenumber" name="840" href="#840">840</a>                     || rawValue.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="841" href="#841">841</a>             <strong class="jxr_keyword">return</strong> <span class="jxr_string">"A"</span>;
+<a class="jxr_linenumber" name="842" href="#842">842</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="843" href="#843">843</a>                 <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> ParseException(<span class="jxr_string">"Could not interpret state value of '"</span>
+<a class="jxr_linenumber" name="844" href="#844">844</a>                                    + rawValue + <span class="jxr_string">"'"</span>, 0);
+<a class="jxr_linenumber" name="845" href="#845">845</a>         }
+<a class="jxr_linenumber" name="846" href="#846">846</a>     }
+<a class="jxr_linenumber" name="847" href="#847">847</a> 
+<a class="jxr_linenumber" name="848" href="#848">848</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> RDFName getTypeAttribute(<a href="../../../../../org/fcrepo/server/storage/types/DigitalObject.html">DigitalObject</a> obj)
+<a class="jxr_linenumber" name="849" href="#849">849</a>             <strong class="jxr_keyword">throws</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a> {
+<a class="jxr_linenumber" name="850" href="#850">850</a>         <strong class="jxr_keyword">if</strong> (obj.hasContentModel(SERVICE_DEFINITION_3_0)) {
+<a class="jxr_linenumber" name="851" href="#851">851</a>             <strong class="jxr_keyword">return</strong> MODEL.BDEF_OBJECT;
+<a class="jxr_linenumber" name="852" href="#852">852</a>         }
+<a class="jxr_linenumber" name="853" href="#853">853</a>         <strong class="jxr_keyword">if</strong> (obj.hasContentModel(SERVICE_DEPLOYMENT_3_0)) {
+<a class="jxr_linenumber" name="854" href="#854">854</a>             <strong class="jxr_keyword">return</strong> MODEL.BMECH_OBJECT;
+<a class="jxr_linenumber" name="855" href="#855">855</a>         }
+<a class="jxr_linenumber" name="856" href="#856">856</a>         <strong class="jxr_keyword">if</strong> (obj.hasContentModel( CONTENT_MODEL_3_0)) {
+<a class="jxr_linenumber" name="857" href="#857">857</a> 
+<a class="jxr_linenumber" name="858" href="#858">858</a>             <em class="jxr_comment">// FOXML 1.0 doesn't support this type; down-convert</em>
+<a class="jxr_linenumber" name="859" href="#859">859</a>             <strong class="jxr_keyword">return</strong> MODEL.DATA_OBJECT;
+<a class="jxr_linenumber" name="860" href="#860">860</a>         }
+<a class="jxr_linenumber" name="861" href="#861">861</a>         <strong class="jxr_keyword">if</strong> (obj.hasContentModel( FEDORA_OBJECT_3_0)) {
+<a class="jxr_linenumber" name="862" href="#862">862</a>             <strong class="jxr_keyword">return</strong> MODEL.DATA_OBJECT;
+<a class="jxr_linenumber" name="863" href="#863">863</a>         }
+<a class="jxr_linenumber" name="864" href="#864">864</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="865" href="#865">865</a>     }
+<a class="jxr_linenumber" name="866" href="#866">866</a> 
+<a class="jxr_linenumber" name="867" href="#867">867</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="868" href="#868">868</a> <em class="jxr_javadoccomment">     * The audit record is created by the system, so programmatic validation</em>
+<a class="jxr_linenumber" name="869" href="#869">869</a> <em class="jxr_javadoccomment">     * here is o.k. Normally, validation takes place via XML Schema and</em>
+<a class="jxr_linenumber" name="870" href="#870">870</a> <em class="jxr_javadoccomment">     * Schematron.</em>
+<a class="jxr_linenumber" name="871" href="#871">871</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="872" href="#872">872</a> <em class="jxr_javadoccomment">     * @param audit</em>
+<a class="jxr_linenumber" name="873" href="#873">873</a> <em class="jxr_javadoccomment">     * @throws ObjectIntegrityException</em>
+<a class="jxr_linenumber" name="874" href="#874">874</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="875" href="#875">875</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> validateAudit(<a href="../../../../../org/fcrepo/server/storage/types/AuditRecord.html">AuditRecord</a> audit)
+<a class="jxr_linenumber" name="876" href="#876">876</a>             <strong class="jxr_keyword">throws</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a> {
+<a class="jxr_linenumber" name="877" href="#877">877</a>         <strong class="jxr_keyword">if</strong> (audit.id == <strong class="jxr_keyword">null</strong> || audit.id.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="878" href="#878">878</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Audit record must have id."</span>);
+<a class="jxr_linenumber" name="879" href="#879">879</a>         }
+<a class="jxr_linenumber" name="880" href="#880">880</a>         <strong class="jxr_keyword">if</strong> (audit.date == <strong class="jxr_keyword">null</strong> || audit.date.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="881" href="#881">881</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Audit record must have date."</span>);
+<a class="jxr_linenumber" name="882" href="#882">882</a>         }
+<a class="jxr_linenumber" name="883" href="#883">883</a>         <strong class="jxr_keyword">if</strong> (audit.processType == <strong class="jxr_keyword">null</strong> || audit.processType.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="884" href="#884">884</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Audit record must have processType."</span>);
+<a class="jxr_linenumber" name="885" href="#885">885</a>         }
+<a class="jxr_linenumber" name="886" href="#886">886</a>         <strong class="jxr_keyword">if</strong> (audit.action == <strong class="jxr_keyword">null</strong> || audit.action.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="887" href="#887">887</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Audit record must have action."</span>);
+<a class="jxr_linenumber" name="888" href="#888">888</a>         }
+<a class="jxr_linenumber" name="889" href="#889">889</a>         <strong class="jxr_keyword">if</strong> (audit.componentID == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="890" href="#890">890</a>             audit.componentID = <span class="jxr_string">""</span>; <em class="jxr_comment">// for backwards compatibility, no error on null</em>
+<a class="jxr_linenumber" name="891" href="#891">891</a>             <em class="jxr_comment">// throw new ObjectIntegrityException("Audit record must have componentID.");</em>
+<a class="jxr_linenumber" name="892" href="#892">892</a>         }
+<a class="jxr_linenumber" name="893" href="#893">893</a>         <strong class="jxr_keyword">if</strong> (audit.responsibility == <strong class="jxr_keyword">null</strong> || audit.responsibility.equals(<span class="jxr_string">""</span>)) {
+<a class="jxr_linenumber" name="894" href="#894">894</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a>(<span class="jxr_string">"Audit record must have responsibility."</span>);
+<a class="jxr_linenumber" name="895" href="#895">895</a>         }
+<a class="jxr_linenumber" name="896" href="#896">896</a>     }
+<a class="jxr_linenumber" name="897" href="#897">897</a> 
+<a class="jxr_linenumber" name="898" href="#898">898</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> String getAuditTrail(<a href="../../../../../org/fcrepo/server/storage/types/DigitalObject.html">DigitalObject</a> obj)
+<a class="jxr_linenumber" name="899" href="#899">899</a>             <strong class="jxr_keyword">throws</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a> {
+<a class="jxr_linenumber" name="900" href="#900">900</a>         StringWriter buf = <strong class="jxr_keyword">new</strong> StringWriter();
+<a class="jxr_linenumber" name="901" href="#901">901</a>         appendAuditTrail(obj, <strong class="jxr_keyword">new</strong> PrintWriter(buf));
+<a class="jxr_linenumber" name="902" href="#902">902</a>         <strong class="jxr_keyword">return</strong> buf.toString();
+<a class="jxr_linenumber" name="903" href="#903">903</a>     }
+<a class="jxr_linenumber" name="904" href="#904">904</a> 
+<a class="jxr_linenumber" name="905" href="#905">905</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendAuditTrail(<a href="../../../../../org/fcrepo/server/storage/types/DigitalObject.html">DigitalObject</a> obj, PrintWriter writer)
+<a class="jxr_linenumber" name="906" href="#906">906</a>             <strong class="jxr_keyword">throws</strong> <a href="../../../../../org/fcrepo/server/errors/ObjectIntegrityException.html">ObjectIntegrityException</a> {
+<a class="jxr_linenumber" name="907" href="#907">907</a>         appendOpenElement(writer, AUDIT.AUDIT_TRAIL, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="908" href="#908">908</a>         <strong class="jxr_keyword">for</strong> (AuditRecord audit : obj.getAuditRecords()) {
+<a class="jxr_linenumber" name="909" href="#909">909</a>             DOTranslationUtility.validateAudit(audit);
+<a class="jxr_linenumber" name="910" href="#910">910</a>             appendOpenElement(writer, AUDIT.RECORD, AUDIT.ID, audit.id);
+<a class="jxr_linenumber" name="911" href="#911">911</a>             appendFullElement(writer,
+<a class="jxr_linenumber" name="912" href="#912">912</a>                               AUDIT.PROCESS,
+<a class="jxr_linenumber" name="913" href="#913">913</a>                               AUDIT.TYPE,
+<a class="jxr_linenumber" name="914" href="#914">914</a>                               audit.processType);
+<a class="jxr_linenumber" name="915" href="#915">915</a>             appendFullElement(writer, AUDIT.ACTION, audit.action);
+<a class="jxr_linenumber" name="916" href="#916">916</a>             appendFullElement(writer, AUDIT.COMPONENT_ID, audit.componentID);
+<a class="jxr_linenumber" name="917" href="#917">917</a>             appendFullElement(writer,
+<a class="jxr_linenumber" name="918" href="#918">918</a>                               AUDIT.RESPONSIBILITY,
+<a class="jxr_linenumber" name="919" href="#919">919</a>                               audit.responsibility);
+<a class="jxr_linenumber" name="920" href="#920">920</a>             appendFullElement(writer, AUDIT.DATE, DateUtility
+<a class="jxr_linenumber" name="921" href="#921">921</a>                     .convertDateToString(audit.date));
+<a class="jxr_linenumber" name="922" href="#922">922</a>             appendFullElement(writer, AUDIT.JUSTIFICATION, audit.justification);
+<a class="jxr_linenumber" name="923" href="#923">923</a>             appendCloseElement(writer, AUDIT.RECORD);
+<a class="jxr_linenumber" name="924" href="#924">924</a>         }
+<a class="jxr_linenumber" name="925" href="#925">925</a>         appendCloseElement(writer, AUDIT.AUDIT_TRAIL);
+<a class="jxr_linenumber" name="926" href="#926">926</a>     }
+<a class="jxr_linenumber" name="927" href="#927">927</a> 
+<a class="jxr_linenumber" name="928" href="#928">928</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> List&lt;AuditRecord&gt; getAuditRecords(XMLEventReader reader)
+<a class="jxr_linenumber" name="929" href="#929">929</a>             <strong class="jxr_keyword">throws</strong> XMLStreamException {
+<a class="jxr_linenumber" name="930" href="#930">930</a>         List&lt;AuditRecord&gt; records = <strong class="jxr_keyword">new</strong> ArrayList&lt;AuditRecord&gt;();
+<a class="jxr_linenumber" name="931" href="#931">931</a>         String inElement = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="932" href="#932">932</a> 
+<a class="jxr_linenumber" name="933" href="#933">933</a>         <strong class="jxr_keyword">while</strong> (reader.hasNext()) {
+<a class="jxr_linenumber" name="934" href="#934">934</a>             XMLEvent event = reader.nextEvent();
+<a class="jxr_linenumber" name="935" href="#935">935</a>             <strong class="jxr_keyword">if</strong> (event.isStartElement()) {
+<a class="jxr_linenumber" name="936" href="#936">936</a>                 StartElement element = (StartElement) event;
+<a class="jxr_linenumber" name="937" href="#937">937</a>                 inElement = element.getName().getLocalPart();
+<a class="jxr_linenumber" name="938" href="#938">938</a>                 <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.RECORD.localName)) {
+<a class="jxr_linenumber" name="939" href="#939">939</a>                     <a href="../../../../../org/fcrepo/server/storage/types/AuditRecord.html">AuditRecord</a> record = <strong class="jxr_keyword">new</strong> <a href="../../../../../org/fcrepo/server/storage/types/AuditRecord.html">AuditRecord</a>();
+<a class="jxr_linenumber" name="940" href="#940">940</a>                     java.util.Iterator&lt;?&gt; it = element.getAttributes();
+<a class="jxr_linenumber" name="941" href="#941">941</a>                     <strong class="jxr_keyword">while</strong> (it.hasNext()) {
+<a class="jxr_linenumber" name="942" href="#942">942</a>                         Attribute attr = (Attribute) it.next();
+<a class="jxr_linenumber" name="943" href="#943">943</a>                         <strong class="jxr_keyword">if</strong> (attr.getName().getLocalPart()
+<a class="jxr_linenumber" name="944" href="#944">944</a>                                 .equals(AUDIT.ID.localName)) {
+<a class="jxr_linenumber" name="945" href="#945">945</a>                             record.id = attr.getValue();
+<a class="jxr_linenumber" name="946" href="#946">946</a>                         }
+<a class="jxr_linenumber" name="947" href="#947">947</a>                     }
+<a class="jxr_linenumber" name="948" href="#948">948</a>                     records.add(record);
+<a class="jxr_linenumber" name="949" href="#949">949</a>                 } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.PROCESS.localName)) {
+<a class="jxr_linenumber" name="950" href="#950">950</a>                     java.util.Iterator&lt;?&gt; it = element.getAttributes();
+<a class="jxr_linenumber" name="951" href="#951">951</a>                     <strong class="jxr_keyword">while</strong> (it.hasNext()) {
+<a class="jxr_linenumber" name="952" href="#952">952</a>                         Attribute attr = (Attribute) it.next();
+<a class="jxr_linenumber" name="953" href="#953">953</a>                         <strong class="jxr_keyword">if</strong> (attr.getName().getLocalPart()
+<a class="jxr_linenumber" name="954" href="#954">954</a>                                 .equals(AUDIT.TYPE.localName)) {
+<a class="jxr_linenumber" name="955" href="#955">955</a>                             records.get(records.size() - 1).processType =
+<a class="jxr_linenumber" name="956" href="#956">956</a>                                     attr.getValue();
+<a class="jxr_linenumber" name="957" href="#957">957</a>                         }
+<a class="jxr_linenumber" name="958" href="#958">958</a>                     }
+<a class="jxr_linenumber" name="959" href="#959">959</a>                 }
+<a class="jxr_linenumber" name="960" href="#960">960</a>             }
+<a class="jxr_linenumber" name="961" href="#961">961</a>             <strong class="jxr_keyword">if</strong> (event.isEndElement()) {
+<a class="jxr_linenumber" name="962" href="#962">962</a>                 inElement = <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="963" href="#963">963</a>             }
+<a class="jxr_linenumber" name="964" href="#964">964</a>             <strong class="jxr_keyword">if</strong> (event.isCharacters()) {
+<a class="jxr_linenumber" name="965" href="#965">965</a>                 Characters characters = (Characters) event;
+<a class="jxr_linenumber" name="966" href="#966">966</a>                 <strong class="jxr_keyword">if</strong> (!records.isEmpty()) {
+<a class="jxr_linenumber" name="967" href="#967">967</a>                     <a href="../../../../../org/fcrepo/server/storage/types/AuditRecord.html">AuditRecord</a> record = records.get(records.size() - 1);
+<a class="jxr_linenumber" name="968" href="#968">968</a>                     <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.ACTION.localName)) {
+<a class="jxr_linenumber" name="969" href="#969">969</a>                         record.action = characters.getData();
+<a class="jxr_linenumber" name="970" href="#970">970</a>                     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.COMPONENT_ID.localName)) {
+<a class="jxr_linenumber" name="971" href="#971">971</a>                         record.componentID = characters.getData();
+<a class="jxr_linenumber" name="972" href="#972">972</a>                     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.DATE.localName)) {
+<a class="jxr_linenumber" name="973" href="#973">973</a>                         record.date =
+<a class="jxr_linenumber" name="974" href="#974">974</a>                                 DateUtility.convertStringToDate(characters
+<a class="jxr_linenumber" name="975" href="#975">975</a>                                         .getData());
+<a class="jxr_linenumber" name="976" href="#976">976</a>                     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.JUSTIFICATION.localName)) {
+<a class="jxr_linenumber" name="977" href="#977">977</a>                         record.justification = characters.getData();
+<a class="jxr_linenumber" name="978" href="#978">978</a>                     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (inElement.equals(AUDIT.RESPONSIBILITY.localName)) {
+<a class="jxr_linenumber" name="979" href="#979">979</a>                         record.responsibility = characters.getData();
+<a class="jxr_linenumber" name="980" href="#980">980</a>                     }
+<a class="jxr_linenumber" name="981" href="#981">981</a>                 }
+<a class="jxr_linenumber" name="982" href="#982">982</a>             }
+<a class="jxr_linenumber" name="983" href="#983">983</a>         }
+<a class="jxr_linenumber" name="984" href="#984">984</a>         <strong class="jxr_keyword">return</strong> records;
+<a class="jxr_linenumber" name="985" href="#985">985</a>     }
+<a class="jxr_linenumber" name="986" href="#986">986</a> 
+<a class="jxr_linenumber" name="987" href="#987">987</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="988" href="#988">988</a> <em class="jxr_javadoccomment">     * Parse an audit:auditTrail and return a list of AuditRecords.</em>
+<a class="jxr_linenumber" name="989" href="#989">989</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="990" href="#990">990</a> <em class="jxr_javadoccomment">     * @since 3.0</em>
+<a class="jxr_linenumber" name="991" href="#991">991</a> <em class="jxr_javadoccomment">     * @param auditTrail</em>
+<a class="jxr_linenumber" name="992" href="#992">992</a> <em class="jxr_javadoccomment">     * @return</em>
+<a class="jxr_linenumber" name="993" href="#993">993</a> <em class="jxr_javadoccomment">     * @throws XMLStreamException</em>
+<a class="jxr_linenumber" name="994" href="#994">994</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="995" href="#995">995</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> List&lt;AuditRecord&gt; getAuditRecords(InputStream auditTrail)
+<a class="jxr_linenumber" name="996" href="#996">996</a>             <strong class="jxr_keyword">throws</strong> XMLStreamException {
+<a class="jxr_linenumber" name="997" href="#997">997</a>         XMLEventReader eventReader;
+<a class="jxr_linenumber" name="998" href="#998">998</a>         <strong class="jxr_keyword">synchronized</strong> (m_xmlInputFactory) {
+<a class="jxr_linenumber" name="999" href="#999">999</a>             eventReader = m_xmlInputFactory.createXMLEventReader(auditTrail);
+<a class="jxr_linenumber" name="1000" href="#1000">1000</a>         }
+<a class="jxr_linenumber" name="1001" href="#1001">1001</a>         List&lt;AuditRecord&gt; records = getAuditRecords(eventReader);
+<a class="jxr_linenumber" name="1002" href="#1002">1002</a>         eventReader.close();
+<a class="jxr_linenumber" name="1003" href="#1003">1003</a>         <strong class="jxr_keyword">return</strong> records;
+<a class="jxr_linenumber" name="1004" href="#1004">1004</a>     }
+<a class="jxr_linenumber" name="1005" href="#1005">1005</a> 
+<a class="jxr_linenumber" name="1006" href="#1006">1006</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> List&lt;AuditRecord&gt; getAuditRecords(Reader auditTrail)
+<a class="jxr_linenumber" name="1007" href="#1007">1007</a>             <strong class="jxr_keyword">throws</strong> XMLStreamException {
+<a class="jxr_linenumber" name="1008" href="#1008">1008</a>         XMLEventReader eventReader;
+<a class="jxr_linenumber" name="1009" href="#1009">1009</a>         <strong class="jxr_keyword">synchronized</strong> (m_xmlInputFactory) {
+<a class="jxr_linenumber" name="1010" href="#1010">1010</a>             eventReader = m_xmlInputFactory.createXMLEventReader(auditTrail);
+<a class="jxr_linenumber" name="1011" href="#1011">1011</a>         }
+<a class="jxr_linenumber" name="1012" href="#1012">1012</a>         List&lt;AuditRecord&gt; records = getAuditRecords(eventReader);
+<a class="jxr_linenumber" name="1013" href="#1013">1013</a>         eventReader.close();
+<a class="jxr_linenumber" name="1014" href="#1014">1014</a>         <strong class="jxr_keyword">return</strong> records;
+<a class="jxr_linenumber" name="1015" href="#1015">1015</a>     }
+<a class="jxr_linenumber" name="1016" href="#1016">1016</a> 
+<a class="jxr_linenumber" name="1017" href="#1017">1017</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendOpenElement(PrintWriter writer,
+<a class="jxr_linenumber" name="1018" href="#1018">1018</a>                                           QName element,
+<a class="jxr_linenumber" name="1019" href="#1019">1019</a>                                           <strong class="jxr_keyword">boolean</strong> declareNamespace) {
+<a class="jxr_linenumber" name="1020" href="#1020">1020</a>         writer.print(<span class="jxr_string">"&lt;"</span>);
+<a class="jxr_linenumber" name="1021" href="#1021">1021</a>         writer.print(element.qName);
+<a class="jxr_linenumber" name="1022" href="#1022">1022</a>         <strong class="jxr_keyword">if</strong> (declareNamespace) {
+<a class="jxr_linenumber" name="1023" href="#1023">1023</a>             writer.print(<span class="jxr_string">" xmlns:"</span>);
+<a class="jxr_linenumber" name="1024" href="#1024">1024</a>             writer.print(element.namespace.prefix);
+<a class="jxr_linenumber" name="1025" href="#1025">1025</a>             writer.print(<span class="jxr_string">"=\&quot;"</span>);
+<a class="jxr_linenumber" name="1026" href="#1026">1026</a>             writer.print(element.namespace.uri);
+<a class="jxr_linenumber" name="1027" href="#1027">1027</a>             writer.print(<span class="jxr_string">"\&quot;"</span>);
+<a class="jxr_linenumber" name="1028" href="#1028">1028</a>         }
+<a class="jxr_linenumber" name="1029" href="#1029">1029</a>         writer.print(<span class="jxr_string">"&gt;\n"</span>);
+<a class="jxr_linenumber" name="1030" href="#1030">1030</a>     }
+<a class="jxr_linenumber" name="1031" href="#1031">1031</a> 
+<a class="jxr_linenumber" name="1032" href="#1032">1032</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendOpenElement(PrintWriter writer,
+<a class="jxr_linenumber" name="1033" href="#1033">1033</a>                                           QName element,
+<a class="jxr_linenumber" name="1034" href="#1034">1034</a>                                           QName attribute,
+<a class="jxr_linenumber" name="1035" href="#1035">1035</a>                                           String attributeContent) {
+<a class="jxr_linenumber" name="1036" href="#1036">1036</a>         writer.print(<span class="jxr_string">"&lt;"</span>);
+<a class="jxr_linenumber" name="1037" href="#1037">1037</a>         writer.print(element.qName);
+<a class="jxr_linenumber" name="1038" href="#1038">1038</a>         writer.print(<span class="jxr_string">" "</span>);
+<a class="jxr_linenumber" name="1039" href="#1039">1039</a>         writer.print(attribute.localName);
+<a class="jxr_linenumber" name="1040" href="#1040">1040</a>         writer.print(<span class="jxr_string">"=\&quot;"</span>);
+<a class="jxr_linenumber" name="1041" href="#1041">1041</a>         writer.print(StreamUtility.enc(attributeContent));
+<a class="jxr_linenumber" name="1042" href="#1042">1042</a>         writer.print(<span class="jxr_string">"\&quot;&gt;\n"</span>);
+<a class="jxr_linenumber" name="1043" href="#1043">1043</a>     }
+<a class="jxr_linenumber" name="1044" href="#1044">1044</a> 
+<a class="jxr_linenumber" name="1045" href="#1045">1045</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendCloseElement(PrintWriter writer, QName element) {
+<a class="jxr_linenumber" name="1046" href="#1046">1046</a>         writer.print(<span class="jxr_string">"&lt;/"</span>);
+<a class="jxr_linenumber" name="1047" href="#1047">1047</a>         writer.print(element.qName);
+<a class="jxr_linenumber" name="1048" href="#1048">1048</a>         writer.print(<span class="jxr_string">"&gt;\n"</span>);
+<a class="jxr_linenumber" name="1049" href="#1049">1049</a>     }
+<a class="jxr_linenumber" name="1050" href="#1050">1050</a> 
+<a class="jxr_linenumber" name="1051" href="#1051">1051</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendFullElement(PrintWriter writer,
+<a class="jxr_linenumber" name="1052" href="#1052">1052</a>                                           QName element,
+<a class="jxr_linenumber" name="1053" href="#1053">1053</a>                                           QName attribute,
+<a class="jxr_linenumber" name="1054" href="#1054">1054</a>                                           String attributeContent) {
+<a class="jxr_linenumber" name="1055" href="#1055">1055</a>         writer.print(<span class="jxr_string">"&lt;"</span>);
+<a class="jxr_linenumber" name="1056" href="#1056">1056</a>         writer.print(element.qName);
+<a class="jxr_linenumber" name="1057" href="#1057">1057</a>         writer.print(<span class="jxr_string">" "</span>);
+<a class="jxr_linenumber" name="1058" href="#1058">1058</a>         writer.print(attribute.localName);
+<a class="jxr_linenumber" name="1059" href="#1059">1059</a>         writer.print(<span class="jxr_string">"=\&quot;"</span>);
+<a class="jxr_linenumber" name="1060" href="#1060">1060</a>         writer.print(StreamUtility.enc(attributeContent));
+<a class="jxr_linenumber" name="1061" href="#1061">1061</a>         writer.print(<span class="jxr_string">"\&quot;/&gt;\n"</span>);
+<a class="jxr_linenumber" name="1062" href="#1062">1062</a>     }
+<a class="jxr_linenumber" name="1063" href="#1063">1063</a> 
+<a class="jxr_linenumber" name="1064" href="#1064">1064</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> appendFullElement(PrintWriter writer,
+<a class="jxr_linenumber" name="1065" href="#1065">1065</a>                                           QName element,
+<a class="jxr_linenumber" name="1066" href="#1066">1066</a>                                           String elementContent) {
+<a class="jxr_linenumber" name="1067" href="#1067">1067</a>         writer.print(<span class="jxr_string">"&lt;"</span>);
+<a class="jxr_linenumber" name="1068" href="#1068">1068</a>         writer.print(element.qName);
+<a class="jxr_linenumber" name="1069" href="#1069">1069</a>         writer.print(<span class="jxr_string">"&gt;"</span>);
+<a class="jxr_linenumber" name="1070" href="#1070">1070</a>         writer.print(StreamUtility.enc(elementContent));
+<a class="jxr_linenumber" name="1071" href="#1071">1071</a>         writer.print(<span class="jxr_string">"&lt;/"</span>);
+<a class="jxr_linenumber" name="1072" href="#1072">1072</a>         writer.print(element.qName);
+<a class="jxr_linenumber" name="1073" href="#1073">1073</a>         writer.print(<span class="jxr_string">"&gt;\n"</span>);
+<a class="jxr_linenumber" name="1074" href="#1074">1074</a>     }
+<a class="jxr_linenumber" name="1075" href="#1075">1075</a> }
+</pre>
+<hr/><div id="footer">This page was automatically generated by <a href="http://maven.apache.org/">Maven</a></div></body>
+</html>
+

@@ -1,0 +1,10 @@
+org.fcrepo.server.security.xacml.pdp.client
+org.fcrepo.server.security.xacml.pep
+org.fcrepo.server.security.xacml.pep.impl
+org.fcrepo.server.security.xacml.pep.rest
+org.fcrepo.server.security.xacml.pep.rest.filters
+org.fcrepo.server.security.xacml.pep.rest.objectshandlers
+org.fcrepo.server.security.xacml.pep.ws
+org.fcrepo.server.security.xacml.pep.ws.operations
+org.fcrepo.server.security.xacml.user
+org.fcrepo.server.security.xacml.util

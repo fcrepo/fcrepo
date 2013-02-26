@@ -1,0 +1,14 @@
+org.fcrepo.common
+org.fcrepo.common.http
+org.fcrepo.common.policy
+org.fcrepo.common.policy.xacml1
+org.fcrepo.common.policy.xacml2
+org.fcrepo.common.rdf
+org.fcrepo.common.xml.format
+org.fcrepo.common.xml.namespace
+org.fcrepo.server.access
+org.fcrepo.server.management
+org.fcrepo.server.types.gen
+org.fcrepo.server.types.mtom.gen
+org.fcrepo.utilities
+org.fcrepo.utilities.xml
