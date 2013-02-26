@@ -15,7 +15,7 @@
         "rebuildUponStartup" : "if_missing",
         "indexStorage" : {
             "type" : "filesystem",
-            "location" : "${fcrepo.modeshape.index.location:indexes}",
+            "location" : "${fcrepo.modeshape.index.location:target/indexes}",
             "lockingStrategy" : "native",
             "fileSystemAccessType" : "auto"
         }
