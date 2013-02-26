@@ -202,22 +202,6 @@
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>org.codehaus.enunciate</groupId>
-          <artifactId>maven-enunciate-cxf-plugin</artifactId>
-          <version>${enunciate.version}</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>docs</goal>
-              </goals>
-              <configuration>
-                <configFile>${basedir}/src/main/enunciate/enunciate.xml</configFile>
-                <docsDir>${project.build.directory}/docs</docsDir>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
           <version>2.3.7</version>
@@ -298,6 +282,16 @@
           </configuration>
         </plugin>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>cobertura-maven-plugin</artifactId>
+          <version>2.5.2</version>
+          <configuration>
+            <aggregate>true</aggregate>
+            <forceMojoExecution>true</forceMojoExecution>
+            <inherited>true</inherited>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
           <version>1.0.0</version>
@@ -326,19 +320,6 @@
                       <goal>add-source</goal>
                       <goal>compile</goal>
                       <goal>testCompile</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.enunciate</groupId>
-                    <artifactId>maven-enunciate-cxf-plugin</artifactId>
-                    <versionRange>[1.26.2,)</versionRange>
-                    <goals>
-                      <goal>docs</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
@@ -433,64 +414,6 @@
         <artifactId>maven-site-plugin</artifactId>
         <configuration>
           <skipDeploy>true</skipDeploy>
-          <reportPlugins>
-            <plugin>
-              <artifactId>maven-failsafe-plugin</artifactId>
-            </plugin>
-            <plugin>
-              <artifactId>maven-javadoc-plugin</artifactId>
-            </plugin>
-            <plugin>
-              <artifactId>maven-jxr-plugin</artifactId>
-            </plugin>
-            <plugin>
-              <artifactId>maven-surefire-report-plugin</artifactId>
-              <configuration>
-                <outputName>surefire-report</outputName>
-                <aggregate>true</aggregate>
-                <reportsDirectories>
-                  <reportsDirectory>${project.build.directory}/surefire-reports/</reportsDirectory>
-                  <reportsDirectory>${project.build.directory}/failsafe-reports/</reportsDirectory>
-                </reportsDirectories>
-              </configuration>
-            </plugin>
-            <plugin>
-              <artifactId>maven-changelog-plugin</artifactId>
-              <version>2.2</version>
-              <configuration>
-                <displayFileDetailUrl>http://github.com/mediashelf/${project_name}/blob/master/%FILE% </displayFileDetailUrl>
-              </configuration>
-            </plugin>
-            <plugin>
-              <artifactId>maven-project-info-reports-plugin</artifactId>
-              <configuration>
-                <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-              </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>cobertura-maven-plugin</artifactId>
-              <version>2.5.2</version>
-              <configuration>
-                <aggregate>true</aggregate>
-              </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>versions-maven-plugin</artifactId>
-              <version>1.3.1</version>
-              <reportSets>
-                <reportSet>
-                  <reports>
-                    <report>dependency-updates-report</report>
-                    <report>plugin-updates-report</report>
-                    <report>property-updates-report</report>
-                  </reports>
-                </reportSet>
-              </reportSets>
-            </plugin>
-          </reportPlugins>
         </configuration>
         <dependencies>
           <dependency>
@@ -505,13 +428,90 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>cobertura-maven-plugin</artifactId>
-        <version>2.5.2</version>
-        <configuration>
-          <aggregate>true</aggregate>
-        </configuration>
       </plugin>
     </plugins>
   </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>2.3</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <configuration>
+          <outputName>surefire-report</outputName>
+          <aggregate>true</aggregate>
+          <reportsDirectories>
+            <reportsDirectory>${project.build.directory}/surefire-reports/</reportsDirectory>
+            <reportsDirectory>${project.build.directory}/failsafe-reports/</reportsDirectory>
+          </reportsDirectories>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-changelog-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <displayFileDetailUrl>http://github.com/mediashelf/${project_name}/blob/master/%FILE% </displayFileDetailUrl>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <configuration>
+          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+          <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+        </configuration>
+      </plugin>
+      <!--
+      <plugin>
+        <groupId>org.codehaus.enunciate</groupId>
+        <artifactId>maven-enunciate-plugin</artifactId>
+        <version>${enunciate.version}</version>
+        <configuration>
+          <configFile>${basedir}/src/main/enunciate/enunciate.xml</configFile>
+          <!- - The subdirectory of the site where the documentation will be put. - ->
+          <!- - Note that if this isn't set, the documentation will overwrite the 
+            site. - ->
+          <docsSubdir>enunciate</docsSubdir>
+          <!- - Alternatively, you can just rename the Enunciate index page - ->
+          <indexPageName>enunciate.html</indexPageName>
+        </configuration>
+      </plugin>
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.5.2</version>
+        <configuration>
+          <aggregate>true</aggregate>
+          <forceMojoExecution>true</forceMojoExecution>
+          <inherited>true</inherited>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>2.0</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>dependency-updates-report</report>
+              <report>plugin-updates-report</report>
+              <report>property-updates-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 
   <repositories>
     <repository>
