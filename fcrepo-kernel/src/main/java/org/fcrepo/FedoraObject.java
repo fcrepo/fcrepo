@@ -65,7 +65,7 @@ public class FedoraObject extends JcrTools {
 
 
     /**
-     * @return A label associated with this datastream. Normally stored in a String-valued dc:title property.
+     * @return A label associated with this object. Normally stored in a String-valued dc:title property.
      * @throws RepositoryException
      */
     public String getLabel() throws RepositoryException {
