@@ -27,15 +27,18 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.ObjectProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +72,7 @@ public class FedoraObjects extends AbstractResource {
     @POST
     @Path("/new")
     public Response ingestAndMint() throws RepositoryException {
-        return ingest(pidMinter.mintPid());
+        return ingest(pidMinter.mintPid(), "");
     }
 
     /**
@@ -107,14 +110,17 @@ public class FedoraObjects extends AbstractResource {
      */
     @POST
     @Path("/{pid}")
-    public Response ingest(@PathParam("pid")
-    final String pid) throws RepositoryException {
+    public Response ingest(@PathParam("pid") final String pid,
+          @QueryParam("label") @DefaultValue("") final String label) throws RepositoryException {
 
         logger.debug("Attempting to ingest with pid: " + pid);
 
         final Session session = repo.login();
         try {
             final Node obj = createObjectNode(session, pid);
+            if (!label.equals("")) {
+                new FedoraObject(obj).setLabel(label);
+            }
             session.save();
             /*
              * we save before updating the repo size because the act of
