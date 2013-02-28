@@ -1,7 +1,7 @@
 
 package org.fcrepo;
 
-import static org.fcrepo.services.ObjectService.createObjectNode;
+import static org.fcrepo.services.ObjectService.createObject;
 import static org.fcrepo.services.ObjectService.getObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +25,7 @@ public class FedoraObjectTest extends AbstractTest {
     @Test
     public void testCreatedObject() throws RepositoryException, IOException {
         Session session = repo.login();
-        createObjectNode(session, "testObject");
+        createObject(session, "testObject");
         session.save();
         session.logout();
         session = repo.login();
@@ -36,8 +36,7 @@ public class FedoraObjectTest extends AbstractTest {
     @Test
     public void testOwnerId() throws RepositoryException, IOException {
         Session session = repo.login();
-        new FedoraObject(createObjectNode(session, "testObject"))
-                .setOwnerId("ajs6f");
+        createObject(session, "testObject").setOwnerId("ajs6f");
         session.save();
         session.logout();
         session = repo.login();
