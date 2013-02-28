@@ -1,6 +1,9 @@
 
 package org.fcrepo;
 
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
+import static org.fcrepo.utils.FedoraTypesUtils.isOwned;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
 import java.util.Calendar;
@@ -55,6 +58,22 @@ public class FedoraObject extends JcrTools {
      */
     public Node getNode() {
         return node;
+    }
+
+    public String getOwnerId() throws RepositoryException {
+        if (isOwned.apply(node))
+            return node.getProperty(FEDORA_OWNERID).getString();
+        else
+            return null;
+    }
+
+    public void setOwnerId(String ownerId) throws RepositoryException {
+        if (isOwned.apply(node))
+            node.setProperty(FEDORA_OWNERID, ownerId);
+        else {
+            node.addMixin(FEDORA_OWNED);
+            node.setProperty(FEDORA_OWNERID, ownerId);
+        }
     }
 
 }

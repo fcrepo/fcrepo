@@ -36,6 +36,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.ObjectProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,8 +160,7 @@ public class FedoraObjects extends AbstractResource {
                         on('/').join(map(dcTitle.getValues(), value2string));
             }
         }
-        objectProfile.objOwnerId =
-                obj.getProperty("fedora:ownerId").getString();
+        objectProfile.objOwnerId = new FedoraObject(obj).getOwnerId();
         objectProfile.objCreateDate =
                 obj.getProperty("jcr:created").getString();
         objectProfile.objLastModDate =
