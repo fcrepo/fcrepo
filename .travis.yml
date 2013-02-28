@@ -1,6 +1,10 @@
 language: java
 jdk:
   - oraclejdk7
+before_script:  
+ - "echo $JAVA_OPTS"
+ - "export JAVA_OPTS=-Xmx512m"
+install: JAVA_OPTS=-Xmx512m mvn install
 branches:
     only:
         - master
