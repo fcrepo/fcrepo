@@ -7,6 +7,7 @@ import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.InputStream;
 import java.util.Date;
@@ -19,13 +20,20 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
  * 
  * @author ajs6f
  *
  */
-public class Datastream {
+public class Datastream extends JcrTools {
+
+    private final static Logger logger = LoggerFactory
+            .getLogger(Datastream.class);
 
     Node node;
 
@@ -47,6 +55,44 @@ public class Datastream {
     public InputStream getContent() throws RepositoryException {
         return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getStream();
+    }
+
+    /**
+     * Sets the content of this Datastream.
+     * 
+     * @param content
+     * @throws RepositoryException
+     */
+    public void setContent(InputStream content) throws RepositoryException {
+        final Node contentNode =
+                findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+        logger.debug("Created content node at path: " + contentNode.getPath());
+        /*
+         * This next line of code deserves explanation. If we chose for the
+         * simpler line:
+         * Property dataProperty = contentNode.setProperty(JCR_DATA,
+         * requestBodyStream);
+         * then the JCR would not block on the stream's completion, and we would
+         * return to the requester before the mutation to the repo had actually
+         * completed. So instead we use createBinary(requestBodyStream), because
+         * its contract specifies:
+         * "The passed InputStream is closed before this method returns either
+         * normally or because of an exception."
+         * which lets us block and not return until the job is done! The simpler
+         * code may still be useful to us for an asynchronous method that we
+         * develop later.
+         */
+        Property dataProperty =
+                contentNode.setProperty(JCR_DATA, node.getSession()
+                        .getValueFactory().createBinary(content));
+        logger.debug("Created data property at path: " + dataProperty.getPath());
+
+    }
+
+    public void setContent(InputStream content, String mimeType)
+            throws RepositoryException {
+        setContent(content);
+        node.setProperty("fedora:contentType", mimeType);
     }
 
     /**

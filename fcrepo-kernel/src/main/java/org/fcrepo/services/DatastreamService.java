@@ -5,10 +5,8 @@ import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
-import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +17,6 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -54,38 +51,10 @@ public class DatastreamService {
 
         final Node ds = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
         ds.addMixin(FEDORA_DATASTREAM);
-
-        final Node contentNode =
-                jcrTools.findOrCreateChild(ds, JCR_CONTENT, NT_RESOURCE);
-        logger.debug("Created content node at path: " + contentNode.getPath());
-        /*
-         * This next line of code deserves explanation. If we chose for the
-         * simpler line:
-         * Property dataProperty = contentNode.setProperty(JCR_DATA,
-         * requestBodyStream);
-         * then the JCR would not block on the stream's completion, and we would
-         * return to the requester before the mutation to the repo had actually
-         * completed. So instead we use createBinary(requestBodyStream), because
-         * its contract specifies:
-         * "The passed InputStream is closed before this method returns either
-         * normally or because of an exception."
-         * which lets us block and not return until the job is done! The simpler
-         * code may still be useful to us for an asynchronous method that we
-         * develop later.
-         */
-        Property dataProperty =
-                contentNode.setProperty(JCR_DATA, session.getValueFactory()
-                        .createBinary(requestBodyStream));
-        logger.debug("Created data property at path: " + dataProperty.getPath());
-
-        ds.setProperty("fedora:contentType", contentType);
-
+        new Datastream(ds).setContent(requestBodyStream,contentType);     
         ds.addMixin(FEDORA_OWNED);
-        ds.setProperty("fedora:ownerId", session.getUserID());
+        ds.setProperty(FEDORA_OWNERID, session.getUserID());
 
-        if (!ds.hasProperty("fedora:created")) {
-            ds.setProperty("fedora:created", Calendar.getInstance());
-        }
         ds.setProperty("jcr:lastModified", Calendar.getInstance());
 
         // TODO: I guess we should also have the PID + DSID..
