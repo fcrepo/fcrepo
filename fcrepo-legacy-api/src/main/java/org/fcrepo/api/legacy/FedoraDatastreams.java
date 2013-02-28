@@ -135,13 +135,15 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/__content__")
     @Produces("multipart/mixed")
-    public MultipartBody getDatastreamsContents(@PathParam("pid") final String pid, @QueryParam("dsid") List<String> dsids) throws RepositoryException, IOException {
+    public MultipartBody getDatastreamsContents(@PathParam("pid")
+    final String pid, @QueryParam("dsid")
+    List<String> dsids) throws RepositoryException, IOException {
 
         final Session session = repo.login();
 
-        if(dsids.isEmpty()) {
+        if (dsids.isEmpty()) {
             NodeIterator ni = getObjectNode(pid).getNodes();
-            while(ni.hasNext()) {
+            while (ni.hasNext()) {
                 dsids.add(ni.nextNode().getName());
             }
         }
@@ -153,9 +155,11 @@ public class FedoraDatastreams extends AbstractResource {
                 final String dsid = i.next();
 
                 try {
-                    final Datastream ds = DatastreamService.getDatastream(pid, dsid);
-                    atts.add(new Attachment(ds.getNode().getName(), ds.getMimeType(), ds.getContent()));
-                } catch(PathNotFoundException e) {
+                    final Datastream ds =
+                            DatastreamService.getDatastream(pid, dsid);
+                    atts.add(new Attachment(ds.getNode().getName(), ds
+                            .getMimeType(), ds.getContent()));
+                } catch (PathNotFoundException e) {
 
                 }
             }
@@ -410,8 +414,7 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.dsMIME = ds.getMimeType();
         dsProfile.dsSize =
                 getNodePropertySize(ds.getNode()) + ds.getContentSize();
-        dsProfile.dsCreateDate =
-                ds.getNode().getProperty("jcr:created").getString();
+        dsProfile.dsCreateDate = ds.getCreatedDate().toString();
         return dsProfile;
     }
 
