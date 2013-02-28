@@ -107,7 +107,6 @@ public class Datastream {
             VersionException, LockException, ConstraintViolationException,
             RepositoryException {
         node.setProperty(DC_TITLE, label);
-        node.getSession().save();
     }
 
 }
