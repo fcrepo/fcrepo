@@ -5,12 +5,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Conveience class for constructing Fedora-related paths in the JCR repository.
+ * Convenience class for constructing Fedora-related paths in the JCR repository.
  * 
  * @author cbeer
  *
  */
 public class PathService {
+
+    public final static String objectPath = "/objects";
 
     private static final Logger logger = LoggerFactory
             .getLogger(DatastreamService.class);
@@ -21,7 +23,7 @@ public class PathService {
      */
     public static String getObjectJcrNodePath(String pid) {
         logger.trace("Executing getObjectJcrNodePath() with pid: " + pid);
-        return "/objects/" + pid;
+        return objectPath + "/" + pid;
     }
 
     /**
