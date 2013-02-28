@@ -35,4 +35,24 @@ public class ObjectTest extends AbstractTest {
         final FedoraObject obj = getObject("testObject");
         assertEquals("Wrong label!", "Best object ever!", obj.getLabel());
     }
+
+    @Test
+    public void testDoubleLabel() throws RepositoryException, IOException {
+        Session session = repo.login();
+        Node dsNode = createObjectNode(session, "testObject");
+        new FedoraObject(dsNode).setLabel("Worst object ever!");
+        session.save();
+        session.logout();
+
+        session = repo.login();
+        dsNode = createObjectNode(session, "testObject");
+        new FedoraObject(dsNode).setLabel("Best object ever!");
+        session.save();
+        session.logout();
+
+        session = repo.login();
+        final FedoraObject obj = getObject("testObject");
+        assertEquals("Wrong label!", "Best object ever!", obj.getLabel());
+    }
+
 }
