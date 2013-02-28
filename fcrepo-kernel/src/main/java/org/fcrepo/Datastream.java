@@ -9,6 +9,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.InputStream;
+import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -107,6 +108,11 @@ public class Datastream {
             VersionException, LockException, ConstraintViolationException,
             RepositoryException {
         node.setProperty(DC_TITLE, label);
+    }
+
+    public Date getCreatedDate() throws RepositoryException {
+        return new Date(node.getProperty("jcr:created").getDate()
+                .getTimeInMillis());
     }
 
 }

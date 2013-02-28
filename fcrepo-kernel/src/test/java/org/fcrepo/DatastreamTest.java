@@ -5,6 +5,7 @@ import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,5 +41,20 @@ public class DatastreamTest extends AbstractTest {
         session = repo.login();
         final Datastream ds = getDatastream("testObject", "testDatastreamNode");
         assertEquals("Wrong label!", "Best datastream ever!", ds.getLabel());
+    }
+    
+    @Test
+    public void testCreatedDate() throws RepositoryException, IOException {
+        Session session = repo.login();
+        createObjectNode(session, "testObject");
+        createDatastreamNode(session,
+                        "/objects/testObject/testDatastreamNode1",
+                        "application/octet-stream", new ByteArrayInputStream(
+                                "asdf".getBytes()));
+        session.save();
+        session.logout();
+        session = repo.login();
+        final Datastream ds = getDatastream("testObject", "testDatastreamNode1");
+        assertNotNull("Couldn't find created date on datastream!", ds.getCreatedDate());
     }
 }
