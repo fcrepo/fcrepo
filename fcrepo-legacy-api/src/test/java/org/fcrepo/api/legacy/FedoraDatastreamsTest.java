@@ -42,6 +42,38 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
     }
 
     @Test
+    public void testAddMultipartFormDatastream() throws Exception {
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest21");
+        assertEquals(201, getStatus(objMethod));
+
+        final HttpPost post =
+                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest21/datastreams/ds1");
+
+        MultipartEntity multiPartEntity = new MultipartEntity();
+        multiPartEntity.addPart("file", new StringBody("asdfg"));
+
+        post.setEntity(multiPartEntity);
+
+        HttpResponse postResponse = client.execute(post);
+
+        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+
+
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest21/datastreams/ds1/content");
+        assertEquals(200, getStatus(method_test_get));
+        String ds_content = EntityUtils.toString(client.execute(method_test_get)
+                .getEntity());
+
+        logger.debug("Got content:" + ds_content);
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertTrue("Got the wrong content back!", "asdfg"
+                .equals(ds_content));
+
+    }
+
+    @Test
     public void testMutateDatastream() throws Exception {
         final HttpPost createObjectMethod =
                 postObjMethod("FedoraDatastreamsTest3");
@@ -66,6 +98,47 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 .equals(EntityUtils.toString(client.execute(
                         retrieveMutatedDataStreamMethod).getEntity())));
     }
+
+
+    @Test
+    public void testMutateMultipartFormDatastream() throws Exception {
+
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest31");
+        assertEquals(201, getStatus(objMethod));
+
+        final HttpPost createDataStreamMethod =
+                postDSMethod("FedoraDatastreamsTest31", "ds1", "foo");
+        assertEquals("Couldn't create a datastream!", 201,
+                getStatus(createDataStreamMethod));
+
+
+        final HttpPut mutateDataStreamMethod =
+                new HttpPut(serverAddress + "objects/FedoraDatastreamsTest31/datastreams/ds1");
+
+        MultipartEntity multiPartEntity = new MultipartEntity();
+        multiPartEntity.addPart("file", new StringBody("asdfg"));
+
+        mutateDataStreamMethod.setEntity(multiPartEntity);
+
+        HttpResponse putResponse = client.execute(mutateDataStreamMethod);
+
+        assertEquals(201, putResponse.getStatusLine().getStatusCode());
+
+
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest31/datastreams/ds1/content");
+        String ds_content = EntityUtils.toString(client.execute(method_test_get)
+                .getEntity());
+
+        logger.debug("Got content: " + ds_content);
+        assertEquals(200, getStatus(method_test_get));
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertTrue("Got the wrong content back!", "asdfg"
+                .equals(ds_content));
+
+    }
+
 
     @Test
     public void testGetDatastream() throws Exception {
