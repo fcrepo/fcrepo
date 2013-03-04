@@ -5,6 +5,7 @@ import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.services.PathService.objectPath;
 
 import java.io.IOException;
 
@@ -86,6 +87,10 @@ public class FedoraRepository extends AbstractResource {
 
         Session session = repo.login();
         DescribeRepository description = new DescribeRepository();
+        description.repositoryBaseURL = uriInfo.getBaseUri();
+        description.sampleOAIURL =
+                uriInfo.getBaseUriBuilder().path(objectPath + "/123/oai_dc")
+                        .build();
         description.repositorySize = getRepositorySize(session);
         description.numberOfObjects =
                 session.getNode("/objects").getNodes().getSize();
