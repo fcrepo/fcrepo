@@ -15,7 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.jaxb.responses.NextPid;
+import org.fcrepo.jaxb.responses.management.NextPid;
 
 import com.google.common.base.Function;
 

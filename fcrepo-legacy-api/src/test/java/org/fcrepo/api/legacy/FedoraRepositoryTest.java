@@ -40,12 +40,12 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found the repository description:\n" + description);
-        assertXpathExists("/access:fedoraRepository/repositoryVersion",
+        assertXpathExists("/access:fedoraRepository/access:repositoryVersion",
                 description);
         logger.debug("Found repository version element.");
     }
 
-    // we can't use this test for now because our responses are not XML 
+    // TODO we can't use this test for now because our responses are not XML 
     // valid according to fcrepo3 XML schemata
 /*    @Test
     public void testDescribeResponseIsValid() throws Exception {

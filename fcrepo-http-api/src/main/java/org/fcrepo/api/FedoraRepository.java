@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.fcrepo.AbstractResource;
-import org.fcrepo.jaxb.responses.DescribeRepository;
+import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

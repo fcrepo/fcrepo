@@ -1,19 +1,18 @@
 
 package org.fcrepo.api.legacy;
 
-import static java.util.regex.Pattern.DOTALL;
-import static java.util.regex.Pattern.compile;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
+import org.custommonkey.xmlunit.exceptions.XpathException;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
 public class FedoraIdentifiersTest extends AbstractResourceTest {
 
@@ -22,31 +21,29 @@ public class FedoraIdentifiersTest extends AbstractResourceTest {
         HttpPost method = new HttpPost(serverAddress + "nextPID");
         method.addHeader("Accepts", "text/xml");
         logger.debug("Executed testGetNextPidResponds()");
-        assertEquals(HttpServletResponse.SC_OK, getStatus(method));
+        assertEquals(SC_OK, getStatus(method));
     }
 
     @Test
-    public void testGetNextHasAPid() throws IOException {
+    public void testGetNextPidHasAPid() throws IOException, XpathException,
+            SAXException {
         HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=1");
         method.addHeader("Accepts", "text/xml");
         HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
         String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Only to find:\n" + content);
-        assertTrue("Didn't find a single dang PID!", compile("<pid>.*?</pid>",
-                DOTALL).matcher(content).find());
+        assertXpathExists("/pids/pid", content);
+        logger.debug("Found a PID.");
     }
 
     @Test
-    public void testGetNextHasTwoPids() throws IOException {
+    public void testGetNextPidHasTwoPids() throws IOException, XpathException, SAXException {
         HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=2");
         method.addHeader("Accepts", "text/xml");
         HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");
         String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Only to find:\n" + response);
-        assertTrue("Didn't find a two dang PIDs!", compile(
-                "<pid>.*?</pid>.*?<pid>.*?</pid>", DOTALL).matcher(content)
-                .find());
+        assertXpathExists("/pids/pid[2]", content);
+        logger.debug("Found two PIDs.");
     }
 }

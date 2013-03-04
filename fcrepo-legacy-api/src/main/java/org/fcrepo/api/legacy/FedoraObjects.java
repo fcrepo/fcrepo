@@ -7,7 +7,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
-import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
+import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.fcrepo.services.ObjectService.getObjectNames;
 import static org.fcrepo.services.ObjectService.getObjectNode;
@@ -36,7 +36,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
-import org.fcrepo.jaxb.responses.ObjectProfile;
+import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,6 +158,8 @@ public class FedoraObjects extends AbstractResource {
                 objectProfile.objLabel =
                         on('/').join(map(dcTitle.getValues(), value2string));
             }
+        } else {
+            objectProfile.objLabel = pid;
         }
         objectProfile.objOwnerId = new FedoraObject(obj).getOwnerId();
         objectProfile.objCreateDate =

@@ -22,8 +22,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.jaxb.responses.NamespaceListing;
-import org.fcrepo.jaxb.responses.NamespaceListing.Namespace;
+import org.fcrepo.jaxb.responses.management.NamespaceListing;
+import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;
 
 import com.google.common.collect.ImmutableSet.Builder;
 

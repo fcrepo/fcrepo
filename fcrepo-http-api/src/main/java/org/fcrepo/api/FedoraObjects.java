@@ -8,7 +8,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.FedoraDatastreams.getContentSize;
-import static org.fcrepo.jaxb.responses.ObjectProfile.ObjectStates.A;
+import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.fcrepo.services.ObjectService.getObjectNames;
 import static org.fcrepo.services.ObjectService.getObjectNode;
@@ -37,7 +37,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
-import org.fcrepo.jaxb.responses.ObjectProfile;
+import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
