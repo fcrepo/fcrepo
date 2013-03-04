@@ -4,9 +4,10 @@ package org.fcrepo.jaxb.responses.management;
 import java.net.URI;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "datastreamProfile")
+@XmlRootElement(name = "datastreamProfile", namespace = "http://www.fedora.info/definitions/1/0/management/")
 public class DatastreamProfile {
 
     @XmlAttribute
@@ -15,46 +16,46 @@ public class DatastreamProfile {
     @XmlAttribute
     public String dsID;
 
-    @XmlAttribute
+    @XmlElement
     public String dsLabel;
 
-    @XmlAttribute
+    @XmlElement
     public String dsVersionID;
 
-    @XmlAttribute
+    @XmlElement
     public String dsCreateDate;
 
-    @XmlAttribute
+    @XmlElement
     public DatastreamStates dsState;
 
-    @XmlAttribute
+    @XmlElement
     public String dsMIME;
 
-    @XmlAttribute
+    @XmlElement
     public URI dsFormatURI;
 
-    @XmlAttribute
+    @XmlElement
     public DatastreamControlGroup dsControlGroup;
 
-    @XmlAttribute
+    @XmlElement
     public long dsSize;
 
-    @XmlAttribute
+    @XmlElement
     public String dsVersionable;
 
-    @XmlAttribute
+    @XmlElement
     public String dsInfoType;
 
-    @XmlAttribute
+    @XmlElement
     public String dsLocation;
 
-    @XmlAttribute
+    @XmlElement
     public String dsLocationType;
 
-    @XmlAttribute
+    @XmlElement
     public String dsChecksumType;
 
-    @XmlAttribute
+    @XmlElement
     public String dsChecksum;
 
     public static enum DatastreamControlGroup {
