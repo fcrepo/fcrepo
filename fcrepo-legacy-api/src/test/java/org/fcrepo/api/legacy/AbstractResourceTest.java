@@ -1,6 +1,9 @@
 
 package org.fcrepo.api.legacy;
 
+import static com.google.common.collect.ImmutableMap.of;
+import static org.custommonkey.xmlunit.XMLUnit.setXpathNamespaceContext;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +16,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.custommonkey.xmlunit.SimpleNamespaceContext;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -49,6 +53,10 @@ public abstract class AbstractResourceTest {
         connectionManager.setDefaultMaxPerRoute(5);
         connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
         client = new DefaultHttpClient(connectionManager);
+
+        setXpathNamespaceContext(new SimpleNamespaceContext(of("management",
+                "http://www.fedora.info/definitions/1/0/management/", "access",
+                "http://www.fedora.info/definitions/1/0/access/")));
     }
 
     protected static HttpPost postObjMethod(final String pid) {

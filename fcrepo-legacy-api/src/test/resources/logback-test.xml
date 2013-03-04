@@ -16,7 +16,10 @@
     <logger name="org.apache.cxf" additivity="false" level="WARN">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="org.apache.http.client" additivity="false" level="DEBUG">
+    <logger name="org.apache.http.client" additivity="false" level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <logger name="org.custommonkey.xmlunit" additivity="false" level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </logger>
     <root additivity="false" level="INFO">

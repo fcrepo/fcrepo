@@ -1,6 +1,7 @@
 
 package org.fcrepo.api.legacy;
 
+import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static junit.framework.TestCase.assertFalse;
@@ -29,7 +30,12 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         final HttpGet method =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest1/datastreams");
-        assertEquals(200, getStatus(method));
+        HttpResponse response = client.execute(method);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertXMLEqual(
+                "<objectDatastreams xmlns='http://www.fedora.info/definitions/1/0/access/'/>",
+                EntityUtils.toString(response.getEntity()));
+        logger.debug("Found appropriately empty object datastreams response.");
     }
 
     @Test
@@ -151,13 +157,13 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 "dsid=\"ds2\"", DOTALL).matcher(content).find());
     }
 
-
     @Test
     public void testAddMultipleDatastreams() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest8");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest8/datastreams/");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest8/datastreams/");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -168,7 +174,6 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         HttpResponse postResponse = client.execute(post);
 
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
-
 
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
@@ -181,8 +186,6 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertTrue("Didn't find the second datastream!", compile(
                 "dsid=\"ds2\"", DOTALL).matcher(content).find());
 
-
-
     }
 
     @Test
@@ -191,7 +194,8 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest9");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest9/datastreams/");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest9/datastreams/");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -201,7 +205,6 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 
         HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
-
 
         // TODO: we should actually evaluate the multipart response for the things we're expecting
         final HttpGet getDSesMethod =
@@ -211,10 +214,10 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        assertTrue("Didn't find the first datastream!", compile("asdfg",
+        assertTrue("Didn't find the first datastream!",
+                compile("asdfg", DOTALL).matcher(content).find());
+        assertTrue("Didn't find the second datastream!", compile("qwerty",
                 DOTALL).matcher(content).find());
-        assertTrue("Didn't find the second datastream!", compile(
-                "qwerty", DOTALL).matcher(content).find());
 
     }
 
@@ -224,7 +227,8 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest10");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest10/datastreams/");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest10/datastreams/");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -235,7 +239,6 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-
         // TODO: we should actually evaluate the multipart response for the things we're expecting
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
@@ -244,8 +247,8 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        assertTrue("Didn't find the first datastream!", compile("asdfg",
-                DOTALL).matcher(content).find());
+        assertTrue("Didn't find the first datastream!",
+                compile("asdfg", DOTALL).matcher(content).find());
         assertFalse("Didn't expect to find the second datastream!", compile(
                 "qwerty", DOTALL).matcher(content).find());
 

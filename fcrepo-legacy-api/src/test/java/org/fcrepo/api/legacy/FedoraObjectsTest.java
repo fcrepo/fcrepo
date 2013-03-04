@@ -2,6 +2,8 @@
 package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.compile;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathValuesEqual;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -43,8 +45,11 @@ public class FedoraObjectsTest extends AbstractResourceTest {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved object profile:\n" + content);
-        assertTrue("Object had wrong PID!", compile(
-                "pid=\"FedoraObjectsTest2\"").matcher(content).find());
+        assertXpathExists("/access:objectProfile/@pid", content);
+        logger.debug("Found PID attribute on object profile.");
+        assertXpathValuesEqual("'FedoraObjectsTest2'",
+                "/access:objectProfile/@pid", content);
+        logger.debug("PID attribute on object profile has correct value.");
     }
 
     @Test

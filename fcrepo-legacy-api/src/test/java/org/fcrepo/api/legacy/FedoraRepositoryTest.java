@@ -4,14 +4,19 @@ package org.fcrepo.api.legacy;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+//import java.io.File;
 import java.util.regex.Matcher;
+
+//import javax.xml.transform.stream.StreamSource;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
+//import org.custommonkey.xmlunit.jaxp13.Validator;
 import org.junit.Test;
 
 public class FedoraRepositoryTest extends AbstractResourceTest {
@@ -35,10 +40,40 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found the repository description:\n" + description);
-        assertTrue("Failed to find a proper repo version", compile(
-                "<repositoryVersion>.*?</repositoryVersion>").matcher(
-                description).find());
+        assertXpathExists("/access:fedoraRepository/repositoryVersion",
+                description);
+        logger.debug("Found repository version element.");
     }
+
+    // we can't use this test for now because our responses are not XML 
+    // valid according to fcrepo3 XML schemata
+/*    @Test
+    public void testDescribeResponseIsValid() throws Exception {
+        final HttpGet method = new HttpGet(serverAddress + "describe");
+        method.addHeader("Accept", TEXT_XML);
+        final HttpResponse response = client.execute(method);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final Validator v = new Validator();
+        logger.debug("Using describeRepository schema from: " +
+                this.getClass().getResource("/xsd/fedoraRepository.xsd")
+                        .toString());
+        v.addSchemaSource(new StreamSource(new File(this.getClass()
+                .getResource("/xsd/fedoraRepository.xsd").getFile())));
+        for (Object e : v.getSchemaErrors()) {
+            logger.debug("Found SAXParseException in XML Schema: " +
+                    e.toString());
+        }
+        for (Object e : v.getInstanceErrors(new StreamSource(response
+                .getEntity().getContent()))) {
+            logger.debug("Found SAXParseException in describeRepository response: " +
+                    e.toString());
+
+        }
+        assertTrue("Not a valid Fedora Repository descripion!", v
+                .isInstanceValid(new StreamSource(response.getEntity()
+                        .getContent())));
+        logger.debug("Found valid Fedora Repository descripion.");
+    }*/
 
     @Test
     public void testDescribeSize() throws Exception {
@@ -62,7 +97,8 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
         newDescribeMethod.addHeader("Accept", TEXT_XML);
         response = client.execute(describeMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        final String newDescription = EntityUtils.toString(response.getEntity());
+        final String newDescription =
+                EntityUtils.toString(response.getEntity());
         logger.debug("Found another repository description:\n" + newDescription);
         Matcher newCheck =
                 compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)

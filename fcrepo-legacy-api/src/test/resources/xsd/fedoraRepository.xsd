@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+  targetNamespace="http://www.fedora.info/definitions/1/0/access/"
+  xmlns="http://www.fedora.info/definitions/1/0/access/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified">
+  <xs:element name="fedoraRepository">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="repositoryName" />
+        <xs:element ref="repositoryBaseURL" />
+        <xs:element ref="repositoryVersion" />
+        <xs:element ref="repositoryPID" />
+        <xs:element ref="repositoryOAI-identifier" />
+        <xs:element ref="sampleSearch-URL" />
+        <xs:element ref="sampleAccess-URL" />
+        <xs:element ref="sampleOAI-URL" />
+        <xs:element ref="adminEmail" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="repositoryOAI-identifier">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="OAI-namespaceIdentifier" />
+        <xs:element ref="OAI-delimiter" />
+        <xs:element ref="OAI-sample" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="repositoryPID">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PID-namespaceIdentifier" />
+        <xs:element ref="PID-delimiter" />
+        <xs:element ref="PID-sample" />
+        <xs:element ref="retainPID" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="adminEmail" type="xs:string" />
+  <xs:element name="PID-namespaceIdentifier" type="xs:string" />
+  <xs:element name="OAI-delimiter" type="xs:string" />
+  <xs:element name="OAI-namespaceIdentifier" type="xs:string" />
+  <xs:element name="PID-delimiter" type="xs:string" />
+  <xs:element name="OAI-sample" type="xs:string" />
+  <xs:element name="PID-sample" type="xs:string" />
+  <xs:element name="repositoryBaseURL" type="xs:anyURI" />
+  <xs:element name="repositoryName" type="xs:string" />
+  <xs:element name="repositoryVersion" type="xs:string" />
+  <xs:element name="sampleAccess-URL" type="xs:anyURI" />
+  <xs:element name="sampleOAI-URL" type="xs:anyURI" />
+  <xs:element name="sampleSearch-URL" type="xs:anyURI" />
+  <xs:element name="retainPID" type="xs:string" />
+</xs:schema>
