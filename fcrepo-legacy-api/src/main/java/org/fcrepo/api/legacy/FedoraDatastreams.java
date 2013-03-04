@@ -30,6 +30,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -44,6 +45,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.jaxb.responses.DatastreamHistory;
@@ -214,6 +216,32 @@ public class FedoraDatastreams extends AbstractResource {
     }
 
     /**
+     * Create a new datastream from a multipart/form-data request
+     *
+     * @param pid
+     *            persistent identifier of the digital object
+     * @param dsid
+     *            datastream identifier
+     * @param contentType
+     *            Content-Type header
+     * @param file
+     *            Binary blob
+     * @return 201 Created
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @POST
+    @Consumes("multipart/form-data")
+    @Path("/{dsid}")
+    public Response addDatastream(@PathParam("pid")
+                                  final String pid, @PathParam("dsid")
+                                  final String dsid, @HeaderParam("Content-Type")
+                                  MediaType contentType, @Multipart("file") Attachment file)
+            throws RepositoryException, IOException {
+        return addDatastream(pid, dsid, file.getContentType(), file.getDataHandler().getInputStream());
+    }
+
+    /**
      * Modify an existing datastream's content
      * 
      * @param pid
@@ -244,6 +272,34 @@ public class FedoraDatastreams extends AbstractResource {
         return created(
                 addDatastreamNode(pid, dspath, contentType, requestBodyStream,
                         session)).build();
+
+    }
+
+    /**
+     * Modify an existing datastream's content
+     *
+     * @param pid
+     *            persistent identifier of the digital object
+     * @param dsid
+     *            datastream identifier
+     * @param contentType
+     *            Content-Type header
+     * @param file
+     *            Binary blob
+     * @return 201 Created
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @PUT
+    @Consumes("multipart/form-data")
+    @Path("/{dsid}")
+    public Response modifyDatastream(@PathParam("pid")
+                                     final String pid, @PathParam("dsid")
+                                     final String dsid, @HeaderParam("Content-Type")
+                                     MediaType contentType, @Multipart("file") Attachment file)
+            throws RepositoryException, IOException {
+
+        return modifyDatastream(pid, dsid, file.getContentType(), file.getDataHandler().getInputStream());
 
     }
 
