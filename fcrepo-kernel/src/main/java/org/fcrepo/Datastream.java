@@ -10,6 +10,11 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import javax.jcr.Node;
@@ -20,6 +25,8 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import org.apache.commons.codec.binary.Hex;
+import org.fcrepo.utils.ContentDigest;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +38,11 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Datastream extends JcrTools {
+
+    private static MessageDigest md;
+    private final static String CONTENT_SIZE = "fedora:size";
+    private final static String DIGEST_VALUE = "fedora:digest";
+    private final static String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
 
     private final static Logger logger = LoggerFactory
             .getLogger(Datastream.class);
@@ -48,6 +60,18 @@ public class Datastream extends JcrTools {
         return node;
     }
 
+    private MessageDigest getMessageDigest() {
+
+        if(this.md == null) {
+            try {
+                this.md  = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return md;
+    }
     /**
      * @return The InputStream of content associated with this datastream.
      * @throws RepositoryException
@@ -66,6 +90,13 @@ public class Datastream extends JcrTools {
     public void setContent(InputStream content) throws RepositoryException {
         final Node contentNode =
                 findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+
+        if(contentNode.canAddMixin("fedora:checksum")) {
+            contentNode.addMixin("fedora:checksum");
+        }
+
+        final DigestInputStream dis = new DigestInputStream(content, getMessageDigest());
+
         logger.debug("Created content node at path: " + contentNode.getPath());
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -84,7 +115,11 @@ public class Datastream extends JcrTools {
          */
         Property dataProperty =
                 contentNode.setProperty(JCR_DATA, node.getSession()
-                        .getValueFactory().createBinary(content));
+                        .getValueFactory().createBinary(dis));
+
+        contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
+        contentNode.setProperty(DIGEST_VALUE,  Hex.encodeHexString(dis.getMessageDigest().digest()));
+        contentNode.setProperty(DIGEST_ALGORITHM, dis.getMessageDigest().getAlgorithm());
         logger.debug("Created data property at path: " + dataProperty.getPath());
 
     }
@@ -100,8 +135,12 @@ public class Datastream extends JcrTools {
      * @throws RepositoryException
      */
     public long getContentSize() throws RepositoryException {
-        return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
-                .getSize();
+        return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE).getLong();
+    }
+
+    public URI getContentDigest() throws RepositoryException {
+        final Node contentNode = node.getNode(JCR_CONTENT);
+        return ContentDigest.asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(), contentNode.getProperty(DIGEST_VALUE).getString());
     }
 
     /**

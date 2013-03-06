@@ -84,3 +84,11 @@
 	 */
 	- foaf:name (STRING) multiple COPY
 
+
+/*
+ * Some content that can have a checksum
+ */
+[fedora:checksum] mixin
+  - fedora:size (LONG) COPY
+  - fedora:digest (STRING) COPY
+  - fedora:digestAlgorithm (STRING) COPY

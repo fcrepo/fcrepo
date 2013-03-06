@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -16,6 +17,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -56,5 +58,70 @@ public class DatastreamTest extends AbstractTest {
         session = repo.login();
         final Datastream ds = getDatastream("testObject", "testDatastreamNode1");
         assertNotNull("Couldn't find created date on datastream!", ds.getCreatedDate());
+    }
+
+    @Test
+    public void testDatastreamContent() throws IOException, RepositoryException {
+        Session session = repo.login();
+        createObjectNode(session, "testObject");
+        createDatastreamNode(session,
+                "/objects/testObject/testDatastreamNode1",
+                "application/octet-stream", new ByteArrayInputStream(
+                "asdf".getBytes()));
+
+        session.save();
+
+        final Datastream ds = getDatastream("testObject", "testDatastreamNode1");
+        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+
+        assertEquals("asdf", contentString);
+
+    }
+
+    @Test
+    public void testDatastreamContentDigestAndLength() throws IOException, RepositoryException {
+        Session session = repo.login();
+        createObjectNode(session, "testObject");
+        createDatastreamNode(session,
+                "/objects/testObject/testDatastreamNode2",
+                "application/octet-stream", new ByteArrayInputStream(
+                "asdf".getBytes()));
+
+
+        session.save();
+
+        final Datastream ds = getDatastream("testObject", "testDatastreamNode2");
+        assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds.getContentDigest().toString());
+        assertEquals(4L, ds.getContentSize());
+
+
+        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+
+        assertEquals("asdf", contentString);
+    }
+
+    @Test
+    public void testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException {
+        Session session = repo.login();
+        createObjectNode(session, "testObject");
+        createDatastreamNode(session,
+                "/objects/testObject/testDatastreamNode3",
+                "application/octet-stream", new ByteArrayInputStream(
+                "asdf".getBytes()));
+
+
+        session.save();
+
+        final Datastream ds = getDatastream("testObject", "testDatastreamNode3");
+        ds.setContent(new ByteArrayInputStream(
+                "0123456789".getBytes()));
+
+        assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds.getContentDigest().toString());
+        assertEquals(10L, ds.getContentSize());
+
+
+        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+
+        assertEquals("0123456789", contentString);
     }
 }
