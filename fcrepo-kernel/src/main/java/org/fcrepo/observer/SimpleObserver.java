@@ -41,7 +41,7 @@ public class SimpleObserver implements EventListener {
     @Inject
     private EventFilter eventFilter;
 
-    final private Logger logger = LoggerFactory.getLogger(SimpleObserver.class);
+    static final private Logger logger = LoggerFactory.getLogger(SimpleObserver.class);
 
     @PostConstruct
     public void buildListener() throws RepositoryException {
