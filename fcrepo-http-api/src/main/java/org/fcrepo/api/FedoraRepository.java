@@ -5,7 +5,7 @@ import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.services.PathService.objectPath;
+import static org.fcrepo.services.PathService.OBJECT_PATH;
 
 import java.io.IOException;
 
@@ -89,7 +89,7 @@ public class FedoraRepository extends AbstractResource {
         DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =
-                uriInfo.getBaseUriBuilder().path(objectPath + "/123/oai_dc")
+                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
                         .build();
         description.repositorySize = getRepositorySize(session);
         description.numberOfObjects =

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PathService {
 
-    public final static String objectPath = "/objects";
+    public final static String OBJECT_PATH = "/objects";
 
     private static final Logger logger = LoggerFactory
             .getLogger(DatastreamService.class);
@@ -23,7 +23,7 @@ public class PathService {
      */
     public static String getObjectJcrNodePath(String pid) {
         logger.trace("Executing getObjectJcrNodePath() with pid: " + pid);
-        return objectPath + "/" + pid;
+        return OBJECT_PATH + "/" + pid;
     }
 
     /**
