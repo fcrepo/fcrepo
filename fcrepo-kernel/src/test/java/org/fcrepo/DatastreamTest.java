@@ -124,4 +124,24 @@ public class DatastreamTest extends AbstractTest {
 
         assertEquals("0123456789", contentString);
     }
+    
+    @Test
+    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException {
+        Session session = repo.login();
+        createObjectNode(session, "testObject");
+        createDatastreamNode(session,
+                "/objects/testObject/testDatastreamNode4",
+                "application/octet-stream", new ByteArrayInputStream(
+                "asdf".getBytes()), "SHA-1", "3da541559918a808c2402bba5012f6c60b27661c");
+
+        session.save();
+
+        final Datastream ds = getDatastream("testObject", "testDatastreamNode4");
+        assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
+                .getContentDigest().toString());
+
+        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+
+        assertEquals("asdf", contentString);
+    }
 }

@@ -22,6 +22,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
+import org.fcrepo.ExceptionHandlers.InvalidChecksumException;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,11 +48,20 @@ public class DatastreamService {
     public static Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
             final InputStream requestBodyStream) throws RepositoryException,
-            IOException {
+            IOException, InvalidChecksumException {
+
+        return createDatastreamNode(session, dsPath, contentType, requestBodyStream, null, null);
+    }
+    
+    public static Node createDatastreamNode(final Session session,
+            final String dsPath, final String contentType,
+            final InputStream requestBodyStream, 
+            String checksumType, String checksum) throws RepositoryException,
+            IOException, InvalidChecksumException {
 
         final Node ds = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
         ds.addMixin(FEDORA_DATASTREAM);
-        new Datastream(ds).setContent(requestBodyStream,contentType);     
+        new Datastream(ds).setContent(requestBodyStream, contentType, checksumType, checksum);     
         ds.addMixin(FEDORA_OWNED);
         ds.setProperty(FEDORA_OWNERID, session.getUserID());
 

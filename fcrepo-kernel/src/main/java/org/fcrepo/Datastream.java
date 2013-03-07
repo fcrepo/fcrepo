@@ -21,6 +21,7 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import org.fcrepo.ExceptionHandlers.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
@@ -72,7 +73,7 @@ public class Datastream extends JcrTools {
      * @param content
      * @throws RepositoryException
      */
-    public void setContent(InputStream content) throws RepositoryException {
+    public void setContent(InputStream content, String checksumType, String checksum) throws RepositoryException, InvalidChecksumException {
         final Node contentNode =
                 findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
@@ -109,18 +110,30 @@ public class Datastream extends JcrTools {
          * develop later.
          */
         Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
+                
+        String dsChecksum = binary.getHexHash();
+        if(checksum != null && !checksum.equals("")){
+	        if(!checksum.equals(binary.getHexHash())) {
+	        	logger.debug("Failed checksum test");
+	        	throw new InvalidChecksumException("Checksum Mismatch of " + dsChecksum + " and " + checksum);
+	        }
+        } 
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-        contentNode.setProperty(DIGEST_VALUE, binary.getHexHash());
+        contentNode.setProperty(DIGEST_VALUE, dsChecksum);
         contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
 
         logger.debug("Created data property at path: " + dataProperty.getPath());
 
     }
+    
+    public void setContent(InputStream content) throws RepositoryException, InvalidChecksumException {
+    	setContent(content, null, null);
+    }
 
-    public void setContent(InputStream content, String mimeType)
-            throws RepositoryException {
-        setContent(content);
+    public void setContent(InputStream content, String mimeType, String checksumType, String checksum)
+            throws RepositoryException, InvalidChecksumException {
+        setContent(content, checksumType, checksum);
         node.setProperty("fedora:contentType", mimeType);
     }
 

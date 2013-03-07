@@ -46,6 +46,7 @@ import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
+import org.fcrepo.ExceptionHandlers.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
@@ -171,6 +172,51 @@ public class FedoraDatastreams extends AbstractResource {
     }
 
     /**
+     * Create a new datastream with user provided checksum for validation
+     * 
+     * @param pid
+     *            persistent identifier of the digital object
+     * @param dsid
+     *            datastream identifier
+     * @param contentType
+     *            Content-Type header
+     * @param requestBodyStream
+     *            Binary blob
+     * @return 201 Created
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @POST
+    @Path("/{dsid}")
+    public Response addDatastream(@PathParam("pid")
+    final String pid, @QueryParam("checksumType")
+    final String checksumType, @QueryParam("checksum")
+    final String checksum, @PathParam("dsid")
+    final String dsid, @HeaderParam("Content-Type")
+    MediaType contentType, InputStream requestBodyStream)
+            throws RepositoryException, IOException {
+        final Session session = repo.login();
+
+        contentType =
+                contentType != null ? contentType
+                        : APPLICATION_OCTET_STREAM_TYPE;
+        String dspath = getDatastreamJcrNodePath(pid, dsid);
+
+        if (!session.nodeExists(dspath)) {
+            return created(
+                    addDatastreamNode(pid, dspath, contentType,
+                            requestBodyStream, session, checksumType, checksum)).build();
+        } else {
+            session.getNode(dspath).remove();
+            session.save();
+            return created(
+                    addDatastreamNode(pid, dspath, contentType,
+                            requestBodyStream, session, checksumType, checksum)).build();
+        }
+
+    }
+    
+    /**
      * Create a new datastream
      * 
      * @param pid
@@ -192,24 +238,8 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, InputStream requestBodyStream)
             throws RepositoryException, IOException {
-        final Session session = repo.login();
-
-        contentType =
-                contentType != null ? contentType
-                        : APPLICATION_OCTET_STREAM_TYPE;
-        String dspath = getDatastreamJcrNodePath(pid, dsid);
-
-        if (!session.nodeExists(dspath)) {
-            return created(
-                    addDatastreamNode(pid, dspath, contentType,
-                            requestBodyStream, session)).build();
-        } else {
-            session.getNode(dspath).remove();
-            session.save();
-            return created(
-                    addDatastreamNode(pid, dspath, contentType,
-                            requestBodyStream, session)).build();
-        }
+    	
+    	return addDatastream(pid, null, null, dsid, contentType, requestBodyStream);
 
     }
 
@@ -243,13 +273,13 @@ public class FedoraDatastreams extends AbstractResource {
 
         return created(
                 addDatastreamNode(pid, dspath, contentType, requestBodyStream,
-                        session)).build();
+                        session, null, null)).build();
 
     }
 
     private URI addDatastreamNode(final String pid, final String dsPath,
             final MediaType contentType, final InputStream requestBodyStream,
-            final Session session) throws RepositoryException, IOException {
+            final Session session, String checksumType, String checksum) throws RepositoryException, IOException {
 
         Long oldObjectSize =
                 getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
@@ -257,7 +287,7 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             boolean created = session.nodeExists(dsPath);
             createDatastreamNode(session, dsPath, contentType.toString(),
-                    requestBodyStream);
+                    requestBodyStream, checksumType, checksum);
             session.save();
             if (created) {
                 /*
@@ -271,10 +301,14 @@ public class FedoraDatastreams extends AbstractResource {
                 // now we save again to persist the repo size
                 session.save();
             }
+            logger.debug("Finished adding datastream node at path: " + dsPath);
+        } catch (InvalidChecksumException e) { 
+        	logger.error("Checksum Mismatch Exception");
+        	logger.debug("No datastream has been added");
+        	session.logout();
         } finally {
             session.logout();
         }
-        logger.debug("Finished adding datastream node at path: " + dsPath);
         return uriInfo.getAbsolutePath();
     }
 
