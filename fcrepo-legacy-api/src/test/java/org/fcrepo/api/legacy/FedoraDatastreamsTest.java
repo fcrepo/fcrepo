@@ -4,9 +4,15 @@ package org.fcrepo.api.legacy;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -17,6 +23,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
+import org.custommonkey.xmlunit.jaxp13.Validator;
 import org.junit.Test;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
@@ -53,7 +60,8 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertEquals(201, getStatus(objMethod));
 
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest21/datastreams/ds1");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest21/datastreams/ds1");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("file", new StringBody("asdfg"));
@@ -64,18 +72,17 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest21/datastreams/ds1/content");
         assertEquals(200, getStatus(method_test_get));
-        String ds_content = EntityUtils.toString(client.execute(method_test_get)
-                .getEntity());
+        String ds_content =
+                EntityUtils.toString(client.execute(method_test_get)
+                        .getEntity());
 
         logger.debug("Got content:" + ds_content);
         logger.debug("Returned from HTTP GET, now checking content...");
-        assertTrue("Got the wrong content back!", "asdfg"
-                .equals(ds_content));
+        assertTrue("Got the wrong content back!", "asdfg".equals(ds_content));
 
     }
 
@@ -105,7 +112,6 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                         retrieveMutatedDataStreamMethod).getEntity())));
     }
 
-
     @Test
     public void testMutateMultipartFormDatastream() throws Exception {
 
@@ -117,9 +123,9 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertEquals("Couldn't create a datastream!", 201,
                 getStatus(createDataStreamMethod));
 
-
         final HttpPut mutateDataStreamMethod =
-                new HttpPut(serverAddress + "objects/FedoraDatastreamsTest31/datastreams/ds1");
+                new HttpPut(serverAddress +
+                        "objects/FedoraDatastreamsTest31/datastreams/ds1");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("file", new StringBody("asdfg"));
@@ -130,21 +136,19 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 
         assertEquals(201, putResponse.getStatusLine().getStatusCode());
 
-
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest31/datastreams/ds1/content");
-        String ds_content = EntityUtils.toString(client.execute(method_test_get)
-                .getEntity());
+        String ds_content =
+                EntityUtils.toString(client.execute(method_test_get)
+                        .getEntity());
 
         logger.debug("Got content: " + ds_content);
         assertEquals(200, getStatus(method_test_get));
         logger.debug("Returned from HTTP GET, now checking content...");
-        assertTrue("Got the wrong content back!", "asdfg"
-                .equals(ds_content));
+        assertTrue("Got the wrong content back!", "asdfg".equals(ds_content));
 
     }
-
 
     @Test
     public void testGetDatastream() throws Exception {
@@ -324,6 +328,35 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 compile("asdfg", DOTALL).matcher(content).find());
         assertFalse("Didn't expect to find the second datastream!", compile(
                 "qwerty", DOTALL).matcher(content).find());
+    }
 
+    @Test
+    public void testDatastreamProfileResponseIsValid() throws Exception {
+        client.execute(postObjMethod("FedoraDatastreamsTest11"));
+        client.execute(postDSMethod("FedoraDatastreamsTest11",
+                "testDatastream", "foo"));
+        final HttpGet method =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest11/datastreams/testDatastream");
+        method.addHeader("Accept", TEXT_XML);
+        final HttpResponse response = client.execute(method);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String profile = EntityUtils.toString(response.getEntity());
+        logger.debug("Retrieved datastream profile for validation: {}", profile);
+        final Validator v = new Validator();
+        logger.debug("Using datastreamProfile schema from: " +
+                this.getClass().getResource("/xsd/datastreamProfile.xsd")
+                        .toString());
+        v.addSchemaSource(new StreamSource(new File(this.getClass()
+                .getResource("/xsd/datastreamProfile.xsd").getFile())));
+        for (Object e : v.getInstanceErrors(new StreamSource(
+                new ByteArrayInputStream(profile.getBytes())))) {
+            logger.debug("Found SAXParseException in datastreamProfile response: " +
+                    e.toString());
+        }
+        assertTrue("Not a valid Fedora datastream description!", v
+                .isInstanceValid(new StreamSource(new ByteArrayInputStream(
+                        profile.getBytes()))));
+        logger.debug("Found valid Fedora datastream description.");
     }
 }

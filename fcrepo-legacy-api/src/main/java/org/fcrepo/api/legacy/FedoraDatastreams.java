@@ -9,7 +9,9 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraObjects.getObjectSize;
+import static org.fcrepo.jaxb.responses.management.DatastreamProfile.convertDateToXSDString;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
+import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamControlGroup.M;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
@@ -44,14 +46,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
-import org.fcrepo.jaxb.responses.management.DatastreamHistory;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
+import org.fcrepo.jaxb.responses.management.DatastreamHistory;
+import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
@@ -234,11 +236,12 @@ public class FedoraDatastreams extends AbstractResource {
     @Consumes("multipart/form-data")
     @Path("/{dsid}")
     public Response addDatastream(@PathParam("pid")
-                                  final String pid, @PathParam("dsid")
-                                  final String dsid, @HeaderParam("Content-Type")
-                                  MediaType contentType, @Multipart("file") Attachment file)
-            throws RepositoryException, IOException {
-        return addDatastream(pid, dsid, file.getContentType(), file.getDataHandler().getInputStream());
+    final String pid, @PathParam("dsid")
+    final String dsid, @HeaderParam("Content-Type")
+    MediaType contentType, @Multipart("file")
+    Attachment file) throws RepositoryException, IOException {
+        return addDatastream(pid, dsid, file.getContentType(), file
+                .getDataHandler().getInputStream());
     }
 
     /**
@@ -294,12 +297,13 @@ public class FedoraDatastreams extends AbstractResource {
     @Consumes("multipart/form-data")
     @Path("/{dsid}")
     public Response modifyDatastream(@PathParam("pid")
-                                     final String pid, @PathParam("dsid")
-                                     final String dsid, @HeaderParam("Content-Type")
-                                     MediaType contentType, @Multipart("file") Attachment file)
-            throws RepositoryException, IOException {
+    final String pid, @PathParam("dsid")
+    final String dsid, @HeaderParam("Content-Type")
+    MediaType contentType, @Multipart("file")
+    Attachment file) throws RepositoryException, IOException {
 
-        return modifyDatastream(pid, dsid, file.getContentType(), file.getDataHandler().getInputStream());
+        return modifyDatastream(pid, dsid, file.getContentType(), file
+                .getDataHandler().getInputStream());
 
     }
 
@@ -466,13 +470,24 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.dsLabel = ds.getLabel();
         logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
                 ds.getLabel());
+        // TODO when we have a versioning model, use it here
+        dsProfile.dsVersionable = Boolean.toString(false);
+        dsProfile.dsVersionID = ds.getDsId() + ".0";
         dsProfile.dsState = A;
+        dsProfile.dsControlGroup = M;
         dsProfile.dsChecksumType = ds.getContentDigestType();
         dsProfile.dsChecksum = ds.getContentDigest();
         dsProfile.dsMIME = ds.getMimeType();
+        // TODO do something about format URI, or deprecate it
+        dsProfile.dsFormatURI = URI.create("info:/nothing");
         dsProfile.dsSize =
                 getNodePropertySize(ds.getNode()) + ds.getContentSize();
-        dsProfile.dsCreateDate = ds.getCreatedDate().toString();
+        dsProfile.dsCreateDate =
+                convertDateToXSDString(ds.getCreatedDate().getTime());
+        // TODO what _is_ a dsInfoType?
+        dsProfile.dsInfoType = "";
+        dsProfile.dsLocation = uriInfo.getAbsolutePath().toString();
+        dsProfile.dsLocationType = "URL";
         return dsProfile;
     }
 
