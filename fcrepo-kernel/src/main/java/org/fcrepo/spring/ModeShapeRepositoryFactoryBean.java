@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.inject.Qualifier;
 import javax.jcr.RepositoryException;
 
 import org.modeshape.jcr.JcrRepository;
@@ -20,8 +21,6 @@ public class ModeShapeRepositoryFactoryBean implements
 	@Inject
 	private JcrRepositoryFactory jcrRepositoryFactory;
 
-	@Inject
-	@ModeShapeRepositoryConfiguration
 	private Resource repositoryConfiguration;
 	private JcrRepository repository;
 
@@ -47,4 +46,7 @@ public class ModeShapeRepositoryFactoryBean implements
 		return true;
 	}
 
+    public void setRepositoryConfiguration(Resource repositoryConfiguration) {
+        this.repositoryConfiguration = repositoryConfiguration;
+    }
 }

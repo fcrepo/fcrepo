@@ -10,14 +10,13 @@
 
     <context:annotation-config/>
 
-    <bean name="modeshapeRepofactory" class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean"/>
+    <bean name="modeshapeRepofactory"
+          class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean">
+      <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:test_repository.json}"/>
+    </bean>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
-    <bean class="org.springframework.core.io.ClassPathResource">
-        <qualifier type="ModeShapeRepositoryConfiguration"/>
-        <constructor-arg type="String" value="test_repository.json"/>
-    </bean>
 
     <bean class="org.fcrepo.services.ObjectService"/>
     <bean class="org.fcrepo.services.DatastreamService"/>
