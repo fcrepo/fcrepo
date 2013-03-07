@@ -410,6 +410,8 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.dsLabel = ds.getLabel();
         logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
                 ds.getLabel());
+        dsProfile.dsChecksumType = ds.getContentDigestType();
+        dsProfile.dsChecksum = ds.getContentDigest();
         dsProfile.dsState = A;
         dsProfile.dsMIME = ds.getMimeType();
         dsProfile.dsSize =

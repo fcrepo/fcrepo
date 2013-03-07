@@ -56,7 +56,7 @@ public class DatastreamProfile {
     public String dsChecksumType;
 
     @XmlElement
-    public String dsChecksum;
+    public URI dsChecksum;
 
     public static enum DatastreamControlGroup {
         M, E, R

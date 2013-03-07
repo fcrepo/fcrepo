@@ -18,6 +18,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFormatException;
@@ -40,8 +41,11 @@ import org.slf4j.LoggerFactory;
 public class Datastream extends JcrTools {
 
     private static MessageDigest md;
+
     private final static String CONTENT_SIZE = "fedora:size";
+
     private final static String DIGEST_VALUE = "fedora:digest";
+
     private final static String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
 
     private final static Logger logger = LoggerFactory
@@ -62,9 +66,9 @@ public class Datastream extends JcrTools {
 
     private MessageDigest getMessageDigest() {
 
-        if(this.md == null) {
+        if (this.md == null) {
             try {
-                this.md  = MessageDigest.getInstance("SHA-1");
+                this.md = MessageDigest.getInstance("SHA-1");
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
@@ -72,6 +76,7 @@ public class Datastream extends JcrTools {
 
         return md;
     }
+
     /**
      * @return The InputStream of content associated with this datastream.
      * @throws RepositoryException
@@ -91,11 +96,12 @@ public class Datastream extends JcrTools {
         final Node contentNode =
                 findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
-        if(contentNode.canAddMixin("fedora:checksum")) {
+        if (contentNode.canAddMixin("fedora:checksum")) {
             contentNode.addMixin("fedora:checksum");
         }
 
-        final DigestInputStream dis = new DigestInputStream(content, getMessageDigest());
+        final DigestInputStream dis =
+                new DigestInputStream(content, getMessageDigest());
 
         logger.debug("Created content node at path: " + contentNode.getPath());
         /*
@@ -118,8 +124,10 @@ public class Datastream extends JcrTools {
                         .getValueFactory().createBinary(dis));
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-        contentNode.setProperty(DIGEST_VALUE,  Hex.encodeHexString(dis.getMessageDigest().digest()));
-        contentNode.setProperty(DIGEST_ALGORITHM, dis.getMessageDigest().getAlgorithm());
+        contentNode.setProperty(DIGEST_VALUE, Hex.encodeHexString(dis
+                .getMessageDigest().digest()));
+        contentNode.setProperty(DIGEST_ALGORITHM, dis.getMessageDigest()
+                .getAlgorithm());
         logger.debug("Created data property at path: " + dataProperty.getPath());
 
     }
@@ -140,7 +148,14 @@ public class Datastream extends JcrTools {
 
     public URI getContentDigest() throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
-        return ContentDigest.asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(), contentNode.getProperty(DIGEST_VALUE).getString());
+        return ContentDigest
+                .asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(),
+                        contentNode.getProperty(DIGEST_VALUE).getString());
+    }
+
+    public String getContentDigestType() throws RepositoryException {
+        return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
+                .getString();
     }
 
     /**
