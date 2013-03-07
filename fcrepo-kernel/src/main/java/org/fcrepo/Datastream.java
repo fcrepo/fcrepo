@@ -11,9 +11,6 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import javax.jcr.Node;
@@ -24,8 +21,8 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
-import org.apache.commons.codec.binary.Hex;
 import org.fcrepo.utils.ContentDigest;
+import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +34,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Datastream extends JcrTools {
-
-    private static MessageDigest md;
 
     private final static String CONTENT_SIZE = "fedora:size";
 
@@ -60,19 +55,6 @@ public class Datastream extends JcrTools {
      */
     public Node getNode() {
         return node;
-    }
-
-    private MessageDigest getMessageDigest() {
-
-        if (this.md == null) {
-            try {
-                this.md = MessageDigest.getInstance("SHA-1");
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return md;
     }
 
     /**
@@ -98,10 +80,19 @@ public class Datastream extends JcrTools {
             contentNode.addMixin("fedora:checksum");
         }
 
-        final DigestInputStream dis =
-                new DigestInputStream(content, getMessageDigest());
-
         logger.debug("Created content node at path: " + contentNode.getPath());
+
+        /*
+         * https://docs.jboss.org/author/display/MODE/Binary+values#Binaryvalues-
+         * ExtendedBinaryinterface
+         * promises: "All javax.jcr.Binary values returned by ModeShape will
+         * implement this public interface, so feel free to cast the values to
+         * gain access to the additional methods."
+         */
+        Binary binary =
+                (Binary) node.getSession().getValueFactory().createBinary(
+                        content);
+
         /*
          * This next line of code deserves explanation. If we chose for the
          * simpler line:
@@ -117,15 +108,12 @@ public class Datastream extends JcrTools {
          * code may still be useful to us for an asynchronous method that we
          * develop later.
          */
-        Property dataProperty =
-                contentNode.setProperty(JCR_DATA, node.getSession()
-                        .getValueFactory().createBinary(dis));
+        Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-        contentNode.setProperty(DIGEST_VALUE, Hex.encodeHexString(dis
-                .getMessageDigest().digest()));
-        contentNode.setProperty(DIGEST_ALGORITHM, dis.getMessageDigest()
-                .getAlgorithm());
+        contentNode.setProperty(DIGEST_VALUE, binary.getHexHash());
+        contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
+
         logger.debug("Created data property at path: " + dataProperty.getPath());
 
     }
