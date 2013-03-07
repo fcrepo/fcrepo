@@ -9,7 +9,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -91,7 +90,8 @@ public class DatastreamTest extends AbstractTest {
         session.save();
 
         final Datastream ds = getDatastream("testObject", "testDatastreamNode2");
-        assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds.getContentDigest().toString());
+        assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
+                .getContentDigest().toString());
         assertEquals(4L, ds.getContentSize());
 
 
