@@ -5,7 +5,6 @@ import java.util.Collections;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.inject.Qualifier;
 import javax.jcr.RepositoryException;
 
 import org.modeshape.jcr.JcrRepository;
