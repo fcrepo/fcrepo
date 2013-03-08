@@ -44,6 +44,7 @@
     <module>fcrepo-http-commons</module>
     <module>fcrepo-rss</module>
     <module>fcrepo-http-api</module>
+    <module>fcrepo-generator-rdf</module>
   </modules>
 
   <dependencyManagement>
