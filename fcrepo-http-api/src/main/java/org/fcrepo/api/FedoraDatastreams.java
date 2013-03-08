@@ -46,7 +46,7 @@ import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
-import org.fcrepo.ExceptionHandlers.InvalidChecksumException;
+import org.fcrepo.exceptionhandlers.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
