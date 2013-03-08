@@ -30,6 +30,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -55,9 +56,11 @@ import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
+import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -431,6 +434,58 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid) throws RepositoryException, IOException {
         return getDatastreamHistory(pid, dsid);
     }
+    
+    @GET
+    @Path("/{dsid}/fixity")
+    @Produces({TEXT_XML, APPLICATION_JSON})
+    public DatastreamFixity getDatastreamFixity(@PathParam("pid")
+    final String pid, @PathParam("dsid")
+    final String dsid) throws RepositoryException {
+
+        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+        DatastreamFixity dsf = validatedDatastreamFixity(ds);
+        return dsf;
+    }
+    
+    /**
+     * Computes the size and sha1 of a datastream and compares
+     * it to that stored in the node properties
+     * @param ds
+     * @return
+     * @throws RepositoryException
+     */
+    private DatastreamFixity validatedDatastreamFixity(Datastream ds) throws RepositoryException {
+    	Node node = ds.getNode();
+        Binary binary =
+                (Binary) node.getSession().getValueFactory().createBinary(
+                        ds.getContent());
+        //compute size and checksum
+        String compChecksum = binary.getHexHash();
+        long compSize = binary.getSize();
+        //get properties for comparison
+        URI dsChecksum = ds.getContentDigest();
+        long dsSize = ds.getContentSize();
+        String dsChecksumStr = ContentDigest.asChecksumString(dsChecksum);
+        
+        DatastreamFixity dsf = new DatastreamFixity();
+        dsf.validChecksum = false;
+        dsf.validSize = false;
+        dsf.dsChecksumType = ds.getContentDigestType();
+        dsf.dsChecksum = dsChecksum;
+        dsf.dsSize = dsSize;
+        
+        logger.debug("Validated checksum: " + compChecksum);
+        logger.debug("Validated size is " + compSize);
+       
+        if (compChecksum.equals(dsChecksumStr)) {
+        	dsf.validChecksum = true;
+        }
+        if (compSize == dsSize) {
+        	dsf.validSize = true;
+        }
+        return dsf;
+    }
+
 
     /**
      * Purge the datastream
