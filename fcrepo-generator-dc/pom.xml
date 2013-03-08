@@ -6,7 +6,7 @@
     <artifactId>fcrepo</artifactId>
     <version>4.0-SNAPSHOT</version>
   </parent>
-  <artifactId>fcrepo-dc</artifactId>
+  <artifactId>fcrepo-generator-dc</artifactId>
   <name>fcrepo dc</name>
 
   <packaging>bundle</packaging>

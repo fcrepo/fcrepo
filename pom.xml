@@ -39,12 +39,12 @@
     <module>fcrepo-audit</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
-    <module>fcrepo-dc</module>
+    <module>fcrepo-generator-dc</module>
+    <module>fcrepo-generator-rdf</module>
     <module>fcrepo-legacy-api</module>
     <module>fcrepo-http-commons</module>
     <module>fcrepo-rss</module>
     <module>fcrepo-http-api</module>
-    <module>fcrepo-generator-rdf</module>
   </modules>
 
   <dependencyManagement>
