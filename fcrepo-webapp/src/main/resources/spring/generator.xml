@@ -35,7 +35,7 @@
     </util:list>
 
 
-  <util:list value-type="org.fcrepo.generator.rdf.TripleGenerator">
+  <util:list id="rdf-indexers" value-type="org.fcrepo.generator.rdf.TripleGenerator">
     <bean class="org.fcrepo.generator.rdf.JcrPropertiesGenerator"/>
   </util:list>
 
