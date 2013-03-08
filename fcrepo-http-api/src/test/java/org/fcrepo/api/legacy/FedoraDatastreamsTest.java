@@ -285,4 +285,17 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 "qwerty", DOTALL).matcher(content).find());
 
     }
+    
+    @Test
+    public void testCheckDatastreamFixity() throws Exception {
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest10");
+        assertEquals(201, getStatus(objMethod));
+        final HttpPost method1 =
+                postDSMethod("FedoraDatastreamsTest10", "zxc", "foo");
+        assertEquals(201, getStatus(method1));
+        final HttpGet method2 =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest10/datastreams/zxc/fixity");
+        assertEquals(200, getStatus(method2));
+    }
 }
