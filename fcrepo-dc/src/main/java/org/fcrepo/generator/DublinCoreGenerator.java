@@ -19,13 +19,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.generator.dublincore.AbstractIndexer;
+import org.fcrepo.generator.dublincore.DCGenerator;
 
 @Path("/objects/{pid}/oai_dc")
-public class DublinCore extends AbstractResource {
+public class DublinCoreGenerator extends AbstractResource {
 
     @Resource
-    List<AbstractIndexer> indexers;
+    List<DCGenerator> indexers;
 
     @GET
     @Produces(TEXT_XML)
@@ -34,7 +34,7 @@ public class DublinCore extends AbstractResource {
 
         final Node obj = getObjectNode(pid);
 
-        for (AbstractIndexer indexer : indexers) {
+        for (DCGenerator indexer : indexers) {
             InputStream inputStream = indexer.getStream(obj);
 
             if (inputStream != null) {

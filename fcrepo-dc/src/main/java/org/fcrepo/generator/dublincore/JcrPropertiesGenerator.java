@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
-public class IndexFromJcrProperties extends AbstractIndexer {
+public class JcrPropertiesGenerator implements DCGenerator {
 
     @Override
     public InputStream getStream(Node node) {

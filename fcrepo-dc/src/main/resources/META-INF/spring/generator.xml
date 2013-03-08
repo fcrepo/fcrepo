@@ -10,11 +10,11 @@
 
     <context:annotation-config/>
 
-    <util:list value-type="org.fcrepo.generator.dublincore.AbstractIndexer">
-        <bean class="org.fcrepo.generator.dublincore.IndexFromWellKnownPath">
-            <property name="wellKnownPath" value="DC"/>
+    <util:list value-type="org.fcrepo.generator.dublincore.DCGenerator">
+        <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator">
+            <property name="wellKnownDsid" value="DC"/>
         </bean>
-        <bean class="org.fcrepo.generator.dublincore.IndexFromJcrProperties"/>
+        <bean class="org.fcrepo.generator.dublincore.JcrPropertiesGenerator"/>
     </util:list>
 
 </beans>

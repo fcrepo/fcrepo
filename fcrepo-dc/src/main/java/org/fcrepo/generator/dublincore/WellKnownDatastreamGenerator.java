@@ -10,9 +10,9 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-public class IndexFromWellKnownPath extends AbstractIndexer {
+public class WellKnownDatastreamGenerator implements DCGenerator {
 
-    private String wellKnownPath;
+    private String wellKnownDsid;
 
     @Override
     public InputStream getStream(final Node node) {
@@ -28,8 +28,8 @@ public class IndexFromWellKnownPath extends AbstractIndexer {
 
     private InputStream getContentInputStream(final Node node)
             throws RepositoryException {
-        if (node.hasNode(this.wellKnownPath)) {
-            final Node dc = node.getNode(this.wellKnownPath);
+        if (node.hasNode(this.wellKnownDsid)) {
+            final Node dc = node.getNode(this.wellKnownDsid);
 
             Binary binary =
                     dc.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
@@ -40,7 +40,7 @@ public class IndexFromWellKnownPath extends AbstractIndexer {
         }
     }
 
-    public void setWellKnownPath(String wellKnownPath) {
-        this.wellKnownPath = wellKnownPath;
+    public void setWellKnownDsid(String wellKnownDsid) {
+        this.wellKnownDsid = wellKnownDsid;
     }
 }

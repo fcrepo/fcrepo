@@ -18,9 +18,9 @@
 
     <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.generator.DublinCore"/>
-            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
-            <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
+            <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
+            <bean class="org.fcrepo.api.FedoraObjects"/>
+            <bean class="org.fcrepo.api.FedoraDatastreams"/>
         </jaxrs:serviceBeans>
         <jaxrs:providers>
             <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
@@ -31,11 +31,11 @@
         </jaxrs:providers>
     </jaxrs:server>
 
-    <util:list id="indexers" value-type="org.fcrepo.generator.dublincore.AbstractIndexer">
-        <bean class="org.fcrepo.generator.dublincore.IndexFromWellKnownPath">
-            <property name="wellKnownPath" value="DC"/>
+    <util:list id="indexers" value-type="org.fcrepo.generator.dublincore.DCGenerator">
+        <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator">
+            <property name="wellKnownDsid" value="DC"/>
         </bean>
-        <bean class="org.fcrepo.generator.dublincore.IndexFromJcrProperties"/>
+        <bean class="org.fcrepo.generator.dublincore.JcrPropertiesGenerator"/>
     </util:list>
 
     <!-- Mints PIDs-->
