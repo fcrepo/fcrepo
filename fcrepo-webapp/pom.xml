@@ -32,7 +32,13 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-dc</artifactId>
+      <artifactId>fcrepo-generator-dc</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-generator-rdf</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>

@@ -7,6 +7,8 @@ import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import junit.framework.Assert;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -117,10 +119,14 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest6/datastreams/ds1/content");
         assertEquals(200, getStatus(method_test_get));
+        final HttpResponse response = client.execute(method_test_get);
         logger.debug("Returned from HTTP GET, now checking content...");
         assertTrue("Got the wrong content back!", "marbles for everyone"
-                .equals(EntityUtils.toString(client.execute(method_test_get)
+                .equals(EntityUtils.toString(response
                         .getEntity())));
+
+        assertEquals("ETag: \"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"", response.getFirstHeader("ETag").toString());
+
         logger.debug("Content was correct.");
     }
 
