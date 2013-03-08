@@ -1,4 +1,4 @@
-package org.fcrepo.ExceptionHandlers;
+package org.fcrepo.exceptionhandlers;
 
 import javax.jcr.RepositoryException;
 
