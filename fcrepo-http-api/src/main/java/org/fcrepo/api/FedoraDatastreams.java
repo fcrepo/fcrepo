@@ -20,6 +20,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,8 +40,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
@@ -351,10 +357,24 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/{dsid}/content")
     public Response getDatastreamContent(@PathParam("pid")
     final String pid, @PathParam("dsid")
-    final String dsid) throws RepositoryException {
+    final String dsid, @Context Request request) throws RepositoryException {
 
         final Datastream ds = DatastreamService.getDatastream(pid, dsid);
-        return ok(ds.getContent(), ds.getMimeType()).build();
+
+        EntityTag etag = new EntityTag(ds.getContentDigest().toString());
+        Date date = ds.getLastModifiedDate();
+        ResponseBuilder builder = request.evaluatePreconditions(date, etag);
+
+
+        CacheControl cc = new CacheControl();
+        cc.setMaxAge(0);
+        cc.setMustRevalidate(true);
+
+        if(builder == null) {
+            builder = Response.ok(ds.getContent(), ds.getMimeType());
+        }
+
+        return builder.cacheControl(cc).lastModified(date).tag(etag).build();
     }
 
     /**

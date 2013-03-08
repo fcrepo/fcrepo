@@ -214,4 +214,8 @@ public class Datastream extends JcrTools {
                 .getTimeInMillis());
     }
 
+    public Date getLastModifiedDate() throws RepositoryException {
+        return new Date(node.getProperty("jcr:lastModified").getDate().getTimeInMillis());
+    }
+
 }
