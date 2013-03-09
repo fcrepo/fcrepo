@@ -3,6 +3,7 @@ package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static junit.framework.Assert.format;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -19,6 +20,9 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
 
@@ -127,7 +131,35 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 
         assertEquals("ETag: \"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"", response.getFirstHeader("ETag").toString());
 
+
+
         logger.debug("Content was correct.");
+    }
+
+    @Test
+    public void testRefetchingDatastreamContent() throws Exception {
+
+        final HttpPost createObjMethod =
+                postObjMethod("FedoraDatastreamsTest61");
+        assertEquals(201, getStatus(createObjMethod));
+
+        final HttpPost createDSMethod =
+                postDSMethod("FedoraDatastreamsTest61", "ds1",
+                        "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+
+        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+
+
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest61/datastreams/ds1/content");
+        method_test_get.setHeader("If-None-Match","\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+        method_test_get.setHeader("If-Modified-Since", format.format(new Date()));
+
+        assertEquals(304, getStatus(method_test_get));
+
     }
 
     @Test

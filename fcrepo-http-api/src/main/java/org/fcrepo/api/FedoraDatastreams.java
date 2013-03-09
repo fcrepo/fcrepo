@@ -363,8 +363,9 @@ public class FedoraDatastreams extends AbstractResource {
 
         EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         Date date = ds.getLastModifiedDate();
-        ResponseBuilder builder = request.evaluatePreconditions(date, etag);
+//        ResponseBuilder builder = request.evaluatePreconditions(date, etag);
 
+        ResponseBuilder builder = request.evaluatePreconditions(etag);
 
         CacheControl cc = new CacheControl();
         cc.setMaxAge(0);
