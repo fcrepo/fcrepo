@@ -27,7 +27,7 @@
         </jaxrs:providers>
     </jaxrs:server>
 
-    <util:list id="indexers" value-type="org.fcrepo.generator.dublincore.DCGenerator">
+    <util:list id="dcgenerators" value-type="org.fcrepo.generator.dublincore.DCGenerator">
         <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator">
             <property name="wellKnownDsid" value="DC"/>
         </bean>
@@ -35,7 +35,7 @@
     </util:list>
 
 
-  <util:list id="rdfindexers" value-type="org.fcrepo.generator.rdf.TripleGenerator">
+  <util:list id="rdfgenerators" value-type="org.fcrepo.generator.rdf.TripleGenerator">
     <bean class="org.fcrepo.generator.rdf.JcrPropertiesGenerator" />
   </util:list>
 

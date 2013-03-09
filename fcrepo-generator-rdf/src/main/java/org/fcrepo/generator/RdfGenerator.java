@@ -26,7 +26,7 @@ import static org.fcrepo.services.ObjectService.getObjectNode;
 public class RdfGenerator {
 
     @Resource
-    List<TripleGenerator> rdfindexers;
+    List<TripleGenerator> rdfgenerators;
 
     @GET
     @Produces(TEXT_XML)
@@ -51,7 +51,7 @@ public class RdfGenerator {
         final Model model = ModelFactory.createDefaultModel();
 
         final com.hp.hpl.jena.rdf.model.Resource resource = model.createResource(obj.getIdentifier());
-        for (TripleGenerator indexer : rdfindexers) {
+        for (TripleGenerator indexer : rdfgenerators) {
             indexer.updateResourceFromNode(resource, obj);
         }
 

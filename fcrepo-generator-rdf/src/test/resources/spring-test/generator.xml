@@ -31,7 +31,7 @@
         </jaxrs:providers>
     </jaxrs:server>
 
-    <util:list id="rdfindexers" value-type="org.fcrepo.generator.rdf.TripleGenerator">
+    <util:list id="rdfgenerators" value-type="org.fcrepo.generator.rdf.TripleGenerator">
         <bean class="org.fcrepo.generator.rdf.JcrPropertiesGenerator" />
     </util:list>
 
