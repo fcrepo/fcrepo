@@ -31,11 +31,13 @@
         </jaxrs:providers>
     </jaxrs:server>
 
-    <util:list id="indexers" value-type="org.fcrepo.generator.rdf.TripleGenerator">
+    <util:list id="rdfindexers" value-type="org.fcrepo.generator.rdf.TripleGenerator">
         <bean class="org.fcrepo.generator.rdf.JcrPropertiesGenerator" />
     </util:list>
 
-    <!-- Mints PIDs-->
+
+
+  <!-- Mints PIDs-->
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
 </beans>
