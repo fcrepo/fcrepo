@@ -3,13 +3,13 @@ package org.fcrepo.api.legacy;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
-import static junit.framework.Assert.format;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import junit.framework.Assert;
-import org.apache.http.Header;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -20,9 +20,6 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
 

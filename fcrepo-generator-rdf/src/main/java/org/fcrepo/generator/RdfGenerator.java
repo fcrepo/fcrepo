@@ -1,13 +1,14 @@
 package org.fcrepo.generator;
 
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFWriter;
-import org.fcrepo.generator.rdf.TripleGenerator;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.services.ObjectService.getObjectNode;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.GET;
@@ -15,12 +16,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
-import java.util.List;
 
-import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.services.ObjectService.getObjectNode;
+import org.fcrepo.generator.rdf.TripleGenerator;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.RDFWriter;
 
 @Path("/objects/{pid}/rdf")
 public class RdfGenerator {
