@@ -7,8 +7,7 @@ System Requirements
 * Maven 3
 
 
-[Fedora4Lib](http://fedora4lib.org) | 
-[JavaDocs](http://futures.github.com/fcrepo4) | 
+[JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Futures Wiki](https://wiki.duraspace.org/display/FF/Fedora+Futures+Home) | 
 [Use cases](https://wiki.duraspace.org/display/FF/Use+Cases)
 
