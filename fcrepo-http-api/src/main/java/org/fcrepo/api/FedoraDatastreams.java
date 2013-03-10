@@ -51,7 +51,7 @@ import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
-import org.fcrepo.exceptionhandlers.InvalidChecksumException;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
@@ -104,7 +104,7 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/")
     public Response addDatastreams(@PathParam("pid")
     final String pid, final List<Attachment> attachmentList)
-            throws RepositoryException, IOException {
+            throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = repo.login();
         try {

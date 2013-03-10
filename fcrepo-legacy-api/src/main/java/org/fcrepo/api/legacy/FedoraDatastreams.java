@@ -50,6 +50,7 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
@@ -102,7 +103,7 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/")
     public Response addDatastreams(@PathParam("pid")
     final String pid, final List<Attachment> attachmentList)
-            throws RepositoryException, IOException {
+            throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = repo.login();
         try {
@@ -188,6 +189,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
+     * @throws InvalidChecksumException 
      */
     @POST
     @Path("/{dsid}")
@@ -195,7 +197,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+            throws RepositoryException, IOException, InvalidChecksumException {
         final Session session = repo.login();
 
         contentType =
@@ -231,6 +233,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
+     * @throws InvalidChecksumException 
      */
     @POST
     @Consumes("multipart/form-data")
@@ -239,7 +242,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, @Multipart("file")
-    Attachment file) throws RepositoryException, IOException {
+    Attachment file) throws RepositoryException, IOException, InvalidChecksumException {
         return addDatastream(pid, dsid, file.getContentType(), file
                 .getDataHandler().getInputStream());
     }
@@ -258,6 +261,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
+     * @throws InvalidChecksumException 
      */
     @PUT
     @Path("/{dsid}")
@@ -265,7 +269,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+            throws RepositoryException, IOException, InvalidChecksumException {
         final Session session = repo.login();
         contentType =
                 contentType != null ? contentType
@@ -292,6 +296,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
+     * @throws InvalidChecksumException 
      */
     @PUT
     @Consumes("multipart/form-data")
@@ -300,7 +305,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, @Multipart("file")
-    Attachment file) throws RepositoryException, IOException {
+    Attachment file) throws RepositoryException, IOException, InvalidChecksumException {
 
         return modifyDatastream(pid, dsid, file.getContentType(), file
                 .getDataHandler().getInputStream());
@@ -309,7 +314,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     private URI addDatastreamNode(final String pid, final String dsPath,
             final MediaType contentType, final InputStream requestBodyStream,
-            final Session session) throws RepositoryException, IOException {
+            final Session session) throws RepositoryException, IOException, InvalidChecksumException {
 
         Long oldObjectSize =
                 getObjectSize(session.getNode(getObjectJcrNodePath(pid)));

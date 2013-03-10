@@ -22,7 +22,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
-import org.fcrepo.exceptionhandlers.InvalidChecksumException;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
