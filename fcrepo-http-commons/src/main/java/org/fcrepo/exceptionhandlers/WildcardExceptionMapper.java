@@ -21,5 +21,4 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
     public void setShowStackTrace(Boolean showStackTrace) {
         this.showStackTrace = showStackTrace;
     }
-
 }
