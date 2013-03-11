@@ -26,4 +26,44 @@ public class DescribeRepository {
     @XmlElement(name = "sampleOAI-URL")
     public URI sampleOAIURL;
 
+	public URI getRepositoryBaseURL() {
+		return repositoryBaseURL;
+	}
+
+	public void setRepositoryBaseURL(URI repositoryBaseURL) {
+		this.repositoryBaseURL = repositoryBaseURL;
+	}
+
+	public String getRepositoryVersion() {
+		return repositoryVersion;
+	}
+
+	public void setRepositoryVersion(String repositoryVersion) {
+		this.repositoryVersion = repositoryVersion;
+	}
+
+	public Long getNumberOfObjects() {
+		return numberOfObjects;
+	}
+
+	public void setNumberOfObjects(Long numberOfObjects) {
+		this.numberOfObjects = numberOfObjects;
+	}
+
+	public Long getRepositorySize() {
+		return repositorySize;
+	}
+
+	public void setRepositorySize(Long repositorySize) {
+		this.repositorySize = repositorySize;
+	}
+
+	public URI getSampleOAIURL() {
+		return sampleOAIURL;
+	}
+
+	public void setSampleOAIURL(URI sampleOAIURL) {
+		this.sampleOAIURL = sampleOAIURL;
+	}
+
 }

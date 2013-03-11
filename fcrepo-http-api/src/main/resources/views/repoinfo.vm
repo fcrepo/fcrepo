@@ -1,0 +1,6 @@
+#include("views/common/header.vm")
+	<h1>${repo.repositoryVersion}</h1>
+	<p>Number Of Objects: ${repo.numberOfObjects}</p>
+	<p>Repository Size: ${repo.repositorySize}</p>
+	<p>Sample OAI URL: ${repo.sampleOAIURL}</p>
+#include("views/common/footer.vm")
