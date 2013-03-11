@@ -14,6 +14,10 @@
   <description>Fedora 4.x HTTP API</description>
 
   <name>fcrepo 4.x HTTP API</name>
+  
+  <properties>
+    <resteasy.version>2.3.5.Final</resteasy.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -33,6 +37,64 @@
         </exclusion>
       </exclusions>
     </dependency>
+    
+    <!-- RESTEasy and HTMLEasy -->
+		<dependency>
+			<groupId>com.googlecode.htmleasy</groupId>
+			<artifactId>htmleasy</artifactId>
+			<version>0.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jaxrs</artifactId>
+			<version>${resteasy.version}</version>
+			<exclusions>
+	        <exclusion>
+	          <groupId>commons-logging</groupId>
+	          <artifactId>commons-logging</artifactId>
+	        </exclusion>
+	      </exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jaxb-provider</artifactId>
+			<version>${resteasy.version}</version>
+			<exclusions>
+	        <exclusion>
+	          <groupId>commons-logging</groupId>
+	          <artifactId>commons-logging</artifactId>
+	        </exclusion>
+	      </exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-html</artifactId>
+			<version>${resteasy.version}</version>
+			<exclusions>
+	        <exclusion>
+	          <groupId>commons-logging</groupId>
+	          <artifactId>commons-logging</artifactId>
+	        </exclusion>
+	      </exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jettison-provider</artifactId>
+			<version>${resteasy.version}</version>
+			<exclusions>
+	        <exclusion>
+	          <groupId>commons-logging</groupId>
+	          <artifactId>commons-logging</artifactId>
+	        </exclusion>
+	      </exclusions>
+		</dependency>
+		
+		<!-- Apache Velocity -->
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <version>1.7</version>
+        </dependency>
 
     <!-- test gear -->
     <dependency>

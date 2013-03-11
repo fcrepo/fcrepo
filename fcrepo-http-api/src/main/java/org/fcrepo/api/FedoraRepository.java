@@ -4,8 +4,11 @@ package org.fcrepo.api;
 import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.services.PathService.OBJECT_PATH;
+
+import com.googlecode.htmleasy.View;
 
 import java.io.IOException;
 
@@ -25,10 +28,12 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
+import org.fcrepo.provider.VelocityViewer;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 /**
@@ -77,6 +82,26 @@ public class FedoraRepository extends AbstractResource {
         repoproperties.put("node.types", nodetypes.build());
         session.logout();
         return ok(repoproperties.build().toString()).build();
+    }
+    
+    @GET
+    @Path("/describe")
+    @Produces(TEXT_HTML)
+    public String describeHtml() throws LoginException,
+            RepositoryException {
+
+        Session session = repo.login();
+        DescribeRepository description = new DescribeRepository();
+        description.repositoryBaseURL = uriInfo.getBaseUri();
+        description.sampleOAIURL =
+                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
+                        .build();
+        description.repositorySize = getRepositorySize(session);
+        description.numberOfObjects =
+                session.getNode("/objects").getNodes().getSize();
+        session.logout();
+        VelocityViewer view = new VelocityViewer();
+        return view.getRepoInfo(description);
     }
 
     @GET
