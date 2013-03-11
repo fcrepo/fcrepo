@@ -15,11 +15,7 @@
     <context:property-placeholder/>
 
     <context:annotation-config/>
-
-    <util:list id="objectGenerators" value-type="org.fcrepo.generator.rdf.TripleSource">
-        <bean class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator"/>
-    </util:list>
-
+    
     <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
             <bean class="org.fcrepo.generator.ObjectRdfGenerator">
