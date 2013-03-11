@@ -12,16 +12,16 @@
 <foaf = 'http://xmlns.com/foaf/0.1/'>
 
 /*
- * Generic Fedora namespace
- */
-<fedora = 'info:fedora'>
-
-/*
  * Dublin Core. See:
  * 
  * http://dublincore.org/documents/dcmi-namespace/
  */
 <dc = 'http://purl.org/dc/terms/'>
+
+/*
+ * Generic Fedora namespace
+ */
+<fedora = 'info:fedora/'>
 
 
 /*
@@ -89,6 +89,7 @@
  * Some content that can have a checksum
  */
 [fedora:checksum] mixin
-  - fedora:size (LONG) COPY
-  - fedora:digest (STRING) COPY
-  - fedora:digestAlgorithm (STRING) COPY
+	- fedora:size (LONG) COPY
+	- fedora:digest (STRING) COPY
+	- fedora:digestAlgorithm (STRING) COPY
+
