@@ -74,4 +74,25 @@ public class RdfGeneratorTest extends AbstractResourceTest {
         logger.debug("Finished testTurtleObjectTriples().");
     }
 
+    @Test
+    public void testXMLDSTriples() throws Exception {
+
+        logger.debug("Executing testXMLDSTriples()...");
+        client.execute(postObjMethod("RdfTest4"));
+        client.execute(postDSMethod("RdfTest4", "testDS", "foobar"));
+        HttpGet getRdfMethod =
+                new HttpGet(serverAddress +
+                        "objects/RdfTest4/datastreams/testDS/rdf");
+        getRdfMethod.setHeader("Accept", TEXT_XML);
+        HttpResponse response = client.execute(getRdfMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        final String content = EntityUtils.toString(response.getEntity());
+
+        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
+                .matcher(content).find());
+        logger.debug("Finished testXMLDSTriples().");
+
+    }
+
 }

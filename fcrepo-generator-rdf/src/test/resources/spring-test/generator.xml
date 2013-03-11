@@ -22,10 +22,17 @@
 
     <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.generator.RdfGenerator">
+            <bean class="org.fcrepo.generator.ObjectRdfGenerator">
                 <property name="objectGenerators">
                     <list>
                         <bean class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator"/>
+                    </list>
+                </property>
+            </bean>
+            <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
+                <property name="dsGenerators">
+                    <list>
+                        <bean class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator"/>
                     </list>
                 </property>
             </bean>
