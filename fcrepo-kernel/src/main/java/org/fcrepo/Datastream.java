@@ -21,7 +21,7 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
-import org.fcrepo.exceptionhandlers.InvalidChecksumException;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;

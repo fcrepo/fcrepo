@@ -16,13 +16,19 @@
   <dependencies>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel</artifactId>
+      <artifactId>fcrepo-http-commons</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-commons</artifactId>
+      <artifactId>fcrepo-kernel</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- test gear -->

@@ -43,7 +43,7 @@ public class FedoraEvent implements Event {
     }
 
     @Override
-    public Map getInfo() throws RepositoryException {
+    public Map<?, ?> getInfo() throws RepositoryException {
         return null;
     }
 

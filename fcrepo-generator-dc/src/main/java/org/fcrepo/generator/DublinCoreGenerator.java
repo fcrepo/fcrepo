@@ -25,7 +25,7 @@ import org.fcrepo.generator.dublincore.DCGenerator;
 public class DublinCoreGenerator extends AbstractResource {
 
     @Resource
-    List<DCGenerator> indexers;
+    List<DCGenerator> dcgenerators;
 
     @GET
     @Produces(TEXT_XML)
@@ -34,7 +34,7 @@ public class DublinCoreGenerator extends AbstractResource {
 
         final Node obj = getObjectNode(pid);
 
-        for (DCGenerator indexer : indexers) {
+        for (DCGenerator indexer : dcgenerators) {
             InputStream inputStream = indexer.getStream(obj);
 
             if (inputStream != null) {

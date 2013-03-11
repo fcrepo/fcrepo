@@ -17,6 +17,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -27,7 +28,7 @@ public class DatastreamTest extends AbstractTest {
     Repository repo;
 
     @Test
-    public void testLabel() throws RepositoryException, IOException {
+    public void testLabel() throws RepositoryException, IOException, InvalidChecksumException {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         Node dsNode =
@@ -45,7 +46,7 @@ public class DatastreamTest extends AbstractTest {
     }
     
     @Test
-    public void testCreatedDate() throws RepositoryException, IOException {
+    public void testCreatedDate() throws RepositoryException, IOException, InvalidChecksumException {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         createDatastreamNode(session,
@@ -60,7 +61,7 @@ public class DatastreamTest extends AbstractTest {
     }
 
     @Test
-    public void testDatastreamContent() throws IOException, RepositoryException {
+    public void testDatastreamContent() throws IOException, RepositoryException, InvalidChecksumException {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         createDatastreamNode(session,
@@ -78,7 +79,7 @@ public class DatastreamTest extends AbstractTest {
     }
 
     @Test
-    public void testDatastreamContentDigestAndLength() throws IOException, RepositoryException {
+    public void testDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         createDatastreamNode(session,
@@ -101,7 +102,7 @@ public class DatastreamTest extends AbstractTest {
     }
 
     @Test
-    public void testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException {
+    public void testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         createDatastreamNode(session,
@@ -126,7 +127,7 @@ public class DatastreamTest extends AbstractTest {
     }
     
     @Test
-    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException {
+    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException, InvalidChecksumException {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         createDatastreamNode(session,
