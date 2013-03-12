@@ -21,7 +21,9 @@
 
     <jaxrs:server address="http://localhost:${test.port:8080}">
         <jaxrs:serviceBeans>
+          <bean class="org.fcrepo.api.FedoraObjects"/>
             <bean class="org.fcrepo.webhooks.FedoraWebhooks"/>
+          <bean class="org.fcrepo.webhooks.TestEndpoint"/>
         </jaxrs:serviceBeans>
     </jaxrs:server>
 

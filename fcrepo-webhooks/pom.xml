@@ -33,6 +33,12 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-http-api</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-jms</artifactId>
       <version>${project.version}</version>
     </dependency>

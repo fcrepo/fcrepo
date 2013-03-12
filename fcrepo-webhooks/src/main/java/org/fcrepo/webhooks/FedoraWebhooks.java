@@ -25,6 +25,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -124,7 +125,7 @@ public class FedoraWebhooks extends AbstractResource {
 
     @POST
     @Path("{id}")
-    public Response registerWebhook(@PathParam("id") final String id, @QueryParam("callbackUrl") final String callbackUrl) throws RepositoryException {
+    public Response registerWebhook(@PathParam("id") final String id, @FormParam("callbackUrl") final String callbackUrl) throws RepositoryException {
 
         final Session session = repo.login();
 
@@ -141,18 +142,11 @@ public class FedoraWebhooks extends AbstractResource {
 
 
     @Subscribe
-    public void newEvent(Event event) {
+    public void newEvent(FedoraEvent event) {
         try {
             final Node resource = jcrTools.findOrCreateNode(readOnlySession, event.getPath());
-            final boolean isDatastreamNode =
-                    FedoraTypesUtils.isFedoraDatastream.apply(resource);
-            final boolean isObjectNode =
-                    FedoraTypesUtils.isFedoraObject.apply(resource) &&
-                            !isDatastreamNode;
 
-            if(isDatastreamNode || isObjectNode) {
-                runHooks(resource, new FedoraEvent(event));
-            }
+            runHooks(resource, event);
         } catch (RepositoryException e) {
             e.printStackTrace();
         }

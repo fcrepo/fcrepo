@@ -14,5 +14,6 @@
         "providers" : [
             { "classname" : "servlet" }
         ]
-    }
+    },
+	"node-types" : ["fedora-node-types.cnd"]
 }
