@@ -19,6 +19,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -362,9 +363,9 @@ public class FedoraDatastreams extends AbstractResource {
 
         EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         Date date = ds.getLastModifiedDate();
-//        ResponseBuilder builder = request.evaluatePreconditions(date, etag);
-
-        ResponseBuilder builder = request.evaluatePreconditions(etag);
+        Date rounded_date = new Date();
+        rounded_date.setTime(date.getTime() - (date.getTime() % 1000));
+        ResponseBuilder builder = request.evaluatePreconditions(rounded_date, etag);
 
         CacheControl cc = new CacheControl();
         cc.setMaxAge(0);
