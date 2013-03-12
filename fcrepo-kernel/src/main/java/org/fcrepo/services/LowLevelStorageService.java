@@ -1,6 +1,7 @@
 
 package org.fcrepo.services;
 
+import static com.google.common.collect.ImmutableMap.builder;
 import static com.google.common.collect.Maps.transformEntries;
 import static java.lang.Boolean.FALSE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -39,6 +40,7 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 public class LowLevelStorageService {
@@ -126,22 +128,19 @@ public class LowLevelStorageService {
      * @param key a Modeshape BinaryValue's key.
      * @return a map of binary stores and input streams
      */
-    public static HashMap<LowLevelCacheStore, InputStream> getBlobs(
-            BinaryKey key) {
+    public static Map<LowLevelCacheStore, InputStream> getBlobs(BinaryKey key) {
 
-        HashMap<LowLevelCacheStore, InputStream> blobs =
-                new LinkedHashMap<LowLevelCacheStore, InputStream>();
+        ImmutableMap.Builder<LowLevelCacheStore, InputStream> blobs = builder();
 
         for (LowLevelCacheStore c : getLowLevelCacheStores()) {
             try {
-                blobs.put(c, c.getInputStream(key));
+                final InputStream is = c.getInputStream(key);
+                blobs.put(c, is);
             } catch (BinaryStoreException e) {
-                e.printStackTrace(); //uh oh, we didn't find anything!
-                blobs.put(c, null);
+                //we didn't find anything.
             }
         }
-
-        return blobs;
+        return blobs.build();
     }
 
     /**
@@ -150,8 +149,8 @@ public class LowLevelStorageService {
      */
     private static BinaryStore getBinaryStore() {
         try {
-            return getRepositoryInstance().getConfiguration().getBinaryStorage()
-                    .getBinaryStore();
+            return getRepositoryInstance().getConfiguration()
+                    .getBinaryStorage().getBinaryStore();
         } catch (Exception e) { // boo, catching all exceptions. unfortunately, that's all getBinaryStore promises..
             throw new IllegalStateException(e);
         }
@@ -196,17 +195,14 @@ public class LowLevelStorageService {
                 if (cacheStore instanceof ChainingCacheStore) {
                     final ChainingCacheStore chainingCacheStore =
                             (ChainingCacheStore) cacheStore;
-
                     // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
                     for (CacheStore s : chainingCacheStore.getStores().keySet()) {
                         stores.add(new LowLevelCacheStore(store, s));
                     }
-
                 } else {
                     // just a nice, simple infinispan cache.
                     stores.add(new LowLevelCacheStore(store, cacheStore));
                 }
-
             }
         } else {
             stores.add(new LowLevelCacheStore(store));
