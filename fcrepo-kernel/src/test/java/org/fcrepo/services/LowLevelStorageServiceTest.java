@@ -1,7 +1,6 @@
 package org.fcrepo.services;
 
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.AbstractTest;
 import org.fcrepo.Datastream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,12 +13,11 @@ import javax.jcr.Session;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.List;
 
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
 import static org.fcrepo.services.ObjectService.createObjectNode;
-import static org.fcrepo.services.RepositoryService.getContentBlobs;
+import static org.fcrepo.services.LowLevelStorageService.getContentBlobs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -27,7 +25,7 @@ import static org.junit.Assert.assertNotEquals;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class RepositoryServiceTest {
+public class LowLevelStorageServiceTest {
 
     @Inject
     Repository repo;

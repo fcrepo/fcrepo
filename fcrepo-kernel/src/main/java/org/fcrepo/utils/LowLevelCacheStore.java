@@ -9,18 +9,18 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 import java.io.InputStream;
 
-public class BinaryCacheStore {
+public class LowLevelCacheStore {
 
     private static final String DATA_SUFFIX = "-data";
     private final BinaryStore store;
     private final CacheStore low_level_store;
 
-    public BinaryCacheStore(BinaryStore store, CacheStore low_level_store) {
+    public LowLevelCacheStore(BinaryStore store, CacheStore low_level_store) {
         this.store = store;
         this.low_level_store = low_level_store;
     }
 
-    public BinaryCacheStore(BinaryStore store) {
+    public LowLevelCacheStore(BinaryStore store) {
         this.store = store;
         this.low_level_store = null;
     }

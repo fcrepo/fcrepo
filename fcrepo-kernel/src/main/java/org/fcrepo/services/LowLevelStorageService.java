@@ -1,17 +1,13 @@
 package org.fcrepo.services;
 
-import org.fcrepo.utils.BinaryCacheStore;
+import org.fcrepo.utils.LowLevelCacheStore;
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.modeshape.jcr.JcrRepository;
-import org.modeshape.jcr.RepositoryConfiguration;
-import org.modeshape.jcr.cache.NodeKey;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
-import org.modeshape.jcr.value.binary.AbstractBinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
@@ -19,7 +15,6 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
-import org.fcrepo.utils.infinispan.StoreChunkInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,24 +22,20 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class RepositoryService {
+public class LowLevelStorageService {
 
 
     private static final Logger logger = LoggerFactory
-            .getLogger(RepositoryService.class);
+            .getLogger(LowLevelStorageService.class);
 
 
     @Inject
@@ -55,7 +46,7 @@ public class RepositoryService {
      */
     private static Session readOnlySession;
 
-    private static List<BinaryCacheStore> cacheStores;
+    private static List<LowLevelCacheStore> cacheStores;
 
     private static JcrRepository getRepositoryInstance() {
         return (JcrRepository)readOnlySession.getRepository();
@@ -67,7 +58,7 @@ public class RepositoryService {
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public static HashMap<BinaryCacheStore, InputStream> getContentBlobs(Node resource) throws RepositoryException {
+    public static HashMap<LowLevelCacheStore, InputStream> getContentBlobs(Node resource) throws RepositoryException {
 
         BinaryValue v = (BinaryValue) resource.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
 
@@ -80,11 +71,11 @@ public class RepositoryService {
      * @param key a Modeshape BinaryValue's key.
      * @return a map of binary stores and input streams
      */
-    public static HashMap<BinaryCacheStore, InputStream> getBlobs(BinaryKey key) {
+    public static HashMap<LowLevelCacheStore, InputStream> getBlobs(BinaryKey key) {
 
-        HashMap<BinaryCacheStore, InputStream> blobs = new LinkedHashMap<BinaryCacheStore, InputStream>();
+        HashMap<LowLevelCacheStore, InputStream> blobs = new LinkedHashMap<LowLevelCacheStore, InputStream>();
 
-        for( BinaryCacheStore c : getLowLevelCacheStores()) {
+        for( LowLevelCacheStore c : getLowLevelCacheStores()) {
             try {
                 blobs.put(c, c.getInputStream(key));
             } catch (BinaryStoreException e) {
@@ -120,13 +111,13 @@ public class RepositoryService {
      *
      * @return a list of "BinaryCacheStore", an abstraction over a plain BinaryStore or a specific Infinispan Cache
      */
-    private static List<BinaryCacheStore> getLowLevelCacheStores() {
+    private static List<LowLevelCacheStore> getLowLevelCacheStores() {
         // I'm assuming the list of stores doesn't change.. probably not a safe assumption
         if(cacheStores != null) {
             return cacheStores;
         }
 
-        List<BinaryCacheStore> stores = new ArrayList<>();
+        List<LowLevelCacheStore> stores = new ArrayList<>();
 
         BinaryStore store = getBinaryStore();
 
@@ -151,17 +142,17 @@ public class RepositoryService {
 
                     // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
                     for( CacheStore s : chainingCacheStore.getStores().keySet()) {
-                        stores.add(new BinaryCacheStore(store, s));
+                        stores.add(new LowLevelCacheStore(store, s));
                     }
 
                 }  else {
                     // just a nice, simple infinispan cache.
-                    stores.add(new BinaryCacheStore(store, cacheStore));
+                    stores.add(new LowLevelCacheStore(store, cacheStore));
                 }
 
             }
         } else {
-            stores.add(new BinaryCacheStore(store));
+            stores.add(new LowLevelCacheStore(store));
         }
 
         cacheStores = stores;
