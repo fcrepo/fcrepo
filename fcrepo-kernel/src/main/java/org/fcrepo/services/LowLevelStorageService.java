@@ -2,8 +2,8 @@
 package org.fcrepo.services;
 
 import static com.google.common.collect.ImmutableMap.builder;
-import static com.google.common.collect.Maps.transformEntries;
-import static java.lang.Boolean.FALSE;
+import static com.google.common.collect.Maps.filterEntries;
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
@@ -23,7 +23,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.commons.codec.binary.Hex;
 import org.fcrepo.utils.LowLevelCacheStore;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -38,8 +37,8 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 public class LowLevelStorageService {
 
@@ -60,48 +59,39 @@ public class LowLevelStorageService {
         return (JcrRepository) readOnlySession.getRepository();
     }
 
-    public static Map<LowLevelCacheStore, Boolean> applyDigestToBlobs(
+    public static Map<LowLevelCacheStore, InputStream> applyDigestToBlobs(
             final Node resource, final MessageDigest digest,
             final String checksum) throws RepositoryException {
-        return applyToBlob(
-                resource,
-                new Maps.EntryTransformer<LowLevelCacheStore, InputStream, Boolean>() {
+        logger.debug("Checking resource: " + resource.getPath());
+        return filterEntries(getBlobs(resource),
+                new Predicate<Map.Entry<LowLevelCacheStore, InputStream>>() {
 
-                    public Boolean transformEntry(LowLevelCacheStore store,
-                            InputStream is) {
-                        DigestInputStream ds = null;
+                    @Override
+                    public boolean apply(
+                            Map.Entry<LowLevelCacheStore, InputStream> entry) {
+
                         try {
-                            ds =
-                                    new DigestInputStream(is,
+                            final DigestInputStream ds =
+                                    new DigestInputStream(entry.getValue(),
                                             (MessageDigest) digest.clone());
 
                             while (ds.read() != -1);
 
                             String calculatedDigest =
-                                    Hex.encodeHexString(ds.getMessageDigest()
+                                    encodeHexString(ds.getMessageDigest()
                                             .digest());
 
                             return checksum.equals(calculatedDigest);
                         } catch (CloneNotSupportedException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            throw new IllegalStateException(e);
                         }
-
-                        return FALSE;
+                        return false;
                     }
+
                 });
 
-    }
-
-    public static
-            <T>
-            Map<LowLevelCacheStore, T>
-            applyToBlob(
-                    final Node resource,
-                    final Maps.EntryTransformer<LowLevelCacheStore, InputStream, T> transform)
-                    throws RepositoryException {
-        return transformEntries(getBlobs(resource), transform);
     }
 
     /**
