@@ -167,7 +167,7 @@ public class LowLevelStorageService {
             return cacheStores;
         }
 
-        List<LowLevelCacheStore> stores = new ArrayList<>();
+        List<LowLevelCacheStore> stores = new ArrayList<LowLevelCacheStore>();
 
         BinaryStore store = getBinaryStore();
 
