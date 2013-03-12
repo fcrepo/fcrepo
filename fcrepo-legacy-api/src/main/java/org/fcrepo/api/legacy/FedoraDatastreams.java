@@ -70,7 +70,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Returns a list of datastreams for the object
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @return the list of datastreams
@@ -177,7 +177,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Create a new datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -189,7 +189,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
-     * @throws InvalidChecksumException 
+     * @throws InvalidChecksumException
      */
     @POST
     @Path("/{dsid}")
@@ -233,7 +233,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
-     * @throws InvalidChecksumException 
+     * @throws InvalidChecksumException
      */
     @POST
     @Consumes("multipart/form-data")
@@ -249,7 +249,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Modify an existing datastream's content
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -261,7 +261,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
-     * @throws InvalidChecksumException 
+     * @throws InvalidChecksumException
      */
     @PUT
     @Path("/{dsid}")
@@ -296,7 +296,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
-     * @throws InvalidChecksumException 
+     * @throws InvalidChecksumException
      */
     @PUT
     @Consumes("multipart/form-data")
@@ -320,9 +320,9 @@ public class FedoraDatastreams extends AbstractResource {
                 getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
         logger.debug("Attempting to add datastream node at path: " + dsPath);
         try {
-            boolean created = session.nodeExists(dsPath);
             createDatastreamNode(session, dsPath, contentType.toString(),
                     requestBodyStream);
+            boolean created = session.nodeExists(dsPath);
             session.save();
             if (created) {
                 /*
@@ -345,7 +345,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Get the datastream profile of a datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -370,7 +370,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Get the binary content of a datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -390,7 +390,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Get previous version information for this datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsId
@@ -420,9 +420,9 @@ public class FedoraDatastreams extends AbstractResource {
     /**
      * Get previous version information for this datastream. See
      * /{dsid}/versions. Kept for compatibility with fcrepo <3.5 API.
-     * 
+     *
      * @deprecated
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -444,7 +444,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Purge the datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
