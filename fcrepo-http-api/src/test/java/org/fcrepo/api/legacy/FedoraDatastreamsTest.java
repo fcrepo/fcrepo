@@ -10,6 +10,10 @@ import static org.junit.Assert.assertTrue;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -19,6 +23,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.jaxb.responses.management.DatastreamFixity;
+import org.fcrepo.jaxb.responses.management.FixityStatus;
 import org.junit.Test;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
@@ -296,6 +302,21 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         final HttpGet method2 =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest10/datastreams/zxc/fixity");
-        assertEquals(200, getStatus(method2));
+        HttpResponse response = execute(method2);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        JAXBContext context = JAXBContext.newInstance(DatastreamFixity.class);
+        Unmarshaller um = context.createUnmarshaller();
+        DatastreamFixity fixity = 
+        		(DatastreamFixity) um.unmarshal(new java.io.StringReader(content));
+        int cache = 0;
+        for (FixityStatus status:fixity.statuses){
+        	logger.debug("Verifying cache {} :", cache++);
+        	assertTrue(status.validChecksum);
+        	logger.debug("Checksum matched");
+        	assertTrue(status.validSize);
+        	logger.debug("DS size matched");
+        }
     }
 }

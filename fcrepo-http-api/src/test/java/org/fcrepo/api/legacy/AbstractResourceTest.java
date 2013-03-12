@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -68,12 +69,17 @@ public abstract class AbstractResourceTest {
         return new HttpPut(serverAddress + "objects/" + pid + "/datastreams/" +
                 ds);
     }
-
-    protected int getStatus(HttpUriRequest method)
+    
+    protected HttpResponse execute(HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());
-        return client.execute(method).getStatusLine().getStatusCode();
+        return client.execute(method);
+    }
+    
+    protected int getStatus(HttpUriRequest method)
+            throws ClientProtocolException, IOException {
+        return execute(method).getStatusLine().getStatusCode();
     }
 
 }
