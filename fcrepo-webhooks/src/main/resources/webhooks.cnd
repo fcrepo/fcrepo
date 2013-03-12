@@ -1,0 +1,12 @@
+/*
+ * Generic Fedora namespace
+ */
+<webhook = 'org.webhooks'>
+
+/*
+ * Any Fedora resource.
+ */
+[webhook:resource] mixin abstract
+
+[webhook:callback] mixin
+	- webhook:callbackUrl (STRING) multiple COPY
