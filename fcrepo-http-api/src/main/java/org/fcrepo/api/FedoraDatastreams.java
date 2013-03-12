@@ -10,7 +10,7 @@ import static javax.ws.rs.core.Response.created;
 import static org.fcrepo.api.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.LowLevelStorageService.getBlobs;
+import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
@@ -67,6 +67,7 @@ import org.fcrepo.jaxb.responses.management.FixityStatus;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
+import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheStore;
 import org.modeshape.common.util.StringUtil;
 import org.modeshape.jcr.api.Binary;
@@ -467,7 +468,6 @@ public class FedoraDatastreams extends AbstractResource {
      */
     private DatastreamFixity validatedDatastreamFixity(Datastream ds) throws RepositoryException {
     	Node node = ds.getNode();
-    	Map<LowLevelCacheStore, InputStream> blobs = getBlobs(node);
         //compute size and checksum
         //get properties for comparison
         URI dsChecksum = ds.getContentDigest();
@@ -475,7 +475,6 @@ public class FedoraDatastreams extends AbstractResource {
         String dsChecksumStr = ContentDigest.asChecksumString(dsChecksum);
 
         DatastreamFixity dsf = new DatastreamFixity();
-        dsf.statuses = new ArrayList<FixityStatus>(blobs.size());
     	MessageDigest digest = null;
     	try { 
     		digest = MessageDigest.getInstance("SHA1");
@@ -483,6 +482,10 @@ public class FedoraDatastreams extends AbstractResource {
 			logger.error("Could not locate a SHA1 provider: Everything is ruined.",e);
 			throw new RepositoryException(e.getMessage(),e);
 		}
+
+        Map<LowLevelCacheStore, FixityResult> blobs = getFixity(node, digest);
+        dsf.statuses = new ArrayList<FixityStatus>(blobs.size());
+
         for (LowLevelCacheStore key: blobs.keySet()){
         	FixityStatus status = new FixityStatus();
         	status.validChecksum = false;
@@ -490,34 +493,19 @@ public class FedoraDatastreams extends AbstractResource {
         	status.dsChecksumType = ds.getContentDigestType();
         	status.dsChecksum = dsChecksum;
         	status.dsSize = dsSize;
-        	InputStream in = blobs.get(key);
-        	byte [] buf = new byte[1024];
-        	int len = -1;
-        	int read = 0;
-        	digest.reset();
-        	try {
-        		while ((len = in.read(buf)) > -1){
-        			digest.update(buf, 0, len);
-        			read += len;
-        		}
-        		in.close();
-        	} catch (IOException e) {
-        		logger.error("Could not read blobs for datastream: Everything is ruined,", e);
-        		throw new RepositoryException(e.getMessage(),e);
-        	}
 
-        	byte [] digestBytes = digest.digest();
-        	String compChecksum = StringUtil.getHexString(digestBytes);
-            long compSize = read;
-        	status.computedSize = compSize;
-        	status.computedChecksum = compChecksum.toString();
-            logger.debug("Computed checksum: " + compChecksum);
-            logger.debug("Computed size is " + compSize);
+            FixityResult result = blobs.get(key);
 
-            if (compChecksum.toString().equals(dsChecksumStr)) {
+
+        	status.computedSize = result.computedSize;
+        	status.computedChecksum = result.computedChecksum;
+            logger.debug("Computed checksum: " + result.computedChecksum);
+            logger.debug("Computed size is " + result.computedSize);
+
+            if (result.computedChecksum.toString().equals(dsChecksumStr)) {
             	status.validChecksum = true;
             }
-            if (compSize == dsSize) {
+            if (result.computedSize == dsSize) {
             	status.validSize = true;
             }
             dsf.statuses.add(status);
