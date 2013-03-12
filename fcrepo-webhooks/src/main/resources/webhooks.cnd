@@ -8,5 +8,5 @@
  */
 [webhook:resource] mixin abstract
 
-[webhook:callback] mixin
-	- webhook:callbackUrl (STRING) multiple COPY
+[webhook:callback]
+	- webhook:callbackUrl (STRING) COPY
