@@ -3,8 +3,6 @@ package org.fcrepo.services;
 import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
-import static org.fcrepo.services.LowLevelStorageService.applyDigestToBlobs;
-import static org.fcrepo.services.LowLevelStorageService.getBlobs;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -20,12 +18,17 @@ import javax.jcr.Session;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
+import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.security.MessageDigest;
+
+import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
+import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
@@ -49,15 +52,17 @@ public class LowLevelStorageServiceTest {
 
         final Datastream ds = getDatastream("testObject", "testRepositoryContent");
 
-        final Map<LowLevelCacheStore, InputStream> booleanMap =
-                applyDigestToBlobs(ds.getNode(), getInstance("SHA-1"), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+        final Map<LowLevelCacheStore,FixityResult> fixityResultMap = LowLevelStorageService.getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"));
 
-        assertNotEquals(0, booleanMap.size());
+        assertNotEquals(0, fixityResultMap.size());
 
+        for (FixityResult fixityResult : fixityResultMap.values()) {
+            assertTrue(fixityResult.computedChecksum.equals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
+        }
     }
 
     @Test
-    public void testGetBlobs() throws Exception {
+    public void testGetBinaryBlobs() throws Exception {
         Session session = repo.login();
         createObjectNode(session, "testObject");
         createDatastreamNode(session,
@@ -70,7 +75,7 @@ public class LowLevelStorageServiceTest {
 
         final Datastream ds = getDatastream("testObject", "testRepositoryContent");
 
-        Iterator<InputStream> inputStreamList = getBlobs(ds.getNode()).values().iterator();
+        Iterator<InputStream> inputStreamList = getBinaryBlobs(ds.getNode()).values().iterator();
 
         int i = 0;
         while(inputStreamList.hasNext()) {
@@ -86,4 +91,6 @@ public class LowLevelStorageServiceTest {
         assertNotEquals(0, i);
 
     }
+
+
 }
