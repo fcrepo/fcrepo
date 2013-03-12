@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 
-public class FixityInputStream extends ProxyInputStream {
+public class FixityInputStream extends CountingInputStream {
 
     /**
      * Creates a <code>FilterInputStream</code>
@@ -20,11 +20,7 @@ public class FixityInputStream extends ProxyInputStream {
      *           this instance is to be created without an underlying stream.
      */
     public FixityInputStream(InputStream in, MessageDigest digest) {
-        super(new CountingInputStream(new DigestInputStream(in, digest)));
-    }
-
-    public long getByteCount() {
-        return ((CountingInputStream)in).getByteCount();
+        super(new DigestInputStream(in, digest));
     }
 
     public MessageDigest getMessageDigest() {

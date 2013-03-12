@@ -2,8 +2,10 @@
 package org.fcrepo.services;
 
 import static com.google.common.collect.ImmutableMap.builder;
+import static com.google.common.collect.Maps.filterEntries;
 import static com.google.common.collect.Maps.transformEntries;
 import static java.lang.Boolean.FALSE;
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
@@ -23,6 +25,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.google.common.base.Predicate;
 import org.apache.commons.codec.binary.Hex;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityInputStream;
@@ -63,26 +66,30 @@ public class LowLevelStorageService {
         return (JcrRepository) readOnlySession.getRepository();
     }
 
-    public static Map<LowLevelCacheStore, FixityResult> applyDigestToBlobs(
-            final Node resource, final MessageDigest digest,
-            final String checksum) throws RepositoryException {
-        return applyToBlob(
+
+    public static Map<LowLevelCacheStore, FixityResult> getFixity(
+            final Node resource, final MessageDigest digest) throws RepositoryException {
+        logger.debug("Checking resource: " + resource.getPath());
+
+        return transformBinaryBlobs(
                 resource,
                 new Maps.EntryTransformer<LowLevelCacheStore, InputStream, FixityResult>() {
 
                     public FixityResult transformEntry(LowLevelCacheStore store,
                             InputStream is) {
-                        FixityResult result = new FixityResult();
+                        logger.debug("Checking fixity for resource in cache store " + store.toString());
+                        FixityResult result = null;
                         FixityInputStream ds = null;
                         try {
                             ds =
                                     new FixityInputStream(is,
                                             (MessageDigest) digest.clone());
 
+                            result = new FixityResult();
                             while (ds.read() != -1);
 
                             String calculatedDigest =
-                                    Hex.encodeHexString(ds.getMessageDigest()
+                                    encodeHexString(ds.getMessageDigest()
                                             .digest());
 
                             result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest).toString();
@@ -92,6 +99,7 @@ public class LowLevelStorageService {
                             e.printStackTrace();
                         } catch (IOException e) {
                             e.printStackTrace();
+                            throw new IllegalStateException(e);
                         }
 
                         return result;
@@ -103,11 +111,11 @@ public class LowLevelStorageService {
     public static
             <T>
             Map<LowLevelCacheStore, T>
-            applyToBlob(
+            transformBinaryBlobs(
                     final Node resource,
                     final Maps.EntryTransformer<LowLevelCacheStore, InputStream, T> transform)
                     throws RepositoryException {
-        return transformEntries(getBlobs(resource), transform);
+        return transformEntries(getBinaryBlobs(resource), transform);
     }
 
     /**
@@ -116,14 +124,14 @@ public class LowLevelStorageService {
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public static Map<LowLevelCacheStore, InputStream> getBlobs(
+    public static Map<LowLevelCacheStore, InputStream> getBinaryBlobs(
             final Node resource) throws RepositoryException {
 
         final BinaryValue v =
                 (BinaryValue) resource.getNode(JCR_CONTENT).getProperty(
                         JCR_DATA).getBinary();
 
-        return getBlobs(v.getKey());
+        return getBinaryBlobs(v.getKey());
 
     }
 
@@ -132,7 +140,7 @@ public class LowLevelStorageService {
      * @param key a Modeshape BinaryValue's key.
      * @return a map of binary stores and input streams
      */
-    public static Map<LowLevelCacheStore, InputStream> getBlobs(BinaryKey key) {
+    public static Map<LowLevelCacheStore, InputStream> getBinaryBlobs(BinaryKey key) {
 
         ImmutableMap.Builder<LowLevelCacheStore, InputStream> blobs = builder();
 

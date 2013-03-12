@@ -1,5 +1,6 @@
 package org.fcrepo.utils;
 
+import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -23,5 +24,6 @@ public class FixityInputStreamTest {
         }
 
         assertEquals(10, is.getByteCount());
+        assertEquals("87acec17cd9dcd20a716cc2cf67417b71c8a7016", Hex.encodeHexString(is.getMessageDigest().digest()));
     }
 }
