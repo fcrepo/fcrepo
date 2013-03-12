@@ -54,11 +54,10 @@ public class RSSPublisher extends AbstractResource {
     private SyndFeed feed = new SyndFeedImpl();
 
     @GET
-    @Path("")
     @Produces("application/rss+xml")
     public StreamSource getFeed() throws FeedException {
         feed.setLink(uriInfo.getBaseUri().toString());
-        feed.setEntries(transform(copyOf(feedQueue), event2entry));
+        feed.setEntries(transform(copyOf(feedQueue).reverse(), event2entry));
         // TODO ought to make this stream, not go through a string
         return new StreamSource(new ByteArrayInputStream(new SyndFeedOutput()
                 .outputString(feed).getBytes()));
