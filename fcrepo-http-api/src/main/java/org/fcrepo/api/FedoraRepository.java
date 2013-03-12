@@ -3,12 +3,10 @@ package org.fcrepo.api;
 
 import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.services.PathService.OBJECT_PATH;
-
-import com.googlecode.htmleasy.View;
 
 import java.io.IOException;
 
@@ -33,7 +31,6 @@ import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 /**

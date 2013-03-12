@@ -96,6 +96,13 @@
             <version>1.7</version>
         </dependency>
 
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
     <!-- test gear -->
     <dependency>
       <groupId>org.fcrepo</groupId>

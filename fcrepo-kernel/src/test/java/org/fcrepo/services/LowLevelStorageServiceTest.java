@@ -1,5 +1,23 @@
 package org.fcrepo.services;
 
+import static java.security.MessageDigest.getInstance;
+import static org.fcrepo.services.DatastreamService.createDatastreamNode;
+import static org.fcrepo.services.DatastreamService.getDatastream;
+import static org.fcrepo.services.LowLevelStorageService.applyDigestToBlobs;
+import static org.fcrepo.services.LowLevelStorageService.getBlobs;
+import static org.fcrepo.services.ObjectService.createObjectNode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.jcr.Repository;
+import javax.jcr.Session;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.utils.LowLevelCacheStore;
@@ -7,21 +25,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.inject.Inject;
-import javax.jcr.Repository;
-import javax.jcr.Session;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.Iterator;
-import java.util.Map;
-
-import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.DatastreamService.getDatastream;
-import static org.fcrepo.services.ObjectService.createObjectNode;
-import static org.fcrepo.services.LowLevelStorageService.getBlobs;
-import static org.junit.Assert.*;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -46,15 +49,11 @@ public class LowLevelStorageServiceTest {
 
         final Datastream ds = getDatastream("testObject", "testRepositoryContent");
 
-        final Map<LowLevelCacheStore,Boolean> booleanMap = LowLevelStorageService.applyDigestToBlobs(ds.getNode(), MessageDigest.getInstance("SHA-1"), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+        final Map<LowLevelCacheStore, InputStream> booleanMap =
+                applyDigestToBlobs(ds.getNode(), getInstance("SHA-1"), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
 
         assertNotEquals(0, booleanMap.size());
 
-        Iterator<Boolean> it = booleanMap.values().iterator();
-
-        while(it.hasNext()) {
-            assertTrue(it.next());
-        }
     }
 
     @Test

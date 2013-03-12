@@ -23,18 +23,13 @@
  */
 package org.fcrepo.utils.infinispan;
 
-import org.infinispan.Cache;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.MarshalledValue;
-import org.modeshape.common.logging.Logger;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.modeshape.common.logging.Logger;
 
 /**
  * Merges chunks from cache and provides InputStream-feeling.
@@ -133,8 +128,6 @@ public class StoreChunkInputStream extends InputStream {
     protected byte[] nextChunk() throws IOException {
         String chunkKey = key+"-"+chunkNumber++;
         logger.debug("Read chunk {0}", chunkKey);
-
-        byte[] bytes;
 
         try {
             final CacheEntry cacheEntry = blobCache.load(chunkKey);
