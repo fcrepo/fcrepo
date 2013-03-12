@@ -2,6 +2,7 @@ package org.fcrepo.services;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
+import org.fcrepo.utils.LowLevelCacheStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -12,15 +13,15 @@ import javax.jcr.Repository;
 import javax.jcr.Session;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.Iterator;
+import java.util.Map;
 
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
 import static org.fcrepo.services.ObjectService.createObjectNode;
-import static org.fcrepo.services.LowLevelStorageService.getContentBlobs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
+import static org.fcrepo.services.LowLevelStorageService.getBlobs;
+import static org.junit.Assert.*;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -29,6 +30,32 @@ public class LowLevelStorageServiceTest {
 
     @Inject
     Repository repo;
+
+    @Test
+    public void testChecksumBlobs() throws Exception {
+
+        Session session = repo.login();
+        createObjectNode(session, "testObject");
+        createDatastreamNode(session,
+                "/objects/testObject/testRepositoryContent",
+                "application/octet-stream", new ByteArrayInputStream(
+                "0123456789".getBytes()));
+
+
+        session.save();
+
+        final Datastream ds = getDatastream("testObject", "testRepositoryContent");
+
+        final Map<LowLevelCacheStore,Boolean> booleanMap = LowLevelStorageService.applyDigestToBlobs(ds.getNode(), MessageDigest.getInstance("SHA-1"), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+
+        assertNotEquals(0, booleanMap.size());
+
+        Iterator<Boolean> it = booleanMap.values().iterator();
+
+        while(it.hasNext()) {
+            assertTrue(it.next());
+        }
+    }
 
     @Test
     public void testGetBlobs() throws Exception {
@@ -44,7 +71,7 @@ public class LowLevelStorageServiceTest {
 
         final Datastream ds = getDatastream("testObject", "testRepositoryContent");
 
-        Iterator<InputStream> inputStreamList = getContentBlobs(ds.getNode()).values().iterator();
+        Iterator<InputStream> inputStreamList = getBlobs(ds.getNode()).values().iterator();
 
         int i = 0;
         while(inputStreamList.hasNext()) {

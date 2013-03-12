@@ -1,5 +1,7 @@
 package org.fcrepo.services;
 
+import com.google.common.collect.Maps;
+import org.apache.commons.codec.binary.Hex;
 import org.fcrepo.utils.LowLevelCacheStore;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -25,11 +27,15 @@ import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LowLevelStorageService {
 
@@ -52,13 +58,44 @@ public class LowLevelStorageService {
         return (JcrRepository)readOnlySession.getRepository();
     }
 
+    public static Map<LowLevelCacheStore, Boolean> applyDigestToBlobs(final Node resource, final MessageDigest digest, final String checksum) throws RepositoryException {
+        return applyToBlob(resource, new Maps.EntryTransformer<LowLevelCacheStore, InputStream, Boolean>() {
+            public Boolean transformEntry(LowLevelCacheStore store, InputStream is) {
+                DigestInputStream ds = null;
+                try {
+                    ds = new DigestInputStream(is, (MessageDigest)digest.clone());
+
+                    while (ds.read() != -1);
+
+                    String calculatedDigest = Hex.encodeHexString(ds.getMessageDigest().digest());
+
+                    return checksum.equals(calculatedDigest);
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return Boolean.FALSE;
+            }
+        });
+
+    }
+
+    public static <T> Map<LowLevelCacheStore, T> applyToBlob(Node resource, Maps.EntryTransformer<LowLevelCacheStore, InputStream, T> transform) throws RepositoryException {
+        Map<LowLevelCacheStore, T> transformed =
+                Maps.transformEntries(getBlobs(resource), transform);
+
+        return transformed;
+    }
+
     /**
      *
      * @param resource a JCR node that has a jcr:content/jcr:data child.
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public static HashMap<LowLevelCacheStore, InputStream> getContentBlobs(Node resource) throws RepositoryException {
+    public static Map<LowLevelCacheStore, InputStream> getBlobs(Node resource) throws RepositoryException {
 
         BinaryValue v = (BinaryValue) resource.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
 
