@@ -24,6 +24,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.codec.binary.Hex;
+import org.fcrepo.utils.ContentDigest;
+import org.fcrepo.utils.FixityInputStream;
+import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheStore;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -60,19 +63,20 @@ public class LowLevelStorageService {
         return (JcrRepository) readOnlySession.getRepository();
     }
 
-    public static Map<LowLevelCacheStore, Boolean> applyDigestToBlobs(
+    public static Map<LowLevelCacheStore, FixityResult> applyDigestToBlobs(
             final Node resource, final MessageDigest digest,
             final String checksum) throws RepositoryException {
         return applyToBlob(
                 resource,
-                new Maps.EntryTransformer<LowLevelCacheStore, InputStream, Boolean>() {
+                new Maps.EntryTransformer<LowLevelCacheStore, InputStream, FixityResult>() {
 
-                    public Boolean transformEntry(LowLevelCacheStore store,
+                    public FixityResult transformEntry(LowLevelCacheStore store,
                             InputStream is) {
-                        DigestInputStream ds = null;
+                        FixityResult result = new FixityResult();
+                        FixityInputStream ds = null;
                         try {
                             ds =
-                                    new DigestInputStream(is,
+                                    new FixityInputStream(is,
                                             (MessageDigest) digest.clone());
 
                             while (ds.read() != -1);
@@ -81,14 +85,16 @@ public class LowLevelStorageService {
                                     Hex.encodeHexString(ds.getMessageDigest()
                                             .digest());
 
-                            return checksum.equals(calculatedDigest);
+                            result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest).toString();
+                            result.computedSize = ds.getByteCount();
+
                         } catch (CloneNotSupportedException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
-                        return FALSE;
+                        return result;
                     }
                 });
 
