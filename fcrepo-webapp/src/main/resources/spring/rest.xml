@@ -50,7 +50,20 @@
             <bean class="org.fcrepo.api.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.FedoraObjects"/>
             <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
-            <bean class="org.fcrepo.generator.RdfGenerator"/>
+            <bean class="org.fcrepo.generator.ObjectRdfGenerator">
+                <property name="objectGenerators">
+                    <list>
+                        <bean class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator"/>
+                    </list>
+                </property>
+            </bean>
+            <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
+                <property name="dsGenerators">
+                    <list>
+                        <bean class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator"/>
+                    </list>
+                </property>
+            </bean>
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
             <entry key="json" value="application/json"/>

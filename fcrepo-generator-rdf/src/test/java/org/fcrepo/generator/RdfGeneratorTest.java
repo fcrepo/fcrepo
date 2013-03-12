@@ -1,5 +1,5 @@
-package org.fcrepo.generator;
 
+package org.fcrepo.generator;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -17,8 +17,10 @@ import static org.junit.Assert.assertTrue;
 public class RdfGeneratorTest extends AbstractResourceTest {
 
     @Test
-    public void testJcrPropertiesBasedTriples() throws Exception {
-        getStatus(postObjMethod("RdfTest1"));
+    public void testXMLObjectTriples() throws Exception {
+
+        logger.debug("Executing testXMLObjectTriples()...");
+        client.execute(postObjMethod("RdfTest1"));
 
         HttpGet getRdfMethod =
                 new HttpGet(serverAddress + "objects/RdfTest1/rdf");
@@ -27,10 +29,70 @@ public class RdfGeneratorTest extends AbstractResourceTest {
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String content = EntityUtils.toString(response.getEntity());
-        assertTrue("Didn't find purl!", compile("purl", DOTALL).matcher(
-                content).find());
 
-        assertTrue("Didn't find identifier!", compile("identifier",
-                DOTALL).matcher(content).find());
+        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
+                .matcher(content).find());
+        logger.debug("Finished testXMLObjectTriples().");
+
     }
+
+    @Test
+    public void testNTriplesObjectTriples() throws Exception {
+        logger.debug("Executing testNTriplesObjectTriples()...");
+
+        client.execute(postObjMethod("RdfTest2"));
+
+        HttpGet getRdfMethod =
+                new HttpGet(serverAddress + "objects/RdfTest2/rdf");
+        HttpResponse response = client.execute(getRdfMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        final String content = EntityUtils.toString(response.getEntity());
+
+        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
+                .matcher(content).find());
+        logger.debug("Finished testNTriplesObjectTriples().");
+    }
+
+    @Test
+    public void testTurtleObjectTriples() throws Exception {
+        logger.debug("Executing testTurtleObjectTriples()...");
+        client.execute(postObjMethod("RdfTest3"));
+
+        HttpGet getRdfMethod =
+                new HttpGet(serverAddress + "objects/RdfTest3/rdf");
+        getRdfMethod.setHeader("Accept", "text/turtle");
+
+        HttpResponse response = client.execute(getRdfMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        final String content = EntityUtils.toString(response.getEntity());
+
+        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
+                .matcher(content).find());
+
+        logger.debug("Finished testTurtleObjectTriples().");
+    }
+
+    @Test
+    public void testXMLDSTriples() throws Exception {
+
+        logger.debug("Executing testXMLDSTriples()...");
+        client.execute(postObjMethod("RdfTest4"));
+        client.execute(postDSMethod("RdfTest4", "testDS", "foobar"));
+        HttpGet getRdfMethod =
+                new HttpGet(serverAddress +
+                        "objects/RdfTest4/datastreams/testDS/rdf");
+        getRdfMethod.setHeader("Accept", TEXT_XML);
+        HttpResponse response = client.execute(getRdfMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        final String content = EntityUtils.toString(response.getEntity());
+
+        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
+                .matcher(content).find());
+        logger.debug("Finished testXMLDSTriples().");
+
+    }
+
 }
