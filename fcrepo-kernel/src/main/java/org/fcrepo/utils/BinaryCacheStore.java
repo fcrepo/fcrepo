@@ -12,7 +12,7 @@ import java.io.InputStream;
 public class BinaryCacheStore {
 
     private static final String DATA_SUFFIX = "-data";
-    private final Object store;
+    private final BinaryStore store;
     private final CacheStore low_level_store;
 
     public BinaryCacheStore(BinaryStore store, CacheStore low_level_store) {
@@ -27,12 +27,10 @@ public class BinaryCacheStore {
 
 
     public InputStream getInputStream(BinaryKey key) throws BinaryStoreException {
-        if(this.store instanceof BinaryStore) {
-            return ((BinaryStore) this.store).getInputStream(key);
-        } else if(this.store instanceof InfinispanBinaryStore) {
+        if(this.store instanceof InfinispanBinaryStore) {
             return new StoreChunkInputStream(low_level_store, key.toString() + DATA_SUFFIX);
         } else {
-            return null;
+            return this.store.getInputStream(key);
         }
     }
 }
