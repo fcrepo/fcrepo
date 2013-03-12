@@ -3,10 +3,13 @@ package org.fcrepo.jaxb.responses.access;
 
 import java.net.URI;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "fedoraRepository")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class DescribeRepository {
 
     public static final String FEDORA_VERSION = "4.0-modeshape-candidate";

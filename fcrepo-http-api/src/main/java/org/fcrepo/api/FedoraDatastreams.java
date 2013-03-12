@@ -19,6 +19,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,6 +30,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.ValueFormatException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -54,9 +56,11 @@ import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
+import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +75,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Returns a list of datastreams for the object
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @return the list of datastreams
@@ -178,7 +182,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Create a new datastream with user provided checksum for validation
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -220,10 +224,10 @@ public class FedoraDatastreams extends AbstractResource {
         }
 
     }
-    
+
     /**
      * Create a new datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -243,14 +247,14 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, InputStream requestBodyStream)
             throws RepositoryException, IOException {
-    	
+
     	return addDatastream(pid, null, null, dsid, contentType, requestBodyStream);
 
     }
 
     /**
      * Modify an existing datastream's content
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -290,9 +294,9 @@ public class FedoraDatastreams extends AbstractResource {
                 getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
         logger.debug("Attempting to add datastream node at path: " + dsPath);
         try {
-            boolean created = session.nodeExists(dsPath);
             createDatastreamNode(session, dsPath, contentType.toString(),
                     requestBodyStream, checksumType, checksum);
+            boolean created = session.nodeExists(dsPath);
             session.save();
             if (created) {
                 /*
@@ -307,7 +311,7 @@ public class FedoraDatastreams extends AbstractResource {
                 session.save();
             }
             logger.debug("Finished adding datastream node at path: " + dsPath);
-        } catch (InvalidChecksumException e) { 
+        } catch (InvalidChecksumException e) {
         	logger.error("Checksum Mismatch Exception");
         	logger.debug("No datastream has been added");
         	session.logout();
@@ -319,7 +323,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Get the datastream profile of a datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -344,7 +348,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Get the binary content of a datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -362,9 +366,9 @@ public class FedoraDatastreams extends AbstractResource {
 
         EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         Date date = ds.getLastModifiedDate();
-//        ResponseBuilder builder = request.evaluatePreconditions(date, etag);
-
-        ResponseBuilder builder = request.evaluatePreconditions(etag);
+        Date rounded_date = new Date();
+        rounded_date.setTime(date.getTime() - (date.getTime() % 1000));
+        ResponseBuilder builder = request.evaluatePreconditions(rounded_date, etag);
 
         CacheControl cc = new CacheControl();
         cc.setMaxAge(0);
@@ -379,7 +383,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Get previous version information for this datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsId
@@ -409,9 +413,9 @@ public class FedoraDatastreams extends AbstractResource {
     /**
      * Get previous version information for this datastream. See
      * /{dsid}/versions. Kept for compatibility with fcrepo <3.5 API.
-     * 
+     *
      * @deprecated
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid
@@ -431,9 +435,61 @@ public class FedoraDatastreams extends AbstractResource {
         return getDatastreamHistory(pid, dsid);
     }
 
+    @GET
+    @Path("/{dsid}/fixity")
+    @Produces({TEXT_XML, APPLICATION_JSON})
+    public DatastreamFixity getDatastreamFixity(@PathParam("pid")
+    final String pid, @PathParam("dsid")
+    final String dsid) throws RepositoryException {
+
+        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+        DatastreamFixity dsf = validatedDatastreamFixity(ds);
+        return dsf;
+    }
+
+    /**
+     * Computes the size and sha1 of a datastream and compares
+     * it to that stored in the node properties
+     * @param ds
+     * @return
+     * @throws RepositoryException
+     */
+    private DatastreamFixity validatedDatastreamFixity(Datastream ds) throws RepositoryException {
+    	Node node = ds.getNode();
+        Binary binary =
+                (Binary) node.getSession().getValueFactory().createBinary(
+                        ds.getContent());
+        //compute size and checksum
+        String compChecksum = binary.getHexHash();
+        long compSize = binary.getSize();
+        //get properties for comparison
+        URI dsChecksum = ds.getContentDigest();
+        long dsSize = ds.getContentSize();
+        String dsChecksumStr = ContentDigest.asChecksumString(dsChecksum);
+
+        DatastreamFixity dsf = new DatastreamFixity();
+        dsf.validChecksum = false;
+        dsf.validSize = false;
+        dsf.dsChecksumType = ds.getContentDigestType();
+        dsf.dsChecksum = dsChecksum;
+        dsf.dsSize = dsSize;
+
+        logger.debug("Validated checksum: " + compChecksum);
+        logger.debug("Validated size is " + compSize);
+
+        if (compChecksum.equals(dsChecksumStr)) {
+        	dsf.validChecksum = true;
+        }
+        if (compSize == dsSize) {
+        	dsf.validSize = true;
+        }
+        return dsf;
+    }
+
+
     /**
      * Purge the datastream
-     * 
+     *
      * @param pid
      *            persistent identifier of the digital object
      * @param dsid

@@ -126,7 +126,7 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
                 .equals(EntityUtils.toString(response
                         .getEntity())));
 
-        assertEquals("ETag: \"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"", response.getFirstHeader("ETag").toString());
+        assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df", response.getFirstHeader("ETag").getValue());
 
 
 
