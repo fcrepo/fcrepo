@@ -7,7 +7,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "DatastreamFixityStatus")
 public class FixityStatus {
-	
+
+    @XmlElement
+    public String storeIdentifier;
+
 	@XmlElement
 	public long computedSize;
 	

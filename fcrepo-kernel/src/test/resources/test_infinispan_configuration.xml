@@ -3,6 +3,7 @@
    xmlns="urn:infinispan:config:5.1">
 
    <global>
+     <globalJmxStatistics allowDuplicateDomains="true" />
       <!-- Defines the global settings shared by all caches -->
    </global>
 

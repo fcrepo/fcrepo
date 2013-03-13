@@ -497,6 +497,7 @@ public class FedoraDatastreams extends AbstractResource {
             FixityResult result = blobs.get(key);
 
 
+            status.storeIdentifier = key.getExternalIdentifier();
         	status.computedSize = result.computedSize;
         	status.computedChecksum = result.computedChecksum;
             logger.debug("Computed checksum: " + result.computedChecksum);
