@@ -22,6 +22,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityInputStream;
@@ -190,7 +191,7 @@ public class LowLevelStorageService {
             //seems like we have to start it, not sure why.
             ispnStore.start();
 
-            for (Cache<?, ?> c : ispnStore.getCaches()) {
+            for (Cache<?, ?> c : ImmutableSet.copyOf(ispnStore.getCaches())) {
 
                 final CacheStore cacheStore =
                         c.getAdvancedCache().getComponentRegistry()
