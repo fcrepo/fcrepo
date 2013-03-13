@@ -30,6 +30,16 @@ public class LowLevelCacheStore {
         this.low_level_store = null;
     }
 
+    public boolean equals(final Object other) {
+        if(other instanceof LowLevelCacheStore) {
+            final LowLevelCacheStore that = (LowLevelCacheStore)other;
+
+            return this.store.equals(that.store) && this.low_level_store.equals(that.low_level_store);
+        } else {
+            return false;
+        }
+    }
+
 
     public InputStream getInputStream(BinaryKey key) throws BinaryStoreException {
         if(this.store instanceof InfinispanBinaryStore) {
