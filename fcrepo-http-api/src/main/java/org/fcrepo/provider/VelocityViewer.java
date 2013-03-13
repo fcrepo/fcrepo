@@ -40,7 +40,7 @@ public class VelocityViewer {
 	        
 	        // Execute the template
 	        StringWriter writer = new StringWriter();
-	        velocityEngine.mergeTemplate( "views/repoinfo.vm", "utf-8", velocityContext, writer );
+	        velocityEngine.mergeTemplate( "views/repo-info.vm", "utf-8", velocityContext, writer );
 	
 	        // Return the result
 	        return writer.toString();

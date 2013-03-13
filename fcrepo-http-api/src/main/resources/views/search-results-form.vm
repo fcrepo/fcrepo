@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>Search Repository</title>
+
+#if ($results.searchTerms)
+	#set ($terms = $results.searchTerms)
+#else
+	#set ($terms = "")
+#end
+#set ($maxView = ["20", "40", "60", "80"])
+
+</head>
+<body>
+	<center>
+		<table width="784" border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td width="141" height="134" valign="top"></td>
+				<td width="643" valign="top">
+					<center>
+						<h2>Fedora Repository</h2>
+						<h3>Find Objects</h3>
+					</center>
+				</td>
+			</tr>
+		</table>
+		<form method="post" action="search">
+			<center>
+				<table border=0 cellpadding=6 cellspacing=0>
+					<tr>
+						<td bgcolor=silver valign=top>&nbsp;&nbsp;&nbsp;</td>
+						<td valign=top>Search all fields for phrase: <input type="text" name="terms" size="15" value="$terms">
+							<p>
+								Maximum Results: <select name="maxResults">
+								#foreach ($col in $maxView)
+									<option value="$col"
+									#if ($col == $results.maxResults.toString())
+										selected="selected"
+									#end
+									>$col</option>
+								#end
+							<p>
+								<input type="submit" value="Search"></td>
+					</tr>
+				</table>
+			</center>
+		</form>
+		<hr size=1>
+		#if ($results)
+		<center>
+			<table width="90%" border="1" cellpadding="5" cellspacing="5" bgcolor="silver">
+				<tr>
+					<td valign="top"><strong>pid</strong></td>
+					<td valign="top"><strong>label</strong></td>
+				</tr>
+				#set ($objects = $results.objectFieldsList)
+				#foreach ($object in $objects )
+					#set ($label = $object.label)
+					<tr>
+						<td><a href="../rest$object.path">$object.pid</a></td>
+						<td> 
+							#if ($label)
+								$label
+							#end
+						</td>
+					</tr>
+				#end
+			</table>
+			
+			#set ($start = $results.start+1)
+			#set ($end = $results.start + $results.maxResults)
+			#set ($offSet = $end)				
+			
+			<p>Viewing results $start.toString() to $end.toString()</p>
+			<form method="post" action="search">
+				<input type="hidden" name="terms" value="$terms">
+				<input type="hidden" name="maxResults" value="$results.maxResults">
+				<input type="hidden" name="offSet" value="$offSet">
+				#if ($results.size > $end) 
+					<input type="submit" value="More Results &gt;">
+				#end
+			</form>
+			
+		</center>
+		#end
+	</center>
+</body>
+</html>
