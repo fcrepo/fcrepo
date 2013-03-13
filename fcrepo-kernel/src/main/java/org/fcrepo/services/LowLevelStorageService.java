@@ -87,7 +87,7 @@ public class LowLevelStorageService {
                                     encodeHexString(ds.getMessageDigest()
                                             .digest());
 
-                            result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest).toString();
+                            result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest);
                             result.computedSize = ds.getByteCount();
 
                         } catch (CloneNotSupportedException e) {

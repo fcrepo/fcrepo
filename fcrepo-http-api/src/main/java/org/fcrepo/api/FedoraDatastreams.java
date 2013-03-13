@@ -503,7 +503,7 @@ public class FedoraDatastreams extends AbstractResource {
             logger.debug("Computed checksum: " + result.computedChecksum);
             logger.debug("Computed size is " + result.computedSize);
 
-            if (result.computedChecksum.toString().equals(dsChecksumStr)) {
+            if (result.computedChecksum.equals(dsChecksum)) {
             	status.validChecksum = true;
             }
             if (result.computedSize == dsSize) {

@@ -57,7 +57,7 @@ public class LowLevelStorageServiceTest {
         assertNotEquals(0, fixityResultMap.size());
 
         for (FixityResult fixityResult : fixityResultMap.values()) {
-            assertTrue(fixityResult.computedChecksum.equals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
+            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", fixityResult.computedChecksum.toString());
         }
     }
 

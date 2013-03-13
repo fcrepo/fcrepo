@@ -15,7 +15,7 @@ public class FixityStatus {
 	public long computedSize;
 	
 	@XmlElement
-	public String computedChecksum;
+	public URI computedChecksum;
 	
 	@XmlElement
     public long dsSize;
