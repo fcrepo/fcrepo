@@ -1,0 +1,58 @@
+<html>
+<head>
+<title>Search Repository</title>
+</head>
+<body>
+	<center>
+		<table width="784" border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td width="141" height="134" valign="top"></td>
+				<td width="643" valign="top">
+					<center>
+						<h2>Fedora Repository</h2>
+						<h3>Find Objects</h3>
+					</center>
+				</td>
+			</tr>
+		</table>
+		<form method="post" action="http://localhost:8080/rest/search">
+			<center>
+				<table border=0 cellpadding=6 cellspacing=0>
+					<tr>
+						<td colspan=3 valign=top><i>Fields to display:</i></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td bgcolor=silver valign=top>&nbsp;&nbsp;&nbsp;</td>
+						<td valign=top>Search all fields for phrase: <input
+							type="text" name="terms" size="15" value="">
+							<p>
+								Maximum Results: <select name="maxResults"><option
+										value="20">20</option>
+									<option value="40">40</option>
+									<option value="60">60</option>
+									<option value="80">80</option></select>
+							<p>
+								<input type="submit" value="Search"></td>
+					</tr>
+				</table>
+			</center>
+		</form>
+		<hr size=1>
+		<center>
+			<table width="90%" border="1" cellpadding="5" cellspacing="5" bgcolor="silver">
+				<tr>
+					<td valign="top"><strong>pid</strong></td>
+					<td valign="top"><strong>title</strong></td>
+				</tr>
+				#foreach($title in $results.keySet() )
+					<tr>
+						<td>$title</td>
+						<td>$results.get($title)</td>
+					</tr>
+				#end
+			</table>
+		</center>
+	</center>
+</body>
+</html>
