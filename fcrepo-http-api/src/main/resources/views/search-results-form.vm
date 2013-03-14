@@ -45,10 +45,11 @@
 					<td valign="top"><strong>pid</strong></td>
 					<td valign="top"><strong>title</strong></td>
 				</tr>
-				#foreach($title in $results.keySet() )
+				#set($objects = $results.objectFieldsList)
+				#foreach($object in $objects )
 					<tr>
-						<td>$title</td>
-						<td>$results.get($title)</td>
+						<td><a href="http://localhost:8080/rest$object.path">$object.pid</a></td>
+						<td></td>
 					</tr>
 				#end
 			</table>

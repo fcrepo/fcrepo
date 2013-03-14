@@ -63,61 +63,6 @@ public class FedoraRepository extends AbstractResource {
             .getLogger(FedoraRepository.class);
     
     @GET
-    @Path("/search")
-    @Produces(TEXT_HTML)
-    public Response searchForm() throws LoginException,
-            RepositoryException {
-   	
-    	VelocityViewer view = new VelocityViewer();    	
-		return ok(view.getViewer("search-results-form.vm", null, null)).build();
-    }
-    
-    @POST
-    @Path("/search")
-    @Produces(TEXT_HTML)
-    public Response searchSubmit(@FormParam("terms") String terms, @FormParam("maxResults") String maxResults) throws LoginException,
-            RepositoryException {
-		
-    	logger.debug("Searching for " + terms);
-		VelocityViewer view = new VelocityViewer();
-    	
-		return ok(view.getViewer("search-results-form.vm", "results", search(terms))).build();
-    }
-    
-    public Map<String, String> search(String terms) throws LoginException,
-    		RepositoryException{
-    	final Session session = repo.login();
-
-    	//TODO temp object
-    	Map<String, String> fieldResults = new HashMap<String, String>();
-		QueryManager queryManager = session.getWorkspace().getQueryManager();
-
-		String language = Query.JCR_SQL2;
-		//TODO expand query to other fields
-		String expression = "SELECT * FROM [fedora:object] WHERE [dc:identifier] = '" + terms + "'";
-		Query query = queryManager.createQuery(expression,language);
-
-		QueryResult result = query.execute();
-		RowIterator rowIter = result.getRows();
-		logger.debug(rowIter.getSize() + " results found");
-
-		NodeIterator nodeIter = result.getNodes();		
-		
-		while ( nodeIter.hasNext() ) {
-			try {
-			    Node node = nodeIter.nextNode();
-			    fieldResults.put(node.getName(), node.getPath());
-			} catch (RepositoryException ex) {
-				logger.debug("Couldn't add to fieldResults");
-				logger.error(ex.getMessage());
-			}
-		}
-
-		session.logout();
-		return fieldResults;
-    }
-
-    @GET
     @Path("/describe/modeshape")
     public Response describeModeshape() throws JsonGenerationException,
             JsonMappingException, IOException, RepositoryException {
