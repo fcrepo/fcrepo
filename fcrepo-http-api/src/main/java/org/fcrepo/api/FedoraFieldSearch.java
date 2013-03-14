@@ -4,20 +4,16 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.ok;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFactory;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
-import javax.jcr.query.RowIterator;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -49,7 +45,7 @@ public class FedoraFieldSearch extends AbstractResource {
             RepositoryException {
    	
     	VelocityViewer view = new VelocityViewer();    	
-		return ok(view.getViewer("search-results-form.vm", null, null)).build();
+		return ok(view.getFieldSearch(null)).build();
     }
     
     @POST
@@ -83,7 +79,7 @@ public class FedoraFieldSearch extends AbstractResource {
 		
 		session.logout();
 		
-		return ok(view.getViewer("search-results-form.vm", "results", fsr)).build();
+		return ok(view.getFieldSearch(fsr)).build();
     }
     
     /**

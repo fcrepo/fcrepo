@@ -6,6 +6,7 @@ import java.util.Properties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
+import org.fcrepo.jaxb.search.FieldSearchResult;
 
 /**
  * Resolves the view to be used
@@ -51,4 +52,26 @@ public class VelocityViewer {
 	    }
 		return null;
 	}
+
+    public String getFieldSearch(FieldSearchResult results) {
+        try {
+            // Build a context to hold the model
+            VelocityContext velocityContext = new VelocityContext();
+            velocityContext.put("results", results);
+
+            // Execute the template
+            StringWriter writer = new StringWriter();
+            velocityEngine.mergeTemplate( "views/search-results-form.vm", "utf-8", velocityContext, writer );
+
+            // Return the result
+            return writer.toString();
+        }
+        catch( Exception e )
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }
