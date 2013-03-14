@@ -13,6 +13,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFactory;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -40,6 +41,8 @@ public class FedoraFieldSearch extends AbstractResource {
 	private static final Logger logger = LoggerFactory
             .getLogger(FedoraFieldSearch.class);
 
+	private QueryResult queryResults = null;
+	
 	@GET
     @Produces(TEXT_HTML)
     public Response searchForm() throws LoginException,
@@ -51,36 +54,65 @@ public class FedoraFieldSearch extends AbstractResource {
     
     @POST
     @Produces(TEXT_HTML)
-    public Response searchSubmit(@FormParam("terms") String terms, @FormParam("maxResults") String maxResults) throws LoginException,
+    public Response searchSubmit(@FormParam("terms") String terms, 
+    		@FormParam("offSet") String offSet, 
+    		@FormParam("maxResults") String maxResults) throws LoginException,
             RepositoryException {
-		
-    	logger.debug("Searching for " + terms);
+    	
+    	final Session session = repo.login();
+    	QueryManager queryManager = session.getWorkspace().getQueryManager();
 		VelocityViewer view = new VelocityViewer();
-		FieldSearchResult fsr = search(terms, Integer.parseInt(maxResults));
-		//TODO - host and port are hardcoded in form
+		
+		logger.debug("Searching for " + terms);
+		
+		//TODO expand to more fields
+		String sqlExpression = "SELECT * FROM [fedora:object] WHERE";
+		sqlExpression += " [dc:identifier] like $sterm";
+		sqlExpression += " OR [dc:title] like $sterm";
+		String language = Query.JCR_SQL2;
+		Query query = queryManager.createQuery(sqlExpression,language);
+		query.bindValue("sterm", session.getValueFactory().createValue("%" + terms + "%"));
+		logger.debug("statement is " + query.getStatement());
+		
+		if (offSet == null) {
+			offSet = "0";
+		}
+		
+		FieldSearchResult fsr = search(query, Integer.parseInt(offSet), Integer.parseInt(maxResults));
+		fsr.setSearchTerms(terms);
+		
+		session.logout();
+		
 		return ok(view.getViewer("search-results-form.vm", "results", fsr)).build();
     }
     
-    public FieldSearchResult search(String terms, int maxResults) throws LoginException,
+    /**
+     * Searches the repository using JCR SQL2 queries and returns a FieldSearchResult object
+     * @param sqlExpression
+     * @param offSet
+     * @param maxResults
+     * @return
+     * @throws LoginException
+     * @throws RepositoryException
+     */
+    public FieldSearchResult search(Query query, int offSet, int maxResults) throws LoginException,
     		RepositoryException {
-    	final Session session = repo.login();
-
+    	
     	List<ObjectFields> fieldObjects = new ArrayList<ObjectFields>();
-		QueryManager queryManager = session.getWorkspace().getQueryManager();
 
-		String language = Query.JCR_SQL2;
-		//TODO expand query to other fields
-		String expression = "SELECT * FROM [fedora:object] WHERE [dc:identifier] = '" + terms + "'";
-		Query query = queryManager.createQuery(expression,language);
+		//if offSet is 0, we assume it's the first query and set the queryResults
+		if (offSet == 0) {
+			queryResults = query.execute();
+		}
 
-		QueryResult queryResults = query.execute();
-		RowIterator rowIter = queryResults.getRows();
-		int size = (int)rowIter.getSize();
+		NodeIterator nodeIter = queryResults.getNodes();	
+		int size = (int)nodeIter.getSize();
 		logger.debug(size + " results found");
-
-		NodeIterator nodeIter = queryResults.getNodes();		
 		
-		while ( nodeIter.hasNext() ) {
+		//add the next set of results to the fieldObjects starting at offSet for pagination
+		int i=offSet;
+		nodeIter.skip((long)offSet);
+		while ( nodeIter.hasNext() && i < (offSet + maxResults)) {
 			ObjectFields obj = new ObjectFields();
 			try {
 			    Node node = nodeIter.nextNode();
@@ -90,12 +122,13 @@ public class FedoraFieldSearch extends AbstractResource {
 			} catch (RepositoryException ex) {
 				logger.error(ex.getMessage());
 			}
+			i++;
 		}
 		
-		FieldSearchResult fsr = new FieldSearchResult(fieldObjects, 0, maxResults, size);
+		FieldSearchResult fsr = new FieldSearchResult(fieldObjects, offSet, maxResults, size);
+		fsr.setStart(offSet);
+		fsr.setMaxResults(maxResults);
 
-		session.logout();
-		
 		return fsr;
     }
 }

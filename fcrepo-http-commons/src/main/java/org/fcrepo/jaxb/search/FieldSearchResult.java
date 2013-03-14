@@ -12,14 +12,16 @@ public class FieldSearchResult {
 	
 	private int start;
 	
-	private int end;
+	private int maxResults;
 	
 	private int size;
 	
-	public FieldSearchResult(List<ObjectFields> objectFieldsList, int start, int end, int size) {
+	private String searchTerms;
+	
+	public FieldSearchResult(List<ObjectFields> objectFieldsList, int start, int maxResults, int size) {
 		this.objectFieldsList = objectFieldsList;
 		this.start = start;
-		this.end = end;
+		this.maxResults = maxResults;
 		this.size = size;
 	}
 
@@ -35,15 +37,23 @@ public class FieldSearchResult {
 		this.start = start;
 	}
 	
-	public void setEnd(int end) {
-		this.end = end;
+	public void setMaxResults(int maxResults) {
+		this.maxResults = maxResults;
 	}
 	
-	public int getEnd() {
-		return end;
+	public int getMaxResults() {
+		return maxResults;
 	}
 	
 	public final int getSize() {
 		return size;
+	}
+
+	public String getSearchTerms() {
+		return searchTerms;
+	}
+
+	public void setSearchTerms(String searchTerms) {
+		this.searchTerms = searchTerms;
 	}
 }
