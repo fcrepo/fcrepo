@@ -2,9 +2,7 @@
 package org.fcrepo.api;
 
 import static com.google.common.collect.ImmutableMap.builder;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.services.PathService.OBJECT_PATH;
 
@@ -83,7 +81,7 @@ public class FedoraRepository extends AbstractResource {
 
     @GET
     @Path("/describe")
-    @Produces({TEXT_XML, APPLICATION_JSON})
+    @Produces({TEXT_XML, APPLICATION_XML, APPLICATION_JSON})
     public DescribeRepository describe() throws LoginException,
             RepositoryException {
 
