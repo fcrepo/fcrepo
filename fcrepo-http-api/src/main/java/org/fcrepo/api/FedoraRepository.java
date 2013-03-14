@@ -80,26 +80,6 @@ public class FedoraRepository extends AbstractResource {
         session.logout();
         return ok(repoproperties.build().toString()).build();
     }
-    
-    @GET
-    @Path("/describe")
-    @Produces(TEXT_HTML)
-    public String describeHtml() throws LoginException,
-            RepositoryException {
-
-        Session session = repo.login();
-        DescribeRepository description = new DescribeRepository();
-        description.repositoryBaseURL = uriInfo.getBaseUri();
-        description.sampleOAIURL =
-                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
-                        .build();
-        description.repositorySize = getRepositorySize(session);
-        description.numberOfObjects =
-                session.getNode("/objects").getNodes().getSize();
-        session.logout();
-        VelocityViewer view = new VelocityViewer();
-        return view.getRepoInfo(description);
-    }
 
     @GET
     @Path("/describe")
@@ -118,6 +98,27 @@ public class FedoraRepository extends AbstractResource {
                 session.getNode("/objects").getNodes().getSize();
         session.logout();
         return description;
+    }
+
+
+    @GET
+    @Path("/describe")
+    @Produces(TEXT_HTML)
+    public String describeHtml() throws LoginException,
+            RepositoryException {
+
+        Session session = repo.login();
+        DescribeRepository description = new DescribeRepository();
+        description.repositoryBaseURL = uriInfo.getBaseUri();
+        description.sampleOAIURL =
+                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
+                        .build();
+        description.repositorySize = getRepositorySize(session);
+        description.numberOfObjects =
+                session.getNode("/objects").getNodes().getSize();
+        session.logout();
+        VelocityViewer view = new VelocityViewer();
+        return view.getRepoInfo(description);
     }
 
 }
