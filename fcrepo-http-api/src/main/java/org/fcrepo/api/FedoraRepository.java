@@ -3,9 +3,7 @@ package org.fcrepo.api;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.ImmutableMap.builder;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
@@ -97,7 +95,27 @@ public class FedoraRepository extends AbstractResource {
         session.logout();
         return ok(repoproperties.build().toString()).build();
     }
-    
+
+    @GET
+    @Path("/describe")
+    @Produces({TEXT_XML, APPLICATION_XML, APPLICATION_JSON})
+    public DescribeRepository describe() throws LoginException,
+            RepositoryException {
+
+        Session session = repo.login();
+        DescribeRepository description = new DescribeRepository();
+        description.repositoryBaseURL = uriInfo.getBaseUri();
+        description.sampleOAIURL =
+                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
+                        .build();
+        description.repositorySize = getRepositorySize(session);
+        description.numberOfObjects =
+                session.getNode("/objects").getNodes().getSize();
+        session.logout();
+        return description;
+    }
+
+
     @GET
     @Path("/describe")
     @Produces(TEXT_HTML)
@@ -116,25 +134,6 @@ public class FedoraRepository extends AbstractResource {
         session.logout();
         VelocityViewer view = new VelocityViewer();
         return view.getRepoInfo(description);
-    }
-
-    @GET
-    @Path("/describe")
-    @Produces({TEXT_XML, APPLICATION_JSON})
-    public DescribeRepository describe() throws LoginException,
-            RepositoryException {
-
-        Session session = repo.login();
-        DescribeRepository description = new DescribeRepository();
-        description.repositoryBaseURL = uriInfo.getBaseUri();
-        description.sampleOAIURL =
-                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
-                        .build();
-        description.repositorySize = getRepositorySize(session);
-        description.numberOfObjects =
-                session.getNode("/objects").getNodes().getSize();
-        session.logout();
-        return description;
     }
 
 }

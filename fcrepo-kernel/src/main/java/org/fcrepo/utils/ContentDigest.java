@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableMap;
 public class ContentDigest {
 
     public final static Map<String, String> algorithmToScheme = ImmutableMap
-            .of("SHA-1", "urn:sha1");
+            .of("SHA-1", "urn:sha1","SHA1", "urn:sha1");
 
     public static URI asURI(String algorithm, String value) {
         try {

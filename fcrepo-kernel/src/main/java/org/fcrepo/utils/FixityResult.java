@@ -1,9 +1,11 @@
 package org.fcrepo.utils;
 
+import java.net.URI;
+
 public class FixityResult {
     public long computedSize;
 
-    public String computedChecksum;
+    public URI computedChecksum;
 
     public boolean equals(Object obj) {
 
