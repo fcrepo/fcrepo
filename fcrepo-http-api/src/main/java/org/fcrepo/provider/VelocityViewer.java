@@ -33,14 +33,18 @@ public class VelocityViewer {
 	}
 	
 	public String getRepoInfo(DescribeRepository repoinfo) {
+		return getViewer("repo-info.vm", "repo", repoinfo);
+	}
+	
+	public String getViewer(String template, String key, Object value) {
 		try {
 			// Build a context to hold the model
 	        VelocityContext velocityContext = new VelocityContext();
-	        velocityContext.put("repo", repoinfo);
+	        velocityContext.put(key, value);
 	        
 	        // Execute the template
 	        StringWriter writer = new StringWriter();
-	        velocityEngine.mergeTemplate( "views/repoinfo.vm", "utf-8", velocityContext, writer );
+	        velocityEngine.mergeTemplate( "views/" + template, "utf-8", velocityContext, writer );
 	
 	        // Return the result
 	        return writer.toString();
