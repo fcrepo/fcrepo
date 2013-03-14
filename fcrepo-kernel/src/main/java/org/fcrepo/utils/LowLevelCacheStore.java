@@ -1,6 +1,8 @@
 package org.fcrepo.utils;
 
+import org.apache.poi.util.IOUtils;
 import org.fcrepo.utils.infinispan.StoreChunkInputStream;
+import org.fcrepo.utils.infinispan.StoreChunkOutputStream;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
@@ -10,7 +12,9 @@ import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.util.Properties;
 
@@ -46,6 +50,17 @@ public class LowLevelCacheStore {
             return new StoreChunkInputStream(low_level_store, key.toString() + DATA_SUFFIX);
         } else {
             return this.store.getInputStream(key);
+        }
+    }
+
+    public void storeValue(BinaryKey key, InputStream stream ) throws BinaryStoreException, IOException {
+        if(this.store instanceof InfinispanBinaryStore) {
+            OutputStream outputStream = new StoreChunkOutputStream(low_level_store, key.toString() + DATA_SUFFIX);
+            IOUtils.copy(stream, outputStream);
+            outputStream.close();
+        } else {
+            // the BinaryStore will calculate a new key for us.
+            this.store.storeValue(stream);
         }
     }
 
