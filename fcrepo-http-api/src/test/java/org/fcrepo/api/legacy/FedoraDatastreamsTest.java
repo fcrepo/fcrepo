@@ -317,6 +317,9 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         	logger.debug("Checksum matched");
         	assertTrue(status.validSize);
         	logger.debug("DS size matched");
+            assertTrue("Didn't find the store identifier!", compile("infinispan",
+                    DOTALL).matcher(status.storeIdentifier).find());
+            logger.debug("cache store matched");
         }
     }
 }
