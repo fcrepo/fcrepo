@@ -50,7 +50,7 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found the repository description:\n" + description);
         assertTrue("Failed to find a proper repo version", compile(
-                "Number Of Objects: ").matcher(
+                "Number Of Objects").matcher(
                 description).find());
     }
 
