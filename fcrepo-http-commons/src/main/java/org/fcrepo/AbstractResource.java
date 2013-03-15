@@ -69,8 +69,6 @@ public abstract class AbstractResource {
         final Session session = repo.login();
         session.getWorkspace().getNamespaceRegistry().registerNamespace("test",
                 "info:fedora/test");
-        Node objects = jcrTools.findOrCreateNode(session, "/objects");
-        objects.setProperty("size", 0L);
         session.save();
         session.logout();
     }
@@ -123,9 +121,15 @@ public abstract class AbstractResource {
      */
     protected void updateRepositorySize(Long change, Session session)
             throws PathNotFoundException, RepositoryException {
+        try {
         logger.debug("updateRepositorySize called with change quantity: " +
                 change);
-        Property sizeProperty = session.getNode("/objects").getProperty("size");
+
+        final Node objectStore = jcrTools.findOrCreateNode(session, "/objects");
+
+
+        Property sizeProperty = objectStore.getProperty("fedora:size");
+
         Long previousSize = sizeProperty.getLong();
         logger.debug("Previous repository size: " + previousSize);
         synchronized (sizeProperty) {
@@ -133,11 +137,27 @@ public abstract class AbstractResource {
             session.save();
         }
         logger.debug("Current repository size: " + sizeProperty.getLong());
+        } catch(RepositoryException e) {
+            logger.warn(e.toString());
+            throw e;
+        }
     }
 
-    protected Long getRepositorySize(Session session)
-            throws ValueFormatException, PathNotFoundException,
-            RepositoryException {
-        return session.getNode("/objects").getProperty("size").getLong();
+    protected Long getRepositorySize(Session session) {
+        try {
+            return session.getNode("/objects").getProperty("fedora:size").getLong();
+        } catch(RepositoryException e) {
+            logger.warn(e.toString());
+            return -1L;
+        }
+    }
+
+    protected Long getRepositoryObjectCount(Session session) {
+        try {
+            return session.getNode("/objects").getNodes().getSize();
+        } catch(RepositoryException e) {
+            logger.warn(e.toString());
+            return -1L;
+        }
     }
 }

@@ -92,3 +92,7 @@
   - fedora:size (LONG) COPY
   - fedora:digest (STRING) COPY
   - fedora:digestAlgorithm (STRING) COPY
+
+
+[fedora:objectStore] mixin
+  - fedora:size (LONG) COPY
