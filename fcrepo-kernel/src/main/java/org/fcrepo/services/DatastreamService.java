@@ -111,4 +111,14 @@ public class DatastreamService {
     public void logoutSession() {
         readOnlySession.logout();
     }
+
+    public void setRepository(Repository repository) {
+            if(readOnlySession != null) {
+                logoutSession();
+            }
+            repo = repository;
+
+            getSession();
+    }
+
 }

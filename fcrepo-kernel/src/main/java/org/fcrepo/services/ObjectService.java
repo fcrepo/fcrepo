@@ -127,4 +127,13 @@ public class ObjectService {
         readOnlySession.logout();
     }
 
+    public void setRepository(Repository repository) {
+        if(readOnlySession != null) {
+            logoutSession();
+        }
+        repo = repository;
+
+        getSession();
+    }
+
 }
