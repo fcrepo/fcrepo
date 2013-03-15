@@ -20,6 +20,7 @@ import javax.jcr.Session;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;

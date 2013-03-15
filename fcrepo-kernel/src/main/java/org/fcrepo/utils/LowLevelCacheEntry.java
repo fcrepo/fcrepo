@@ -17,34 +17,37 @@ import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
-public class LowLevelCacheStore {
+public class LowLevelCacheEntry {
 
     private static final String DATA_SUFFIX = "-data";
     private final BinaryStore store;
     private final CacheStore low_level_store;
+    private final BinaryKey key;
 
-    public LowLevelCacheStore(BinaryStore store, CacheStore low_level_store) {
+    public LowLevelCacheEntry(BinaryStore store, CacheStore low_level_store, BinaryKey key) {
         this.store = store;
         this.low_level_store = low_level_store;
+        this.key = key;
     }
 
-    public LowLevelCacheStore(BinaryStore store) {
+    public LowLevelCacheEntry(BinaryStore store, BinaryKey key) {
         this.store = store;
         this.low_level_store = null;
+        this.key = key;
     }
 
     public boolean equals(final Object other) {
-        if(other instanceof LowLevelCacheStore) {
-            final LowLevelCacheStore that = (LowLevelCacheStore)other;
+        if(other instanceof LowLevelCacheEntry) {
+            final LowLevelCacheEntry that = (LowLevelCacheEntry)other;
 
-            return this.store.equals(that.store) && ((this.low_level_store == null && that.low_level_store == null) || this.low_level_store.equals(that.low_level_store));
+            return this.key.equals(that.key) && this.store.equals(that.store) && ((this.low_level_store == null && that.low_level_store == null) || this.low_level_store.equals(that.low_level_store));
         } else {
             return false;
         }
     }
 
 
-    public InputStream getInputStream(BinaryKey key) throws BinaryStoreException {
+    public InputStream getInputStream() throws BinaryStoreException {
         if(this.store instanceof InfinispanBinaryStore) {
             return new StoreChunkInputStream(low_level_store, key.toString() + DATA_SUFFIX);
         } else {
@@ -52,7 +55,7 @@ public class LowLevelCacheStore {
         }
     }
 
-    public void storeValue(BinaryKey key, InputStream stream ) throws BinaryStoreException, IOException {
+    public void storeValue(InputStream stream ) throws BinaryStoreException, IOException {
         if(this.store instanceof InfinispanBinaryStore) {
             OutputStream outputStream = new StoreChunkOutputStream(low_level_store, key.toString() + DATA_SUFFIX);
             IOUtils.copy(stream, outputStream);

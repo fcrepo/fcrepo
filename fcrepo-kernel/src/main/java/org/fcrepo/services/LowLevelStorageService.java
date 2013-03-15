@@ -26,7 +26,7 @@ import javax.jcr.Session;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityInputStream;
 import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.LowLevelCacheStore;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -57,7 +57,7 @@ public class LowLevelStorageService {
      */
     private static Session readOnlySession;
 
-    private static List<LowLevelCacheStore> cacheStores;
+    private static List<LowLevelCacheEntry> cacheStores;
 
     private static JcrRepository getRepositoryInstance() {
         return (JcrRepository) readOnlySession.getRepository();
@@ -69,9 +69,9 @@ public class LowLevelStorageService {
 
         return transformBinaryBlobs(
                 resource,
-                new Maps.EntryTransformer<LowLevelCacheStore, InputStream, FixityResult>() {
+                new Maps.EntryTransformer<LowLevelCacheEntry, InputStream, FixityResult>() {
 
-                    public FixityResult transformEntry(LowLevelCacheStore store,
+                    public FixityResult transformEntry(LowLevelCacheEntry store,
                                                        InputStream is) {
                         logger.debug("Checking fixity for resource in cache store " + store.toString());
                         FixityResult result = null;
@@ -91,6 +91,8 @@ public class LowLevelStorageService {
                                             .digest());
                             result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest);
                             result.computedSize = ds.getByteCount();
+
+                            logger.debug("Got " + result.toString());
                             ds.close();
 
                         } catch (CloneNotSupportedException e) {
@@ -108,10 +110,10 @@ public class LowLevelStorageService {
 
     public static
             <T>
-            Map<LowLevelCacheStore, T>
+            Map<LowLevelCacheEntry, T>
             transformBinaryBlobs(
                     final Node resource,
-                    final Maps.EntryTransformer<LowLevelCacheStore, InputStream, T> transform)
+                    final Maps.EntryTransformer<LowLevelCacheEntry, InputStream, T> transform)
                     throws RepositoryException {
         return transformEntries(getBinaryBlobs(resource), transform);
     }
@@ -122,7 +124,7 @@ public class LowLevelStorageService {
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public static Map<LowLevelCacheStore, InputStream> getBinaryBlobs(
+    public static Map<LowLevelCacheEntry, InputStream> getBinaryBlobs(
             final Node resource) throws RepositoryException {
 
         final BinaryValue v =
@@ -138,13 +140,13 @@ public class LowLevelStorageService {
      * @param key a Modeshape BinaryValue's key.
      * @return a map of binary stores and input streams
      */
-    public static Map<LowLevelCacheStore, InputStream> getBinaryBlobs(BinaryKey key) {
+    public static Map<LowLevelCacheEntry, InputStream> getBinaryBlobs(BinaryKey key) {
 
-        ImmutableMap.Builder<LowLevelCacheStore, InputStream> blobs = builder();
+        ImmutableMap.Builder<LowLevelCacheEntry, InputStream> blobs = builder();
 
-        for (LowLevelCacheStore c : getLowLevelCacheStores()) {
+        for (LowLevelCacheEntry c : getLowLevelCacheStores(key)) {
             try {
-                final InputStream is = c.getInputStream(key);
+                final InputStream is = c.getInputStream();
                 blobs.put(c, is);
             } catch (BinaryStoreException e) {
                 //we didn't find anything.
@@ -173,13 +175,13 @@ public class LowLevelStorageService {
      *
      * @return a list of "BinaryCacheStore", an abstraction over a plain BinaryStore or a specific Infinispan Cache
      */
-    private static List<LowLevelCacheStore> getLowLevelCacheStores() {
+    private static List<LowLevelCacheEntry> getLowLevelCacheStores(BinaryKey key) {
         //TODO I'm assuming the list of stores doesn't change.. probably not a safe assumption      
         if (cacheStores != null) {
             return cacheStores;
         }
 
-        List<LowLevelCacheStore> stores = new ArrayList<LowLevelCacheStore>();
+        List<LowLevelCacheEntry> stores = new ArrayList<LowLevelCacheEntry>();
 
         BinaryStore store = getBinaryStore();
 
@@ -207,15 +209,15 @@ public class LowLevelStorageService {
                             (ChainingCacheStore) cacheStore;
                     // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
                     for (CacheStore s : chainingCacheStore.getStores().keySet()) {
-                        stores.add(new LowLevelCacheStore(store, s));
+                        stores.add(new LowLevelCacheEntry(store, s, key));
                     }
                 } else {
                     // just a nice, simple infinispan cache.
-                    stores.add(new LowLevelCacheStore(store, cacheStore));
+                    stores.add(new LowLevelCacheEntry(store, cacheStore, key));
                 }
             }
         } else {
-            stores.add(new LowLevelCacheStore(store));
+            stores.add(new LowLevelCacheEntry(store, key));
         }
 
         cacheStores = stores;

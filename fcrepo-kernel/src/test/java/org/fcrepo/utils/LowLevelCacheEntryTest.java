@@ -27,7 +27,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class LowLevelCacheStoreTest {
+public class LowLevelCacheEntryTest {
 
     @Inject
     Repository repo;
@@ -37,7 +37,7 @@ public class LowLevelCacheStoreTest {
         BinaryStore store = ((JcrRepository)repo).getConfiguration()
                 .getBinaryStorage().getBinaryStore();
 
-        LowLevelCacheStore cs = new LowLevelCacheStore(store);
+        LowLevelCacheEntry cs = new LowLevelCacheEntry(store, new BinaryKey("asd"));
         assertEquals("org.modeshape.jcr.value.binary.TransientBinaryStore", cs.getExternalIdentifier().split("@")[0]);
     }
 
@@ -47,8 +47,8 @@ public class LowLevelCacheStoreTest {
         BinaryStore store = ((JcrRepository)repo).getConfiguration()
                 .getBinaryStorage().getBinaryStore();
 
-        LowLevelCacheStore cs1 = new LowLevelCacheStore(store);
-        LowLevelCacheStore cs2 = new LowLevelCacheStore(store);
+        LowLevelCacheEntry cs1 = new LowLevelCacheEntry(store, new BinaryKey("asd"));
+        LowLevelCacheEntry cs2 = new LowLevelCacheEntry(store, new BinaryKey("asd"));
 
         assertEquals(cs1, cs2);
     }
@@ -64,8 +64,8 @@ public class LowLevelCacheStoreTest {
                 .getComponent(CacheLoaderManager.class)
                 .getCacheStore();
 
-        LowLevelCacheStore cs1 = new LowLevelCacheStore(store, ispn);
-        LowLevelCacheStore cs2 = new LowLevelCacheStore(store, ispn);
+        LowLevelCacheEntry cs1 = new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+        LowLevelCacheEntry cs2 = new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
 
         assertEquals(cs1,  cs2);
 
@@ -80,7 +80,7 @@ public class LowLevelCacheStoreTest {
         CacheStore ispn = cm.getCache("FedoraRepository").getAdvancedCache().getComponentRegistry()
                 .getComponent(CacheLoaderManager.class)
                 .getCacheStore();
-        LowLevelCacheStore cs = new LowLevelCacheStore(store, ispn);
+        LowLevelCacheEntry cs = new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
         assertEquals("org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore:org.infinispan.loaders.file.FileCacheStore:target/FedoraRepository/storage", cs.getExternalIdentifier());
     }
 
@@ -103,17 +103,17 @@ public class LowLevelCacheStoreTest {
         final LinkedHashMap<CacheStore,CacheStoreConfiguration> stores = chained_store.getStores();
 
 
-        LowLevelCacheStore cs = new LowLevelCacheStore(store, (CacheStore)stores.keySet().toArray()[0]);
-        LowLevelCacheStore cs2 = new LowLevelCacheStore(store, (CacheStore)stores.keySet().toArray()[1]);
+        LowLevelCacheEntry cs = new LowLevelCacheEntry(store, (CacheStore)stores.keySet().toArray()[0], key);
+        LowLevelCacheEntry cs2 = new LowLevelCacheEntry(store, (CacheStore)stores.keySet().toArray()[1], key);
 
-        cs.storeValue(key, new ByteArrayInputStream("123456".getBytes()));
+        cs.storeValue(new ByteArrayInputStream("123456".getBytes()));
 
-        cs2.storeValue(key, new ByteArrayInputStream("asdfg".getBytes()));
+        cs2.storeValue(new ByteArrayInputStream("asdfg".getBytes()));
 
         Thread.sleep(1000);
 
-        String v1 = IOUtils.toString(cs.getInputStream(key));
-        String v2 = IOUtils.toString(cs2.getInputStream(key));
+        String v1 = IOUtils.toString(cs.getInputStream());
+        String v2 = IOUtils.toString(cs2.getInputStream());
 
         assertEquals("Found the wrong value in our cache store", "123456", v1);
         assertEquals("Found the wrong value in our cache store", "asdfg", v2);

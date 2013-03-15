@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -71,7 +70,7 @@ import org.fcrepo.jaxb.responses.management.FixityStatus;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.LowLevelCacheStore;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -520,7 +519,6 @@ public class FedoraDatastreams extends AbstractResource {
         	blob.dsChecksumType = ds.getContentDigestType();
         	blob.dsChecksum = dsChecksum;
         	blob.dsSize = dsSize;
-
 
 
 //            status.storeIdentifier = blob.storeIdentifier;
