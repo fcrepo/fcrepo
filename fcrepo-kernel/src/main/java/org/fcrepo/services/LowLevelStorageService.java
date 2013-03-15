@@ -71,9 +71,9 @@ public class LowLevelStorageService {
                 resource,
                 new Maps.EntryTransformer<LowLevelCacheEntry, InputStream, FixityResult>() {
 
-                    public FixityResult transformEntry(LowLevelCacheEntry store,
+                    public FixityResult transformEntry(LowLevelCacheEntry entry,
                                                        InputStream is) {
-                        logger.debug("Checking fixity for resource in cache store " + store.toString());
+                        logger.debug("Checking fixity for resource in cache store " + entry.toString());
                         FixityResult result = null;
                         FixityInputStream ds = null;
                         try {
@@ -81,8 +81,8 @@ public class LowLevelStorageService {
                                     new FixityInputStream(is,
                                             (MessageDigest) digest.clone());
 
-                            result = new FixityResult();
-                            result.storeIdentifier = store.getExternalIdentifier();
+                            result = new FixityResult(entry);
+                            result.storeIdentifier = entry.getExternalIdentifier();
                             //result.
                             while (ds.read() != -1) ;
 

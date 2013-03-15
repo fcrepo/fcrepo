@@ -1,6 +1,6 @@
 {
-    "name" : "repo",
-    "jndiName" : "",
+    "name" : "self-healing-repo",
+    "jndiName" : "asdfg",
     "workspaces" : {
         "predefined" : ["fedora"],
         "default" : "fedora",

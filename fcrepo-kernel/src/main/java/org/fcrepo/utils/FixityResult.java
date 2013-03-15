@@ -31,11 +31,25 @@ public class FixityResult {
 	
 	@XmlElement
 	public boolean validSize;
-    public FixityResult() {
 
+    private final LowLevelCacheEntry entry;
+
+    public FixityResult() {
+        this.entry = null;
+    }
+
+    public FixityResult(LowLevelCacheEntry entry) {
+        this.entry = entry;
     }
 
     public FixityResult(long size, URI checksum) {
+        this.entry = null;
+        this.computedSize = size;
+        this.computedChecksum = checksum;
+    }
+
+    public FixityResult(LowLevelCacheEntry entry, long size, URI checksum) {
+        this.entry = entry;
         this.computedSize = size;
         this.computedChecksum = checksum;
     }
@@ -54,5 +68,9 @@ public class FixityResult {
 
     public String toString() {
         return "Fixity: checksum: " + computedChecksum.toString() + " / " + Long.toString(computedSize);
+    }
+
+    public LowLevelCacheEntry getEntry() {
+        return entry;
     }
 }

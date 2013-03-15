@@ -2,7 +2,7 @@
 package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
-import static com.google.common.collect.Maps.filterEntries;
+import static com.google.common.collect.Collections2.filter;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
@@ -17,7 +17,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -28,8 +28,8 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
@@ -171,17 +171,17 @@ public class Datastream extends JcrTools {
 
     public void runFixityAndFixProblems() throws RepositoryException {
         try {
-            final Map<LowLevelCacheEntry,FixityResult> fixityResultMap = ImmutableMap.copyOf(LowLevelStorageService.getFixity(node, MessageDigest.getInstance(getContentDigestType())));
+            final Set<FixityResult> fixityResults = ImmutableSet.copyOf(LowLevelStorageService.getFixity(node, MessageDigest.getInstance(getContentDigestType())));
 
-            Map<LowLevelCacheEntry, FixityResult> goodEntries = ImmutableMap.copyOf(filterEntries(fixityResultMap, new Predicate<Map.Entry<LowLevelCacheEntry, FixityResult>>() {
+            Set< FixityResult> goodEntries = ImmutableSet.copyOf(filter(fixityResults, new Predicate<FixityResult>() {
 
                 @Override
-                public boolean apply(Map.Entry<LowLevelCacheEntry, FixityResult> entry) {
+                public boolean apply(FixityResult result) {
 
                     try {
                         final URI digest = getContentDigest();
                         final long size = getContentSize();
-                        return entry.getValue().computedChecksum.equals(digest) && entry.getValue().computedSize == size;
+                        return result.computedChecksum.equals(digest) && result.computedSize == size;
                     } catch (RepositoryException e) {
                         return false;
                     }
@@ -192,18 +192,18 @@ public class Datastream extends JcrTools {
 
             assert goodEntries.size() > 0;
 
-            Iterator<LowLevelCacheEntry> it = goodEntries.keySet().iterator();
+            Iterator<FixityResult> it = goodEntries.iterator();
 
 
-            LowLevelCacheEntry anyGoodCacheStore = it.next();
+            LowLevelCacheEntry anyGoodCacheEntry = it.next().getEntry();
 
 
-            Map<LowLevelCacheEntry, FixityResult> badEntries = Maps.difference(fixityResultMap, goodEntries).entriesOnlyOnLeft();
+            Set<FixityResult> badEntries = Sets.difference(fixityResults, goodEntries);
 
-            for(LowLevelCacheEntry store : badEntries.keySet()) {
+            for(FixityResult result : badEntries) {
 
                 try {
-                    store.storeValue(anyGoodCacheStore.getInputStream());
+                    result.getEntry().storeValue(anyGoodCacheEntry.getInputStream());
                 } catch (IOException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
