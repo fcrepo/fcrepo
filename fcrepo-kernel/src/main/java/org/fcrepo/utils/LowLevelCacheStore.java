@@ -38,7 +38,7 @@ public class LowLevelCacheStore {
         if(other instanceof LowLevelCacheStore) {
             final LowLevelCacheStore that = (LowLevelCacheStore)other;
 
-            return this.store.equals(that.store) && this.low_level_store.equals(that.low_level_store);
+            return this.store.equals(that.store) && ((this.low_level_store == null && that.low_level_store == null) || this.low_level_store.equals(that.low_level_store));
         } else {
             return false;
         }

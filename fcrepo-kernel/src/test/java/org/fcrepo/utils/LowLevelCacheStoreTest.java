@@ -45,6 +45,36 @@ public class LowLevelCacheStoreTest {
     }
 
     @Test
+    public void testEquals() throws Exception {
+
+        BinaryStore store = ((JcrRepository)repo).getConfiguration()
+                .getBinaryStorage().getBinaryStore();
+
+        LowLevelCacheStore cs1 = new LowLevelCacheStore(store);
+        LowLevelCacheStore cs2 = new LowLevelCacheStore(store);
+
+        assertEquals(cs1, cs2);
+    }
+
+
+    @Test
+    public void testEqualsIspn() throws Exception {
+
+        EmbeddedCacheManager cm = new DefaultCacheManager("test_infinispan_configuration.xml");
+        BinaryStore store = new InfinispanBinaryStore(cm, false, "FedoraRepository", "FedoraRepository");
+
+        CacheStore ispn = cm.getCache("FedoraRepository").getAdvancedCache().getComponentRegistry()
+                .getComponent(CacheLoaderManager.class)
+                .getCacheStore();
+
+        LowLevelCacheStore cs1 = new LowLevelCacheStore(store, ispn);
+        LowLevelCacheStore cs2 = new LowLevelCacheStore(store, ispn);
+
+        assertEquals(cs1,  cs2);
+
+    }
+
+    @Test
     public void testGetExternalIdentifierWithInfinispan() throws Exception {
 
         EmbeddedCacheManager cm = new DefaultCacheManager("test_infinispan_configuration.xml");
