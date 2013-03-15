@@ -1,5 +1,5 @@
 
-package org.fcrepo.api.legacy;
+package org.fcrepo.api;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.api.AbstractResourceTest;
 import org.junit.Test;
 
 public class FedoraRepositoryTest extends AbstractResourceTest {
@@ -50,7 +51,7 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found the repository description:\n" + description);
         assertTrue("Failed to find a proper repo version", compile(
-                "Number Of Objects").matcher(
+                "Number Of Objects: ").matcher(
                 description).find());
     }
 

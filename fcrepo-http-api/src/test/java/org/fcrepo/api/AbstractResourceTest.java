@@ -1,5 +1,5 @@
 
-package org.fcrepo.api.legacy;
+package org.fcrepo.api;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

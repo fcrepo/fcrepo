@@ -4,7 +4,6 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
-import org.fcrepo.api.legacy.AbstractResourceTest;
 import org.junit.Test;
 
 import java.util.ArrayList;
