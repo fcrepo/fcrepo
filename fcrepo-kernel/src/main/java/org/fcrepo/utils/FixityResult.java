@@ -7,6 +7,15 @@ public class FixityResult {
 
     public URI computedChecksum;
 
+    public FixityResult() {
+
+    }
+
+    public FixityResult(long size, URI checksum) {
+        this.computedSize = size;
+        this.computedChecksum = checksum;
+    }
+
     public boolean equals(Object obj) {
 
         boolean result = false;
