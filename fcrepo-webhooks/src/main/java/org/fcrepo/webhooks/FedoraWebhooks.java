@@ -1,19 +1,12 @@
 package org.fcrepo.webhooks;
 
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.fcrepo.AbstractResource;
-import org.fcrepo.messaging.legacy.LegacyMethod;
-import org.fcrepo.observer.FedoraEvent;
-import org.fcrepo.utils.FedoraTypesUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -24,21 +17,26 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.observation.Event;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.concurrent.TimeUnit;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.fcrepo.AbstractResource;
+import org.fcrepo.messaging.legacy.LegacyMethod;
+import org.fcrepo.observer.FedoraEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.ok;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 @Path("/webhooks")
 public class FedoraWebhooks extends AbstractResource {
