@@ -2,6 +2,7 @@
 package org.fcrepo.services;
 
 import static org.fcrepo.services.ObjectService.getObjectNode;
+import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
@@ -87,6 +88,14 @@ public class DatastreamService {
     public static Datastream getDatastream(final String pid, final String dsId)
             throws RepositoryException {
         return new Datastream(getDatastreamNode(pid, dsId));
+    }
+    
+    public static void purgeDatastream(final Session session,
+    		final String pid, 
+    		final String dsId) throws RepositoryException {
+    	final String dsPath = getDatastreamJcrNodePath(pid, dsId);
+		final Node obj = session.getNode(dsPath);
+		obj.remove();
     }
 
     @PostConstruct
