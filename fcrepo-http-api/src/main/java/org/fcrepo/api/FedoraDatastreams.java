@@ -66,7 +66,6 @@ import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.jaxb.responses.management.FixityStatus;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheStore;
 import org.modeshape.jcr.api.Binary;
@@ -471,7 +470,6 @@ public class FedoraDatastreams extends AbstractResource {
         //get properties for comparison
         URI dsChecksum = ds.getContentDigest();
         long dsSize = ds.getContentSize();
-        String dsChecksumStr = ContentDigest.asChecksumString(dsChecksum);
 
         DatastreamFixity dsf = new DatastreamFixity();
     	MessageDigest digest = null;
