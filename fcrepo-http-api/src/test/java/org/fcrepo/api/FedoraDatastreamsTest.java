@@ -323,4 +323,29 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
             logger.debug("cache store matched");
         }
     }
+    
+    @Test
+    public void testBatchDeleteDatastream() throws Exception {
+    	client.execute(postObjMethod("FedoraDatastreamsTest11"));
+    	final HttpPost method1 =
+                postDSMethod("FedoraDatastreamsTest11", "ds1", "foo1");
+        assertEquals(201, getStatus(method1));
+        final HttpPost method2 =
+                postDSMethod("FedoraDatastreamsTest11", "ds2", "foo2");
+        assertEquals(201, getStatus(method2));
+        
+        final HttpDelete dmethod =
+                new HttpDelete(serverAddress +
+                        "objects/FedoraDatastreamsTest11/datastreams?dsid=ds1&dsid=ds2");
+        assertEquals(204, getStatus(dmethod));
+
+        final HttpGet method_test_get1 =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest11/datastreams/ds1");
+        assertEquals(404, getStatus(method_test_get1));
+        final HttpGet method_test_get2 =
+                new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest11/datastreams/ds2");
+        assertEquals(404, getStatus(method_test_get2));
+    }
 }
