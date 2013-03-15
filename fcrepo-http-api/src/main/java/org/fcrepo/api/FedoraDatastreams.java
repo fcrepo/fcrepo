@@ -25,6 +25,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -509,33 +510,32 @@ public class FedoraDatastreams extends AbstractResource {
 			throw new RepositoryException(e.getMessage(),e);
 		}
 
-        Map<LowLevelCacheStore, FixityResult> blobs = getFixity(node, digest);
-        dsf.statuses = new ArrayList<FixityStatus>(blobs.size());
+        Collection<FixityResult> blobs = getFixity(node, digest);
+        dsf.statuses = new ArrayList<FixityResult>(blobs.size());
 
-        for (LowLevelCacheStore key: blobs.keySet()){
-        	FixityStatus status = new FixityStatus();
-        	status.validChecksum = false;
-        	status.validSize = false;
-        	status.dsChecksumType = ds.getContentDigestType();
-        	status.dsChecksum = dsChecksum;
-        	status.dsSize = dsSize;
-
-            FixityResult result = blobs.get(key);
+        for (FixityResult blob: blobs){
+        	//FixityStatus status = new FixityStatus();
+        	blob.validChecksum = false;
+        	blob.validSize = false;
+        	blob.dsChecksumType = ds.getContentDigestType();
+        	blob.dsChecksum = dsChecksum;
+        	blob.dsSize = dsSize;
 
 
-            status.storeIdentifier = key.getExternalIdentifier();
-        	status.computedSize = result.computedSize;
-        	status.computedChecksum = result.computedChecksum;
-            logger.debug("Computed checksum: " + result.computedChecksum);
-            logger.debug("Computed size is " + result.computedSize);
 
-            if (result.computedChecksum.equals(dsChecksum)) {
-            	status.validChecksum = true;
+//            status.storeIdentifier = blob.storeIdentifier;
+//        	status.computedSize = blob.computedSize;
+//        	status.computedChecksum = blob.computedChecksum;
+            logger.debug("Computed checksum: {}", blob.computedChecksum);
+            logger.debug("Computed size is ", blob.computedSize);
+
+            if (blob.computedChecksum.equals(dsChecksum)) {
+            	blob.validChecksum = true;
             }
-            if (result.computedSize == dsSize) {
-            	status.validSize = true;
+            if (blob.computedSize == dsSize) {
+            	blob.validSize = true;
             }
-            dsf.statuses.add(status);
+            dsf.statuses.add(blob);
         }
         return dsf;
     }

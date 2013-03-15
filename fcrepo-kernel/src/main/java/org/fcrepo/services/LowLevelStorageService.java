@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +63,7 @@ public class LowLevelStorageService {
         return (JcrRepository) readOnlySession.getRepository();
     }
 
-    public static Map<LowLevelCacheStore, FixityResult> getFixity(
+    public static Collection<FixityResult> getFixity(
             final Node resource, final MessageDigest digest) throws RepositoryException {
         logger.debug("Checking resource: " + resource.getPath());
 
@@ -81,12 +82,13 @@ public class LowLevelStorageService {
                                             (MessageDigest) digest.clone());
 
                             result = new FixityResult();
+                            result.storeIdentifier = store.getExternalIdentifier();
+                            //result.
                             while (ds.read() != -1) ;
 
                             String calculatedDigest =
                                     encodeHexString(ds.getMessageDigest()
                                             .digest());
-
                             result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest);
                             result.computedSize = ds.getByteCount();
                             ds.close();
@@ -101,7 +103,7 @@ public class LowLevelStorageService {
                         return result;
                     }
 
-                });
+                }).values();
     }
 
     public static

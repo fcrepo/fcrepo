@@ -26,6 +26,7 @@ import org.apache.http.util.EntityUtils;
 import org.fcrepo.api.AbstractResourceTest;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.FixityStatus;
+import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
 
 public class FedoraDatastreamsTest extends AbstractResourceTest {
@@ -321,7 +322,7 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         DatastreamFixity fixity = 
         		(DatastreamFixity) um.unmarshal(new java.io.StringReader(content));
         int cache = 0;
-        for (FixityStatus status:fixity.statuses){
+        for (FixityResult status:fixity.statuses){
         	logger.debug("Verifying cache {} :", cache++);
         	assertTrue(status.validChecksum);
         	logger.debug("Checksum matched");

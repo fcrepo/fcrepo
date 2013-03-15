@@ -10,8 +10,8 @@ import static org.junit.Assert.assertNotEquals;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -20,7 +20,6 @@ import javax.jcr.Session;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.LowLevelCacheStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -48,11 +47,11 @@ public class LowLevelStorageServiceTest {
 
         final Datastream ds = getDatastream("testObject", "testRepositoryContent");
 
-        final Map<LowLevelCacheStore,FixityResult> fixityResultMap = LowLevelStorageService.getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"));
+        final Collection<FixityResult> fixityResults = LowLevelStorageService.getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"));
 
-        assertNotEquals(0, fixityResultMap.size());
+        assertNotEquals(0, fixityResults.size());
 
-        for (FixityResult fixityResult : fixityResultMap.values()) {
+        for (FixityResult fixityResult : fixityResults) {
             assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", fixityResult.computedChecksum.toString());
         }
     }
