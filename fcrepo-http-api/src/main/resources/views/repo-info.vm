@@ -1,6 +1,23 @@
 #include("views/common/header.vm")
-<h1>${repo.repositoryVersion}</h1>
-<p>Number Of Objects: ${repo.numberOfObjects}</p>
-<p>Repository Size: ${repo.repositorySize}</p>
-<p>Sample OAI URL: ${repo.sampleOAIURL}</p>
+<center>
+	<h1>Repository Info</h1>
+	<table width="600" border="1" cellpadding="5" cellspacing="5" bgcolor="silver">
+		<tr>
+			<td align="right">Repository Name</td>
+			<td>${repo.repositoryVersion}</td>
+		</tr>
+		<tr>
+			<td align="right">Number Of Objects</td>
+			<td>${repo.numberOfObjects}</td>
+		</tr>
+		<tr>
+			<td align="right">Repository Size</td>
+			<td>${repo.repositorySize}</td>
+		</tr>
+		<tr>
+			<td align="right">Sample OAI URL</td>
+			<td>${repo.sampleOAIURL}</td>
+		</tr>
+	</table>
+</center>
 #include("views/common/footer.vm")
