@@ -2,6 +2,7 @@
 package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
+import static com.google.common.collect.Maps.filterEntries;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
@@ -9,9 +10,14 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -21,8 +27,14 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
+import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -155,6 +167,53 @@ public class Datastream extends JcrTools {
     public String getContentDigestType() throws RepositoryException {
         return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
                 .getString();
+    }
+
+    public void runFixityAndFixProblems() throws RepositoryException {
+        try {
+            final Map<LowLevelCacheEntry,FixityResult> fixityResultMap = ImmutableMap.copyOf(LowLevelStorageService.getFixity(node, MessageDigest.getInstance(getContentDigestType())));
+
+            Map<LowLevelCacheEntry, FixityResult> goodEntries = ImmutableMap.copyOf(filterEntries(fixityResultMap, new Predicate<Map.Entry<LowLevelCacheEntry, FixityResult>>() {
+
+                @Override
+                public boolean apply(Map.Entry<LowLevelCacheEntry, FixityResult> entry) {
+
+                    try {
+                        final URI digest = getContentDigest();
+                        final long size = getContentSize();
+                        return entry.getValue().computedChecksum.equals(digest) && entry.getValue().computedSize == size;
+                    } catch (RepositoryException e) {
+                        return false;
+                    }
+                }
+
+                ;
+            }));
+
+            assert goodEntries.size() > 0;
+
+            Iterator<LowLevelCacheEntry> it = goodEntries.keySet().iterator();
+
+
+            LowLevelCacheEntry anyGoodCacheStore = it.next();
+
+
+            Map<LowLevelCacheEntry, FixityResult> badEntries = Maps.difference(fixityResultMap, goodEntries).entriesOnlyOnLeft();
+
+            for(LowLevelCacheEntry store : badEntries.keySet()) {
+
+                try {
+                    store.storeValue(anyGoodCacheStore.getInputStream());
+                } catch (IOException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+
+
+        } catch (NoSuchAlgorithmException e) {
+
+        }
+
     }
 
     /**
