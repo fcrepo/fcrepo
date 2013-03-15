@@ -7,9 +7,11 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static org.fcrepo.api.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
+import static org.fcrepo.services.DatastreamService.purgeDatastream;
 import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -152,6 +155,25 @@ public class FedoraDatastreams extends AbstractResource {
         }
 
         return created(uriInfo.getAbsolutePath()).build();
+    }
+    
+    @DELETE
+    @Path("/")
+    public Response deleteDatastreams(@PathParam("pid")
+    final String pid, @QueryParam("dsid") 
+    final List<String> dsidList) throws RepositoryException {
+    	final Session session = repo.login();
+        try {
+        	for (String dsid : dsidList) {
+        		purgeDatastream(session, pid, dsid);
+        		logger.debug("purged datastream " + dsid);
+        	}
+        	session.save();
+        } finally {
+            session.logout();
+        }
+        
+    	return noContent().build();
     }
 
     @GET
