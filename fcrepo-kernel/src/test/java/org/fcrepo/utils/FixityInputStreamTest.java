@@ -1,15 +1,14 @@
 package org.fcrepo.utils;
 
-import org.apache.commons.codec.binary.Hex;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static junit.framework.Assert.assertEquals;
+import org.apache.commons.codec.binary.Hex;
+import org.junit.Test;
 
 public class FixityInputStreamTest {
 
