@@ -22,13 +22,4 @@ public class ContentDigest {
             return null;
         }
     }
-    
-    public static String asChecksumString(URI uri) {
-    	if(uri != null) {
-    		String checksumUri = uri.toString();
-    		return checksumUri.substring(checksumUri.lastIndexOf(":") + 1);
-    	} else {
-    		return null;
-    	}
-    }
 }
