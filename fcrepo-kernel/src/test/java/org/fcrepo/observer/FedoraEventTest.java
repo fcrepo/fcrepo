@@ -1,13 +1,15 @@
 package org.fcrepo.observer;
 
-import com.google.common.collect.ImmutableMap;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
-import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 public class FedoraEventTest {
 
@@ -111,7 +113,7 @@ public class FedoraEventTest {
         }
 
         @Override
-        public Map getInfo() throws RepositoryException {
+        public Map<String, String> getInfo() throws RepositoryException {
             return info;
         }
 

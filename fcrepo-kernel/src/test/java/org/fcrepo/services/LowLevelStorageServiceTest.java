@@ -1,14 +1,15 @@
 package org.fcrepo.services;
 
-import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
+import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -24,11 +25,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.security.MessageDigest;
-
-import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
-import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})

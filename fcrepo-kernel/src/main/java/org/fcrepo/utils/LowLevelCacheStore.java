@@ -1,5 +1,10 @@
 package org.fcrepo.utils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Properties;
+
 import org.apache.poi.util.IOUtils;
 import org.fcrepo.utils.infinispan.StoreChunkInputStream;
 import org.fcrepo.utils.infinispan.StoreChunkOutputStream;
@@ -11,12 +16,6 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.Properties;
 
 public class LowLevelCacheStore {
 

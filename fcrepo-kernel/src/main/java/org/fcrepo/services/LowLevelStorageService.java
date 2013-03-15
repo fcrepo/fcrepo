@@ -22,8 +22,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityInputStream;
 import org.fcrepo.utils.FixityResult;
@@ -42,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 public class LowLevelStorageService {
 

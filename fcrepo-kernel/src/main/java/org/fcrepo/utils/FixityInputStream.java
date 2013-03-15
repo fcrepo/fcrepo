@@ -1,12 +1,10 @@
 package org.fcrepo.utils;
 
-import org.apache.commons.io.input.CountingInputStream;
-import org.apache.commons.io.input.ProxyInputStream;
-
-import java.io.FilterInputStream;
 import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+
+import org.apache.commons.io.input.CountingInputStream;
 
 public class FixityInputStream extends CountingInputStream {
 

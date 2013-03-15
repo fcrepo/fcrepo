@@ -1,31 +1,28 @@
 package org.fcrepo.utils;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.util.LinkedHashMap;
+
+import javax.inject.Inject;
+import javax.jcr.Repository;
+
 import org.apache.commons.io.IOUtils;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.BinaryKey;
-import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.inject.Inject;
-import javax.jcr.Repository;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.LinkedHashMap;
-
-import static org.junit.Assert.assertEquals;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
