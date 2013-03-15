@@ -51,4 +51,8 @@ public class FixityResult {
 
         return result;
     }
+
+    public String toString() {
+        return "Fixity: checksum: " + computedChecksum.toString() + " / " + Long.toString(computedSize);
+    }
 }
