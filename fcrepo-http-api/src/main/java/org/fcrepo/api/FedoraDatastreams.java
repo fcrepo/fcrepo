@@ -119,8 +119,9 @@ public class FedoraDatastreams extends AbstractResource {
 
     @POST
     @Path("/")
-    public Response addDatastreams(@PathParam("pid")
-    final String pid, final List<Attachment> attachmentList)
+    public Response modifyDatastreams(@PathParam("pid")
+    final String pid,  @QueryParam("delete")
+    final List<String> dsidList, final List<Attachment> attachmentList)
             throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = repo.login();
@@ -128,9 +129,15 @@ public class FedoraDatastreams extends AbstractResource {
             Long oldObjectSize =
                     getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
 
+            for (String dsid : dsidList) {
+                logger.debug("purging datastream " + dsid);
+                purgeDatastream(session, pid, dsid);
+            }
+
             for (final Attachment a : attachmentList) {
                 final String dsid =
                         a.getContentDisposition().getParameter("name");
+                logger.debug("adding datastream " + dsid);
                 final String dsPath = getDatastreamJcrNodePath(pid, dsid);
                 createDatastreamNode(session, dsPath, a.getDataHandler()
                         .getContentType(), a.getDataHandler().getInputStream());
@@ -163,8 +170,8 @@ public class FedoraDatastreams extends AbstractResource {
     	final Session session = repo.login();
         try {
         	for (String dsid : dsidList) {
+                logger.debug("purging datastream " + dsid);
         		purgeDatastream(session, pid, dsid);
-        		logger.debug("purged datastream " + dsid);
         	}
         	session.save();
         } finally {

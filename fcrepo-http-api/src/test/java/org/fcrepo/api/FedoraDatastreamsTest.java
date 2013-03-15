@@ -195,11 +195,18 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
 
 
     @Test
-    public void testAddMultipleDatastreams() throws Exception {
+    public void testModifyMultipleDatastreams() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest8");
+
         assertEquals(201, getStatus(objMethod));
+
+        final HttpPost createDSVOIDMethod =
+                postDSMethod("FedoraDatastreamsTest8", "ds_void",
+                        "marbles for everyone");
+        assertEquals(201, getStatus(createDSVOIDMethod));
+
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest8/datastreams/");
+                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest8/datastreams?delete=ds_void");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -223,6 +230,8 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         assertTrue("Didn't find the second datastream!", compile(
                 "dsid=\"ds2\"", DOTALL).matcher(content).find());
 
+        assertFalse("Found the deleted datastream!", compile(
+                "dsid=\"ds_void\"", DOTALL).matcher(content).find());
 
 
     }
