@@ -69,7 +69,6 @@ import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheStore;
-import org.modeshape.common.util.StringUtil;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

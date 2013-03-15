@@ -3,7 +3,6 @@ package org.fcrepo.api;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
-import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -13,7 +12,6 @@ import java.util.regex.Matcher;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.api.AbstractResourceTest;
 import org.junit.Test;
 
 public class FedoraRepositoryTest extends AbstractResourceTest {
