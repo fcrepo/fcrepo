@@ -75,7 +75,7 @@ public class DatastreamService {
     }
 
     public static Node getDatastreamNode(final String pid, final String dsId)
-            throws PathNotFoundException, RepositoryException {
+            throws RepositoryException {
         logger.trace("Executing getDatastreamNode() with pid: " + pid +
                 " and dsId: " + dsId);
         final Node objNode = getObjectNode(pid);
@@ -86,8 +86,8 @@ public class DatastreamService {
     }
 
     public static Datastream getDatastream(final String pid, final String dsId)
-            throws PathNotFoundException, RepositoryException {
-        return new Datastream(getObjectNode(pid).getNode(dsId));
+            throws RepositoryException {
+        return new Datastream(getDatastreamNode(pid, dsId));
     }
 
     @PostConstruct
