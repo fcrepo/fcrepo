@@ -49,6 +49,7 @@ public class ModeShapeRepositoryFactoryBean implements
         }
 
         s.save();
+        s.logout();
     }
 
     @Override
