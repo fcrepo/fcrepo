@@ -45,13 +45,13 @@ public class FedoraRepositoryTest extends AbstractResourceTest {
     @Test
     public void testDescribeHtml() throws Exception {
         final HttpGet method = new HttpGet(serverAddress + "describe");
-        method.addHeader("Accept", TEXT_HTML_TYPE.toString());
+        method.addHeader("Accept", "text/html");
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found the repository description:\n" + description);
         assertTrue("Failed to find a proper repo version", compile(
-                "Number Of Objects: ").matcher(
+                "Number Of Objects").matcher(
                 description).find());
     }
 

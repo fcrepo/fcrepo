@@ -54,14 +54,14 @@ import com.google.common.collect.ImmutableMap.Builder;
  * @author ajs6f
  */
 
-@Path("")
+@Path("/describe")
 public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraRepository.class);
     
     @GET
-    @Path("/describe/modeshape")
+    @Path("modeshape")
     public Response describeModeshape() throws JsonGenerationException,
             JsonMappingException, IOException, RepositoryException {
         final Session session = repo.login();
@@ -97,7 +97,6 @@ public class FedoraRepository extends AbstractResource {
     }
 
     @GET
-    @Path("/describe")
     @Produces({TEXT_XML, APPLICATION_XML, APPLICATION_JSON})
     public DescribeRepository describe() throws LoginException,
             RepositoryException {
@@ -117,7 +116,6 @@ public class FedoraRepository extends AbstractResource {
 
 
     @GET
-    @Path("/describe")
     @Produces(TEXT_HTML)
     public String describeHtml() throws LoginException,
             RepositoryException {
