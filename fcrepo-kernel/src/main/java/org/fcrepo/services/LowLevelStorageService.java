@@ -89,6 +89,7 @@ public class LowLevelStorageService {
 
                             result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest);
                             result.computedSize = ds.getByteCount();
+                            ds.close();
 
                         } catch (CloneNotSupportedException e) {
                             e.printStackTrace();
