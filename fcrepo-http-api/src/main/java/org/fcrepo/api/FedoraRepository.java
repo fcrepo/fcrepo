@@ -1,21 +1,38 @@
 
 package org.fcrepo.api;
 
+import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.services.PathService.OBJECT_PATH;
+import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
+import static org.fcrepo.utils.FedoraTypesUtils.map;
+import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.RowIterator;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
@@ -42,7 +59,7 @@ public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraRepository.class);
-
+    
     @GET
     @Path("/describe/modeshape")
     public Response describeModeshape() throws JsonGenerationException,
