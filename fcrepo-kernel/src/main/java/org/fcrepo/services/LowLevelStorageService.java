@@ -9,6 +9,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +65,8 @@ public class LowLevelStorageService {
     }
 
     public static Collection<FixityResult> getFixity(
-            final Node resource, final MessageDigest digest) throws RepositoryException {
+            final Node resource, final MessageDigest digest,
+            final URI dsChecksum, final long dsSize) throws RepositoryException {
         logger.debug("Checking resource: " + resource.getPath());
 
         return transformBinaryBlobs(
@@ -75,33 +77,12 @@ public class LowLevelStorageService {
                                                        InputStream is) {
                         logger.debug("Checking fixity for resource in cache store " + entry.toString());
                         FixityResult result = null;
-                        FixityInputStream ds = null;
                         try {
-                            ds =
-                                    new FixityInputStream(is,
-                                            (MessageDigest) digest.clone());
-
-                            result = new FixityResult(entry);
-                            result.storeIdentifier = entry.getExternalIdentifier();
-                            //result.
-                            while (ds.read() != -1) ;
-
-                            String calculatedDigest =
-                                    encodeHexString(ds.getMessageDigest()
-                                            .digest());
-                            result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest);
-                            result.computedSize = ds.getByteCount();
-
-                            logger.debug("Got " + result.toString());
-                            ds.close();
-
-                        } catch (CloneNotSupportedException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
+                        	result = entry.checkFixity(dsChecksum, dsSize, digest);
+                        } catch (BinaryStoreException e) {
                             e.printStackTrace();
                             throw new IllegalStateException(e);
-                        }
-
+						}
                         return result;
                     }
 

@@ -27,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,6 +76,7 @@ import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
 @Path("/objects/{pid}/datastreams")
@@ -482,59 +484,14 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid) throws RepositoryException {
 
         final Datastream ds = DatastreamService.getDatastream(pid, dsid);
-        DatastreamFixity dsf = validatedDatastreamFixity(ds);
-        return dsf;
-    }
-
-    /**
-     * Computes the size and sha1 of a datastream and compares
-     * it to that stored in the node properties
-     * @param ds
-     * @return
-     * @throws RepositoryException
-     */
-    private DatastreamFixity validatedDatastreamFixity(Datastream ds) throws RepositoryException {
-    	Node node = ds.getNode();
-        //compute size and checksum
-        //get properties for comparison
-        URI dsChecksum = ds.getContentDigest();
-        long dsSize = ds.getContentSize();
 
         DatastreamFixity dsf = new DatastreamFixity();
-    	MessageDigest digest = null;
-    	try { 
-    		digest = MessageDigest.getInstance("SHA1");
-    	} catch (NoSuchAlgorithmException e) {
-			logger.error("Could not locate a SHA1 provider: Everything is ruined.",e);
-			throw new RepositoryException(e.getMessage(),e);
-		}
+        dsf.objectId = pid;
+        dsf.dsId = dsid;
+        dsf.timestamp = new Date();
 
-        Collection<FixityResult> blobs = getFixity(node, digest);
-        dsf.statuses = new ArrayList<FixityResult>(blobs.size());
-
-        for (FixityResult blob: blobs){
-        	//FixityStatus status = new FixityStatus();
-        	blob.validChecksum = false;
-        	blob.validSize = false;
-        	blob.dsChecksumType = ds.getContentDigestType();
-        	blob.dsChecksum = dsChecksum;
-        	blob.dsSize = dsSize;
-
-
-//            status.storeIdentifier = blob.storeIdentifier;
-//        	status.computedSize = blob.computedSize;
-//        	status.computedChecksum = blob.computedChecksum;
-            logger.debug("Computed checksum: {}", blob.computedChecksum);
-            logger.debug("Computed size is ", blob.computedSize);
-
-            if (blob.computedChecksum.equals(dsChecksum)) {
-            	blob.validChecksum = true;
-            }
-            if (blob.computedSize == dsSize) {
-            	blob.validSize = true;
-            }
-            dsf.statuses.add(blob);
-        }
+        Collection<FixityResult> blobs = ds.runFixityAndFixProblems();
+        dsf.statuses = new ArrayList<FixityResult>(blobs);
         return dsf;
     }
 

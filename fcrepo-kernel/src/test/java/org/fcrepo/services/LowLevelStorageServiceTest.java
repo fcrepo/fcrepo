@@ -48,7 +48,9 @@ public class LowLevelStorageServiceTest {
 
         final Datastream ds = getDatastream("testObject", "testRepositoryContent");
 
-        final Collection<FixityResult> fixityResults = LowLevelStorageService.getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"));
+        final Collection<FixityResult> fixityResults = LowLevelStorageService.getFixity(
+        		ds.getNode(), MessageDigest.getInstance("SHA-1"),
+        		ds.getContentDigest(), ds.getContentSize());
 
         assertNotEquals(0, fixityResults.size());
 

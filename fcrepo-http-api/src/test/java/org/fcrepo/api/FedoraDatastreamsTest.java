@@ -324,9 +324,9 @@ public class FedoraDatastreamsTest extends AbstractResourceTest {
         int cache = 0;
         for (FixityResult status:fixity.statuses){
         	logger.debug("Verifying cache {} :", cache++);
-        	assertTrue(status.validChecksum);
+        	assertTrue((status.status & FixityResult.BAD_CHECKSUM) != FixityResult.BAD_CHECKSUM);
         	logger.debug("Checksum matched");
-        	assertTrue(status.validSize);
+        	assertTrue((status.status & FixityResult.BAD_SIZE) != FixityResult.BAD_SIZE);
         	logger.debug("DS size matched");
             assertTrue("Didn't find the store identifier!", compile("infinispan",
                     DOTALL).matcher(status.storeIdentifier).find());

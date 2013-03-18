@@ -1,8 +1,12 @@
 package org.fcrepo.utils;
 
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.security.MessageDigest;
 import java.util.Properties;
 
 import org.apache.poi.util.IOUtils;
@@ -16,8 +20,13 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LowLevelCacheEntry {
+
+    private static final Logger logger = LoggerFactory
+            .getLogger(LowLevelCacheEntry.class);
 
     private static final String DATA_SUFFIX = "-data";
     private final BinaryStore store;
@@ -96,5 +105,38 @@ public class LowLevelCacheEntry {
         } else {
             return this.store.toString();
         }
+    }
+    
+    public FixityResult checkFixity(URI checksum, long size, MessageDigest digest) throws BinaryStoreException {
+        FixityResult result = null;
+        FixityInputStream ds = null;
+        try {
+            ds =
+                    new FixityInputStream(getInputStream(),
+                            (MessageDigest) digest.clone());
+
+            result = new FixityResult(this);
+            //result.
+            while (ds.read() != -1) ;
+
+            String calculatedDigest =
+                    encodeHexString(ds.getMessageDigest()
+                            .digest());
+            result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), calculatedDigest);
+            result.computedSize = ds.getByteCount();
+            result.dsChecksum = checksum;
+            result.dsSize = size;
+            if (!result.computedChecksum.equals(result.dsChecksum)) result.status |= FixityResult.BAD_CHECKSUM;
+            if (result.dsSize != result.computedSize) result.status |= FixityResult.BAD_SIZE;
+            logger.debug("Got " + result.toString());
+            ds.close();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException(e);
+        }
+
+        return result;    	
     }
 }

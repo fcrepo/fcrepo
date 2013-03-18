@@ -91,8 +91,7 @@ public class SelfHealingTest {
 
     private Collection<FixityResult> getNodeFixity(final Datastream ds) throws NoSuchAlgorithmException, RepositoryException {
 
-        return getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"));
-
+        return getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"), ds.getContentDigest(), ds.getContentSize());
 
     }
 

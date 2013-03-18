@@ -15,7 +15,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -169,51 +171,54 @@ public class Datastream extends JcrTools {
                 .getString();
     }
 
-    public void runFixityAndFixProblems() throws RepositoryException {
-        try {
-            final Set<FixityResult> fixityResults = ImmutableSet.copyOf(LowLevelStorageService.getFixity(node, MessageDigest.getInstance(getContentDigestType())));
+    public Collection<FixityResult> runFixityAndFixProblems() throws RepositoryException {
+    	HashSet<FixityResult> fixityResults = null;
+		final URI digestUri = getContentDigest();
+		final long size = getContentSize();
+        MessageDigest digest = null;
+		try {
+            digest = MessageDigest.getInstance(getContentDigestType());
+    	} catch (NoSuchAlgorithmException e) {
+            throw new RepositoryException(e.getMessage(), e);
+    	}
+		fixityResults = new HashSet<FixityResult>(
+				LowLevelStorageService.getFixity(node, digest, digestUri, size));
 
-            Set< FixityResult> goodEntries = ImmutableSet.copyOf(filter(fixityResults, new Predicate<FixityResult>() {
+    	Set< FixityResult> goodEntries = ImmutableSet.copyOf(filter(fixityResults, new Predicate<FixityResult>() {
 
-                @Override
-                public boolean apply(FixityResult result) {
+    		@Override
+    		public boolean apply(FixityResult result) {
+  				return result.computedChecksum.equals(digestUri) && result.computedSize == size;
+    		}
 
-                    try {
-                        final URI digest = getContentDigest();
-                        final long size = getContentSize();
-                        return result.computedChecksum.equals(digest) && result.computedSize == size;
-                    } catch (RepositoryException e) {
-                        return false;
-                    }
-                }
+    		;
+    	}));
 
-                ;
-            }));
+    	if (goodEntries.size() == 0) {
+    		logger.error("ALL COPIES OF " + getObject().getName() + "/" + getDsId() + " HAVE FAILED FIXITY CHECKS.");
+    		return fixityResults;
+    	}
 
-            assert goodEntries.size() > 0;
-
-            Iterator<FixityResult> it = goodEntries.iterator();
-
-
-            LowLevelCacheEntry anyGoodCacheEntry = it.next().getEntry();
-
-
-            Set<FixityResult> badEntries = Sets.difference(fixityResults, goodEntries);
-
-            for(FixityResult result : badEntries) {
-
-                try {
-                    result.getEntry().storeValue(anyGoodCacheEntry.getInputStream());
-                } catch (IOException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-            }
+    	Iterator<FixityResult> it = goodEntries.iterator();
 
 
-        } catch (NoSuchAlgorithmException e) {
+    	LowLevelCacheEntry anyGoodCacheEntry = it.next().getEntry();
 
-        }
 
+    	Set<FixityResult> badEntries = Sets.difference(fixityResults, goodEntries);
+
+    	for(FixityResult result : badEntries) {
+
+    		try {
+    			result.getEntry().storeValue(anyGoodCacheEntry.getInputStream());
+    			FixityResult newResult = result.getEntry().checkFixity(digestUri, size, digest);
+    			if (newResult.status == FixityResult.SUCCESS) result.status |= FixityResult.REPAIRED;
+    		} catch (IOException e) {
+    			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    		}
+    	}
+    	
+        return fixityResults;
     }
 
     /**
