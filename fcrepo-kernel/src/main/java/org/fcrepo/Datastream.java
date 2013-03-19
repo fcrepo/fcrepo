@@ -5,12 +5,9 @@ import static com.google.common.base.Joiner.on;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.RepositoryService.metrics;
-<<<<<<< HEAD
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
-=======
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
->>>>>>> Passing user authentication to JAX-RS
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
