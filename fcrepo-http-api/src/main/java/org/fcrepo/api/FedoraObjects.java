@@ -80,7 +80,7 @@ public class FedoraObjects extends AbstractResource {
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             // TODO do something with awful mess of fcrepo3 query params
             session.save();

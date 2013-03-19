@@ -48,6 +48,15 @@
   <listener>
     <listener-class>org.modeshape.web.jcr.ModeShapeJcrDeployer</listener-class>
   </listener>
-
+  
+  <!-- BASIC security parameters -->
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>fcrepo</realm-name>
+  </login-config>
+  
+  <security-role>
+    <role-name>admin</role-name>
+  </security-role>
 
 </web-app>
