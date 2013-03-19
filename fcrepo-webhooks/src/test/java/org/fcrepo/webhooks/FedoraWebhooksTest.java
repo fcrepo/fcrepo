@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
@@ -51,6 +52,25 @@ public class FedoraWebhooksTest extends AbstractResourceTest {
                 .find());
 
 
+    }
+
+    public void deleteWebhookTest() throws Exception {
+        HttpPost method = new HttpPost(serverAddress +
+                "/webhooks/callback_id");
+
+        List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+
+        formparams.add(new BasicNameValuePair("callbackUrl", "info:fedora/fake:url"));
+        UrlEncodedFormEntity entity = new UrlEncodedFormEntity(formparams, "UTF-8");
+        method.setEntity(entity);
+
+        assertEquals(201, getStatus(method));
+
+
+        HttpDelete delete_method = new HttpDelete(serverAddress + "/webhooks/callback_id");
+
+
+        assertEquals(204, getStatus(delete_method));
     }
 
     @Test

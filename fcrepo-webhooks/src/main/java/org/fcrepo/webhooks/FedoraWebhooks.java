@@ -2,6 +2,7 @@ package org.fcrepo.webhooks;
 
 
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -115,7 +117,7 @@ public class FedoraWebhooks extends AbstractResource {
         while(webhooksIterator.hasNext()) {
             final Node hook = webhooksIterator.nextNode();
             final String callbackUrl = hook.getProperty("webhook:callbackUrl").getString();
-            str.append(callbackUrl + ", ");
+            str.append(hook.getIdentifier() + ": " + callbackUrl + ", ");
         }
 
         return ok(str.toString()).build();
@@ -135,6 +137,21 @@ public class FedoraWebhooks extends AbstractResource {
         session.logout();
 
         return created(uriInfo.getAbsolutePath()).build();
+    }
+
+    @DELETE
+    @Path("{id}")
+    public Response registerWebhook(@PathParam("id") final String id) throws RepositoryException {
+
+        final Session session = repo.login();
+
+        Node n = jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" + id, "webhook:callback");
+        n.remove();
+
+        session.save();
+        session.logout();
+
+        return noContent().build();
     }
 
 
