@@ -48,7 +48,7 @@ public class FedoraEventTest {
 
     @Test
     public void testGetInfo() throws Exception {
-        Map<String, String> m = e.getInfo();
+        Map<?, ?> m = e.getInfo();
 
         assertEquals("2", m.get("1"));
     }

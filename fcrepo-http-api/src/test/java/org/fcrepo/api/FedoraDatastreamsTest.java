@@ -23,9 +23,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.api.AbstractResourceTest;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
-import org.fcrepo.jaxb.responses.management.FixityStatus;
 import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
 

@@ -3,11 +3,9 @@ package org.fcrepo.services;
 
 import static com.google.common.collect.ImmutableMap.builder;
 import static com.google.common.collect.Maps.transformEntries;
-import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -24,8 +22,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.utils.ContentDigest;
-import org.fcrepo.utils.FixityInputStream;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;

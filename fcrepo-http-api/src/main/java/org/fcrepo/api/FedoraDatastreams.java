@@ -12,7 +12,6 @@ import static org.fcrepo.api.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.purgeDatastream;
-import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
@@ -22,16 +21,12 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -67,16 +62,13 @@ import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
-import org.fcrepo.jaxb.responses.management.FixityStatus;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
 @Path("/objects/{pid}/datastreams")

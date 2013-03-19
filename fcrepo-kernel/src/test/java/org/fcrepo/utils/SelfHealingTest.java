@@ -1,21 +1,14 @@
 package org.fcrepo.utils;
 
-import org.fcrepo.Datastream;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.services.ObjectService;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.modeshape.jcr.JcrRepositoryFactory;
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.fcrepo.services.DatastreamService.createDatastreamNode;
+import static org.fcrepo.services.DatastreamService.getDatastream;
+import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
+import static org.fcrepo.services.LowLevelStorageService.getFixity;
+import static org.fcrepo.services.ObjectService.createObjectNode;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
-import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -25,15 +18,21 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.DatastreamService.getDatastream;
-import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
-import static org.fcrepo.services.LowLevelStorageService.getFixity;
-import static org.fcrepo.services.ObjectService.createObjectNode;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import javax.jcr.Node;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.Datastream;
+import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.ObjectService;
+import org.junit.Before;
+import org.junit.Test;
+import org.modeshape.jcr.JcrRepositoryFactory;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class SelfHealingTest {

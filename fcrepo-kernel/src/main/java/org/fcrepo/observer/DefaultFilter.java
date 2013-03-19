@@ -1,22 +1,20 @@
 package org.fcrepo.observer;
 
-import static com.google.common.collect.Iterables.any;
-import static com.google.common.collect.Sets.newHashSet;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.LoginException;
+import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
 import org.modeshape.common.SystemFailureException;
 import org.modeshape.jcr.api.Repository;
-
-import com.google.common.base.Predicate;
 
 /**
  * EventFilter that passes only events emitted from nodes with
@@ -34,20 +32,13 @@ public class DefaultFilter implements EventFilter {
 	// the state of the repository
 	private Session session;
 
-	private Predicate<NodeType> isFedoraNodeType = new Predicate<NodeType>() {
-		@Override
-		public boolean apply(NodeType type) {
-			return type.getName().startsWith("fedora:");
-		}
-	};
-
 	@Override
 	public boolean apply(Event event) {
 
 		try {
-			return any(newHashSet(session.getNode(event.getPath())
-					.getMixinNodeTypes()), isFedoraNodeType);
-
+		    final Node resource = session.getNode(event.getPath());
+            return isFedoraObject.apply(resource) || isFedoraDatastream.apply(resource);
+                   
 		} catch (PathNotFoundException e) {
 			return false; // not a node in the fedora workspace
 		} catch (LoginException e) {

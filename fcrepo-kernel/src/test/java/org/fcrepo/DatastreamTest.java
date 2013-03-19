@@ -1,20 +1,14 @@
 
 package org.fcrepo;
 
-import static com.google.common.collect.Maps.filterEntries;
 import static org.fcrepo.services.DatastreamService.createDatastreamNode;
 import static org.fcrepo.services.DatastreamService.getDatastream;
-import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
-import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -22,12 +16,8 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
