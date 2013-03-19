@@ -58,8 +58,6 @@ public class LowLevelStorageService {
      */
     private static Session readOnlySession;
 
-    private static List<LowLevelCacheEntry> cacheStores;
-
     private static JcrRepository getRepositoryInstance() {
         return (JcrRepository) readOnlySession.getRepository();
     }
@@ -157,10 +155,6 @@ public class LowLevelStorageService {
      * @return a list of "BinaryCacheStore", an abstraction over a plain BinaryStore or a specific Infinispan Cache
      */
     private static List<LowLevelCacheEntry> getLowLevelCacheStores(BinaryKey key) {
-        //TODO I'm assuming the list of stores doesn't change.. probably not a safe assumption      
-        if (cacheStores != null) {
-            return cacheStores;
-        }
 
         List<LowLevelCacheEntry> stores = new ArrayList<LowLevelCacheEntry>();
 
@@ -200,8 +194,6 @@ public class LowLevelStorageService {
         } else {
             stores.add(new LowLevelCacheEntry(store, key));
         }
-
-        cacheStores = stores;
 
         return stores;
     }
