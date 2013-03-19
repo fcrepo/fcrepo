@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -32,6 +33,11 @@ import javax.jcr.version.VersionException;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
@@ -131,7 +137,10 @@ public class Datastream extends JcrTools {
 	        	logger.debug("Failed checksum test");
 	        	throw new InvalidChecksumException("Checksum Mismatch of " + dsChecksum + " and " + checksum);
 	        }
-        } 
+        }
+
+        final Histogram contentSizeHistogram = Metrics.newHistogram(Datastream.class, "content-size");
+        contentSizeHistogram.update(dataProperty.getLength());
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
         contentNode.setProperty(DIGEST_VALUE, dsChecksum);
@@ -173,26 +182,43 @@ public class Datastream extends JcrTools {
 
     public Collection<FixityResult> runFixityAndFixProblems() throws RepositoryException {
     	HashSet<FixityResult> fixityResults = null;
+        Set< FixityResult> goodEntries;
 		final URI digestUri = getContentDigest();
 		final long size = getContentSize();
         MessageDigest digest = null;
-		try {
+
+
+        final Counter contentSizeHistogram = Metrics.newCounter(Datastream.class, "fixity-check-counter");
+        contentSizeHistogram.inc();
+
+
+        try {
             digest = MessageDigest.getInstance(getContentDigestType());
     	} catch (NoSuchAlgorithmException e) {
             throw new RepositoryException(e.getMessage(), e);
     	}
+
+
+        final Timer timer = Metrics.newTimer(Datastream.class, "fixity-check-time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+
+        final TimerContext context = timer.time();
+
+        try {
 		fixityResults = new HashSet<FixityResult>(
 				LowLevelStorageService.getFixity(node, digest, digestUri, size));
 
-    	Set< FixityResult> goodEntries = ImmutableSet.copyOf(filter(fixityResults, new Predicate<FixityResult>() {
+            goodEntries = ImmutableSet.copyOf(filter(fixityResults, new Predicate<FixityResult>() {
 
-    		@Override
-    		public boolean apply(FixityResult result) {
-  				return result.computedChecksum.equals(digestUri) && result.computedSize == size;
-    		}
+                @Override
+                public boolean apply(FixityResult result) {
+                    return result.computedChecksum.equals(digestUri) && result.computedSize == size;
+                }
 
-    		;
-    	}));
+                ;
+            }));
+        } finally {
+            context.stop();
+        }
 
     	if (goodEntries.size() == 0) {
     		logger.error("ALL COPIES OF " + getObject().getName() + "/" + getDsId() + " HAVE FAILED FIXITY CHECKS.");
