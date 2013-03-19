@@ -95,12 +95,17 @@ public class SelfHealingTest {
 
     }
 
-    @Ignore("doesn't play nice with other tests")
+   // @Ignore("doesn't play nice with other tests")
     @Test
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         Session session = repo.login();
 
         createObjectNode(session, "testObjectzzz");
+
+        createDatastreamNode(session,
+                "/objects/testObjectzzz/testDatastreamNode4",
+                "application/octet-stream", new ByteArrayInputStream(
+                "9876543210".getBytes()), "SHA-1", "9cd656169600157ec17231dcf0613c94932efcdc");
         createDatastreamNode(session,
                 "/objects/testObjectzzz/testDatastreamNode5",
                 "application/octet-stream", new ByteArrayInputStream(
@@ -109,6 +114,7 @@ public class SelfHealingTest {
         session.save();
 
         Collection<FixityResult> nodeFixity;
+        Collection<FixityResult> nodeFixity2;
 
         Thread.sleep(1000);
 
@@ -116,12 +122,17 @@ public class SelfHealingTest {
         Datastream ds = getDatastream("testObjectzzz", "testDatastreamNode5");
 
 
+        Datastream ds2 = getDatastream("testObjectzzz", "testDatastreamNode4");
+
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);
+
+        nodeFixity2 = getNodeFixity(ds2);
 
         assertNotEquals(0, nodeFixity.size());
 
 
+        logger.info("ds1");
         boolean fixityOk = true;
 
         for (FixityResult fixityResult : nodeFixity) {
@@ -129,6 +140,17 @@ public class SelfHealingTest {
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
+
+        logger.info("ds2");
+
+        fixityOk = true;
+
+        for (FixityResult fixityResult : nodeFixity2) {
+            fixityOk &= fixityResult.computedChecksum.toString().equals("urn:sha1:9cd656169600157ec17231dcf0613c94932efcdc");
+        }
+
+        assertTrue("Expected the fixity check to pass.", fixityOk);
+
 
         tamperWithNode(ds.getNode());
 
