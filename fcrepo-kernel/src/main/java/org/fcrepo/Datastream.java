@@ -5,8 +5,12 @@ import static com.google.common.base.Joiner.on;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.RepositoryService.metrics;
+<<<<<<< HEAD
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
+=======
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
+>>>>>>> Passing user authentication to JAX-RS
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -241,6 +245,25 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             return "";
         }
 
+    }
+    
+    /**
+     * @return Owner of this datastream stored in the fedora:ownerId property.
+     * @throws RepositoryException
+     */
+    public String getOwnerId() throws RepositoryException {
+    	if (node.hasProperty(FEDORA_OWNERID)) {
+    		Property ownerIds = node.getProperty(FEDORA_OWNERID);
+    		String ownerId;
+            if (!ownerIds.isMultiple()) {
+            	ownerId = node.getProperty(FEDORA_OWNERID).getString();
+            } else {
+            	ownerId = on('/').join(map(ownerIds.getValues(), value2string));
+            }
+            return ownerId;
+    	} else {
+    		return "";
+    	}
     }
 
     public void setLabel(String label) throws ValueFormatException,
