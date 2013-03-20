@@ -100,7 +100,7 @@ public class SelfHealingIT {
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         Session session = repo.login();
 
-        createObjectNode(session, "test");
+        createObjectNode(session, "testSelfHealingObject");
 
         createDatastreamNode(session,
                 "/objects/testSelfHealingObject/testDatastreamNode4",
