@@ -19,10 +19,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @ContextConfiguration({"/spring-test/repo.xml", "/spring-test/rest.xml",
         "/spring-test/eventing.xml"})
+@RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraWebhooksIT extends AbstractResourceIT {
 
     @Test
