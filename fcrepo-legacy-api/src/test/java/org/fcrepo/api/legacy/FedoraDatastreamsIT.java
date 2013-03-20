@@ -26,7 +26,7 @@ import org.apache.http.util.EntityUtils;
 import org.custommonkey.xmlunit.jaxp13.Validator;
 import org.junit.Test;
 
-public class FedoraDatastreamsTest extends AbstractResourceTest {
+public class FedoraDatastreamsIT extends AbstractResourceTest {
 
     private static final String faulkner1 =
             "The past is never dead. It's not even past.";

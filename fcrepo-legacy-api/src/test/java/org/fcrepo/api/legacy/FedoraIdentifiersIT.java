@@ -14,7 +14,7 @@ import org.custommonkey.xmlunit.exceptions.XpathException;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-public class FedoraIdentifiersTest extends AbstractResourceTest {
+public class FedoraIdentifiersIT extends AbstractResourceTest {
 
     @Test
     public void testGetNextPidResponds() throws Exception {
