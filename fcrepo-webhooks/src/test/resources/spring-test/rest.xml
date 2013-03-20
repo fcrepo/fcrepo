@@ -23,7 +23,7 @@
         <jaxrs:serviceBeans>
           <bean class="org.fcrepo.api.FedoraObjects"/>
             <bean class="org.fcrepo.webhooks.FedoraWebhooks"/>
-          <bean class="org.fcrepointegration..webhooks.TestEndpoint"/>
+          <bean class="org.fcrepointegration.webhooks.TestEndpoint"/>
         </jaxrs:serviceBeans>
     </jaxrs:server>
 
