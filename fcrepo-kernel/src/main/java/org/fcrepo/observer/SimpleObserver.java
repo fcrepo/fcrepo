@@ -11,6 +11,9 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.EventListener;
 
+import com.yammer.metrics.Counter;
+import com.yammer.metrics.MetricRegistry;
+import org.fcrepo.services.RepositoryService;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +46,8 @@ public class SimpleObserver implements EventListener {
 
     static final private Logger logger = LoggerFactory.getLogger(SimpleObserver.class);
 
+    static final Counter eventCounter = RepositoryService.metrics.counter(MetricRegistry.name(SimpleObserver.class, "onEvent"));
+
     @PostConstruct
     public void buildListener() throws RepositoryException {
         Session session = repository.login();
@@ -58,8 +63,12 @@ public class SimpleObserver implements EventListener {
     @SuppressWarnings("unchecked")
     @Override
     public void onEvent(EventIterator events) {
+
         for (Event e : filter(new Builder<Event>().addAll(events).build(),
                 eventFilter)) {
+
+            eventCounter.inc();
+
             logger.debug("Putting event: " + e.toString() + " on the bus.");
             eventBus.post(new FedoraEvent(e));
         }

@@ -16,6 +16,9 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.version.VersionException;
 
+import com.yammer.metrics.MetricRegistry;
+import com.yammer.metrics.Timer;
+import org.fcrepo.services.RepositoryService;
 import org.modeshape.jcr.api.JcrTools;
 
 /**
@@ -29,6 +32,8 @@ public class FedoraObject extends JcrTools {
 
     private Node node;
 
+    final static Timer timer = RepositoryService.metrics.timer(MetricRegistry.name(FedoraObject.class, "FedoraObject"));
+
     public FedoraObject(Node n) {
         this.node = n;
     }
@@ -36,6 +41,10 @@ public class FedoraObject extends JcrTools {
     public FedoraObject(Session session, String path)
             throws NoSuchNodeTypeException, VersionException,
             ConstraintViolationException, LockException, RepositoryException {
+
+        final Timer.Context context = timer.time();
+
+        try {
         this.node = findOrCreateNode(session, path, NT_FOLDER);
         node.addMixin("fedora:object");
         node.addMixin("fedora:owned");
@@ -43,6 +52,9 @@ public class FedoraObject extends JcrTools {
         node.setProperty("jcr:lastModified", Calendar.getInstance());
         node.setProperty("dc:identifier", new String[] {node.getIdentifier(),
                 node.getName()});
+        } finally {
+            context.stop();
+        }
     }
 
     /**

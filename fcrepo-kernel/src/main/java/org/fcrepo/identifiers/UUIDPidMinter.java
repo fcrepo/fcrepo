@@ -1,5 +1,9 @@
 package org.fcrepo.identifiers;
 
+import com.yammer.metrics.MetricRegistry;
+import com.yammer.metrics.Timer;
+import org.fcrepo.services.RepositoryService;
+
 import static java.util.UUID.randomUUID;
 
 /**
@@ -10,9 +14,19 @@ import static java.util.UUID.randomUUID;
  */
 public class UUIDPidMinter implements PidMinter {
 
+    final static Timer timer = RepositoryService.metrics.timer(MetricRegistry.name(UUIDPidMinter.class, "mint"));
+
 	@Override
 	public String mintPid() {
-        return randomUUID().toString();
+
+
+        final Timer.Context context = timer.time();
+
+        try {
+            return randomUUID().toString();
+        } finally {
+            context.stop();
+        }
 	}
 
 }

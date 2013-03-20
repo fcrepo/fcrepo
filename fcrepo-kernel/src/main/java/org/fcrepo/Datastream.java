@@ -33,13 +33,13 @@ import javax.jcr.version.VersionException;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
+import com.yammer.metrics.Counter;
+import com.yammer.metrics.Histogram;
+import com.yammer.metrics.MetricRegistry;
+import com.yammer.metrics.Timer;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.RepositoryService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
@@ -64,6 +64,13 @@ public class Datastream extends JcrTools {
 
     private final static Logger logger = LoggerFactory
             .getLogger(Datastream.class);
+
+
+    final static Histogram contentSizeHistogram = RepositoryService.metrics.histogram(MetricRegistry.name(Datastream.class, "content-size"));
+    final static Counter fixityCheckCounter = RepositoryService.metrics.counter(MetricRegistry.name(Datastream.class, "fixity-check-counter"));
+    final static Timer timer = RepositoryService.metrics.timer(MetricRegistry.name(Datastream.class, "fixity-check-time"));
+    final static Counter fixityRepairedCounter = RepositoryService.metrics.counter(MetricRegistry.name(Datastream.class, "fixity-repaired-counter"));
+    final static Counter fixityErrorCounter = RepositoryService.metrics.counter(MetricRegistry.name(Datastream.class, "fixity-error-counter"));
 
     Node node;
 
@@ -139,7 +146,6 @@ public class Datastream extends JcrTools {
 	        }
         }
 
-        final Histogram contentSizeHistogram = Metrics.newHistogram(Datastream.class, "content-size");
         contentSizeHistogram.update(dataProperty.getLength());
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
@@ -188,8 +194,7 @@ public class Datastream extends JcrTools {
         MessageDigest digest = null;
 
 
-        final Counter contentSizeHistogram = Metrics.newCounter(Datastream.class, "fixity-check-counter");
-        contentSizeHistogram.inc();
+        fixityCheckCounter.inc();
 
 
         try {
@@ -199,9 +204,8 @@ public class Datastream extends JcrTools {
     	}
 
 
-        final Timer timer = Metrics.newTimer(Datastream.class, "fixity-check-time", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
-        final TimerContext context = timer.time();
+        final Timer.Context context = timer.time();
 
         try {
 		fixityResults = new HashSet<FixityResult>(
@@ -238,7 +242,12 @@ public class Datastream extends JcrTools {
     		try {
     			result.getEntry().storeValue(anyGoodCacheEntry.getInputStream());
     			FixityResult newResult = result.getEntry().checkFixity(digestUri, size, digest);
-    			if (newResult.status == FixityResult.SUCCESS) result.status |= FixityResult.REPAIRED;
+    			if (newResult.status == FixityResult.SUCCESS) {
+                    result.status |= FixityResult.REPAIRED;
+                    fixityRepairedCounter.inc();
+                } else {
+                    fixityErrorCounter.inc();
+                }
     		} catch (IOException e) {
     			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     		}
