@@ -14,7 +14,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/generator.xml", "/spring-test/repo.xml"})
-public class DublinCoreGeneratorTest extends AbstractResourceTest {
+public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {

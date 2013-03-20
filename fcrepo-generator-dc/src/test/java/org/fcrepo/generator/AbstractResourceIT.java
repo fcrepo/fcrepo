@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-public abstract class AbstractResourceTest {
+public abstract class AbstractResourceIT {
 
     protected Logger logger;
 
@@ -42,7 +42,7 @@ public abstract class AbstractResourceTest {
 
     protected static HttpClient client;
 
-    public AbstractResourceTest() {
+    public AbstractResourceIT() {
         connectionManager.setMaxTotal(Integer.MAX_VALUE);
         connectionManager.setDefaultMaxPerRoute(5);
         connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
