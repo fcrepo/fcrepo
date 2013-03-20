@@ -96,19 +96,18 @@ public class SelfHealingIT {
 
     }
 
-   // @Ignore("doesn't play nice with other tests")
     @Test
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         Session session = repo.login();
 
-        createObjectNode(session, "testObjectzzz");
+        createObjectNode(session, "test");
 
         createDatastreamNode(session,
-                "/objects/testObjectzzz/testDatastreamNode4",
+                "/objects/testSelfHealingObject/testDatastreamNode4",
                 "application/octet-stream", new ByteArrayInputStream(
                 "9876543210".getBytes()), "SHA-1", "9cd656169600157ec17231dcf0613c94932efcdc");
         createDatastreamNode(session,
-                "/objects/testObjectzzz/testDatastreamNode5",
+                "/objects/testSelfHealingObject/testDatastreamNode5",
                 "application/octet-stream", new ByteArrayInputStream(
                 "0123456789".getBytes()), "SHA-1", "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
 
@@ -120,10 +119,10 @@ public class SelfHealingIT {
         Thread.sleep(1000);
 
 
-        Datastream ds = getDatastream("testObjectzzz", "testDatastreamNode5");
+        Datastream ds = getDatastream("testSelfHealingObject", "testDatastreamNode5");
 
 
-        Datastream ds2 = getDatastream("testObjectzzz", "testDatastreamNode4");
+        Datastream ds2 = getDatastream("testSelfHealingObject", "testDatastreamNode4");
 
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);

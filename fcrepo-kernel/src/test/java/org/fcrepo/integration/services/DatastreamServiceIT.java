@@ -48,14 +48,14 @@ public class DatastreamServiceIT extends AbstractIT {
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         InputStream is = new ByteArrayInputStream("asdf".getBytes());
-        createObjectNode(session, "testObject");
-        createDatastreamNode(session, "/objects/testObject/testDatastreamNode",
+        createObjectNode(session, "testDatastreamServiceObject");
+        createDatastreamNode(session, "/objects/testDatastreamServiceObject/testDatastreamNode",
                 "application/octet-stream", is);
 
         session.save();
         session.logout();
         session = repository.login();
-        final Datastream ds = getDatastream("testObject", "testDatastreamNode");
+        final Datastream ds = getDatastream("testDatastreamServiceObject", "testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(ds.getContent(), "UTF-8"));
         session.logout();
     }

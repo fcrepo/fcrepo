@@ -37,16 +37,16 @@ public class LowLevelStorageServiceIT {
     public void testChecksumBlobs() throws Exception {
 
         Session session = repo.login();
-        createObjectNode(session, "testObject");
+        createObjectNode(session, "testLLObject");
         createDatastreamNode(session,
-                "/objects/testObject/testRepositoryContent",
+                "/objects/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
                 "0123456789".getBytes()));
 
 
         session.save();
 
-        final Datastream ds = getDatastream("testObject", "testRepositoryContent");
+        final Datastream ds = getDatastream("testLLObject", "testRepositoryContent");
 
         final Collection<FixityResult> fixityResults = LowLevelStorageService.getFixity(
         		ds.getNode(), MessageDigest.getInstance("SHA-1"),
@@ -62,16 +62,16 @@ public class LowLevelStorageServiceIT {
     @Test
     public void testGetBinaryBlobs() throws Exception {
         Session session = repo.login();
-        createObjectNode(session, "testObject");
+        createObjectNode(session, "testLLObject");
         createDatastreamNode(session,
-                "/objects/testObject/testRepositoryContent",
+                "/objects/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
                 "0123456789".getBytes()));
 
 
         session.save();
 
-        final Datastream ds = getDatastream("testObject", "testRepositoryContent");
+        final Datastream ds = getDatastream("testLLObject", "testRepositoryContent");
 
         Iterator<InputStream> inputStreamList = getBinaryBlobs(ds.getNode()).values().iterator();
 
