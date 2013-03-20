@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 
-public class FedoraFieldSearchTest extends AbstractResourceTest {
+public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchForm() throws Exception {
 

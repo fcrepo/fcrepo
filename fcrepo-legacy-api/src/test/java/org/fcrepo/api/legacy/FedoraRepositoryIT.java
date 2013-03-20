@@ -19,7 +19,7 @@ import org.apache.http.util.EntityUtils;
 //import org.custommonkey.xmlunit.jaxp13.Validator;
 import org.junit.Test;
 
-public class FedoraRepositoryIT extends AbstractResourceTest {
+public class FedoraRepositoryIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeModeshape() throws Exception {

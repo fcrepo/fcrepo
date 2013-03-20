@@ -17,13 +17,13 @@ import javax.jcr.Repository;
 import javax.jcr.Session;
 
 import org.apache.tika.io.IOUtils;
-import org.fcrepo.AbstractTest;
+import org.fcrepo.AbstractIT;
 import org.fcrepo.Datastream;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class DatastreamServiceTest extends AbstractTest {
+public class DatastreamServiceIT extends AbstractIT {
 
     @Inject
     private Repository repository;

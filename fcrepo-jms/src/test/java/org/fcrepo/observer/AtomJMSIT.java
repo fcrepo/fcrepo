@@ -49,7 +49,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/jms.xml", "/spring-test/repo.xml",
         "/spring-test/eventing.xml"})
-public class AtomJMSTest implements MessageListener {
+public class AtomJMSIT implements MessageListener {
 
     @Inject
     private Repository repository;
@@ -67,7 +67,7 @@ public class AtomJMSTest implements MessageListener {
 
     private Entry entry;
 
-    final private Logger logger = LoggerFactory.getLogger(AtomJMSTest.class);
+    final private Logger logger = LoggerFactory.getLogger(AtomJMSIT.class);
 
     @Test
     public void testAtomStream() throws LoginException, RepositoryException {

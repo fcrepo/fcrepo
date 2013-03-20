@@ -27,7 +27,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class LowLevelStorageServiceTest {
+public class LowLevelStorageServiceIT {
 
     @Inject
     Repository repo;

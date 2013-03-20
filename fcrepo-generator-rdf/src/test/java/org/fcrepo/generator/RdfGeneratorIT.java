@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @ContextConfiguration({"/spring-test/generator.xml", "/spring-test/repo.xml"})
-public class RdfGeneratorTest extends AbstractResourceTest {
+public class RdfGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testJcrPropertiesBasedTriples() throws Exception {

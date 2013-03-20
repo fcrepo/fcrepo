@@ -17,9 +17,9 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml", "/spring-test/rest.xml",
         "/spring-test/eventing.xml"})
-public class RSSTest extends AbstractResourceTest {
+public class RSSIT extends AbstractResourceIT {
 
-    final private Logger logger = LoggerFactory.getLogger(RSSTest.class);
+    final private Logger logger = LoggerFactory.getLogger(RSSIT.class);
 
     @Test
     public void testRSS() throws Exception {

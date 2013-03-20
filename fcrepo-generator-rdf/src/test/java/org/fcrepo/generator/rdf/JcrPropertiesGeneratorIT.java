@@ -16,7 +16,7 @@ import javax.jcr.Session;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
-public class JcrPropertiesGeneratorTest {
+public class JcrPropertiesGeneratorIT {
 
 
     @Inject

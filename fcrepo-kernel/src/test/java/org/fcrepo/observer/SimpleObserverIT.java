@@ -7,7 +7,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.AbstractTest;
+import org.fcrepo.AbstractIT;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +17,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 @ContextConfiguration({ "/spring-test/eventing.xml", "/spring-test/repo.xml" })
-public class SimpleObserverTest extends AbstractTest {
+public class SimpleObserverIT extends AbstractIT {
 
 	private Integer eventBusMessageCount;
 	@Inject

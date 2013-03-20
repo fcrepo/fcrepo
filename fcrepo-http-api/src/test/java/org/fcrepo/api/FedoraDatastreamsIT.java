@@ -27,7 +27,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
 
-public class FedoraDatastreamsTest extends AbstractResourceTest {
+public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     private static final String faulkner1 =
             "The past is never dead. It's not even past.";

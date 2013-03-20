@@ -16,7 +16,7 @@ import org.junit.Test;
 public class StoreChunkInputStreamTest {
 
     @Test
-    public void tryRetrievingContentFromInfinispanTest() throws IOException {
+    public void tryRetrievingContentFromInfinispanIT() throws IOException {
         EmbeddedCacheManager cm = new DefaultCacheManager("test_infinispan_configuration.xml");
 
         Cache<String, byte[]> ispn = cm.getCache("FedoraRepository");

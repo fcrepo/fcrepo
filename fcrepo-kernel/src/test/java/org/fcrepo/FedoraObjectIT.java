@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class FedoraObjectTest extends AbstractTest {
+public class FedoraObjectIT extends AbstractIT {
 
     @Inject
     Repository repo;

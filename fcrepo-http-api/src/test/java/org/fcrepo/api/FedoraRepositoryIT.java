@@ -14,7 +14,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-public class FedoraRepositoryTest extends AbstractResourceTest {
+public class FedoraRepositoryIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeModeshape() throws Exception {

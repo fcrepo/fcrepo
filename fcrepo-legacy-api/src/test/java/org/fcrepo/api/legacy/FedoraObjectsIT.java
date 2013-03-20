@@ -21,7 +21,7 @@ import org.apache.http.util.EntityUtils;
 import org.custommonkey.xmlunit.jaxp13.Validator;
 import org.junit.Test;
 
-public class FedoraObjectsIT extends AbstractResourceTest {
+public class FedoraObjectsIT extends AbstractResourceIT {
 
     @Test
     public void testIngest() throws Exception {

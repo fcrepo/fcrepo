@@ -23,7 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml", "/spring-test/rest.xml",
         "/spring-test/eventing.xml"})
-public class FedoraWebhooksTest extends AbstractResourceTest {
+public class FedoraWebhooksIT extends AbstractResourceIT {
 
     @Test
     public void registerWebhookCallbackTest() throws IOException {

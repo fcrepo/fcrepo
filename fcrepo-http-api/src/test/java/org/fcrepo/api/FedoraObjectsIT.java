@@ -10,10 +10,10 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.api.AbstractResourceTest;
+import org.fcrepo.api.AbstractResourceIT;
 import org.junit.Test;
 
-public class FedoraObjectsTest extends AbstractResourceTest {
+public class FedoraObjectsIT extends AbstractResourceIT {
 
     @Test
     public void testIngest() throws Exception {

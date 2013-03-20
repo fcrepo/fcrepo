@@ -13,10 +13,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.api.AbstractResourceTest;
+import org.fcrepo.api.AbstractResourceIT;
 import org.junit.Test;
 
-public class FedoraIdentifiersTest extends AbstractResourceTest {
+public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextPidResponds() throws Exception {
