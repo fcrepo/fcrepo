@@ -10,9 +10,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.fcrepo.api.FedoraObjects.getObjectSize;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
-import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.DatastreamService.purgeDatastream;
-import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -64,6 +61,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FixityResult;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
@@ -79,6 +77,12 @@ public class FedoraDatastreams extends AbstractResource {
     
     @Inject
     private LowLevelStorageService llStorageService;
+    
+    @Inject
+    private ObjectService objectService;
+    
+    @Inject
+    private DatastreamService datastreamService;
 
     /**
      * Returns a list of datastreams for the object
@@ -100,7 +104,7 @@ public class FedoraDatastreams extends AbstractResource {
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
         final Builder<DatastreamElement> datastreams = builder();
 
-        NodeIterator i = getObjectNode(pid).getNodes();
+        NodeIterator i = objectService.getObjectNode(pid).getNodes();
         while (i.hasNext()) {
             final Node ds = i.nextNode();
             datastreams.add(new DatastreamElement(ds.getName(), ds.getName(),
@@ -125,7 +129,7 @@ public class FedoraDatastreams extends AbstractResource {
 
             for (String dsid : dsidList) {
                 logger.debug("purging datastream " + dsid);
-                purgeDatastream(session, pid, dsid);
+                datastreamService.purgeDatastream(session, pid, dsid);
             }
 
             for (final Attachment a : attachmentList) {
@@ -133,7 +137,7 @@ public class FedoraDatastreams extends AbstractResource {
                         a.getContentDisposition().getParameter("name");
                 logger.debug("adding datastream " + dsid);
                 final String dsPath = getDatastreamJcrNodePath(pid, dsid);
-                createDatastreamNode(session, dsPath, a.getDataHandler()
+                datastreamService.createDatastreamNode(session, dsPath, a.getDataHandler()
                         .getContentType(), a.getDataHandler().getInputStream());
 
             }
@@ -165,7 +169,7 @@ public class FedoraDatastreams extends AbstractResource {
         try {
         	for (String dsid : dsidList) {
                 logger.debug("purging datastream " + dsid);
-        		purgeDatastream(session, pid, dsid);
+                datastreamService.purgeDatastream(session, pid, dsid);
         	}
         	session.save();
         } finally {
@@ -185,7 +189,7 @@ public class FedoraDatastreams extends AbstractResource {
         final Session session = repo.login();
 
         if (dsids.isEmpty()) {
-            NodeIterator ni = getObjectNode(pid).getNodes();
+            NodeIterator ni = objectService.getObjectNode(pid).getNodes();
             while (ni.hasNext()) {
                 dsids.add(ni.nextNode().getName());
             }
@@ -199,7 +203,7 @@ public class FedoraDatastreams extends AbstractResource {
 
                 try {
                     final Datastream ds =
-                            DatastreamService.getDatastream(pid, dsid);
+                            datastreamService.getDatastream(pid, dsid);
                     atts.add(new Attachment(ds.getNode().getName(), ds
                             .getMimeType(), ds.getContent()));
                 } catch (PathNotFoundException e) {
@@ -327,7 +331,7 @@ public class FedoraDatastreams extends AbstractResource {
                 getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
         logger.debug("Attempting to add datastream node at path: " + dsPath);
         try {
-            createDatastreamNode(session, dsPath, contentType.toString(),
+        	datastreamService.createDatastreamNode(session, dsPath, contentType.toString(),
                     requestBodyStream, checksumType, checksum);
             boolean created = session.nodeExists(dsPath);
             session.save();
@@ -373,7 +377,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsId) throws RepositoryException, IOException {
         logger.trace("Executing getDatastream() with dsId: " + dsId);
-        Datastream ds = DatastreamService.getDatastream(pid, dsId);
+        Datastream ds = datastreamService.getDatastream(pid, dsId);
         logger.debug("Retrieved dsNode: " + ds.getNode().getName());
         return getDSProfile(ds);
 
@@ -395,7 +399,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid, @Context Request request) throws RepositoryException {
 
-        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+        final Datastream ds = datastreamService.getDatastream(pid, dsid);
 
         EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         Date date = ds.getLastModifiedDate();
@@ -435,7 +439,7 @@ public class FedoraDatastreams extends AbstractResource {
             final String pid, @PathParam("dsid")
             final String dsId) throws RepositoryException, IOException {
 
-        final Datastream ds = DatastreamService.getDatastream(pid, dsId);
+        final Datastream ds = datastreamService.getDatastream(pid, dsId);
         final DatastreamHistory dsHistory =
                 new DatastreamHistory(singletonList(getDSProfile(ds)));
         dsHistory.dsID = dsId;
@@ -475,7 +479,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException {
 
-        final Datastream ds = DatastreamService.getDatastream(pid, dsid);
+        final Datastream ds = datastreamService.getDatastream(pid, dsid);
 
         DatastreamFixity dsf = new DatastreamFixity();
         dsf.objectId = pid;

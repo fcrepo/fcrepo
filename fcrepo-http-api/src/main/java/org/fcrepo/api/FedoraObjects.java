@@ -9,9 +9,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
-import static org.fcrepo.services.ObjectService.createObjectNode;
-import static org.fcrepo.services.ObjectService.getObjectNames;
-import static org.fcrepo.services.ObjectService.getObjectNode;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
@@ -20,6 +17,7 @@ import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -38,6 +36,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
+import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +45,9 @@ public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraObjects.class);
+    
+    @Inject
+    private ObjectService objectService;
 
     /**
      * 
@@ -57,7 +59,7 @@ public class FedoraObjects extends AbstractResource {
     @GET
     public Response getObjects() throws RepositoryException {
 
-        return ok(getObjectNames().toString()).build();
+        return ok(objectService.getObjectNames().toString()).build();
 
     }
 
@@ -115,7 +117,7 @@ public class FedoraObjects extends AbstractResource {
 
         final Session session = repo.login();
         try {
-            final Node obj = createObjectNode(session, pid);
+            final Node obj = objectService.createObjectNode(session, pid);
             session.save();
             /*
              * we save before updating the repo size because the act of
@@ -147,7 +149,7 @@ public class FedoraObjects extends AbstractResource {
     public ObjectProfile getObject(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 
-        final Node obj = getObjectNode(pid);
+        final Node obj = objectService.getObjectNode(pid);
         final ObjectProfile objectProfile = new ObjectProfile();
 
         objectProfile.pid = pid;
