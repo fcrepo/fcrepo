@@ -76,13 +76,10 @@ public class FedoraDatastreams extends AbstractResource {
             .getLogger(FedoraDatastreams.class);
     
     @Inject
-    private LowLevelStorageService llStorageService;
+    ObjectService objectService;
     
     @Inject
-    private ObjectService objectService;
-    
-    @Inject
-    private DatastreamService datastreamService;
+    DatastreamService datastreamService;
 
     /**
      * Returns a list of datastreams for the object
@@ -104,7 +101,7 @@ public class FedoraDatastreams extends AbstractResource {
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
         final Builder<DatastreamElement> datastreams = builder();
 
-        NodeIterator i = objectService.getObjectNode(pid).getNodes();
+        NodeIterator i = datastreamService.getDatastreamsFor(pid);
         while (i.hasNext()) {
             final Node ds = i.nextNode();
             datastreams.add(new DatastreamElement(ds.getName(), ds.getName(),

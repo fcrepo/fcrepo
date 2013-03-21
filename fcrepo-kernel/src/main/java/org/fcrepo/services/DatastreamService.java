@@ -2,6 +2,7 @@
 package org.fcrepo.services;
 
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
+import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,11 +11,13 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
+import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +76,14 @@ public class DatastreamService {
     		final String dsId) throws RepositoryException {
     	final String dsPath = getDatastreamJcrNodePath(pid, dsId);
 		new Datastream(session, dsPath).purge();
+    }
+    
+    public NodeIterator getDatastreamsFor(String pid, Session session) throws RepositoryException {
+    	return new FedoraObject(session, getObjectJcrNodePath(pid)).getNode().getNodes();
+    }
+
+    public NodeIterator getDatastreamsFor(String pid) throws RepositoryException {
+    	return getDatastreamsFor(pid, readOnlySession);
     }
 
     @PostConstruct
