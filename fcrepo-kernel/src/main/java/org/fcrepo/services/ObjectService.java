@@ -38,7 +38,7 @@ public class ObjectService {
     /**
      * For use with non-mutating methods.
      */
-    private static Session readOnlySession;
+    private Session readOnlySession;
 
     /**
      * @param session A JCR Session
@@ -47,7 +47,7 @@ public class ObjectService {
      * @throws RepositoryException
      */
     @Deprecated
-    public static Node createObjectNodeByPath(final Session session,
+    public Node createObjectNodeByPath(final Session session,
             final String path) throws RepositoryException {
         return new FedoraObject(session, path).getNode();
     }
@@ -58,7 +58,7 @@ public class ObjectService {
      * @return the JCR node behind the created object
      * @throws RepositoryException
      */
-    public static Node
+    public Node
             createObjectNode(final Session session, final String name)
                     throws RepositoryException {
         return new FedoraObject(session, getObjectJcrNodePath(name)).getNode();
@@ -70,7 +70,7 @@ public class ObjectService {
      * @return The created object
      * @throws RepositoryException
      */
-    public static FedoraObject createObject(final Session session,
+    public FedoraObject createObject(final Session session,
             final String name) throws RepositoryException {
         return new FedoraObject(session, getObjectJcrNodePath(name));
     }
@@ -80,7 +80,7 @@ public class ObjectService {
      * @return The JCR node behind the FedoraObject with the proferred PID
      * @throws RepositoryException
      */
-    public static Node getObjectNode(final String pid)
+    public Node getObjectNode(final String pid)
             throws RepositoryException {
         logger.trace("Executing getObjectNode() with pid: " + pid);
         return getObject(pid).getNode();
@@ -91,7 +91,7 @@ public class ObjectService {
      * @return A FedoraObject with the proffered PID
      * @throws RepositoryException
      */
-    public static FedoraObject getObject(final String pid)
+    public FedoraObject getObject(final String pid)
             throws RepositoryException {
         logger.trace("Executing getObject() with pid: " + pid);
         return new FedoraObject(readOnlySession
@@ -102,7 +102,7 @@ public class ObjectService {
      * @return A Set of object names (identifiers)
      * @throws RepositoryException
      */
-    public static Set<String> getObjectNames() throws RepositoryException {
+    public Set<String> getObjectNames() throws RepositoryException {
 
         Node objects = readOnlySession.getNode(getObjectJcrNodePath(""));
         Builder<String> b = builder();

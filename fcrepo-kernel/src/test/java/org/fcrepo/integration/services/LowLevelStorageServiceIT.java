@@ -1,9 +1,6 @@
 package org.fcrepo.integration.services;
 
-import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.DatastreamService.getDatastream;
 import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
-import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -19,7 +16,9 @@ import javax.jcr.Session;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
+import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,13 +31,19 @@ public class LowLevelStorageServiceIT {
 
     @Inject
     Repository repo;
+    
+    @Inject
+    ObjectService objectService;
+    
+    @Inject
+    DatastreamService datastreamService;
 
     @Test
     public void testChecksumBlobs() throws Exception {
 
         Session session = repo.login();
-        createObjectNode(session, "testLLObject");
-        createDatastreamNode(session,
+        objectService.createObjectNode(session, "testLLObject");
+        datastreamService.createDatastreamNode(session,
                 "/objects/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
                 "0123456789".getBytes()));
@@ -46,7 +51,7 @@ public class LowLevelStorageServiceIT {
 
         session.save();
 
-        final Datastream ds = getDatastream("testLLObject", "testRepositoryContent");
+        final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
 
         final Collection<FixityResult> fixityResults = LowLevelStorageService.getFixity(
         		ds.getNode(), MessageDigest.getInstance("SHA-1"),
@@ -62,8 +67,8 @@ public class LowLevelStorageServiceIT {
     @Test
     public void testGetBinaryBlobs() throws Exception {
         Session session = repo.login();
-        createObjectNode(session, "testLLObject");
-        createDatastreamNode(session,
+        objectService.createObjectNode(session, "testLLObject");
+        datastreamService.createDatastreamNode(session,
                 "/objects/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
                 "0123456789".getBytes()));
@@ -71,7 +76,7 @@ public class LowLevelStorageServiceIT {
 
         session.save();
 
-        final Datastream ds = getDatastream("testLLObject", "testRepositoryContent");
+        final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
 
         Iterator<InputStream> inputStreamList = getBinaryBlobs(ds.getNode()).values().iterator();
 

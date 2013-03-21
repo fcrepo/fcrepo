@@ -15,7 +15,7 @@ public class PathService {
     public final static String OBJECT_PATH = "/objects";
 
     private static final Logger logger = LoggerFactory
-            .getLogger(DatastreamService.class);
+            .getLogger(PathService.class);
 
     /**
      * @param pid

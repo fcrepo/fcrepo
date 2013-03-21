@@ -18,6 +18,6 @@
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
-
+    <bean class="org.fcrepo.services.ObjectService" />
 
 </beans>
