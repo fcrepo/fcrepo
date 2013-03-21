@@ -95,15 +95,17 @@ public class Datastream extends JcrTools {
     
     public Datastream(final Session session, final String dsPath) throws RepositoryException {
     	this.node = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
-        this.node.addMixin(FEDORA_DATASTREAM);
-        this.node.addMixin(FEDORA_OWNED);
-        this.node.setProperty(FEDORA_OWNERID, session.getUserID());
+    	if (this.node.isNew()){
+    		this.node.addMixin(FEDORA_DATASTREAM);
+    		this.node.addMixin(FEDORA_OWNED);
+    		this.node.setProperty(FEDORA_OWNERID, session.getUserID());
 
-        this.node.setProperty("jcr:lastModified", Calendar.getInstance());
+    		this.node.setProperty("jcr:lastModified", Calendar.getInstance());
 
-        // TODO: I guess we should also have the PID + DSID..
-        this.node.setProperty(DC_IDENTIFER, new String[] {this.node.getIdentifier(),
-        		this.node.getParent().getName() + "/" + this.node.getName()});
+    		// TODO: I guess we should also have the PID + DSID..
+    		this.node.setProperty(DC_IDENTIFER, new String[] {this.node.getIdentifier(),
+    				this.node.getParent().getName() + "/" + this.node.getName()});
+    	}
     }
 
     /**
