@@ -2,18 +2,19 @@
 package org.fcrepo.api;
 
 import static com.google.common.collect.ImmutableMap.builder;
+import static javax.jcr.Repository.REP_NAME_DESC;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.services.PathService.OBJECT_PATH;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
 import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -30,7 +31,6 @@ import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap.Builder;
 
@@ -43,16 +43,14 @@ import com.google.common.collect.ImmutableMap.Builder;
 @Path("/describe")
 public class FedoraRepository extends AbstractResource {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(FedoraRepository.class);
-    
+    private static final Logger logger = getLogger(FedoraRepository.class);
+
     @GET
     @Path("modeshape")
     public Response describeModeshape() throws JsonGenerationException,
             JsonMappingException, IOException, RepositoryException {
         final Session session = repo.login();
-        logger.debug("Repository name: " +
-                repo.getDescriptor(Repository.REP_NAME_DESC));
+        logger.debug("Repository name: " + repo.getDescriptor(REP_NAME_DESC));
         final Builder<String, Object> repoproperties = builder();
         for (final String key : repo.getDescriptorKeys()) {
             if (repo.getDescriptor(key) != null)
@@ -99,11 +97,9 @@ public class FedoraRepository extends AbstractResource {
         return description;
     }
 
-
     @GET
     @Produces(TEXT_HTML)
-    public String describeHtml() throws LoginException,
-            RepositoryException {
+    public String describeHtml() throws LoginException, RepositoryException {
 
         Session session = repo.login();
         DescribeRepository description = new DescribeRepository();
@@ -112,8 +108,7 @@ public class FedoraRepository extends AbstractResource {
                 uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
                         .build();
         description.repositorySize = getRepositorySize(session);
-        description.numberOfObjects =
-                session.getNode("/objects").getNodes().getSize();
+        description.numberOfObjects = getRepositoryObjectCount(session);
         session.logout();
         VelocityViewer view = new VelocityViewer();
         return view.getRepoInfo(description);
