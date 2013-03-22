@@ -3,15 +3,17 @@ package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.Collections2.filter;
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
 import static com.yammer.metrics.MetricRegistry.name;
 import static java.security.MessageDigest.getInstance;
+import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
-import static org.fcrepo.utils.FixityResult.REPAIRED;
-import static org.fcrepo.utils.FixityResult.SUCCESS;
+import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
+import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
@@ -26,8 +28,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import javax.jcr.Node;
@@ -40,7 +40,6 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FixityResult;
@@ -50,7 +49,6 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
 import com.yammer.metrics.Counter;
 import com.yammer.metrics.Histogram;
 import com.yammer.metrics.Timer;
@@ -227,11 +225,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     public Collection<FixityResult> runFixityAndFixProblems()
             throws RepositoryException {
-        HashSet<FixityResult> fixityResults = null;
+        Set<FixityResult> fixityResults;
         Set<FixityResult> goodEntries;
         final URI digestUri = getContentDigest();
         final long size = getContentSize();
-        MessageDigest digest = null;
+        MessageDigest digest;
 
         fixityCheckCounter.inc();
 
@@ -244,23 +242,17 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         final Timer.Context context = timer.time();
 
         try {
-            fixityResults =
-                    new HashSet<FixityResult>(LowLevelStorageService.getFixity(
-                            node, digest, digestUri, size));
+            fixityResults = copyOf(getFixity(node, digest, digestUri, size));
 
             goodEntries =
-                    ImmutableSet.copyOf(filter(fixityResults,
-                            new Predicate<FixityResult>() {
+                    copyOf(filter(fixityResults, new Predicate<FixityResult>() {
 
-                                @Override
-                                public boolean apply(FixityResult result) {
-                                    return result.computedChecksum
-                                            .equals(digestUri) &&
-                                            result.computedSize == size;
-                                }
-
-                                ;
-                            }));
+                        @Override
+                        public boolean apply(FixityResult result) {
+                            return result.computedChecksum.equals(digestUri) &&
+                                    result.computedSize == size;
+                        };
+                    }));
         } finally {
             context.stop();
         }
@@ -271,27 +263,26 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             return fixityResults;
         }
 
-        Iterator<FixityResult> it = goodEntries.iterator();
+        final LowLevelCacheEntry anyGoodCacheEntry =
+                goodEntries.iterator().next().getEntry();
 
-        LowLevelCacheEntry anyGoodCacheEntry = it.next().getEntry();
+        final Set<FixityResult> badEntries =
+                difference(fixityResults, goodEntries);
 
-        Set<FixityResult> badEntries = difference(fixityResults, goodEntries);
-
-        for (FixityResult result : badEntries) {
-
+        for (final FixityResult result : badEntries) {
             try {
                 result.getEntry()
                         .storeValue(anyGoodCacheEntry.getInputStream());
-                FixityResult newResult =
+                final FixityResult newResult =
                         result.getEntry().checkFixity(digestUri, size, digest);
-                if (newResult.status == SUCCESS) {
-                    result.status = result.status | REPAIRED;
+                if (newResult.status.contains(SUCCESS)) {
+                    result.status.add(REPAIRED);
                     fixityRepairedCounter.inc();
                 } else {
                     fixityErrorCounter.inc();
                 }
             } catch (IOException e) {
-                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
         }
 

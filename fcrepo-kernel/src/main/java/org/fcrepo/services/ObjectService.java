@@ -17,10 +17,8 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
-import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
 
 import org.fcrepo.FedoraObject;
@@ -111,7 +109,7 @@ public class ObjectService implements FedoraJcrTypes {
 
         Node objects = readOnlySession.getNode(getObjectJcrNodePath(""));
         Builder<String> b = builder();
-        for (NodeIterator i = objects.getNodes(); i.hasNext();) {
+        for (final NodeIterator i = objects.getNodes(); i.hasNext();) {
             b.add(i.nextNode().getName());
         }
         return b.build();
@@ -133,14 +131,11 @@ public class ObjectService implements FedoraJcrTypes {
                 "\n" + "SELECT [" + FEDORA_SIZE + "] FROM [" + FEDORA_CHECKSUM +
                         "]";
 
-        Query query = queryManager.createQuery(querystring, JCR_SQL2);
+        final QueryResult queryResults =
+                queryManager.createQuery(querystring, JCR_SQL2).execute();
 
-        QueryResult queryResults = query.execute();
-
-        final RowIterator rows = queryResults.getRows();
-        while (rows.hasNext()) {
-            final Row row = rows.nextRow();
-            final Value value = row.getValue(FEDORA_SIZE);
+        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
+            final Value value = rows.nextRow().getValue(FEDORA_SIZE);
             sum += value.getLong();
         }
 
@@ -166,7 +161,6 @@ public class ObjectService implements FedoraJcrTypes {
             logoutSession();
         }
         repo = repository;
-
         getSession();
     }
 

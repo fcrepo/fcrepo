@@ -3,6 +3,12 @@ package org.fcrepo.observer;
 
 import static com.google.common.collect.Collections2.filter;
 import static com.yammer.metrics.MetricRegistry.name;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_MOVED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -31,9 +37,8 @@ import com.yammer.metrics.Counter;
  */
 public class SimpleObserver implements EventListener {
 
-    final private Integer eventTypes = Event.NODE_ADDED + Event.NODE_REMOVED +
-            Event.NODE_MOVED + Event.PROPERTY_ADDED + Event.PROPERTY_CHANGED +
-            Event.PROPERTY_REMOVED;
+    final private Integer eventTypes = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
+            PROPERTY_ADDED + PROPERTY_CHANGED + PROPERTY_REMOVED;
 
     @Inject
     private Repository repository;
@@ -46,7 +51,8 @@ public class SimpleObserver implements EventListener {
 
     static final private Logger logger = getLogger(SimpleObserver.class);
 
-    static final Counter eventCounter = metrics.counter(name(SimpleObserver.class, "onEvent"));
+    static final Counter eventCounter = metrics.counter(name(
+            SimpleObserver.class, "onEvent"));
 
     @PostConstruct
     public void buildListener() throws RepositoryException {

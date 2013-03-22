@@ -4,6 +4,8 @@ package org.fcrepo.integration.api;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static junit.framework.TestCase.assertFalse;
+import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
+import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -84,9 +86,11 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                 "objects/FedoraDatastreamsTest4/datastreams/ds1")));
         assertEquals(201, getStatus(postDSMethod("FedoraDatastreamsTest4",
                 "ds1", "foo")));
-        HttpResponse response = execute(new HttpGet(serverAddress +
-                "objects/FedoraDatastreamsTest4/datastreams/ds1"));
-        assertEquals(EntityUtils.toString(response.getEntity()), 200, response.getStatusLine().getStatusCode());
+        HttpResponse response =
+                execute(new HttpGet(serverAddress +
+                        "objects/FedoraDatastreamsTest4/datastreams/ds1"));
+        assertEquals(EntityUtils.toString(response.getEntity()), 200, response
+                .getStatusLine().getStatusCode());
     }
 
     @Test
@@ -130,12 +134,10 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(method_test_get);
         logger.debug("Returned from HTTP GET, now checking content...");
         assertTrue("Got the wrong content back!", "marbles for everyone"
-                .equals(EntityUtils.toString(response
-                        .getEntity())));
+                .equals(EntityUtils.toString(response.getEntity())));
 
-        assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df", response.getFirstHeader("ETag").getValue().replace("\"", ""));
-
-
+        assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
+                response.getFirstHeader("ETag").getValue().replace("\"", ""));
 
         logger.debug("Content was correct.");
     }
@@ -152,15 +154,16 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                         "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
-
-        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-
+        SimpleDateFormat format =
+                new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest61/datastreams/ds1/content");
-        method_test_get.setHeader("If-None-Match","\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
-        method_test_get.setHeader("If-Modified-Since", format.format(new Date()));
+        method_test_get.setHeader("If-None-Match",
+                "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+        method_test_get.setHeader("If-Modified-Since", format
+                .format(new Date()));
 
         assertEquals(304, getStatus(method_test_get));
 
@@ -193,7 +196,6 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                 "dsid=\"ds2\"", DOTALL).matcher(content).find());
     }
 
-
     @Test
     public void testModifyMultipleDatastreams() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest8");
@@ -206,7 +208,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(201, getStatus(createDSVOIDMethod));
 
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest8/datastreams?delete=ds_void");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest8/datastreams?delete=ds_void");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -217,7 +220,6 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         HttpResponse postResponse = client.execute(post);
 
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
-
 
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
@@ -233,7 +235,6 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertFalse("Found the deleted datastream!", compile(
                 "dsid=\"ds_void\"", DOTALL).matcher(content).find());
 
-
     }
 
     @Test
@@ -242,7 +243,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest9");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest9/datastreams/");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest9/datastreams/");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -252,7 +254,6 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
         HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
-
 
         // TODO: we should actually evaluate the multipart response for the things we're expecting
         final HttpGet getDSesMethod =
@@ -262,10 +263,10 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        assertTrue("Didn't find the first datastream!", compile("asdfg",
+        assertTrue("Didn't find the first datastream!",
+                compile("asdfg", DOTALL).matcher(content).find());
+        assertTrue("Didn't find the second datastream!", compile("qwerty",
                 DOTALL).matcher(content).find());
-        assertTrue("Didn't find the second datastream!", compile(
-                "qwerty", DOTALL).matcher(content).find());
 
     }
 
@@ -275,7 +276,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest10");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/FedoraDatastreamsTest10/datastreams/");
+                new HttpPost(serverAddress +
+                        "objects/FedoraDatastreamsTest10/datastreams/");
 
         MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -286,7 +288,6 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-
         // TODO: we should actually evaluate the multipart response for the things we're expecting
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
@@ -295,13 +296,13 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        assertTrue("Didn't find the first datastream!", compile("asdfg",
-                DOTALL).matcher(content).find());
+        assertTrue("Didn't find the first datastream!",
+                compile("asdfg", DOTALL).matcher(content).find());
         assertFalse("Didn't expect to find the second datastream!", compile(
                 "qwerty", DOTALL).matcher(content).find());
 
     }
-    
+
     @Test
     public void testCheckDatastreamFixity() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest10");
@@ -318,31 +319,33 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         String content = EntityUtils.toString(entity);
         JAXBContext context = JAXBContext.newInstance(DatastreamFixity.class);
         Unmarshaller um = context.createUnmarshaller();
-        DatastreamFixity fixity = 
-        		(DatastreamFixity) um.unmarshal(new java.io.StringReader(content));
+        DatastreamFixity fixity =
+                (DatastreamFixity) um.unmarshal(new java.io.StringReader(
+                        content));
         int cache = 0;
-        for (FixityResult status:fixity.statuses){
-        	logger.debug("Verifying cache {} :", cache++);
-        	assertTrue((status.status & FixityResult.BAD_CHECKSUM) != FixityResult.BAD_CHECKSUM);
-        	logger.debug("Checksum matched");
-        	assertTrue((status.status & FixityResult.BAD_SIZE) != FixityResult.BAD_SIZE);
-        	logger.debug("DS size matched");
-            assertTrue("Didn't find the store identifier!", compile("infinispan",
-                    DOTALL).matcher(status.storeIdentifier).find());
+        for (FixityResult status : fixity.statuses) {
+            logger.debug("Verifying cache {} :", cache++);
+            assertFalse(status.status.contains(BAD_CHECKSUM));
+            logger.debug("Checksum matched");
+            assertFalse(status.status.contains(BAD_SIZE));
+            logger.debug("DS size matched");
+            assertTrue("Didn't find the store identifier!", compile(
+                    "infinispan", DOTALL).matcher(status.storeIdentifier)
+                    .find());
             logger.debug("cache store matched");
         }
     }
-    
+
     @Test
     public void testBatchDeleteDatastream() throws Exception {
-    	client.execute(postObjMethod("FedoraDatastreamsTest11"));
-    	final HttpPost method1 =
+        client.execute(postObjMethod("FedoraDatastreamsTest11"));
+        final HttpPost method1 =
                 postDSMethod("FedoraDatastreamsTest11", "ds1", "foo1");
         assertEquals(201, getStatus(method1));
         final HttpPost method2 =
                 postDSMethod("FedoraDatastreamsTest11", "ds2", "foo2");
         assertEquals(201, getStatus(method2));
-        
+
         final HttpDelete dmethod =
                 new HttpDelete(serverAddress +
                         "objects/FedoraDatastreamsTest11/datastreams?dsid=ds1&dsid=ds2");

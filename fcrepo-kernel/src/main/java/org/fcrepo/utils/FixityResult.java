@@ -1,6 +1,8 @@
+
 package org.fcrepo.utils;
 
 import java.net.URI;
+import java.util.EnumSet;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -8,36 +10,32 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "DatastreamFixityStatus")
 public class FixityResult {
-	
-	public static final int SUCCESS = 0;
-	
-	public static final int REPAIRED = 1;
-	
-	public static final int BAD_CHECKSUM = 2;
-	
-	public static final int BAD_SIZE = 4;
+
+    public static enum FixityState {
+        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE
+    }
 
     @XmlElement
     public String storeIdentifier;
-    
-    @XmlAttribute
-    public int status;
 
-	@XmlElement
-	public long computedSize;
-	
-	@XmlElement
-	public URI computedChecksum;
-	
-	@XmlElement
+    @XmlAttribute
+    public EnumSet<FixityState> status = EnumSet.noneOf(FixityState.class);
+
+    @XmlElement
+    public long computedSize;
+
+    @XmlElement
+    public URI computedChecksum;
+
+    @XmlElement
     public long dsSize;
-	
-	@XmlElement
+
+    @XmlElement
     public String dsChecksumType;
-	
-	@XmlElement
+
+    @XmlElement
     public URI dsChecksum;
-	
+
     private final LowLevelCacheEntry entry;
 
     public FixityResult() {
@@ -60,13 +58,15 @@ public class FixityResult {
         this.computedSize = size;
         this.computedChecksum = checksum;
     }
-    
+
     public boolean equals(Object obj) {
 
         boolean result = false;
         if (obj instanceof FixityResult) {
             FixityResult that = (FixityResult) obj;
-            result = this.computedSize == that.computedSize && this.computedChecksum.equals(that.computedChecksum);
+            result =
+                    this.computedSize == that.computedSize &&
+                            this.computedChecksum.equals(that.computedChecksum);
 
         }
 
@@ -74,7 +74,8 @@ public class FixityResult {
     }
 
     public String toString() {
-        return "Fixity: checksum: " + computedChecksum.toString() + " / " + Long.toString(computedSize);
+        return "Fixity: checksum: " + computedChecksum.toString() + " / " +
+                Long.toString(computedSize);
     }
 
     public LowLevelCacheEntry getEntry() {

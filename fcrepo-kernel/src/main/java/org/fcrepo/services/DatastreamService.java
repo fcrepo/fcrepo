@@ -42,17 +42,18 @@ public class DatastreamService {
             final InputStream requestBodyStream) throws RepositoryException,
             IOException, InvalidChecksumException {
 
-        return createDatastreamNode(session, dsPath, contentType, requestBodyStream, null, null);
+        return createDatastreamNode(session, dsPath, contentType,
+                requestBodyStream, null, null);
     }
-    
+
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
-            final InputStream requestBodyStream, 
-            String checksumType, String checksum) throws RepositoryException,
-            IOException, InvalidChecksumException {
+            final InputStream requestBodyStream, String checksumType,
+            String checksum) throws RepositoryException, IOException,
+            InvalidChecksumException {
 
         Datastream ds = new Datastream(session, dsPath);
-        ds.setContent(requestBodyStream, contentType, checksumType, checksum);     
+        ds.setContent(requestBodyStream, contentType, checksumType, checksum);
         return ds.getNode();
     }
 
@@ -69,20 +70,22 @@ public class DatastreamService {
             throws RepositoryException {
         return new Datastream(readOnlySession, pid, dsId);
     }
-    
-    public void purgeDatastream(final Session session,
-    		final String pid, 
-    		final String dsId) throws RepositoryException {
-    	final String dsPath = getDatastreamJcrNodePath(pid, dsId);
-		new Datastream(session, dsPath).purge();
-    }
-    
-    public NodeIterator getDatastreamsFor(String pid, Session session) throws RepositoryException {
-    	return new FedoraObject(session, getObjectJcrNodePath(pid)).getNode().getNodes();
+
+    public void purgeDatastream(final Session session, final String pid,
+            final String dsId) throws RepositoryException {
+        final String dsPath = getDatastreamJcrNodePath(pid, dsId);
+        new Datastream(session, dsPath).purge();
     }
 
-    public NodeIterator getDatastreamsFor(String pid) throws RepositoryException {
-    	return getDatastreamsFor(pid, readOnlySession);
+    public NodeIterator getDatastreamsFor(final String pid,
+            final Session session) throws RepositoryException {
+        return new FedoraObject(session, getObjectJcrNodePath(pid)).getNode()
+                .getNodes();
+    }
+
+    public NodeIterator getDatastreamsFor(final String pid)
+            throws RepositoryException {
+        return getDatastreamsFor(pid, readOnlySession);
     }
 
     @PostConstruct
@@ -100,12 +103,12 @@ public class DatastreamService {
     }
 
     public void setRepository(Repository repository) {
-            if(readOnlySession != null) {
-                logoutSession();
-            }
-            repo = repository;
+        if (readOnlySession != null) {
+            logoutSession();
+        }
+        repo = repository;
 
-            getSession();
+        getSession();
     }
 
 }
