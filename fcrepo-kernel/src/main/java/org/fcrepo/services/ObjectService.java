@@ -14,6 +14,10 @@ import javax.jcr.NodeIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.Row;
+import javax.jcr.query.RowIterator;
 
 import org.fcrepo.FedoraObject;
 import org.slf4j.Logger;
@@ -111,6 +115,37 @@ public class ObjectService {
         }
         return b.build();
 
+    }
+
+
+    /**
+     *
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public double getAllObjectsDatastreamSize() throws RepositoryException {
+
+        double sum = 0;
+        javax.jcr.query.QueryManager queryManager = readOnlySession.getWorkspace().getQueryManager();
+
+        String querystring = "\n" +
+                "SELECT [fedora:size] FROM [fedora:checksum]";
+
+        String language = javax.jcr.query.Query.JCR_SQL2;
+
+        javax.jcr.query.Query query = queryManager.createQuery(querystring,language);
+
+        QueryResult queryResults = query.execute();
+
+        final RowIterator rows = queryResults.getRows();
+        while(rows.hasNext()) {
+            final Row row = rows.nextRow();
+            final Value value = row.getValue("fedora:size");
+
+            sum = sum + value.getDouble();
+        }
+
+        return sum;
     }
 
     @PostConstruct
