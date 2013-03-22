@@ -49,6 +49,7 @@
     <module>fcrepo-rss</module>
     <module>fcrepo-http-api</module>
     <module>fcrepo-webhooks</module>
+    <module>fcrepo-metrics</module>
   </modules>
 
   <dependencyManagement>
