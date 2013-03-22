@@ -11,7 +11,10 @@ import java.util.concurrent.TimeUnit;
 public class ReporterFactory {
 
     public Reporter registerGraphiteReporter(Graphite g, String prefix) {
-        return new GraphiteReporter(RegistryService.getMetrics(), g, Clock.defaultClock(), prefix, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, MetricFilter.ALL);
+        GraphiteReporter r = new GraphiteReporter(RegistryService.getMetrics(), g, Clock.defaultClock(), prefix, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, MetricFilter.ALL);
+
+        r.start(1, TimeUnit.MINUTES);
+        return r;
     }
 
     public static ReporterFactory buildDefaultReporterFactory() {
