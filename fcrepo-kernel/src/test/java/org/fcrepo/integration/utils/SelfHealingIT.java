@@ -1,10 +1,7 @@
 package org.fcrepo.integration.utils;
 
-import static org.fcrepo.services.DatastreamService.createDatastreamNode;
-import static org.fcrepo.services.DatastreamService.getDatastream;
 import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
 import static org.fcrepo.services.LowLevelStorageService.getFixity;
-import static org.fcrepo.services.ObjectService.createObjectNode;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,6 +37,10 @@ import org.slf4j.LoggerFactory;
 public class SelfHealingIT {
     protected Logger logger;
     static private Repository repo;
+    
+    private DatastreamService datastreamService;
+    
+    private ObjectService objectService;
 
 
     @Before
@@ -53,8 +54,10 @@ public class SelfHealingIT {
         URL config = this.getClass().getClassLoader().getResource("test_selfhealing_repository.json");
         repo = new JcrRepositoryFactory().getRepository(config.toString(), null);
 
-        new DatastreamService().setRepository(repo);
-        new ObjectService().setRepository(repo);
+        datastreamService = new DatastreamService();
+        datastreamService.setRepository(repo);
+        objectService = new ObjectService();
+        objectService.setRepository(repo);
         new LowLevelStorageService().setRepository(repo);
         setupInitialNodes();
     }
@@ -100,13 +103,13 @@ public class SelfHealingIT {
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         Session session = repo.login();
 
-        createObjectNode(session, "testSelfHealingObject");
+        objectService.createObjectNode(session, "testSelfHealingObject");
 
-        createDatastreamNode(session,
+        datastreamService.createDatastreamNode(session,
                 "/objects/testSelfHealingObject/testDatastreamNode4",
                 "application/octet-stream", new ByteArrayInputStream(
                 "9876543210".getBytes()), "SHA-1", "9cd656169600157ec17231dcf0613c94932efcdc");
-        createDatastreamNode(session,
+        datastreamService.createDatastreamNode(session,
                 "/objects/testSelfHealingObject/testDatastreamNode5",
                 "application/octet-stream", new ByteArrayInputStream(
                 "0123456789".getBytes()), "SHA-1", "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
@@ -119,10 +122,10 @@ public class SelfHealingIT {
         Thread.sleep(1000);
 
 
-        Datastream ds = getDatastream("testSelfHealingObject", "testDatastreamNode5");
+        Datastream ds = datastreamService.getDatastream("testSelfHealingObject", "testDatastreamNode5");
 
 
-        Datastream ds2 = getDatastream("testSelfHealingObject", "testDatastreamNode4");
+        Datastream ds2 = datastreamService.getDatastream("testSelfHealingObject", "testDatastreamNode4");
 
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);

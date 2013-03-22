@@ -84,8 +84,9 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                 "objects/FedoraDatastreamsTest4/datastreams/ds1")));
         assertEquals(201, getStatus(postDSMethod("FedoraDatastreamsTest4",
                 "ds1", "foo")));
-        assertEquals(200, getStatus(new HttpGet(serverAddress +
-                "objects/FedoraDatastreamsTest4/datastreams/ds1")));
+        HttpResponse response = execute(new HttpGet(serverAddress +
+                "objects/FedoraDatastreamsTest4/datastreams/ds1"));
+        assertEquals(EntityUtils.toString(response.getEntity()), 200, response.getStatusLine().getStatusCode());
     }
 
     @Test

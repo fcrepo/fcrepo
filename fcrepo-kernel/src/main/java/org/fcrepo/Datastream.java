@@ -3,11 +3,17 @@ package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.Collections2.filter;
+import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
+import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.IOException;
@@ -15,6 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -25,9 +32,11 @@ import java.util.concurrent.TimeUnit;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.version.VersionException;
 
 import com.google.common.base.Predicate;
@@ -61,6 +70,8 @@ public class Datastream extends JcrTools {
     private final static String DIGEST_VALUE = "fedora:digest";
 
     private final static String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
+    
+    private static JcrTools jcrTools = new JcrTools(false);
 
     private final static Logger logger = LoggerFactory
             .getLogger(Datastream.class);
@@ -76,6 +87,25 @@ public class Datastream extends JcrTools {
 
     public Datastream(Node n) {
         this.node = n;
+    }
+    
+    public Datastream(final Session session, String pid, String dsId) throws RepositoryException {
+    	this(session, getDatastreamJcrNodePath(pid, dsId));
+    }
+    
+    public Datastream(final Session session, final String dsPath) throws RepositoryException {
+    	this.node = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
+    	if (this.node.isNew()){
+    		this.node.addMixin(FEDORA_DATASTREAM);
+    		this.node.addMixin(FEDORA_OWNED);
+    		this.node.setProperty(FEDORA_OWNERID, session.getUserID());
+
+    		this.node.setProperty("jcr:lastModified", Calendar.getInstance());
+
+    		// TODO: I guess we should also have the PID + DSID..
+    		this.node.setProperty(DC_IDENTIFER, new String[] {this.node.getIdentifier(),
+    				this.node.getParent().getName() + "/" + this.node.getName()});
+    	}
     }
 
     /**
@@ -315,6 +345,13 @@ public class Datastream extends JcrTools {
 
     public Date getLastModifiedDate() throws RepositoryException {
         return new Date(node.getProperty("jcr:lastModified").getDate().getTimeInMillis());
+    }
+    
+    /**
+     * Delete this datastream's underlying node
+     */
+    public void purge() throws RepositoryException {
+    	this.node.remove();
     }
 
 }
