@@ -102,7 +102,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             this.node.setProperty("jcr:lastModified", Calendar.getInstance());
 
             // TODO: I guess we should also have the PID + DSID..
-            this.node.setProperty(DC_IDENTIFER,
+            this.node.setProperty(DC_IDENTIFIER,
                     new String[] {
                             this.node.getIdentifier(),
                             this.node.getParent().getName() + "/" +

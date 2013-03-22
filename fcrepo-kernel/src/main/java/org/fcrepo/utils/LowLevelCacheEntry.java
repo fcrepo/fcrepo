@@ -154,7 +154,6 @@ public class LowLevelCacheEntry {
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
             throw new IllegalStateException(e);
         }
 

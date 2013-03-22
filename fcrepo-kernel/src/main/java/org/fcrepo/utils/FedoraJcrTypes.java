@@ -21,7 +21,7 @@ public interface FedoraJcrTypes {
 
     public static final String DC_TITLE = "dc:title";
 
-    public static final String DC_IDENTIFER = "dc:identifier";
+    public static final String DC_IDENTIFIER = "dc:identifier";
 
     public static final String JCR_LASTMODIFIED = "jcr:lastModified";
 

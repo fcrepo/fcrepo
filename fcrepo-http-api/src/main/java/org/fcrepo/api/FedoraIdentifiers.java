@@ -30,7 +30,7 @@ public class FedoraIdentifiers extends AbstractResource {
 
     /**
      * @param numPids
-     * @return HTTP 200 with XML-formatted block of PIDs
+     * @return HTTP 200 with block of PIDs
      * @throws RepositoryException
      * @throws IOException
      * @throws TemplateException

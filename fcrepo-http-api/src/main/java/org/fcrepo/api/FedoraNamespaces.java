@@ -5,7 +5,6 @@ import static com.google.common.collect.ImmutableSet.builder;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
 import java.net.URI;
@@ -98,7 +97,7 @@ public class FedoraNamespaces extends AbstractResource {
     @GET
     @Path("/{prefix}")
     @Produces(APPLICATION_JSON)
-    public Response retrieveObjectNamespace(@PathParam("ns")
+    public Namespace retrieveObjectNamespace(@PathParam("ns")
     final String prefix) throws RepositoryException {
 
         final Session session = repo.login();
@@ -109,7 +108,7 @@ public class FedoraNamespaces extends AbstractResource {
             final Namespace ns =
                     new Namespace(prefix, URI.create(r.getURI(prefix)));
 
-            return ok(ns).build();
+            return ns;
         } finally {
             session.logout();
         }
