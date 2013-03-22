@@ -3,6 +3,7 @@ package org.fcrepo.services;
 
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +21,6 @@ import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -30,8 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DatastreamService {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(DatastreamService.class);
+    private static final Logger logger = getLogger(DatastreamService.class);
 
     @Inject
     private Repository repo;

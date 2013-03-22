@@ -3,18 +3,20 @@ package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.Collections2.filter;
+import static com.google.common.collect.Sets.difference;
+import static com.yammer.metrics.MetricRegistry.name;
+import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-import static org.fcrepo.utils.FedoraJcrTypes.DC_IDENTIFER;
-import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
+import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.utils.FixityResult.REPAIRED;
+import static org.fcrepo.utils.FixityResult.SUCCESS;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +29,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -36,26 +37,23 @@ import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.version.VersionException;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.yammer.metrics.Counter;
-import com.yammer.metrics.Histogram;
-import com.yammer.metrics.MetricRegistry;
-import com.yammer.metrics.Timer;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.services.RepositoryService;
 import org.fcrepo.utils.ContentDigest;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
+import com.yammer.metrics.Counter;
+import com.yammer.metrics.Histogram;
+import com.yammer.metrics.Timer;
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
@@ -63,56 +61,62 @@ import org.slf4j.LoggerFactory;
  * @author ajs6f
  *
  */
-public class Datastream extends JcrTools {
+public class Datastream extends JcrTools implements FedoraJcrTypes {
 
-    private final static String CONTENT_SIZE = "fedora:size";
-
-    private final static String DIGEST_VALUE = "fedora:digest";
-
-    private final static String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
-    
     private static JcrTools jcrTools = new JcrTools(false);
 
-    private final static Logger logger = LoggerFactory
-            .getLogger(Datastream.class);
+    private final static Logger logger = getLogger(Datastream.class);
 
+    final static Histogram contentSizeHistogram = metrics.histogram(name(
+            Datastream.class, "content-size"));
 
-    final static Histogram contentSizeHistogram = RepositoryService.metrics.histogram(MetricRegistry.name(Datastream.class, "content-size"));
-    final static Counter fixityCheckCounter = RepositoryService.metrics.counter(MetricRegistry.name(Datastream.class, "fixity-check-counter"));
-    final static Timer timer = RepositoryService.metrics.timer(MetricRegistry.name(Datastream.class, "fixity-check-time"));
-    final static Counter fixityRepairedCounter = RepositoryService.metrics.counter(MetricRegistry.name(Datastream.class, "fixity-repaired-counter"));
-    final static Counter fixityErrorCounter = RepositoryService.metrics.counter(MetricRegistry.name(Datastream.class, "fixity-error-counter"));
+    final static Counter fixityCheckCounter = metrics.counter(name(
+            Datastream.class, "fixity-check-counter"));
+
+    final static Timer timer = metrics.timer(name(Datastream.class,
+            "fixity-check-time"));
+
+    final static Counter fixityRepairedCounter = metrics.counter(name(
+            Datastream.class, "fixity-repaired-counter"));
+
+    final static Counter fixityErrorCounter = metrics.counter(name(
+            Datastream.class, "fixity-error-counter"));
 
     Node node;
 
     public Datastream(Node n) {
         this.node = n;
     }
-    
-    public Datastream(final Session session, String pid, String dsId) throws RepositoryException {
-    	this(session, getDatastreamJcrNodePath(pid, dsId));
+
+    public Datastream(final Session session, String pid, String dsId)
+            throws RepositoryException {
+        this(session, getDatastreamJcrNodePath(pid, dsId));
     }
-    
-    public Datastream(final Session session, final String dsPath) throws RepositoryException {
-    	this.node = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
-    	if (this.node.isNew()){
-    		this.node.addMixin(FEDORA_DATASTREAM);
-    		this.node.addMixin(FEDORA_OWNED);
-    		this.node.setProperty(FEDORA_OWNERID, session.getUserID());
 
-    		this.node.setProperty("jcr:lastModified", Calendar.getInstance());
+    public Datastream(final Session session, final String dsPath)
+            throws RepositoryException {
+        this.node = jcrTools.findOrCreateNode(session, dsPath, NT_FILE);
+        if (this.node.isNew()) {
+            this.node.addMixin(FEDORA_DATASTREAM);
+            this.node.addMixin(FEDORA_OWNED);
+            this.node.setProperty(FEDORA_OWNERID, session.getUserID());
 
-    		// TODO: I guess we should also have the PID + DSID..
-    		this.node.setProperty(DC_IDENTIFER, new String[] {this.node.getIdentifier(),
-    				this.node.getParent().getName() + "/" + this.node.getName()});
-    	}
+            this.node.setProperty("jcr:lastModified", Calendar.getInstance());
+
+            // TODO: I guess we should also have the PID + DSID..
+            this.node.setProperty(DC_IDENTIFER,
+                    new String[] {
+                            this.node.getIdentifier(),
+                            this.node.getParent().getName() + "/" +
+                                    this.node.getName()});
+        }
     }
 
     /**
      * @return The backing JCR node.
      */
     public Node getNode() {
-        return node;
+        return this.node;
     }
 
     /**
@@ -130,12 +134,14 @@ public class Datastream extends JcrTools {
      * @param content
      * @throws RepositoryException
      */
-    public void setContent(InputStream content, String checksumType, String checksum) throws RepositoryException, InvalidChecksumException {
+    public void setContent(InputStream content, String checksumType,
+            String checksum) throws RepositoryException,
+            InvalidChecksumException {
         final Node contentNode =
                 findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
-        if (contentNode.canAddMixin("fedora:checksum")) {
-            contentNode.addMixin("fedora:checksum");
+        if (contentNode.canAddMixin(FEDORA_CHECKSUM)) {
+            contentNode.addMixin(FEDORA_CHECKSUM);
         }
 
         logger.debug("Created content node at path: " + contentNode.getPath());
@@ -167,13 +173,14 @@ public class Datastream extends JcrTools {
          * develop later.
          */
         Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
-                
+
         String dsChecksum = binary.getHexHash();
-        if(checksum != null && !checksum.equals("")){
-	        if(!checksum.equals(binary.getHexHash())) {
-	        	logger.debug("Failed checksum test");
-	        	throw new InvalidChecksumException("Checksum Mismatch of " + dsChecksum + " and " + checksum);
-	        }
+        if (checksum != null && !checksum.equals("")) {
+            if (!checksum.equals(binary.getHexHash())) {
+                logger.debug("Failed checksum test");
+                throw new InvalidChecksumException("Checksum Mismatch of " +
+                        dsChecksum + " and " + checksum);
+            }
         }
 
         contentSizeHistogram.update(dataProperty.getLength());
@@ -185,15 +192,17 @@ public class Datastream extends JcrTools {
         logger.debug("Created data property at path: " + dataProperty.getPath());
 
     }
-    
-    public void setContent(InputStream content) throws RepositoryException, InvalidChecksumException {
-    	setContent(content, null, null);
+
+    public void setContent(InputStream content) throws RepositoryException,
+            InvalidChecksumException {
+        setContent(content, null, null);
     }
 
-    public void setContent(InputStream content, String mimeType, String checksumType, String checksum)
-            throws RepositoryException, InvalidChecksumException {
+    public void setContent(InputStream content, String mimeType,
+            String checksumType, String checksum) throws RepositoryException,
+            InvalidChecksumException {
         setContent(content, checksumType, checksum);
-        node.setProperty("fedora:contentType", mimeType);
+        node.setProperty(FEDORA_CONTENTTYPE, mimeType);
     }
 
     /**
@@ -216,73 +225,76 @@ public class Datastream extends JcrTools {
                 .getString();
     }
 
-    public Collection<FixityResult> runFixityAndFixProblems() throws RepositoryException {
-    	HashSet<FixityResult> fixityResults = null;
-        Set< FixityResult> goodEntries;
-		final URI digestUri = getContentDigest();
-		final long size = getContentSize();
+    public Collection<FixityResult> runFixityAndFixProblems()
+            throws RepositoryException {
+        HashSet<FixityResult> fixityResults = null;
+        Set<FixityResult> goodEntries;
+        final URI digestUri = getContentDigest();
+        final long size = getContentSize();
         MessageDigest digest = null;
-
 
         fixityCheckCounter.inc();
 
-
         try {
-            digest = MessageDigest.getInstance(getContentDigestType());
-    	} catch (NoSuchAlgorithmException e) {
+            digest = getInstance(getContentDigestType());
+        } catch (NoSuchAlgorithmException e) {
             throw new RepositoryException(e.getMessage(), e);
-    	}
-
-
+        }
 
         final Timer.Context context = timer.time();
 
         try {
-		fixityResults = new HashSet<FixityResult>(
-				LowLevelStorageService.getFixity(node, digest, digestUri, size));
+            fixityResults =
+                    new HashSet<FixityResult>(LowLevelStorageService.getFixity(
+                            node, digest, digestUri, size));
 
-            goodEntries = ImmutableSet.copyOf(filter(fixityResults, new Predicate<FixityResult>() {
+            goodEntries =
+                    ImmutableSet.copyOf(filter(fixityResults,
+                            new Predicate<FixityResult>() {
 
-                @Override
-                public boolean apply(FixityResult result) {
-                    return result.computedChecksum.equals(digestUri) && result.computedSize == size;
-                }
+                                @Override
+                                public boolean apply(FixityResult result) {
+                                    return result.computedChecksum
+                                            .equals(digestUri) &&
+                                            result.computedSize == size;
+                                }
 
-                ;
-            }));
+                                ;
+                            }));
         } finally {
             context.stop();
         }
 
-    	if (goodEntries.size() == 0) {
-    		logger.error("ALL COPIES OF " + getObject().getName() + "/" + getDsId() + " HAVE FAILED FIXITY CHECKS.");
-    		return fixityResults;
-    	}
+        if (goodEntries.size() == 0) {
+            logger.error("ALL COPIES OF " + getObject().getName() + "/" +
+                    getDsId() + " HAVE FAILED FIXITY CHECKS.");
+            return fixityResults;
+        }
 
-    	Iterator<FixityResult> it = goodEntries.iterator();
+        Iterator<FixityResult> it = goodEntries.iterator();
 
+        LowLevelCacheEntry anyGoodCacheEntry = it.next().getEntry();
 
-    	LowLevelCacheEntry anyGoodCacheEntry = it.next().getEntry();
+        Set<FixityResult> badEntries = difference(fixityResults, goodEntries);
 
+        for (FixityResult result : badEntries) {
 
-    	Set<FixityResult> badEntries = Sets.difference(fixityResults, goodEntries);
-
-    	for(FixityResult result : badEntries) {
-
-    		try {
-    			result.getEntry().storeValue(anyGoodCacheEntry.getInputStream());
-    			FixityResult newResult = result.getEntry().checkFixity(digestUri, size, digest);
-    			if (newResult.status == FixityResult.SUCCESS) {
-                    result.status |= FixityResult.REPAIRED;
+            try {
+                result.getEntry()
+                        .storeValue(anyGoodCacheEntry.getInputStream());
+                FixityResult newResult =
+                        result.getEntry().checkFixity(digestUri, size, digest);
+                if (newResult.status == SUCCESS) {
+                    result.status = result.status | REPAIRED;
                     fixityRepairedCounter.inc();
                 } else {
                     fixityErrorCounter.inc();
                 }
-    		} catch (IOException e) {
-    			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    		}
-    	}
-    	
+            } catch (IOException e) {
+                e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+
         return fixityResults;
     }
 
@@ -307,8 +319,8 @@ public class Datastream extends JcrTools {
      * @throws RepositoryException
      */
     public String getMimeType() throws RepositoryException {
-        return node.hasProperty("fedora:contentType") ? node.getProperty(
-                "fedora:contentType").getString() : "application/octet-stream";
+        return node.hasProperty(FEDORA_CONTENTTYPE) ? node.getProperty(
+                FEDORA_CONTENTTYPE).getString() : "application/octet-stream";
     }
 
     /**
@@ -339,19 +351,20 @@ public class Datastream extends JcrTools {
     }
 
     public Date getCreatedDate() throws RepositoryException {
-        return new Date(node.getProperty("jcr:created").getDate()
+        return new Date(node.getProperty(JCR_CREATED).getDate()
                 .getTimeInMillis());
     }
 
     public Date getLastModifiedDate() throws RepositoryException {
-        return new Date(node.getProperty("jcr:lastModified").getDate().getTimeInMillis());
+        return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
+                .getTimeInMillis());
     }
-    
+
     /**
      * Delete this datastream's underlying node
      */
     public void purge() throws RepositoryException {
-    	this.node.remove();
+        this.node.remove();
     }
 
 }

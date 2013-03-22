@@ -5,6 +5,7 @@ import static com.google.common.collect.ImmutableMap.builder;
 import static com.google.common.collect.Maps.transformEntries;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -35,7 +36,6 @@ import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -43,8 +43,7 @@ import com.google.common.collect.Maps;
 
 public class LowLevelStorageService {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(LowLevelStorageService.class);
+    private static final Logger logger = getLogger(LowLevelStorageService.class);
 
     @Inject
     private Repository repo;

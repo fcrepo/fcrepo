@@ -2,7 +2,9 @@
 package org.fcrepo.services;
 
 import static com.google.common.collect.ImmutableSet.builder;
+import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Set;
 
@@ -15,13 +17,15 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
 
 import org.fcrepo.FedoraObject;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet.Builder;
 
@@ -31,10 +35,9 @@ import com.google.common.collect.ImmutableSet.Builder;
  * @author cbeer
  *
  */
-public class ObjectService {
+public class ObjectService implements FedoraJcrTypes {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(ObjectService.class);
+    private static final Logger logger = getLogger(ObjectService.class);
 
     @Inject
     private Repository repo;
@@ -51,8 +54,9 @@ public class ObjectService {
      * @throws RepositoryException
      */
     @Deprecated
-    public Node createObjectNodeByPath(final Session session,
-            final String path) throws RepositoryException {
+    public Node
+            createObjectNodeByPath(final Session session, final String path)
+                    throws RepositoryException {
         return new FedoraObject(session, path).getNode();
     }
 
@@ -62,9 +66,8 @@ public class ObjectService {
      * @return the JCR node behind the created object
      * @throws RepositoryException
      */
-    public Node
-            createObjectNode(final Session session, final String name)
-                    throws RepositoryException {
+    public Node createObjectNode(final Session session, final String name)
+            throws RepositoryException {
         return new FedoraObject(session, getObjectJcrNodePath(name)).getNode();
     }
 
@@ -74,8 +77,8 @@ public class ObjectService {
      * @return The created object
      * @throws RepositoryException
      */
-    public FedoraObject createObject(final Session session,
-            final String name) throws RepositoryException {
+    public FedoraObject createObject(final Session session, final String name)
+            throws RepositoryException {
         return new FedoraObject(session, getObjectJcrNodePath(name));
     }
 
@@ -84,8 +87,7 @@ public class ObjectService {
      * @return The JCR node behind the FedoraObject with the proferred PID
      * @throws RepositoryException
      */
-    public Node getObjectNode(final String pid)
-            throws RepositoryException {
+    public Node getObjectNode(final String pid) throws RepositoryException {
         logger.trace("Executing getObjectNode() with pid: " + pid);
         return getObject(pid).getNode();
     }
@@ -95,8 +97,7 @@ public class ObjectService {
      * @return A FedoraObject with the proffered PID
      * @throws RepositoryException
      */
-    public FedoraObject getObject(final String pid)
-            throws RepositoryException {
+    public FedoraObject getObject(final String pid) throws RepositoryException {
         logger.trace("Executing getObject() with pid: " + pid);
         return new FedoraObject(readOnlySession
                 .getNode(getObjectJcrNodePath(pid)));
@@ -117,7 +118,6 @@ public class ObjectService {
 
     }
 
-
     /**
      *
      * @return a double of the size of the fedora:datastream binary content
@@ -126,23 +126,22 @@ public class ObjectService {
     public long getAllObjectsDatastreamSize() throws RepositoryException {
 
         long sum = 0;
-        javax.jcr.query.QueryManager queryManager = readOnlySession.getWorkspace().getQueryManager();
+        QueryManager queryManager =
+                readOnlySession.getWorkspace().getQueryManager();
 
-        String querystring = "\n" +
-                "SELECT [fedora:size] FROM [fedora:checksum]";
+        final String querystring =
+                "\n" + "SELECT [" + FEDORA_SIZE + "] FROM [" + FEDORA_CHECKSUM +
+                        "]";
 
-        String language = javax.jcr.query.Query.JCR_SQL2;
-
-        javax.jcr.query.Query query = queryManager.createQuery(querystring,language);
+        Query query = queryManager.createQuery(querystring, JCR_SQL2);
 
         QueryResult queryResults = query.execute();
 
         final RowIterator rows = queryResults.getRows();
-        while(rows.hasNext()) {
+        while (rows.hasNext()) {
             final Row row = rows.nextRow();
-            final Value value = row.getValue("fedora:size");
-
-            sum = sum + value.getLong();
+            final Value value = row.getValue(FEDORA_SIZE);
+            sum += value.getLong();
         }
 
         return sum;
@@ -163,7 +162,7 @@ public class ObjectService {
     }
 
     public void setRepository(Repository repository) {
-        if(readOnlySession != null) {
+        if (readOnlySession != null) {
             logoutSession();
         }
         repo = repository;

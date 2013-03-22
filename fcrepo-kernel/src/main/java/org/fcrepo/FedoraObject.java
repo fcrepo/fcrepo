@@ -1,8 +1,8 @@
 
 package org.fcrepo;
 
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
+import static com.yammer.metrics.MetricRegistry.name;
+import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FedoraTypesUtils.isOwned;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
@@ -11,15 +11,11 @@ import java.util.Calendar;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
-import javax.jcr.version.VersionException;
 
-import com.yammer.metrics.MetricRegistry;
-import com.yammer.metrics.Timer;
-import org.fcrepo.services.RepositoryService;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
+
+import com.yammer.metrics.Timer;
 
 /**
  * An abstraction that represents a Fedora Object backed by
@@ -28,30 +24,30 @@ import org.modeshape.jcr.api.JcrTools;
  * @author ajs6f
  *
  */
-public class FedoraObject extends JcrTools {
+public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
     private Node node;
 
-    final static Timer timer = RepositoryService.metrics.timer(MetricRegistry.name(FedoraObject.class, "FedoraObject"));
+    final static Timer timer = metrics.timer(name(FedoraObject.class,
+            "FedoraObject"));
 
     public FedoraObject(Node n) {
         this.node = n;
     }
 
     public FedoraObject(Session session, String path)
-            throws NoSuchNodeTypeException, VersionException,
-            ConstraintViolationException, LockException, RepositoryException {
+            throws RepositoryException {
 
         final Timer.Context context = timer.time();
 
         try {
-        this.node = findOrCreateNode(session, path, NT_FOLDER);
-        node.addMixin("fedora:object");
-        node.addMixin("fedora:owned");
-        node.setProperty("fedora:ownerId", session.getUserID());
-        node.setProperty("jcr:lastModified", Calendar.getInstance());
-        node.setProperty("dc:identifier", new String[] {node.getIdentifier(),
-                node.getName()});
+            this.node = findOrCreateNode(session, path, NT_FOLDER);
+            node.addMixin(FEDORA_OBJECT);
+            node.addMixin(FEDORA_OWNED);
+            node.setProperty(FEDORA_OWNERID, session.getUserID());
+            node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
+            node.setProperty(DC_IDENTIFER, new String[] {node.getIdentifier(),
+                    node.getName()});
         } finally {
             context.stop();
         }

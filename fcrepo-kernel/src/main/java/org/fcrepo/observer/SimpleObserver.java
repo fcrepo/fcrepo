@@ -2,6 +2,9 @@
 package org.fcrepo.observer;
 
 import static com.google.common.collect.Collections2.filter;
+import static com.yammer.metrics.MetricRegistry.name;
+import static org.fcrepo.services.RepositoryService.metrics;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -11,15 +14,12 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.EventListener;
 
-import com.yammer.metrics.Counter;
-import com.yammer.metrics.MetricRegistry;
-import org.fcrepo.services.RepositoryService;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.eventbus.EventBus;
+import com.yammer.metrics.Counter;
 
 /**
  * Simple JCR EventListener that filters JCR Events through a Fedora
@@ -44,9 +44,9 @@ public class SimpleObserver implements EventListener {
     @Inject
     private EventFilter eventFilter;
 
-    static final private Logger logger = LoggerFactory.getLogger(SimpleObserver.class);
+    static final private Logger logger = getLogger(SimpleObserver.class);
 
-    static final Counter eventCounter = RepositoryService.metrics.counter(MetricRegistry.name(SimpleObserver.class, "onEvent"));
+    static final Counter eventCounter = metrics.counter(name(SimpleObserver.class, "onEvent"));
 
     @PostConstruct
     public void buildListener() throws RepositoryException {
