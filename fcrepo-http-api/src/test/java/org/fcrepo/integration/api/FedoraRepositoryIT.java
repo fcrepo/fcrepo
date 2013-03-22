@@ -70,6 +70,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         }
 
         assertEquals(201, getStatus(postObjMethod("fdhgsldfhg")));
+        assertEquals(201, getStatus(postDSMethod("fdhgsldfhg", "asdf", "1234")));
 
         HttpGet newDescribeMethod = new HttpGet(serverAddress + "describe");
         newDescribeMethod.addHeader("Accept", TEXT_XML);

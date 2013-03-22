@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
+import org.fcrepo.services.ObjectService;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
@@ -48,6 +49,14 @@ public abstract class AbstractResource {
      */
     @Inject
     protected Repository repo;
+
+
+    /**
+     * The fcrepo object service
+     */
+    @Inject
+    protected ObjectService objectService;
+
 
     /**
      * A resource that can mint new Fedora PIDs.
@@ -144,7 +153,7 @@ public abstract class AbstractResource {
 
     protected Long getRepositorySize(Session session) {
         try {
-            return session.getNode("/objects").getProperty("fedora:size").getLong();
+            return objectService.getAllObjectsDatastreamSize();
         } catch(RepositoryException e) {
             logger.warn(e.toString());
             return -1L;

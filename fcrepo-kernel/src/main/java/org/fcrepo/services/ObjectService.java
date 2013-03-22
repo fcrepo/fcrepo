@@ -123,9 +123,9 @@ public class ObjectService {
      * @return a double of the size of the fedora:datastream binary content
      * @throws RepositoryException
      */
-    public double getAllObjectsDatastreamSize() throws RepositoryException {
+    public long getAllObjectsDatastreamSize() throws RepositoryException {
 
-        double sum = 0;
+        long sum = 0;
         javax.jcr.query.QueryManager queryManager = readOnlySession.getWorkspace().getQueryManager();
 
         String querystring = "\n" +
@@ -142,7 +142,7 @@ public class ObjectService {
             final Row row = rows.nextRow();
             final Value value = row.getValue("fedora:size");
 
-            sum = sum + value.getDouble();
+            sum = sum + value.getLong();
         }
 
         return sum;
