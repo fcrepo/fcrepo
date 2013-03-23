@@ -36,7 +36,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastreams() throws Exception {
-        client.execute(postObjMethod("FedoraDatastreamsTest1"));
+        execute(postObjMethod("FedoraDatastreamsTest1"));
         final HttpGet method =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest1/datastreams");
@@ -80,7 +80,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastream() throws Exception {
-        client.execute(postObjMethod("FedoraDatastreamsTest4"));
+        execute(postObjMethod("FedoraDatastreamsTest4"));
 
         assertEquals(404, getStatus(new HttpGet(serverAddress +
                 "objects/FedoraDatastreamsTest4/datastreams/ds1")));
@@ -95,7 +95,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testDeleteDatastream() throws Exception {
-        client.execute(postObjMethod("FedoraDatastreamsTest5"));
+        execute(postObjMethod("FedoraDatastreamsTest5"));
 
         final HttpPost method =
                 postDSMethod("FedoraDatastreamsTest5", "ds1", "foo");
@@ -338,7 +338,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testBatchDeleteDatastream() throws Exception {
-        client.execute(postObjMethod("FedoraDatastreamsTest11"));
+        execute(postObjMethod("FedoraDatastreamsTest11"));
         final HttpPost method1 =
                 postDSMethod("FedoraDatastreamsTest11", "ds1", "foo1");
         assertEquals(201, getStatus(method1));

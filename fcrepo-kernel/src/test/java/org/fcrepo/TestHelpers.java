@@ -1,36 +1,59 @@
 package org.fcrepo;
 
-import static org.apache.tika.io.IOUtils.toInputStream;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.IOException;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.Date;
 
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.Property;
+import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
-import org.modeshape.jcr.api.Binary;
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.utils.ContentDigest;
+import org.fcrepo.utils.DatastreamIterator;
+import org.modeshape.jcr.api.Repository;
 
 public class TestHelpers {
-    public static NodeIterator mockDatastreamNode(String dsId, String content) throws RepositoryException, IOException {
-    	Node mockDsNode = mock(Node.class);
-        Node mockContent = mock(Node.class);
-        Property mockData = mock(Property.class);
-        Binary mockBinary = mock(Binary.class);
-        when(mockDsNode.getName()).thenReturn(dsId);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
-        when(mockData.getBinary()).thenReturn(mockBinary);
-        when(mockBinary.getMimeType()).thenReturn("binary/octet-stream");
-        when(mockBinary.getStream()).thenReturn(toInputStream(content));
-    	NodeIterator mockIter = mock(NodeIterator.class);
+    public static DatastreamIterator mockDatastreamIterator(String pid, String dsId, String content) throws RepositoryException, IOException {
+    	DatastreamIterator mockIter = mock(DatastreamIterator.class);
+    	Datastream mockDs = mockDatastream(pid, dsId, content);
         when(mockIter.hasNext()).thenReturn(true, false);
-        when(mockIter.next()).thenReturn(mockDsNode);
-        when(mockIter.nextNode()).thenReturn(mockDsNode);
+        when(mockIter.next()).thenReturn(mockDs);
+        when(mockIter.nextDatastream()).thenReturn(mockDs);
         return mockIter;
     }
+    
+    public static Repository mockRepository() throws LoginException, RepositoryException {
+    	Repository mockRepo = mock(Repository.class);
+    	Session mockSession = mock(Session.class);
+    	when(mockRepo.login()).thenReturn(mockSession);
+    	return mockRepo;
+    }
+
+	public static Datastream mockDatastream(String pid, String dsId, String content) {
+		Datastream mockDs = mock(Datastream.class);
+		FedoraObject mockObj = mock(FedoraObject.class);
+		try{
+			when(mockObj.getName()).thenReturn(pid);
+			when(mockDs.getObject()).thenReturn(mockObj);
+			when(mockDs.getDsId()).thenReturn(dsId);
+	    	when(mockDs.getMimeType()).thenReturn("application/octet-stream");
+			when(mockDs.getCreatedDate()).thenReturn(new Date());
+			when(mockDs.getLastModifiedDate()).thenReturn(new Date());
+			if (content != null) {
+				MessageDigest md = MessageDigest.getInstance("SHA-1");
+				byte [] digest = md.digest(content.getBytes());
+				URI cd = ContentDigest.asURI("SHA-1", digest);
+				when(mockDs.getContent()).thenReturn(IOUtils.toInputStream(content));
+				when(mockDs.getContentDigest()).thenReturn(cd);
+				when(mockDs.getContentDigestType()).thenReturn("SHA-1");
+			}
+		} catch (Throwable t) {}
+		return mockDs;
+	}
+    
 }

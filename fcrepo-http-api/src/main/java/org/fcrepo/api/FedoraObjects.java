@@ -6,10 +6,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.api.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
-import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
@@ -34,9 +33,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.services.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,21 +114,13 @@ public class FedoraObjects extends AbstractResource {
     public Response ingest(@PathParam("pid")
     final String pid) throws RepositoryException {
 
-        logger.debug("Attempting to ingest with pid: " + pid);
+        logger.debug("Attempting to ingest with pid: {}", pid);
 
         final Session session = repo.login();
         try {
-            final Node obj = objectService.createObjectNode(session, pid);
+            objectService.createObjectNode(session, pid);
             session.save();
-            /*
-             * we save before updating the repo size because the act of
-             * persisting session state creates new system-curated nodes and
-             * properties which contribute to the footprint of this resource
-             */
-            updateRepositorySize(getObjectSize(obj), session);
-            // now we save again to persist the repo size
-            session.save();
-            logger.debug("Finished ingest with pid: " + pid);
+            logger.debug("Finished ingest with pid: {}", pid);
             return created(uriInfo.getAbsolutePath()).entity(pid).build();
 
         } finally {
@@ -188,9 +181,9 @@ public class FedoraObjects extends AbstractResource {
     public Response deleteObject(@PathParam("pid")
     final String pid) throws RepositoryException {
         final Session session = repo.login();
-        final Node obj = session.getNode(getObjectJcrNodePath(pid));
-        updateRepositorySize(0L - getObjectSize(obj), session);
-        return deleteResource(obj);
+        objectService.deleteObject(pid, session);
+        session.save();
+        return noContent().build();
     }
 
     /**
@@ -199,7 +192,7 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     static Long getObjectSize(Node obj) throws RepositoryException {
-        return getNodePropertySize(obj) + getObjectDSSize(obj);
+        return RepositoryService.getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
     /**
@@ -211,9 +204,8 @@ public class FedoraObjects extends AbstractResource {
         Long size = 0L;
         NodeIterator i = obj.getNodes();
         while (i.hasNext()) {
-            Node ds = i.nextNode();
-            size = size + getNodePropertySize(ds);
-            size = size + getContentSize(ds);
+            Datastream ds = new Datastream(i.nextNode());
+            size += ds.getSize();
         }
         return size;
     }

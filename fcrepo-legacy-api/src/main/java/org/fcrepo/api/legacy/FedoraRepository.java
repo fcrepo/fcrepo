@@ -91,7 +91,7 @@ public class FedoraRepository extends AbstractResource {
         description.sampleOAIURL =
                 uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
                         .build();
-        description.repositorySize = getRepositorySize(session);
+        description.repositorySize = objectService.getAllObjectsDatastreamSize();
         description.numberOfObjects =
                 session.getNode("/objects").getNodes().getSize();
         session.logout();

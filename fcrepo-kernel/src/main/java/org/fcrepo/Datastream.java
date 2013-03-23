@@ -9,6 +9,7 @@ import static com.yammer.metrics.MetricRegistry.name;
 import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
+import static org.fcrepo.services.RepositoryService.getNodePropertySize;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
@@ -358,4 +359,13 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         this.node.remove();
     }
 
+    /**
+     * Return the calculated size of the DS node
+     * @return
+     * @throws RepositoryException
+     */
+    public long getSize() throws RepositoryException {
+        return getNodePropertySize(this.node) + getContentSize();
+
+    }
 }

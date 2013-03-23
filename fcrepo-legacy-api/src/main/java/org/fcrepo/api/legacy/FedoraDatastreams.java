@@ -56,6 +56,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.services.RepositoryService;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +132,7 @@ public class FedoraDatastreams extends AbstractResource {
              * persisting session state creates new system-curated nodes and
              * properties which contribute to the footprint of this resource
              */
-            updateRepositorySize(getObjectSize(session
+            datastreamService.updateRepositorySize(getObjectSize(session
                     .getNode(getObjectJcrNodePath(pid))) -
                     oldObjectSize, session);
             // now we save again to persist the repo size
@@ -336,7 +337,7 @@ public class FedoraDatastreams extends AbstractResource {
                  * persisting session state creates new system-curated nodes and
                  * properties which contribute to the footprint of this resource
                  */
-                updateRepositorySize(getObjectSize(session
+                datastreamService.updateRepositorySize(getObjectSize(session
                         .getNode(getObjectJcrNodePath(pid))) -
                         oldObjectSize, session);
                 // now we save again to persist the repo size
@@ -466,7 +467,7 @@ public class FedoraDatastreams extends AbstractResource {
         final String dsPath = getDatastreamJcrNodePath(pid, dsid);
         final Session session = repo.login();
         final Node ds = session.getNode(dsPath);
-        updateRepositorySize(0L - getDatastreamSize(ds), session);
+        datastreamService.updateRepositorySize(0L - getDatastreamSize(ds), session);
         return deleteResource(ds);
     }
 
@@ -492,7 +493,7 @@ public class FedoraDatastreams extends AbstractResource {
         // TODO do something about format URI, or deprecate it
         dsProfile.dsFormatURI = URI.create("info:/nothing");
         dsProfile.dsSize =
-                getNodePropertySize(ds.getNode()) + ds.getContentSize();
+                RepositoryService.getNodePropertySize(ds.getNode()) + ds.getContentSize();
         dsProfile.dsCreateDate =
                 convertDateToXSDString(ds.getCreatedDate().getTime());
         // TODO what _is_ a dsInfoType?
@@ -512,7 +513,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     public static Long getDatastreamSize(Node ds) throws ValueFormatException,
             PathNotFoundException, RepositoryException {
-        return getNodePropertySize(ds) + getContentSize(ds);
+        return RepositoryService.getNodePropertySize(ds) + getContentSize(ds);
     }
 
     public static Long getContentSize(Node ds) throws ValueFormatException,

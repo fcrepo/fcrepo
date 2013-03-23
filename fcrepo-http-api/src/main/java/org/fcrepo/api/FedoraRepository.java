@@ -13,6 +13,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
 import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
@@ -29,6 +30,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
+import org.fcrepo.services.ObjectService;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 
@@ -36,7 +38,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 
 /**
  * 
- * @author cabeer
+ * @author cbeer
  * @author ajs6f
  */
 
@@ -44,6 +46,9 @@ import com.google.common.collect.ImmutableMap.Builder;
 public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraRepository.class);
+    
+    @Inject
+    private ObjectService objectService;
 
     @GET
     @Path("modeshape")
@@ -91,8 +96,8 @@ public class FedoraRepository extends AbstractResource {
         description.sampleOAIURL =
                 uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
                         .build();
-        description.repositorySize = getRepositorySize(session);
-        description.numberOfObjects = getRepositoryObjectCount(session);
+        description.repositorySize = objectService.getRepositorySize(session);
+        description.numberOfObjects = objectService.getRepositoryObjectCount(session);
         session.logout();
         return description;
     }
@@ -101,17 +106,8 @@ public class FedoraRepository extends AbstractResource {
     @Produces(TEXT_HTML)
     public String describeHtml() throws LoginException, RepositoryException {
 
-        Session session = repo.login();
-        DescribeRepository description = new DescribeRepository();
-        description.repositoryBaseURL = uriInfo.getBaseUri();
-        description.sampleOAIURL =
-                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
-                        .build();
-        description.repositorySize = getRepositorySize(session);
-        description.numberOfObjects = getRepositoryObjectCount(session);
-        session.logout();
         VelocityViewer view = new VelocityViewer();
-        return view.getRepoInfo(description);
+        return view.getRepoInfo(describe());
     }
 
 }

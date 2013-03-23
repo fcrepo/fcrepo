@@ -133,14 +133,12 @@ public class LowLevelCacheEntry {
                             (MessageDigest) digest.clone());
 
             result = new FixityResult(this);
-            //result.
+
             while (ds.read() != -1);
 
-            String calculatedDigest =
-                    encodeHexString(ds.getMessageDigest().digest());
             result.computedChecksum =
                     ContentDigest
-                            .asURI(digest.getAlgorithm(), calculatedDigest);
+                            .asURI(digest.getAlgorithm(), ds.getMessageDigest().digest());
             result.computedSize = ds.getByteCount();
             result.dsChecksum = checksum;
             result.dsSize = size;

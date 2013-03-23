@@ -1,6 +1,8 @@
 
 package org.fcrepo.utils;
 
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -21,5 +23,9 @@ public class ContentDigest {
             e.printStackTrace();
             return null;
         }
+    }
+    
+    public static URI asURI(String algorithm, byte[] data) {
+    	return asURI(algorithm, encodeHexString(data));
     }
 }

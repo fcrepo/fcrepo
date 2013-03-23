@@ -1,7 +1,6 @@
 
 package org.fcrepo;
 
-import static com.google.common.collect.ImmutableSet.copyOf;
 import static javax.ws.rs.core.Response.noContent;
 
 import javax.annotation.PostConstruct;
@@ -10,11 +9,8 @@ import javax.jcr.LoginException;
 import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -97,75 +93,21 @@ public abstract class AbstractResource {
         return noContent().build();
 
     }
-
-    public static Long getNodePropertySize(Node node)
-            throws RepositoryException {
-        Long size = 0L;
-        PropertyIterator i = node.getProperties();
-        while (i.hasNext()) {
-            Property p = i.nextProperty();
-            if (p.isMultiple()) {
-                for (Value v : copyOf(p.getValues())) {
-                    size = size + v.getBinary().getSize();
-                }
-            } else {
-                size = size + p.getBinary().getSize();
-            }
-        }
-        return size;
-    }
-
+    
     /**
-     * Alter the total repository size.
-     * 
-     * @param change
-     *            the amount by which to [de|in]crement the total repository
-     *            size
-     * @param session
-     *            the javax.jcr.Session in which the originating mutation is
-     *            occurring
-     * @throws PathNotFoundException
-     * @throws RepositoryException
+     * A testing convenience setter for otherwise injected resources
+     * @param repo
      */
-    protected void updateRepositorySize(Long change, Session session)
-            throws PathNotFoundException, RepositoryException {
-        try {
-        logger.debug("updateRepositorySize called with change quantity: " +
-                change);
-
-        final Node objectStore = jcrTools.findOrCreateNode(session, "/objects");
-
-
-        Property sizeProperty = objectStore.getProperty("fedora:size");
-
-        Long previousSize = sizeProperty.getLong();
-        logger.debug("Previous repository size: " + previousSize);
-        synchronized (sizeProperty) {
-            sizeProperty.setValue(previousSize + change);
-            session.save();
-        }
-        logger.debug("Current repository size: " + sizeProperty.getLong());
-        } catch(RepositoryException e) {
-            logger.warn(e.toString());
-            throw e;
-        }
+    public void setRepository(Repository repo) {
+    	this.repo = repo;
+    }
+    
+    /**
+     * A testing convenience setter for otherwise injected resources
+     * @param uriInfo
+     */
+    public void setUriInfo(UriInfo uriInfo) {
+    	this.uriInfo = uriInfo;
     }
 
-    protected Long getRepositorySize(Session session) {
-        try {
-            return objectService.getAllObjectsDatastreamSize();
-        } catch(RepositoryException e) {
-            logger.warn(e.toString());
-            return -1L;
-        }
-    }
-
-    protected Long getRepositoryObjectCount(Session session) {
-        try {
-            return session.getNode("/objects").getNodes().getSize();
-        } catch(RepositoryException e) {
-            logger.warn(e.toString());
-            return -1L;
-        }
-    }
 }

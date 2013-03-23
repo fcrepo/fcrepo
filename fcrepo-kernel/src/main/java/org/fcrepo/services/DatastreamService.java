@@ -8,18 +8,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.utils.DatastreamIterator;
 import org.slf4j.Logger;
 
 /**
@@ -28,14 +24,9 @@ import org.slf4j.Logger;
  * @author cbeer
  *
  */
-public class DatastreamService {
+public class DatastreamService extends RepositoryService {
 
     private static final Logger logger = getLogger(DatastreamService.class);
-
-    @Inject
-    private Repository repo;
-
-    private Session readOnlySession;
 
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
@@ -53,16 +44,16 @@ public class DatastreamService {
             InvalidChecksumException {
 
         Datastream ds = new Datastream(session, dsPath);
+        Node result = ds.getNode();
         ds.setContent(requestBodyStream, contentType, checksumType, checksum);
-        return ds.getNode();
+        return result;
     }
 
     public Node getDatastreamNode(final String pid, final String dsId)
             throws RepositoryException {
-        logger.trace("Executing getDatastreamNode() with pid: " + pid +
-                " and dsId: " + dsId);
+        logger.trace("Executing getDatastreamNode() with pid: {} and dsId: {}", pid, dsId);
         final Node dsNode = getDatastream(pid, dsId).getNode();
-        logger.trace("Retrieved datastream node: " + dsNode.getName());
+        logger.trace("Retrieved datastream node: {}", dsNode.getName());
         return dsNode;
     }
 
@@ -73,42 +64,29 @@ public class DatastreamService {
 
     public void purgeDatastream(final Session session, final String pid,
             final String dsId) throws RepositoryException {
-        final String dsPath = getDatastreamJcrNodePath(pid, dsId);
-        new Datastream(session, dsPath).purge();
+    	Datastream ds = new Datastream(session, pid, dsId);
+    	ds.purge();
     }
 
-    public NodeIterator getDatastreamsFor(final String pid,
+    public DatastreamIterator getDatastreamsFor(final String pid,
             final Session session) throws RepositoryException {
-        return new FedoraObject(session, getObjectJcrNodePath(pid)).getNode()
-                .getNodes();
+        return new DatastreamIterator(
+        		new FedoraObject(session, getObjectJcrNodePath(pid)).getNode()
+                .getNodes());
     }
 
-    public NodeIterator getDatastreamsFor(final String pid)
+    public DatastreamIterator getDatastreamsFor(final String pid)
             throws RepositoryException {
         return getDatastreamsFor(pid, readOnlySession);
     }
-
-    @PostConstruct
-    public void getSession() {
-        try {
-            readOnlySession = repo.login();
-        } catch (RepositoryException e) {
-            throw new IllegalStateException(e);
-        }
+    
+    public boolean exists(String pid, String dsId) throws RepositoryException {
+    	return exists(pid, dsId, readOnlySession);
     }
-
-    @PreDestroy
-    public void logoutSession() {
-        readOnlySession.logout();
-    }
-
-    public void setRepository(Repository repository) {
-        if (readOnlySession != null) {
-            logoutSession();
-        }
-        repo = repository;
-
-        getSession();
+    
+    public boolean exists(String pid, String dsId, Session session) throws RepositoryException {
+    	String dspath = getDatastreamJcrNodePath(pid, dsId);
+    	return session.nodeExists(dspath);
     }
 
 }

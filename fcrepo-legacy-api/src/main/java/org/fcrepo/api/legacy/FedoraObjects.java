@@ -36,6 +36,7 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.services.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,7 +124,7 @@ public class FedoraObjects extends AbstractResource {
              * persisting session state creates new system-curated nodes and
              * properties which contribute to the footprint of this resource
              */
-            updateRepositorySize(getObjectSize(obj), session);
+            objectService.updateRepositorySize(getObjectSize(obj), session);
             // now we save again to persist the repo size
             session.save();
             logger.debug("Finished ingest with pid: " + pid);
@@ -190,7 +191,7 @@ public class FedoraObjects extends AbstractResource {
     final String pid) throws RepositoryException {
         final Session session = repo.login();
         final Node obj = session.getNode(getObjectJcrNodePath(pid));
-        updateRepositorySize(0L - getObjectSize(obj), session);
+        objectService.updateRepositorySize(0L - getObjectSize(obj), session);
         return deleteResource(obj);
     }
 
@@ -200,7 +201,7 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     static Long getObjectSize(Node obj) throws RepositoryException {
-        return getNodePropertySize(obj) + getObjectDSSize(obj);
+        return RepositoryService.getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
     /**
@@ -213,7 +214,7 @@ public class FedoraObjects extends AbstractResource {
         NodeIterator i = obj.getNodes();
         while (i.hasNext()) {
             Node ds = i.nextNode();
-            size = size + getNodePropertySize(ds);
+            size = size + RepositoryService.getNodePropertySize(ds);
             size = size + getContentSize(ds);
         }
         return size;
