@@ -11,7 +11,6 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.serverError;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 

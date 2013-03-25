@@ -109,5 +109,13 @@ public abstract class AbstractResource {
     public void setUriInfo(UriInfo uriInfo) {
     	this.uriInfo = uriInfo;
     }
+    
+    /**
+     * A testing convenience setter for otherwise injected resources
+     * @param pidMinter
+     */
+    public void setPidMinter(PidMinter pidMinter) {
+    	this.pidMinter = pidMinter;
+    }
 
 }

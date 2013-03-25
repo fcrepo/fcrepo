@@ -8,6 +8,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
+
 import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
@@ -48,7 +49,7 @@ public class FedoraObjects extends AbstractResource {
             .getLogger(FedoraObjects.class);
     
     @Inject
-    private ObjectService objectService;
+    ObjectService objectService;
 
     /**
      * 
@@ -88,17 +89,13 @@ public class FedoraObjects extends AbstractResource {
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
-        /*
-         * final String objPath = "/objects/" + pid;
-         * final Session session = repo.login();
-         * try {
-         * final Node obj = session.getNode(objPath);
-         * // TODO do something with awful mess of fcrepo3 query params
-         * session.save();
-         * } finally {
-         * session.logout();
-         * }
-         */
+    	final Session session = repo.login();
+    	try {
+    		// TODO do something with awful mess of fcrepo3 query params
+    		session.save();
+    	} finally {
+    		session.logout();
+    	}
         return created(uriInfo.getAbsolutePath()).build();
     }
 
@@ -142,29 +139,18 @@ public class FedoraObjects extends AbstractResource {
     public ObjectProfile getObject(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
 
-        final Node obj = objectService.getObjectNode(pid);
         final ObjectProfile objectProfile = new ObjectProfile();
-
+        final FedoraObject obj = objectService.getObject(pid);
         objectProfile.pid = pid;
-        if (obj.hasProperty(DC_TITLE)) {
-            Property dcTitle = obj.getProperty(DC_TITLE);
-            if (!dcTitle.isMultiple())
-                objectProfile.objLabel = obj.getProperty(DC_TITLE).getString();
-            else {
-                objectProfile.objLabel =
-                        on('/').join(map(dcTitle.getValues(), value2string));
-            }
-        }
-        objectProfile.objOwnerId = new FedoraObject(obj).getOwnerId();
-        objectProfile.objCreateDate =
-                obj.getProperty("jcr:created").getString();
-        objectProfile.objLastModDate =
-                obj.getProperty("jcr:lastModified").getString();
-        objectProfile.objSize = getObjectSize(obj);
+        objectProfile.objLabel = obj.getLabel();
+        objectProfile.objOwnerId = obj.getOwnerId();
+        objectProfile.objCreateDate = obj.getCreated();
+        objectProfile.objLastModDate = obj.getLastModified();
+        objectProfile.objSize = obj.getSize();
         objectProfile.objItemIndexViewURL =
                 uriInfo.getAbsolutePathBuilder().path("datastreams").build();
         objectProfile.objState = A;
-        objectProfile.objModels = map(obj.getMixinNodeTypes(), nodetype2name);
+        objectProfile.objModels = obj.getModels();
         return objectProfile;
 
     }
@@ -184,30 +170,6 @@ public class FedoraObjects extends AbstractResource {
         objectService.deleteObject(pid, session);
         session.save();
         return noContent().build();
-    }
-
-    /**
-     * @param obj
-     * @return object size in bytes
-     * @throws RepositoryException
-     */
-    static Long getObjectSize(Node obj) throws RepositoryException {
-        return RepositoryService.getNodePropertySize(obj) + getObjectDSSize(obj);
-    }
-
-    /**
-     * @param obj
-     * @return object's datastreams' total size in bytes
-     * @throws RepositoryException
-     */
-    private static Long getObjectDSSize(Node obj) throws RepositoryException {
-        Long size = 0L;
-        NodeIterator i = obj.getNodes();
-        while (i.hasNext()) {
-            Datastream ds = new Datastream(i.nextNode());
-            size += ds.getSize();
-        }
-        return size;
     }
 
 }

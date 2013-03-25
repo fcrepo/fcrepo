@@ -73,7 +73,11 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public Node getObjectNode(final String pid) throws RepositoryException {
         logger.trace("Executing getObjectNode() with pid: " + pid);
-        return getObject(pid).getNode();
+        return getObjectNode(readOnlySession, pid);
+    }
+    
+    public Node getObjectNode(final Session session, final String pid) throws RepositoryException {
+        return session.getNode(getObjectJcrNodePath(pid));
     }
 
     /**
@@ -83,8 +87,18 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraObject getObject(final String pid) throws RepositoryException {
         logger.trace("Executing getObject() with pid: " + pid);
-        return new FedoraObject(readOnlySession
-                .getNode(getObjectJcrNodePath(pid)));
+        return new FedoraObject(getObjectNode(pid));
+    }
+    
+    /**
+     * @param pid
+     * @param session
+     * @return A FedoraObject with the proffered PID
+     * @throws RepositoryException
+     */
+    public FedoraObject getObject(Session session, String pid) throws RepositoryException {
+        logger.trace("Executing getObject() with pid: " + pid);
+    	return new FedoraObject(getObjectNode(session, pid));
     }
 
     /**
