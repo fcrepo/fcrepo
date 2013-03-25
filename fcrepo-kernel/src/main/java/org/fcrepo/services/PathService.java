@@ -1,8 +1,9 @@
 
 package org.fcrepo.services;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Convenience class for constructing Fedora-related paths in the JCR repository.
@@ -14,8 +15,7 @@ public class PathService {
 
     public final static String OBJECT_PATH = "/objects";
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(PathService.class);
+    private static final Logger logger = getLogger(PathService.class);
 
     /**
      * @param pid

@@ -1,6 +1,5 @@
 package org.fcrepo.services;
 
-import static com.google.common.collect.ImmutableSet.copyOf;
 import static javax.jcr.query.Query.JCR_SQL2;
 
 import java.io.PrintStream;
@@ -11,7 +10,6 @@ import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -152,22 +150,5 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         repo = repository;
         getSession();
     }
-
-	public static Long getNodePropertySize(Node node)
-	        throws RepositoryException {
-	    Long size = 0L;
-	    PropertyIterator i = node.getProperties();
-	    while (i.hasNext()) {
-	        Property p = i.nextProperty();
-	        if (p.isMultiple()) {
-	            for (Value v : copyOf(p.getValues())) {
-	                size = size + v.getBinary().getSize();
-	            }
-	        } else {
-	            size = size + p.getBinary().getSize();
-	        }
-	    }
-	    return size;
-	}
 
 }

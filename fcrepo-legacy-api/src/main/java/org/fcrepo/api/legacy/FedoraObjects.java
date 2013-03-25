@@ -9,6 +9,7 @@ import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.api.legacy.FedoraDatastreams.getContentSize;
 import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
+import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
@@ -36,7 +37,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.services.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,7 +201,7 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     static Long getObjectSize(Node obj) throws RepositoryException {
-        return RepositoryService.getNodePropertySize(obj) + getObjectDSSize(obj);
+        return getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
     /**
@@ -214,7 +214,7 @@ public class FedoraObjects extends AbstractResource {
         NodeIterator i = obj.getNodes();
         while (i.hasNext()) {
             Node ds = i.nextNode();
-            size = size + RepositoryService.getNodePropertySize(ds);
+            size = size + getNodePropertySize(ds);
             size = size + getContentSize(ds);
         }
         return size;

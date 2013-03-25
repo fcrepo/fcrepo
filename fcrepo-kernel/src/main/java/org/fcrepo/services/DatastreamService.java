@@ -51,7 +51,8 @@ public class DatastreamService extends RepositoryService {
 
     public Node getDatastreamNode(final String pid, final String dsId)
             throws RepositoryException {
-        logger.trace("Executing getDatastreamNode() with pid: {} and dsId: {}", pid, dsId);
+        logger.trace("Executing getDatastreamNode() with pid: {} and dsId: {}",
+                pid, dsId);
         final Node dsNode = getDatastream(pid, dsId).getNode();
         logger.trace("Retrieved datastream node: {}", dsNode.getName());
         return dsNode;
@@ -64,29 +65,27 @@ public class DatastreamService extends RepositoryService {
 
     public void purgeDatastream(final Session session, final String pid,
             final String dsId) throws RepositoryException {
-    	Datastream ds = new Datastream(session, pid, dsId);
-    	ds.purge();
+        new Datastream(session, pid, dsId).purge();
     }
 
     public DatastreamIterator getDatastreamsFor(final String pid,
             final Session session) throws RepositoryException {
-        return new DatastreamIterator(
-        		new FedoraObject(session, getObjectJcrNodePath(pid)).getNode()
-                .getNodes());
+        return new DatastreamIterator(new FedoraObject(session,
+                getObjectJcrNodePath(pid)).getNode().getNodes());
     }
 
     public DatastreamIterator getDatastreamsFor(final String pid)
             throws RepositoryException {
         return getDatastreamsFor(pid, readOnlySession);
     }
-    
+
     public boolean exists(String pid, String dsId) throws RepositoryException {
-    	return exists(pid, dsId, readOnlySession);
+        return exists(pid, dsId, readOnlySession);
     }
-    
-    public boolean exists(String pid, String dsId, Session session) throws RepositoryException {
-    	String dspath = getDatastreamJcrNodePath(pid, dsId);
-    	return session.nodeExists(dspath);
+
+    public boolean exists(String pid, String dsId, Session session)
+            throws RepositoryException {
+        return session.nodeExists(getDatastreamJcrNodePath(pid, dsId));
     }
 
 }

@@ -4,6 +4,7 @@ package org.fcrepo;
 import static com.google.common.base.Joiner.on;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
+import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.isOwned;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
@@ -19,7 +20,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.services.RepositoryService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
 
@@ -126,7 +126,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     static Long getObjectSize(Node obj) throws RepositoryException {
-        return RepositoryService.getNodePropertySize(obj) + getObjectDSSize(obj);
+        return getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
     /**

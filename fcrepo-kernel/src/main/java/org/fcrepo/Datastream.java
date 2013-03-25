@@ -9,7 +9,7 @@ import static com.yammer.metrics.MetricRegistry.name;
 import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-import static org.fcrepo.services.RepositoryService.getNodePropertySize;
+import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;

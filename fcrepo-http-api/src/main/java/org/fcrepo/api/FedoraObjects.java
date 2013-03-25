@@ -8,6 +8,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
@@ -29,13 +30,11 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Path("/objects")
 public class FedoraObjects extends AbstractResource {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(FedoraObjects.class);
+    private static final Logger logger = getLogger(FedoraObjects.class);
 
     @Inject
     ObjectService objectService;
