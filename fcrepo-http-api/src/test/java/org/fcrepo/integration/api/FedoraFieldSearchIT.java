@@ -32,4 +32,18 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         assertEquals(200, getStatus(method));
 
     }
+
+    @Test
+    public void testSearchSubmitPaging() throws Exception {
+        final HttpPost method = new HttpPost(serverAddress + "search");
+        List<BasicNameValuePair> list = new ArrayList<BasicNameValuePair>();
+
+        list.add(new BasicNameValuePair("terms", ""));
+        list.add(new BasicNameValuePair("offset", "1"));
+        list.add(new BasicNameValuePair("maxResults", "1"));
+        final UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(list);
+        method.setEntity(formEntity);
+        assertEquals(200, getStatus(method));
+
+    }
 }
