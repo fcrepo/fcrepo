@@ -27,6 +27,7 @@
             <bean class="org.fcrepo.api.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.FedoraObjects"/>
             <bean class="org.fcrepo.api.FedoraFieldSearch"/>
+            <bean class="org.fcrepo.api.FedoraSitemap"/>
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
             <entry key="json" value="application/json"/>

@@ -24,6 +24,7 @@
             <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
             <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
+            <bean class="org.fcrepo.api.FedoraSitemap"/>
             <bean class="org.fcrepo.foxml.FedoraOXML"/>
         </jaxrs:serviceBeans>
         <jaxrs:extensionMappings>
