@@ -1,10 +1,11 @@
+
 package org.fcrepo.identifiers;
 
-import com.yammer.metrics.MetricRegistry;
-import com.yammer.metrics.Timer;
-import org.fcrepo.services.RepositoryService;
-
+import static com.yammer.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.services.RepositoryService.metrics;
+
+import com.yammer.metrics.Timer;
 
 /**
  * Simple PidMinter that replies on Java's inbuilt UUID minting.
@@ -12,13 +13,12 @@ import static java.util.UUID.randomUUID;
  * @author ajs6f
  *
  */
-public class UUIDPidMinter implements PidMinter {
+public class UUIDPidMinter extends BasePidMinter {
 
-    final static Timer timer = RepositoryService.metrics.timer(MetricRegistry.name(UUIDPidMinter.class, "mint"));
+    final static Timer timer = metrics.timer(name(UUIDPidMinter.class, "mint"));
 
-	@Override
-	public String mintPid() {
-
+    @Override
+    public String mintPid() {
 
         final Timer.Context context = timer.time();
 
@@ -27,6 +27,7 @@ public class UUIDPidMinter implements PidMinter {
         } finally {
             context.stop();
         }
-	}
+    }
+
 
 }

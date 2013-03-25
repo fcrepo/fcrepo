@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.integration.api.AbstractResourceIT;
 import org.junit.Test;
 
 public class FedoraIdentifiersIT extends AbstractResourceIT {

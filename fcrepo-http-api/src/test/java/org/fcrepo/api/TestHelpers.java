@@ -14,7 +14,6 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
 import org.apache.tika.io.IOUtils;
-
 import org.jboss.resteasy.specimpl.PathSegmentImpl;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
 

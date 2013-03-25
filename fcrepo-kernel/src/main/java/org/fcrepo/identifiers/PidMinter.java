@@ -1,4 +1,7 @@
+
 package org.fcrepo.identifiers;
+
+import com.google.common.base.Function;
 
 /**
  * Defines the behavior of a component that can accept responsibility
@@ -8,7 +11,9 @@ package org.fcrepo.identifiers;
  *
  */
 public interface PidMinter {
-	
+
     public String mintPid();
-		
+
+    public Function<Object, String> makePid();
+
 }

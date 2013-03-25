@@ -1,25 +1,27 @@
 package org.fcrepo.api;
 
-import static org.fcrepo.TestHelpers.mockDatastreamIterator;
 import static org.fcrepo.TestHelpers.mockDatastream;
+import static org.fcrepo.TestHelpers.mockDatastreamIterator;
 import static org.fcrepo.api.TestHelpers.getStringsAsAttachments;
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.jcr.LoginException;
-import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.Request;
@@ -28,11 +30,8 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
-import org.apache.http.HttpEntity;
-import org.apache.http.util.EntityUtils;
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.Datastream;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;

@@ -4,7 +4,6 @@ package org.fcrepo;
 import static com.google.common.base.Joiner.on;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
-import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
 import static org.fcrepo.utils.FedoraTypesUtils.isOwned;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
@@ -16,11 +15,9 @@ import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFormatException;
 
 import org.fcrepo.services.RepositoryService;
 import org.fcrepo.utils.FedoraJcrTypes;

@@ -10,7 +10,6 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.integration.api.AbstractResourceIT;
 import org.junit.Test;
 
 public class FedoraObjectsIT extends AbstractResourceIT {

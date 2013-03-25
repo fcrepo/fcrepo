@@ -1,7 +1,6 @@
 
 package org.fcrepo.utils;
 
-import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;

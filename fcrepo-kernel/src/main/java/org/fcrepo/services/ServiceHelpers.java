@@ -13,8 +13,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
-import org.fcrepo.Datastream;
-
 public class ServiceHelpers {
 	
     public static Long getNodePropertySize(Node node)

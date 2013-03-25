@@ -1,26 +1,17 @@
 
 package org.fcrepo.api;
 
-import static com.google.common.base.Joiner.on;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
-
 import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
-import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
-import static org.fcrepo.utils.FedoraTypesUtils.map;
-import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
-import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 
 import java.io.IOException;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
@@ -34,11 +25,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.services.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

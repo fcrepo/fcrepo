@@ -1,13 +1,13 @@
 
 package org.fcrepo.integration.services;
 
-import org.fcrepo.services.PathService;
-import org.junit.Test;
-
+import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
-import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.junit.Assert.assertEquals;
+
+import org.fcrepo.services.PathService;
+import org.junit.Test;
 
 public class PathServiceTest {
 
