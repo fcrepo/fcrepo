@@ -36,7 +36,7 @@ public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraObjects.class);
-    
+
     @Inject
     ObjectService objectService;
 
@@ -78,14 +78,14 @@ public class FedoraObjects extends AbstractResource {
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
-    	final Session session = repo.login();
-    	try {
-    		// TODO do something with awful mess of fcrepo3 query params
-    		session.save();
-    	} finally {
-    		session.logout();
-    	}
-        return created(uriInfo.getAbsolutePath()).build();
+        final Session session = repo.login();
+        try {
+            // TODO do something with awful mess of fcrepo3 query params
+            session.save();
+            return created(uriInfo.getAbsolutePath()).build();
+        } finally {
+            session.logout();
+        }
     }
 
     /**
