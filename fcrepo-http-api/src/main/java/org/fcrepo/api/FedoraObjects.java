@@ -81,7 +81,7 @@ public class FedoraObjects extends AbstractResource {
         try {
             // TODO do something with awful mess of fcrepo3 query params
             session.save();
-            return created(uriInfo.getAbsolutePath()).build();
+            return created(uriInfo.getRequestUri()).build();
         } finally {
             session.logout();
         }
@@ -106,7 +106,7 @@ public class FedoraObjects extends AbstractResource {
             objectService.createObjectNode(session, pid);
             session.save();
             logger.debug("Finished ingest with pid: {}", pid);
-            return created(uriInfo.getAbsolutePath()).entity(pid).build();
+            return created(uriInfo.getRequestUri()).entity(pid).build();
 
         } finally {
             session.logout();

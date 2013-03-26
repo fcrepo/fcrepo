@@ -60,7 +60,7 @@ public class FedoraNamespaces extends AbstractResource {
         } finally {
             session.logout();
         }
-        return created(uriInfo.getAbsolutePath()).build();
+        return created(uriInfo.getRequestUri()).build();
     }
 
     /**
@@ -84,7 +84,7 @@ public class FedoraNamespaces extends AbstractResource {
         } finally {
             session.logout();
         }
-        return created(uriInfo.getAbsolutePath()).build();
+        return created(uriInfo.getRequestUri()).build();
     }
 
     /**

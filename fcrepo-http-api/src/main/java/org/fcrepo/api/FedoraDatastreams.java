@@ -223,7 +223,7 @@ public class FedoraDatastreams extends AbstractResource {
                         checksumType, checksum);
             }
             session.save();
-            return created(uriInfo.getAbsolutePath()).build();
+            return created(uriInfo.getRequestUri()).build();
         } finally {
             session.logout();
         }
@@ -292,7 +292,7 @@ public class FedoraDatastreams extends AbstractResource {
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream);
             session.save();
-            return created(uriInfo.getAbsolutePath()).build();
+            return created(uriInfo.getRequestUri()).build();
         } finally {
             session.logout();
         }
