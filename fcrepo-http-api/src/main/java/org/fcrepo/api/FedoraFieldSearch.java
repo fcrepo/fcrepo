@@ -12,6 +12,8 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFactory;
+import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -39,8 +41,8 @@ public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 
     private static final Logger logger = getLogger(FedoraFieldSearch.class);
-
-    private QueryResult queryResults = null;
+    
+    private static final String QUERY_STRING = buildQueryString();
 
     @GET
     @Produces(TEXT_HTML)
@@ -57,17 +59,12 @@ public class FedoraFieldSearch extends AbstractResource implements
 
         final Session session = repo.login();
         QueryManager queryManager = session.getWorkspace().getQueryManager();
+        ValueFactory valueFactory = session.getValueFactory();
         VelocityViewer view = new VelocityViewer();
 
         logger.debug("Searching for " + terms);
 
-        //TODO expand to more fields
-        String sqlExpression = "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE";
-        sqlExpression += " [" + DC_IDENTIFIER + "] like $sterm";
-        sqlExpression += " OR [" + DC_TITLE + "] like $sterm";
-        Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);
-        query.bindValue("sterm", session.getValueFactory().createValue(
-                "%" + terms + "%"));
+        Query query = getQuery(queryManager, valueFactory, terms);
         logger.debug("statement is " + query.getStatement());
 
         if (offSet == null) {
@@ -81,6 +78,14 @@ public class FedoraFieldSearch extends AbstractResource implements
         session.logout();
 
         return view.getFieldSearch(fsr);
+    }
+    
+    Query getQuery(QueryManager queryManager, ValueFactory valueFactory, String terms) throws InvalidQueryException, RepositoryException {
+        Query query = queryManager.createQuery(QUERY_STRING, JCR_SQL2);
+        query.bindValue("sterm", valueFactory.createValue(
+                "%" + terms + "%"));
+        logger.debug("statement is " + query.getStatement());
+        return query;
     }
 
     /**
@@ -97,10 +102,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
         ImmutableList.Builder<ObjectFields> fieldObjects = builder();
 
-        //if offSet is 0, we assume it's the first query and set the queryResults
-        if (offSet == 0) {
-            queryResults = query.execute();
-        }
+        QueryResult queryResults = query.execute();
 
         NodeIterator nodeIter = queryResults.getNodes();
         int size = (int) nodeIter.getSize();
@@ -129,5 +131,13 @@ public class FedoraFieldSearch extends AbstractResource implements
         fsr.setMaxResults(maxResults);
 
         return fsr;
+    }
+    
+    public static String buildQueryString() {
+        //TODO expand to more fields
+        String sqlExpression = "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE ["
+                             + DC_IDENTIFIER + "] like $sterm OR ["
+        		             + DC_TITLE + "] like $sterm";
+        return sqlExpression;
     }
 }
