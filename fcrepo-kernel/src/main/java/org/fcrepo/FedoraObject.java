@@ -104,6 +104,11 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         return null;
     }
     
+
+    public void setLabel(String label) throws RepositoryException {
+        node.setProperty(DC_TITLE, label);
+    }
+    
     public String getCreated() throws RepositoryException {
     	return node.getProperty("jcr:created").getString();
     }

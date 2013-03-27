@@ -56,6 +56,15 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + "objects/" + pid);
     }
 
+    protected static HttpPost postObjMethod(final String pid, final String query) {
+        if (query.equals("")) {
+            return new HttpPost(serverAddress + "objects/" + pid);
+        }
+        else {
+            return new HttpPost(serverAddress + "objects/" + pid + "?" + query);
+        }
+    }
+
     protected static HttpPost postDSMethod(final String pid, final String ds,
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =

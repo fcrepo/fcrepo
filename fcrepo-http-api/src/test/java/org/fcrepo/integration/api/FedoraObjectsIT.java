@@ -4,12 +4,14 @@ package org.fcrepo.integration.api;
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.fcrepo.services.ObjectService.getObject;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.FedoraObject;
 import org.junit.Test;
 
 public class FedoraObjectsIT extends AbstractResourceIT {
@@ -57,4 +59,16 @@ public class FedoraObjectsIT extends AbstractResourceIT {
                         "objects/FedoraObjectsTest3")));
     }
 
+    @Test
+    public void testIngestWithLabel() throws Exception {
+        final HttpPost method = postObjMethod("FedoraObjectsTest4", "label=Awesome_Object");
+        final HttpResponse response = client.execute(method);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+        assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
+                .find());
+
+        final FedoraObject obj = getObject("FedoraObjectsTest4");
+        assertEquals("Wrong label!", "Awesome_Object", obj.getLabel());
+    }
 }
