@@ -3,12 +3,12 @@ package org.fcrepo.generator;
 
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.fcrepo.services.ObjectService.getObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.DefaultValue;
@@ -26,6 +26,7 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.generator.rdf.TripleSource.Triple;
 import org.fcrepo.generator.rdf.Utils;
+import org.fcrepo.services.ObjectService;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
@@ -37,6 +38,9 @@ import org.slf4j.LoggerFactory;
 public class ObjectRdfGenerator extends AbstractResource {
 
     List<TripleSource<FedoraObject>> objectGenerators;
+    
+    @Inject
+    ObjectService objectService;
 
     final private static ValueFactory valFactory = new MemValueFactory();
 
@@ -52,7 +56,7 @@ public class ObjectRdfGenerator extends AbstractResource {
     final String mimeType) throws IOException, RepositoryException,
             TripleHandlerException {
 
-        final FedoraObject obj = getObject(pid);
+        final FedoraObject obj = objectService.getObject(pid);
         final URI docURI = valFactory.createURI("info:" + pid);
         logger.debug("Using ValueFactory: " + valFactory.toString());
         final ExtractionContext context =

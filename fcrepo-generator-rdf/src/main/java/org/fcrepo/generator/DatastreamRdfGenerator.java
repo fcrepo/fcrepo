@@ -3,12 +3,12 @@ package org.fcrepo.generator;
 
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.fcrepo.services.DatastreamService.getDatastream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.DefaultValue;
@@ -26,6 +26,7 @@ import org.fcrepo.Datastream;
 import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.generator.rdf.TripleSource.Triple;
 import org.fcrepo.generator.rdf.Utils;
+import org.fcrepo.services.DatastreamService;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
@@ -42,6 +43,9 @@ public class DatastreamRdfGenerator extends AbstractResource {
 
     final private Logger logger = LoggerFactory
             .getLogger(DatastreamRdfGenerator.class);
+    
+    @Inject
+    DatastreamService datastreamService;
 
     @GET
     @Path("/")
@@ -53,7 +57,7 @@ public class DatastreamRdfGenerator extends AbstractResource {
     final String mimeType) throws IOException, RepositoryException,
             TripleHandlerException {
 
-        final Datastream ds = getDatastream(pid, dsId);
+        final Datastream ds = datastreamService.getDatastream(pid, dsId);
         final URI docURI = valFactory.createURI("info:" + pid + "/" + dsId);
         logger.debug("Using ValueFactory: " + valFactory.toString());
         final ExtractionContext context =
