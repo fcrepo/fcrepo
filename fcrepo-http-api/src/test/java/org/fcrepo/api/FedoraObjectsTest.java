@@ -86,11 +86,11 @@ public class FedoraObjectsTest {
 	@Test
 	public void testIngest() throws RepositoryException {
 		String pid = "testObject";
-		Response actual = testObj.ingest(pid);
+		Response actual = testObj.ingest(pid, null);
 		assertNotNull(actual);
     	assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
     	assertTrue(actual.getEntity().toString().endsWith(pid));
-    	verify(mockObjects).createObjectNode(mockSession, pid);
+    	verify(mockObjects).createObject(mockSession, pid);
 		verify(mockSession).save();
 	}
 	
