@@ -48,7 +48,7 @@ public class FedoraRepository extends AbstractResource {
     private static final Logger logger = getLogger(FedoraRepository.class);
     
     @Inject
-    private ObjectService objectService;
+    ObjectService objectService;
 
     @GET
     @Path("modeshape")
