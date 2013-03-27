@@ -55,6 +55,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FixityResult;
 import org.slf4j.Logger;
@@ -68,6 +69,9 @@ public class FedoraDatastreams extends AbstractResource {
 
     @Inject
     DatastreamService datastreamService;
+    
+    @Inject
+    LowLevelStorageService llStoreService;
 
     /**
      * Returns a list of datastreams for the object
@@ -425,7 +429,7 @@ public class FedoraDatastreams extends AbstractResource {
         dsf.dsId = dsid;
         dsf.timestamp = new Date();
 
-        Collection<FixityResult> blobs = ds.runFixityAndFixProblems();
+        Collection<FixityResult> blobs = llStoreService.runFixityAndFixProblems(ds);
         dsf.statuses = new ArrayList<FixityResult>(blobs);
         return dsf;
     }

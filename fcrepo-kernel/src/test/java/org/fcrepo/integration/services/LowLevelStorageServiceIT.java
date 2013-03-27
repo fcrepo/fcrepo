@@ -1,6 +1,5 @@
 package org.fcrepo.integration.services;
 
-import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -37,6 +36,9 @@ public class LowLevelStorageServiceIT {
     
     @Inject
     DatastreamService datastreamService;
+    
+    @Inject
+    LowLevelStorageService lowLevelService;
 
     @Test
     public void testChecksumBlobs() throws Exception {
@@ -53,7 +55,7 @@ public class LowLevelStorageServiceIT {
 
         final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
 
-        final Collection<FixityResult> fixityResults = LowLevelStorageService.getFixity(
+        final Collection<FixityResult> fixityResults = lowLevelService.getFixity(
         		ds.getNode(), MessageDigest.getInstance("SHA-1"),
         		ds.getContentDigest(), ds.getContentSize());
 
@@ -78,7 +80,7 @@ public class LowLevelStorageServiceIT {
 
         final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
 
-        Iterator<InputStream> inputStreamList = getBinaryBlobs(ds.getNode()).values().iterator();
+        Iterator<InputStream> inputStreamList = lowLevelService.getBinaryBlobs(ds.getNode()).values().iterator();
 
         int i = 0;
         while(inputStreamList.hasNext()) {

@@ -26,6 +26,10 @@ public class ContentDigest {
     }
     
     public static URI asURI(String algorithm, byte[] data) {
-    	return asURI(algorithm, encodeHexString(data));
+    	return asURI(algorithm, asString(data));
+    }
+    
+    public static String asString(byte[] data) {
+    	return encodeHexString(data);
     }
 }

@@ -1,7 +1,5 @@
 package org.fcrepo.integration.utils;
 
-import static org.fcrepo.services.LowLevelStorageService.getBinaryBlobs;
-import static org.fcrepo.services.LowLevelStorageService.getFixity;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -41,6 +39,8 @@ public class SelfHealingIT {
     private DatastreamService datastreamService;
     
     private ObjectService objectService;
+    
+    private LowLevelStorageService lowLevelService;
 
 
     @Before
@@ -58,7 +58,8 @@ public class SelfHealingIT {
         datastreamService.setRepository(repo);
         objectService = new ObjectService();
         objectService.setRepository(repo);
-        new LowLevelStorageService().setRepository(repo);
+        lowLevelService = new LowLevelStorageService();
+        lowLevelService.setRepository(repo);
         setupInitialNodes();
     }
 
@@ -82,7 +83,7 @@ public class SelfHealingIT {
 
 
         logger.info("Tampering with node " + node.toString());
-        final Map<LowLevelCacheEntry,InputStream> binaryBlobs = getBinaryBlobs(node);
+        final Map<LowLevelCacheEntry,InputStream> binaryBlobs = lowLevelService.getBinaryBlobs(node);
 
         Iterator<LowLevelCacheEntry> it = binaryBlobs.keySet().iterator();
 
@@ -95,7 +96,7 @@ public class SelfHealingIT {
 
     private Collection<FixityResult> getNodeFixity(final Datastream ds) throws NoSuchAlgorithmException, RepositoryException {
 
-        return getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"), ds.getContentDigest(), ds.getContentSize());
+        return lowLevelService.getFixity(ds.getNode(), MessageDigest.getInstance("SHA-1"), ds.getContentDigest(), ds.getContentSize());
 
     }
 
@@ -168,7 +169,7 @@ public class SelfHealingIT {
         assertFalse("Expected the fixity check to fail.", fixityOk);
 
 
-        ds.runFixityAndFixProblems();
+        lowLevelService.runFixityAndFixProblems(ds);
 
 
         nodeFixity = getNodeFixity(ds);

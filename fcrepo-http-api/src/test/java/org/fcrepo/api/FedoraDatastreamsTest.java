@@ -38,6 +38,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.DatastreamIterator;
 import org.junit.After;
 import org.junit.Before;
@@ -50,6 +51,8 @@ public class FedoraDatastreamsTest {
 	
 	DatastreamService mockDatastreams;
 	
+	LowLevelStorageService mockLow;
+	
 	Repository mockRepo;
 	
 	Session mockSession;
@@ -57,8 +60,10 @@ public class FedoraDatastreamsTest {
 	@Before
 	public void setUp() throws LoginException, RepositoryException {
 		mockDatastreams = mock(DatastreamService.class);
+		mockLow = mock(LowLevelStorageService.class);
 		testObj = new FedoraDatastreams();
 		testObj.datastreamService = mockDatastreams;
+		testObj.llStoreService = mockLow;
 		mockRepo = mock(Repository.class);
 		mockSession = mock(Session.class);
 		when(mockRepo.login()).thenReturn(mockSession);
@@ -217,7 +222,7 @@ public class FedoraDatastreamsTest {
     	DatastreamFixity actual = testObj.getDatastreamFixity(pid, dsId);
     	assertNotNull(actual);
     	verify(mockDatastreams).getDatastream(pid, dsId);
-    	verify(mockDs).runFixityAndFixProblems();
+    	verify(mockLow).runFixityAndFixProblems(mockDs);
     	verify(mockSession, never()).save();
     }
 
