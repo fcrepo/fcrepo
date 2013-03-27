@@ -15,10 +15,23 @@
     <context:property-placeholder/>
 
     <context:annotation-config/>
-
+    
     <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.generator.RdfGenerator"/>
+            <bean class="org.fcrepo.generator.ObjectRdfGenerator">
+                <property name="objectGenerators">
+                    <list>
+                        <bean class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator"/>
+                    </list>
+                </property>
+            </bean>
+            <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
+                <property name="dsGenerators">
+                    <list>
+                        <bean class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator"/>
+                    </list>
+                </property>
+            </bean>
             <bean class="org.fcrepo.api.FedoraObjects"/>
             <bean class="org.fcrepo.api.FedoraDatastreams"/>
         </jaxrs:serviceBeans>
@@ -31,13 +44,7 @@
         </jaxrs:providers>
     </jaxrs:server>
 
-    <util:list id="rdfgenerators" value-type="org.fcrepo.generator.rdf.TripleGenerator">
-        <bean class="org.fcrepo.generator.rdf.JcrPropertiesGenerator" />
-    </util:list>
-
-
-
-  <!-- Mints PIDs-->
+    <!-- Mints PIDs-->
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
 </beans>

@@ -54,35 +54,34 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-core</artifactId>
-      <version>2.10.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
 
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
       <version>2.7.1</version>
     </dependency>
-    <!-- This dependency is for compile-time: it keeps this module independent of 
-      any given choice of JAX-RS implementation. It must be _after_ the test gear. Otherwise 
-      it will get loaded during test phase, but because this is just an API, the tests 
-      will not be able to execute. -->
+    <!-- This dependency is for compile-time: it keeps this module independent 
+      of any given choice of JAX-RS implementation. It must be _after_ the test 
+      gear. Otherwise it will get loaded during test phase, but because this is 
+      just an API, the tests will not be able to execute. -->
     <dependency>
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.any23</groupId>
+      <artifactId>apache-any23-core</artifactId>
+      <version>0.7.0-incubating</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-jdk14</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
   
