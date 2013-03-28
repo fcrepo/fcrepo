@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.jcr.Binary;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -19,6 +20,8 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -31,10 +34,16 @@ import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
 import org.apache.tika.io.IOUtils;
 import org.jboss.resteasy.specimpl.PathSegmentImpl;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
+import org.modeshape.jcr.api.Repository;
+import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.query.QueryResults;
 
 public abstract class TestHelpers {
-    public static UriInfo getUriInfoImpl() {
+	
+	static String MOCK_PREFIX = "mockPrefix";
+	static String MOCK_URI_STRING = "mock.namespace.org";
+    
+	public static UriInfo getUriInfoImpl() {
     	URI baseURI = URI.create("/fcrepo");
     	URI absoluteURI = URI.create("http://localhost/fcrepo");
         URI absolutePath = UriBuilder.fromUri(absoluteURI).replaceQuery(null).build();
@@ -101,6 +110,36 @@ public abstract class TestHelpers {
 			e.printStackTrace();
 		}
     	return mock;
+    }
+    
+    public static Repository createMockRepo() throws RepositoryException {
+    	Repository mockRepo = mock(Repository.class);
+    	Session mockSession = mock(Session.class);
+    	
+    	when(mockRepo.getDescriptor("jcr.repository.name")).thenReturn("Mock Repository");
+    	String[] mockKeys = { MOCK_PREFIX };
+    	String[] mockPrefixes = mockKeys;
+    	
+    	Workspace mockWorkspace = mock(Workspace.class);
+    	NamespaceRegistry mockNameReg = mock(NamespaceRegistry.class);
+    	NodeTypeManager mockNTM = mock(NodeTypeManager.class);
+    	NodeTypeIterator mockNTI = mock(NodeTypeIterator.class);
+    	NodeType mockNodeType = mock(NodeType.class);
+    
+    	when(mockRepo.login()).thenReturn(mockSession);
+    	when(mockRepo.getDescriptorKeys()).thenReturn(mockKeys);
+    	when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+    	when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
+    	when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
+    	when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI_STRING);
+    	when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNTM);
+    	when(mockNodeType.getName()).thenReturn("mockName");
+    	when(mockNodeType.toString()).thenReturn("mockString");
+    	when(mockNTM.getAllNodeTypes()).thenReturn(mockNTI);
+    	when(mockNTI.hasNext()).thenReturn(true,false);
+    	when(mockNTI.nextNodeType()).thenReturn(mockNodeType).thenThrow(ArrayIndexOutOfBoundsException.class);
+    	
+    	return mockRepo;
     }
     
 }
