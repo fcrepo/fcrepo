@@ -77,7 +77,6 @@ public class FedoraObjects extends AbstractResource {
      */
     @PUT
     @Path("/{pid}")
-    @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
         final Session session = repo.login();
