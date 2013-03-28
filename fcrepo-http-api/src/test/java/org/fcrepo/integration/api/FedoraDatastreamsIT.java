@@ -15,6 +15,7 @@ import java.util.Date;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -37,10 +38,26 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
     @Test
     public void testGetDatastreams() throws Exception {
         execute(postObjMethod("FedoraDatastreamsTest1"));
+
+        final HttpPost dsmethod =
+                postDSMethod("FedoraDatastreamsTest1", "zxc", "foo");
+        assertEquals(201, getStatus(dsmethod));
+
         final HttpGet method =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest1/datastreams");
         assertEquals(200, getStatus(method));
+
+
+
+        final HttpResponse response = execute(method);
+
+        String content = IOUtils.toString(response.getEntity().getContent());
+
+        logger.info(content);
+
+        assertTrue("Found the wrong XML tag", compile(
+                "<datastream ", DOTALL).matcher(content).find());
     }
 
     @Test
