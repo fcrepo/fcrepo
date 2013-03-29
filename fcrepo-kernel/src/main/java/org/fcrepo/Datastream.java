@@ -2,33 +2,22 @@
 package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
-import static com.google.common.collect.Collections2.filter;
-import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Sets.difference;
 import static com.yammer.metrics.MetricRegistry.name;
-import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.services.RepositoryService.metrics;
+import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
-import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
-import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -43,16 +32,11 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.google.common.base.Predicate;
-import com.yammer.metrics.Counter;
 import com.yammer.metrics.Histogram;
-import com.yammer.metrics.Timer;
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.

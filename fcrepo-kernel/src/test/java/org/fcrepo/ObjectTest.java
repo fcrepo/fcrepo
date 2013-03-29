@@ -2,19 +2,14 @@
 package org.fcrepo;
 
 import static org.fcrepo.utils.FedoraJcrTypes.DC_TITLE;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import static org.junit.Assert.assertEquals;
-
-import static org.mockito.Mockito.*;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.junit.Before;
 import org.junit.Test;

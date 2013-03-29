@@ -1,17 +1,16 @@
 package org.fcrepo;
 
-import static org.fcrepo.utils.FedoraJcrTypes.*;
-
+import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
+import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_ALGORITHM;
+import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_VALUE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -72,7 +71,8 @@ public class TestHelpers {
 		return mockDs;
 	}
 
-	public static PropertyIterator getPropertyIterator(int numValues, long size) {
+	@SuppressWarnings("unchecked")
+    public static PropertyIterator getPropertyIterator(int numValues, long size) {
     	PropertyIterator mock = mock(PropertyIterator.class);
     	Property mockProp = mock(Property.class);
     	try{

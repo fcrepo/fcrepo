@@ -1,28 +1,26 @@
 package org.fcrepo;
 
+import static org.fcrepo.TestHelpers.checksumString;
+import static org.fcrepo.TestHelpers.getContentNodeMock;
+import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 
-import static org.fcrepo.TestHelpers.*;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-
-import static org.mockito.Mockito.*;
-
-import static org.modeshape.jcr.api.JcrConstants.*;
-
-import javax.jcr.AccessDeniedException;
-import javax.jcr.Binary;
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -35,10 +33,7 @@ import javax.jcr.version.VersionException;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.FixityResult;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -167,13 +162,13 @@ public class DatastreamTest implements FedoraJcrTypes {
 	
 	@Test
 	public void testGetMimeType() throws RepositoryException {
-		String actual = testObj.getMimeType();
+		testObj.getMimeType();
 		verify(mockDsNode).hasProperty(FEDORA_CONTENTTYPE);
 	}
 	
 	@Test
 	public void testGetLabel() throws RepositoryException {
-		String actual = testObj.getLabel();
+		testObj.getLabel();
 		verify(mockDsNode).hasProperty(DC_TITLE);
 	}
 	
