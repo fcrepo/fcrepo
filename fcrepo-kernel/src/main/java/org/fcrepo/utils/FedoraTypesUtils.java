@@ -79,8 +79,8 @@ public class FedoraTypesUtils {
     /**
      * Translates a node type to its name. 
      */
-    static public Function<NodeType, String> nodetype2name =
-            new Function<NodeType, String>() {
+    static public Funktion<NodeType, String> nodetype2name =
+            new Funktion<NodeType, String>() {
 
                 @Override
                 public String apply(NodeType t) {
@@ -91,8 +91,8 @@ public class FedoraTypesUtils {
     /**
      * Translates a JCR value to its string expression. 
      */
-    public static Function<Value, String> value2string =
-            new Function<Value, String>() {
+    public static Funktion<Value, String> value2string =
+            new Funktion<Value, String>() {
 
                 @Override
                 public String apply(Value v) {
