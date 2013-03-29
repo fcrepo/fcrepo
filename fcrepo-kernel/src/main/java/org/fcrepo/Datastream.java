@@ -32,7 +32,6 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.Funktion;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -53,11 +52,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             Datastream.class, "content-size"));
 
     Node node;
-
+    
     LowLevelStorageService llStore;
 
     public Datastream(Node n) {
-        super(false); // turn off debug logging
+    	super(false); // turn off debug logging
         this.node = n;
     }
 
@@ -68,7 +67,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     public Datastream(final Session session, final String dsPath)
             throws RepositoryException {
-        super(false);
+    	super(false);
         this.node = findOrCreateNode(session, dsPath, NT_FILE);
         if (this.node.isNew()) {
             this.node.addMixin(FEDORA_DATASTREAM);
@@ -85,16 +84,6 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
                                     this.node.getName()});
         }
     }
-
-    public static Funktion<Node, Datastream> node2Datastream =
-            new Funktion<Node, Datastream>() {
-
-                @Override
-                public Datastream apply(Node n) {
-                    return new Datastream(n);
-                }
-
-            };
 
     /**
      * @return The backing JCR node.

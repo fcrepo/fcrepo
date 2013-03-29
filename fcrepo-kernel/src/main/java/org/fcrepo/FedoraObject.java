@@ -1,17 +1,10 @@
 
 package org.fcrepo;
 
-import static ch.lambdaj.Lambda.aggregate;
-import static ch.lambdaj.Lambda.extract;
-import static ch.lambdaj.Lambda.on;
 import static com.google.common.base.Joiner.on;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.transform;
 import static com.yammer.metrics.MetricRegistry.name;
-import static org.fcrepo.Datastream.node2Datastream;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
-import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.utils.FedoraTypesUtils.isOwned;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
@@ -22,15 +15,13 @@ import java.util.Calendar;
 import java.util.Collection;
 
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.FedoraNodeIterator;
 import org.modeshape.jcr.api.JcrTools;
-
-import ch.lambdaj.function.aggregate.Sum;
 
 import com.yammer.metrics.Timer;
 
@@ -100,10 +91,10 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
             node.setProperty(FEDORA_OWNERID, ownerId);
         }
     }
-
+    
     public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
-            final Property dcTitle = node.getProperty(DC_TITLE);
+            Property dcTitle = node.getProperty(DC_TITLE);
             if (!dcTitle.isMultiple())
                 return node.getProperty(DC_TITLE).getString();
             else {
@@ -112,25 +103,26 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         }
         return null;
     }
+    
 
     public void setLabel(String label) throws RepositoryException {
         node.setProperty(DC_TITLE, label);
     }
-
+    
     public String getCreated() throws RepositoryException {
-        return node.getProperty("jcr:created").getString();
+    	return node.getProperty("jcr:created").getString();
     }
-
+    
     public String getLastModified() throws RepositoryException {
-        return node.getProperty("jcr:lastModified").getString();
+    	return node.getProperty("jcr:lastModified").getString();
     }
-
+    
     public long getSize() throws RepositoryException {
-        return getObjectSize(node);
+    	return getObjectSize(node);
     }
-
+    
     public Collection<String> getModels() throws RepositoryException {
-        return map(node.getMixinNodeTypes(), nodetype2name);
+    	return map(node.getMixinNodeTypes(), nodetype2name);
     }
 
     /**
@@ -148,9 +140,13 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     private static Long getObjectDSSize(Node obj) throws RepositoryException {
-        return (Long) aggregate(extract(transform(filter(new FedoraNodeIterator(obj
-                .getNodes()), isFedoraDatastream), node2Datastream), on(
-                Datastream.class).getSize()), new Sum());
+        Long size = 0L;
+        NodeIterator i = obj.getNodes();
+        while (i.hasNext()) {
+            Datastream ds = new Datastream(i.nextNode());
+            size += ds.getSize();
+        }
+        return size;
     }
 
 }
