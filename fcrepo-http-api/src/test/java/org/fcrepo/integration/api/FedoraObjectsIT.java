@@ -10,7 +10,6 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.junit.Test;
 

@@ -1,6 +1,8 @@
 package org.fcrepo.api;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -8,15 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.query.Query;
@@ -31,7 +28,6 @@ import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
 import org.apache.tika.io.IOUtils;
 import org.jboss.resteasy.specimpl.PathSegmentImpl;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
-import org.modeshape.jcr.query.QueryResults;
 
 public abstract class TestHelpers {
     public static UriInfo getUriInfoImpl() {
@@ -58,6 +54,7 @@ public abstract class TestHelpers {
     	return results;
     }
     
+    @SuppressWarnings("unchecked")
     public static Query getQueryMock() {
 		Query mockQ = mock(Query.class);
 		QueryResult mockResults = mock(QueryResult.class);

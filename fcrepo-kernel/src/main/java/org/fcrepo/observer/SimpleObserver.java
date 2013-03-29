@@ -1,7 +1,7 @@
 
 package org.fcrepo.observer;
 
-import static com.google.common.collect.Collections2.filter;
+import static com.google.common.collect.Iterables.filter;
 import static com.yammer.metrics.MetricRegistry.name;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
@@ -20,10 +20,10 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.EventListener;
 
+import org.fcrepo.utils.FedoraEventIterator;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.eventbus.EventBus;
 import com.yammer.metrics.Counter;
 
@@ -63,14 +63,10 @@ public class SimpleObserver implements EventListener {
         session.logout();
     }
 
-    // it's okay to suppress type-safety warning here,
-    // because we know that EventIterator only produces
-    // Events, like an Iterator<Event>
-    @SuppressWarnings("unchecked")
     @Override
     public void onEvent(EventIterator events) {
 
-        for (Event e : filter(new Builder<Event>().addAll(events).build(),
+        for (final Event e : filter(new FedoraEventIterator(events),
                 eventFilter)) {
 
             eventCounter.inc();

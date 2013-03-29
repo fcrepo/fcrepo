@@ -15,7 +15,6 @@ import java.io.IOException;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -31,7 +30,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
-
 import org.slf4j.Logger;
 
 @Path("/objects")
