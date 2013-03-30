@@ -34,20 +34,20 @@ public class LowLevelCacheEntry {
 
     private final BinaryStore store;
 
-    private final CacheStore low_level_store;
+    private final CacheStore cacheStore;
 
     private final BinaryKey key;
 
-    public LowLevelCacheEntry(BinaryStore store, CacheStore low_level_store,
+    public LowLevelCacheEntry(BinaryStore store, CacheStore lowLevelStore,
             BinaryKey key) {
         this.store = store;
-        this.low_level_store = low_level_store;
+        this.cacheStore = lowLevelStore;
         this.key = key;
     }
 
     public LowLevelCacheEntry(BinaryStore store, BinaryKey key) {
         this.store = store;
-        this.low_level_store = null;
+        this.cacheStore = null;
         this.key = key;
     }
 
@@ -57,16 +57,25 @@ public class LowLevelCacheEntry {
 
             return this.key.equals(that.key) &&
                     this.store.equals(that.store) &&
-                    ((this.low_level_store == null && that.low_level_store == null) || this.low_level_store
-                            .equals(that.low_level_store));
+                    ((this.cacheStore == null && that.cacheStore == null) || (this.cacheStore != null && this.cacheStore
+                            .equals(that.cacheStore)));
         } else {
             return false;
         }
     }
 
+    public int hashCode() {
+        int hash = 1;
+        hash = hash * 31 + store.hashCode();
+        hash = hash * 31 + (cacheStore == null ? 0 : cacheStore.hashCode());
+        hash = hash * 31 + key.hashCode();
+
+        return hash;
+    }
+
     public InputStream getInputStream() throws BinaryStoreException {
         if (this.store instanceof InfinispanBinaryStore) {
-            return new StoreChunkInputStream(low_level_store, key.toString() +
+            return new StoreChunkInputStream(cacheStore, key.toString() +
                     DATA_SUFFIX);
         } else {
             return this.store.getInputStream(key);
@@ -77,7 +86,7 @@ public class LowLevelCacheEntry {
             IOException {
         if (this.store instanceof InfinispanBinaryStore) {
             OutputStream outputStream =
-                    new StoreChunkOutputStream(low_level_store, key.toString() +
+                    new StoreChunkOutputStream(cacheStore, key.toString() +
                             DATA_SUFFIX);
             IOUtils.copy(stream, outputStream);
             outputStream.close();
@@ -92,7 +101,7 @@ public class LowLevelCacheEntry {
         if (this.store instanceof InfinispanBinaryStore) {
 
             CacheStoreConfig config =
-                    this.low_level_store.getCacheStoreConfig();
+                    this.cacheStore.getCacheStoreConfig();
 
             String externalId = null;
             if (config instanceof AbstractCacheStoreConfig) {
@@ -114,7 +123,7 @@ public class LowLevelCacheEntry {
 
             return this.store.getClass().getName() +
                     ":" +
-                    this.low_level_store.getCacheStoreConfig()
+                    this.cacheStore.getCacheStoreConfig()
                             .getCacheLoaderClassName() + ":" + externalId;
 
         } else {
@@ -133,7 +142,9 @@ public class LowLevelCacheEntry {
 
             result = new FixityResult(this);
 
-            while (ds.read() != -1);
+            while (ds.read() != -1) {
+                // noop; we're just reading the stream for the checksum and size
+            }
 
             result.computedChecksum =
                     ContentDigest
@@ -141,11 +152,15 @@ public class LowLevelCacheEntry {
             result.computedSize = ds.getByteCount();
             result.dsChecksum = checksum;
             result.dsSize = size;
+
             if (!result.computedChecksum.equals(result.dsChecksum))
                 result.status.add(BAD_CHECKSUM);
+
             if (result.dsSize != result.computedSize)
                 result.status.add(BAD_SIZE);
+
             if (result.status.isEmpty()) result.status.add(SUCCESS);
+
             logger.debug("Got " + result.toString());
             ds.close();
         } catch (CloneNotSupportedException e) {

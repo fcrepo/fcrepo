@@ -54,6 +54,18 @@ public class LowLevelCacheEntryIT {
         assertEquals(cs1, cs2);
     }
 
+    @Test
+    public void testHashCode() throws Exception {
+
+        BinaryStore store = ((JcrRepository)repo).getConfiguration()
+                .getBinaryStorage().getBinaryStore();
+
+        LowLevelCacheEntry cs1 = new LowLevelCacheEntry(store, new BinaryKey("asd"));
+        LowLevelCacheEntry cs2 = new LowLevelCacheEntry(store, new BinaryKey("asd"));
+
+        assertEquals(cs1.hashCode(), cs2.hashCode());
+    }
+
 
     @Test
     public void testEqualsIspn() throws Exception {
@@ -69,6 +81,23 @@ public class LowLevelCacheEntryIT {
         LowLevelCacheEntry cs2 = new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
 
         assertEquals(cs1,  cs2);
+
+    }
+
+    @Test
+    public void testHashCodeIspn() throws Exception {
+
+        EmbeddedCacheManager cm = new DefaultCacheManager("test_infinispan_configuration.xml");
+        BinaryStore store = new InfinispanBinaryStore(cm, false, "FedoraRepository", "FedoraRepository");
+
+        CacheStore ispn = cm.getCache("FedoraRepository").getAdvancedCache().getComponentRegistry()
+                .getComponent(CacheLoaderManager.class)
+                .getCacheStore();
+
+        LowLevelCacheEntry cs1 = new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+        LowLevelCacheEntry cs2 = new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+
+        assertEquals(cs1.hashCode(),  cs2.hashCode());
 
     }
 

@@ -1,6 +1,8 @@
 
 package org.fcrepo.utils;
 
+import com.google.common.primitives.Longs;
+
 import java.net.URI;
 import java.util.EnumSet;
 
@@ -71,6 +73,14 @@ public class FixityResult {
         }
 
         return result;
+    }
+
+    public int hashCode() {
+        int hash = 1;
+        hash = hash * 31 + Longs.hashCode(this.computedSize);
+        hash = hash * 31 + this.computedChecksum.hashCode();
+
+        return hash;
     }
 
     public String toString() {

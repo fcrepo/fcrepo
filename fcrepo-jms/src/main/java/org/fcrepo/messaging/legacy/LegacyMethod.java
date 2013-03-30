@@ -48,7 +48,7 @@ public class LegacyMethod {
             "http://www.fedora.info/definitions/1/0/types/formatURI";
 
     //TODO get this out of the build properties
-    public final static String SERVER_VERSION = "4.0.0-SNAPSHOT";
+    public static final String SERVER_VERSION = "4.0.0-SNAPSHOT";
 
     private final static String TYPES_NS =
             "http://www.fedora.info/definitions/1/0/types/";

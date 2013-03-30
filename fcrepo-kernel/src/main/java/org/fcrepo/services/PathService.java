@@ -13,7 +13,7 @@ import org.slf4j.Logger;
  */
 public class PathService {
 
-    public final static String OBJECT_PATH = "/objects";
+    public static final String OBJECT_PATH = "/objects";
 
     private static final Logger logger = getLogger(PathService.class);
 

@@ -148,12 +148,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         String dsChecksum = binary.getHexHash();
-        if (checksum != null && !checksum.equals("")) {
-            if (!checksum.equals(binary.getHexHash())) {
+        if (checksum != null && !checksum.equals("")
+                && !checksum.equals(binary.getHexHash())) {
                 logger.debug("Failed checksum test");
                 throw new InvalidChecksumException("Checksum Mismatch of " +
                         dsChecksum + " and " + checksum);
-            }
         }
 
         contentSizeHistogram.update(dataProperty.getLength());

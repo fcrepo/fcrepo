@@ -138,7 +138,7 @@ public class StoreChunkInputStream extends InputStream {
 
             return (byte[]) cacheEntry.getValue();
        } catch (CacheLoaderException e) {
-            throw new IOException(e.toString());
+            throw new IOException(e);
         }
     }
 }

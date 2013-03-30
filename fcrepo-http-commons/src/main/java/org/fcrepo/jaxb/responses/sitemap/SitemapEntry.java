@@ -1,7 +1,6 @@
 package org.fcrepo.jaxb.responses.sitemap;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.query.Row;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.net.URI;

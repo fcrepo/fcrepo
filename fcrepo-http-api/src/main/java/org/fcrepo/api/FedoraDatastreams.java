@@ -347,10 +347,10 @@ public class FedoraDatastreams extends AbstractResource {
 
         EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         Date date = ds.getLastModifiedDate();
-        Date rounded_date = new Date();
-        rounded_date.setTime(date.getTime() - (date.getTime() % 1000));
+        Date roundedDate = new Date();
+        roundedDate.setTime(date.getTime() - (date.getTime() % 1000));
         ResponseBuilder builder =
-                request.evaluatePreconditions(rounded_date, etag);
+                request.evaluatePreconditions(roundedDate, etag);
 
         CacheControl cc = new CacheControl();
         cc.setMaxAge(0);

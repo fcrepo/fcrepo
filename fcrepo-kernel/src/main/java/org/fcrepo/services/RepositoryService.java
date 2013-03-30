@@ -30,7 +30,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     final private Logger logger = LoggerFactory
             .getLogger(RepositoryService.class);
 
-    public final static MetricRegistry metrics = RegistryService.getMetrics();
+    public static final MetricRegistry metrics = RegistryService.getMetrics();
 
     @Inject
     protected Repository repo;

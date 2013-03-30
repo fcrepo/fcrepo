@@ -80,16 +80,17 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
     }
 
     public String getOwnerId() throws RepositoryException {
-        if (isOwned.apply(node))
+        if (isOwned.apply(node)) {
             return node.getProperty(FEDORA_OWNERID).getString();
-        else
+        } else {
             return null;
+        }
     }
 
     public void setOwnerId(String ownerId) throws RepositoryException {
-        if (isOwned.apply(node))
+        if (isOwned.apply(node)) {
             node.setProperty(FEDORA_OWNERID, ownerId);
-        else {
+        } else {
             node.addMixin(FEDORA_OWNED);
             node.setProperty(FEDORA_OWNERID, ownerId);
         }
@@ -98,9 +99,9 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
     public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
             Property dcTitle = node.getProperty(DC_TITLE);
-            if (!dcTitle.isMultiple())
+            if (!dcTitle.isMultiple()) {
                 return node.getProperty(DC_TITLE).getString();
-            else {
+            } else {
                 return on('/').join(map(dcTitle.getValues(), value2string));
             }
         }

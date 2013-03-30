@@ -79,8 +79,9 @@ public class FedoraNamespaces extends AbstractResource {
         try {
             final NamespaceRegistry r =
                     session.getWorkspace().getNamespaceRegistry();
-            for (Namespace ns : nses.namespaces)
+            for (Namespace ns : nses.namespaces) {
                 r.registerNamespace(ns.prefix, ns.uri.toString());
+            }
         } finally {
             session.logout();
         }

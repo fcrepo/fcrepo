@@ -155,9 +155,9 @@ public class FedoraObjects extends AbstractResource {
         objectProfile.pid = pid;
         if (obj.hasProperty(DC_TITLE)) {
             Property dcTitle = obj.getProperty(DC_TITLE);
-            if (!dcTitle.isMultiple())
+            if (!dcTitle.isMultiple()) {
                 objectProfile.objLabel = obj.getProperty(DC_TITLE).getString();
-            else {
+            } else {
                 objectProfile.objLabel =
                         on('/').join(map(dcTitle.getValues(), value2string));
             }

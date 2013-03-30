@@ -29,12 +29,12 @@ public interface FedoraJcrTypes {
 
     public static final String FEDORA_CHECKSUM = "fedora:checksum";
 
-    public final static String CONTENT_SIZE = "fedora:size";
+    public static final String CONTENT_SIZE = "fedora:size";
 
-    public final static String DIGEST_VALUE = "fedora:digest";
+    public static final String DIGEST_VALUE = "fedora:digest";
 
-    public final static String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
+    public static final String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
 
-    public final static String FEDORA_CONTENTTYPE = "fedora:contentType";
+    public static final String FEDORA_CONTENTTYPE = "fedora:contentType";
 
 }

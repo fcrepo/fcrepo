@@ -51,8 +51,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public Node createObjectNode(final Session session, final String name)
             throws RepositoryException {
-        Node result = new FedoraObject(session, getObjectJcrNodePath(name)).getNode();
-        return result;
+        return new FedoraObject(session, getObjectJcrNodePath(name)).getNode();
     }
 
     /**
