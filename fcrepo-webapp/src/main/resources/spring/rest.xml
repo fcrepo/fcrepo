@@ -50,6 +50,7 @@
             <bean class="org.fcrepo.api.FedoraNamespaces"/>
             <bean class="org.fcrepo.api.FedoraObjects"/>
             <bean class="org.fcrepo.api.FedoraFieldSearch"/>
+            <bean class="org.fcrepo.api.FedoraSitemap"/>
             <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
             <bean class="org.fcrepo.generator.ObjectRdfGenerator">
                 <property name="objectGenerators">
