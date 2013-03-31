@@ -8,16 +8,16 @@ import java.util.Calendar;
 
 @XmlRootElement(name = "url",  namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapEntry {
-    @XmlElement
+    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private final URI loc;
 
-    @XmlElement
+    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private final Calendar lastmod;
 
-    @XmlElement
+    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private final String changefreq = "monthly";
 
-    @XmlElement
+    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private final double priority = 0.8;
 
     public SitemapEntry() {

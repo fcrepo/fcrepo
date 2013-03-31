@@ -3,6 +3,7 @@ package org.fcrepo.jaxb.responses.sitemap;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import java.util.List;
 public class SitemapUrlSet {
 
 
-    @XmlElement(name = "url")
+    @XmlElement(name = "url", namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private List<SitemapEntry> sitemapEntries = new ArrayList<SitemapEntry>();
 
     public SitemapUrlSet() {

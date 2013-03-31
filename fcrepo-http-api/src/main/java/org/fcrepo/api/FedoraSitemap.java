@@ -18,9 +18,11 @@ import javax.jcr.query.RowIterator;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 
 import static java.lang.Integer.parseInt;
 import static javax.jcr.query.Query.JCR_SQL2;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.fcrepo.utils.FedoraJcrTypes.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -34,6 +36,7 @@ public class FedoraSitemap extends AbstractResource {
     ObjectService objectService;
 
     @GET
+    @Produces(TEXT_XML)
     public SitemapIndex getSitemapIndex() throws RepositoryException {
         final Session session = repo.login();
         try {
@@ -53,12 +56,13 @@ public class FedoraSitemap extends AbstractResource {
 
     @GET
     @Path("/{page}")
+    @Produces(TEXT_XML)
     public SitemapUrlSet getSitemap(@PathParam("page") final String page) throws RepositoryException {
         final Session session = repo.login();
         try {
             final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 
-            RowIterator rows = getSitemapEntries(session, parseInt(page));
+            RowIterator rows = getSitemapEntries(session, parseInt(page)-1);
 
             while(rows.hasNext()) {
                 Row r = rows.nextRow();
