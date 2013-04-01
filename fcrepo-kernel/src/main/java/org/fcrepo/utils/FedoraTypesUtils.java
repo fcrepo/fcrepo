@@ -7,11 +7,15 @@ import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
 
+import java.io.InputStream;
 import java.util.Collection;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 
 import com.google.common.base.Function;
@@ -103,6 +107,27 @@ public class FedoraTypesUtils {
                     }
                 }
             };
+    
+    public static Function<Node, ValueFactory> getValueFactory =
+    		new Function<Node, ValueFactory>() {
+    	        @Override
+    	        public ValueFactory apply(Node n) {
+    	        	try {
+						return n.getSession().getValueFactory();
+					} catch (RepositoryException e) {
+                        throw new IllegalStateException(e);
+					}
+    	        }
+    };
+    
+    public static Binary getBinary(Node n, InputStream i) {
+    	try {
+			return n.getSession().getValueFactory().createBinary(i);
+		} catch (RepositoryException e) {
+            throw new IllegalStateException(e);
+		}
+    }
+    
 
     /**
      * Convenience method for transforming collections into 

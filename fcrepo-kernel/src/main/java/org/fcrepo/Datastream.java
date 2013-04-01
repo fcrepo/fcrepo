@@ -10,6 +10,7 @@ import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.services.RepositoryService.metrics;
+import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
@@ -43,6 +44,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.Binary;
@@ -142,9 +144,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
          * implement this public interface, so feel free to cast the values to
          * gain access to the additional methods."
          */
-        Binary binary =
-                (Binary) node.getSession().getValueFactory().createBinary(
-                        content);
+        Binary binary = (Binary) getBinary(node, content);
 
         /*
          * This next line of code deserves explanation. If we chose for the

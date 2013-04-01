@@ -37,14 +37,21 @@ import org.apache.tika.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.FixityResult;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest( { FedoraTypesUtils.class })
 public class DatastreamTest implements FedoraJcrTypes {
 	
 	String testPid = "testObj";
@@ -104,12 +111,15 @@ public class DatastreamTest implements FedoraJcrTypes {
 
 	@Test
 	public void testSetContent() throws RepositoryException, InvalidChecksumException {
+		org.modeshape.jcr.api.Binary mockBin = mock(org.modeshape.jcr.api.Binary.class);
+		PowerMockito.mockStatic(FedoraTypesUtils.class);
+		when(FedoraTypesUtils.getBinary(any(Node.class), any(InputStream.class)))
+		.thenReturn(mockBin);
 		InputStream content = mock(InputStream.class);
 		Node mockContent = getContentNodeMock(8);
 		when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 		ValueFactory mockVF = mock(ValueFactory.class);
 		when(mockSession.getValueFactory()).thenReturn(mockVF);
-		org.modeshape.jcr.api.Binary mockBin = mock(org.modeshape.jcr.api.Binary.class);
 		when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
 		Property mockSize = mock(Property.class);
 		when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockSize);
