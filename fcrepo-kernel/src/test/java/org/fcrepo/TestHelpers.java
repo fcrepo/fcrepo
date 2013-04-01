@@ -3,6 +3,9 @@ package org.fcrepo;
 import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_ALGORITHM;
 import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_VALUE;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
+import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -116,6 +119,8 @@ public class TestHelpers {
 		Property mockProp = mock(Property.class);
 		Property mockDigest = mock(Property.class);
 		Property mockDigestType = mock(Property.class);
+		Property mockOwner = mock(Property.class);
+		Property mockCreated = mock(Property.class);
 		Binary mockBin = mock(Binary.class);
 		try{
 			when(mockFedoraSize.getLong()).thenReturn(size);
@@ -132,6 +137,9 @@ public class TestHelpers {
 			when(mock.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
 			when(mock.getProperty(DIGEST_ALGORITHM)).thenReturn(mockDigestType);
 			when(mock.getProperty(DIGEST_VALUE)).thenReturn(mockDigest);
+			when(mock.getProperty(FEDORA_OWNERID)).thenReturn(mockOwner);
+			when(mock.getProperty(FEDORA_OWNED)).thenReturn(mockOwner);
+			when(mock.getProperty(JCR_CREATED)).thenReturn(mockCreated);
     	} catch (RepositoryException e) {} // shhh
 		return mock;
 	}
