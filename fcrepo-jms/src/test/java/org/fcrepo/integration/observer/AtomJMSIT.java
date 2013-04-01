@@ -75,12 +75,16 @@ public class AtomJMSIT implements MessageListener {
         session.getRootNode().addNode("test1").addMixin(FEDORA_OBJECT);
         session.save();
         session.logout();
-        while (entry == null)
+
+        // we're relying on the onMessage handler to populate entry
+        while (entry == null) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         final String title = entry.getTitle();
         entry = null;
@@ -107,12 +111,15 @@ public class AtomJMSIT implements MessageListener {
         ds.addNode(JCR_CONTENT).setProperty(JCR_DATA, "fake data");
         session.save();
         session.logout();
-        while (entry == null)
+
+        // we're relying on the onMessage handler to populate entry
+        while (entry == null) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         entry = null;
         String path = null;
@@ -145,7 +152,7 @@ public class AtomJMSIT implements MessageListener {
         		logger.warn("Could not parse message: {}", message);
         	}
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception receiving message: {}", e);
             fail(e.getMessage());
         }
 

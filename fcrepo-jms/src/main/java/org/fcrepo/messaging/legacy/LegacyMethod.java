@@ -6,6 +6,7 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -30,6 +31,7 @@ import org.fcrepo.utils.FedoraTypesUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
 
 public class LegacyMethod {
 
@@ -63,6 +65,8 @@ public class LegacyMethod {
             "purgeDatastream"};
 
     private final static List<String> METHOD_NAMES = Arrays.asList(METHODS);
+
+    private static final Logger logger = getLogger(LegacyMethod.class);
 
     static {
         try {
@@ -293,7 +297,7 @@ public class LegacyMethod {
                     METHOD_NAMES.contains(jmsMessage
                             .getStringProperty("methodName"));
         } catch (JMSException e) {
-            e.printStackTrace();
+            logger.info("Could not parse message: {}", jmsMessage);
             return false;
         }
     }

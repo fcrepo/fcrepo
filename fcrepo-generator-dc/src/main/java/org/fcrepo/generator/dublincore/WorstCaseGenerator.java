@@ -1,11 +1,17 @@
 package org.fcrepo.generator.dublincore;
 
+import org.slf4j.Logger;
+
 import javax.jcr.Node;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class WorstCaseGenerator implements DCGenerator {
+
+    private static final Logger logger = getLogger(WorstCaseGenerator.class);
 
     @Override
     public InputStream getStream(Node node) {
@@ -14,7 +20,7 @@ public class WorstCaseGenerator implements DCGenerator {
         try {
             return new ByteArrayInputStream(str.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            logger.warn("logged exception", e);
             return null;
         }
     }

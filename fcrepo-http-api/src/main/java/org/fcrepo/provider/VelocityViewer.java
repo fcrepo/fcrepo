@@ -7,6 +7,9 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.jaxb.search.FieldSearchResult;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Resolves the view to be used
@@ -16,8 +19,11 @@ import org.fcrepo.jaxb.search.FieldSearchResult;
 public class VelocityViewer {
 	
 	private VelocityEngine velocityEngine;
-	
-	public VelocityViewer() {
+
+    private static final Logger logger = getLogger(VelocityViewer.class);
+
+
+    public VelocityViewer() {
 		try
         {
             // Load the velocity properties from the class path
@@ -29,7 +35,7 @@ public class VelocityViewer {
         }
         catch( Exception e )
         {
-            e.printStackTrace();
+            logger.warn("Exception rendering Velocity template: {}", e);
         }
 	}
 	
@@ -48,7 +54,7 @@ public class VelocityViewer {
 		}
 	    catch( Exception e )
 	    {
-	        e.printStackTrace();
+            logger.warn("Exception rendering Velocity template: {}", e);
 	    }
 		return null;
 	}
@@ -68,7 +74,7 @@ public class VelocityViewer {
         }
         catch( Exception e )
         {
-            e.printStackTrace();
+            logger.warn("Exception rendering Velocity template: {}", e);
         }
         return null;
     }

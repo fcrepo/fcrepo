@@ -100,7 +100,7 @@ public class LowLevelStorageService {
                         try {
                         	result = entry.checkFixity(dsChecksum, dsSize, digest);
                         } catch (BinaryStoreException e) {
-                            e.printStackTrace();
+                            logger.error("Exception checking low-level fixity: {}", e);
                             throw new IllegalStateException(e);
 						}
                         return result;
@@ -299,7 +299,7 @@ public class LowLevelStorageService {
                     fixityErrorCounter.inc();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.warn("Exception repairing low-level cache entry: {}", e);
             }
         }
 

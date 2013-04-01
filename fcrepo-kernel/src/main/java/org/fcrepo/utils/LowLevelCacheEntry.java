@@ -164,7 +164,7 @@ public class LowLevelCacheEntry {
             logger.debug("Got " + result.toString());
             ds.close();
         } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
+            logger.warn("Could not clone MessageDigest: {}", e);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

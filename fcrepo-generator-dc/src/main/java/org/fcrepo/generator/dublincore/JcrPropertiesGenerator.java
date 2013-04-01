@@ -1,11 +1,17 @@
 package org.fcrepo.generator.dublincore;
 
+import org.slf4j.Logger;
+
 import javax.jcr.*;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class JcrPropertiesGenerator implements DCGenerator {
+
+    private static final Logger logger = getLogger(JcrPropertiesGenerator.class);
 
     @Override
     public InputStream getStream(Node node) {
@@ -32,14 +38,12 @@ public class JcrPropertiesGenerator implements DCGenerator {
 
             str += "</oai_dc:dc>";
 
-            try {
-                return new ByteArrayInputStream(str.getBytes("UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-                return null;
-            }
+            return new ByteArrayInputStream(str.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            logger.warn("Exception rendering properties: {}", e);
+            return null;
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            logger.error("Repository exception: {}", e);
             return null;
         }
     }

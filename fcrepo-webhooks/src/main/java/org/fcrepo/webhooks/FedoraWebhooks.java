@@ -157,13 +157,14 @@ public class FedoraWebhooks extends AbstractResource {
 
 
     @Subscribe
-    public void newEvent(FedoraEvent event) {
+    public void onEvent(FedoraEvent event) {
         try {
+            logger.debug("Webhooks received event: {}", event);
             final Node resource = jcrTools.findOrCreateNode(readOnlySession, event.getPath());
 
             runHooks(resource, event);
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            logger.error("Got a repository exception handling message: {}", e);
         }
     }
 
