@@ -48,7 +48,7 @@ public class FedoraRepository extends AbstractResource {
     private static final Logger logger = getLogger(FedoraRepository.class);
     
     @Inject
-    private ObjectService objectService;
+    ObjectService objectService;
 
     @GET
     @Path("modeshape")
@@ -63,19 +63,13 @@ public class FedoraRepository extends AbstractResource {
         }
 
         // add in node namespaces
-        final NamespaceRegistry reg =
-                session.getWorkspace().getNamespaceRegistry();
         final Builder<String, String> namespaces = builder();
-        for (final String prefix : reg.getPrefixes()) {
-            namespaces.put(prefix, reg.getURI(prefix));
-        }
+        namespaces.putAll(objectService.getRepositoryNamespaces(session));
         repoproperties.put("node.namespaces", namespaces.build());
 
         // add in node types
-        final NodeTypeManager ntmanager =
-                (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
         final Builder<String, String> nodetypes = builder();
-        NodeTypeIterator i = ntmanager.getAllNodeTypes();
+        NodeTypeIterator i = objectService.getAllNodeTypes(session);
         while (i.hasNext()) {
             NodeType nt = i.nextNodeType();
             nodetypes.put(nt.getName(), nt.toString());

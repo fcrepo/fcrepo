@@ -1,12 +1,16 @@
 package org.fcrepo.services;
 
+import static com.google.common.collect.ImmutableMap.builder;
 import static javax.jcr.query.Query.JCR_SQL2;
 
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -14,6 +18,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
@@ -21,9 +26,11 @@ import javax.jcr.query.RowIterator;
 import org.fcrepo.metrics.RegistryService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
+import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMap.Builder;
 import com.yammer.metrics.MetricRegistry;
 
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
@@ -127,6 +134,23 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
             logger.warn(e.toString());
             return -1L;
         }
+    }
+    
+    public NodeTypeIterator getAllNodeTypes(Session session) throws RepositoryException {
+        final NodeTypeManager ntmanager =
+                (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
+        return ntmanager.getAllNodeTypes();
+    }
+    
+    public Map<String, String> getRepositoryNamespaces(Session session) throws RepositoryException {
+        final NamespaceRegistry reg =
+                session.getWorkspace().getNamespaceRegistry();
+        String [] prefixes = reg.getPrefixes();
+        HashMap<String, String> result = new HashMap<String, String>(prefixes.length);
+        for (final String prefix : reg.getPrefixes()) {
+            result.put(prefix, reg.getURI(prefix));
+        }
+        return result;
     }
     
     @PostConstruct
