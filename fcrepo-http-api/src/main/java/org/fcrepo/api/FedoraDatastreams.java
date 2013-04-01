@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.jcr.LoginException;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -65,7 +64,7 @@ import com.google.common.collect.ImmutableSet.Builder;
 @Path("/objects/{pid}/datastreams")
 public class FedoraDatastreams extends AbstractResource {
 
-    final private Logger logger = getLogger(FedoraDatastreams.class);
+    private final Logger logger = getLogger(FedoraDatastreams.class);
 
     @Inject
     DatastreamService datastreamService;
@@ -200,8 +199,7 @@ public class FedoraDatastreams extends AbstractResource {
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
-     * @throws InvalidChecksumException 
-     * @throws LoginException 
+     * @throws InvalidChecksumException
      */
     @POST
     @Path("/{dsid}")
@@ -210,22 +208,19 @@ public class FedoraDatastreams extends AbstractResource {
     final String checksumType, @QueryParam("checksum")
     final String checksum, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
-    MediaType contentType, InputStream requestBodyStream) throws IOException,
+    MediaType requestContentType, InputStream requestBodyStream) throws IOException,
             InvalidChecksumException, RepositoryException {
-        if (contentType == null) contentType = APPLICATION_OCTET_STREAM_TYPE;
+        final MediaType contentType =
+                requestContentType != null ? requestContentType
+                        : APPLICATION_OCTET_STREAM_TYPE;
+
         final Session session = repo.login();
         try {
             String dsPath = getDatastreamJcrNodePath(pid, dsid);
             logger.info("addDatastream {}", dsPath);
-            if (!datastreamService.exists(pid, dsid, session)) {
-                datastreamService.createDatastreamNode(session, dsPath,
-                        contentType.toString(), requestBodyStream,
-                        checksumType, checksum);
-            } else {
-                datastreamService.createDatastreamNode(session, dsPath,
-                        contentType.toString(), requestBodyStream,
-                        checksumType, checksum);
-            }
+            datastreamService.createDatastreamNode(session, dsPath,
+                    contentType.toString(), requestBodyStream,
+                    checksumType, checksum);
             session.save();
             return created(uriInfo.getRequestUri()).build();
         } finally {
@@ -284,12 +279,12 @@ public class FedoraDatastreams extends AbstractResource {
     public Response modifyDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
-    MediaType contentType, InputStream requestBodyStream)
+    MediaType requestContentType, InputStream requestBodyStream)
             throws RepositoryException, IOException, InvalidChecksumException {
         final Session session = repo.login();
         try {
-            contentType =
-                    contentType != null ? contentType
+            final MediaType contentType =
+                    requestContentType != null ? requestContentType
                             : APPLICATION_OCTET_STREAM_TYPE;
             String dsPath = getDatastreamJcrNodePath(pid, dsid);
 
