@@ -150,7 +150,6 @@ public class FedoraDatastreamsTest {
     	InputStream dsContentStream = IOUtils.toInputStream(dsContent);
     	Response actual = testObj.addDatastream(pid, dsId, null, dsContentStream);
     	assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
-    	verify(mockDatastreams).exists(pid, dsId, mockSession);
     	verify(mockDatastreams).createDatastreamNode(
     			any(Session.class), eq(dsPath), 
     			anyString(), any(InputStream.class),
