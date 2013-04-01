@@ -2,12 +2,16 @@ package org.fcrepo;
 
 import static org.fcrepo.TestHelpers.getContentNodeMock;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
+import static org.fcrepo.services.PathService.getObjectJcrNodePath;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+
 
 import java.util.Collection;
 import java.util.Date;
@@ -23,14 +27,22 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.services.ServiceHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.Repository;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Predicate;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest( { ServiceHelpers.class })
 public class FedoraObjectTest implements FedoraJcrTypes {
 
 	String testPid = "testObj";
@@ -47,31 +59,33 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 	
 	Node mockRootNode;
 	
-	Node mockDsNode;
+	Node mockObjNode;
 	
-	FedoraObject testObj;
+	FedoraObject testFedoraObject;
 	
 	NodeType[] mockNodetypes;
+	
+	Predicate<Node> isOwned;
 	
 	
 	@Before
 	public void setUp() throws LoginException, RepositoryException {
-		String relPath = getDatastreamJcrNodePath(testPid, testDsId).substring(1);
+		this.isOwned = FedoraTypesUtils.isOwned;
+		String relPath = getObjectJcrNodePath(testPid).substring(1);
 		
 		mockSession = mock(Session.class);
 		mockRootNode = mock(Node.class);
-		mockDsNode = mock(Node.class);
-		Predicate<Node> isOwned = mock(Predicate.class);
-		Predicate<Node> mockIsFedoraDatastream = mock(Predicate.class);
+		mockObjNode = mock(Node.class);
+		Predicate<Node> mockPredicate = mock(Predicate.class);
 
 		try{
 			
-			when(mockDsNode.getName()).thenReturn(testDsId);
-			when(mockDsNode.getSession()).thenReturn(mockSession);
+			when(mockObjNode.getName()).thenReturn(testPid);
+			when(mockObjNode.getSession()).thenReturn(mockSession);
 		    when(mockSession.getRootNode()).thenReturn(mockRootNode);
-		    when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
+		    when(mockRootNode.getNode(relPath)).thenReturn(mockObjNode);
 		    when(mockSession.getUserID()).thenReturn(mockUser);
-			testObj = new FedoraObject(mockSession, relPath);
+			testFedoraObject = new FedoraObject(mockSession, relPath);
 
 			verify(mockRootNode).getNode(relPath);
 			
@@ -79,12 +93,10 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 			mockNodetypes[0] =  mock(NodeType.class);
 			mockNodetypes[1] = mock(NodeType.class);
 			
-			when(mockDsNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
-			testObj.setNode(mockDsNode);
-			testObj.setIsOwned(isOwned);
-			testObj.setIsFedoraDatastream(mockIsFedoraDatastream);
-			when(isOwned.apply(mockDsNode)).thenReturn(true);
-			when(mockIsFedoraDatastream.apply(mockDsNode)).thenReturn(true);
+			when(mockObjNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
+			
+			when(mockPredicate.apply(mockObjNode)).thenReturn(true);
+			FedoraTypesUtils.isOwned = mockPredicate;
 			
 		} catch(RepositoryException e) {
 			e.printStackTrace();
@@ -97,95 +109,80 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 	public void tearDown() {
 		mockSession = null;
 		mockRootNode = null;
-		mockDsNode = null;
+		mockObjNode = null;
+		if (this.isOwned != null){
+			FedoraTypesUtils.isOwned = this.isOwned;
+		}
 	}
 	
 	@Test
 	public void testGetName() throws RepositoryException {
-		assertEquals(testObj.getName(), testDsId);
+		assertEquals(testFedoraObject.getName(), testPid);
 	}
 	
 	@Test
 	public void testGetNode() {
-		assertEquals(testObj.getNode(), mockDsNode);
+		assertEquals(testFedoraObject.getNode(), mockObjNode);
 	}
 	
 	@Test
 	public void testSetOwnerId() throws RepositoryException {
 		Property mockProp = mock(Property.class);
-		when(mockDsNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
-		when(mockProp.getString()).thenReturn(mockUser);
-		testObj.setOwnerId(mockUser);
-		String expected = mockDsNode.getProperty(FEDORA_OWNERID).getString();
-		assertEquals(mockUser, expected);
+		when(mockObjNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
+		String expected = "resuKcom";
+		testFedoraObject.setOwnerId(expected);
+		verify(mockObjNode).setProperty(FEDORA_OWNERID, expected);
 	}
 	
 	@Test
 	public void testGetOwnerId() throws RepositoryException {
-		String expected = "asdf";
 		Property mockProp = mock(Property.class);
-		Node mockContent = getContentNodeMock(expected);
-		when(mockDsNode.getNode("jcr:content")).thenReturn(mockContent);
-		when(mockDsNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
-		when(mockProp.getString()).thenReturn("mockUser");
-		String actual = testObj.getOwnerId();
+		when(mockObjNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
+		when(mockProp.getString()).thenReturn(mockUser);
+		String actual = testFedoraObject.getOwnerId();
 		assertEquals(mockUser, actual);
+		verify(mockObjNode).getProperty(FEDORA_OWNERID);
 	}
 		
 	@Test
 	public void testGetLabel() throws RepositoryException {
 		Property mockProp = mock(Property.class);
-		when(mockDsNode.hasProperty(DC_TITLE)).thenReturn(true);
-		when(mockDsNode.getProperty(DC_TITLE)).thenReturn(mockProp);
+		when(mockObjNode.hasProperty(DC_TITLE)).thenReturn(true);
+		when(mockObjNode.getProperty(DC_TITLE)).thenReturn(mockProp);
 		when(mockProp.getString()).thenReturn("mockTitle");
-		String actual = testObj.getLabel();
-		assertEquals("mockTitle", actual);
+		testFedoraObject.getLabel();
+		verify(mockObjNode).getProperty(DC_TITLE);
 	}
 	
 	@Test
 	public void testGetCreated() throws RepositoryException {
-		Date expected = new Date();
-		String expectedString = Long.toString(expected.getTime());
 		Property mockProp = mock(Property.class);
-		when(mockProp.getString()).thenReturn(expectedString);
-		when(mockDsNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-		String actual = testObj.getCreated();
-		assertEquals(expectedString, actual);
+		when(mockProp.getString()).thenReturn("mockDate");
+		when(mockObjNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
+		testFedoraObject.getCreated();
+		verify(mockObjNode).getProperty(JCR_CREATED);
 	}
 	
 	@Test
 	public void testGetLastModified() throws RepositoryException {
 		Property mockProp = mock(Property.class);
-		when(mockDsNode.getProperty("jcr:lastModified")).thenReturn(mockProp);
+		when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
 		when(mockProp.getString()).thenReturn("mockDate");
-		String actual = testObj.getLastModified();
-		assertEquals("mockDate", actual);
+		testFedoraObject.getLastModified();
+		verify(mockObjNode).getProperty(JCR_LASTMODIFIED);
 	}
 	
 	@Test
 	public void testGetSize() throws RepositoryException {
-		String expected = "asdf";
-		Binary mockBinary = mock(Binary.class);
-		PropertyIterator mockPI = mock(PropertyIterator.class);
-		NodeIterator mockNI = mock(NodeIterator.class);
-		Node mockContent = getContentNodeMock(expected);
-		Property mockProp = mock(Property.class);
-		when(mockDsNode.getNode("jcr:content")).thenReturn(mockContent);
-		when(mockDsNode.getProperties()).thenReturn(mockPI);
-		when(mockPI.hasNext()).thenReturn(true,false);
-		when(mockPI.nextProperty()).thenReturn(mockProp);
-		when(mockProp.getBinary()).thenReturn(mockBinary);
-		when(mockBinary.getSize()).thenReturn(0L);
-		when(mockDsNode.getNodes()).thenReturn(mockNI);
-		when(mockNI.hasNext()).thenReturn(true,false);
-		when(mockNI.nextNode()).thenReturn(mockDsNode);
-		long actual = testObj.getSize();
-		assertEquals(4, actual);
+		PowerMockito.mockStatic(ServiceHelpers.class);
+        when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(-8L); // obviously not a real value
+		long actual = testFedoraObject.getSize();
+		assertEquals(-8, actual);
 	}
 	
 	@Test
 	public void testGetModels() throws RepositoryException {
-		Collection<String> actual = testObj.getModels();
+		Collection<String> actual = testFedoraObject.getModels();
 		assertNotNull(actual);
 	}
 	
