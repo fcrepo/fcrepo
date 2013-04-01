@@ -22,10 +22,7 @@ public class RegistryService {
         final MetricRegistry registry = getMetrics();
 
         final MetricFilter filter = MetricFilter.ALL;
-        final ConsoleReporter reporter = new ConsoleReporter(registry,
-                os, Locale.getDefault(), new Clock.UserTimeClock(), TimeZone.getDefault(), TimeUnit.SECONDS,
-                TimeUnit.MILLISECONDS,
-                filter);
+        final ConsoleReporter reporter = ConsoleReporter.forRegistry(registry).build();
 
         reporter.report(registry.getGauges(filter),
                 registry.getCounters(filter),
