@@ -26,6 +26,7 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraNodeIterator;
 import org.modeshape.jcr.api.JcrTools;
 
+import com.google.common.base.Predicate;
 import com.yammer.metrics.Timer;
 
 /**
@@ -77,6 +78,19 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      */
     public Node getNode() {
         return node;
+    }
+    
+    public void setNode(Node node) {
+    	this.node = node;
+    }
+    
+    /**
+     * convenient setter for injecting static member isOwned
+     * for unit tests
+     * @param isowned
+     */
+    public void setIsOwned(Predicate<Node> isowned) {
+    	isOwned = isowned;
     }
 
     public String getOwnerId() throws RepositoryException {
