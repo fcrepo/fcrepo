@@ -1,5 +1,7 @@
+
 package org.fcrepo.api;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
@@ -28,17 +30,22 @@ public class FedoraIdentifiersTest {
 
     @Test
     public void testGetNextPid() {
-        when(mockPidMinter.makePid()).thenReturn(new Function<Object, String>() {
+        when(mockPidMinter.makePid()).thenReturn(
+                new Function<Object, String>() {
 
-            @Override
-            public String apply(Object input) {
-                return "asdf:123";
-            }
+                    @Override
+                    public String apply(Object input) {
+                        return "asdf:123";
+                    }
                 });
 
         NextPid np = fi.getNextPid(2);
 
-        //TODO: test for actual values
         assertNotNull(np);
+
+        for (final String pid : np.pids) {
+            assertEquals("Wrong pid value!", "asdf:123", pid);
+        }
+
     }
 }

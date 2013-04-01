@@ -1,10 +1,11 @@
 package org.fcrepo.jaxb.responses.sitemap;
 
+import java.net.URI;
+import java.util.Calendar;
+
 import javax.jcr.RepositoryException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.net.URI;
-import java.util.Calendar;
 
 @XmlRootElement(name = "url",  namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapEntry {

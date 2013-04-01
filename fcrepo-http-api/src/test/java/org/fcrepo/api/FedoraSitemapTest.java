@@ -1,21 +1,20 @@
 package org.fcrepo.api;
 
-import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.ObjectService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.modeshape.jcr.api.Repository;
+import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
+import org.fcrepo.services.ObjectService;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.modeshape.jcr.api.Repository;
 
 public class FedoraSitemapTest {
 

@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class NextPid {
 
     @XmlElement(name = "pid", namespace = "")
-    Set<String> pids;
+    public Set<String> pids;
 
     public NextPid(Set<String> pids) {
         this.pids = pids;

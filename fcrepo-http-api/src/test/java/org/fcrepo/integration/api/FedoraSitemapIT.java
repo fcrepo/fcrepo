@@ -1,11 +1,10 @@
 package org.fcrepo.integration.api;
 
+import static org.junit.Assert.assertEquals;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpGet;
-import org.fcrepo.api.FedoraSitemap;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class FedoraSitemapIT extends AbstractResourceIT {
     @Test

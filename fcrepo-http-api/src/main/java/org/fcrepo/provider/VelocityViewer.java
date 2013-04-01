@@ -1,5 +1,7 @@
 package org.fcrepo.provider;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.StringWriter;
 import java.util.Properties;
 
@@ -8,8 +10,6 @@ import org.apache.velocity.app.VelocityEngine;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.slf4j.Logger;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Resolves the view to be used
