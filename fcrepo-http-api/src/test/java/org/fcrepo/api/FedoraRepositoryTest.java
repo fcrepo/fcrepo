@@ -1,20 +1,21 @@
 package org.fcrepo.api;
 
+import static org.fcrepo.api.TestHelpers.createMockRepo;
+import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
+import org.fcrepo.services.ObjectService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,19 +23,21 @@ import org.modeshape.jcr.api.Repository;
 
 public class FedoraRepositoryTest {
 	
-	FedoraRepository testFedoraRepo;
+	FedoraRepository testObj;
 	
 	Repository mockRepo;
 	
-	Session mockSession;
+	ObjectService mockObjects;
 	
 	@Before
 	public void setUp() throws LoginException, RepositoryException {
-		testFedoraRepo = mock(FedoraRepository.class);
-		mockRepo = mock(Repository.class);
-		mockSession = mock(Session.class);
-		when(mockRepo.login()).thenReturn(mockSession);
-		testFedoraRepo.setRepository(mockRepo);
+		testObj = new FedoraRepository();
+		mockObjects = mock(ObjectService.class);
+		mockRepo = createMockRepo();
+		testObj.setRepository(mockRepo);
+		testObj.setPidMinter(new UUIDPidMinter());
+		testObj.objectService = mockObjects;
+		testObj.setUriInfo(getUriInfoImpl());
 	}
 	
 	@After
@@ -43,26 +46,23 @@ public class FedoraRepositoryTest {
 	}
 	
     @Test
-    public void testDescribeModeshape() throws RepositoryException, IOException {
-    	Response actual = testFedoraRepo.describeModeshape();
+    public void testDescribeModeshape() throws RepositoryException, IOException {   	
+    	testObj.setRepository(mockRepo);
+    	Response actual = testObj.describeModeshape();
     	assertNotNull(actual);
     	assertEquals(Status.OK.getStatusCode(), actual.getStatus());
-    	verify(testFedoraRepo).describeModeshape();
     }
     
+	
     @Test
     public void testDescribe() throws LoginException, RepositoryException {
-    	DescribeRepository actual = testFedoraRepo.describe();
+    	DescribeRepository actual = testObj.describe();
     	assertNotNull(actual);
-    	assertEquals("4.0-modeshape-candidate", actual.getRepositoryVersion());
-    	verify(testFedoraRepo).describe();
     }
     
     @Test
     public void testDescribeHtml() throws LoginException, RepositoryException {
-    	String actual = testFedoraRepo.describeHtml();
+    	String actual = testObj.describeHtml();
     	assertNotNull(actual);
-    	assertEquals(true, actual.contains("4.0-modeshape-candidate"));
-    	verify(testFedoraRepo).describeHtml();
     }
 }
