@@ -85,12 +85,21 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
     }
     
     /**
-     * convenient setter for injecting static member isOwned
+     * convenient setter for otherwise injected member
      * for unit tests
      * @param isowned
      */
     public void setIsOwned(Predicate<Node> isowned) {
     	isOwned = isowned;
+    }
+    
+    /**
+     * convenient setter for otherwise injected member
+     * for unit tests
+     * @param isfedoraDatastream
+     */
+    public void setIsFedoraDatastream(Predicate<Node> isfedoraDatastream) {
+    	isFedoraDatastream = isfedoraDatastream;
     }
 
     public String getOwnerId() throws RepositoryException {

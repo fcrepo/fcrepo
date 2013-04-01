@@ -49,7 +49,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 	
 	Node mockDsNode;
 	
-	FedoraObject testFedoraObject;
+	FedoraObject testObj;
 	
 	NodeType[] mockNodetypes;
 	
@@ -61,7 +61,8 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		mockSession = mock(Session.class);
 		mockRootNode = mock(Node.class);
 		mockDsNode = mock(Node.class);
-		Predicate<Node> mockPredicate = mock(Predicate.class);
+		Predicate<Node> isOwned = mock(Predicate.class);
+		Predicate<Node> mockIsFedoraDatastream = mock(Predicate.class);
 
 		try{
 			
@@ -70,7 +71,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		    when(mockSession.getRootNode()).thenReturn(mockRootNode);
 		    when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
 		    when(mockSession.getUserID()).thenReturn(mockUser);
-			testFedoraObject = new FedoraObject(mockSession, relPath);
+			testObj = new FedoraObject(mockSession, relPath);
 
 			verify(mockRootNode).getNode(relPath);
 			
@@ -79,9 +80,11 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 			mockNodetypes[1] = mock(NodeType.class);
 			
 			when(mockDsNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
-			testFedoraObject.setNode(mockDsNode);
-			testFedoraObject.setIsOwned(mockPredicate);
-			when(mockPredicate.apply(mockDsNode)).thenReturn(true);
+			testObj.setNode(mockDsNode);
+			testObj.setIsOwned(isOwned);
+			testObj.setIsFedoraDatastream(mockIsFedoraDatastream);
+			when(isOwned.apply(mockDsNode)).thenReturn(true);
+			when(mockIsFedoraDatastream.apply(mockDsNode)).thenReturn(true);
 			
 		} catch(RepositoryException e) {
 			e.printStackTrace();
@@ -99,12 +102,12 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 	
 	@Test
 	public void testGetName() throws RepositoryException {
-		assertEquals(testFedoraObject.getName(), testDsId);
+		assertEquals(testObj.getName(), testDsId);
 	}
 	
 	@Test
 	public void testGetNode() {
-		assertEquals(testFedoraObject.getNode(), mockDsNode);
+		assertEquals(testObj.getNode(), mockDsNode);
 	}
 	
 	@Test
@@ -112,7 +115,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		Property mockProp = mock(Property.class);
 		when(mockDsNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
 		when(mockProp.getString()).thenReturn(mockUser);
-		testFedoraObject.setOwnerId(mockUser);
+		testObj.setOwnerId(mockUser);
 		String expected = mockDsNode.getProperty(FEDORA_OWNERID).getString();
 		assertEquals(mockUser, expected);
 	}
@@ -125,7 +128,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		when(mockDsNode.getNode("jcr:content")).thenReturn(mockContent);
 		when(mockDsNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
 		when(mockProp.getString()).thenReturn("mockUser");
-		String actual = testFedoraObject.getOwnerId();
+		String actual = testObj.getOwnerId();
 		assertEquals(mockUser, actual);
 	}
 		
@@ -135,7 +138,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		when(mockDsNode.hasProperty(DC_TITLE)).thenReturn(true);
 		when(mockDsNode.getProperty(DC_TITLE)).thenReturn(mockProp);
 		when(mockProp.getString()).thenReturn("mockTitle");
-		String actual = testFedoraObject.getLabel();
+		String actual = testObj.getLabel();
 		assertEquals("mockTitle", actual);
 	}
 	
@@ -146,7 +149,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		Property mockProp = mock(Property.class);
 		when(mockProp.getString()).thenReturn(expectedString);
 		when(mockDsNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-		String actual = testFedoraObject.getCreated();
+		String actual = testObj.getCreated();
 		assertEquals(expectedString, actual);
 	}
 	
@@ -155,7 +158,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		Property mockProp = mock(Property.class);
 		when(mockDsNode.getProperty("jcr:lastModified")).thenReturn(mockProp);
 		when(mockProp.getString()).thenReturn("mockDate");
-		String actual = testFedoraObject.getLastModified();
+		String actual = testObj.getLastModified();
 		assertEquals("mockDate", actual);
 	}
 	
@@ -176,13 +179,13 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 		when(mockDsNode.getNodes()).thenReturn(mockNI);
 		when(mockNI.hasNext()).thenReturn(true,false);
 		when(mockNI.nextNode()).thenReturn(mockDsNode);
-		long actual = testFedoraObject.getSize();
+		long actual = testObj.getSize();
 		assertEquals(4, actual);
 	}
 	
 	@Test
 	public void testGetModels() throws RepositoryException {
-		Collection<String> actual = testFedoraObject.getModels();
+		Collection<String> actual = testObj.getModels();
 		assertNotNull(actual);
 	}
 	
