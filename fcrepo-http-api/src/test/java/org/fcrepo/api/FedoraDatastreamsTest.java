@@ -49,8 +49,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
 
-import com.google.common.base.Function;
-
 public class FedoraDatastreamsTest {
 	
 	FedoraDatastreams testObj;

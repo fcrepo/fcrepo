@@ -19,8 +19,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.FedoraObject;
 import org.fcrepo.identifiers.UUIDPidMinter;
@@ -31,8 +31,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
-
-import com.google.common.base.Function;
 
 public class FedoraObjectsTest {
 

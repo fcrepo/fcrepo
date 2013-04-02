@@ -159,8 +159,6 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @QueryParam("dsid")
     List<String> dsids) throws RepositoryException, IOException {
 
-        final Session session = getAuthenticatedSession();
-
         if (dsids.isEmpty()) {
             NodeIterator ni = objectService.getObjectNode(pid).getNodes();
             while (ni.hasNext()) {

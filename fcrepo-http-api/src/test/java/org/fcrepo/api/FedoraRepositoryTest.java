@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -19,15 +18,14 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -32,7 +32,6 @@ import org.fcrepo.session.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.Repository;
 
 public class FedoraFieldSearchTest {
 	

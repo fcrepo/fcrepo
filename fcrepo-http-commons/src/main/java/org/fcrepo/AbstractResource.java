@@ -1,21 +1,15 @@
 
 package org.fcrepo;
 
-import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.ImmutableSet.copyOf;
 import static javax.ws.rs.core.Response.noContent;
-
-import java.util.Collection;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.Credentials;
 import javax.jcr.LoginException;
 import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -26,14 +20,8 @@ import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
-import org.modeshape.jcr.api.Repository;
-import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.fcrepo.utils.FedoraTypesUtils.map;
-
-import com.google.common.base.Function;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields

@@ -1,27 +1,18 @@
 package org.fcrepo;
 
-import static org.fcrepo.TestHelpers.getContentNodeMock;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-
 
 import java.util.Collection;
-import java.util.Date;
 
-import javax.jcr.Binary;
 import javax.jcr.LoginException;
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;

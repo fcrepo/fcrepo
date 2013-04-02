@@ -21,8 +21,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
