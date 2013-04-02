@@ -77,7 +77,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         final Node objectStore = findOrCreateNode(session, "/objects");
 
 
-        Property sizeProperty = objectStore.getProperty("fedora:size");
+        Property sizeProperty = objectStore.getProperty(FEDORA_SIZE);
 
         Long previousSize = sizeProperty.getLong();
         logger.debug("Previous repository size: " + previousSize);
