@@ -19,6 +19,7 @@ import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -80,11 +81,11 @@ public class LowLevelStorageServiceIT {
 
         final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
 
-        Iterator<InputStream> inputStreamList = lowLevelService.getBinaryBlobs(ds.getNode()).values().iterator();
+        Iterator<LowLevelCacheEntry> inputStreamList = lowLevelService.getBinaryBlobs(ds.getNode()).iterator();
 
         int i = 0;
         while(inputStreamList.hasNext()) {
-            InputStream is = inputStreamList.next();
+            InputStream is = inputStreamList.next().getInputStream();
 
             String myString = IOUtils.toString(is, "UTF-8");
 

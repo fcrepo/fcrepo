@@ -2,28 +2,22 @@
 package org.fcrepo.services;
 
 import static com.google.common.collect.Collections2.filter;
-import static com.google.common.collect.ImmutableMap.builder;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableSet.builder;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Maps.transformEntries;
 import static com.google.common.collect.Sets.difference;
 import static com.yammer.metrics.MetricRegistry.name;
 import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
 import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -35,24 +29,22 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
+import org.fcrepo.services.functions.GetBinaryKey;
+import org.fcrepo.services.functions.GetBinaryStore;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.BinaryKey;
-import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.yammer.metrics.Counter;
 import com.yammer.metrics.Timer;
 
@@ -74,15 +66,15 @@ public class LowLevelStorageService {
 
     @Inject
     private Repository repo;
+    
+    GetBinaryStore getBinaryStore = new GetBinaryStore();
+    
+    GetBinaryKey getBinaryKey = new GetBinaryKey();
 
     /**
      * For use with non-mutating methods.
      */
     private Session readOnlySession;
-
-    private JcrRepository getRepositoryInstance() {
-        return (JcrRepository) readOnlySession.getRepository();
-    }
 
     public Collection<FixityResult> getFixity(
             final Node resource, final MessageDigest digest,
@@ -91,29 +83,14 @@ public class LowLevelStorageService {
 
         return transformBinaryBlobs(
                 resource,
-                new Maps.EntryTransformer<LowLevelCacheEntry, InputStream, FixityResult>() {
-
-                    public FixityResult transformEntry(LowLevelCacheEntry entry,
-                                                       InputStream is) {
-                        logger.debug("Checking fixity for resource in cache store " + entry.toString());
-                        FixityResult result = null;
-                        try {
-                        	result = entry.checkFixity(dsChecksum, dsSize, digest);
-                        } catch (BinaryStoreException e) {
-                            logger.error("Exception checking low-level fixity: {}", e);
-                            throw new IllegalStateException(e);
-						}
-                        return result;
-                    }
-
-                }).values();
+                ServiceHelpers.getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
     }
 
-    public <T> Map<LowLevelCacheEntry, T> transformBinaryBlobs(
+    public <T> Collection<T> transformBinaryBlobs(
     		final Node resource,
-    		final Maps.EntryTransformer<LowLevelCacheEntry, InputStream, T> transform)
+    		final Function<LowLevelCacheEntry, T> transform)
     				throws RepositoryException {
-        return transformEntries(getBinaryBlobs(resource), transform);
+        return transform(getBinaryBlobs(resource), transform);
     }
 
     /**
@@ -122,67 +99,28 @@ public class LowLevelStorageService {
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public Map<LowLevelCacheEntry, InputStream> getBinaryBlobs(
+    public Set<LowLevelCacheEntry> getBinaryBlobs(
             final Node resource) throws RepositoryException {
 
-        final BinaryValue v =
-                (BinaryValue) resource.getNode(JCR_CONTENT).getProperty(
-                        JCR_DATA).getBinary();
-
-        return getBinaryBlobs(v.getKey());
+        return getBinaryBlobs(getBinaryKey.apply(resource));
 
     }
 
     /**
      *
      * @param key a Modeshape BinaryValue's key.
-     * @return a map of binary stores and input streams
+     * @return a set of binary stores
      */
-    public Map<LowLevelCacheEntry, InputStream> getBinaryBlobs(BinaryKey key) {
+    public Set<LowLevelCacheEntry> getBinaryBlobs(BinaryKey key) {
 
-        ImmutableMap.Builder<LowLevelCacheEntry, InputStream> blobs = builder();
+        ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
-        for (LowLevelCacheEntry c : getLowLevelCacheStores(key)) {
-            try {
-                final InputStream is = c.getInputStream();
-                blobs.put(c, is);
-            } catch (BinaryStoreException e) {
-                //we didn't find anything.
-            }
-        }
-        return blobs.build();
-    }
-
-    /**
-     * Extract the BinaryStore out of Modeshape (infinspan, jdbc, file, transient, etc)
-     * @return
-     */
-    BinaryStore getBinaryStore() {
-        try {
-            return getRepositoryInstance().getConfiguration()
-                    .getBinaryStorage().getBinaryStore();
-        } catch (Exception e) { // boo, catching all exceptions. unfortunately, that's all getBinaryStore promises..
-            throw new IllegalStateException(e);
-        }
-
-    }
-
-    /**
-     * Get the list of low-level cache stores at play. If it's an infinispan node, for instance, figure out exactly
-     * which cachestores are being used.
-     *
-     * @return a list of "BinaryCacheStore", an abstraction over a plain BinaryStore or a specific Infinispan Cache
-     */
-    private List<LowLevelCacheEntry> getLowLevelCacheStores(BinaryKey key) {
-
-        List<LowLevelCacheEntry> stores = new ArrayList<LowLevelCacheEntry>();
-
-        BinaryStore store = getBinaryStore();
+        BinaryStore store = getBinaryStore.apply(repo);
 
         if (store == null) {
-            return stores;
+            return blobs.build();
         }
-
+        
         // if we have an Infinispan store, it may have multiple stores (or cluster nodes)
         if (store instanceof InfinispanBinaryStore) {
             InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
@@ -203,18 +141,18 @@ public class LowLevelStorageService {
                             (ChainingCacheStore) cacheStore;
                     // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
                     for (CacheStore s : chainingCacheStore.getStores().keySet()) {
-                        stores.add(new LowLevelCacheEntry(store, s, key));
+                    	blobs.add(new LowLevelCacheEntry(store, s, key));
                     }
                 } else {
                     // just a nice, simple infinispan cache.
-                    stores.add(new LowLevelCacheEntry(store, cacheStore, key));
+                	blobs.add(new LowLevelCacheEntry(store, cacheStore, key));
                 }
             }
         } else {
-            stores.add(new LowLevelCacheEntry(store, key));
+        	blobs.add(new LowLevelCacheEntry(store, key));
         }
-
-        return stores;
+        
+        return blobs.build();
     }
 
     @PostConstruct

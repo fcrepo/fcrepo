@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -83,9 +84,9 @@ public class SelfHealingIT {
 
 
         logger.info("Tampering with node " + node.toString());
-        final Map<LowLevelCacheEntry,InputStream> binaryBlobs = lowLevelService.getBinaryBlobs(node);
+        final Set<LowLevelCacheEntry> binaryBlobs = lowLevelService.getBinaryBlobs(node);
 
-        Iterator<LowLevelCacheEntry> it = binaryBlobs.keySet().iterator();
+        Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
 
 
         LowLevelCacheEntry entryToTamper = it.next();

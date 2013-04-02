@@ -4,6 +4,9 @@ package org.fcrepo.services;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
+import java.net.URI;
+import java.security.MessageDigest;
+
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
@@ -12,6 +15,12 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
+
+import org.fcrepo.services.functions.CheckCacheEntryFixity;
+import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.LowLevelCacheEntry;
+
+import com.google.common.base.Function;
 
 public class ServiceHelpers {
 
@@ -62,6 +71,12 @@ public class ServiceHelpers {
             PathNotFoundException, RepositoryException {
         return ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getSize();
+    }
+    
+    public static Function<LowLevelCacheEntry, FixityResult> getCheckCacheFixityFunction(
+    		final MessageDigest digest,
+            final URI dsChecksum, final long dsSize) {
+    	return new CheckCacheEntryFixity(digest, dsChecksum, dsSize);
     }
 
 }
