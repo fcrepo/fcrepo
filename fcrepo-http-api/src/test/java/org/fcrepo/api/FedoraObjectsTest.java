@@ -11,11 +11,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.FedoraObject;
@@ -27,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
 
+import com.google.common.base.Function;
+
 public class FedoraObjectsTest {
 
 	FedoraObjects testObj;
@@ -36,18 +41,37 @@ public class FedoraObjectsTest {
 	Repository mockRepo;
 	
 	Session mockSession;
+	
+	SecurityContext mockSecurityContext;
+	
+	HttpServletRequest mockServletRequest;
+	
+	Principal mockPrincipal;
+	
+	String mockUser = "testuser";
 
 	@Before
 	public void setUp() throws LoginException, RepositoryException{
+		mockSecurityContext = mock(SecurityContext.class);
+		mockServletRequest = mock(HttpServletRequest.class);
+		mockPrincipal = mock(Principal.class);
+		Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
 		mockObjects = mock(ObjectService.class);
 		testObj = new FedoraObjects();
 		testObj.objectService = mockObjects;
 		mockRepo = mock(Repository.class);
 		mockSession = mock(Session.class);
 		when(mockRepo.login()).thenReturn(mockSession);
+		when(mockSession.getUserID()).thenReturn(mockUser);
+		when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
+		when(mockFunction.apply(mockServletRequest)).thenReturn(mockSession);
+		when(mockPrincipal.getName()).thenReturn(mockUser);
 		testObj.setRepository(mockRepo);
 		testObj.setUriInfo(getUriInfoImpl());
 		testObj.setPidMinter(new UUIDPidMinter());
+		testObj.setHttpServletRequest(mockServletRequest);
+		testObj.setSecurityContext(mockSecurityContext);
+		testObj.setAuthenticateSession(mockFunction);
 	}
 	
 	@After

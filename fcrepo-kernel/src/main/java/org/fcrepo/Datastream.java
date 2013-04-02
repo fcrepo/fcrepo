@@ -241,6 +241,25 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         }
 
     }
+    
+    /**
+     * @return Owner of this datastream stored in the fedora:ownerId property.
+     * @throws RepositoryException
+     */
+    public String getOwnerId() throws RepositoryException {
+    	if (node.hasProperty(FEDORA_OWNERID)) {
+    		Property ownerIds = node.getProperty(FEDORA_OWNERID);
+    		String ownerId;
+            if (!ownerIds.isMultiple()) {
+            	ownerId = node.getProperty(FEDORA_OWNERID).getString();
+            } else {
+            	ownerId = on('/').join(map(ownerIds.getValues(), value2string));
+            }
+            return ownerId;
+    	} else {
+    		return "";
+    	}
+    }
 
     public void setLabel(String label) throws ValueFormatException,
             VersionException, LockException, ConstraintViolationException,
