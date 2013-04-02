@@ -2,19 +2,22 @@ package org.fcrepo.api;
 
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.Repository;
 
 public class FedoraSitemapTest {
 
@@ -23,8 +26,6 @@ public class FedoraSitemapTest {
     ObjectService mockObjects;
 
 
-    Repository mockRepo;
-
     Session mockSession;
 
     @Before
@@ -32,10 +33,11 @@ public class FedoraSitemapTest {
         mockObjects = mock(ObjectService.class);
         testObj = new FedoraSitemap();
         testObj.objectService = mockObjects;
-        mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
-        when(mockRepo.login()).thenReturn(mockSession);
-        testObj.setRepository(mockRepo);
+    	SessionFactory mockSessions = mock(SessionFactory.class);
+    	when(mockSessions.getSession()).thenReturn(mockSession);
+    	when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
+        testObj.setSessionFactory(mockSessions);
         testObj.setUriInfo(getUriInfoImpl());
     }
 

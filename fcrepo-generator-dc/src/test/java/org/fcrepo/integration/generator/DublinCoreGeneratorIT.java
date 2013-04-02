@@ -18,8 +18,8 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
-        getStatus(postObjMethod("DublinCoreTest1"));
-
+        int status = getStatus(postObjMethod("DublinCoreTest1"));
+        assertEquals(201, status);
         HttpGet getWorstCaseOaiMethod =
                 new HttpGet(serverAddress + "objects/DublinCoreTest1/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
@@ -36,14 +36,16 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testWellKnownPathOaiDc() throws Exception {
-        client.execute(postObjMethod("DublinCoreTest2"));
-        client.execute(postDSMethod("DublinCoreTest2", "DC",
+        HttpResponse response = client.execute(postObjMethod("DublinCoreTest2"));
+        assertEquals(201, response.getStatusLine().getStatusCode());
+        response = client.execute(postDSMethod("DublinCoreTest2", "DC",
                 "marbles for everyone"));
+        assertEquals(201, response.getStatusLine().getStatusCode());
 
         HttpGet getWorstCaseOaiMethod =
                 new HttpGet(serverAddress + "objects/DublinCoreTest2/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
-        HttpResponse response = client.execute(getWorstCaseOaiMethod);
+        response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Didn't find our datastream!", compile(

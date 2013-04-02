@@ -110,22 +110,14 @@ public abstract class TestHelpers {
     	return mock;
     }
     
-    public static Repository createMockRepo() throws RepositoryException {
-    	Repository mockRepo = mock(Repository.class);
+    public static Session getSessionMock() throws RepositoryException {
+    	String[] mockPrefixes = { MOCK_PREFIX };
     	Session mockSession = mock(Session.class);
-    	
-    	when(mockRepo.getDescriptor("jcr.repository.name")).thenReturn("Mock Repository");
-    	String[] mockKeys = { MOCK_PREFIX };
-    	String[] mockPrefixes = mockKeys;
-    	
     	Workspace mockWorkspace = mock(Workspace.class);
     	NamespaceRegistry mockNameReg = mock(NamespaceRegistry.class);
     	NodeTypeManager mockNTM = mock(NodeTypeManager.class);
     	NodeTypeIterator mockNTI = mock(NodeTypeIterator.class);
     	NodeType mockNodeType = mock(NodeType.class);
-    
-    	when(mockRepo.login()).thenReturn(mockSession);
-    	when(mockRepo.getDescriptorKeys()).thenReturn(mockKeys);
     	when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
     	when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
     	when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
@@ -136,6 +128,19 @@ public abstract class TestHelpers {
     	when(mockNTM.getAllNodeTypes()).thenReturn(mockNTI);
     	when(mockNTI.hasNext()).thenReturn(true,false);
     	when(mockNTI.nextNodeType()).thenReturn(mockNodeType).thenThrow(ArrayIndexOutOfBoundsException.class);
+    	return mockSession;
+    }
+    
+    public static Repository createMockRepo() throws RepositoryException {
+    	Repository mockRepo = mock(Repository.class);
+    	Session mockSession = getSessionMock();
+    	
+    	when(mockRepo.getDescriptor("jcr.repository.name")).thenReturn("Mock Repository");
+    	String[] mockKeys = { MOCK_PREFIX };
+    	
+    
+    	when(mockRepo.login()).thenReturn(mockSession);
+    	when(mockRepo.getDescriptorKeys()).thenReturn(mockKeys);
     	
     	return mockRepo;
     }

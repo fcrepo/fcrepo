@@ -101,7 +101,7 @@ public class FedoraObjects extends AbstractResource {
 
         logger.debug("Attempting to ingest with pid: {}", pid);
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             FedoraObject result = objectService.createObject(session, pid);
             if (label != null && !"".equals(label)) result.setLabel(label);
@@ -155,7 +155,7 @@ public class FedoraObjects extends AbstractResource {
     @Path("/{pid}")
     public Response deleteObject(@PathParam("pid")
     final String pid) throws RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         objectService.deleteObject(pid, session);
         session.save();
         return noContent().build();

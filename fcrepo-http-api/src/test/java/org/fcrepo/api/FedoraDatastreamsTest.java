@@ -42,6 +42,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.DatastreamIterator;
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +76,7 @@ public class FedoraDatastreamsTest {
 		mockSecurityContext = mock(SecurityContext.class);
 		mockServletRequest = mock(HttpServletRequest.class);
 		mockPrincipal = mock(Principal.class);
-		Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
+		//Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
 		mockDatastreams = mock(DatastreamService.class);
 		mockLow = mock(LowLevelStorageService.class);
 		
@@ -84,17 +85,15 @@ public class FedoraDatastreamsTest {
 		testObj.setSecurityContext(mockSecurityContext);
 		testObj.setHttpServletRequest(mockServletRequest);
 		testObj.llStoreService = mockLow;
-		testObj.setAuthenticateSession(mockFunction);
-		mockRepo = mock(Repository.class);
+		//mockRepo = mock(Repository.class);
+		SessionFactory mockSessions = mock(SessionFactory.class);
+		testObj.setSessionFactory(mockSessions);
 		mockSession = mock(Session.class);
-		
-		when(mockRepo.login()).thenReturn(mockSession);
+		when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
 		when(mockSession.getUserID()).thenReturn(mockUser);
 		when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-		when(mockFunction.apply(mockServletRequest)).thenReturn(mockSession);
 		when(mockPrincipal.getName()).thenReturn(mockUser);
 		
-		testObj.setRepository(mockRepo);
 		testObj.setUriInfo(getUriInfoImpl());
 	}
 	

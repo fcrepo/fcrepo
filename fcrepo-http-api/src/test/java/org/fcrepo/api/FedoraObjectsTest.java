@@ -4,6 +4,7 @@ import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -25,6 +26,7 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,23 +57,22 @@ public class FedoraObjectsTest {
 		mockSecurityContext = mock(SecurityContext.class);
 		mockServletRequest = mock(HttpServletRequest.class);
 		mockPrincipal = mock(Principal.class);
-		Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
 		mockObjects = mock(ObjectService.class);
 		testObj = new FedoraObjects();
 		testObj.objectService = mockObjects;
 		mockRepo = mock(Repository.class);
 		mockSession = mock(Session.class);
-		when(mockRepo.login()).thenReturn(mockSession);
 		when(mockSession.getUserID()).thenReturn(mockUser);
 		when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-		when(mockFunction.apply(mockServletRequest)).thenReturn(mockSession);
 		when(mockPrincipal.getName()).thenReturn(mockUser);
-		testObj.setRepository(mockRepo);
+    	SessionFactory mockSessions = mock(SessionFactory.class);
+    	when(mockSessions.getSession()).thenReturn(mockSession);
+    	when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
+        testObj.setSessionFactory(mockSessions);
 		testObj.setUriInfo(getUriInfoImpl());
 		testObj.setPidMinter(new UUIDPidMinter());
 		testObj.setHttpServletRequest(mockServletRequest);
 		testObj.setSecurityContext(mockSecurityContext);
-		testObj.setAuthenticateSession(mockFunction);
 	}
 	
 	@After

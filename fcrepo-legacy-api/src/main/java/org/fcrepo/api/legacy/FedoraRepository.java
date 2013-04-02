@@ -9,6 +9,7 @@ import static org.fcrepo.services.PathService.OBJECT_PATH;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
 import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
@@ -33,7 +34,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 
 /**
  * 
- * @author cabeer
+ * @author cbeer
  * @author ajs6f
  */
 
@@ -42,12 +43,15 @@ public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraRepository.class);
+    
+    @Inject
+    Repository repo;
 
     @GET
     @Path("/describe/modeshape")
     public Response describeModeshape() throws JsonGenerationException,
             JsonMappingException, IOException, RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         logger.debug("Repository name: " +
                 repo.getDescriptor(Repository.REP_NAME_DESC));
         final Builder<String, Object> repoproperties = builder();
@@ -85,7 +89,7 @@ public class FedoraRepository extends AbstractResource {
     public DescribeRepository describe() throws LoginException,
             RepositoryException {
 
-        Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =

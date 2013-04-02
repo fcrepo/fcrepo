@@ -24,6 +24,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.ServletCredentials;
@@ -52,11 +53,8 @@ public abstract class AbstractResource {
     @Context
     protected UriInfo uriInfo;
 
-    /**
-     * The JCR repository at the heart of Fedora.
-     */
     @Inject
-    protected Repository repo;
+    protected SessionFactory sessions;
 
 
     /**
@@ -88,7 +86,7 @@ public abstract class AbstractResource {
     public void initialize() throws LoginException, NoSuchWorkspaceException,
             RepositoryException {
 
-        final Session session = repo.login();
+        final Session session = sessions.getSession();
         session.getWorkspace().getNamespaceRegistry().registerNamespace("test",
                 "info:fedora/test");
         session.save();
@@ -96,36 +94,8 @@ public abstract class AbstractResource {
     }
     
     protected Session getAuthenticatedSession() {
-    	return authenticateSession.apply(servletRequest);
+    	return sessions.getSession(securityContext, servletRequest);
     }
-
-    /**
-     * Function object to retrieve authenticated session
-     * this is done to make it possible to stub an authenticated
-     * session for testing
-     */
-	protected Function<HttpServletRequest, Session> authenticateSession = 
-    		new Function<HttpServletRequest, Session>() {
-    	
-		    	public Session apply(HttpServletRequest servletRequest) {
-		    		Session session = null;
-		    		
-		    		try {
-			            if(securityContext.getUserPrincipal() != null) {
-			            	logger.debug("Authenticated user: " + securityContext.getUserPrincipal().getName());
-			                ServletCredentials credentials = new ServletCredentials(servletRequest);
-			                
-							session = repo.login(credentials);
-			            } else {
-			            	logger.debug("No authenticated user found!");
-			            	session = repo.login();
-			            }
-		    		} catch (RepositoryException e) {
-		    			throw new IllegalStateException(e);
-		    		}
-		            return session;
-		    	}
-		    };
 
     protected synchronized Response deleteResource(final Node resource)
             throws RepositoryException {
@@ -148,8 +118,8 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param repo
      */
-    public void setRepository(Repository repo) {
-    	this.repo = repo;
+    public void setSessionFactory(SessionFactory sessions) {
+    	this.sessions = sessions;
     }
     
     /**
@@ -184,11 +154,4 @@ public abstract class AbstractResource {
     	this.servletRequest = servletRequest;
     }
     
-    /**
-     * A testing convenience setter for otherwise injected resources
-     * @param Function<HttpServletRequest, Session>
-     */
-    public void setAuthenticateSession(Function<HttpServletRequest, Session> authenticateSession) {
-    	this.authenticateSession = authenticateSession;
-    }
 }

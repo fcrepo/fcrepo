@@ -57,7 +57,7 @@ public class FedoraFieldSearch extends AbstractResource implements
     String offSet, @FormParam("maxResults")
     String maxResults) throws LoginException, RepositoryException {
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         QueryManager queryManager = session.getWorkspace().getQueryManager();
         ValueFactory valueFactory = session.getValueFactory();
         VelocityViewer view = new VelocityViewer();

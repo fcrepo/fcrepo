@@ -115,7 +115,7 @@ public class FedoraObjects extends AbstractResource {
 
         logger.debug("Attempting to ingest with pid: " + pid);
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             final Node obj = objectService.createObjectNode(session, pid);
             session.save();
@@ -189,7 +189,7 @@ public class FedoraObjects extends AbstractResource {
     @Path("/{pid}")
     public Response deleteObject(@PathParam("pid")
     final String pid) throws RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         final Node obj = session.getNode(getObjectJcrNodePath(pid));
         objectService.updateRepositorySize(0L - getObjectSize(obj), session);
         return deleteResource(obj);

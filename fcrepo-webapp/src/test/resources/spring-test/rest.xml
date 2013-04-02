@@ -21,6 +21,8 @@
 
   <!-- Mints PIDs-->
   <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+  
+  <bean class="org.fcrepo.session.SessionFactory" />
 
   <jaxrs:server address="http://localhost:${test.port:8080}/rest">
     <jaxrs:serviceBeans>

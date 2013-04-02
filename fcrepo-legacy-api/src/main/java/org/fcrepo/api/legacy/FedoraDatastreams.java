@@ -112,7 +112,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, final List<Attachment> attachmentList)
             throws RepositoryException, IOException, InvalidChecksumException {
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             Long oldObjectSize =
                     getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
@@ -152,7 +152,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid, @QueryParam("dsid")
     List<String> dsids) throws RepositoryException, IOException {
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
 
         if (dsids.isEmpty()) {
             NodeIterator ni = objectService.getObjectNode(pid).getNodes();
@@ -206,7 +206,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, InputStream requestBodyStream)
             throws RepositoryException, IOException, InvalidChecksumException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
 
         contentType =
                 contentType != null ? contentType
@@ -279,7 +279,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid, @HeaderParam("Content-Type")
     MediaType contentType, InputStream requestBodyStream)
             throws RepositoryException, IOException, InvalidChecksumException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         contentType =
                 contentType != null ? contentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -469,7 +469,7 @@ public class FedoraDatastreams extends AbstractResource {
     String pid, @PathParam("dsid")
     String dsid) throws RepositoryException {
         final String dsPath = getDatastreamJcrNodePath(pid, dsid);
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         final Node ds = session.getNode(dsPath);
         datastreamService.updateRepositorySize(0L - getDatastreamSize(ds),
                 session);
