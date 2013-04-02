@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,9 +25,11 @@ import java.util.List;
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
@@ -39,11 +42,14 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.DatastreamIterator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
+
+import com.google.common.base.Function;
 
 public class FedoraDatastreamsTest {
 	
@@ -57,17 +63,37 @@ public class FedoraDatastreamsTest {
 	
 	Session mockSession;
 	
+	SecurityContext mockSecurityContext;
+	
+	HttpServletRequest mockServletRequest;
+	
+	Principal mockPrincipal;
+	
+	String mockUser = "testuser";
+	
 	@Before
 	public void setUp() throws LoginException, RepositoryException {
+		mockSecurityContext = mock(SecurityContext.class);
+		mockServletRequest = mock(HttpServletRequest.class);
+		mockPrincipal = mock(Principal.class);
+		//Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
 		mockDatastreams = mock(DatastreamService.class);
 		mockLow = mock(LowLevelStorageService.class);
+		
 		testObj = new FedoraDatastreams();
 		testObj.datastreamService = mockDatastreams;
+		testObj.setSecurityContext(mockSecurityContext);
+		testObj.setHttpServletRequest(mockServletRequest);
 		testObj.llStoreService = mockLow;
-		mockRepo = mock(Repository.class);
+		//mockRepo = mock(Repository.class);
+		SessionFactory mockSessions = mock(SessionFactory.class);
+		testObj.setSessionFactory(mockSessions);
 		mockSession = mock(Session.class);
-		when(mockRepo.login()).thenReturn(mockSession);
-		testObj.setRepository(mockRepo);
+		when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
+		when(mockSession.getUserID()).thenReturn(mockUser);
+		when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
+		when(mockPrincipal.getName()).thenReturn(mockUser);
+		
 		testObj.setUriInfo(getUriInfoImpl());
 	}
 	

@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 import javax.jcr.LoginException;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -46,13 +47,16 @@ public class FedoraRepository extends AbstractResource {
     private static final Logger logger = getLogger(FedoraRepository.class);
     
     @Inject
+    Repository repo;
+    
+    @Inject
     ObjectService objectService;
 
     @GET
     @Path("modeshape")
     public Response describeModeshape() throws JsonGenerationException,
             JsonMappingException, IOException, RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         logger.debug("Repository name: " + repo.getDescriptor(REP_NAME_DESC));
         final Builder<String, Object> repoproperties = builder();
         for (final String key : repo.getDescriptorKeys()) {
@@ -82,7 +86,7 @@ public class FedoraRepository extends AbstractResource {
     public DescribeRepository describe() throws LoginException,
             RepositoryException {
 
-        Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =
@@ -100,6 +104,14 @@ public class FedoraRepository extends AbstractResource {
 
         VelocityViewer view = new VelocityViewer();
         return view.getRepoInfo(describe());
+    }
+
+    /**
+     * A testing convenience setter for otherwise injected resources
+     * @param repo
+     */
+    public void setRepository(Repository repo) {
+    	this.repo = repo;
     }
 
 }

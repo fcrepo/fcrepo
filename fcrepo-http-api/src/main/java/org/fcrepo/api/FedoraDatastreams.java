@@ -110,7 +110,7 @@ public class FedoraDatastreams extends AbstractResource {
     final List<String> dsidList, final List<Attachment> attachmentList)
             throws RepositoryException, IOException, InvalidChecksumException {
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             for (String dsid : dsidList) {
                 logger.debug("purging datastream " + dsid);
@@ -139,7 +139,7 @@ public class FedoraDatastreams extends AbstractResource {
     public Response deleteDatastreams(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     final List<String> dsidList) throws RepositoryException {
-        final Session session = repo.login();
+    	final Session session = getAuthenticatedSession();
         try {
             for (String dsid : dsidList) {
                 logger.debug("purging datastream " + dsid);
@@ -158,6 +158,8 @@ public class FedoraDatastreams extends AbstractResource {
     public MultipartBody getDatastreamsContents(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     List<String> dsids) throws RepositoryException, IOException {
+
+        final Session session = getAuthenticatedSession();
 
         if (dsids.isEmpty()) {
             NodeIterator ni = objectService.getObjectNode(pid).getNodes();
@@ -214,7 +216,7 @@ public class FedoraDatastreams extends AbstractResource {
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             String dsPath = getDatastreamJcrNodePath(pid, dsid);
             logger.info("addDatastream {}", dsPath);
@@ -281,7 +283,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsid, @HeaderParam("Content-Type")
     MediaType requestContentType, InputStream requestBodyStream)
             throws RepositoryException, IOException, InvalidChecksumException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             final MediaType contentType =
                     requestContentType != null ? requestContentType
@@ -444,7 +446,7 @@ public class FedoraDatastreams extends AbstractResource {
     public Response deleteDatastream(@PathParam("pid")
     String pid, @PathParam("dsid")
     String dsid) throws RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             datastreamService.purgeDatastream(session, pid, dsid);
             session.save();
@@ -465,6 +467,7 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.dsLabel = ds.getLabel();
         logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
                 ds.getLabel());
+        dsProfile.dsOwnerId = ds.getOwnerId();
         dsProfile.dsChecksumType = ds.getContentDigestType();
         dsProfile.dsChecksum = ds.getContentDigest();
         dsProfile.dsState = A;

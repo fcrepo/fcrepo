@@ -2,10 +2,13 @@ package org.fcrepo.api;
 
 import static org.fcrepo.api.TestHelpers.MOCK_PREFIX;
 import static org.fcrepo.api.TestHelpers.MOCK_URI_STRING;
-import static org.fcrepo.api.TestHelpers.createMockRepo;
+import static org.fcrepo.api.TestHelpers.getSessionMock;
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,23 +18,24 @@ import java.util.Set;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
 import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;
+import org.fcrepo.session.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.Repository;
 
 public class FedoraNamespacesTest {
 
 	FedoraNamespaces testObj;
-	
-	Repository mockRepo;
-	
+		
 	Namespace mockNs;
 	
 	@Before
@@ -39,11 +43,14 @@ public class FedoraNamespacesTest {
 		mockNs = new Namespace();
 		mockNs.prefix = MOCK_PREFIX;
 		mockNs.uri = new URI(MOCK_URI_STRING);
-		mockRepo = createMockRepo();
     	
 		testObj = new FedoraNamespaces();
 		testObj.setUriInfo(getUriInfoImpl());
-		testObj.setRepository(mockRepo);
+		SessionFactory mockSessions = mock(SessionFactory.class);
+		Session mockSession = getSessionMock();
+    	when(mockSessions.getSession()).thenReturn(mockSession);
+    	when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
+        testObj.setSessionFactory(mockSessions);
 		testObj.setPidMinter(new UUIDPidMinter());
 	}
 	

@@ -5,6 +5,7 @@ import static org.fcrepo.api.TestHelpers.getQuerySessionMock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import javax.jcr.LoginException;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -21,9 +23,12 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.fcrepo.jaxb.search.ObjectFields;
+import org.fcrepo.session.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,21 +38,16 @@ public class FedoraFieldSearchTest {
 	
 	FedoraFieldSearch testObj;
 	
-	Repository mockRepo;
-
 	Session mockSession;
 	
     @Before
-    public void setUp(){
-		mockRepo = mock(Repository.class);
+    public void setUp() throws LoginException, RepositoryException{
     	mockSession = getQuerySessionMock();
+    	SessionFactory mockSessions = mock(SessionFactory.class);
+    	when(mockSessions.getSession()).thenReturn(mockSession);
+		when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
     	testObj = new FedoraFieldSearch();
-		try {
-			when(mockRepo.login()).thenReturn(mockSession);
-		} catch (RepositoryException e) {
-			e.printStackTrace();
-		}
-		testObj.setRepository(mockRepo);
+		testObj.setSessionFactory(mockSessions);
     }
     
     @After

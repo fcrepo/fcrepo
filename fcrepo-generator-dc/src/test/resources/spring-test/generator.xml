@@ -15,6 +15,8 @@
     <context:property-placeholder/>
 
     <context:annotation-config/>
+    
+    <bean class="org.fcrepo.session.SessionFactory" />
 
     <jaxrs:server address="http://localhost:${test.port:8080}/rest">
         <jaxrs:serviceBeans>

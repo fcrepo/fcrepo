@@ -75,7 +75,7 @@ public class FedoraWebhooks extends AbstractResource {
 
         eventBus.register(this);
 
-        final Session session = repo.login();
+        final Session session = sessions.getSession();
         jcrTools.registerNodeTypes(session, "webhooks.cnd");
         session.save();
         session.logout();
@@ -127,7 +127,7 @@ public class FedoraWebhooks extends AbstractResource {
     @Path("{id}")
     public Response registerWebhook(@PathParam("id") final String id, @FormParam("callbackUrl") final String callbackUrl) throws RepositoryException {
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
 
         Node n = jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" + id, "webhook:callback");
 
@@ -143,7 +143,7 @@ public class FedoraWebhooks extends AbstractResource {
     @Path("{id}")
     public Response registerWebhook(@PathParam("id") final String id) throws RepositoryException {
 
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
 
         Node n = jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" + id, "webhook:callback");
         n.remove();
@@ -171,7 +171,7 @@ public class FedoraWebhooks extends AbstractResource {
     @PostConstruct
     public final void getSession() {
         try {
-            readOnlySession = repo.login();
+            readOnlySession = sessions.getSession();
         } catch (RepositoryException e) {
             throw new IllegalStateException(e);
         }

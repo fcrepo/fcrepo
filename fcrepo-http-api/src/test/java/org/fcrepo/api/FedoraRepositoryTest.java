@@ -2,6 +2,7 @@ package org.fcrepo.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,13 +16,16 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeIterator;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.SessionFactory;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
 
 import org.junit.After;
@@ -48,7 +52,10 @@ public class FedoraRepositoryTest {
 		testFedoraRepo.objectService = mockObjects;
 		mockRepo = mock(Repository.class);
 		mockSession = mock(Session.class);
-		when(mockRepo.login()).thenReturn(mockSession);
+    	SessionFactory mockSessions = mock(SessionFactory.class);
+    	when(mockSessions.getSession()).thenReturn(mockSession);
+    	when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class))).thenReturn(mockSession);
+        testFedoraRepo.setSessionFactory(mockSessions);
 		when(mockRepo.getDescriptorKeys()).thenReturn(new String[0]);
 		when(mockObjects.getRepositoryNamespaces(mockSession)).thenReturn(new HashMap<String,String>(0));
 		NodeTypeIterator mockNT = mock(NodeTypeIterator.class);

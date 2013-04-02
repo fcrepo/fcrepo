@@ -41,7 +41,7 @@ public class FedoraSitemap extends AbstractResource {
     @Produces(TEXT_XML)
     public SitemapIndex getSitemapIndex() throws RepositoryException {
         logger.trace("Executing getSitemapIndex()...");
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             final long count =
                     objectService.getRepositoryObjectCount(session) /
@@ -68,7 +68,7 @@ public class FedoraSitemap extends AbstractResource {
     @Produces(TEXT_XML)
     public SitemapUrlSet getSitemap(@PathParam("page")
     final String page) throws RepositoryException {
-        final Session session = repo.login();
+        final Session session = getAuthenticatedSession();
         try {
             final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 

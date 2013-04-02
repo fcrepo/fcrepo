@@ -106,6 +106,12 @@
           <webApp>
             <contextPath>/</contextPath>
           </webApp>
+          <loginServices>
+            <loginService implementation="org.eclipse.jetty.security.HashLoginService">
+              <name>fcrepo</name>
+              <config>${project.build.directory}/test-classes/jetty-users.properties</config>
+            </loginService>
+          </loginServices>
         </configuration>
       </plugin>
     </plugins>

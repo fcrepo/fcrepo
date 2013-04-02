@@ -1,25 +1,39 @@
 
 package org.fcrepo;
 
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static javax.ws.rs.core.Response.noContent;
+
+import java.util.Collection;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.jcr.Credentials;
 import javax.jcr.LoginException;
 import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Repository;
+import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.fcrepo.utils.FedoraTypesUtils.map;
+
+import com.google.common.base.Function;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -39,11 +53,8 @@ public abstract class AbstractResource {
     @Context
     protected UriInfo uriInfo;
 
-    /**
-     * The JCR repository at the heart of Fedora.
-     */
     @Inject
-    protected Repository repo;
+    protected SessionFactory sessions;
 
 
     /**
@@ -58,6 +69,12 @@ public abstract class AbstractResource {
      */
     @Inject
     protected PidMinter pidMinter;
+    
+    @Context 
+    private HttpServletRequest servletRequest;
+    
+    @Context 
+    private SecurityContext securityContext;
 
     /**
      * A convenience object provided by ModeShape for acting against the JCR
@@ -69,11 +86,15 @@ public abstract class AbstractResource {
     public void initialize() throws LoginException, NoSuchWorkspaceException,
             RepositoryException {
 
-        final Session session = repo.login();
+        final Session session = sessions.getSession();
         session.getWorkspace().getNamespaceRegistry().registerNamespace("test",
                 "info:fedora/test");
         session.save();
         session.logout();
+    }
+    
+    protected Session getAuthenticatedSession() {
+    	return sessions.getSession(securityContext, servletRequest);
     }
 
     protected synchronized Response deleteResource(final Node resource)
@@ -97,8 +118,8 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param repo
      */
-    public void setRepository(Repository repo) {
-    	this.repo = repo;
+    public void setSessionFactory(SessionFactory sessions) {
+    	this.sessions = sessions;
     }
     
     /**
@@ -116,5 +137,21 @@ public abstract class AbstractResource {
     public void setPidMinter(PidMinter pidMinter) {
     	this.pidMinter = pidMinter;
     }
+    
+    /**
+     * A testing convenience setter for otherwise injected resources
+     * @param SecurityContext
+     */
+    public void setSecurityContext(SecurityContext securityContext) {
+    	this.securityContext = securityContext;
+    }
 
+    /**
+     * A testing convenience setter for otherwise injected resources
+     * @param HttpServletRequest
+     */
+    public void setHttpServletRequest(HttpServletRequest servletRequest) {
+    	this.servletRequest = servletRequest;
+    }
+    
 }
