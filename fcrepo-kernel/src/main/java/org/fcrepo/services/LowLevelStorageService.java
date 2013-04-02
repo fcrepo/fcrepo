@@ -157,7 +157,7 @@ public class LowLevelStorageService {
      * Extract the BinaryStore out of Modeshape (infinspan, jdbc, file, transient, etc)
      * @return
      */
-    private BinaryStore getBinaryStore() {
+    BinaryStore getBinaryStore() {
         try {
             return getRepositoryInstance().getConfiguration()
                     .getBinaryStorage().getBinaryStore();
