@@ -33,7 +33,6 @@ import org.jboss.resteasy.specimpl.PathSegmentImpl;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
-import org.modeshape.jcr.query.QueryResults;
 
 public abstract class TestHelpers {
 	
@@ -110,6 +109,7 @@ public abstract class TestHelpers {
     	return mock;
     }
     
+    @SuppressWarnings("unchecked")
     public static Repository createMockRepo() throws RepositoryException {
     	Repository mockRepo = mock(Repository.class);
     	Session mockSession = mock(Session.class);

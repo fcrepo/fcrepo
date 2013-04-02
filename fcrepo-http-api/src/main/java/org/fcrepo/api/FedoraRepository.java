@@ -15,7 +15,6 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 import javax.jcr.LoginException;
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -31,7 +30,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
 import org.fcrepo.services.ObjectService;
-import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap.Builder;

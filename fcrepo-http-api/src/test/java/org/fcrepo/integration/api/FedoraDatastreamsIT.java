@@ -4,6 +4,7 @@ package org.fcrepo.integration.api;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static junit.framework.TestCase.assertFalse;
+import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
@@ -48,16 +49,14 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                         "objects/FedoraDatastreamsTest1/datastreams");
         assertEquals(200, getStatus(method));
 
-
-
         final HttpResponse response = execute(method);
 
         String content = IOUtils.toString(response.getEntity().getContent());
 
         logger.info(content);
 
-        assertTrue("Found the wrong XML tag", compile(
-                "<datastream ", DOTALL).matcher(content).find());
+        assertTrue("Found the wrong XML tag", compile("<datastream ", DOTALL)
+                .matcher(content).find());
     }
 
     @Test
@@ -66,7 +65,13 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(201, getStatus(objMethod));
         final HttpPost method =
                 postDSMethod("FedoraDatastreamsTest2", "zxc", "foo");
-        assertEquals(201, getStatus(method));
+        final HttpResponse response = client.execute(method);
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals(201, response.getStatusLine().getStatusCode());
+        assertEquals(
+                "Got wrong URI in Location header for datastream creation!",
+                serverAddress + OBJECT_PATH.replace("/", "") +
+                        "/FedoraDatastreamsTest2/datastreams/zxc", location);
     }
 
     @Test
@@ -84,9 +89,15 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPut mutateDataStreamMethod =
                 putDSMethod("FedoraDatastreamsTest3", "ds1");
         mutateDataStreamMethod.setEntity(new StringEntity(faulkner1, "UTF-8"));
-        assertEquals("Couldn't mutate a datastream!", 201,
-                getStatus(mutateDataStreamMethod));
-
+        final HttpResponse response = client.execute(mutateDataStreamMethod);
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals("Couldn't mutate a datastream!", 201, response
+                .getStatusLine().getStatusCode());
+        assertEquals(
+                "Got wrong URI in Location header for datastream creation!",
+                serverAddress + OBJECT_PATH.replace("/", "") +
+                        "/FedoraDatastreamsTest3/datastreams/ds1", location);
+        
         final HttpGet retrieveMutatedDataStreamMethod =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest3/datastreams/ds1/content");

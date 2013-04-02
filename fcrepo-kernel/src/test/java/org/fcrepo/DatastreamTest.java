@@ -35,7 +35,6 @@ import org.apache.tika.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

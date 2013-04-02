@@ -53,11 +53,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             Datastream.class, "content-size"));
 
     Node node;
-    
+
     LowLevelStorageService llStore;
 
     public Datastream(Node n) {
-    	super(false); // turn off debug logging
+        super(false); // turn off debug logging
         this.node = n;
     }
 
@@ -68,7 +68,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     public Datastream(final Session session, final String dsPath)
             throws RepositoryException {
-    	super(false);
+        super(false);
         this.node = findOrCreateNode(session, dsPath, NT_FILE);
         if (this.node.isNew()) {
             this.node.addMixin(FEDORA_DATASTREAM);
@@ -98,8 +98,9 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public InputStream getContent() throws RepositoryException {
-        return node.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
-                .getStream();
+        final Node contentNode = node.getNode(JCR_CONTENT);
+        logger.trace("Retrieved datastream content node.");
+        return contentNode.getProperty(JCR_DATA).getBinary().getStream();
     }
 
     /**
@@ -147,11 +148,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         String dsChecksum = binary.getHexHash();
-        if (checksum != null && !checksum.equals("")
-                && !checksum.equals(binary.getHexHash())) {
-                logger.debug("Failed checksum test");
-                throw new InvalidChecksumException("Checksum Mismatch of " +
-                        dsChecksum + " and " + checksum);
+        if (checksum != null && !checksum.equals("") &&
+                !checksum.equals(binary.getHexHash())) {
+            logger.debug("Failed checksum test");
+            throw new InvalidChecksumException("Checksum Mismatch of " +
+                    dsChecksum + " and " + checksum);
         }
 
         contentSizeHistogram.update(dataProperty.getLength());

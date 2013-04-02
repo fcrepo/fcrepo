@@ -1,6 +1,5 @@
 package org.fcrepo.services;
 
-import static com.google.common.collect.ImmutableMap.builder;
 import static javax.jcr.query.Query.JCR_SQL2;
 
 import java.io.PrintStream;
@@ -30,7 +29,6 @@ import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableMap.Builder;
 import com.yammer.metrics.MetricRegistry;
 
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {

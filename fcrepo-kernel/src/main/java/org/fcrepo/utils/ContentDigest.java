@@ -8,8 +8,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
+
+import com.google.common.collect.ImmutableMap;
 
 public class ContentDigest {
 

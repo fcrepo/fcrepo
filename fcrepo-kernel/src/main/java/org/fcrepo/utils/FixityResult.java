@@ -1,14 +1,14 @@
 
 package org.fcrepo.utils;
 
-import com.google.common.primitives.Longs;
-
 import java.net.URI;
 import java.util.EnumSet;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import com.google.common.primitives.Longs;
 
 @XmlRootElement(name = "DatastreamFixityStatus")
 public class FixityResult {

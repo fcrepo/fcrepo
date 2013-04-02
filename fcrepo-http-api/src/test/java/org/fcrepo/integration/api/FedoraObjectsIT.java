@@ -2,6 +2,7 @@
 package org.fcrepo.integration.api;
 
 import static java.util.regex.Pattern.compile;
+import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +24,9 @@ public class FedoraObjectsIT extends AbstractResourceIT {
         final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals("Got wrong Location header for ingest!", serverAddress +
+                OBJECT_PATH.replace("/", "") + "/FedoraObjectsTest1", location);
     }
 
     @Test
@@ -60,7 +64,8 @@ public class FedoraObjectsIT extends AbstractResourceIT {
 
     @Test
     public void testIngestWithLabel() throws Exception {
-        final HttpPost method = postObjMethod("FedoraObjectsTest4", "label=Awesome_Object");
+        final HttpPost method =
+                postObjMethod("FedoraObjectsTest4", "label=Awesome_Object");
         final HttpResponse response = client.execute(method);
         assertEquals(201, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
