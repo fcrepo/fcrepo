@@ -19,6 +19,7 @@
 
     <!-- Mints PIDs-->
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+    <bean class="org.fcrepo.session.SessionFactory"/>
 
     <jaxrs:server address="/v3">
         <jaxrs:serviceBeans>
