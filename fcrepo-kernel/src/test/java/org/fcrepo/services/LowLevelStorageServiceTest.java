@@ -114,21 +114,6 @@ public class LowLevelStorageServiceTest {
 	}
 
 	@Test
-	public void testGetBinaryStore() throws LoginException, RepositoryException {
-		//TODO Now that this has been refactored into a Function, break the test case out
-		JcrRepository mockRepo = mock(JcrRepository.class);
-		JcrSession mockSession = mock(JcrSession.class);
-		RepositoryConfiguration mockConfig = mock(RepositoryConfiguration.class);
-		BinaryStorage mockBinStorage = mock(BinaryStorage.class);
-		when(mockConfig.getBinaryStorage()).thenReturn(mockBinStorage);
-		when(mockRepo.getConfiguration()).thenReturn(mockConfig);
-		when(mockSession.getRepository()).thenReturn(mockRepo);
-		when(mockRepo.login()).thenReturn(mockSession);
-		GetBinaryStore testObj = new GetBinaryStore();
-		testObj.apply(mockRepo);
-	}
-
-	@Test
 	public void testGetSession() throws LoginException, RepositoryException {
 		Repository mockRepo = mock(Repository.class);
 		Session mockSession = mock(Session.class);
