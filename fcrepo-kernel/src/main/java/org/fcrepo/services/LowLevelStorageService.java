@@ -1,7 +1,6 @@
 
 package org.fcrepo.services;
 
-import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.google.common.collect.ImmutableSet.copyOf;
@@ -32,10 +31,10 @@ import org.fcrepo.Datastream;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetBinaryStore;
 import org.fcrepo.services.functions.GetCacheStore;
+import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
-import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.modeshape.jcr.value.BinaryKey;
@@ -44,7 +43,6 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.yammer.metrics.Counter;
 import com.yammer.metrics.Timer;
@@ -73,6 +71,8 @@ public class LowLevelStorageService {
     GetBinaryKey getBinaryKey = new GetBinaryKey();
     
     GetCacheStore getCacheStore = new GetCacheStore();
+    
+    GetGoodFixityResults getGoodFixityResults = new GetGoodFixityResults();
 
     /**
      * For use with non-mutating methods.
@@ -200,15 +200,7 @@ public class LowLevelStorageService {
         try {
             fixityResults = copyOf(getFixity(datastream.getNode(), digest, digestUri, size));
 
-            goodEntries =
-                    copyOf(filter(fixityResults, new Predicate<FixityResult>() {
-
-                        @Override
-                        public boolean apply(FixityResult result) {
-                            return result.computedChecksum.equals(digestUri) &&
-                                    result.computedSize == size;
-                        };
-                    }));
+            goodEntries = getGoodFixityResults.apply(fixityResults);
         } finally {
             context.stop();
         }

@@ -1,16 +1,20 @@
 package org.fcrepo.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.jcr.LoginException;
@@ -19,18 +23,22 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.Datastream;
+import org.fcrepo.FedoraObject;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetBinaryStore;
+import org.fcrepo.services.functions.GetCacheStore;
+import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.FixityResult.FixityState;
 import org.fcrepo.utils.LowLevelCacheEntry;
+import org.infinispan.Cache;
+import org.infinispan.loaders.CacheStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.modeshape.jcr.JcrRepository;
-import org.modeshape.jcr.JcrSession;
-import org.modeshape.jcr.RepositoryConfiguration;
-import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
+import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -153,8 +161,69 @@ public class LowLevelStorageServiceTest {
 	}
 	
 	@Test
-	public void testRunFixityAndFixProblems() {
-		
+	public void testRunFixityAndFixProblems() throws RepositoryException, IOException {
+		GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
+		GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
+		Node mockNode = mock(Node.class);
+		Repository mockRepo = mock(Repository.class);
+		BinaryKey mockKey = mock(BinaryKey.class);
+		InfinispanBinaryStore mockStore = mock(InfinispanBinaryStore.class);
+		when(mockStore.toString()).thenReturn("foo");
+		Cache<?, ?> mockGoodCache = mock(Cache.class);
+		Cache<?, ?> mockBadCache = mock(Cache.class);
+		Cache<?, ?>[] mockCaches = new Cache[]{mockGoodCache, mockBadCache};
+		GetCacheStore mockCacheStoreFunc = mock(GetCacheStore.class);
+		CacheStore mockGoodCacheStore = mock(CacheStore.class);
+		CacheStore mockBadCacheStore = mock(CacheStore.class);
+		when(mockCacheStoreFunc.apply(mockGoodCache)).thenReturn(mockGoodCacheStore);
+		when(mockCacheStoreFunc.apply(mockBadCache)).thenReturn(mockBadCacheStore);
+		when(mockStore.getCaches()).thenReturn(Arrays.asList(mockCaches));
+		when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+		when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
+		LowLevelStorageService testObj = new LowLevelStorageService();
+		testObj.getBinaryStore = mockStoreFunc;
+		testObj.getBinaryKey = mockKeyFunc;
+		testObj.setRepository(mockRepo);
+		MessageDigest mockDigest = mock(MessageDigest.class);
+		URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
+		long testSize = 4L;
+		Function<LowLevelCacheEntry, FixityResult> mockFixityFunc = mock(Function.class);
+		PowerMockito.mockStatic(ServiceHelpers.class);
+        when(ServiceHelpers.getCheckCacheFixityFunction(any(MessageDigest.class), any(URI.class), any(Long.class)))
+        .thenReturn(mockFixityFunc);
+        GetGoodFixityResults goodMock = mock(GetGoodFixityResults.class);
+        testObj.getGoodFixityResults = goodMock;
+        testObj.getCacheStore = mockCacheStoreFunc;
+        Datastream mockDs = mock(Datastream.class);
+        FedoraObject mockObj = mock(FedoraObject.class);
+        when(mockObj.getName()).thenReturn("mockObject");
+        when(mockDs.getObject()).thenReturn(mockObj);
+        when(mockDs.getDsId()).thenReturn("mockDs");
+        when(mockDs.getNode()).thenReturn(mockNode);
+        when(mockDs.getContentSize()).thenReturn(testSize);
+        when(mockDs.getContentDigestType()).thenReturn("MD5"); // whatever, just be quiet
+        when(mockDs.getContentDigest()).thenReturn(mockUri);
+
+		FixityResult mockGoodFixity = mock(FixityResult.class);
+		FixityResult mockBadFixity = mock(FixityResult.class);
+		when(mockFixityFunc.apply(any(LowLevelCacheEntry.class)))
+		.thenReturn(mockGoodFixity, mockBadFixity);
+		FixityResult[] results = new FixityResult[]{mockGoodFixity};
+        when(goodMock.apply(any(Collection.class))).thenReturn(new HashSet<FixityResult>(Arrays.asList(results)));
+        LowLevelCacheEntry goodEntry = mock(LowLevelCacheEntry.class);
+        LowLevelCacheEntry badEntry = mock(LowLevelCacheEntry.class);
+        when(mockGoodFixity.getEntry()).thenReturn(goodEntry);
+        when(mockBadFixity.getEntry()).thenReturn(badEntry);
+        mockBadFixity.status = EnumSet.noneOf(FixityState.class);
+        InputStream mockIS = mock(InputStream.class);
+        when(goodEntry.getInputStream()).thenReturn(mockIS);
+        when(badEntry.checkFixity(any(URI.class), any(Long.class), any(MessageDigest.class))).thenReturn(mockBadFixity);
+		Collection<FixityResult> actual =
+				testObj.runFixityAndFixProblems(mockDs);
+		FixityResult result = actual.iterator().next();
+		verify(mockFixityFunc, times(2)).apply(any(LowLevelCacheEntry.class));
+		verify(goodMock).apply(any(Collection.class));
+		verify(badEntry).storeValue(mockIS);
 	}
 	
 }
