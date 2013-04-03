@@ -2,11 +2,15 @@ package org.fcrepo.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.Collection;
 import java.util.Set;
 
 import javax.jcr.LoginException;
@@ -17,25 +21,77 @@ import javax.jcr.Session;
 
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetBinaryStore;
+import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrSession;
 import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.google.common.base.Function;
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest( { ServiceHelpers.class })
 public class LowLevelStorageServiceTest {
 	
 	@Test
-	public void testGetFixity() {
-		
+	public void testGetFixity() throws RepositoryException {
+		GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
+		GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
+		Node mockNode = mock(Node.class);
+		Repository mockRepo = mock(Repository.class);
+		BinaryKey mockKey = mock(BinaryKey.class);
+		BinaryStore mockStore = mock(BinaryStore.class);
+		when(mockStore.toString()).thenReturn("foo");
+		when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+		when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
+		LowLevelStorageService testObj = new LowLevelStorageService();
+		testObj.getBinaryStore = mockStoreFunc;
+		testObj.getBinaryKey = mockKeyFunc;
+		testObj.setRepository(mockRepo);
+		MessageDigest mockDigest = mock(MessageDigest.class);
+		URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
+		long testSize = 4L;
+		FixityResult mockFixity = mock(FixityResult.class);
+		Function<LowLevelCacheEntry, FixityResult> mockFixityFunc = mock(Function.class);
+		when(mockFixityFunc.apply(any(LowLevelCacheEntry.class)))
+		.thenReturn(mockFixity);
+		PowerMockito.mockStatic(ServiceHelpers.class);
+        when(ServiceHelpers.getCheckCacheFixityFunction(any(MessageDigest.class), any(URI.class), any(Long.class)))
+        .thenReturn(mockFixityFunc);
+		Collection<FixityResult> actual =
+				testObj.getFixity(mockNode, mockDigest, mockUri, testSize);
+		FixityResult result = actual.iterator().next();
+		verify(mockFixityFunc).apply(any(LowLevelCacheEntry.class));
 	}
 	
 	@Test
-	public void testTransformBinaryBlobs() {
-		
+	public void testTransformBinaryBlobs() throws RepositoryException {
+		GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
+		GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
+		Node mockNode = mock(Node.class);
+		Repository mockRepo = mock(Repository.class);
+		BinaryKey mockKey = mock(BinaryKey.class);
+		BinaryStore mockStore = mock(BinaryStore.class);
+		when(mockStore.toString()).thenReturn("foo");
+		when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+		when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
+		LowLevelStorageService testObj = new LowLevelStorageService();
+		testObj.getBinaryStore = mockStoreFunc;
+		testObj.getBinaryKey = mockKeyFunc;
+		testObj.setRepository(mockRepo);
+		Function<LowLevelCacheEntry, String> testFunc = mock(Function.class);
+		when(testFunc.apply(any(LowLevelCacheEntry.class))).thenReturn("bar");
+		Collection<String> actual = testObj.transformBinaryBlobs(mockNode, testFunc);
+		assertEquals("bar", actual.iterator().next());
+		verify(testFunc).apply(any(LowLevelCacheEntry.class));
 	}
 	
 	@Test
@@ -81,7 +137,6 @@ public class LowLevelStorageServiceTest {
 		LowLevelStorageService testObj = new LowLevelStorageService();
 		testObj.setRepository(mockRepo);
 		testObj.getSession();
-//		verify(mockSession).logout();
 		verify(mockRepo,times(2)).login();
 	}
 	

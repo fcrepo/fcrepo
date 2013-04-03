@@ -31,6 +31,7 @@ import javax.jcr.Session;
 import org.fcrepo.Datastream;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetBinaryStore;
+import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
@@ -70,6 +71,8 @@ public class LowLevelStorageService {
     GetBinaryStore getBinaryStore = new GetBinaryStore();
     
     GetBinaryKey getBinaryKey = new GetBinaryKey();
+    
+    GetCacheStore getCacheStore = new GetCacheStore();
 
     /**
      * For use with non-mutating methods.
@@ -131,9 +134,7 @@ public class LowLevelStorageService {
             for (Cache<?, ?> c : ImmutableSet.copyOf(ispnStore.getCaches())) {
 
                 final CacheStore cacheStore =
-                        c.getAdvancedCache().getComponentRegistry()
-                                .getComponent(CacheLoaderManager.class)
-                                .getCacheStore();
+                        getCacheStore.apply(c);
 
                 // A ChainingCacheStore indicates we (may) have multiple CacheStores at play
                 if (cacheStore instanceof ChainingCacheStore) {
