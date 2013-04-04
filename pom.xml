@@ -714,6 +714,17 @@
       </roles>
       <timezone>+0</timezone>
     </developer>
+    <developer>
+      <id>escowles</id>
+      <name>Esmé Cowles</name>
+      <email>escowles @ (domain of organization url)</email>
+      <organization>UC San Diego</organization>
+      <organizationUrl>http://www.ucsd.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
   </developers>
 
   <dependencies>
