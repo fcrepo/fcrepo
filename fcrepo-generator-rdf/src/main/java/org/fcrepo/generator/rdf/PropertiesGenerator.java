@@ -56,7 +56,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
                 public Triple apply(Property p) {
                     try {
                         return new Triple(
-                                p.getParent().getName(),
+                                p.getParent().getPath(),
                                 expandJCRNamespace(p.getName(), p.getSession()
                                         .getWorkspace().getNamespaceRegistry()),
                                 p.getString());
@@ -75,7 +75,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
                     final Builder<Triple> triples = builder();
                     try {
                         for (Value v : p.getValues()) {
-                            triples.add(new Triple(p.getParent().getName(),
+                            triples.add(new Triple(p.getParent().getPath(),
                                     expandJCRNamespace(p.getName(), p
                                             .getSession().getWorkspace()
                                             .getNamespaceRegistry()), v
