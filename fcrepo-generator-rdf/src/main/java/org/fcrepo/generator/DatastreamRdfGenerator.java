@@ -78,7 +78,11 @@ public class DatastreamRdfGenerator extends AbstractResource {
                     ds.getNode().getSession().getWorkspace()
                             .getNamespaceRegistry();
             for (final String prefix : nReg.getPrefixes()) {
-                writer.receiveNamespace(prefix, nReg.getURI(prefix), context);
+                String nsURI = nReg.getURI(prefix);
+                if ( nsURI != null && !nsURI.equals("")
+                    && !prefix.equals("xmlns") ) {
+                    writer.receiveNamespace(prefix, nsURI, context);
+                }
             }
 
             // add triples from each TripleSource
