@@ -7,8 +7,7 @@
         "allowCreation" : true
     },
     "clustering" : {
-        "clusterName" : "modeshape",
-        "channelConfiguration" : "${fcrepo.modeshape.jgroups.configuration:config/jgroups-modeshape.xml}"
+        "clusterName" : "modeshape-cluster"
     },
     "query" : {
         "enabled" : true,

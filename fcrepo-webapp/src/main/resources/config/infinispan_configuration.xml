@@ -4,9 +4,9 @@
 
    <global>
       <!-- Defines the global settings shared by all caches -->
-      <transport>
+      <transport clusterName="modeshape-cluster">
          <properties>
-            <property name="configurationFile" value="${fcrepo.ispn.jgroups.configuration:config/jgroups-infinispan.xml}"/>
+            <property name="configurationFile" value="${fcrepo.ispn.jgroups.configuration:config/jgroups-fcrepo-tcp.xml}"/>
          </properties>
       </transport>
    </global>
