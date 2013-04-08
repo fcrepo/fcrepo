@@ -32,7 +32,7 @@ public class FedoraSitemap extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraSitemap.class);
 
-    public static final int entriesPerPage = 50000;
+    public static final long entriesPerPage = 50000;
 
     @Inject
     ObjectService objectService;
@@ -86,7 +86,7 @@ public class FedoraSitemap extends AbstractResource {
         }
     }
 
-    private RowIterator getSitemapEntries(Session session, int page)
+    private RowIterator getSitemapEntries(Session session, long page)
             throws RepositoryException {
         QueryManager queryManager = session.getWorkspace().getQueryManager();
 
