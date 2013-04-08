@@ -12,33 +12,34 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class JcrPropertiesGenerator implements DCGenerator {
 
     private static final Logger logger = getLogger(JcrPropertiesGenerator.class);
+    public static final String[] SALIENT_DC_PROPERTY_NAMESPACES = new String[] { "dc:*" };
 
     @Override
     public InputStream getStream(Node node) {
 
+        StringBuilder str = new StringBuilder();
 
-        String str = "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">";
+        str.append("<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n");
 
         try {
-            final String[] nameGlobs = new String[] { "dc:*"};
-            PropertyIterator iter = node.getProperties(nameGlobs);
+            PropertyIterator iter = node.getProperties(SALIENT_DC_PROPERTY_NAMESPACES);
 
             while(iter.hasNext()) {
                 Property property = iter.nextProperty();
                 if(property.isMultiple()) {
                     for(final Value v : property.getValues()) {
-                        str += "\t<" + property.getName() + ">" + v.getString() + "</" + property.getName() + ">\n";
+                        str.append("\t<" + property.getName() + ">" + v.getString() + "</" + property.getName() + ">\n");
                     }
                 }
                 else {
-                    str += "\t<" + property.getName() + ">" + property.getValue().getString() + "</" + property.getName() + ">\n";
+                    str.append("\t<" + property.getName() + ">" + property.getValue().getString() + "</" + property.getName() + ">\n");
 
                 }
             }
 
-            str += "</oai_dc:dc>";
+            str.append("</oai_dc:dc>");
 
-            return new ByteArrayInputStream(str.getBytes("UTF-8"));
+            return new ByteArrayInputStream(str.toString().getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             logger.warn("Exception rendering properties: {}", e);
             return null;
