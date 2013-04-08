@@ -16,10 +16,12 @@
          Defines the default behavior for all caches, including those created dynamically (e.g., when a 
          repository uses a cache that doesn't exist in this configuration). 
        -->
-      <clustering mode="replication">
-         <sync/>
-         <stateTransfer fetchInMemoryState="true"/>
-      </clustering>
+     <clustering mode="distribution">
+       <sync/>
+       <l1 enabled="false" lifespan="0" onRehash="false"/>
+       <hash numOwners="${fcrepo.ispn.numOwners:1}"/>
+       <stateTransfer fetchInMemoryState="true"/>
+     </clustering>
    </default>
 
    <namedCache name="FedoraRepository">
@@ -28,8 +30,10 @@
           use pessimistic locking, which is required whenever applications will be concurrently
           updating nodes within the same process. If you're not sure, use pessimistic locking.
        -->
-      <clustering mode="replication">
+      <clustering mode="distribution">
         <sync/>
+        <l1 enabled="false" lifespan="0" onRehash="false"/>
+        <hash numOwners="${fcrepo.ispn.numOwners:1}"/>
         <stateTransfer fetchInMemoryState="true"/>
       </clustering>
       
