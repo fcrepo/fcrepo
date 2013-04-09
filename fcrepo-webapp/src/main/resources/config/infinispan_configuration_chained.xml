@@ -36,6 +36,8 @@
         <hash numOwners="${fcrepo.ispn.numOwners:1}"/>
         <stateTransfer fetchInMemoryState="true"/>
       </clustering>
+
+      <locking useLockStriping="false" />
       
       <eviction maxEntries="100"  strategy="LRU" threadPolicy="DEFAULT"/>
       
