@@ -19,8 +19,8 @@
      <clustering mode="distribution">
        <sync/>
        <l1 enabled="false" lifespan="0" onRehash="false"/>
-       <hash numOwners="${fcrepo.ispn.numOwners:1}"/>
-       <stateTransfer fetchInMemoryState="true"/>
+       <hash numOwners="${fcrepo.ispn.numOwners:2}"/>
+       <stateTransfer chunkSize="100" fetchInMemoryState="true"/>
      </clustering>
    </default>
 
@@ -33,8 +33,8 @@
       <clustering mode="distribution">
         <sync/>
         <l1 enabled="false" lifespan="0" onRehash="false"/>
-        <hash numOwners="${fcrepo.ispn.numOwners:1}"/>
-        <stateTransfer fetchInMemoryState="true"/>
+        <hash numOwners="${fcrepo.ispn.numOwners:2}"/>
+        <stateTransfer chunkSize="100" fetchInMemoryState="true"/>
       </clustering>
 
       <locking useLockStriping="false" />
