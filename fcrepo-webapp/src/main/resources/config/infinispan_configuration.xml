@@ -39,7 +39,10 @@
 
       <locking useLockStriping="false" />
 
-      <eviction maxEntries="100"  strategy="LRU" threadPolicy="DEFAULT"/>
+      <deadlockDetection enabled="true" spinDuration="1000"/>
+
+
+     <eviction maxEntries="100"  strategy="LRU" threadPolicy="DEFAULT"/>
       
       <transaction
          transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
