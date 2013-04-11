@@ -10,6 +10,11 @@
   <artifactId>fcrepo-webapp</artifactId>
   <packaging>war</packaging>
   <name>fcrepo webapp</name>
+  
+  <properties>
+    <!-- integration test properties -->
+    <test.context.path>/rest</test.context.path>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -90,29 +95,80 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
       </plugin>
       <plugin>
-      	<groupId>org.apache.maven.plugins</groupId>
       	<artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <test.port>${jetty.port}</test.port>
+            <test.context.path>${test.context.path}</test.context.path>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <configuration>
+          <portNames>
+            <portName>jetty.port</portName>
+            <portName>jetty.port.stop</portName>
+          </portNames>
+        </configuration>
+        <executions>
+          <execution>
+            <id>reserve-port</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>reserve-network-port</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
-        <version>8.1.9.v20130131</version>
         <configuration>
-          <scanIntervalSeconds>2</scanIntervalSeconds>
-          <webApp>
-            <contextPath>/</contextPath>
-          </webApp>
+          <connectors>
+            <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+              <port>${jetty.port}</port>
+              <maxIdleTime>60000</maxIdleTime>
+            </connector>
+          </connectors>
           <loginServices>
             <loginService implementation="org.eclipse.jetty.security.HashLoginService">
               <name>fcrepo</name>
               <config>${project.build.directory}/test-classes/jetty-users.properties</config>
             </loginService>
           </loginServices>
+          <scanIntervalSeconds>2</scanIntervalSeconds>
+          <stopKey>STOP</stopKey>
+            <stopPort>${jetty.port.stop}</stopPort>
+          <webApp>
+            <contextPath>${test.context.path}</contextPath>
+          </webApp>
         </configuration>
+        <executions>
+          <execution>
+            <id>start-jetty</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>stop</goal>
+              <goal>start</goal>
+            </goals>
+            <configuration>
+              <daemon>true</daemon>
+              <webAppSourceDirectory>${project.build.directory}/test-classes</webAppSourceDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>stop-jetty</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>stop</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
