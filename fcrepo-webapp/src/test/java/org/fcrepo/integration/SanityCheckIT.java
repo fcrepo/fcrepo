@@ -64,7 +64,7 @@ public class SanityCheckIT {
     @Test
     public void doASanityCheck() throws IOException {
         assertEquals(200, getStatus(new HttpGet(serverAddress +
- "/describe")));
+                "/rest/describe")));
     }
 
 

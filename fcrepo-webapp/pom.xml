@@ -10,10 +10,10 @@
   <artifactId>fcrepo-webapp</artifactId>
   <packaging>war</packaging>
   <name>fcrepo webapp</name>
-  
+
   <properties>
     <!-- integration test properties -->
-    <test.context.path>/rest</test.context.path>
+    <test.context.path>/</test.context.path>
   </properties>
 
   <dependencies>
@@ -98,7 +98,7 @@
         <artifactId>maven-war-plugin</artifactId>
       </plugin>
       <plugin>
-      	<artifactId>maven-failsafe-plugin</artifactId>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
             <test.port>${jetty.port}</test.port>
@@ -129,12 +129,6 @@
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
         <configuration>
-          <connectors>
-            <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-              <port>${jetty.port}</port>
-              <maxIdleTime>60000</maxIdleTime>
-            </connector>
-          </connectors>
           <loginServices>
             <loginService implementation="org.eclipse.jetty.security.HashLoginService">
               <name>fcrepo</name>
@@ -143,7 +137,6 @@
           </loginServices>
           <scanIntervalSeconds>2</scanIntervalSeconds>
           <stopKey>STOP</stopKey>
-            <stopPort>${jetty.port.stop}</stopPort>
           <webApp>
             <contextPath>${test.context.path}</contextPath>
           </webApp>
@@ -157,7 +150,14 @@
               <goal>start</goal>
             </goals>
             <configuration>
+              <connectors>
+                <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                  <port>${jetty.port}</port>
+                  <maxIdleTime>60000</maxIdleTime>
+                </connector>
+              </connectors>
               <daemon>true</daemon>
+              <stopPort>${jetty.port.stop}</stopPort>
               <webAppSourceDirectory>${project.build.directory}/test-classes</webAppSourceDirectory>
             </configuration>
           </execution>
@@ -167,6 +167,9 @@
             <goals>
               <goal>stop</goal>
             </goals>
+            <configuration>
+              <stopPort>${jetty.port.stop}</stopPort>
+            </configuration>
           </execution>
         </executions>
       </plugin>
