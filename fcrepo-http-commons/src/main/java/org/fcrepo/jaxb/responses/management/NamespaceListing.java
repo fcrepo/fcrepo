@@ -15,7 +15,7 @@ public class NamespaceListing {
     public Set<Namespace> namespaces;
 
     public NamespaceListing(Set<Namespace> nses) {
-        this.namespaces = nses;
+        namespaces = nses;
     }
 
     public NamespaceListing() {

@@ -1,3 +1,4 @@
+
 package org.fcrepo.observer;
 
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
@@ -25,36 +26,37 @@ import org.modeshape.jcr.api.Repository;
  */
 public class DefaultFilter implements EventFilter {
 
-	@Inject
-	private Repository repository;
+    @Inject
+    private Repository repository;
 
-	// it's safe to keep the session around, because this code does not mutate
-	// the state of the repository
-	private Session session;
+    // it's safe to keep the session around, because this code does not mutate
+    // the state of the repository
+    private Session session;
 
-	@Override
-	public boolean apply(Event event) {
+    @Override
+    public boolean apply(Event event) {
 
-		try {
-		    final Node resource = session.getNode(event.getPath());
-            return isFedoraObject.apply(resource) || isFedoraDatastream.apply(resource);
-                   
-		} catch (PathNotFoundException e) {
-			return false; // not a node in the fedora workspace
-		} catch (LoginException e) {
-			throw new SystemFailureException(e);
-		} catch (RepositoryException e) {
-			throw new SystemFailureException(e);
-		}
-	}
+        try {
+            final Node resource = session.getNode(event.getPath());
+            return isFedoraObject.apply(resource) ||
+                    isFedoraDatastream.apply(resource);
 
-	@PostConstruct
-	public void acquireSession() throws LoginException, RepositoryException {
-		session = repository.login();
-	}
+        } catch (PathNotFoundException e) {
+            return false; // not a node in the fedora workspace
+        } catch (LoginException e) {
+            throw new SystemFailureException(e);
+        } catch (RepositoryException e) {
+            throw new SystemFailureException(e);
+        }
+    }
 
-	@PreDestroy
-	public void releaseSession() {
-		session.logout();
-	}
+    @PostConstruct
+    public void acquireSession() throws LoginException, RepositoryException {
+        session = repository.login();
+    }
+
+    @PreDestroy
+    public void releaseSession() {
+        session.logout();
+    }
 }

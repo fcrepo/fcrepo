@@ -1,3 +1,4 @@
+
 package org.fcrepo.integration.services;
 
 import static org.junit.Assert.assertEquals;
@@ -31,13 +32,13 @@ public class LowLevelStorageServiceIT {
 
     @Inject
     Repository repo;
-    
+
     @Inject
     ObjectService objectService;
-    
+
     @Inject
     DatastreamService datastreamService;
-    
+
     @Inject
     LowLevelStorageService lowLevelService;
 
@@ -49,21 +50,24 @@ public class LowLevelStorageServiceIT {
         datastreamService.createDatastreamNode(session,
                 "/objects/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
-                "0123456789".getBytes()));
-
+                        "0123456789".getBytes()));
 
         session.save();
 
-        final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
+        final Datastream ds =
+                datastreamService.getDatastream("testLLObject",
+                        "testRepositoryContent");
 
-        final Collection<FixityResult> fixityResults = lowLevelService.getFixity(
-        		ds.getNode(), MessageDigest.getInstance("SHA-1"),
-        		ds.getContentDigest(), ds.getContentSize());
+        final Collection<FixityResult> fixityResults =
+                lowLevelService.getFixity(ds.getNode(), MessageDigest
+                        .getInstance("SHA-1"), ds.getContentDigest(), ds
+                        .getContentSize());
 
         assertNotEquals(0, fixityResults.size());
 
         for (FixityResult fixityResult : fixityResults) {
-            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", fixityResult.computedChecksum.toString());
+            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
+                    fixityResult.computedChecksum.toString());
         }
     }
 
@@ -74,17 +78,19 @@ public class LowLevelStorageServiceIT {
         datastreamService.createDatastreamNode(session,
                 "/objects/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
-                "0123456789".getBytes()));
-
+                        "0123456789".getBytes()));
 
         session.save();
 
-        final Datastream ds = datastreamService.getDatastream("testLLObject", "testRepositoryContent");
+        final Datastream ds =
+                datastreamService.getDatastream("testLLObject",
+                        "testRepositoryContent");
 
-        Iterator<LowLevelCacheEntry> inputStreamList = lowLevelService.getBinaryBlobs(ds.getNode()).iterator();
+        Iterator<LowLevelCacheEntry> inputStreamList =
+                lowLevelService.getBinaryBlobs(ds.getNode()).iterator();
 
         int i = 0;
-        while(inputStreamList.hasNext()) {
+        while (inputStreamList.hasNext()) {
             InputStream is = inputStreamList.next().getInputStream();
 
             String myString = IOUtils.toString(is, "UTF-8");
@@ -97,6 +103,5 @@ public class LowLevelStorageServiceIT {
         assertNotEquals(0, i);
 
     }
-
 
 }

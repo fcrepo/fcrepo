@@ -41,29 +41,31 @@ public class LowLevelCacheEntry {
     public LowLevelCacheEntry(BinaryStore store, CacheStore lowLevelStore,
             BinaryKey key) {
         this.store = store;
-        this.cacheStore = lowLevelStore;
+        cacheStore = lowLevelStore;
         this.key = key;
     }
 
     public LowLevelCacheEntry(BinaryStore store, BinaryKey key) {
         this.store = store;
-        this.cacheStore = null;
+        cacheStore = null;
         this.key = key;
     }
 
+    @Override
     public boolean equals(final Object other) {
         if (other instanceof LowLevelCacheEntry) {
             final LowLevelCacheEntry that = (LowLevelCacheEntry) other;
 
-            return this.key.equals(that.key) &&
-                    this.store.equals(that.store) &&
-                    ((this.cacheStore == null && that.cacheStore == null) || (this.cacheStore != null && this.cacheStore
-                            .equals(that.cacheStore)));
+            return key.equals(that.key) &&
+                    store.equals(that.store) &&
+                    (cacheStore == null && that.cacheStore == null || cacheStore != null &&
+                            cacheStore.equals(that.cacheStore));
         } else {
             return false;
         }
     }
 
+    @Override
     public int hashCode() {
         int hash = 1;
         hash = hash * 31 + store.hashCode();
@@ -74,17 +76,17 @@ public class LowLevelCacheEntry {
     }
 
     public InputStream getInputStream() throws BinaryStoreException {
-        if (this.store instanceof InfinispanBinaryStore) {
+        if (store instanceof InfinispanBinaryStore) {
             return new StoreChunkInputStream(cacheStore, key.toString() +
                     DATA_SUFFIX);
         } else {
-            return this.store.getInputStream(key);
+            return store.getInputStream(key);
         }
     }
 
     public void storeValue(InputStream stream) throws BinaryStoreException,
             IOException {
-        if (this.store instanceof InfinispanBinaryStore) {
+        if (store instanceof InfinispanBinaryStore) {
             OutputStream outputStream =
                     new StoreChunkOutputStream(cacheStore, key.toString() +
                             DATA_SUFFIX);
@@ -92,16 +94,15 @@ public class LowLevelCacheEntry {
             outputStream.close();
         } else {
             // the BinaryStore will calculate a new key for us.
-            this.store.storeValue(stream);
+            store.storeValue(stream);
         }
     }
 
     public String getExternalIdentifier() {
 
-        if (this.store instanceof InfinispanBinaryStore) {
+        if (store instanceof InfinispanBinaryStore) {
 
-            CacheStoreConfig config =
-                    this.cacheStore.getCacheStoreConfig();
+            CacheStoreConfig config = cacheStore.getCacheStoreConfig();
 
             String externalId = null;
             if (config instanceof AbstractCacheStoreConfig) {
@@ -121,13 +122,12 @@ public class LowLevelCacheEntry {
                 externalId = config.toString();
             }
 
-            return this.store.getClass().getName() +
-                    ":" +
-                    this.cacheStore.getCacheStoreConfig()
-                            .getCacheLoaderClassName() + ":" + externalId;
+            return store.getClass().getName() + ":" +
+                    cacheStore.getCacheStoreConfig().getCacheLoaderClassName() +
+                    ":" + externalId;
 
         } else {
-            return this.store.toString();
+            return store.toString();
         }
     }
 
@@ -147,19 +147,23 @@ public class LowLevelCacheEntry {
             }
 
             result.computedChecksum =
-                    ContentDigest
-                            .asURI(digest.getAlgorithm(), ds.getMessageDigest().digest());
+                    ContentDigest.asURI(digest.getAlgorithm(), ds
+                            .getMessageDigest().digest());
             result.computedSize = ds.getByteCount();
             result.dsChecksum = checksum;
             result.dsSize = size;
 
-            if (!result.computedChecksum.equals(result.dsChecksum))
+            if (!result.computedChecksum.equals(result.dsChecksum)) {
                 result.status.add(BAD_CHECKSUM);
+            }
 
-            if (result.dsSize != result.computedSize)
+            if (result.dsSize != result.computedSize) {
                 result.status.add(BAD_SIZE);
+            }
 
-            if (result.status.isEmpty()) result.status.add(SUCCESS);
+            if (result.status.isEmpty()) {
+                result.status.add(SUCCESS);
+            }
 
             logger.debug("Got " + result.toString());
             ds.close();

@@ -1,3 +1,4 @@
+
 package org.fcrepo.integration.observer;
 
 import static org.junit.Assert.assertEquals;
@@ -17,52 +18,53 @@ import org.springframework.test.context.ContextConfiguration;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-@ContextConfiguration({ "/spring-test/eventing.xml", "/spring-test/repo.xml" })
+@ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
 
-	private Integer eventBusMessageCount;
-	@Inject
-	private Repository repository;
+    private Integer eventBusMessageCount;
 
-	@Inject
-	private EventBus eventBus;
+    @Inject
+    private Repository repository;
 
-	@Test
-	public void TestEventBusPublishing() throws RepositoryException {
+    @Inject
+    private EventBus eventBus;
 
-		Session se = repository.login();
-		se.getRootNode().addNode("/object1").addMixin("fedora:object");
-		se.getRootNode().addNode("/object2").addMixin("fedora:object");
-		se.save();
-		se.logout();
+    @Test
+    public void TestEventBusPublishing() throws RepositoryException {
 
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+        Session se = repository.login();
+        se.getRootNode().addNode("/object1").addMixin("fedora:object");
+        se.getRootNode().addNode("/object2").addMixin("fedora:object");
+        se.save();
+        se.logout();
 
-		// Should be two messages, for each time
-		// each node becomes a Fedora object
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-		assertEquals("Where are my messages!?", (Integer) 2,
-				eventBusMessageCount);
+        // Should be two messages, for each time
+        // each node becomes a Fedora object
 
-	}
+        assertEquals("Where are my messages!?", (Integer) 2,
+                eventBusMessageCount);
 
-	@Subscribe
-	public void countMessages(FedoraEvent e) {
-		eventBusMessageCount++;
-	}
+    }
 
-	@Before
-	public void acquireConnections() {
-		eventBusMessageCount = 0;
-		eventBus.register(this);
-	}
+    @Subscribe
+    public void countMessages(FedoraEvent e) {
+        eventBusMessageCount++;
+    }
 
-	@After
-	public void releaseConnections() {
-		eventBus.unregister(this);
-	}
+    @Before
+    public void acquireConnections() {
+        eventBusMessageCount = 0;
+        eventBus.register(this);
+    }
+
+    @After
+    public void releaseConnections() {
+        eventBus.unregister(this);
+    }
 }

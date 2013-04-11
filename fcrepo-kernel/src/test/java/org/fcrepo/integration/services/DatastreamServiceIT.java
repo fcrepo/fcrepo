@@ -32,7 +32,7 @@ public class DatastreamServiceIT extends AbstractIT {
 
     @Inject
     DatastreamService datastreamService;
-    
+
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
@@ -54,13 +54,16 @@ public class DatastreamServiceIT extends AbstractIT {
         Session session = repository.login();
         InputStream is = new ByteArrayInputStream("asdf".getBytes());
         objectService.createObjectNode(session, "testDatastreamServiceObject");
-        datastreamService.createDatastreamNode(session, "/objects/testDatastreamServiceObject/testDatastreamNode",
+        datastreamService.createDatastreamNode(session,
+                "/objects/testDatastreamServiceObject/testDatastreamNode",
                 "application/octet-stream", is);
 
         session.save();
         session.logout();
         session = repository.login();
-        final Datastream ds = datastreamService.getDatastream("testDatastreamServiceObject", "testDatastreamNode");
+        final Datastream ds =
+                datastreamService.getDatastream("testDatastreamServiceObject",
+                        "testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(ds.getContent(), "UTF-8"));
         session.logout();
     }

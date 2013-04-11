@@ -21,7 +21,7 @@ public class FedoraIdentifiersTest {
     private PidMinter mockPidMinter;
 
     @InjectMocks
-    private FedoraIdentifiers fi = new FedoraIdentifiers();
+    private final FedoraIdentifiers fi = new FedoraIdentifiers();
 
     @Before
     public void initMocks() {

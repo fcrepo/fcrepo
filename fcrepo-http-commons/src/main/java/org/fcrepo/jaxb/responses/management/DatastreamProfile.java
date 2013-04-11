@@ -22,7 +22,7 @@ public class DatastreamProfile {
 
     @XmlElement
     public String dsLabel;
-    
+
     @XmlElement
     public String dsOwnerId;
 

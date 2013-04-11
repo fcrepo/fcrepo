@@ -1,3 +1,4 @@
+
 package org.fcrepo.utils;
 
 import java.io.InputStream;
@@ -22,7 +23,7 @@ public class FixityInputStream extends CountingInputStream {
     }
 
     public MessageDigest getMessageDigest() {
-        return ((DigestInputStream)in).getMessageDigest();
+        return ((DigestInputStream) in).getMessageDigest();
     }
 
 }

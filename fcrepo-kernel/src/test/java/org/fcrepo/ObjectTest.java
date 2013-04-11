@@ -15,17 +15,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ObjectTest {
-	
-	FedoraObject testObj;
-	
-	Node mockNode;
-	
-	@Before
-	public void setUp(){
-		mockNode = mock(Node.class);
-		testObj = new FedoraObject(mockNode);
-	}
 
+    FedoraObject testObj;
+
+    Node mockNode;
+
+    @Before
+    public void setUp() {
+        mockNode = mock(Node.class);
+        testObj = new FedoraObject(mockNode);
+    }
 
     @Test
     public void testLabel() throws RepositoryException, IOException {

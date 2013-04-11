@@ -14,7 +14,7 @@ public interface FedoraJcrTypes {
     public static final String FEDORA_OBJECT = "fedora:object";
 
     public static final String FEDORA_SIZE = "fedora:size";
-    
+
     public static final String FEDORA_OWNED = "fedora:owned";
 
     public static final String FEDORA_OWNERID = "fedora:ownerId";

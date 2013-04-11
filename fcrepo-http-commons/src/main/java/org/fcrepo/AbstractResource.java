@@ -44,24 +44,22 @@ public abstract class AbstractResource {
     @Inject
     protected SessionFactory sessions;
 
-
     /**
      * The fcrepo object service
      */
     @Inject
     protected ObjectService objectService;
 
-
     /**
      * A resource that can mint new Fedora PIDs.
      */
     @Inject
     protected PidMinter pidMinter;
-    
-    @Context 
+
+    @Context
     private HttpServletRequest servletRequest;
-    
-    @Context 
+
+    @Context
     private SecurityContext securityContext;
 
     /**
@@ -80,9 +78,9 @@ public abstract class AbstractResource {
         session.save();
         session.logout();
     }
-    
+
     protected Session getAuthenticatedSession() {
-    	return sessions.getSession(securityContext, servletRequest);
+        return sessions.getSession(securityContext, servletRequest);
     }
 
     protected synchronized Response deleteResource(final Node resource)
@@ -101,37 +99,37 @@ public abstract class AbstractResource {
         return noContent().build();
 
     }
-    
+
     /**
      * A testing convenience setter for otherwise injected resources
      * @param repo
      */
     public void setSessionFactory(SessionFactory sessions) {
-    	this.sessions = sessions;
+        this.sessions = sessions;
     }
-    
+
     /**
      * A testing convenience setter for otherwise injected resources
      * @param uriInfo
      */
     public void setUriInfo(UriInfo uriInfo) {
-    	this.uriInfo = uriInfo;
+        this.uriInfo = uriInfo;
     }
-    
+
     /**
      * A testing convenience setter for otherwise injected resources
      * @param pidMinter
      */
     public void setPidMinter(PidMinter pidMinter) {
-    	this.pidMinter = pidMinter;
+        this.pidMinter = pidMinter;
     }
-    
+
     /**
      * A testing convenience setter for otherwise injected resources
      * @param SecurityContext
      */
     public void setSecurityContext(SecurityContext securityContext) {
-    	this.securityContext = securityContext;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -139,7 +137,7 @@ public abstract class AbstractResource {
      * @param HttpServletRequest
      */
     public void setHttpServletRequest(HttpServletRequest servletRequest) {
-    	this.servletRequest = servletRequest;
+        this.servletRequest = servletRequest;
     }
-    
+
 }

@@ -1,3 +1,4 @@
+
 package org.fcrepo.utils;
 
 import static org.junit.Assert.assertEquals;
@@ -14,15 +15,20 @@ public class FixityInputStreamTest {
 
     @Test
     public void SimpleFixityInputStreamTest() throws NoSuchAlgorithmException {
-        FixityInputStream is = new FixityInputStream(new ByteArrayInputStream("0123456789".getBytes()), MessageDigest.getInstance("SHA-1"));
+        FixityInputStream is =
+                new FixityInputStream(new ByteArrayInputStream("0123456789"
+                        .getBytes()), MessageDigest.getInstance("SHA-1"));
 
         try {
-            while(is.read() != -1);
+            while (is.read() != -1) {
+                ;
+            }
         } catch (IOException e) {
 
         }
 
         assertEquals(10, is.getByteCount());
-        assertEquals("87acec17cd9dcd20a716cc2cf67417b71c8a7016", Hex.encodeHexString(is.getMessageDigest().digest()));
+        assertEquals("87acec17cd9dcd20a716cc2cf67417b71c8a7016", Hex
+                .encodeHexString(is.getMessageDigest().digest()));
     }
 }

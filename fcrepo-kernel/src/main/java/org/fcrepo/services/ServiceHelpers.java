@@ -72,11 +72,11 @@ public class ServiceHelpers {
         return ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getSize();
     }
-    
-    public static Function<LowLevelCacheEntry, FixityResult> getCheckCacheFixityFunction(
-    		final MessageDigest digest,
-            final URI dsChecksum, final long dsSize) {
-    	return new CheckCacheEntryFixity(digest, dsChecksum, dsSize);
+
+    public static Function<LowLevelCacheEntry, FixityResult>
+            getCheckCacheFixityFunction(final MessageDigest digest,
+                    final URI dsChecksum, final long dsSize) {
+        return new CheckCacheEntryFixity(digest, dsChecksum, dsSize);
     }
 
 }

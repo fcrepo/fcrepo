@@ -61,7 +61,7 @@ public class FedoraTypesUtils {
             }
         }
     };
-    
+
     /**
      * Predicate for determining whether this node is owned in the Fedora sense.
      */
@@ -106,27 +106,27 @@ public class FedoraTypesUtils {
                     }
                 }
             };
-    
+
     public static Function<Node, ValueFactory> getValueFactory =
-    		new Function<Node, ValueFactory>() {
-    	        @Override
-    	        public ValueFactory apply(Node n) {
-    	        	try {
-						return n.getSession().getValueFactory();
-					} catch (RepositoryException e) {
+            new Function<Node, ValueFactory>() {
+
+                @Override
+                public ValueFactory apply(Node n) {
+                    try {
+                        return n.getSession().getValueFactory();
+                    } catch (RepositoryException e) {
                         throw new IllegalStateException(e);
-					}
-    	        }
-    };
-    
+                    }
+                }
+            };
+
     public static Binary getBinary(Node n, InputStream i) {
-    	try {
-			return n.getSession().getValueFactory().createBinary(i);
-		} catch (RepositoryException e) {
+        try {
+            return n.getSession().getValueFactory().createBinary(i);
+        } catch (RepositoryException e) {
             throw new IllegalStateException(e);
-		}
+        }
     }
-    
 
     /**
      * Convenience method for transforming collections into 

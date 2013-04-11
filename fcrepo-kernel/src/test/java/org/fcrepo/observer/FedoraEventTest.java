@@ -1,3 +1,4 @@
+
 package org.fcrepo.observer;
 
 import static org.junit.Assert.assertEquals;
@@ -13,14 +14,9 @@ import com.google.common.collect.ImmutableMap;
 
 public class FedoraEventTest {
 
-    Event e = new FedoraEvent(new TestEvent(1,
-            "Path",
-            "UserId",
-            "Identifier",
-            ImmutableMap.of("1", "2"),
-            "data",
-            0L
-            ));
+    Event e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",
+            ImmutableMap.of("1", "2"), "data", 0L));
+
     @Test
     public void testGetType() throws Exception {
         assertEquals(1, e.getType());
@@ -69,20 +65,22 @@ public class FedoraEventTest {
     class TestEvent implements Event {
 
         private final int type;
+
         private final String path;
+
         private final String user_id;
+
         private final String identifier;
+
         private final Map<String, String> info;
+
         private final String userData;
+
         private final long date;
 
-        public TestEvent(int type,
-                         String path,
-                         String user_id,
-                         String identifier,
-                         Map<String, String> info,
-                         String userData,
-                         long date ) {
+        public TestEvent(int type, String path, String user_id,
+                String identifier, Map<String, String> info, String userData,
+                long date) {
             this.type = type;
             this.path = path;
             this.user_id = user_id;
@@ -94,12 +92,12 @@ public class FedoraEventTest {
 
         @Override
         public int getType() {
-            return this.type;
+            return type;
         }
 
         @Override
         public String getPath() throws RepositoryException {
-            return this.path;
+            return path;
         }
 
         @Override

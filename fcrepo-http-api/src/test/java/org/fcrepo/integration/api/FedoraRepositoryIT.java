@@ -49,8 +49,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found the repository description:\n" + description);
         assertTrue("Failed to find a proper repo version", compile(
-                "Number Of Objects").matcher(
-                description).find());
+                "Number Of Objects").matcher(description).find());
     }
 
     @Test
@@ -76,7 +75,8 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         newDescribeMethod.addHeader("Accept", TEXT_XML);
         response = client.execute(describeMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        final String newDescription = EntityUtils.toString(response.getEntity());
+        final String newDescription =
+                EntityUtils.toString(response.getEntity());
         logger.debug("Found another repository description:\n" + newDescription);
         Matcher newCheck =
                 compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)

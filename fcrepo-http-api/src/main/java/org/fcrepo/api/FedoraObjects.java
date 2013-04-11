@@ -96,15 +96,19 @@ public class FedoraObjects extends AbstractResource {
      */
     @POST
     @Path("/{pid}")
-    public Response ingest(@PathParam("pid") final String pid,
-          @QueryParam("label") @DefaultValue("") final String label) throws RepositoryException {
+    public Response ingest(@PathParam("pid")
+    final String pid, @QueryParam("label")
+    @DefaultValue("")
+    final String label) throws RepositoryException {
 
         logger.debug("Attempting to ingest with pid: {}", pid);
 
         final Session session = getAuthenticatedSession();
         try {
             FedoraObject result = objectService.createObject(session, pid);
-            if (label != null && !"".equals(label)) result.setLabel(label);
+            if (label != null && !"".equals(label)) {
+                result.setLabel(label);
+            }
             session.save();
             logger.debug("Finished ingest with pid: {}", pid);
             return created(uriInfo.getRequestUri()).entity(pid).build();

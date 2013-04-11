@@ -49,29 +49,30 @@ import com.yammer.metrics.Timer;
 
 public class LowLevelStorageService {
 
-    private static final Logger logger = getLogger(LowLevelStorageService.class);
+    private static final Logger logger =
+            getLogger(LowLevelStorageService.class);
 
     final static Counter fixityCheckCounter = metrics.counter(name(
-    		LowLevelStorageService.class, "fixity-check-counter"));
+            LowLevelStorageService.class, "fixity-check-counter"));
 
     final static Timer timer = metrics.timer(name(Datastream.class,
             "fixity-check-time"));
 
     final static Counter fixityRepairedCounter = metrics.counter(name(
-    		LowLevelStorageService.class, "fixity-repaired-counter"));
+            LowLevelStorageService.class, "fixity-repaired-counter"));
 
     final static Counter fixityErrorCounter = metrics.counter(name(
-    		LowLevelStorageService.class, "fixity-error-counter"));
+            LowLevelStorageService.class, "fixity-error-counter"));
 
     @Inject
     private Repository repo;
-    
+
     GetBinaryStore getBinaryStore = new GetBinaryStore();
-    
+
     GetBinaryKey getBinaryKey = new GetBinaryKey();
-    
+
     GetCacheStore getCacheStore = new GetCacheStore();
-    
+
     GetGoodFixityResults getGoodFixityResults = new GetGoodFixityResults();
 
     /**
@@ -79,20 +80,19 @@ public class LowLevelStorageService {
      */
     private Session readOnlySession;
 
-    public Collection<FixityResult> getFixity(
-            final Node resource, final MessageDigest digest,
-            final URI dsChecksum, final long dsSize) throws RepositoryException {
+    public Collection<FixityResult>
+            getFixity(final Node resource, final MessageDigest digest,
+                    final URI dsChecksum, final long dsSize)
+                    throws RepositoryException {
         logger.debug("Checking resource: " + resource.getPath());
 
-        return transformBinaryBlobs(
-                resource,
-                ServiceHelpers.getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
+        return transformBinaryBlobs(resource, ServiceHelpers
+                .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
     }
 
-    public <T> Collection<T> transformBinaryBlobs(
-    		final Node resource,
-    		final Function<LowLevelCacheEntry, T> transform)
-    				throws RepositoryException {
+    public <T> Collection<T> transformBinaryBlobs(final Node resource,
+            final Function<LowLevelCacheEntry, T> transform)
+            throws RepositoryException {
         return transform(getBinaryBlobs(resource), transform);
     }
 
@@ -102,8 +102,8 @@ public class LowLevelStorageService {
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public Set<LowLevelCacheEntry> getBinaryBlobs(
-            final Node resource) throws RepositoryException {
+    public Set<LowLevelCacheEntry> getBinaryBlobs(final Node resource)
+            throws RepositoryException {
 
         return getBinaryBlobs(getBinaryKey.apply(resource));
 
@@ -123,7 +123,7 @@ public class LowLevelStorageService {
         if (store == null) {
             return blobs.build();
         }
-        
+
         // if we have an Infinispan store, it may have multiple stores (or cluster nodes)
         if (store instanceof InfinispanBinaryStore) {
             InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
@@ -133,8 +133,7 @@ public class LowLevelStorageService {
 
             for (Cache<?, ?> c : ImmutableSet.copyOf(ispnStore.getCaches())) {
 
-                final CacheStore cacheStore =
-                        getCacheStore.apply(c);
+                final CacheStore cacheStore = getCacheStore.apply(c);
 
                 // A ChainingCacheStore indicates we (may) have multiple CacheStores at play
                 if (cacheStore instanceof ChainingCacheStore) {
@@ -142,17 +141,17 @@ public class LowLevelStorageService {
                             (ChainingCacheStore) cacheStore;
                     // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
                     for (CacheStore s : chainingCacheStore.getStores().keySet()) {
-                    	blobs.add(new LowLevelCacheEntry(store, s, key));
+                        blobs.add(new LowLevelCacheEntry(store, s, key));
                     }
                 } else {
                     // just a nice, simple infinispan cache.
-                	blobs.add(new LowLevelCacheEntry(store, cacheStore, key));
+                    blobs.add(new LowLevelCacheEntry(store, cacheStore, key));
                 }
             }
         } else {
-        	blobs.add(new LowLevelCacheEntry(store, key));
+            blobs.add(new LowLevelCacheEntry(store, key));
         }
-        
+
         return blobs.build();
     }
 
@@ -171,16 +170,16 @@ public class LowLevelStorageService {
     }
 
     public void setRepository(Repository repository) {
-        if(readOnlySession != null) {
+        if (readOnlySession != null) {
             logoutSession();
         }
         repo = repository;
 
         getSession();
     }
-    
-    public Collection<FixityResult> runFixityAndFixProblems(Datastream datastream)
-            throws RepositoryException {
+
+    public Collection<FixityResult> runFixityAndFixProblems(
+            Datastream datastream) throws RepositoryException {
         Set<FixityResult> fixityResults;
         Set<FixityResult> goodEntries;
         final URI digestUri = datastream.getContentDigest();
@@ -198,7 +197,9 @@ public class LowLevelStorageService {
         final Timer.Context context = timer.time();
 
         try {
-            fixityResults = copyOf(getFixity(datastream.getNode(), digest, digestUri, size));
+            fixityResults =
+                    copyOf(getFixity(datastream.getNode(), digest, digestUri,
+                            size));
 
             goodEntries = getGoodFixityResults.apply(fixityResults);
         } finally {
@@ -206,8 +207,8 @@ public class LowLevelStorageService {
         }
 
         if (goodEntries.size() == 0) {
-            logger.error("ALL COPIES OF " + datastream.getObject().getName() + "/" +
-            		datastream.getDsId() + " HAVE FAILED FIXITY CHECKS.");
+            logger.error("ALL COPIES OF " + datastream.getObject().getName() +
+                    "/" + datastream.getDsId() + " HAVE FAILED FIXITY CHECKS.");
             return fixityResults;
         }
 

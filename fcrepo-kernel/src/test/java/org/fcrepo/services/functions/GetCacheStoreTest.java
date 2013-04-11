@@ -1,3 +1,4 @@
+
 package org.fcrepo.services.functions;
 
 import static org.mockito.Matchers.any;
@@ -19,25 +20,27 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ ComponentRegistry.class })
+@PrepareForTest({ComponentRegistry.class})
 public class GetCacheStoreTest {
-	
-	@Test
-	public void testApply() throws LoginException, RepositoryException {
-		Cache<?, ?> mockCache = mock(Cache.class);
-		AdvancedCache mockAC = mock(AdvancedCache.class);
-		ComponentRegistry mockCR = mock(ComponentRegistry.class);
-		CacheLoaderManager mockCLM = mock(CacheLoaderManager.class);
-		CacheStore mockStore = mock(CacheStore.class);
 
-		when(mockCLM.getCacheStore()).thenReturn(mockStore);
-		when(mockCR.getComponent(CacheLoaderManager.class)).thenReturn(mockCLM);
-		when(mockAC.getComponentRegistry()).thenReturn(mockCR);
-		when(mockCache.getAdvancedCache()).thenReturn(mockAC);
-		
-		GetCacheStore testObj = new GetCacheStore();
-		testObj.apply(mockCache);
-		verify(mockCR).getComponent(any(Class.class));
-	}
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testApply() throws LoginException, RepositoryException {
+        Cache<?, ?> mockCache = mock(Cache.class);
+        @SuppressWarnings("rawtypes")
+        AdvancedCache mockAC = mock(AdvancedCache.class);
+        ComponentRegistry mockCR = mock(ComponentRegistry.class);
+        CacheLoaderManager mockCLM = mock(CacheLoaderManager.class);
+        CacheStore mockStore = mock(CacheStore.class);
+
+        when(mockCLM.getCacheStore()).thenReturn(mockStore);
+        when(mockCR.getComponent(CacheLoaderManager.class)).thenReturn(mockCLM);
+        when(mockAC.getComponentRegistry()).thenReturn(mockCR);
+        when(mockCache.getAdvancedCache()).thenReturn(mockAC);
+
+        GetCacheStore testObj = new GetCacheStore();
+        testObj.apply(mockCache);
+        verify(mockCR).getComponent(any(Class.class));
+    }
 
 }

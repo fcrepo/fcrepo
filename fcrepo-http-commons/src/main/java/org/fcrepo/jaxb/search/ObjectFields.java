@@ -1,3 +1,4 @@
+
 package org.fcrepo.jaxb.search;
 
 /**
@@ -5,74 +6,74 @@ package org.fcrepo.jaxb.search;
  * @author Vincent Nguyen
  */
 public class ObjectFields {
-	
-	private String pid;
-	
-	private String label;
-	
-	private String path;
-	
-	private String state;
-	
-	private String ownerId;
-	
-	private String createdDate;
-	
-	private String modifiedDate;
 
-	public String getPid() {
-		return pid;
-	}
+    private String pid;
 
-	public void setPid(String pid) {
-		this.pid = pid;
-	}
+    private String label;
 
-	public String getLabel() {
-		return label;
-	}
+    private String path;
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
+    private String state;
 
-	public String getPath() {
-		return path;
-	}
+    private String ownerId;
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+    private String createdDate;
 
-	public String getState() {
-		return state;
-	}
+    private String modifiedDate;
 
-	public void setState(String state) {
-		this.state = state;
-	}
+    public String getPid() {
+        return pid;
+    }
 
-	public String getOwnerId() {
-		return ownerId;
-	}
+    public void setPid(String pid) {
+        this.pid = pid;
+    }
 
-	public void setOwnerId(String ownerId) {
-		this.ownerId = ownerId;
-	}
+    public String getLabel() {
+        return label;
+    }
 
-	public String getCreatedDate() {
-		return createdDate;
-	}
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
-	public void setCreatedDate(String createdDate) {
-		this.createdDate = createdDate;
-	}
+    public String getPath() {
+        return path;
+    }
 
-	public String getModifiedDate() {
-		return modifiedDate;
-	}
+    public void setPath(String path) {
+        this.path = path;
+    }
 
-	public void setModifiedDate(String modifiedDate) {
-		this.modifiedDate = modifiedDate;
-	}
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public String getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getModifiedDate() {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate(String modifiedDate) {
+        this.modifiedDate = modifiedDate;
+    }
 }

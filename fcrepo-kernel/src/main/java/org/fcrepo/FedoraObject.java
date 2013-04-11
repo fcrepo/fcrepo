@@ -39,7 +39,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
             "FedoraObject"));
 
     public FedoraObject(Node n) {
-        this.node = n;
+        node = n;
     }
 
     public FedoraObject(Session session, String path)
@@ -48,7 +48,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         final Timer.Context context = timer.time();
 
         try {
-            this.node = findOrCreateNode(session, path, NT_FOLDER);
+            node = findOrCreateNode(session, path, NT_FOLDER);
             node.addMixin(FEDORA_OBJECT);
             node.addMixin(FEDORA_OWNED);
             node.setProperty(FEDORA_OWNERID, session.getUserID());
@@ -74,7 +74,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
     public Node getNode() {
         return node;
     }
-    
+
     public String getOwnerId() throws RepositoryException {
         if (isOwned.apply(node)) {
             return node.getProperty(FEDORA_OWNERID).getString();

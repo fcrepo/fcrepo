@@ -97,7 +97,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                 "Got wrong URI in Location header for datastream creation!",
                 serverAddress + OBJECT_PATH.replace("/", "") +
                         "/FedoraDatastreamsTest3/datastreams/ds1", location);
-        
+
         final HttpGet retrieveMutatedDataStreamMethod =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest3/datastreams/ds1/content");

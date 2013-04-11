@@ -45,10 +45,10 @@ import com.google.common.collect.ImmutableMap.Builder;
 public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraRepository.class);
-    
+
     @Inject
     Repository repo;
-    
+
     @Inject
     ObjectService objectService;
 
@@ -60,8 +60,9 @@ public class FedoraRepository extends AbstractResource {
         logger.debug("Repository name: " + repo.getDescriptor(REP_NAME_DESC));
         final Builder<String, Object> repoproperties = builder();
         for (final String key : repo.getDescriptorKeys()) {
-            if (repo.getDescriptor(key) != null)
+            if (repo.getDescriptor(key) != null) {
                 repoproperties.put(key, repo.getDescriptor(key));
+            }
         }
 
         // add in node namespaces
@@ -93,7 +94,8 @@ public class FedoraRepository extends AbstractResource {
                 uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
                         .build();
         description.repositorySize = objectService.getRepositorySize(session);
-        description.numberOfObjects = objectService.getRepositoryObjectCount(session);
+        description.numberOfObjects =
+                objectService.getRepositoryObjectCount(session);
         session.logout();
         return description;
     }
@@ -111,7 +113,7 @@ public class FedoraRepository extends AbstractResource {
      * @param repo
      */
     public void setRepository(Repository repo) {
-    	this.repo = repo;
+        this.repo = repo;
     }
 
 }

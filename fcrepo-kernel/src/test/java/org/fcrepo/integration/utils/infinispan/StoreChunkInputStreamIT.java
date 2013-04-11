@@ -1,3 +1,4 @@
+
 package org.fcrepo.integration.utils.infinispan;
 
 import static org.junit.Assert.assertEquals;
@@ -18,13 +19,14 @@ public class StoreChunkInputStreamIT {
 
     @Test
     public void tryRetrievingContentFromInfinispanIT() throws IOException {
-        EmbeddedCacheManager cm = new DefaultCacheManager("test_infinispan_configuration.xml");
+        EmbeddedCacheManager cm =
+                new DefaultCacheManager("test_infinispan_configuration.xml");
 
         Cache<String, byte[]> ispn = cm.getCache("FedoraRepository");
 
-        CacheStore cs = ispn.getAdvancedCache().getComponentRegistry()
-                .getComponent(CacheLoaderManager.class)
-                .getCacheStore();
+        CacheStore cs =
+                ispn.getAdvancedCache().getComponentRegistry().getComponent(
+                        CacheLoaderManager.class).getCacheStore();
 
         ispn.put("key-data-0", "0".getBytes());
         ispn.put("key-data-1", "1".getBytes());

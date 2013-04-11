@@ -21,7 +21,7 @@ public class FedoraObjectIT extends AbstractIT {
 
     @Inject
     Repository repo;
-    
+
     @Inject
     ObjectService objectService;
 
@@ -43,7 +43,8 @@ public class FedoraObjectIT extends AbstractIT {
         session.save();
         session.logout();
         session = repo.login();
-        final String ownerId = objectService.getObject("testObject").getOwnerId();
+        final String ownerId =
+                objectService.getObject("testObject").getOwnerId();
         assertEquals("Couldn't find object owner ID!", "ajs6f", ownerId);
     }
 }

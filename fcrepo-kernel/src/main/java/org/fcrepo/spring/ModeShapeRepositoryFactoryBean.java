@@ -1,3 +1,4 @@
+
 package org.fcrepo.spring;
 
 import java.io.IOException;
@@ -18,32 +19,34 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
 
 public class ModeShapeRepositoryFactoryBean implements
-		FactoryBean<JcrRepository> {
+        FactoryBean<JcrRepository> {
 
-	@Inject
-	private JcrRepositoryFactory jcrRepositoryFactory;
+    @Inject
+    private JcrRepositoryFactory jcrRepositoryFactory;
 
-	private Resource repositoryConfiguration;
-	private JcrRepository repository;
+    private Resource repositoryConfiguration;
 
-	@PostConstruct
-	public void buildRepository() throws RepositoryException, IOException {
-		repository = (JcrRepository) jcrRepositoryFactory
-				.getRepository(Collections.singletonMap(RepositoryFactory.URL,
-						repositoryConfiguration.getURL()));
+    private JcrRepository repository;
 
+    @PostConstruct
+    public void buildRepository() throws RepositoryException, IOException {
+        repository =
+                (JcrRepository) jcrRepositoryFactory.getRepository(Collections
+                        .singletonMap(RepositoryFactory.URL,
+                                repositoryConfiguration.getURL()));
 
         setupInitialNodes();
-	}
+    }
 
     private void setupInitialNodes() throws RepositoryException {
         Session s = repository.login();
-        final Node objectStore = new JcrTools(true).findOrCreateNode(s, "/objects");
+        final Node objectStore =
+                new JcrTools(true).findOrCreateNode(s, "/objects");
 
-        if(objectStore.canAddMixin("fedora:objectStore")) {
+        if (objectStore.canAddMixin("fedora:objectStore")) {
             objectStore.addMixin("fedora:objectStore");
 
-            if(!objectStore.hasProperty("fedora:size")) {
+            if (!objectStore.hasProperty("fedora:size")) {
                 objectStore.setProperty("fedora:size", 0L);
             }
         }
@@ -53,19 +56,19 @@ public class ModeShapeRepositoryFactoryBean implements
     }
 
     @Override
-	public JcrRepository getObject() throws RepositoryException, IOException {
-		return repository;
-	}
+    public JcrRepository getObject() throws RepositoryException, IOException {
+        return repository;
+    }
 
-	@Override
-	public Class<?> getObjectType() {
-		return Repository.class;
-	}
+    @Override
+    public Class<?> getObjectType() {
+        return Repository.class;
+    }
 
-	@Override
-	public boolean isSingleton() {
-		return true;
-	}
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
 
     public void setRepositoryConfiguration(Resource repositoryConfiguration) {
         this.repositoryConfiguration = repositoryConfiguration;

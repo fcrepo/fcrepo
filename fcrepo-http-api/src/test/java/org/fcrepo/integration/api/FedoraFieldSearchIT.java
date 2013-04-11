@@ -1,3 +1,4 @@
+
 package org.fcrepo.integration.api;
 
 import static org.junit.Assert.assertEquals;
@@ -11,8 +12,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 
-
 public class FedoraFieldSearchIT extends AbstractResourceIT {
+
     @Test
     public void testSearchForm() throws Exception {
 

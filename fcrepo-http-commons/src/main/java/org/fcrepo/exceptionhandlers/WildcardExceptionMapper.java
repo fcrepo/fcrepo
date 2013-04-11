@@ -13,7 +13,7 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(Exception e) {
-        
+
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();
     }

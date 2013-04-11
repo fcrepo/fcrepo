@@ -14,7 +14,8 @@ public class PathServiceTest {
     @Test
     public void testGetObjectJcrNodePath() throws Exception {
         new PathService();
-        assertEquals(OBJECT_PATH + "/test:123", getObjectJcrNodePath("test:123"));
+        assertEquals(OBJECT_PATH + "/test:123",
+                getObjectJcrNodePath("test:123"));
     }
 
     @Test

@@ -1,5 +1,5 @@
-package org.fcrepo.integration.services;
 
+package org.fcrepo.integration.services;
 
 import static org.jgroups.util.Util.assertEquals;
 
@@ -14,7 +14,6 @@ import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
-
 
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class ObjectServiceIT extends AbstractIT {
@@ -34,9 +33,9 @@ public class ObjectServiceIT extends AbstractIT {
 
         double originalSize = objectService.getAllObjectsDatastreamSize();
 
-        datastreamService.createDatastreamNode(session, "testObjectServiceNode",
-                "application/octet-stream", new ByteArrayInputStream("asdf"
-                .getBytes()));
+        datastreamService.createDatastreamNode(session,
+                "testObjectServiceNode", "application/octet-stream",
+                new ByteArrayInputStream("asdf".getBytes()));
         session.save();
         session.logout();
 

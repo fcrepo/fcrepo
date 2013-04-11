@@ -1,7 +1,7 @@
+
 package org.fcrepo.identifiers;
 
 import com.google.common.base.Function;
-
 
 public abstract class BasePidMinter implements PidMinter {
 

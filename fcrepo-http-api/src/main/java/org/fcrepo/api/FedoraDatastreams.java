@@ -68,7 +68,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     @Inject
     DatastreamService datastreamService;
-    
+
     @Inject
     LowLevelStorageService llStoreService;
 
@@ -139,7 +139,7 @@ public class FedoraDatastreams extends AbstractResource {
     public Response deleteDatastreams(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     final List<String> dsidList) throws RepositoryException {
-    	final Session session = getAuthenticatedSession();
+        final Session session = getAuthenticatedSession();
         try {
             for (String dsid : dsidList) {
                 logger.debug("purging datastream " + dsid);
@@ -208,8 +208,8 @@ public class FedoraDatastreams extends AbstractResource {
     final String checksumType, @QueryParam("checksum")
     final String checksum, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
-    MediaType requestContentType, InputStream requestBodyStream) throws IOException,
-            InvalidChecksumException, RepositoryException {
+    MediaType requestContentType, InputStream requestBodyStream)
+            throws IOException, InvalidChecksumException, RepositoryException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -218,9 +218,8 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             String dsPath = getDatastreamJcrNodePath(pid, dsid);
             logger.info("addDatastream {}", dsPath);
-            datastreamService.createDatastreamNode(session, dsPath,
-                    contentType.toString(), requestBodyStream,
-                    checksumType, checksum);
+            datastreamService.createDatastreamNode(session, dsPath, contentType
+                    .toString(), requestBodyStream, checksumType, checksum);
             session.save();
             return created(uriInfo.getRequestUri()).build();
         } finally {
@@ -343,7 +342,7 @@ public class FedoraDatastreams extends AbstractResource {
         EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         Date date = ds.getLastModifiedDate();
         Date roundedDate = new Date();
-        roundedDate.setTime(date.getTime() - (date.getTime() % 1000));
+        roundedDate.setTime(date.getTime() - date.getTime() % 1000);
         ResponseBuilder builder =
                 request.evaluatePreconditions(roundedDate, etag);
 
@@ -424,7 +423,8 @@ public class FedoraDatastreams extends AbstractResource {
         dsf.dsId = dsid;
         dsf.timestamp = new Date();
 
-        Collection<FixityResult> blobs = llStoreService.runFixityAndFixProblems(ds);
+        Collection<FixityResult> blobs =
+                llStoreService.runFixityAndFixProblems(ds);
         dsf.statuses = new ArrayList<FixityResult>(blobs);
         return dsf;
     }

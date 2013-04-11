@@ -35,7 +35,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public abstract class AbstractResourceIT {
 
     protected Logger logger;
-    
+
     protected JAXBContext context;
 
     @Before
@@ -45,10 +45,12 @@ public abstract class AbstractResourceIT {
 
     @Before
     public void setContext() throws JAXBException {
-    	context = 
-    			JAXBContext.newInstance(ObjectProfile.class, ObjectDatastreams.class, DatastreamProfile.class, DatastreamFixity.class);
+        context =
+                JAXBContext.newInstance(ObjectProfile.class,
+                        ObjectDatastreams.class, DatastreamProfile.class,
+                        DatastreamFixity.class);
     }
-    
+
     protected static final int SERVER_PORT = Integer.parseInt(System
             .getProperty("test.port", "8080"));
 
@@ -73,11 +75,11 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + "objects/" + pid);
     }
 
-    protected static HttpPost postObjMethod(final String pid, final String query) {
+    protected static HttpPost
+            postObjMethod(final String pid, final String query) {
         if (query.equals("")) {
             return new HttpPost(serverAddress + "objects/" + pid);
-        }
-        else {
+        } else {
             return new HttpPost(serverAddress + "objects/" + pid + "?" + query);
         }
     }
@@ -95,24 +97,24 @@ public abstract class AbstractResourceIT {
         return new HttpPut(serverAddress + "objects/" + pid + "/datastreams/" +
                 ds);
     }
-    
+
     protected HttpResponse execute(HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());
         return client.execute(method);
     }
-    
+
     protected int getStatus(HttpUriRequest method)
             throws ClientProtocolException, IOException {
         return execute(method).getStatusLine().getStatusCode();
     }
 
-    protected ObjectProfile getObject(String pid) throws ClientProtocolException, IOException, JAXBException {
-        final HttpGet get =
-                new HttpGet(serverAddress + "objects/" + pid);
-    	HttpResponse resp = execute(get);
-    	Unmarshaller um = context.createUnmarshaller();
-    	return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());
+    protected ObjectProfile getObject(String pid)
+            throws ClientProtocolException, IOException, JAXBException {
+        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
+        HttpResponse resp = execute(get);
+        Unmarshaller um = context.createUnmarshaller();
+        return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());
     }
 }

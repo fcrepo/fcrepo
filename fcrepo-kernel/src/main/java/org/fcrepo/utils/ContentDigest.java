@@ -17,7 +17,7 @@ public class ContentDigest {
     private static final Logger logger = getLogger(ContentDigest.class);
 
     public static final Map<String, String> algorithmToScheme = ImmutableMap
-            .of("SHA-1", "urn:sha1","SHA1", "urn:sha1");
+            .of("SHA-1", "urn:sha1", "SHA1", "urn:sha1");
 
     public static URI asURI(String algorithm, String value) {
         try {
@@ -25,16 +25,17 @@ public class ContentDigest {
 
             return new URI(scheme, value, null);
         } catch (URISyntaxException unlikelyException) {
-            logger.warn("Exception creating checksum URI: {}", unlikelyException);
+            logger.warn("Exception creating checksum URI: {}",
+                    unlikelyException);
             return null;
         }
     }
-    
+
     public static URI asURI(String algorithm, byte[] data) {
-    	return asURI(algorithm, asString(data));
+        return asURI(algorithm, asString(data));
     }
-    
+
     public static String asString(byte[] data) {
-    	return encodeHexString(data);
+        return encodeHexString(data);
     }
 }

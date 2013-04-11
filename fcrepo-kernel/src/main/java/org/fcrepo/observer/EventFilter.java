@@ -1,3 +1,4 @@
+
 package org.fcrepo.observer;
 
 import javax.jcr.observation.Event;

@@ -1,3 +1,4 @@
+
 package org.fcrepo.jaxb.responses.management;
 
 import java.net.URI;
@@ -11,24 +12,24 @@ public class FixityStatus {
     @XmlElement
     public String storeIdentifier;
 
-	@XmlElement
-	public long computedSize;
-	
-	@XmlElement
-	public URI computedChecksum;
-	
-	@XmlElement
+    @XmlElement
+    public long computedSize;
+
+    @XmlElement
+    public URI computedChecksum;
+
+    @XmlElement
     public long dsSize;
-	
-	@XmlElement
+
+    @XmlElement
     public String dsChecksumType;
-	
-	@XmlElement
+
+    @XmlElement
     public URI dsChecksum;
-	
-	@XmlElement
-	public boolean validChecksum;
-	
-	@XmlElement
-	public boolean validSize;
+
+    @XmlElement
+    public boolean validChecksum;
+
+    @XmlElement
+    public boolean validSize;
 }

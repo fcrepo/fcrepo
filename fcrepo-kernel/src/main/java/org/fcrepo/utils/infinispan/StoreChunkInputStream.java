@@ -21,6 +21,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.fcrepo.utils.infinispan;
 
 import java.io.IOException;
@@ -38,15 +39,18 @@ import org.modeshape.common.logging.Logger;
 public class StoreChunkInputStream extends InputStream {
 
     private final Logger logger;
+
     private final CacheStore blobCache;
+
     private final String key;
 
     protected int indexInBuffer;
+
     protected byte[] buffer;
+
     private int chunkNumber;
 
-
-    public StoreChunkInputStream(CacheStore blobCache, String key){
+    public StoreChunkInputStream(CacheStore blobCache, String key) {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.key = key;
@@ -54,10 +58,10 @@ public class StoreChunkInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        if(indexInBuffer == -1){
+        if (indexInBuffer == -1) {
             return -1;
         }
-        if(buffer == null || indexInBuffer >= buffer.length){
+        if (buffer == null || indexInBuffer >= buffer.length) {
             fillBuffer();
             return read();
         }
@@ -66,22 +70,22 @@ public class StoreChunkInputStream extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        if(indexInBuffer == -1){
+        if (indexInBuffer == -1) {
             return -1;
         }
-        if(buffer == null){
+        if (buffer == null) {
             fillBuffer();
             return read(b, off, len);
         }
-        if(indexInBuffer >= buffer.length){
+        if (indexInBuffer >= buffer.length) {
             return -1;
         }
-        if (indexInBuffer + len > buffer.length){
+        if (indexInBuffer + len > buffer.length) {
             len = buffer.length - indexInBuffer;
         }
         System.arraycopy(buffer, indexInBuffer, b, off, len);
         indexInBuffer += len;
-        if(indexInBuffer >= buffer.length){
+        if (indexInBuffer >= buffer.length) {
             fillBuffer();
         }
         return len;
@@ -97,17 +101,17 @@ public class StoreChunkInputStream extends InputStream {
 
     @Override
     public final long skip(long n) throws IOException {
-        if(n <= 0 || indexInBuffer == -1){
+        if (n <= 0 || indexInBuffer == -1) {
             return 0;
         }
-        if(buffer == null){
+        if (buffer == null) {
             fillBuffer();
             return skip(n);
         }
-        if (buffer.length + n > indexInBuffer){
+        if (buffer.length + n > indexInBuffer) {
             n = buffer.length - indexInBuffer;
         }
-        if (n < 0){
+        if (n < 0) {
             return 0;
         }
         indexInBuffer += n;
@@ -117,7 +121,7 @@ public class StoreChunkInputStream extends InputStream {
     private void fillBuffer() throws IOException {
 
         buffer = nextChunk();
-        if(buffer == null){
+        if (buffer == null) {
             buffer = new byte[0];
             indexInBuffer = -1;
         } else {
@@ -126,18 +130,18 @@ public class StoreChunkInputStream extends InputStream {
     }
 
     protected byte[] nextChunk() throws IOException {
-        String chunkKey = key+"-"+chunkNumber++;
+        String chunkKey = key + "-" + chunkNumber++;
         logger.debug("Read chunk {0}", chunkKey);
 
         try {
             final CacheEntry cacheEntry = blobCache.load(chunkKey);
 
-            if(cacheEntry == null ) {
+            if (cacheEntry == null) {
                 return null;
             }
 
             return (byte[]) cacheEntry.getValue();
-       } catch (CacheLoaderException e) {
+        } catch (CacheLoaderException e) {
             throw new IOException(e);
         }
     }

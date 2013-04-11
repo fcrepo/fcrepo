@@ -41,48 +41,51 @@ public class FixityResult {
     private final LowLevelCacheEntry entry;
 
     public FixityResult() {
-        this.entry = null;
+        entry = null;
     }
 
     public FixityResult(LowLevelCacheEntry entry) {
         this.entry = entry;
-        this.storeIdentifier = entry.getExternalIdentifier();
+        storeIdentifier = entry.getExternalIdentifier();
     }
 
     public FixityResult(long size, URI checksum) {
-        this.entry = null;
-        this.computedSize = size;
-        this.computedChecksum = checksum;
+        entry = null;
+        computedSize = size;
+        computedChecksum = checksum;
     }
 
     public FixityResult(LowLevelCacheEntry entry, long size, URI checksum) {
         this.entry = entry;
-        this.computedSize = size;
-        this.computedChecksum = checksum;
+        computedSize = size;
+        computedChecksum = checksum;
     }
 
+    @Override
     public boolean equals(Object obj) {
 
         boolean result = false;
         if (obj instanceof FixityResult) {
             FixityResult that = (FixityResult) obj;
             result =
-                    this.computedSize == that.computedSize &&
-                            this.computedChecksum.equals(that.computedChecksum);
+                    computedSize == that.computedSize &&
+                            computedChecksum.equals(that.computedChecksum);
 
         }
 
         return result;
     }
 
+    @Override
     public int hashCode() {
         int hash = 1;
-        hash = hash * 31 + Longs.hashCode(this.computedSize);
-        hash = hash * 31 + this.computedChecksum.hashCode();
+        hash = hash * 31 + Longs.hashCode(computedSize);
+        hash = hash * 31 + computedChecksum.hashCode();
 
         return hash;
     }
 
+    @Override
     public String toString() {
         return "Fixity: checksum: " + computedChecksum.toString() + " / " +
                 Long.toString(computedSize);

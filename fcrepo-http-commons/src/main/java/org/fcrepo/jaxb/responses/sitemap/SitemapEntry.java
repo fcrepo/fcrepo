@@ -1,3 +1,4 @@
+
 package org.fcrepo.jaxb.responses.sitemap;
 
 import java.net.URI;
@@ -7,8 +8,9 @@ import javax.jcr.RepositoryException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "url",  namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+@XmlRootElement(name = "url", namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapEntry {
+
     @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private final URI loc;
 
@@ -26,16 +28,16 @@ public class SitemapEntry {
         lastmod = null;
     }
 
-
-    public SitemapEntry(URI loc) throws RepositoryException {
+    public SitemapEntry(URI loc)
+            throws RepositoryException {
         this.loc = loc;
-        this.lastmod = Calendar.getInstance();
+        lastmod = Calendar.getInstance();
     }
 
-    public SitemapEntry(URI loc, Calendar lastmod) throws RepositoryException {
+    public SitemapEntry(URI loc, Calendar lastmod)
+            throws RepositoryException {
         this.loc = loc;
         this.lastmod = lastmod;
     }
-
 
 }

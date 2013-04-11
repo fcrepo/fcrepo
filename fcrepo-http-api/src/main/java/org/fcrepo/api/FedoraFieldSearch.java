@@ -41,7 +41,7 @@ public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 
     private static final Logger logger = getLogger(FedoraFieldSearch.class);
-    
+
     private static final String QUERY_STRING = buildQueryString();
 
     @GET
@@ -79,11 +79,11 @@ public class FedoraFieldSearch extends AbstractResource implements
 
         return view.getFieldSearch(fsr);
     }
-    
-    Query getQuery(QueryManager queryManager, ValueFactory valueFactory, String terms) throws InvalidQueryException, RepositoryException {
+
+    Query getQuery(QueryManager queryManager, ValueFactory valueFactory,
+            String terms) throws InvalidQueryException, RepositoryException {
         Query query = queryManager.createQuery(QUERY_STRING, JCR_SQL2);
-        query.bindValue("sterm", valueFactory.createValue(
-                "%" + terms + "%"));
+        query.bindValue("sterm", valueFactory.createValue("%" + terms + "%"));
         logger.debug("statement is " + query.getStatement());
         return query;
     }
@@ -110,8 +110,8 @@ public class FedoraFieldSearch extends AbstractResource implements
 
         //add the next set of results to the fieldObjects starting at offSet for pagination
         int i = offSet;
-        nodeIter.skip((long) offSet);
-        while (nodeIter.hasNext() && i < (offSet + maxResults)) {
+        nodeIter.skip(offSet);
+        while (nodeIter.hasNext() && i < offSet + maxResults) {
             ObjectFields obj = new ObjectFields();
             try {
                 Node node = nodeIter.nextNode();
@@ -132,12 +132,13 @@ public class FedoraFieldSearch extends AbstractResource implements
 
         return fsr;
     }
-    
+
     public static String buildQueryString() {
         //TODO expand to more fields
-        String sqlExpression = "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE ["
-                             + DC_IDENTIFIER + "] like $sterm OR ["
-        		             + DC_TITLE + "] like $sterm";
+        String sqlExpression =
+                "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE [" +
+                        DC_IDENTIFIER + "] like $sterm OR [" + DC_TITLE +
+                        "] like $sterm";
         return sqlExpression;
     }
 }

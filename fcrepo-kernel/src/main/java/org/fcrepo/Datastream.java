@@ -58,7 +58,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     public Datastream(Node n) {
         super(false); // turn off debug logging
-        this.node = n;
+        node = n;
     }
 
     public Datastream(final Session session, String pid, String dsId)
@@ -69,20 +69,17 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     public Datastream(final Session session, final String dsPath)
             throws RepositoryException {
         super(false);
-        this.node = findOrCreateNode(session, dsPath, NT_FILE);
-        if (this.node.isNew()) {
-            this.node.addMixin(FEDORA_DATASTREAM);
-            this.node.addMixin(FEDORA_OWNED);
-            this.node.setProperty(FEDORA_OWNERID, session.getUserID());
+        node = findOrCreateNode(session, dsPath, NT_FILE);
+        if (node.isNew()) {
+            node.addMixin(FEDORA_DATASTREAM);
+            node.addMixin(FEDORA_OWNED);
+            node.setProperty(FEDORA_OWNERID, session.getUserID());
 
-            this.node.setProperty("jcr:lastModified", Calendar.getInstance());
+            node.setProperty("jcr:lastModified", Calendar.getInstance());
 
             // TODO: I guess we should also have the PID + DSID..
-            this.node.setProperty(DC_IDENTIFIER,
-                    new String[] {
-                            this.node.getIdentifier(),
-                            this.node.getParent().getName() + "/" +
-                                    this.node.getName()});
+            node.setProperty(DC_IDENTIFIER, new String[] {node.getIdentifier(),
+                    node.getParent().getName() + "/" + node.getName()});
         }
     }
 
@@ -90,7 +87,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @return The backing JCR node.
      */
     public Node getNode() {
-        return this.node;
+        return node;
     }
 
     /**
@@ -242,24 +239,24 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         }
 
     }
-    
+
     /**
      * @return Owner of this datastream stored in the fedora:ownerId property.
      * @throws RepositoryException
      */
     public String getOwnerId() throws RepositoryException {
-    	if (node.hasProperty(FEDORA_OWNERID)) {
-    		Property ownerIds = node.getProperty(FEDORA_OWNERID);
-    		String ownerId;
+        if (node.hasProperty(FEDORA_OWNERID)) {
+            Property ownerIds = node.getProperty(FEDORA_OWNERID);
+            String ownerId;
             if (!ownerIds.isMultiple()) {
-            	ownerId = node.getProperty(FEDORA_OWNERID).getString();
+                ownerId = node.getProperty(FEDORA_OWNERID).getString();
             } else {
-            	ownerId = on('/').join(map(ownerIds.getValues(), value2string));
+                ownerId = on('/').join(map(ownerIds.getValues(), value2string));
             }
             return ownerId;
-    	} else {
-    		return "";
-    	}
+        } else {
+            return "";
+        }
     }
 
     public void setLabel(String label) throws ValueFormatException,
@@ -282,7 +279,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * Delete this datastream's underlying node
      */
     public void purge() throws RepositoryException {
-        this.node.remove();
+        node.remove();
     }
 
     /**
@@ -291,7 +288,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public long getSize() throws RepositoryException {
-        return getNodePropertySize(this.node) + getContentSize();
+        return getNodePropertySize(node) + getContentSize();
 
     }
 }
