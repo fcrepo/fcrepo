@@ -384,31 +384,6 @@ public class FedoraDatastreams extends AbstractResource {
         return dsHistory;
     }
 
-    /**
-     * Get previous version information for this datastream. See
-     * /{dsid}/versions. Kept for compatibility with fcrepo <3.5 API.
-     *
-     * @deprecated
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @return 200
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws TemplateException
-     */
-    @GET
-    @Path("/{dsid}/history")
-    @Produces(TEXT_XML)
-    @Deprecated
-    public DatastreamHistory getDatastreamHistoryOld(@PathParam("pid")
-    final String pid, @PathParam("dsid")
-    final String dsid) throws RepositoryException, IOException {
-        return getDatastreamHistory(pid, dsid);
-    }
-
     @GET
     @Path("/{dsid}/fixity")
     @Produces({TEXT_XML, APPLICATION_JSON})
