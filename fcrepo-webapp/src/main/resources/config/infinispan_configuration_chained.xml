@@ -37,9 +37,9 @@
         <stateTransfer chunkSize="100" fetchInMemoryState="true"/>
       </clustering>
 
-      <locking useLockStriping="false" />
+     <locking concurrencyLevel="1000" lockAcquisitionTimeout="500" useLockStriping="false">
 
-      <deadlockDetection enabled="true" spinDuration="1000"/>
+     <deadlockDetection enabled="true" spinDuration="1000"/>
       
       <eviction maxEntries="100"  strategy="LRU" threadPolicy="DEFAULT"/>
       
