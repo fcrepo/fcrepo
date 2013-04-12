@@ -37,7 +37,7 @@
         <stateTransfer chunkSize="100" fetchInMemoryState="true"/>
       </clustering>
 
-     <locking concurrencyLevel="1000" lockAcquisitionTimeout="500" useLockStriping="false" />
+     <locking concurrencyLevel="1000" lockAcquisitionTimeout="15000" useLockStriping="false" />
 
      <deadlockDetection enabled="true" spinDuration="1000"/>
       
