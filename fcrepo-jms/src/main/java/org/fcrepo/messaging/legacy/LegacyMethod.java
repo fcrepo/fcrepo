@@ -9,6 +9,7 @@ import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.Writer;
 import java.util.Arrays;
@@ -70,9 +71,11 @@ public class LegacyMethod {
 
     static {
         try {
-            FEDORA_TYPES
-                    .load(LegacyMethod.class
-                            .getResourceAsStream("/org/fcrepo/messaging/legacy/map.properties"));
+            InputStream is =
+                    LegacyMethod.class
+                            .getResourceAsStream("/org/fcrepo/messaging/legacy/map.properties");
+            FEDORA_TYPES.load(is);
+            is.close();
         } catch (IOException e) { // it's in the jar.
             e.printStackTrace();
         }
