@@ -69,15 +69,16 @@ public class LegacyMethod {
 
     private static final Logger logger = getLogger(LegacyMethod.class);
 
+    private static final String MAP_PROPERTIES =
+            "/org/fcrepo/messaging/legacy/map.properties";
+
     static {
-        try {
-            InputStream is =
-                    LegacyMethod.class
-                            .getResourceAsStream("/org/fcrepo/messaging/legacy/map.properties");
+        try (final InputStream is =
+                LegacyMethod.class.getResourceAsStream(MAP_PROPERTIES)) {
             FEDORA_TYPES.load(is);
-            is.close();
-        } catch (IOException e) { // it's in the jar.
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+            // it's in the jar.
         }
     }
 
