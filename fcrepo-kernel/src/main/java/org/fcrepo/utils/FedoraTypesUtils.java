@@ -1,6 +1,7 @@
 
 package org.fcrepo.utils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
@@ -35,7 +36,7 @@ public class FedoraTypesUtils {
 
         @Override
         public boolean apply(Node node) {
-
+            checkNotNull(node);
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OBJECT);
@@ -52,7 +53,7 @@ public class FedoraTypesUtils {
 
         @Override
         public boolean apply(Node node) {
-
+            checkNotNull(node);
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_DATASTREAM);
@@ -69,7 +70,7 @@ public class FedoraTypesUtils {
 
         @Override
         public boolean apply(Node node) {
-
+            checkNotNull(node);
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OWNED);
@@ -87,6 +88,7 @@ public class FedoraTypesUtils {
 
                 @Override
                 public String apply(NodeType t) {
+                    checkNotNull(t);
                     return t.getName();
                 }
             };
@@ -99,6 +101,7 @@ public class FedoraTypesUtils {
 
                 @Override
                 public String apply(Value v) {
+                    checkNotNull(v);
                     try {
                         return v.getString();
                     } catch (RepositoryException e) {
@@ -112,6 +115,7 @@ public class FedoraTypesUtils {
 
                 @Override
                 public ValueFactory apply(Node n) {
+                    checkNotNull(n);
                     try {
                         return n.getSession().getValueFactory();
                     } catch (RepositoryException e) {
