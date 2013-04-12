@@ -23,7 +23,6 @@
 
     <jaxrs:server address="http://localhost:${test.port:8080}">
         <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
             <bean class="org.fcrepo.syndication.RSSPublisher"/>
         </jaxrs:serviceBeans>
     </jaxrs:server>
