@@ -1,14 +1,10 @@
 package org.fcrepo.metrics;
 
-import com.yammer.metrics.Clock;
+import java.io.PrintStream;
+
 import com.yammer.metrics.ConsoleReporter;
 import com.yammer.metrics.MetricFilter;
 import com.yammer.metrics.MetricRegistry;
-
-import java.io.PrintStream;
-import java.util.Locale;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 public class RegistryService {
     private final static MetricRegistry metrics = new MetricRegistry("fcrepo");
