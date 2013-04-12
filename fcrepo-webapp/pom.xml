@@ -72,11 +72,6 @@
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-rt-transports-http-jetty</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-frontend-jaxrs</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -88,7 +83,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -101,7 +95,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
-            <test.port>${jetty.port}</test.port>
+            <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
           </systemPropertyVariables>
         </configuration>
@@ -111,19 +105,11 @@
         <artifactId>build-helper-maven-plugin</artifactId>
         <configuration>
           <portNames>
-            <portName>jetty.port</portName>
+            <portName>test.port</portName>
+            <!-- reserves the stop port for jetty-maven-plugin -->
             <portName>jetty.port.stop</portName>
           </portNames>
         </configuration>
-        <executions>
-          <execution>
-            <id>reserve-port</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>reserve-network-port</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
@@ -152,7 +138,7 @@
             <configuration>
               <connectors>
                 <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-                  <port>${jetty.port}</port>
+                  <port>${test.port}</port>
                   <maxIdleTime>60000</maxIdleTime>
                 </connector>
               </connectors>

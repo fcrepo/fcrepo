@@ -16,7 +16,7 @@
   <description>Parent project for fcrepo</description>
 
   <properties>
-    <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect
+    <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
       replacements of "fcrepo4" in child modules (for scm, site-distribution, etc -->
     <project_name>fcrepo4</project_name>
 
@@ -55,9 +55,9 @@
 
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement"
-        section defaults for all of the modules we might need, but we still have to include
-        in the "dependencies" section the modules we DO need. The benefit is that we don't
+      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
+        section defaults for all of the modules we might need, but we still have to include 
+        in the "dependencies" section the modules we DO need. The benefit is that we don't 
         have to specify the versions of any of those modules. -->
       <dependency>
         <groupId>org.modeshape.bom</groupId>
@@ -209,14 +209,14 @@
         </exclusions>
       </dependency>
       <dependency>
-      	<groupId>org.powermock</groupId>
-      	<artifactId>powermock-module-junit4</artifactId>
-      	<version>${powermock.version}</version>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-module-junit4</artifactId>
+        <version>${powermock.version}</version>
       </dependency>
       <dependency>
-      	<groupId>org.powermock</groupId>
-      	<artifactId>powermock-api-mockito</artifactId>
-      	<version>${powermock.version}</version>
+        <groupId>org.powermock</groupId>
+        <artifactId>powermock-api-mockito</artifactId>
+        <version>${powermock.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -302,6 +302,12 @@
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>2.14</version>
+          <configuration>
+            <systemPropertyVariables>
+              <test.port>${test.port}</test.port>
+              <test.context.path>${test.context.path}</test.context.path>
+            </systemPropertyVariables>
+          </configuration>
           <executions>
             <execution>
               <id>integration-test</id>
@@ -352,7 +358,7 @@
           </configuration>
           <dependencies>
             <dependency>
-              <!-- allows markdown syntax for site generation. To use it place files
+              <!-- allows markdown syntax for site generation. To use it place files 
                 below src/site/markdown/[filename].md -->
               <groupId>org.apache.maven.doxia</groupId>
               <artifactId>doxia-module-markdown</artifactId>
@@ -380,6 +386,21 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
+          <!-- reserve a port under the property ${test.port} for integration tests -->
+          <configuration>
+            <portNames>
+              <portName>test.port</portName>
+            </portNames>
+          </configuration>
+          <executions>
+            <execution>
+              <id>reserve-port</id>
+              <phase>pre-integration-test</phase>
+              <goals>
+                <goal>reserve-network-port</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -738,15 +759,15 @@
   </developers>
 
   <dependencies>
-  	<dependency>
-  		<groupId>org.powermock</groupId>
-  		<artifactId>powermock-module-junit4</artifactId>
-  		<scope>test</scope>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.powermock</groupId>
-  		<artifactId>powermock-api-mockito</artifactId>
-  		<scope>test</scope>
-  	</dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

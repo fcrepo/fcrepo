@@ -55,8 +55,8 @@
       <artifactId>httpclient</artifactId>
     </dependency>
 
-    <!-- This dependency is for compile-time: it keeps this module independent 
-      of any given choice of JAX-RS implementation. It must be _after_ the test 
+    <!-- This dependency is for compile-time: it keeps this module independent of 
+      any given choice of JAX-RS implementation. It must be _after_ the test 
       gear. Otherwise it will get loaded during test phase, but because this is 
       just an API, the tests will not be able to execute. -->
     <dependency>
@@ -69,14 +69,17 @@
       <version>1.0.0</version>
     </dependency>
   </dependencies>
-  
+
   <build>
-  	<plugins>
+    <plugins>
       <plugin>
-      	<groupId>org.apache.maven.plugins</groupId>
-      	<artifactId>maven-failsafe-plugin</artifactId>
+        <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
-  	</plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
   </build>
 
 </project>
