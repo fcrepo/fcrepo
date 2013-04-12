@@ -158,7 +158,6 @@
               </connectors>
               <daemon>true</daemon>
               <stopPort>${jetty.port.stop}</stopPort>
-              <webAppSourceDirectory>${project.build.directory}/test-classes</webAppSourceDirectory>
             </configuration>
           </execution>
           <execution>
