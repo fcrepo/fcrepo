@@ -15,10 +15,7 @@ import javax.jcr.Session;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.services.PathService;
-import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Test;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
