@@ -56,8 +56,9 @@ public class FedoraRepository extends AbstractResource {
                 repo.getDescriptor(Repository.REP_NAME_DESC));
         final Builder<String, Object> repoproperties = builder();
         for (final String key : repo.getDescriptorKeys()) {
-            if (repo.getDescriptor(key) != null)
+            if (repo.getDescriptor(key) != null) {
                 repoproperties.put(key, repo.getDescriptor(key));
+            }
         }
 
         // add in node namespaces

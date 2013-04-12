@@ -39,7 +39,9 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
         logger.debug("Constructed serialized Atom message from event.");
         TextMessage tm = jmsSession.createTextMessage(atomMessage);
         String pid = legacy.getPid();
-        if (pid != null) tm.setStringProperty("pid", pid);
+        if (pid != null) {
+            tm.setStringProperty("pid", pid);
+        }
         tm.setStringProperty("methodName", legacy.getMethodName());
         tm.setJMSType(LegacyMethod.FORMAT);
         tm.setStringProperty("fcrepo.server.version",

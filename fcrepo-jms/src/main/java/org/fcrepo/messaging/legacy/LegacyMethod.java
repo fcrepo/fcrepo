@@ -133,7 +133,9 @@ public class LegacyMethod {
     }
 
     public void setUserId(String val) {
-        if (val == null) val = "unknown";
+        if (val == null) {
+            val = "unknown";
+        }
         delegate.addAuthor(val, null, BASE_URL);
     }
 
@@ -170,7 +172,9 @@ public class LegacyMethod {
     public String getPid() {
         List<Category> categories = delegate.getCategories("xsd:string");
         for (Category c : categories) {
-            if ("fedora-types:pid".equals(c.getLabel())) return c.getTerm();
+            if ("fedora-types:pid".equals(c.getLabel())) {
+                return c.getTerm();
+            }
         }
         return null;
     }
@@ -187,7 +191,9 @@ public class LegacyMethod {
     public String getDsId() {
         List<Category> categories = delegate.getCategories("xsd:string");
         for (Category c : categories) {
-            if ("fedora-types:dsID".equals(c.getLabel())) return c.getTerm();
+            if ("fedora-types:dsID".equals(c.getLabel())) {
+                return c.getTerm();
+            }
         }
         return null;
     }
@@ -226,9 +232,9 @@ public class LegacyMethod {
             //term = array2string(obj);
             term = "[UNSUPPORTED" + xsdType + "]";
         } else if (xsdType.equals("xsd:boolean")) {
-            term = obj.toString();
+            term = obj;
         } else if (xsdType.equals("xsd:nonNegativeInteger")) {
-            term = obj.toString();
+            term = obj;
         } else if (xsdType.equals("fedora-types:RelationshipTuple")) {
             //RelationshipTuple[] tuples = (RelationshipTuple[]) obj;
             //TupleArrayTripleIterator iter =
@@ -243,7 +249,7 @@ public class LegacyMethod {
             //term = new String(os.toByteArray());
             term = "[UNSUPPORTED" + xsdType + "]";
         } else if (javaType != null && javaType.equals("java.lang.String")) {
-            term = (String) obj;
+            term = obj;
             term = term.replaceAll("\"", "'");
         } else {
             term = "[OMITTED]";
