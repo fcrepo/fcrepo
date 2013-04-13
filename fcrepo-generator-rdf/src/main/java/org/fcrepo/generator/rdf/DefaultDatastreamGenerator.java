@@ -44,6 +44,9 @@ public class DefaultDatastreamGenerator implements TripleSource<Datastream> {
 
                     @Override
                     public Triple apply(Triple t) {
+                        if (t == null) {
+                            return null;
+                        }
                         try {
                             return new Triple(uriInfo.getBaseUriBuilder().path(
                                     "objects").path(ds.getObject().getName())

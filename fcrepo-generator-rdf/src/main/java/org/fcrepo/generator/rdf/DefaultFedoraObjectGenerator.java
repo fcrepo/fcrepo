@@ -44,6 +44,9 @@ public class DefaultFedoraObjectGenerator implements TripleSource<FedoraObject> 
 
                     @Override
                     public Triple apply(Triple t) {
+                        if (t == null) {
+                            return null;
+                        }
                         return new Triple(uriInfo.getBaseUriBuilder().path(
                                 t.subject).build().toString(), t.predicate,
                                 t.object);

@@ -54,6 +54,9 @@ public class PropertiesGenerator implements TripleSource<Node> {
 
                 @Override
                 public Triple apply(Property p) {
+                    if (p == null) {
+                        return null;
+                    }
                     try {
                         return new Triple(
                                 p.getParent().getPath(),
@@ -72,6 +75,9 @@ public class PropertiesGenerator implements TripleSource<Node> {
 
                 @Override
                 public List<Triple> apply(Property p) {
+                    if (p == null) {
+                        return null;
+                    }
                     final Builder<Triple> triples = builder();
                     try {
                         for (Value v : p.getValues()) {
@@ -101,7 +107,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
         @Override
         public boolean apply(Property p) {
             try {
-                return p.isMultiple();
+                return p == null ? false : p.isMultiple();
             } catch (RepositoryException e) {
                 throw new RuntimeException(e);
             }
