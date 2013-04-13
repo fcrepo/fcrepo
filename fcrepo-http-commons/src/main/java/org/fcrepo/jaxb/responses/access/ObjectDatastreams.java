@@ -17,12 +17,6 @@ public class ObjectDatastreams {
     @XmlType(name = "datastream")
     public static class DatastreamElement {
 
-        public DatastreamElement(String dsid, String label, String mimeType) {
-            this.dsid = dsid;
-            this.label = label;
-            this.mimeType = mimeType;
-        }
-
         @XmlAttribute
         public String dsid;
 
@@ -31,6 +25,12 @@ public class ObjectDatastreams {
 
         @XmlAttribute
         public String mimeType;
+
+        public DatastreamElement(String dsid, String label, String mimeType) {
+            this.dsid = dsid;
+            this.label = label;
+            this.mimeType = mimeType;
+        }
 
         public DatastreamElement() {
         }

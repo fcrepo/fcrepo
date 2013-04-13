@@ -97,7 +97,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
 
     private static String expandJCRNamespace(final String name,
             NamespaceRegistry nReg) throws RepositoryException {
-        final String predicatePrefix = name.substring(0, name.indexOf(":"));
+        final String predicatePrefix = name.substring(0, name.indexOf(':'));
         return name.replaceFirst(predicatePrefix + ":", nReg
                 .getURI(predicatePrefix));
     }
