@@ -149,16 +149,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testUpdateRepositorySize() throws PathNotFoundException,
-            RepositoryException {
-        final String content = "asdf";
-        final Node mockContent = TestHelpers.getContentNodeMock(content);
-        when(mockDsNode.getNode(Node.JCR_CONTENT)).thenReturn(mockContent);
-        testObj.updateRepositorySize(expectedSize, mockSession);
-        assertEquals(expectedSize, testObj.getRepositorySize(mockSession));
-    }
-
-    @Test
     public void testGetRepositorySize() throws RepositoryException {
         final Long actual = testObj.getRepositorySize(mockSession);
         assertEquals(expectedSize, actual);

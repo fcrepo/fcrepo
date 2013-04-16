@@ -125,13 +125,10 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final Node mockObjectsNode = mock(Node.class);
         final Property mockProp = mock(Property.class);
         final Node mockObjNode = mock(Node.class);
-        when(mockObjectsNode.getProperty(FEDORA_SIZE)).thenReturn(mockProp);
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockRootNode.getNode("objects")).thenReturn(mockObjectsNode);
         when(mockSession.getNode(objPath)).thenReturn(mockObjNode);
         PowerMockito.mockStatic(ServiceHelpers.class);
-        final long mockSize = new SecureRandom().nextLong();
-        when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(mockSize); // testing with a random value
         final ObjectService testObj = new ObjectService();
         testObj.deleteObject("foo", mockSession);
         verify(mockSession).getNode(objPath);

@@ -56,41 +56,6 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * Alter the total repository size.
-     * 
-     * @param change
-     *            the amount by which to [de|in]crement the total repository
-     *            size
-     * @param session
-     *            the javax.jcr.Session in which the originating mutation is
-     *            occurring
-     * @throws PathNotFoundException
-     * @throws RepositoryException
-     */
-    public void updateRepositorySize(final Long change, final Session session)
-            throws PathNotFoundException, RepositoryException {
-        try {
-            logger.debug("updateRepositorySize called with change quantity: " +
-                    change);
-
-            final Node objectStore = findOrCreateNode(session, "/objects");
-
-            final Property sizeProperty = objectStore.getProperty(FEDORA_SIZE);
-
-            final Long previousSize = sizeProperty.getLong();
-            logger.debug("Previous repository size: " + previousSize);
-            synchronized (sizeProperty) {
-                sizeProperty.setValue(previousSize + change);
-                session.save();
-            }
-            logger.debug("Current repository size: " + sizeProperty.getLong());
-        } catch (final RepositoryException e) {
-            logger.warn(e.toString());
-            throw e;
-        }
-    }
-
-    /**
     *
     * @return a double of the size of the fedora:datastream binary content
     * @throws RepositoryException
