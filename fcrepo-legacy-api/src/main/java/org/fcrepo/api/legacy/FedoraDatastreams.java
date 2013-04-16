@@ -128,16 +128,6 @@ public class FedoraDatastreams extends AbstractResource {
             }
             session.save();
 
-            /*
-             * we save before updating the repo size because the act of
-             * persisting session state creates new system-curated nodes and
-             * properties which contribute to the footprint of this resource
-             */
-            datastreamService.updateRepositorySize(getObjectSize(session
-                    .getNode(getObjectJcrNodePath(pid))) -
-                    oldObjectSize, session);
-            // now we save again to persist the repo size
-            session.save();
         } finally {
             session.logout();
         }
@@ -335,18 +325,6 @@ public class FedoraDatastreams extends AbstractResource {
                     .toString(), requestBodyStream);
             boolean created = session.nodeExists(dsPath);
             session.save();
-            if (created) {
-                /*
-                 * we save before updating the repo size because the act of
-                 * persisting session state creates new system-curated nodes and
-                 * properties which contribute to the footprint of this resource
-                 */
-                datastreamService.updateRepositorySize(getObjectSize(session
-                        .getNode(getObjectJcrNodePath(pid))) -
-                        oldObjectSize, session);
-                // now we save again to persist the repo size
-                session.save();
-            }
         } finally {
             session.logout();
         }
@@ -471,8 +449,6 @@ public class FedoraDatastreams extends AbstractResource {
         final String dsPath = getDatastreamJcrNodePath(pid, dsid);
         final Session session = getAuthenticatedSession();
         final Node ds = session.getNode(dsPath);
-        datastreamService.updateRepositorySize(0L - getDatastreamSize(ds),
-                session);
         return deleteResource(ds);
     }
 

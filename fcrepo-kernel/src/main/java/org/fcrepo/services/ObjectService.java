@@ -123,8 +123,6 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         long objSize = getObjectSize(obj);
         obj.remove();
         session.save();
-        updateRepositorySize(0L - objSize, session);
-        session.save();
     }
 
 }

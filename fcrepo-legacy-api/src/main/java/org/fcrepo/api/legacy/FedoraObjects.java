@@ -119,14 +119,6 @@ public class FedoraObjects extends AbstractResource {
         try {
             final Node obj = objectService.createObjectNode(session, pid);
             session.save();
-            /*
-             * we save before updating the repo size because the act of
-             * persisting session state creates new system-curated nodes and
-             * properties which contribute to the footprint of this resource
-             */
-            objectService.updateRepositorySize(getObjectSize(obj), session);
-            // now we save again to persist the repo size
-            session.save();
             logger.debug("Finished ingest with pid: " + pid);
             return created(uriInfo.getAbsolutePath()).entity(pid).build();
 
@@ -191,7 +183,6 @@ public class FedoraObjects extends AbstractResource {
     final String pid) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         final Node obj = session.getNode(getObjectJcrNodePath(pid));
-        objectService.updateRepositorySize(0L - getObjectSize(obj), session);
         return deleteResource(obj);
     }
 
