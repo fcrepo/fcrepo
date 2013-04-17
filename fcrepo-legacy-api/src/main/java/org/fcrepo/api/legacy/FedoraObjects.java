@@ -39,14 +39,17 @@ import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-@Path("/objects")
+@Path("/v3/objects")
+@Component
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraObjects.class);
     
-    @Inject
+    @Autowired
     ObjectService objectService;
 
     /**

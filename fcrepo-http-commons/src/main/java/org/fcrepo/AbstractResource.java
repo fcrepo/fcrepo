@@ -22,6 +22,7 @@ import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -41,19 +42,19 @@ public abstract class AbstractResource {
     @Context
     protected UriInfo uriInfo;
 
-    @Inject
+    @Autowired
     protected SessionFactory sessions;
 
     /**
      * The fcrepo object service
      */
-    @Inject
+    @Autowired
     protected ObjectService objectService;
 
     /**
      * A resource that can mint new Fedora PIDs.
      */
-    @Inject
+    @Autowired
     protected PidMinter pidMinter;
 
     @Context

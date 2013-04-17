@@ -7,7 +7,9 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import javax.jcr.PathNotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
+@Provider
 public class PathNotFoundExceptionMapper implements
         ExceptionMapper<PathNotFoundException> {
 

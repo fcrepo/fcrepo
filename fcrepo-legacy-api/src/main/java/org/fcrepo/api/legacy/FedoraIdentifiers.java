@@ -16,6 +16,7 @@ import javax.ws.rs.QueryParam;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.management.NextPid;
+import org.springframework.stereotype.Component;
 
 import com.google.common.base.Function;
 
@@ -25,7 +26,8 @@ import com.google.common.base.Function;
  * @author ajs6f
  * 
  */
-@Path("nextPID")
+@Path("/v3/nextPID")
+@Component
 public class FedoraIdentifiers extends AbstractResource {
 
     /**

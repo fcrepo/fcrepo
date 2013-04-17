@@ -25,7 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("/spring-test/master.xml")
+@ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
     protected Logger logger;
@@ -41,7 +41,7 @@ public abstract class AbstractResourceIT {
     protected static final String HOSTNAME = "localhost";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + "/rest/";
+            SERVER_PORT + "/v3/";
 
     protected final PoolingClientConnectionManager connectionManager =
             new PoolingClientConnectionManager();
