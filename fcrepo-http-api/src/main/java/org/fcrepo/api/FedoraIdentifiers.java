@@ -19,6 +19,7 @@ import javax.ws.rs.QueryParam;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.management.NextPid;
+import org.springframework.stereotype.Component;
 
 /**
  * JAX-RS Resource offering PID creation.
@@ -26,7 +27,8 @@ import org.fcrepo.jaxb.responses.management.NextPid;
  * @author ajs6f
  * 
  */
-@Path("nextPID")
+@Component
+@Path("/rest/nextPID")
 public class FedoraIdentifiers extends AbstractResource {
 
     /**

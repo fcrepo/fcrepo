@@ -11,7 +11,7 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
-    Boolean showStackTrace=false;
+    Boolean showStackTrace=true;
 
     @Override
     public Response toResponse(Exception e) {

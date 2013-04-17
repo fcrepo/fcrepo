@@ -10,29 +10,17 @@
        http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-    <import resource="classpath:META-INF/cxf/cxf.xml"/>
-
-    <context:property-placeholder/>
-
-    <context:annotation-config/>
+    <context:annotation-config />
+    
+    <context:component-scan base-package="org.fcrepo.generator,org.fcrepo.exceptionhandlers"/>
     
     <bean class="org.fcrepo.session.SessionFactory" />
 
-    <jaxrs:server address="http://localhost:${test.port:8080}/rest">
-        <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
-            <bean class="org.fcrepo.api.FedoraObjects"/>
-            <bean class="org.fcrepo.api.FedoraDatastreams"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
-                <property name="showStackTrace" value="true"/>
-            </bean>
-        </jaxrs:providers>
-    </jaxrs:server>
-
+    <bean class="org.fcrepo.session.SessionFactory" />
+    
+    <!-- Mints PIDs-->
+    <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+    
     <util:list id="dcgenerators" value-type="org.fcrepo.generator.dublincore.DCGenerator">
         <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator">
             <property name="wellKnownDsid" value="DC"/>
@@ -40,7 +28,5 @@
         <bean class="org.fcrepo.generator.dublincore.JcrPropertiesGenerator"/>
     </util:list>
 
-    <!-- Mints PIDs-->
-    <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
 </beans>

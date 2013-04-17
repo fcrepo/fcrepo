@@ -3,7 +3,6 @@ package org.fcrepo.api;
 
 import static org.fcrepo.TestHelpers.mockDatastream;
 import static org.fcrepo.TestHelpers.mockDatastreamIterator;
-import static org.fcrepo.api.TestHelpers.getStringsAsAttachments;
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
@@ -32,8 +31,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 
-import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.apache.poi.hmef.Attachment;
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -49,6 +47,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
+
+import com.sun.jersey.multipart.MultiPart;
 
 public class FedoraDatastreamsTest {
 
@@ -125,10 +125,10 @@ public class FedoraDatastreamsTest {
         HashMap<String, String> atts = new HashMap<String, String>(2);
         atts.put(dsId1, "asdf");
         atts.put(dsId2, "sdfg");
-        List<Attachment> attachStreams = getStringsAsAttachments(atts);
+        MultiPart multipart = TestHelpers.getStringsAsMultipart(atts);
         Response actual =
                 testObj.modifyDatastreams(pid, Arrays.asList(new String[] {
-                        dsId1, dsId2}), attachStreams);
+                        dsId1, dsId2}), multipart);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(getDatastreamJcrNodePath(pid, dsId1)), anyString(),
@@ -158,17 +158,15 @@ public class FedoraDatastreamsTest {
         String dsContent = "asdf";
         Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(pid, dsId)).thenReturn(mockDs);
-        MultipartBody actual =
-                testObj.getDatastreamsContents(pid, Arrays
-                        .asList(new String[] {dsId}));
+        
+        Response resp = testObj.getDatastreamsContents(pid, Arrays.asList(new String[] {dsId}));
+        MultiPart multipart = (MultiPart) resp.getEntity();
+        
         verify(mockDatastreams).getDatastream(pid, dsId);
-        verify(mockDs).getDsId();
         verify(mockDs).getContent();
         verify(mockSession, never()).save();
-        List<Attachment> actualAttachments = actual.getAllAttachments();
-        assertEquals(1, actualAttachments.size());
-        InputStream actualContent =
-                (InputStream) actual.getAttachment(dsId).getObject();
+        assertEquals(1,multipart.getBodyParts().size());
+        InputStream actualContent =  (InputStream) multipart.getBodyParts().get(0).getEntity();
         assertEquals("asdf", IOUtils.toString(actualContent, "UTF-8"));
     }
 
@@ -181,7 +179,7 @@ public class FedoraDatastreamsTest {
         String dsPath = getDatastreamJcrNodePath(pid, dsId);
         InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         Response actual =
-                testObj.addDatastream(pid, dsId, null, dsContentStream);
+                testObj.addDatastream(pid,null,null,dsId,null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class), anyString(),

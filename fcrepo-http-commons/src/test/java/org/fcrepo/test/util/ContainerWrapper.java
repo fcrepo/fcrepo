@@ -1,7 +1,10 @@
 package org.fcrepo.test.util;
 
 import java.net.URI;
-import java.util.List;
+import java.nio.Buffer;
+
+import javax.jms.Connection;
+import javax.servlet.FilterChain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

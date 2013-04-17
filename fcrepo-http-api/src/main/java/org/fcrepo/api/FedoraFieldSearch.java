@@ -29,6 +29,7 @@ import org.fcrepo.jaxb.search.ObjectFields;
 import org.fcrepo.provider.VelocityViewer;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableList;
 
@@ -36,7 +37,8 @@ import com.google.common.collect.ImmutableList;
  * @author Vincent Nguyen
  */
 
-@Path("/search")
+@Component
+@Path("/rest/search")
 public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 

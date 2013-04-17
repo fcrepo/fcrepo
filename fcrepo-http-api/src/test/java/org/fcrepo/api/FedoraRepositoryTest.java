@@ -8,8 +8,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.net.URI;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.jcr.LoginException;
@@ -17,16 +15,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
-import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,11 +40,7 @@ public class FedoraRepositoryTest {
     @Before
     public void setUp() throws LoginException, RepositoryException {
         testFedoraRepo = new FedoraRepository();
-        UriInfo mockUriInfo =
-                new UriInfoImpl(URI.create("http://localhost/fcrepo"), URI
-                        .create("http://localhost/fcrepo"), "", "", Arrays
-                        .asList(new PathSegment[0]));
-        testFedoraRepo.setUriInfo(mockUriInfo);
+        testFedoraRepo.setUriInfo(TestHelpers.getUriInfoImpl());
         mockObjects = mock(ObjectService.class);
         testFedoraRepo.objectService = mockObjects;
         mockRepo = mock(Repository.class);

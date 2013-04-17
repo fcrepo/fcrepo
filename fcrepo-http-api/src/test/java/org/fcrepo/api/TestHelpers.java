@@ -4,12 +4,13 @@ package org.fcrepo.api;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.ParseException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -23,17 +24,18 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
 import org.apache.tika.io.IOUtils;
-import org.jboss.resteasy.specimpl.PathSegmentImpl;
-import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
+
+import com.sun.jersey.api.uri.UriBuilderImpl;
+import com.sun.jersey.core.header.ContentDisposition;
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.MultiPart;
+import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
 public abstract class TestHelpers {
 
@@ -42,33 +44,38 @@ public abstract class TestHelpers {
     static String MOCK_URI_STRING = "mock.namespace.org";
 
     public static UriInfo getUriInfoImpl() {
-        URI baseURI = URI.create("/fcrepo");
-        URI absoluteURI = URI.create("http://localhost/fcrepo");
-        URI absolutePath =
-                UriBuilder.fromUri(absoluteURI).replaceQuery(null).build();
-        // path must be relative to the application's base uri
-        URI relativeUri = baseURI.relativize(absoluteURI);
-
-        List<PathSegment> encodedPathSegments =
-                PathSegmentImpl.parseSegments(relativeUri.getRawPath(), false);
-        return new UriInfoImpl(absolutePath, baseURI, "/" +
-                relativeUri.getRawPath(), absoluteURI.getRawQuery(),
-                encodedPathSegments);
+//        UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
+        UriInfo ui = mock(UriInfo.class);
+        UriBuilder ub = new UriBuilderImpl();
+        ub.scheme("http");
+        ub.host("locahost");
+        ub.path("/fcrepo");
+        
+        when(ui.getRequestUri()).thenReturn(URI.create("http://localhost/fcrepo"));
+        when(ui.getBaseUri()).thenReturn(URI.create("http://localhost/"));
+        when(ui.getBaseUriBuilder()).thenReturn(ub);
+        when(ui.getAbsolutePathBuilder()).thenReturn(ub);
+        
+        return ui;
     }
 
-    public static List<Attachment> getStringsAsAttachments(
+    public static MultiPart getStringsAsMultipart (
             Map<String, String> contents) {
-        List<Attachment> results = new ArrayList<Attachment>(contents.size());
-        for (String id : contents.keySet()) {
-            String content = contents.get(id);
-            InputStream contentStream = IOUtils.toInputStream(content);
-            ContentDisposition cd =
-                    new ContentDisposition("form-data;name=" + id +
-                            ";filename=" + id + ".txt");
-            Attachment a = new Attachment(id, contentStream, cd);
-            results.add(a);
+        MultiPart multipart = new MultiPart();
+        for (Entry<String,String> e : contents.entrySet()) {
+            String id = e.getKey();
+            String content = e.getValue();
+            InputStream src = IOUtils.toInputStream(content);
+            StreamDataBodyPart part = new  StreamDataBodyPart(id, src);
+            try {
+                FormDataContentDisposition cd = new FormDataContentDisposition("form-data;name=" + id + ";filename=" + id + ".txt"); 
+                part.contentDisposition(cd);
+            }catch (ParseException ex) {
+                ex.printStackTrace();
+            }
+            multipart.bodyPart(part);
         }
-        return results;
+        return multipart;
     }
 
     @SuppressWarnings("unchecked")

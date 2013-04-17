@@ -26,43 +26,7 @@
       <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.codehaus.enunciate</groupId>
-      <artifactId>enunciate-cxf-rt</artifactId>
-      <version>${enunciate.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    
-    <!-- RESTEasy -->
-	<dependency>
-	  <groupId>org.jboss.resteasy</groupId>
-	  <artifactId>resteasy-jaxrs</artifactId>
-	  <version>${resteasy.version}</version>
-	  <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
-	</dependency>
-	<dependency>
-	  <groupId>org.jboss.resteasy</groupId>
-	  <artifactId>resteasy-jaxb-provider</artifactId>
-	  <version>${resteasy.version}</version>
-	  <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
-	</dependency>
-
-	<!-- Apache Velocity -->
+   	<!-- Apache Velocity -->
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity</artifactId>
@@ -75,7 +39,21 @@
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
-
+    <dependency>
+    	<groupId>com.sun.jersey</groupId>
+    	<artifactId>jersey-core</artifactId>
+    	<version>1.17.1</version>
+    </dependency>
+    <dependency>
+    	<groupId>com.sun.jersey.contribs</groupId>
+    	<artifactId>jersey-multipart</artifactId>
+    	<version>1.17.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+    
     <!-- test gear -->
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -84,7 +62,49 @@
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
-
+   <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-http-commons</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.grizzly</groupId>
+      <artifactId>grizzly-servlet-webserver</artifactId>
+      <version>1.9.57</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-grizzly</artifactId>
+      <version>1.17.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <version>1.4.4</version>
+      <scope>test</scope>
+    </dependency>
+	<dependency>
+		<groupId>com.sun.jersey.contribs</groupId>
+		<artifactId>jersey-spring</artifactId>
+		<version>1.17.1</version>
+		<scope>test</scope>
+		<exclusions>
+			<exclusion>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+			</exclusion>
+		</exclusions>
+	</dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -93,20 +113,7 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-rt-transports-http-jetty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-rt-rs-extension-providers</artifactId>
-    </dependency>
-    <dependency>
+     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
     </dependency>

@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
 import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableSet.Builder;
 
@@ -36,7 +37,8 @@ import com.google.common.collect.ImmutableSet.Builder;
  * @author ajs6f
  * 
  */
-@Path("/namespaces")
+@Component
+@Path("/rest/namespaces")
 public class FedoraNamespaces extends AbstractResource {
 
     /**

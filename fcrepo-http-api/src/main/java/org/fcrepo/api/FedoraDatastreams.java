@@ -18,10 +18,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
-import javax.inject.Inject;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -43,8 +41,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.apache.poi.hmef.Attachment;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -58,18 +55,24 @@ import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FixityResult;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableSet.Builder;
+import com.sun.jersey.multipart.BodyPart;
+import com.sun.jersey.multipart.BodyPartEntity;
+import com.sun.jersey.multipart.MultiPart;
 
-@Path("/objects/{pid}/datastreams")
+@Component
+@Path("/rest/objects/{pid}/datastreams")
 public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
 
-    @Inject
+    @Autowired
     DatastreamService datastreamService;
 
-    @Inject
+    @Autowired
     LowLevelStorageService llStoreService;
 
     /**
@@ -107,7 +110,7 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/")
     public Response modifyDatastreams(@PathParam("pid")
     final String pid, @QueryParam("delete")
-    final List<String> dsidList, final List<Attachment> attachmentList)
+    final List<String> dsidList, final MultiPart multipart)
             throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = getAuthenticatedSession();
@@ -117,16 +120,21 @@ public class FedoraDatastreams extends AbstractResource {
                 datastreamService.purgeDatastream(session, pid, dsid);
             }
 
-            for (final Attachment a : attachmentList) {
-                final String dsid =
-                        a.getContentDisposition().getParameter("name");
+            for (BodyPart part : multipart.getBodyParts()) {
+                final String dsid = part.getContentDisposition().getParameters().get("name");
                 logger.debug("adding datastream " + dsid);
                 final String dsPath = getDatastreamJcrNodePath(pid, dsid);
-                datastreamService.createDatastreamNode(session, dsPath, a
-                        .getDataHandler().getContentType(), a.getDataHandler()
-                        .getInputStream());
-
+                Object obj = part.getEntity();
+                InputStream src = null;
+                if (obj instanceof BodyPartEntity) {
+                    BodyPartEntity entity = (BodyPartEntity) part.getEntity();
+                    src = entity.getInputStream();
+                }else if (obj instanceof InputStream){
+                    src = (InputStream) obj;
+                }
+                datastreamService.createDatastreamNode(session, dsPath, part.getMediaType().toString(), src);
             }
+
             session.save();
             return created(uriInfo.getAbsolutePath()).build();
         } finally {
@@ -155,7 +163,7 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/__content__")
     @Produces("multipart/mixed")
-    public MultipartBody getDatastreamsContents(@PathParam("pid")
+    public Response getDatastreamsContents(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     List<String> dsids) throws RepositoryException, IOException {
 
@@ -166,7 +174,7 @@ public class FedoraDatastreams extends AbstractResource {
             }
         }
 
-        List<Attachment> atts = new LinkedList<Attachment>();
+        final MultiPart multipart = new MultiPart();
 
         Iterator<String> i = dsids.iterator();
         while (i.hasNext()) {
@@ -175,14 +183,13 @@ public class FedoraDatastreams extends AbstractResource {
             try {
                 final Datastream ds =
                         datastreamService.getDatastream(pid, dsid);
-                atts.add(new Attachment(ds.getDsId(), ds.getMimeType(), ds
-                        .getContent()));
+                multipart.bodyPart(ds.getContent(),MediaType.valueOf(ds.getMimeType()));
             } catch (PathNotFoundException e) {
 
             }
         }
 
-        return new MultipartBody(atts, true);
+        return Response.ok(multipart,MediaType.MULTIPART_FORM_DATA).build();
     }
 
     /**
@@ -218,42 +225,13 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             String dsPath = getDatastreamJcrNodePath(pid, dsid);
             logger.info("addDatastream {}", dsPath);
-            datastreamService.createDatastreamNode(session, dsPath, contentType
-                    .toString(), requestBodyStream, checksumType, checksum);
+                datastreamService.createDatastreamNode(session, dsPath, contentType
+                        .toString(), requestBodyStream, checksumType, checksum);
             session.save();
             return created(uriInfo.getRequestUri()).build();
         } finally {
             session.logout();
         }
-
-    }
-
-    /**
-     * Create a new datastream
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @param contentType
-     *            Content-Type header
-     * @param requestBodyStream
-     *            Binary blob
-     * @return 201 Created
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws InvalidChecksumException 
-     */
-    @POST
-    @Path("/{dsid}")
-    public Response addDatastream(@PathParam("pid")
-    final String pid, @PathParam("dsid")
-    final String dsid, @HeaderParam("Content-Type")
-    MediaType contentType, InputStream requestBodyStream)
-            throws RepositoryException, IOException, InvalidChecksumException {
-
-        return addDatastream(pid, null, null, dsid, contentType,
-                requestBodyStream);
 
     }
 

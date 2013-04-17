@@ -12,7 +12,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DELETE;
@@ -31,13 +30,16 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-@Path("/objects")
+@Component
+@Path("/rest/objects")
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraObjects.class);
 
-    @Inject
+    @Autowired
     ObjectService objectService;
 
     /**

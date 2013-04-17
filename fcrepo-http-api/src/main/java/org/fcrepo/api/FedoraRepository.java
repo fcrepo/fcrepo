@@ -13,7 +13,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -32,24 +31,21 @@ import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap.Builder;
 
-/**
- * 
- * @author cbeer
- * @author ajs6f
- */
-
-@Path("/describe")
+@Component
+@Path("/rest/describe")
 public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraRepository.class);
 
-    @Inject
+    @Autowired
     Repository repo;
 
-    @Inject
+    @Autowired
     ObjectService objectService;
 
     @GET

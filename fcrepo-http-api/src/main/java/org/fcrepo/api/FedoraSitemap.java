@@ -26,15 +26,18 @@ import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.jaxb.responses.sitemap.SitemapUrlSet;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-@Path("/sitemap")
+@Component
+@Path("/rest/sitemap")
 public class FedoraSitemap extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraSitemap.class);
 
     public static final long entriesPerPage = 50000;
 
-    @Inject
+    @Autowired
     ObjectService objectService;
 
     @GET

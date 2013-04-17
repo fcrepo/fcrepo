@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -21,6 +20,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.services.ObjectService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Path("/objects/{pid}/oai_dc")
 public class DublinCoreGenerator extends AbstractResource {
@@ -28,7 +28,7 @@ public class DublinCoreGenerator extends AbstractResource {
     @Resource
     List<DCGenerator> dcgenerators;
     
-    @Inject
+    @Autowired
     ObjectService objectService;
 
     @GET
