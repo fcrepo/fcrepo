@@ -21,6 +21,8 @@ import javax.xml.transform.stream.StreamSource;
 import org.fcrepo.AbstractResource;
 import org.joda.time.DateTime;
 import org.modeshape.common.SystemFailureException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.google.common.base.Function;
 import com.google.common.eventbus.EventBus;
@@ -34,6 +36,7 @@ import com.sun.syndication.feed.synd.SyndFeedImpl;
 import com.sun.syndication.io.FeedException;
 import com.sun.syndication.io.SyndFeedOutput;
 
+@Component
 @Path("/rss")
 public class RSSPublisher extends AbstractResource {
 
@@ -45,7 +48,7 @@ public class RSSPublisher extends AbstractResource {
 
     private static final String FEED_DESCRIPTION = FEED_TITLE;
 
-    @Inject
+    @Autowired
     EventBus eventBus;
 
     private BlockingQueue<Event> feedQueue = new ArrayBlockingQueue<Event>(

@@ -21,8 +21,10 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-@Path("/objects/{pid}/oai_dc")
+@Component
+@Path("/rest/objects/{pid}/oai_dc")
 public class DublinCoreGenerator extends AbstractResource {
 
     @Resource

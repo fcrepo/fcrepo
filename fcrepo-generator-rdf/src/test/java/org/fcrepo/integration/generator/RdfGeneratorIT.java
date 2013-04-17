@@ -12,7 +12,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@ContextConfiguration({"/spring-test/generator.xml", "/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/test-container.xml"})
 public class RdfGeneratorIT extends AbstractResourceIT {
 
     @Test

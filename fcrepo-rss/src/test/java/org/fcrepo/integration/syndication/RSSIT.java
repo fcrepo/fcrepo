@@ -8,7 +8,6 @@ import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.Session;
@@ -20,15 +19,15 @@ import org.junit.Test;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration({"/spring-test/repo.xml", "/spring-test/rest.xml",
-        "/spring-test/eventing.xml"})
+@ContextConfiguration({"/spring-test/repo.xml", "/spring-test/test-container.xml"})
 public class RSSIT extends AbstractResourceIT {
 
     final private Logger logger = LoggerFactory.getLogger(RSSIT.class);
     
-    @Inject
+    @Autowired
     Repository repo;
     
     JcrTools jcrTools = new JcrTools(true);

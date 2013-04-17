@@ -11,6 +11,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -32,7 +33,9 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+@Component
 @Path("/objects/{pid}/datastreams/{dsid}/rdf")
 @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
 public class DatastreamRdfGenerator extends AbstractResource {
