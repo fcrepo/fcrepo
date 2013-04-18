@@ -65,7 +65,7 @@ import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.multipart.MultiPart;
 
 @Path("/v3/objects/{pid}/datastreams")
-@Component
+@Component("fedoraLegacyDatastreams")
 public class FedoraDatastreams extends AbstractResource {
 
     final private Logger logger = LoggerFactory

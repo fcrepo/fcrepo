@@ -41,7 +41,7 @@ import com.google.common.collect.ImmutableMap.Builder;
  */
 
 @Path("/v3")
-@Component
+@Component("fedoraLegacyRepository")
 public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = LoggerFactory

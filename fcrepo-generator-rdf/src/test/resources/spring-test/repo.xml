@@ -15,6 +15,7 @@
       <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:my_repository.json}"/>
     </bean>
 
+
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
     <bean class="org.fcrepo.services.ObjectService"/>

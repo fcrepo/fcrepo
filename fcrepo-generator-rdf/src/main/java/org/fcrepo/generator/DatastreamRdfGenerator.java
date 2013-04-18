@@ -33,10 +33,12 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/objects/{pid}/datastreams/{dsid}/rdf")
+@Path("/rest/objects/{pid}/datastreams/{dsid}/rdf")
 @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
 public class DatastreamRdfGenerator extends AbstractResource {
 
@@ -47,7 +49,7 @@ public class DatastreamRdfGenerator extends AbstractResource {
     final private Logger logger = LoggerFactory
             .getLogger(DatastreamRdfGenerator.class);
     
-    @Inject
+    @Autowired
     DatastreamService datastreamService;
 
     @GET

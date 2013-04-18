@@ -37,6 +37,9 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/rest/";
 
+    protected static final String serverOAIAddress = "http://" + HOSTNAME + ":" +
+            SERVER_PORT + "/oai/";
+
     protected final PoolingClientConnectionManager connectionManager =
             new PoolingClientConnectionManager();
 

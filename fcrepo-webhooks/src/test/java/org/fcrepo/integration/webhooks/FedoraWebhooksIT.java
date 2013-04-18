@@ -23,8 +23,7 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@ContextConfiguration({"/spring-test/repo.xml", "/spring-test/rest.xml",
-        "/spring-test/eventing.xml"})
+@ContextConfiguration({"/spring-test/test-container.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraWebhooksIT extends AbstractResourceIT {
 
@@ -91,7 +90,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(method));
 
         HttpPost create_method = new HttpPost(serverAddress +
-                "/objects/new");
+                "/rest/objects/new");
         assertEquals(201, getStatus(create_method));
 
         try {

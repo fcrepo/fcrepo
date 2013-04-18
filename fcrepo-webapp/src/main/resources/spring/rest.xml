@@ -10,8 +10,6 @@
     http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-    <import resource="classpath:META-INF/cxf/cxf.xml"/>
-
     <!-- Context that houses JAX-RS Resources that compose the API
         as well as som utility gear. -->
 
@@ -21,108 +19,6 @@
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
     <bean class="org.fcrepo.session.SessionFactory"/>
 
-    <jaxrs:server address="/v3">
-        <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
-            <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
-            <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
-            <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
-            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
-            <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:extensionMappings>
-            <entry key="json" value="application/json"/>
-            <entry key="xml" value="application/xml"/>
-        </jaxrs:extensionMappings>
-        <jaxrs:providers>
-            <ref bean="pathNotFoundExceptionMapper"/>
-            <ref bean="accessControlExceptionMapper"/>
-            <ref bean="wildcardExceptionMapper"/>
-            <ref bean="jaxbElementProvider"/>
-            <ref bean="jsonProvider"/>
-        </jaxrs:providers>
-    </jaxrs:server>
+    <context:component-scan base-package="org.modeshape.web.jcr.rest, org.fcrepo.api, org.fcrepo.api.legacy, org.fcrepo.exceptionhandlers"/>
 
-    <jaxrs:server address="/rest">
-        <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.api.FedoraRepository"/>
-            <bean class="org.fcrepo.api.FedoraDatastreams"/>
-            <bean class="org.fcrepo.api.FedoraIdentifiers"/>
-            <bean class="org.fcrepo.api.FedoraNamespaces"/>
-            <bean class="org.fcrepo.api.FedoraObjects"/>
-            <bean class="org.fcrepo.api.FedoraFieldSearch"/>
-            <bean class="org.fcrepo.api.FedoraSitemap"/>
-            <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
-            <bean class="org.fcrepo.generator.ObjectRdfGenerator">
-                <property name="objectGenerators">
-                    <list>
-                        <bean class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator"/>
-                    </list>
-                </property>
-            </bean>
-            <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
-                <property name="dsGenerators">
-                    <list>
-                        <bean class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator"/>
-                    </list>
-                </property>
-            </bean>
-            <bean class="org.fcrepo.api.FedoraSitemap"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:extensionMappings>
-            <entry key="json" value="application/json"/>
-            <entry key="xml" value="application/xml"/>
-        </jaxrs:extensionMappings>
-        <jaxrs:providers>
-            <ref bean="pathNotFoundExceptionMapper"/>
-            <ref bean="accessControlExceptionMapper"/>
-            <ref bean="wildcardExceptionMapper"/>
-            <ref bean="jaxbElementProvider"/>
-            <ref bean="jsonProvider"/>
-            <bean class="org.apache.cxf.jaxrs.provider.XSLTJaxbProvider">
-                <property name="outMediaTemplates">
-                    <map>
-                        <entry key="text/html" value="classpath:/views/object.xslt"/>
-                    </map>
-                </property>
-                <!--
-                <property name="resolver">
-                    <bean class="org.apache.xml.resolver.helpers.BootstrapResolver"/>
-                </property>
-                -->
-            </bean>
-        </jaxrs:providers>
-    </jaxrs:server>
-
-    <jaxrs:server address="/rest/modeshape">
-        <jaxrs:serviceBeans>
-            <bean class="org.modeshape.web.jcr.rest.ModeShapeRestService"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-            <bean class="org.modeshape.web.jcr.rest.output.HtmlBodyWriter"/>
-            <bean class="org.modeshape.web.jcr.rest.output.JSONBodyWriter"/>
-            <bean class="org.modeshape.web.jcr.rest.output.TextBodyWriter"/>
-        </jaxrs:providers>
-    </jaxrs:server>
-
-    <bean name="pathNotFoundExceptionMapper"
-        class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
-    <bean name="accessControlExceptionMapper"
-        class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
-    <bean name="wildcardExceptionMapper"
-        class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
-        <property name="showStackTrace" value="true"/>
-    </bean>
-    <bean name="jaxbElementProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
-        <property name="marshallerProperties">
-            <util:map>
-                <entry key="jaxb.formatted.output">
-                    <value type="java.lang.Boolean">true</value>
-                </entry>
-            </util:map>
-        </property>
-    </bean>
-    <bean name="jsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
-        <property name="ignoreNamespaces" value="true"/>
-    </bean>
 </beans>

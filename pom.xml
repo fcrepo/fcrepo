@@ -242,7 +242,8 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>4.2.3</version>
-        <scope>test</scope>
+<!--         commented out since fcrepo-webhooks uses httpclient at compile time -->
+<!--         <scope>test</scope> -->
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>

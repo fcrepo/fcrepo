@@ -10,55 +10,13 @@
     http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-    <import resource="classpath:META-INF/cxf/cxf.xml"/>
- 
-    <!-- Context that houses JAX-RS Resources that compose the API
-        as well as some utility gear. -->
-
-    <context:annotation-config/>
-
-    <jaxrs:server address="/rest">
-        <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.api.legacy.FedoraRepository"/>
-            <bean class="org.fcrepo.api.legacy.FedoraDatastreams"/>
-            <bean class="org.fcrepo.api.legacy.FedoraIdentifiers"/>
-            <bean class="org.fcrepo.api.legacy.FedoraNamespaces"/>
-            <bean class="org.fcrepo.api.legacy.FedoraObjects"/>
-            <bean class="org.fcrepo.foxml.FedoraOXML"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:extensionMappings>
-            <entry key="json" value="application/json"/>
-            <entry key="xml" value="application/xml"/>
-        </jaxrs:extensionMappings>
-        <jaxrs:providers>
-            <bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
-                <property name="marshallerProperties">
-                    <util:map>
-                        <entry key="jaxb.formatted.output">
-                            <value type="java.lang.Boolean">true</value>
-                        </entry>
-                    </util:map>
-                </property>
-            </bean>
-            <bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
-                <property name="ignoreNamespaces" value="true"/>
-            </bean>
-        </jaxrs:providers>
-    </jaxrs:server>
-
-    <jaxrs:server address="/rest/modeshape">
-        <jaxrs:serviceBeans>
-            <bean class="org.modeshape.web.jcr.rest.ModeShapeRestService"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-            <bean class="org.modeshape.web.jcr.rest.output.HtmlBodyWriter"/>
-            <bean class="org.modeshape.web.jcr.rest.output.JSONBodyWriter"/>
-            <bean class="org.modeshape.web.jcr.rest.output.TextBodyWriter"/>
-        </jaxrs:providers>
-    </jaxrs:server>
-
+    <bean class="org.fcrepo.session.SessionFactory" />
+    
     <!-- Mints PIDs-->
     <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
     
+    <context:annotation-config />
+    
+    <context:component-scan base-package="org.fcrepo.api.legacy,org.fcrepo.exceptionhandlers"/>    
 
 </beans>

@@ -27,7 +27,7 @@ import com.google.common.base.Function;
  * 
  */
 @Path("/v3/nextPID")
-@Component
+@Component("fedoraLegacyIdentifiers")
 public class FedoraIdentifiers extends AbstractResource {
 
     /**

@@ -1,52 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:context="http://www.springframework.org/schema/context"
-    xmlns:jaxrs="http://cxf.apache.org/jaxrs"
-    xmlns:util="http://www.springframework.org/schema/util"
-    xsi:schemaLocation="
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:util="http://www.springframework.org/schema/util"
+  xsi:schemaLocation="
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
-       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
-       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
-    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+  <context:property-placeholder />
 
-    <context:property-placeholder/>
+  <context:annotation-config />
 
-    <context:annotation-config/>
-    
-    <bean class="org.fcrepo.session.SessionFactory" />
+  <bean class="org.fcrepo.generator.ObjectRdfGenerator">
+    <property name="objectGenerators">
+      <list value-type="org.fcrepo.generator.rdf.TripleSource">
+        <bean id="objectRdf" class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator" />
+      </list>
+    </property> 
+  </bean>
 
-    <jaxrs:server address="http://localhost:${test.port:8080}/rest">
-        <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.generator.ObjectRdfGenerator">
-                <property name="objectGenerators">
-                    <list>
-                        <bean class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator"/>
-                    </list>
-                </property>
-            </bean>
-            <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
-                <property name="dsGenerators">
-                    <list>
-                        <bean class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator"/>
-                    </list>
-                </property>
-            </bean>
-            <bean class="org.fcrepo.api.FedoraObjects"/>
-            <bean class="org.fcrepo.api.FedoraDatastreams"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
-                <property name="showStackTrace" value="true"/>
-            </bean>
-        </jaxrs:providers>
-    </jaxrs:server>
+  <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
+    <property name="dsGenerators">
+      <list>
+        <bean id="datastreamRdf" class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator" />
+      </list>
+    </property>  
+  </bean>
+ 
+  
 
-    <!-- Mints PIDs-->
-    <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+  <bean class="org.fcrepo.session.SessionFactory" />
+
+  <!-- Mints PIDs -->
+  <bean class="org.fcrepo.identifiers.UUIDPidMinter" />
+
+
+  <context:component-scan base-package="org.fcrepo.api, org.fcrepo.exceptionhandlers" />
 
 </beans>

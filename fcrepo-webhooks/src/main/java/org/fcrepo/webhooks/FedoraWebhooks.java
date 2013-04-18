@@ -36,11 +36,14 @@ import org.fcrepo.messaging.legacy.LegacyMethod;
 import org.fcrepo.observer.FedoraEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 @Path("/webhooks")
+@Component
 public class FedoraWebhooks extends AbstractResource {
 
     static final private Logger logger = LoggerFactory
@@ -53,7 +56,7 @@ public class FedoraWebhooks extends AbstractResource {
     protected static HttpClient client;
 
 
-    @Inject
+    @Autowired
     EventBus eventBus;
 
     /**

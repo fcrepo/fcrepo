@@ -2,30 +2,13 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:context="http://www.springframework.org/schema/context"
-    xmlns:jaxrs="http://cxf.apache.org/jaxrs"
     xmlns:util="http://www.springframework.org/schema/util"
     xsi:schemaLocation="
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
-       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
-
-    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
     <context:annotation-config/>
-
-    <jaxrs:server address="/oai">
-        <jaxrs:serviceBeans>
-            <bean class="org.fcrepo.generator.DublinCoreGenerator"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-            <bean class="org.fcrepo.exceptionhandlers.PathNotFoundExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.AccessControlExceptionMapper"/>
-            <bean class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper">
-                <property name="showStackTrace" value="true"/>
-            </bean>
-        </jaxrs:providers>
-    </jaxrs:server>
 
     <util:list id="dcgenerators" value-type="org.fcrepo.generator.dublincore.DCGenerator">
         <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator">

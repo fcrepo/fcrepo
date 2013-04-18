@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Path("/v3/objects")
-@Component
+@Component("fedoraLegacyObjects")
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = LoggerFactory

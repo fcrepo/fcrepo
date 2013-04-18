@@ -21,7 +21,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         int status = getStatus(postObjMethod("DublinCoreTest1"));
         assertEquals(201, status);
         HttpGet getWorstCaseOaiMethod =
-                new HttpGet(serverAddress + "objects/DublinCoreTest1/oai_dc");
+                new HttpGet(serverOAIAddress + "objects/DublinCoreTest1/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         HttpResponse response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -43,7 +43,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         HttpGet getWorstCaseOaiMethod =
-                new HttpGet(serverAddress + "objects/DublinCoreTest2/oai_dc");
+                new HttpGet(serverOAIAddress + "objects/DublinCoreTest2/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
