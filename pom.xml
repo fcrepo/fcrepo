@@ -30,7 +30,8 @@
     <infinispan.version>5.3.0.Alpha1</infinispan.version>
     <jgroups.version>3.3.0.CR1</jgroups.version>
     <modeshape.version>3.2-SNAPSHOT</modeshape.version>
-    <slf4j.version>1.7.2</slf4j.version>
+    <sesame.version>2.7.0</sesame.version>
+    <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
 
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
@@ -151,6 +152,54 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <!-- sesame/openrdf dependencies that were previously provided by the Aduna 
+        Maven repo -->
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-model</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-rio-api</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-rio-ntriples</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-rio-rdfxml</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-rio-trix</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-rio-turtle</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-repository-api</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-repository-sail</artifactId>
+        <version>${sesame.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openrdf.sesame</groupId>
+        <artifactId>sesame-sail-memory</artifactId>
+        <version>${sesame.version}</version>
       </dependency>
 
       <!-- test gear -->
@@ -570,13 +619,24 @@
   <repositories>
     <repository>
       <id>fcrepo-snapshot</id>
-      <name>Fcrepo Repository for Maven</name>
+      <name>Fcrepo Snapshot Repository</name>
       <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>fcrepo-thirdparty</id>
+      <name>Fcrepo Thirdparty Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
-        <enabled>true</enabled>
+        <enabled>false</enabled>
       </snapshots>
     </repository>
     <repository>
