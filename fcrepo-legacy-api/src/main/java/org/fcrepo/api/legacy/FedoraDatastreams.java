@@ -114,9 +114,6 @@ public class FedoraDatastreams extends AbstractResource {
 
         final Session session = getAuthenticatedSession();
         try {
-            Long oldObjectSize =
-                    getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
-
             for (final Attachment a : attachmentList) {
                 final String dsid =
                         a.getContentDisposition().getParameter("name");
@@ -317,8 +314,6 @@ public class FedoraDatastreams extends AbstractResource {
             final Session session) throws RepositoryException, IOException,
             InvalidChecksumException {
 
-        Long oldObjectSize =
-                getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
         logger.debug("Attempting to add datastream node at path: " + dsPath);
         try {
             datastreamService.createDatastreamNode(session, dsPath, contentType

@@ -117,7 +117,7 @@ public class FedoraObjects extends AbstractResource {
 
         final Session session = getAuthenticatedSession();
         try {
-            final Node obj = objectService.createObjectNode(session, pid);
+            objectService.createObjectNode(session, pid);
             session.save();
             logger.debug("Finished ingest with pid: " + pid);
             return created(uriInfo.getAbsolutePath()).entity(pid).build();

@@ -120,7 +120,6 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
     public void deleteObject(String pid, Session session)
             throws PathNotFoundException, RepositoryException {
         Node obj = session.getNode(getObjectJcrNodePath(pid));
-        long objSize = getObjectSize(obj);
         obj.remove();
         session.save();
     }
