@@ -60,13 +60,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.sun.jersey.contribs</groupId>
       <artifactId>jersey-spring</artifactId>
-      </dependency>
+    </dependency>
     <dependency>
       <groupId>org.modeshape</groupId>
       <artifactId>modeshape-web-jcr-rest</artifactId>
@@ -83,10 +79,6 @@
       <artifactId>junit</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.sun.jersey.contribs</groupId>
-      <artifactId>jersey-spring</artifactId>
-    </dependency>
     <!-- test gear -->
     <dependency>
       <groupId>org.springframework</groupId>
