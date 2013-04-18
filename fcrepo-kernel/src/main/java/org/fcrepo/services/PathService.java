@@ -21,7 +21,7 @@ public class PathService {
      * @param pid
      * @return The JCR path to this object's backing node.
      */
-    public static String getObjectJcrNodePath(String pid) {
+    public static String getObjectJcrNodePath(final String pid) {
         logger.trace("Executing getObjectJcrNodePath() with pid: " + pid);
         return OBJECT_PATH + "/" + pid;
     }
@@ -31,7 +31,8 @@ public class PathService {
      * @param dsId
      * @return The JCR path to this datastream's backing node.
      */
-    public static String getDatastreamJcrNodePath(String pid, String dsId) {
+    public static String getDatastreamJcrNodePath(final String pid,
+            final String dsId) {
         logger.trace("Executing getDatastreamJcrNodePath() with pid: " + pid +
                 " and dsId: " + dsId);
         return getObjectJcrNodePath(pid) + "/" + dsId;

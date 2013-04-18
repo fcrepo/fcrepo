@@ -18,7 +18,7 @@ public class SitemapIndex {
 
     }
 
-    public void appendSitemapEntry(SitemapEntry e) {
+    public void appendSitemapEntry(final SitemapEntry e) {
         entries.add(e);
     }
 

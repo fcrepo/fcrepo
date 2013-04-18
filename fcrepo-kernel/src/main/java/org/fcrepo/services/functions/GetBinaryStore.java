@@ -15,11 +15,11 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
      * @return
      */
     @Override
-    public BinaryStore apply(Repository input) {
+    public BinaryStore apply(final Repository input) {
         try {
             return ((JcrRepository) input).getConfiguration()
                     .getBinaryStorage().getBinaryStore();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
     }

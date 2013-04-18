@@ -18,7 +18,7 @@ public class FedoraEvent implements Event {
 
     Event e;
 
-    public FedoraEvent(Event e) {
+    public FedoraEvent(final Event e) {
         this.e = e;
     }
 

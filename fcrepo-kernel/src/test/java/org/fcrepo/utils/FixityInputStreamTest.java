@@ -15,7 +15,7 @@ public class FixityInputStreamTest {
 
     @Test
     public void SimpleFixityInputStreamTest() throws NoSuchAlgorithmException {
-        FixityInputStream is =
+        final FixityInputStream is =
                 new FixityInputStream(new ByteArrayInputStream("0123456789"
                         .getBytes()), MessageDigest.getInstance("SHA-1"));
 
@@ -23,7 +23,7 @@ public class FixityInputStreamTest {
             while (is.read() != -1) {
                 ;
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
 
         }
 

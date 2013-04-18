@@ -68,9 +68,9 @@ public class FedoraRepository extends AbstractResource {
 
         // add in node types
         final Builder<String, String> nodetypes = builder();
-        NodeTypeIterator i = objectService.getAllNodeTypes(session);
+        final NodeTypeIterator i = objectService.getAllNodeTypes(session);
         while (i.hasNext()) {
-            NodeType nt = i.nextNodeType();
+            final NodeType nt = i.nextNodeType();
             nodetypes.put(nt.getName(), nt.toString());
         }
         repoproperties.put("node.types", nodetypes.build());
@@ -84,7 +84,7 @@ public class FedoraRepository extends AbstractResource {
             RepositoryException {
 
         final Session session = getAuthenticatedSession();
-        DescribeRepository description = new DescribeRepository();
+        final DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =
                 uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
@@ -100,7 +100,7 @@ public class FedoraRepository extends AbstractResource {
     @Produces(TEXT_HTML)
     public String describeHtml() throws LoginException, RepositoryException {
 
-        VelocityViewer view = new VelocityViewer();
+        final VelocityViewer view = new VelocityViewer();
         return view.getRepoInfo(describe());
     }
 
@@ -108,7 +108,7 @@ public class FedoraRepository extends AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param repo
      */
-    public void setRepository(Repository repo) {
+    public void setRepository(final Repository repo) {
         this.repo = repo;
     }
 

@@ -10,7 +10,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 import javax.ws.rs.GET;
@@ -51,10 +50,10 @@ public class RSSPublisher extends AbstractResource {
     @Autowired
     EventBus eventBus;
 
-    private BlockingQueue<Event> feedQueue = new ArrayBlockingQueue<Event>(
-            FEED_LENGTH);
+    private final BlockingQueue<Event> feedQueue =
+            new ArrayBlockingQueue<Event>(FEED_LENGTH);
 
-    private SyndFeed feed = new SyndFeedImpl();
+    private final SyndFeed feed = new SyndFeedImpl();
 
     @GET
     @Produces("application/rss+xml")
@@ -66,23 +65,23 @@ public class RSSPublisher extends AbstractResource {
                 .outputString(feed).getBytes()));
     }
 
-    private Function<Event, SyndEntry> event2entry =
+    private final Function<Event, SyndEntry> event2entry =
             new Function<Event, SyndEntry>() {
 
                 @Override
-                public SyndEntry apply(Event event) {
-                    SyndEntry entry = new SyndEntryImpl();
+                public SyndEntry apply(final Event event) {
+                    final SyndEntry entry = new SyndEntryImpl();
                     try {
                         entry.setTitle(event.getIdentifier());
                         entry.setLink(event.getPath());
                         entry.setPublishedDate(new DateTime(event.getDate())
                                 .toDate());
-                        SyndContent description = new SyndContentImpl();
+                        final SyndContent description = new SyndContentImpl();
                         description.setType("text/plain");
                         description.setValue(getEventType(event.getType())
                                 .toString());
                         entry.setDescription(description);
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new SystemFailureException(e);
                     }
                     return entry;
@@ -90,6 +89,7 @@ public class RSSPublisher extends AbstractResource {
 
             };
 
+    @Override
     @PostConstruct
     public void initialize() {
         eventBus.register(this);
@@ -99,7 +99,7 @@ public class RSSPublisher extends AbstractResource {
     }
 
     @Subscribe
-    public void newEvent(Event event) {
+    public void newEvent(final Event event) {
         if (feedQueue.remainingCapacity() > 0) {
             feedQueue.offer(event);
         } else {

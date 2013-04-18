@@ -19,7 +19,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextPidResponds() throws Exception {
-        HttpPost method = new HttpPost(serverAddress + "nextPID");
+        final HttpPost method = new HttpPost(serverAddress + "nextPID");
         method.addHeader("Accepts", "text/xml");
         logger.debug("Executed testGetNextPidResponds()");
         assertEquals(HttpServletResponse.SC_OK, getStatus(method));
@@ -27,11 +27,12 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextHasAPid() throws IOException {
-        HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=1");
+        final HttpPost method =
+                new HttpPost(serverAddress + "nextPID?numPids=1");
         method.addHeader("Accepts", "text/xml");
-        HttpResponse response = client.execute(method);
+        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Only to find:\n" + content);
         assertTrue("Didn't find a single dang PID!", compile("<pid>.*?</pid>",
                 DOTALL).matcher(content).find());
@@ -39,11 +40,12 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextHasTwoPids() throws IOException {
-        HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=2");
+        final HttpPost method =
+                new HttpPost(serverAddress + "nextPID?numPids=2");
         method.addHeader("Accepts", "text/xml");
-        HttpResponse response = client.execute(method);
+        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Only to find:\n" + response);
         assertTrue("Didn't find a two dang PIDs!", compile(
                 "<pid>.*?</pid>.*?<pid>.*?</pid>", DOTALL).matcher(content)

@@ -67,17 +67,17 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Before
     public void setUp() {
-        String relPath =
+        final String relPath =
                 getDatastreamJcrNodePath(testPid, testDsId).substring(1);
-        String[] mockPrefixes = {mockPrefix};
+        final String[] mockPrefixes = {mockPrefix};
         expectedNS = new HashMap<String, String>();
 
         mockSession = mock(Session.class);
         mockRootNode = mock(Node.class);
         mockDsNode = mock(Node.class);
         mockRepo = mock(Repository.class);
-        NodeIterator mockNI = mock(NodeIterator.class);
-        Property mockProp = mock(Property.class);
+        final NodeIterator mockNI = mock(NodeIterator.class);
+        final Property mockProp = mock(Property.class);
 
         try {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
@@ -86,15 +86,16 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
             when(mockProp.getLong()).thenReturn(expectedSize);
             when(mockRepo.login()).thenReturn(mockSession);
 
-            Workspace mockWorkspace = mock(Workspace.class);
-            QueryManager mockQueryManager = mock(QueryManager.class);
-            QueryResult mockQueryResult = mock(QueryResult.class);
-            Query mockQuery = mock(Query.class);
-            RowIterator mockRI = mock(RowIterator.class);
-            Value mockValue = mock(Value.class);
-            Row mockRow = mock(Row.class);
-            NodeTypeManager mockNodeTypeManager = mock(NodeTypeManager.class);
-            NamespaceRegistry mockNamespaceRegistry =
+            final Workspace mockWorkspace = mock(Workspace.class);
+            final QueryManager mockQueryManager = mock(QueryManager.class);
+            final QueryResult mockQueryResult = mock(QueryResult.class);
+            final Query mockQuery = mock(Query.class);
+            final RowIterator mockRI = mock(RowIterator.class);
+            final Value mockValue = mock(Value.class);
+            final Row mockRow = mock(Row.class);
+            final NodeTypeManager mockNodeTypeManager =
+                    mock(NodeTypeManager.class);
+            final NamespaceRegistry mockNamespaceRegistry =
                     mock(NamespaceRegistry.class);
 
             mockNTI = mock(NodeTypeIterator.class);
@@ -129,7 +130,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
             expectedNS
                     .put(mockPrefix, mockNamespaceRegistry.getURI(mockPrefix));
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -146,26 +147,36 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
+    public void testUpdateRepositorySize() throws PathNotFoundException,
+            RepositoryException {
+        final String content = "asdf";
+        final Node mockContent = getContentNodeMock(content);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        testObj.updateRepositorySize(expectedSize, mockSession);
+        assertEquals(expectedSize, testObj.getRepositorySize(mockSession));
+    }
+
+    @Test
     public void testGetRepositorySize() throws RepositoryException {
-        Long actual = testObj.getRepositorySize(mockSession);
+        final Long actual = testObj.getRepositorySize(mockSession);
         assertEquals(expectedSize, actual);
     }
 
     @Test
     public void testGetRepositoryObjectCount() {
-        Long actual = testObj.getRepositoryObjectCount(mockSession);
+        final Long actual = testObj.getRepositoryObjectCount(mockSession);
         assertEquals(expectedSize, actual);
     }
 
     @Test
     public void testGetAllNodeTypes() throws RepositoryException {
-        NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
+        final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
         assertEquals(mockNTI, actual);
     }
 
     @Test
     public void testGetRepositoryNamespaces() throws RepositoryException {
-        Map<String, String> actual =
+        final Map<String, String> actual =
                 testObj.getRepositoryNamespaces(mockSession);
         assertEquals(expectedNS, actual);
     }

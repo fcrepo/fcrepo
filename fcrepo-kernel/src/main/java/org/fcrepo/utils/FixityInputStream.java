@@ -18,7 +18,7 @@ public class FixityInputStream extends CountingInputStream {
      * @param in the underlying input stream, or <code>null</code> if
      *           this instance is to be created without an underlying stream.
      */
-    public FixityInputStream(InputStream in, MessageDigest digest) {
+    public FixityInputStream(final InputStream in, final MessageDigest digest) {
         super(new DigestInputStream(in, digest));
     }
 

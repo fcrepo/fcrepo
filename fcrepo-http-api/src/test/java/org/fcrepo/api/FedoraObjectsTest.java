@@ -64,7 +64,7 @@ public class FedoraObjectsTest {
         when(mockSession.getUserID()).thenReturn(mockUser);
         when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
         when(mockPrincipal.getName()).thenReturn(mockUser);
-        SessionFactory mockSessions = mock(SessionFactory.class);
+        final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
                 mockSessions.getSession(any(SecurityContext.class),
@@ -83,7 +83,7 @@ public class FedoraObjectsTest {
 
     @Test
     public void testGetObjects() throws RepositoryException {
-        Response actual = testObj.getObjects();
+        final Response actual = testObj.getObjects();
         assertNotNull(actual);
         assertEquals(Status.OK.getStatusCode(), actual.getStatus());
         verify(mockObjects).getObjectNames();
@@ -92,7 +92,7 @@ public class FedoraObjectsTest {
 
     @Test
     public void testIngestAndMint() throws RepositoryException {
-        Response actual = testObj.ingestAndMint();
+        final Response actual = testObj.ingestAndMint();
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockSession).save();
@@ -100,8 +100,8 @@ public class FedoraObjectsTest {
 
     @Test
     public void testModify() throws RepositoryException {
-        String pid = "testObject";
-        Response actual = testObj.modify(pid);
+        final String pid = "testObject";
+        final Response actual = testObj.modify(pid);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -111,8 +111,8 @@ public class FedoraObjectsTest {
 
     @Test
     public void testIngest() throws RepositoryException {
-        String pid = "testObject";
-        Response actual = testObj.ingest(pid, null);
+        final String pid = "testObject";
+        final Response actual = testObj.ingest(pid, null);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -122,10 +122,10 @@ public class FedoraObjectsTest {
 
     @Test
     public void testGetObject() throws RepositoryException, IOException {
-        String pid = "testObject";
-        FedoraObject mockObj = mock(FedoraObject.class);
+        final String pid = "testObject";
+        final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObjects.getObject(pid)).thenReturn(mockObj);
-        ObjectProfile actual = testObj.getObject(pid);
+        final ObjectProfile actual = testObj.getObject(pid);
         assertNotNull(actual);
         assertEquals(pid, actual.pid);
         verify(mockObjects).getObject(pid);
@@ -134,8 +134,8 @@ public class FedoraObjectsTest {
 
     @Test
     public void testDeleteObject() throws RepositoryException {
-        String pid = "testObject";
-        Response actual = testObj.deleteObject(pid);
+        final String pid = "testObject";
+        final Response actual = testObj.deleteObject(pid);
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockObjects).deleteObject(pid, mockSession);

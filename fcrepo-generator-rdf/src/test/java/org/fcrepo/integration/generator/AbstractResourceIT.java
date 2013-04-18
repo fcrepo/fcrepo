@@ -1,6 +1,10 @@
 
 package org.fcrepo.integration.generator;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -14,10 +18,6 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 public abstract class AbstractResourceIT {
@@ -67,7 +67,7 @@ public abstract class AbstractResourceIT {
                 ds);
     }
 
-    protected int getStatus(HttpUriRequest method)
+    protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());

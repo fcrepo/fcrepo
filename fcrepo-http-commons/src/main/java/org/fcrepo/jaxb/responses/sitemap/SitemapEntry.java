@@ -28,13 +28,13 @@ public class SitemapEntry {
         lastmod = null;
     }
 
-    public SitemapEntry(URI loc)
+    public SitemapEntry(final URI loc)
             throws RepositoryException {
         this.loc = loc;
         lastmod = Calendar.getInstance();
     }
 
-    public SitemapEntry(URI loc, Calendar lastmod)
+    public SitemapEntry(final URI loc, final Calendar lastmod)
             throws RepositoryException {
         this.loc = loc;
         this.lastmod = lastmod;

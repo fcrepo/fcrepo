@@ -10,7 +10,7 @@ public abstract class BasePidMinter implements PidMinter {
         return new Function<Object, String>() {
 
             @Override
-            public String apply(Object input) {
+            public String apply(final Object input) {
                 return mintPid();
             }
         };

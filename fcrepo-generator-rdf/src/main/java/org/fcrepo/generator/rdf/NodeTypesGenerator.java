@@ -28,7 +28,7 @@ public class NodeTypesGenerator implements TripleSource<Node> {
             final Node source, final UriInfo... uriInfo)
             throws RepositoryException {
         logger.trace("Entering getTriples()...");
-        Builder<Triple> triples = builder();
+        final Builder<Triple> triples = builder();
         logger.debug("Generating triples for node: " + source.getPath());
         final String subject = source.getPath();
 

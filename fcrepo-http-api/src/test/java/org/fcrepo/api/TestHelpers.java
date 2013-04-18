@@ -4,7 +4,6 @@ package org.fcrepo.api;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -32,7 +31,6 @@ import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
 import com.sun.jersey.api.uri.UriBuilderImpl;
-import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
@@ -44,33 +42,36 @@ public abstract class TestHelpers {
     static String MOCK_URI_STRING = "mock.namespace.org";
 
     public static UriInfo getUriInfoImpl() {
-//        UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
-        UriInfo ui = mock(UriInfo.class);
-        UriBuilder ub = new UriBuilderImpl();
+        //        UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
+        final UriInfo ui = mock(UriInfo.class);
+        final UriBuilder ub = new UriBuilderImpl();
         ub.scheme("http");
         ub.host("locahost");
         ub.path("/fcrepo");
-        
-        when(ui.getRequestUri()).thenReturn(URI.create("http://localhost/fcrepo"));
+
+        when(ui.getRequestUri()).thenReturn(
+                URI.create("http://localhost/fcrepo"));
         when(ui.getBaseUri()).thenReturn(URI.create("http://localhost/"));
         when(ui.getBaseUriBuilder()).thenReturn(ub);
         when(ui.getAbsolutePathBuilder()).thenReturn(ub);
-        
+
         return ui;
     }
 
-    public static MultiPart getStringsAsMultipart (
-            Map<String, String> contents) {
-        MultiPart multipart = new MultiPart();
-        for (Entry<String,String> e : contents.entrySet()) {
-            String id = e.getKey();
-            String content = e.getValue();
-            InputStream src = IOUtils.toInputStream(content);
-            StreamDataBodyPart part = new  StreamDataBodyPart(id, src);
+    public static MultiPart getStringsAsMultipart(
+            final Map<String, String> contents) {
+        final MultiPart multipart = new MultiPart();
+        for (final Entry<String, String> e : contents.entrySet()) {
+            final String id = e.getKey();
+            final String content = e.getValue();
+            final InputStream src = IOUtils.toInputStream(content);
+            final StreamDataBodyPart part = new StreamDataBodyPart(id, src);
             try {
-                FormDataContentDisposition cd = new FormDataContentDisposition("form-data;name=" + id + ";filename=" + id + ".txt"); 
+                final FormDataContentDisposition cd =
+                        new FormDataContentDisposition("form-data;name=" + id +
+                                ";filename=" + id + ".txt");
                 part.contentDisposition(cd);
-            }catch (ParseException ex) {
+            } catch (final ParseException ex) {
                 ex.printStackTrace();
             }
             multipart.bodyPart(part);
@@ -80,17 +81,17 @@ public abstract class TestHelpers {
 
     @SuppressWarnings("unchecked")
     public static Query getQueryMock() {
-        Query mockQ = mock(Query.class);
-        QueryResult mockResults = mock(QueryResult.class);
-        NodeIterator mockNodes = mock(NodeIterator.class);
+        final Query mockQ = mock(Query.class);
+        final QueryResult mockResults = mock(QueryResult.class);
+        final NodeIterator mockNodes = mock(NodeIterator.class);
         when(mockNodes.getSize()).thenReturn(2L);
         when(mockNodes.hasNext()).thenReturn(true, true, false);
-        Node node1 = mock(Node.class);
-        Node node2 = mock(Node.class);
+        final Node node1 = mock(Node.class);
+        final Node node2 = mock(Node.class);
         try {
             when(node1.getName()).thenReturn("node1");
             when(node2.getName()).thenReturn("node2");
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
         when(mockNodes.nextNode()).thenReturn(node1, node2).thenThrow(
@@ -98,29 +99,29 @@ public abstract class TestHelpers {
         try {
             when(mockResults.getNodes()).thenReturn(mockNodes);
             when(mockQ.execute()).thenReturn(mockResults);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
         return mockQ;
     }
 
     public static Session getQuerySessionMock() {
-        Session mock = mock(Session.class);
-        Workspace mockWS = mock(Workspace.class);
-        QueryManager mockQM = mock(QueryManager.class);
+        final Session mock = mock(Session.class);
+        final Workspace mockWS = mock(Workspace.class);
+        final QueryManager mockQM = mock(QueryManager.class);
         try {
-            Query mockQ = getQueryMock();
+            final Query mockQ = getQueryMock();
             when(mockQM.createQuery(anyString(), anyString()))
                     .thenReturn(mockQ);
             when(mockWS.getQueryManager()).thenReturn(mockQM);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
         when(mock.getWorkspace()).thenReturn(mockWS);
-        ValueFactory mockVF = mock(ValueFactory.class);
+        final ValueFactory mockVF = mock(ValueFactory.class);
         try {
             when(mock.getValueFactory()).thenReturn(mockVF);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
         return mock;
@@ -128,13 +129,13 @@ public abstract class TestHelpers {
 
     @SuppressWarnings("unchecked")
     public static Session getSessionMock() throws RepositoryException {
-        String[] mockPrefixes = {MOCK_PREFIX};
-        Session mockSession = mock(Session.class);
-        Workspace mockWorkspace = mock(Workspace.class);
-        NamespaceRegistry mockNameReg = mock(NamespaceRegistry.class);
-        NodeTypeManager mockNTM = mock(NodeTypeManager.class);
-        NodeTypeIterator mockNTI = mock(NodeTypeIterator.class);
-        NodeType mockNodeType = mock(NodeType.class);
+        final String[] mockPrefixes = {MOCK_PREFIX};
+        final Session mockSession = mock(Session.class);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        final NamespaceRegistry mockNameReg = mock(NamespaceRegistry.class);
+        final NodeTypeManager mockNTM = mock(NodeTypeManager.class);
+        final NodeTypeIterator mockNTI = mock(NodeTypeIterator.class);
+        final NodeType mockNodeType = mock(NodeType.class);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
         when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
@@ -150,12 +151,12 @@ public abstract class TestHelpers {
     }
 
     public static Repository createMockRepo() throws RepositoryException {
-        Repository mockRepo = mock(Repository.class);
-        Session mockSession = getSessionMock();
+        final Repository mockRepo = mock(Repository.class);
+        final Session mockSession = getSessionMock();
 
         when(mockRepo.getDescriptor("jcr.repository.name")).thenReturn(
                 "Mock Repository");
-        String[] mockKeys = {MOCK_PREFIX};
+        final String[] mockKeys = {MOCK_PREFIX};
 
         when(mockRepo.login()).thenReturn(mockSession);
         when(mockRepo.getDescriptorKeys()).thenReturn(mockKeys);

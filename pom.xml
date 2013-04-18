@@ -25,7 +25,6 @@
 
     <!-- Dependency version properties -->
     <activemq.version>5.7.0</activemq.version>
-    <cxf.version>2.7.2</cxf.version>
     <enunciate.version>1.26.2</enunciate.version>
     <infinispan.version>5.3.0.Alpha1</infinispan.version>
     <jgroups.version>3.3.0.CR1</jgroups.version>
@@ -33,10 +32,12 @@
     <sesame.version>2.7.0</sesame.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
-
+    <jersey.version>1.17.1</jersey.version>
+    <powermock.version>1.5</powermock.version>
+    
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
-    <powermock.version>1.5</powermock.version>
+
   </properties>
 
   <modules>
@@ -56,10 +57,11 @@
 
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
-        section defaults for all of the modules we might need, but we still have to include 
-        in the "dependencies" section the modules we DO need. The benefit is that we don't 
-        have to specify the versions of any of those modules. -->
+      <!-- Import the ModeShape BOM for embedded usage. This adds to the 
+        "dependenciesManagement" section defaults for all of the modules we might 
+        need, but we still have to include in the "dependencies" section the modules 
+        we DO need. The benefit is that we don't have to specify the versions of 
+        any of those modules. -->
       <dependency>
         <groupId>org.modeshape.bom</groupId>
         <artifactId>modeshape-bom-embedded</artifactId>
@@ -91,7 +93,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>13.0.1</version>
+        <version>14.0.1</version>
       </dependency>
       <dependency>
         <groupId>org.infinispan</groupId>
@@ -164,6 +166,16 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.contribs</groupId>
+        <artifactId>jersey-multipart</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
 
       <!-- sesame/openrdf dependencies that were previously provided by the Aduna 
         Maven repo -->
@@ -221,29 +233,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-        <version>${cxf.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-rs-extension-providers</artifactId>
-        <version>${cxf.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-transports-http-jetty</artifactId>
-        <version>${cxf.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>4.2.3</version>
-<!--         commented out since fcrepo-webhooks uses httpclient at compile time -->
-<!--         <scope>test</scope> -->
+        <!-- commented out since fcrepo-webhooks uses httpclient at compile 
+          time -->
+        <!-- <scope>test</scope> -->
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -279,6 +274,36 @@
         <artifactId>powermock-api-mockito</artifactId>
         <version>${powermock.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.sun.grizzly</groupId>
+        <artifactId>grizzly-servlet-webserver</artifactId>
+        <version>1.9.57</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-grizzly</artifactId>
+        <version>${jersey.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>javax.mail</groupId>
+        <artifactId>mail</artifactId>
+        <version>1.4.4</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.contribs</groupId>
+        <artifactId>jersey-spring</artifactId>
+        <version>${jersey.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -290,8 +315,10 @@
           <artifactId>site-maven-plugin</artifactId>
           <version>0.7</version>
           <configuration>
-            <message>Creating site for ${project.artifactId}, ${project.version}</message>
-            <!-- this does the trick to place every module in the correct subfolder -->
+            <message>Creating site for ${project.artifactId},
+              ${project.version}</message>
+            <!-- this does the trick to place every module in the correct 
+              subfolder -->
             <path>${project.distributionManagement.site.url}</path>
             <merge>true</merge>
           </configuration>
@@ -419,8 +446,8 @@
           </configuration>
           <dependencies>
             <dependency>
-              <!-- allows markdown syntax for site generation. To use it place files 
-                below src/site/markdown/[filename].md -->
+              <!-- allows markdown syntax for site generation. To use it 
+                place files below src/site/markdown/[filename].md -->
               <groupId>org.apache.maven.doxia</groupId>
               <artifactId>doxia-module-markdown</artifactId>
               <version>1.3</version>
@@ -447,7 +474,8 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
-          <!-- reserve a port under the property ${test.port} for integration tests -->
+          <!-- reserve a port under the property ${test.port} for integration 
+            tests -->
           <configuration>
             <portNames>
               <portName>test.port</portName>

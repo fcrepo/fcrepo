@@ -48,8 +48,8 @@ public class FedoraNamespacesTest {
 
         testObj = new FedoraNamespaces();
         testObj.setUriInfo(getUriInfoImpl());
-        SessionFactory mockSessions = mock(SessionFactory.class);
-        Session mockSession = getSessionMock();
+        final SessionFactory mockSessions = mock(SessionFactory.class);
+        final Session mockSession = getSessionMock();
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
                 mockSessions.getSession(any(SecurityContext.class),
@@ -65,7 +65,7 @@ public class FedoraNamespacesTest {
 
     @Test
     public void testRegisterObjectNamespace() throws RepositoryException {
-        Response actual =
+        final Response actual =
                 testObj.registerObjectNamespace(MOCK_PREFIX, MOCK_URI_STRING);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
@@ -73,11 +73,11 @@ public class FedoraNamespacesTest {
 
     @Test
     public void testRegisterObjectNamespaces() throws RepositoryException {
-        Set<Namespace> mockNses = new HashSet<Namespace>();
+        final Set<Namespace> mockNses = new HashSet<Namespace>();
         mockNses.add(mockNs);
-        NamespaceListing nses = new NamespaceListing();
+        final NamespaceListing nses = new NamespaceListing();
         nses.namespaces = mockNses;
-        Response actual = testObj.registerObjectNamespaces(nses);
+        final Response actual = testObj.registerObjectNamespaces(nses);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
     }
@@ -85,14 +85,14 @@ public class FedoraNamespacesTest {
     @Test
     public void testRetrieveObjectNamespace() throws RepositoryException {
         testObj.registerObjectNamespace(MOCK_PREFIX, MOCK_URI_STRING);
-        Namespace actual = testObj.retrieveObjectNamespace(MOCK_PREFIX);
+        final Namespace actual = testObj.retrieveObjectNamespace(MOCK_PREFIX);
         assertNotNull(actual);
         assertEquals(actual.uri, mockNs.uri);
     }
 
     @Test
     public void testGetNamespaces() throws RepositoryException, IOException {
-        NamespaceListing actual = testObj.getNamespaces();
+        final NamespaceListing actual = testObj.getNamespaces();
         assertNotNull(actual);
     }
 }

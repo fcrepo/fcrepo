@@ -34,13 +34,13 @@ public class CheckCacheEntryFixity implements
     }
 
     @Override
-    public FixityResult apply(LowLevelCacheEntry input) {
+    public FixityResult apply(final LowLevelCacheEntry input) {
         logger.debug("Checking fixity for resource in cache store " +
                 input.toString());
         FixityResult result = null;
         try {
             result = input.checkFixity(dsChecksum, dsSize, digest);
-        } catch (BinaryStoreException e) {
+        } catch (final BinaryStoreException e) {
             logger.error("Exception checking low-level fixity: {}", e);
             throw new IllegalStateException(e);
         }

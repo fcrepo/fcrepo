@@ -23,7 +23,8 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchSubmit() throws Exception {
         final HttpPost method = new HttpPost(serverAddress + "search");
-        List<BasicNameValuePair> list = new ArrayList<BasicNameValuePair>();
+        final List<BasicNameValuePair> list =
+                new ArrayList<BasicNameValuePair>();
 
         list.add(new BasicNameValuePair("terms", ""));
         list.add(new BasicNameValuePair("offset", "0"));
@@ -37,7 +38,8 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchSubmitPaging() throws Exception {
         final HttpPost method = new HttpPost(serverAddress + "search");
-        List<BasicNameValuePair> list = new ArrayList<BasicNameValuePair>();
+        final List<BasicNameValuePair> list =
+                new ArrayList<BasicNameValuePair>();
 
         list.add(new BasicNameValuePair("terms", ""));
         list.add(new BasicNameValuePair("offset", "1"));

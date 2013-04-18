@@ -45,7 +45,7 @@ public class FedoraRepositoryTest {
         testFedoraRepo.objectService = mockObjects;
         mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
-        SessionFactory mockSessions = mock(SessionFactory.class);
+        final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
                 mockSessions.getSession(any(SecurityContext.class),
@@ -54,7 +54,7 @@ public class FedoraRepositoryTest {
         when(mockRepo.getDescriptorKeys()).thenReturn(new String[0]);
         when(mockObjects.getRepositoryNamespaces(mockSession)).thenReturn(
                 new HashMap<String, String>(0));
-        NodeTypeIterator mockNT = mock(NodeTypeIterator.class);
+        final NodeTypeIterator mockNT = mock(NodeTypeIterator.class);
         when(mockObjects.getAllNodeTypes(mockSession)).thenReturn(mockNT);
         testFedoraRepo.setRepository(mockRepo);
     }
@@ -66,21 +66,21 @@ public class FedoraRepositoryTest {
 
     @Test
     public void testDescribeModeshape() throws RepositoryException, IOException {
-        Response actual = testFedoraRepo.describeModeshape();
+        final Response actual = testFedoraRepo.describeModeshape();
         assertNotNull(actual);
         assertEquals(Status.OK.getStatusCode(), actual.getStatus());
     }
 
     @Test
     public void testDescribe() throws LoginException, RepositoryException {
-        DescribeRepository actual = testFedoraRepo.describe();
+        final DescribeRepository actual = testFedoraRepo.describe();
         assertNotNull(actual);
         assertEquals("4.0-modeshape-candidate", actual.getRepositoryVersion());
     }
 
     @Test
     public void testDescribeHtml() throws LoginException, RepositoryException {
-        String actual = testFedoraRepo.describeHtml();
+        final String actual = testFedoraRepo.describeHtml();
         assertNotNull(actual);
         assertEquals(true, actual.contains("4.0-modeshape-candidate"));
     }

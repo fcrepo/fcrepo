@@ -98,23 +98,23 @@ public abstract class AbstractResourceIT {
                 ds);
     }
 
-    protected HttpResponse execute(HttpUriRequest method)
+    protected HttpResponse execute(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());
         return client.execute(method);
     }
 
-    protected int getStatus(HttpUriRequest method)
+    protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         return execute(method).getStatusLine().getStatusCode();
     }
 
-    protected ObjectProfile getObject(String pid)
+    protected ObjectProfile getObject(final String pid)
             throws ClientProtocolException, IOException, JAXBException {
         final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
-        HttpResponse resp = execute(get);
-        Unmarshaller um = context.createUnmarshaller();
+        final HttpResponse resp = execute(get);
+        final Unmarshaller um = context.createUnmarshaller();
         return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());
     }
 }

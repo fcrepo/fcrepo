@@ -34,18 +34,18 @@ public class DefaultFilter implements EventFilter {
     private Session session;
 
     @Override
-    public boolean apply(Event event) {
+    public boolean apply(final Event event) {
 
         try {
             final Node resource = session.getNode(event.getPath());
             return isFedoraObject.apply(resource) ||
                     isFedoraDatastream.apply(resource);
 
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             return false; // not a node in the fedora workspace
-        } catch (LoginException e) {
+        } catch (final LoginException e) {
             throw new SystemFailureException(e);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new SystemFailureException(e);
         }
     }

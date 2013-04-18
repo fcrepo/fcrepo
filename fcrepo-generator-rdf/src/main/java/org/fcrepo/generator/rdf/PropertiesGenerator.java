@@ -53,7 +53,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
             new Function<Property, Triple>() {
 
                 @Override
-                public Triple apply(Property p) {
+                public Triple apply(final Property p) {
                     if (p == null) {
                         return null;
                     }
@@ -63,7 +63,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
                                 expandJCRNamespace(p.getName(), p.getSession()
                                         .getWorkspace().getNamespaceRegistry()),
                                 p.getString());
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
@@ -74,13 +74,13 @@ public class PropertiesGenerator implements TripleSource<Node> {
             new Function<Property, List<Triple>>() {
 
                 @Override
-                public List<Triple> apply(Property p) {
+                public List<Triple> apply(final Property p) {
                     if (p == null) {
                         return null;
                     }
                     final Builder<Triple> triples = builder();
                     try {
-                        for (Value v : p.getValues()) {
+                        for (final Value v : p.getValues()) {
                             triples.add(new Triple(p.getParent().getPath(),
                                     expandJCRNamespace(p.getName(), p
                                             .getSession().getWorkspace()
@@ -88,7 +88,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
                                             .getString()));
                         }
                         return triples.build();
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
@@ -96,7 +96,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
             };
 
     private static String expandJCRNamespace(final String name,
-            NamespaceRegistry nReg) throws RepositoryException {
+            final NamespaceRegistry nReg) throws RepositoryException {
         final String predicatePrefix = name.substring(0, name.indexOf(':'));
         return name.replaceFirst(predicatePrefix + ":", nReg
                 .getURI(predicatePrefix));
@@ -105,10 +105,10 @@ public class PropertiesGenerator implements TripleSource<Node> {
     private static Predicate<Property> isMultiple = new Predicate<Property>() {
 
         @Override
-        public boolean apply(Property p) {
+        public boolean apply(final Property p) {
             try {
                 return p == null ? false : p.isMultiple();
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -9,9 +9,9 @@ import com.yammer.metrics.graphite.GraphiteReporter;
 
 public class ReporterFactory {
 
-    public ScheduledReporter
-            registerGraphiteReporter(Graphite g, String prefix) {
-        GraphiteReporter r =
+    public ScheduledReporter registerGraphiteReporter(final Graphite g,
+            final String prefix) {
+        final GraphiteReporter r =
                 GraphiteReporter.forRegistry(RegistryService.getMetrics())
                         .build(g);
 

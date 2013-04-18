@@ -44,29 +44,30 @@ public class FixityResult {
         entry = null;
     }
 
-    public FixityResult(LowLevelCacheEntry entry) {
+    public FixityResult(final LowLevelCacheEntry entry) {
         this.entry = entry;
         storeIdentifier = entry.getExternalIdentifier();
     }
 
-    public FixityResult(long size, URI checksum) {
+    public FixityResult(final long size, final URI checksum) {
         entry = null;
         computedSize = size;
         computedChecksum = checksum;
     }
 
-    public FixityResult(LowLevelCacheEntry entry, long size, URI checksum) {
+    public FixityResult(final LowLevelCacheEntry entry, final long size,
+            final URI checksum) {
         this.entry = entry;
         computedSize = size;
         computedChecksum = checksum;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
 
         boolean result = false;
         if (obj instanceof FixityResult) {
-            FixityResult that = (FixityResult) obj;
+            final FixityResult that = (FixityResult) obj;
             result =
                     computedSize == that.computedSize &&
                             computedChecksum.equals(that.computedChecksum);

@@ -29,7 +29,7 @@ public class DublinCoreGenerator extends AbstractResource {
 
     @Resource
     List<DCGenerator> dcgenerators;
-    
+
     @Autowired
     ObjectService objectService;
 
@@ -40,8 +40,8 @@ public class DublinCoreGenerator extends AbstractResource {
 
         final Node obj = objectService.getObjectNode(pid);
 
-        for (DCGenerator indexer : dcgenerators) {
-            InputStream inputStream = indexer.getStream(obj);
+        for (final DCGenerator indexer : dcgenerators) {
+            final InputStream inputStream = indexer.getStream(obj);
 
             if (inputStream != null) {
                 return ok(inputStream).build();

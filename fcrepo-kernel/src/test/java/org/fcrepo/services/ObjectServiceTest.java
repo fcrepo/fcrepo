@@ -43,13 +43,13 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @Test
     public void testCreateObjectNode() throws Exception {
         final Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        String testPath = getObjectJcrNodePath("foo");
-        FedoraObject mockWrapper = new FedoraObject(mockNode);
+        final Session mockSession = mock(Session.class);
+        final String testPath = getObjectJcrNodePath("foo");
+        final FedoraObject mockWrapper = new FedoraObject(mockNode);
         whenNew(FedoraObject.class).withArguments(mockSession, testPath)
                 .thenReturn(mockWrapper);
-        ObjectService testObj = new ObjectService();
-        Node actual = testObj.createObjectNode(mockSession, "foo");
+        final ObjectService testObj = new ObjectService();
+        final Node actual = testObj.createObjectNode(mockSession, "foo");
         assertEquals(mockNode, actual);
         verifyNew(FedoraObject.class).withArguments(mockSession, testPath);
     }
@@ -57,22 +57,22 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @Test
     public void testCreateObject() throws Exception {
         final Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        String testPath = getObjectJcrNodePath("foo");
-        FedoraObject mockWrapper = new FedoraObject(mockNode);
+        final Session mockSession = mock(Session.class);
+        final String testPath = getObjectJcrNodePath("foo");
+        final FedoraObject mockWrapper = new FedoraObject(mockNode);
         whenNew(FedoraObject.class).withArguments(any(Session.class),
                 any(String.class)).thenReturn(mockWrapper);
-        ObjectService testObj = new ObjectService();
+        final ObjectService testObj = new ObjectService();
         testObj.createObject(mockSession, "foo");
         verifyNew(FedoraObject.class).withArguments(mockSession, testPath);
     }
 
     @Test
     public void testGetObject() throws RepositoryException {
-        Session mockSession = mock(Session.class);
-        Session mockROSession = mock(Session.class);
-        String testPath = getObjectJcrNodePath("foo");
-        ObjectService testObj = new ObjectService();
+        final Session mockSession = mock(Session.class);
+        final Session mockROSession = mock(Session.class);
+        final String testPath = getObjectJcrNodePath("foo");
+        final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockROSession;
         testObj.getObject("foo");
         testObj.getObject(mockSession, "foo");
@@ -82,10 +82,10 @@ public class ObjectServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetObjectNode() throws RepositoryException {
-        Session mockSession = mock(Session.class);
-        Session mockROSession = mock(Session.class);
-        String testPath = getObjectJcrNodePath("foo");
-        ObjectService testObj = new ObjectService();
+        final Session mockSession = mock(Session.class);
+        final Session mockROSession = mock(Session.class);
+        final String testPath = getObjectJcrNodePath("foo");
+        final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockROSession;
         testObj.getObjectNode("foo");
         testObj.getObjectNode(mockSession, "foo");
@@ -96,20 +96,20 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @SuppressWarnings("unchecked")
     @Test
     public void testGetObjectNames() throws RepositoryException {
-        String objPath = getObjectJcrNodePath("");
-        Session mockSession = mock(Session.class);
-        Node mockRoot = mock(Node.class);
-        Node mockObj = mock(Node.class);
+        final String objPath = getObjectJcrNodePath("");
+        final Session mockSession = mock(Session.class);
+        final Node mockRoot = mock(Node.class);
+        final Node mockObj = mock(Node.class);
         when(mockObj.getName()).thenReturn("foo");
-        NodeIterator mockIter = mock(NodeIterator.class);
+        final NodeIterator mockIter = mock(NodeIterator.class);
         when(mockIter.hasNext()).thenReturn(true, false);
         when(mockIter.nextNode()).thenReturn(mockObj).thenThrow(
                 IndexOutOfBoundsException.class);
         when(mockRoot.getNodes()).thenReturn(mockIter);
         when(mockSession.getNode(objPath)).thenReturn(mockRoot);
-        ObjectService testObj = new ObjectService();
+        final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockSession;
-        Set<String> actual = testObj.getObjectNames();
+        final Set<String> actual = testObj.getObjectNames();
         verify(mockSession).getNode(objPath);
         assertEquals(1, actual.size());
         assertEquals("foo", actual.iterator().next());
@@ -117,16 +117,20 @@ public class ObjectServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testDeleteOBject() throws RepositoryException {
-        String objPath = getObjectJcrNodePath("foo");
-        Session mockSession = mock(Session.class);
-        Node mockRootNode = mock(Node.class);
-        Node mockObjectsNode = mock(Node.class);
-        Node mockObjNode = mock(Node.class);
+        final String objPath = getObjectJcrNodePath("foo");
+        final Session mockSession = mock(Session.class);
+        final Node mockRootNode = mock(Node.class);
+        final Node mockObjectsNode = mock(Node.class);
+        final Property mockProp = mock(Property.class);
+        final Node mockObjNode = mock(Node.class);
+        when(mockObjectsNode.getProperty(FEDORA_SIZE)).thenReturn(mockProp);
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockRootNode.getNode("objects")).thenReturn(mockObjectsNode);
         when(mockSession.getNode(objPath)).thenReturn(mockObjNode);
         PowerMockito.mockStatic(ServiceHelpers.class);
-        ObjectService testObj = new ObjectService();
+        final long mockSize = new SecureRandom().nextLong();
+        when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(mockSize); // testing with a random value
+        final ObjectService testObj = new ObjectService();
         testObj.deleteObject("foo", mockSession);
         verify(mockSession).getNode(objPath);
         verify(mockObjNode).remove();

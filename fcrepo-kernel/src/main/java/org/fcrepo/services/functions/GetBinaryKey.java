@@ -15,11 +15,11 @@ import com.google.common.base.Function;
 public class GetBinaryKey implements Function<Node, BinaryKey> {
 
     @Override
-    public BinaryKey apply(Node input) {
+    public BinaryKey apply(final Node input) {
         try {
             return ((BinaryValue) input.getNode(JCR_CONTENT).getProperty(
                     JCR_DATA).getBinary()).getKey();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new IllegalArgumentException(e);
         }
     }

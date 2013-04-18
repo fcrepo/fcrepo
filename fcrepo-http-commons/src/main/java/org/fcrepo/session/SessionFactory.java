@@ -33,7 +33,7 @@ public class SessionFactory {
         }
     }
 
-    public void setRepository(Repository repo) {
+    public void setRepository(final Repository repo) {
         this.repo = repo;
     }
 
@@ -41,15 +41,15 @@ public class SessionFactory {
         return repo.login();
     }
 
-    public Session getSession(SecurityContext securityContext,
-            HttpServletRequest servletRequest) {
+    public Session getSession(final SecurityContext securityContext,
+            final HttpServletRequest servletRequest) {
         Session session = null;
 
         try {
             if (securityContext.getUserPrincipal() != null) {
                 logger.debug("Authenticated user: " +
                         securityContext.getUserPrincipal().getName());
-                ServletCredentials credentials =
+                final ServletCredentials credentials =
                         new ServletCredentials(servletRequest);
 
                 session = repo.login(credentials);
@@ -57,7 +57,7 @@ public class SessionFactory {
                 logger.debug("No authenticated user found!");
                 session = repo.login();
             }
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }
         return session;

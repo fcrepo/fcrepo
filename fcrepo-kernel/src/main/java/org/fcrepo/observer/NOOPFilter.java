@@ -12,7 +12,7 @@ import javax.jcr.observation.Event;
 public class NOOPFilter implements EventFilter {
 
     @Override
-    public boolean apply(Event event) {
+    public boolean apply(final Event event) {
         return true;
     }
 }

@@ -41,10 +41,10 @@ public class SessionFactoryTest {
     @Test
     public void testGetSessionAuthenticated() throws LoginException,
             RepositoryException {
-        SecurityContext mockContext = mock(SecurityContext.class);
-        Principal mockUser = mock(Principal.class);
+        final SecurityContext mockContext = mock(SecurityContext.class);
+        final Principal mockUser = mock(Principal.class);
         when(mockContext.getUserPrincipal()).thenReturn(mockUser);
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         testObj.getSession(mockContext, mockRequest);
         verify(mockRepo).login(any(Credentials.class));
     }

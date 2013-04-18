@@ -71,14 +71,15 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         assertEquals(201, getStatus(postObjMethod("fdhgsldfhg")));
         assertEquals(201, getStatus(postDSMethod("fdhgsldfhg", "asdf", "1234")));
 
-        HttpGet newDescribeMethod = new HttpGet(serverAddress + "describe");
+        final HttpGet newDescribeMethod =
+                new HttpGet(serverAddress + "describe");
         newDescribeMethod.addHeader("Accept", TEXT_XML);
         response = client.execute(describeMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String newDescription =
                 EntityUtils.toString(response.getEntity());
         logger.debug("Found another repository description:\n" + newDescription);
-        Matcher newCheck =
+        final Matcher newCheck =
                 compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)
                         .matcher(newDescription);
         Long newSize = null;

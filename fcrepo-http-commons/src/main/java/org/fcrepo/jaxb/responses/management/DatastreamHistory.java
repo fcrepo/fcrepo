@@ -22,7 +22,7 @@ public class DatastreamHistory {
     public DatastreamHistory() {
     }
 
-    public DatastreamHistory(List<DatastreamProfile> datastreamProfiles) {
+    public DatastreamHistory(final List<DatastreamProfile> datastreamProfiles) {
         this.datastreamProfiles = datastreamProfiles;
     }
 }

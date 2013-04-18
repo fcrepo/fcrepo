@@ -19,10 +19,10 @@ public class GetGoodFixityResultsTest {
 
     @Test
     public void testPredicate() {
-        IsGoodFixity testPred = new IsGoodFixity();
-        FixityResult mockFixity = mock(FixityResult.class);
-        URI uri = URI.create("urn:foo:bar");
-        URI otherUri = URI.create("urn:does:not:match");
+        final IsGoodFixity testPred = new IsGoodFixity();
+        final FixityResult mockFixity = mock(FixityResult.class);
+        final URI uri = URI.create("urn:foo:bar");
+        final URI otherUri = URI.create("urn:does:not:match");
         mockFixity.computedChecksum = uri;
         mockFixity.dsChecksum = otherUri;
         assertFalse(testPred.apply(mockFixity));
@@ -35,10 +35,10 @@ public class GetGoodFixityResultsTest {
 
     @Test
     public void testIsGood() {
-        GetGoodFixityResults testObj = new GetGoodFixityResults();
-        FixityResult mockFixity = mock(FixityResult.class);
-        URI uri = URI.create("urn:foo:bar");
-        URI otherUri = URI.create("urn:does:not:match");
+        final GetGoodFixityResults testObj = new GetGoodFixityResults();
+        final FixityResult mockFixity = mock(FixityResult.class);
+        final URI uri = URI.create("urn:foo:bar");
+        final URI otherUri = URI.create("urn:does:not:match");
         mockFixity.computedChecksum = uri;
         mockFixity.dsChecksum = otherUri;
         assertFalse(testObj.isGood(mockFixity));
@@ -51,18 +51,18 @@ public class GetGoodFixityResultsTest {
 
     @Test
     public void testFunction() {
-        GetGoodFixityResults testObj = new GetGoodFixityResults();
-        FixityResult mockBadFixity = mock(FixityResult.class);
-        FixityResult mockGoodFixity = mock(FixityResult.class);
-        List<FixityResult> mockList =
+        final GetGoodFixityResults testObj = new GetGoodFixityResults();
+        final FixityResult mockBadFixity = mock(FixityResult.class);
+        final FixityResult mockGoodFixity = mock(FixityResult.class);
+        final List<FixityResult> mockList =
                 Arrays.asList(new FixityResult[] {mockBadFixity, mockGoodFixity});
-        URI uri = URI.create("urn:foo:bar");
-        URI otherUri = URI.create("urn:does:not:match");
+        final URI uri = URI.create("urn:foo:bar");
+        final URI otherUri = URI.create("urn:does:not:match");
         mockBadFixity.computedChecksum = uri;
         mockBadFixity.dsChecksum = otherUri;
         mockGoodFixity.computedChecksum = uri;
         mockGoodFixity.dsChecksum = uri;
-        Set<FixityResult> actual = testObj.apply(mockList);
+        final Set<FixityResult> actual = testObj.apply(mockList);
         assertEquals(1, actual.size());
         assertTrue(actual.contains(mockGoodFixity));
     }

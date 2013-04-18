@@ -37,8 +37,8 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/rest/";
 
-    protected static final String serverOAIAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + "/oai/";
+    protected static final String serverOAIAddress = "http://" + HOSTNAME +
+            ":" + SERVER_PORT + "/oai/";
 
     protected final PoolingClientConnectionManager connectionManager =
             new PoolingClientConnectionManager();
@@ -70,7 +70,7 @@ public abstract class AbstractResourceIT {
                 ds);
     }
 
-    protected int getStatus(HttpUriRequest method)
+    protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());

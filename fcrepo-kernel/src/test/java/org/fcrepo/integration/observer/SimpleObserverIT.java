@@ -32,7 +32,7 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void TestEventBusPublishing() throws RepositoryException {
 
-        Session se = repository.login();
+        final Session se = repository.login();
         se.getRootNode().addNode("/object1").addMixin("fedora:object");
         se.getRootNode().addNode("/object2").addMixin("fedora:object");
         se.save();
@@ -40,7 +40,7 @@ public class SimpleObserverIT extends AbstractIT {
 
         try {
             Thread.sleep(500);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -53,7 +53,7 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Subscribe
-    public void countMessages(FedoraEvent e) {
+    public void countMessages(final FedoraEvent e) {
         eventBusMessageCount++;
     }
 

@@ -44,7 +44,7 @@ public class FedoraEventTest {
 
     @Test
     public void testGetInfo() throws Exception {
-        Map<?, ?> m = e.getInfo();
+        final Map<?, ?> m = e.getInfo();
 
         assertEquals("2", m.get("1"));
     }
@@ -78,9 +78,10 @@ public class FedoraEventTest {
 
         private final long date;
 
-        public TestEvent(int type, String path, String user_id,
-                String identifier, Map<String, String> info, String userData,
-                long date) {
+        public TestEvent(final int type, final String path,
+                final String user_id, final String identifier,
+                final Map<String, String> info, final String userData,
+                final long date) {
             this.type = type;
             this.path = path;
             this.user_id = user_id;

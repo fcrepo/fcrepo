@@ -17,16 +17,16 @@ public class GetBinaryStoreTest {
 
     @Test
     public void testApply() throws LoginException, RepositoryException {
-        JcrRepository mockRepo = mock(JcrRepository.class);
-        JcrSession mockSession = mock(JcrSession.class);
-        RepositoryConfiguration mockConfig =
+        final JcrRepository mockRepo = mock(JcrRepository.class);
+        final JcrSession mockSession = mock(JcrSession.class);
+        final RepositoryConfiguration mockConfig =
                 mock(RepositoryConfiguration.class);
-        BinaryStorage mockBinStorage = mock(BinaryStorage.class);
+        final BinaryStorage mockBinStorage = mock(BinaryStorage.class);
         when(mockConfig.getBinaryStorage()).thenReturn(mockBinStorage);
         when(mockRepo.getConfiguration()).thenReturn(mockConfig);
         when(mockSession.getRepository()).thenReturn(mockRepo);
         when(mockRepo.login()).thenReturn(mockSession);
-        GetBinaryStore testObj = new GetBinaryStore();
+        final GetBinaryStore testObj = new GetBinaryStore();
         testObj.apply(mockRepo);
     }
 

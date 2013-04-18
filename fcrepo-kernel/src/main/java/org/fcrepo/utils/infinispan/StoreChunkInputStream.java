@@ -50,7 +50,7 @@ public class StoreChunkInputStream extends InputStream {
 
     private int chunkNumber;
 
-    public StoreChunkInputStream(CacheStore blobCache, String key) {
+    public StoreChunkInputStream(final CacheStore blobCache, final String key) {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.key = key;
@@ -69,7 +69,7 @@ public class StoreChunkInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(final byte[] b, final int off, int len) throws IOException {
         if (indexInBuffer == -1) {
             return -1;
         }
@@ -130,7 +130,7 @@ public class StoreChunkInputStream extends InputStream {
     }
 
     protected byte[] nextChunk() throws IOException {
-        String chunkKey = key + "-" + chunkNumber++;
+        final String chunkKey = key + "-" + chunkNumber++;
         logger.debug("Read chunk {0}", chunkKey);
 
         try {
@@ -141,7 +141,7 @@ public class StoreChunkInputStream extends InputStream {
             }
 
             return (byte[]) cacheEntry.getValue();
-        } catch (CacheLoaderException e) {
+        } catch (final CacheLoaderException e) {
             throw new IOException(e);
         }
     }

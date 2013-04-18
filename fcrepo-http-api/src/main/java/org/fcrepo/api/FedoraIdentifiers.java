@@ -2,9 +2,10 @@
 package org.fcrepo.api;
 
 import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.DiscreteDomains.integers;
+import static com.google.common.collect.ContiguousSet.create;
+import static com.google.common.collect.DiscreteDomain.integers;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Ranges.closed;
+import static com.google.common.collect.Range.closed;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 
@@ -42,10 +43,10 @@ public class FedoraIdentifiers extends AbstractResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     public NextPid getNextPid(@QueryParam("numPids")
     @DefaultValue("1")
-    Integer numPids) {
+    final Integer numPids) {
 
-        return new NextPid(copyOf(transform(closed(1, numPids)
-                .asSet(integers()), pidMinter.makePid())));
+        return new NextPid(copyOf(transform(create(closed(1, numPids),
+                integers()), pidMinter.makePid())));
 
     }
 

@@ -39,12 +39,12 @@ public class DatastreamService extends RepositoryService {
 
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
-            final InputStream requestBodyStream, String checksumType,
-            String checksum) throws RepositoryException, IOException,
+            final InputStream requestBodyStream, final String checksumType,
+            final String checksum) throws RepositoryException, IOException,
             InvalidChecksumException {
 
-        Datastream ds = new Datastream(session, dsPath);
-        Node result = ds.getNode();
+        final Datastream ds = new Datastream(session, dsPath);
+        final Node result = ds.getNode();
         ds.setContent(requestBodyStream, contentType, checksumType, checksum);
         return result;
     }
@@ -79,12 +79,13 @@ public class DatastreamService extends RepositoryService {
         return getDatastreamsFor(pid, readOnlySession);
     }
 
-    public boolean exists(String pid, String dsId) throws RepositoryException {
+    public boolean exists(final String pid, final String dsId)
+            throws RepositoryException {
         return exists(pid, dsId, readOnlySession);
     }
 
-    public boolean exists(String pid, String dsId, Session session)
-            throws RepositoryException {
+    public boolean exists(final String pid, final String dsId,
+            final Session session) throws RepositoryException {
         return session.nodeExists(getDatastreamJcrNodePath(pid, dsId));
     }
 

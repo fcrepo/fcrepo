@@ -12,7 +12,7 @@ public class NextPid {
     @XmlElement(name = "pid", namespace = "")
     public Set<String> pids;
 
-    public NextPid(Set<String> pids) {
+    public NextPid(final Set<String> pids) {
         this.pids = pids;
     }
 

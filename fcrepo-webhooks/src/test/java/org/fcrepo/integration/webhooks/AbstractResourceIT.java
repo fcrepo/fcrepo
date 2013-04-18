@@ -47,7 +47,8 @@ public abstract class AbstractResourceIT {
         connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
         client = new DefaultHttpClient(connectionManager);
     }
-    protected int getStatus(HttpUriRequest method)
+
+    protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());

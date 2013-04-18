@@ -18,7 +18,7 @@ public class SitemapUrlSet {
 
     }
 
-    public void appendSitemapEntry(SitemapEntry e) {
+    public void appendSitemapEntry(final SitemapEntry e) {
         sitemapEntries.add(e);
     }
 

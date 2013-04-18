@@ -33,7 +33,7 @@ public class DescribeRepository {
         return repositoryBaseURL;
     }
 
-    public void setRepositoryBaseURL(URI repositoryBaseURL) {
+    public void setRepositoryBaseURL(final URI repositoryBaseURL) {
         this.repositoryBaseURL = repositoryBaseURL;
     }
 
@@ -41,7 +41,7 @@ public class DescribeRepository {
         return repositoryVersion;
     }
 
-    public void setRepositoryVersion(String repositoryVersion) {
+    public void setRepositoryVersion(final String repositoryVersion) {
         this.repositoryVersion = repositoryVersion;
     }
 
@@ -49,7 +49,7 @@ public class DescribeRepository {
         return numberOfObjects;
     }
 
-    public void setNumberOfObjects(Long numberOfObjects) {
+    public void setNumberOfObjects(final Long numberOfObjects) {
         this.numberOfObjects = numberOfObjects;
     }
 
@@ -57,7 +57,7 @@ public class DescribeRepository {
         return repositorySize;
     }
 
-    public void setRepositorySize(Long repositorySize) {
+    public void setRepositorySize(final Long repositorySize) {
         this.repositorySize = repositorySize;
     }
 
@@ -65,7 +65,7 @@ public class DescribeRepository {
         return sampleOAIURL;
     }
 
-    public void setSampleOAIURL(URI sampleOAIURL) {
+    public void setSampleOAIURL(final URI sampleOAIURL) {
         this.sampleOAIURL = sampleOAIURL;
     }
 

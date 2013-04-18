@@ -50,15 +50,15 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     @Test
     public void testCreateDatastreamNode() throws Exception {
         final Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        InputStream mockIS = mock(InputStream.class);
-        String testPath = getDatastreamJcrNodePath("foo", "bar");
-        Datastream mockWrapper = mock(Datastream.class);
+        final Session mockSession = mock(Session.class);
+        final InputStream mockIS = mock(InputStream.class);
+        final String testPath = getDatastreamJcrNodePath("foo", "bar");
+        final Datastream mockWrapper = mock(Datastream.class);
         when(mockWrapper.getNode()).thenReturn(mockNode);
         whenNew(Datastream.class).withArguments(mockSession, testPath)
                 .thenReturn(mockWrapper);
-        DatastreamService testObj = new DatastreamService();
-        Node actual =
+        final DatastreamService testObj = new DatastreamService();
+        final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,
                         MOCK_CONTENT_TYPE, mockIS);
         assertEquals(mockNode, actual);
@@ -69,13 +69,13 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetDatastreamNode() throws Exception {
-        Session mockSession = mock(Session.class);
+        final Session mockSession = mock(Session.class);
         final Node mockNode = mock(Node.class);
-        Datastream mockWrapper = mock(Datastream.class);
+        final Datastream mockWrapper = mock(Datastream.class);
         when(mockWrapper.getNode()).thenReturn(mockNode);
         whenNew(Datastream.class).withArguments(mockSession, "foo", "bar")
                 .thenReturn(mockWrapper);
-        DatastreamService testObj = new DatastreamService();
+        final DatastreamService testObj = new DatastreamService();
         testObj.readOnlySession = mockSession;
         testObj.getDatastreamNode("foo", "bar");
         verifyNew(Datastream.class).withArguments(mockSession, "foo", "bar");
@@ -84,13 +84,13 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetDatastream() throws Exception {
-        Session mockSession = mock(Session.class);
+        final Session mockSession = mock(Session.class);
         final Node mockNode = mock(Node.class);
-        Datastream mockWrapper = mock(Datastream.class);
+        final Datastream mockWrapper = mock(Datastream.class);
         when(mockWrapper.getNode()).thenReturn(mockNode);
         whenNew(Datastream.class).withArguments(mockSession, "foo", "bar")
                 .thenReturn(mockWrapper);
-        DatastreamService testObj = new DatastreamService();
+        final DatastreamService testObj = new DatastreamService();
         testObj.readOnlySession = mockSession;
         testObj.getDatastream("foo", "bar");
         verifyNew(Datastream.class).withArguments(mockSession, "foo", "bar");
@@ -98,13 +98,13 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testPurgeDatastream() throws Exception {
-        Session mockSession = mock(Session.class);
+        final Session mockSession = mock(Session.class);
         final Node mockNode = mock(Node.class);
-        Datastream mockWrapper = mock(Datastream.class);
+        final Datastream mockWrapper = mock(Datastream.class);
         when(mockWrapper.getNode()).thenReturn(mockNode);
         whenNew(Datastream.class).withArguments(mockSession, "foo", "bar")
                 .thenReturn(mockWrapper);
-        DatastreamService testObj = new DatastreamService();
+        final DatastreamService testObj = new DatastreamService();
         testObj.purgeDatastream(mockSession, "foo", "bar");
         verifyNew(Datastream.class).withArguments(mockSession, "foo", "bar");
         verify(mockWrapper).purge();
@@ -112,15 +112,15 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetDatastreamsFor() throws Exception {
-        Session mockSession = mock(Session.class);
-        Node mockObjNode = mock(Node.class);
-        FedoraObject mockObj = mock(FedoraObject.class);
+        final Session mockSession = mock(Session.class);
+        final Node mockObjNode = mock(Node.class);
+        final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObj.getNode()).thenReturn(mockObjNode);
         whenNew(FedoraObject.class).withArguments(mockSession,
                 getObjectJcrNodePath("foo")).thenReturn(mockObj);
-        DatastreamService testObj = new DatastreamService();
+        final DatastreamService testObj = new DatastreamService();
         testObj.readOnlySession = mockSession;
-        DatastreamIterator actual = testObj.getDatastreamsFor("foo");
+        final DatastreamIterator actual = testObj.getDatastreamsFor("foo");
         assertNotNull(actual);
         verifyNew(FedoraObject.class).withArguments(mockSession,
                 getObjectJcrNodePath("foo"));
@@ -129,8 +129,8 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testExists() throws RepositoryException {
-        Session mockSession = mock(Session.class);
-        DatastreamService testObj = new DatastreamService();
+        final Session mockSession = mock(Session.class);
+        final DatastreamService testObj = new DatastreamService();
         testObj.readOnlySession = mockSession;
         testObj.exists("foo", "bar");
         verify(mockSession).nodeExists(getDatastreamJcrNodePath("foo", "bar"));

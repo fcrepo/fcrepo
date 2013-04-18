@@ -38,11 +38,11 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
     final static Timer timer = metrics.timer(name(FedoraObject.class,
             "FedoraObject"));
 
-    public FedoraObject(Node n) {
+    public FedoraObject(final Node n) {
         node = n;
     }
 
-    public FedoraObject(Session session, String path)
+    public FedoraObject(final Session session, final String path)
             throws RepositoryException {
 
         final Timer.Context context = timer.time();
@@ -83,7 +83,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    public void setOwnerId(String ownerId) throws RepositoryException {
+    public void setOwnerId(final String ownerId) throws RepositoryException {
         if (isOwned.apply(node)) {
             node.setProperty(FEDORA_OWNERID, ownerId);
         } else {
@@ -94,7 +94,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
     public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
-            Property dcTitle = node.getProperty(DC_TITLE);
+            final Property dcTitle = node.getProperty(DC_TITLE);
             if (!dcTitle.isMultiple()) {
                 return dcTitle.getString();
             } else {
@@ -104,7 +104,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         return null;
     }
 
-    public void setLabel(String label) throws RepositoryException {
+    public void setLabel(final String label) throws RepositoryException {
         node.setProperty(DC_TITLE, label);
     }
 

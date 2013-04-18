@@ -17,19 +17,19 @@ public class GetGoodFixityResults implements
 
     IsGoodFixity predicate = new IsGoodFixity();
 
-    public boolean isGood(FixityResult input) {
+    public boolean isGood(final FixityResult input) {
         return predicate.apply(input);
     }
 
     @Override
-    public Set<FixityResult> apply(Collection<FixityResult> input) {
+    public Set<FixityResult> apply(final Collection<FixityResult> input) {
         return copyOf(filter(input, predicate));
     }
 
     static class IsGoodFixity implements Predicate<FixityResult> {
 
         @Override
-        public boolean apply(FixityResult input) {
+        public boolean apply(final FixityResult input) {
             return input.computedChecksum.equals(input.dsChecksum) &&
                     input.computedSize == input.dsSize;
         }

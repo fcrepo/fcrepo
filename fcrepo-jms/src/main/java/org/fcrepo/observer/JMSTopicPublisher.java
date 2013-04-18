@@ -24,7 +24,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 public class JMSTopicPublisher {
-	
+
     @Inject
     EventBus eventBus;
 
@@ -33,7 +33,7 @@ public class JMSTopicPublisher {
 
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
-    
+
     @Inject
     private JMSEventMessageFactory eventFactory;
 
@@ -49,10 +49,11 @@ public class JMSTopicPublisher {
     private javax.jcr.Session session;
 
     @Subscribe
-    public void publishJCREvent(Event fedoraEvent) throws JMSException,
+    public void publishJCREvent(final Event fedoraEvent) throws JMSException,
             RepositoryException, IOException {
         logger.debug("Received an event from the internal bus.");
-        Message tm = eventFactory.getMessage(fedoraEvent, session, jmsSession);
+        final Message tm =
+                eventFactory.getMessage(fedoraEvent, session, jmsSession);
         logger.debug("Transformed the event to a JMS message.");
         producer.send(tm);
 

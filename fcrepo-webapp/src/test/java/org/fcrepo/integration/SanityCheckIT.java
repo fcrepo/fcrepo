@@ -1,5 +1,5 @@
-package org.fcrepo.integration;
 
+package org.fcrepo.integration;
 
 import static org.junit.Assert.assertEquals;
 
@@ -62,8 +62,7 @@ public class SanityCheckIT {
                 "/rest/describe")));
     }
 
-
-    protected int getStatus(HttpUriRequest method)
+    protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());

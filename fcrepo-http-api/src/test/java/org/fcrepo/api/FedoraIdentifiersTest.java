@@ -34,12 +34,12 @@ public class FedoraIdentifiersTest {
                 new Function<Object, String>() {
 
                     @Override
-                    public String apply(Object input) {
+                    public String apply(final Object input) {
                         return "asdf:123";
                     }
                 });
 
-        NextPid np = fi.getNextPid(2);
+        final NextPid np = fi.getNextPid(2);
 
         assertNotNull(np);
 

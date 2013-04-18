@@ -26,50 +26,50 @@ public class VelocityViewer {
     public VelocityViewer() {
         try {
             // Load the velocity properties from the class path
-            Properties properties = new Properties();
+            final Properties properties = new Properties();
             properties.load(getClass().getClassLoader().getResourceAsStream(
                     "velocity.properties"));
 
             // Create and initialize the template engine
             velocityEngine = new VelocityEngine(properties);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.warn("Exception rendering Velocity template: {}", e);
         }
     }
 
-    public String getRepoInfo(DescribeRepository repoinfo) {
+    public String getRepoInfo(final DescribeRepository repoinfo) {
         try {
             // Build a context to hold the model
-            VelocityContext velocityContext = new VelocityContext();
+            final VelocityContext velocityContext = new VelocityContext();
             velocityContext.put("repo", repoinfo);
 
             // Execute the template
-            StringWriter writer = new StringWriter();
+            final StringWriter writer = new StringWriter();
             velocityEngine.mergeTemplate("views/repo-info.vm", "utf-8",
                     velocityContext, writer);
 
             // Return the result
             return writer.toString();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.warn("Exception rendering Velocity template: {}", e);
         }
         return null;
     }
 
-    public String getFieldSearch(FieldSearchResult results) {
+    public String getFieldSearch(final FieldSearchResult results) {
         try {
             // Build a context to hold the model
-            VelocityContext velocityContext = new VelocityContext();
+            final VelocityContext velocityContext = new VelocityContext();
             velocityContext.put("results", results);
 
             // Execute the template
-            StringWriter writer = new StringWriter();
+            final StringWriter writer = new StringWriter();
             velocityEngine.mergeTemplate("views/search-results-form.vm",
                     "utf-8", velocityContext, writer);
 
             // Return the result
             return writer.toString();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.warn("Exception rendering Velocity template: {}", e);
         }
         return null;

@@ -1,3 +1,4 @@
+
 package org.fcrepo.audit;
 
 import static org.mockito.Matchers.argThat;
@@ -23,11 +24,11 @@ import com.google.common.eventbus.EventBus;
 
 public class LogbackAuditorTest {
 
-    private int jcrEventType = 1;
+    private final int jcrEventType = 1;
 
-    private String jcrEventUserID = "jdoe";
+    private final String jcrEventUserID = "jdoe";
 
-    private String jcrEventPath = "/foo/bar";
+    private final String jcrEventPath = "/foo/bar";
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
@@ -39,19 +40,20 @@ public class LogbackAuditorTest {
 
     @Test
     public void testEventAuditing() throws Exception {
-        Logger root = (Logger) LoggerFactory.getLogger(LogbackAuditor.class);
+        final Logger root =
+                (Logger) LoggerFactory.getLogger(LogbackAuditor.class);
 
         when(mockAppender.getName()).thenReturn("MockAppender");
 
-        Event mockEvent = mock(Event.class);
+        final Event mockEvent = mock(Event.class);
         when(mockEvent.getType()).thenReturn(jcrEventType);
         when(mockEvent.getUserID()).thenReturn(jcrEventUserID);
         when(mockEvent.getPath()).thenReturn(jcrEventPath);
 
         root.addAppender(mockAppender);
 
-        EventBus eventBus = new EventBus("Test EventBus");
-        Auditor auditor = new LogbackAuditor();
+        final EventBus eventBus = new EventBus("Test EventBus");
+        final Auditor auditor = new LogbackAuditor();
         eventBus.register(auditor);
         eventBus.post(mockEvent);
 

@@ -51,7 +51,7 @@ public class SelfHealingIT {
     @Before
     public void setRepository() throws RepositoryException {
 
-        URL config =
+        final URL config =
                 this.getClass().getClassLoader().getResource(
                         "test_selfhealing_repository.json");
         repo =
@@ -68,7 +68,7 @@ public class SelfHealingIT {
     }
 
     private void setupInitialNodes() throws RepositoryException {
-        Session s = repo.login();
+        final Session s = repo.login();
         final Node objectStore =
                 new JcrTools(true).findOrCreateNode(s, "/objects");
 
@@ -90,9 +90,9 @@ public class SelfHealingIT {
         final Set<LowLevelCacheEntry> binaryBlobs =
                 lowLevelService.getBinaryBlobs(node);
 
-        Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
+        final Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
 
-        LowLevelCacheEntry entryToTamper = it.next();
+        final LowLevelCacheEntry entryToTamper = it.next();
         entryToTamper.storeValue(new ByteArrayInputStream("qwerty".getBytes()));
         Thread.sleep(1000);
 
@@ -109,7 +109,7 @@ public class SelfHealingIT {
 
     @Test
     public void testEddiesMagicSelfHealingRepository() throws Exception {
-        Session session = repo.login();
+        final Session session = repo.login();
 
         objectService.createObjectNode(session, "testSelfHealingObject");
 
@@ -131,11 +131,11 @@ public class SelfHealingIT {
 
         Thread.sleep(1000);
 
-        Datastream ds =
+        final Datastream ds =
                 datastreamService.getDatastream("testSelfHealingObject",
                         "testDatastreamNode5");
 
-        Datastream ds2 =
+        final Datastream ds2 =
                 datastreamService.getDatastream("testSelfHealingObject",
                         "testDatastreamNode4");
 
@@ -149,7 +149,7 @@ public class SelfHealingIT {
         logger.info("ds1");
         boolean fixityOk = true;
 
-        for (FixityResult fixityResult : nodeFixity) {
+        for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
@@ -162,7 +162,7 @@ public class SelfHealingIT {
 
         fixityOk = true;
 
-        for (FixityResult fixityResult : nodeFixity2) {
+        for (final FixityResult fixityResult : nodeFixity2) {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
@@ -176,7 +176,7 @@ public class SelfHealingIT {
         nodeFixity = getNodeFixity(ds);
 
         fixityOk = true;
-        for (FixityResult fixityResult : nodeFixity) {
+        for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
@@ -190,7 +190,7 @@ public class SelfHealingIT {
         nodeFixity = getNodeFixity(ds);
 
         fixityOk = true;
-        for (FixityResult fixityResult : nodeFixity) {
+        for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()

@@ -67,25 +67,21 @@
     <dependency>
       <groupId>com.sun.grizzly</groupId>
       <artifactId>grizzly-servlet-webserver</artifactId>
-      <version>1.9.57</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-grizzly</artifactId>
-      <version>1.17.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>javax.mail</groupId>
       <artifactId>mail</artifactId>
-      <version>1.4.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey.contribs</groupId>
       <artifactId>jersey-spring</artifactId>
-      <version>1.17.1</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -95,10 +91,10 @@
       </exclusions>
     </dependency>
 
-    <!-- This dependency is for compile-time: it keeps this module independent of 
-      any given choice of JAX-RS implementation. It must be _after_ the test gear. Otherwise 
-      it will get loaded during test phase, but because this is just an API, the tests 
-      will not be able to execute. -->
+    <!-- This dependency is for compile-time: it keeps this module independent 
+      of any given choice of JAX-RS implementation. It must be _after_ the test 
+      gear. Otherwise it will get loaded during test phase, but because this is 
+      just an API, the tests will not be able to execute. -->
     <dependency>
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>

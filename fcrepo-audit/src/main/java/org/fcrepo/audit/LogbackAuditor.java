@@ -1,3 +1,4 @@
+
 package org.fcrepo.audit;
 
 import static org.fcrepo.utils.EventType.getEventName;
@@ -20,12 +21,12 @@ public class LogbackAuditor implements Auditor {
     /**
      * Logger for this class.
      */
-    private Logger logger = LoggerFactory.getLogger(LogbackAuditor.class);
+    private final Logger logger = LoggerFactory.getLogger(LogbackAuditor.class);
 
-	@Override
-	@Subscribe
+    @Override
+    @Subscribe
     public void recordEvent(final Event e) throws RepositoryException {
-		logger.info(e.getUserID() + " " + getEventName(e.getType()) + " "
-				+ e.getPath());
-	}
+        logger.info(e.getUserID() + " " + getEventName(e.getType()) + " " +
+                e.getPath());
+    }
 }

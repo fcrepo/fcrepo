@@ -19,8 +19,8 @@ public class FieldSearchResult {
 
     private String searchTerms;
 
-    public FieldSearchResult(List<ObjectFields> objectFieldsList, int start,
-            int maxResults, int size) {
+    public FieldSearchResult(final List<ObjectFields> objectFieldsList,
+            final int start, final int maxResults, final int size) {
         this.objectFieldsList = objectFieldsList;
         this.start = start;
         this.maxResults = maxResults;
@@ -35,11 +35,11 @@ public class FieldSearchResult {
         return start;
     }
 
-    public void setStart(int start) {
+    public void setStart(final int start) {
         this.start = start;
     }
 
-    public void setMaxResults(int maxResults) {
+    public void setMaxResults(final int maxResults) {
         this.maxResults = maxResults;
     }
 
@@ -55,7 +55,7 @@ public class FieldSearchResult {
         return searchTerms;
     }
 
-    public void setSearchTerms(String searchTerms) {
+    public void setSearchTerms(final String searchTerms) {
         this.searchTerms = searchTerms;
     }
 }

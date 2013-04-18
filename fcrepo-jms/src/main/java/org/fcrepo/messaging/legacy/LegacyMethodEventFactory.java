@@ -24,21 +24,22 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
     }
 
     @Override
-    public Message getMessage(Event jcrEvent, javax.jcr.Session jcrSession,
-            javax.jms.Session jmsSession) throws RepositoryException,
+    public Message getMessage(final Event jcrEvent,
+            final javax.jcr.Session jcrSession,
+            final javax.jms.Session jmsSession) throws RepositoryException,
             IOException, JMSException {
         logger.trace("Received an event to transform.");
-        String path = jcrEvent.getPath();
+        final String path = jcrEvent.getPath();
         logger.trace("Retrieved path from event.");
-        Node resource = jcrSession.getNode(path);
+        final Node resource = jcrSession.getNode(path);
         logger.trace("Retrieved node from event.");
-        LegacyMethod legacy = new LegacyMethod(jcrEvent, resource);
-        StringWriter writer = new StringWriter();
+        final LegacyMethod legacy = new LegacyMethod(jcrEvent, resource);
+        final StringWriter writer = new StringWriter();
         legacy.writeTo(writer);
-        String atomMessage = writer.toString();
+        final String atomMessage = writer.toString();
         logger.debug("Constructed serialized Atom message from event.");
-        TextMessage tm = jmsSession.createTextMessage(atomMessage);
-        String pid = legacy.getPid();
+        final TextMessage tm = jmsSession.createTextMessage(atomMessage);
+        final String pid = legacy.getPid();
         if (pid != null) {
             tm.setStringProperty("pid", pid);
         }

@@ -26,7 +26,8 @@ public class ObjectDatastreams {
         @XmlAttribute
         public String mimeType;
 
-        public DatastreamElement(String dsid, String label, String mimeType) {
+        public DatastreamElement(final String dsid, final String label,
+                final String mimeType) {
             this.dsid = dsid;
             this.label = label;
             this.mimeType = mimeType;

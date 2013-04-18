@@ -76,7 +76,7 @@ public class LegacyMethod {
         try (final InputStream is =
                 LegacyMethod.class.getResourceAsStream(MAP_PROPERTIES)) {
             FEDORA_TYPES.load(is);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
             // it's in the jar.
         }
@@ -84,19 +84,19 @@ public class LegacyMethod {
 
     private final Entry delegate;
 
-    public LegacyMethod(Event jcrEvent, Node resource)
+    public LegacyMethod(final Event jcrEvent, final Node resource)
             throws RepositoryException {
         this(newEntry());
 
-        boolean isDatastreamNode =
+        final boolean isDatastreamNode =
                 FedoraTypesUtils.isFedoraDatastream.apply(resource);
-        boolean isObjectNode =
+        final boolean isObjectNode =
                 FedoraTypesUtils.isFedoraObject.apply(resource) &&
                         !isDatastreamNode;
 
         if (isDatastreamNode || isObjectNode) {
             setMethodName(mapMethodName(jcrEvent, isObjectNode));
-            String returnValue = getReturnValue(jcrEvent, resource);
+            final String returnValue = getReturnValue(jcrEvent, resource);
             setContent(getEntryContent(getMethodName(), returnValue));
             if (isDatastreamNode) {
                 setPid(resource.getParent().getName());
@@ -107,18 +107,17 @@ public class LegacyMethod {
         } else {
             setMethodName(null);
         }
-        String userID =
-                (jcrEvent.getUserID() == null) ? "unknown" : jcrEvent
-                        .getUserID();
+        final String userID =
+                jcrEvent.getUserID() == null ? "unknown" : jcrEvent.getUserID();
         setUserId(userID);
         setModified(new Date(jcrEvent.getDate()));
     }
 
-    public LegacyMethod(Entry atomEntry) {
+    public LegacyMethod(final Entry atomEntry) {
         delegate = atomEntry;
     }
 
-    public LegacyMethod(String atomEntry) {
+    public LegacyMethod(final String atomEntry) {
         delegate =
                 (Entry) abderaParser.parse(new StringReader(atomEntry))
                         .getRoot();
@@ -128,7 +127,7 @@ public class LegacyMethod {
         return delegate;
     }
 
-    public void setContent(String content) {
+    public void setContent(final String content) {
         delegate.setContent(content);
     }
 
@@ -143,7 +142,7 @@ public class LegacyMethod {
         return delegate.getAuthor().getName();
     }
 
-    public void setModified(Date date) {
+    public void setModified(final Date date) {
         delegate.setUpdated(date);
     }
 
@@ -151,7 +150,7 @@ public class LegacyMethod {
         return delegate.getUpdated();
     }
 
-    public void setMethodName(String val) {
+    public void setMethodName(final String val) {
         delegate.setTitle(val).setBaseUri(BASE_URL);
     }
 
@@ -159,8 +158,8 @@ public class LegacyMethod {
         return delegate.getTitle();
     }
 
-    public void setPid(String val) {
-        List<Category> vals = delegate.getCategories("fedora-types:pid");
+    public void setPid(final String val) {
+        final List<Category> vals = delegate.getCategories("fedora-types:pid");
         if (vals == null || vals.isEmpty()) {
             delegate.addCategory("xsd:string", val, "fedora-types:pid");
         } else {
@@ -170,8 +169,8 @@ public class LegacyMethod {
     }
 
     public String getPid() {
-        List<Category> categories = delegate.getCategories("xsd:string");
-        for (Category c : categories) {
+        final List<Category> categories = delegate.getCategories("xsd:string");
+        for (final Category c : categories) {
             if ("fedora-types:pid".equals(c.getLabel())) {
                 return c.getTerm();
             }
@@ -179,8 +178,8 @@ public class LegacyMethod {
         return null;
     }
 
-    public void setDsId(String val) {
-        List<Category> vals = delegate.getCategories("fedora-types:dsID");
+    public void setDsId(final String val) {
+        final List<Category> vals = delegate.getCategories("fedora-types:dsID");
         if (vals == null || vals.isEmpty()) {
             delegate.addCategory("xsd:string", val, "fedora-types:dsID");
         } else {
@@ -189,8 +188,8 @@ public class LegacyMethod {
     }
 
     public String getDsId() {
-        List<Category> categories = delegate.getCategories("xsd:string");
-        for (Category c : categories) {
+        final List<Category> categories = delegate.getCategories("xsd:string");
+        for (final Category c : categories) {
             if ("fedora-types:dsID".equals(c.getLabel())) {
                 return c.getTerm();
             }
@@ -198,12 +197,12 @@ public class LegacyMethod {
         return null;
     }
 
-    public void writeTo(Writer writer) throws IOException {
+    public void writeTo(final Writer writer) throws IOException {
         delegate.writeTo(writer);
     }
 
     private static Entry newEntry() {
-        Entry entry = abdera.newEntry();
+        final Entry entry = abdera.newEntry();
         entry.declareNS(XSD_NS, "xsd");
         entry.declareNS(TYPES_NS, "fedora-types");
         entry.setId("urn:uuid:" + UUID.randomUUID().toString());
@@ -212,17 +211,20 @@ public class LegacyMethod {
         return entry;
     }
 
-    private static String getEntryContent(String methodName, String returnVal) {
+    private static String getEntryContent(final String methodName,
+            final String returnVal) {
         //String parm = (String)FEDORA_TYPES.get(methodName + ".parm");
-        String datatype = (String) FEDORA_TYPES.get(methodName + ".datatype");
+        final String datatype =
+                (String) FEDORA_TYPES.get(methodName + ".datatype");
         return objectToString(returnVal, datatype);
     }
 
-    private static String objectToString(String obj, String xsdType) {
+    private static String
+            objectToString(final String obj, final String xsdType) {
         if (obj == null) {
             return "null";
         }
-        String javaType = obj.getClass().getCanonicalName();
+        final String javaType = obj.getClass().getCanonicalName();
         String term;
         //TODO Most of these types are not yet relevant to FCR4, but we can borrow their serializations as necessary
         if (javaType != null && javaType.equals("java.util.Date")) { // several circumstances yield null canonical names
@@ -257,8 +259,8 @@ public class LegacyMethod {
         return term;
     }
 
-    private static String getReturnValue(Event jcrEvent, Node jcrNode)
-            throws RepositoryException {
+    private static String getReturnValue(final Event jcrEvent,
+            final Node jcrNode) throws RepositoryException {
         switch (jcrEvent.getType()) {
             case NODE_ADDED:
                 return jcrNode.getName();
@@ -274,7 +276,8 @@ public class LegacyMethod {
         return null;
     }
 
-    private static String mapMethodName(Event jcrEvent, boolean isObjectNode) {
+    private static String mapMethodName(final Event jcrEvent,
+            final boolean isObjectNode) {
         switch (jcrEvent.getType()) {
             case NODE_ADDED:
                 return isObjectNode ? "ingest" : "addDatastream";
@@ -295,18 +298,18 @@ public class LegacyMethod {
      * @return the lexical form of the XSD dateTime value, e.g.
      *         "2006-11-13T09:40:55.001Z".
      */
-    private static String convertDateToXSDString(long date) {
+    private static String convertDateToXSDString(final long date) {
         final DateTime dt = new DateTime(date);
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+        final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
         return fmt.print(dt);
     }
 
-    public static boolean canParse(Message jmsMessage) {
+    public static boolean canParse(final Message jmsMessage) {
         try {
             return FORMAT.equals(jmsMessage.getJMSType()) &&
                     METHOD_NAMES.contains(jmsMessage
                             .getStringProperty("methodName"));
-        } catch (JMSException e) {
+        } catch (final JMSException e) {
             logger.info("Could not parse message: {}", jmsMessage);
             return false;
         }

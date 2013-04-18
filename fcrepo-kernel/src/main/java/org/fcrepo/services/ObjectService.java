@@ -95,7 +95,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      * @return A FedoraObject with the proffered PID
      * @throws RepositoryException
      */
-    public FedoraObject getObject(Session session, String pid)
+    public FedoraObject getObject(final Session session, final String pid)
             throws RepositoryException {
         logger.trace("Executing getObject() with pid: " + pid);
         return new FedoraObject(getObjectNode(session, pid));
@@ -107,8 +107,8 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public Set<String> getObjectNames() throws RepositoryException {
 
-        Node objects = readOnlySession.getNode(getObjectJcrNodePath(""));
-        Builder<String> b = builder();
+        final Node objects = readOnlySession.getNode(getObjectJcrNodePath(""));
+        final Builder<String> b = builder();
         for (final NodeIterator i = objects.getNodes(); i.hasNext();) {
             b.add(i.nextNode().getName());
         }
@@ -116,9 +116,10 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
 
     }
 
-    public void deleteObject(String pid, Session session)
+    public void deleteObject(final String pid, final Session session)
             throws PathNotFoundException, RepositoryException {
-        Node obj = session.getNode(getObjectJcrNodePath(pid));
+        final Node obj = session.getNode(getObjectJcrNodePath(pid));
+        final long objSize = getObjectSize(obj);
         obj.remove();
         session.save();
     }

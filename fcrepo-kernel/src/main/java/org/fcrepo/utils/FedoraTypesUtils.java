@@ -34,14 +34,14 @@ public class FedoraTypesUtils {
     static public Predicate<Node> isFedoraObject = new Predicate<Node>() {
 
         @Override
-        public boolean apply(Node node) {
+        public boolean apply(final Node node) {
             if (node == null) {
                 return false;
             }
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OBJECT);
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new IllegalStateException(e);
             }
         }
@@ -53,14 +53,14 @@ public class FedoraTypesUtils {
     static public Predicate<Node> isFedoraDatastream = new Predicate<Node>() {
 
         @Override
-        public boolean apply(Node node) {
+        public boolean apply(final Node node) {
             if (node == null) {
                 return false;
             }
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_DATASTREAM);
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new IllegalStateException(e);
             }
         }
@@ -72,14 +72,14 @@ public class FedoraTypesUtils {
     static public Predicate<Node> isOwned = new Predicate<Node>() {
 
         @Override
-        public boolean apply(Node node) {
+        public boolean apply(final Node node) {
             if (node == null) {
                 return false;
             }
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OWNED);
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new IllegalStateException(e);
             }
         }
@@ -92,7 +92,7 @@ public class FedoraTypesUtils {
             new Function<NodeType, String>() {
 
                 @Override
-                public String apply(NodeType t) {
+                public String apply(final NodeType t) {
                     return t == null ? null : t.getName();
                 }
             };
@@ -104,10 +104,10 @@ public class FedoraTypesUtils {
             new Function<Value, String>() {
 
                 @Override
-                public String apply(Value v) {
+                public String apply(final Value v) {
                     try {
                         return v == null ? null : v.getString();
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
@@ -117,20 +117,20 @@ public class FedoraTypesUtils {
             new Function<Node, ValueFactory>() {
 
                 @Override
-                public ValueFactory apply(Node n) {
+                public ValueFactory apply(final Node n) {
                     try {
                         return n == null ? null : n.getSession()
                                 .getValueFactory();
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
             };
 
-    public static Binary getBinary(Node n, InputStream i) {
+    public static Binary getBinary(final Node n, final InputStream i) {
         try {
             return n.getSession().getValueFactory().createBinary(i);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -143,8 +143,8 @@ public class FedoraTypesUtils {
      * @param f A Function<F,T>.
      * @return An ImmutableSet copy of input after transformation by f
      */
-    public static <From, To> Collection<To> map(From[] input,
-            Function<From, To> f) {
+    public static <From, To> Collection<To> map(final From[] input,
+            final Function<From, To> f) {
         return transform(copyOf(input), f);
     }
 

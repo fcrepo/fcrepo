@@ -14,7 +14,7 @@ public class PathNotFoundExceptionMapper implements
         ExceptionMapper<PathNotFoundException> {
 
     @Override
-    public Response toResponse(PathNotFoundException arg0) {
+    public Response toResponse(final PathNotFoundException arg0) {
         return status(NOT_FOUND).build();
     }
 

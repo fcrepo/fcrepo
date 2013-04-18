@@ -107,7 +107,8 @@ public class FedoraObjects extends AbstractResource {
 
         final Session session = getAuthenticatedSession();
         try {
-            FedoraObject result = objectService.createObject(session, pid);
+            final FedoraObject result =
+                    objectService.createObject(session, pid);
             if (label != null && !"".equals(label)) {
                 result.setLabel(label);
             }

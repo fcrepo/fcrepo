@@ -11,9 +11,9 @@ public class UUIDPidMinterTest {
     @Test
     public void testMintPid() throws Exception {
 
-        PidMinter pidMinter = new UUIDPidMinter();
+        final PidMinter pidMinter = new UUIDPidMinter();
 
-        String pid = pidMinter.mintPid();
+        final String pid = pidMinter.mintPid();
 
         assertTrue("PID wasn't a UUID", compile(
                 "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")

@@ -4,7 +4,6 @@ package org.fcrepo;
 import static javax.ws.rs.core.Response.noContent;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.jcr.LoginException;
 import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
@@ -105,7 +104,7 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param repo
      */
-    public void setSessionFactory(SessionFactory sessions) {
+    public void setSessionFactory(final SessionFactory sessions) {
         this.sessions = sessions;
     }
 
@@ -113,7 +112,7 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param uriInfo
      */
-    public void setUriInfo(UriInfo uriInfo) {
+    public void setUriInfo(final UriInfo uriInfo) {
         this.uriInfo = uriInfo;
     }
 
@@ -121,7 +120,7 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param pidMinter
      */
-    public void setPidMinter(PidMinter pidMinter) {
+    public void setPidMinter(final PidMinter pidMinter) {
         this.pidMinter = pidMinter;
     }
 
@@ -129,7 +128,7 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param SecurityContext
      */
-    public void setSecurityContext(SecurityContext securityContext) {
+    public void setSecurityContext(final SecurityContext securityContext) {
         this.securityContext = securityContext;
     }
 
@@ -137,7 +136,7 @@ public abstract class AbstractResource {
      * A testing convenience setter for otherwise injected resources
      * @param HttpServletRequest
      */
-    public void setHttpServletRequest(HttpServletRequest servletRequest) {
+    public void setHttpServletRequest(final HttpServletRequest servletRequest) {
         this.servletRequest = servletRequest;
     }
 

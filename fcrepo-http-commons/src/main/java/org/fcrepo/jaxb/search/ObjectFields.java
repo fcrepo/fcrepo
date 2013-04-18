@@ -25,7 +25,7 @@ public class ObjectFields {
         return pid;
     }
 
-    public void setPid(String pid) {
+    public void setPid(final String pid) {
         this.pid = pid;
     }
 
@@ -33,7 +33,7 @@ public class ObjectFields {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(final String label) {
         this.label = label;
     }
 
@@ -41,7 +41,7 @@ public class ObjectFields {
         return path;
     }
 
-    public void setPath(String path) {
+    public void setPath(final String path) {
         this.path = path;
     }
 
@@ -49,7 +49,7 @@ public class ObjectFields {
         return state;
     }
 
-    public void setState(String state) {
+    public void setState(final String state) {
         this.state = state;
     }
 
@@ -57,7 +57,7 @@ public class ObjectFields {
         return ownerId;
     }
 
-    public void setOwnerId(String ownerId) {
+    public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;
     }
 
@@ -65,7 +65,7 @@ public class ObjectFields {
         return createdDate;
     }
 
-    public void setCreatedDate(String createdDate) {
+    public void setCreatedDate(final String createdDate) {
         this.createdDate = createdDate;
     }
 
@@ -73,7 +73,7 @@ public class ObjectFields {
         return modifiedDate;
     }
 
-    public void setModifiedDate(String modifiedDate) {
+    public void setModifiedDate(final String modifiedDate) {
         this.modifiedDate = modifiedDate;
     }
 }

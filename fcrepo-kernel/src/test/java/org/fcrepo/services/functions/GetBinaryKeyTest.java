@@ -18,14 +18,14 @@ public class GetBinaryKeyTest {
 
     @Test
     public void testApply() throws LoginException, RepositoryException {
-        Node mockNode = mock(Node.class);
-        Node mockContent = mock(Node.class);
-        Property mockProp = mock(Property.class);
-        BinaryValue mockBin = mock(BinaryValue.class);
+        final Node mockNode = mock(Node.class);
+        final Node mockContent = mock(Node.class);
+        final Property mockProp = mock(Property.class);
+        final BinaryValue mockBin = mock(BinaryValue.class);
         when(mockProp.getBinary()).thenReturn(mockBin);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProp);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        GetBinaryKey testObj = new GetBinaryKey();
+        final GetBinaryKey testObj = new GetBinaryKey();
         testObj.apply(mockNode);
     }
 

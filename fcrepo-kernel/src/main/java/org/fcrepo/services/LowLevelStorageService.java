@@ -114,11 +114,11 @@ public class LowLevelStorageService {
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
-    public Set<LowLevelCacheEntry> getBinaryBlobs(BinaryKey key) {
+    public Set<LowLevelCacheEntry> getBinaryBlobs(final BinaryKey key) {
 
-        ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
+        final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
-        BinaryStore store = getBinaryStore.apply(repo);
+        final BinaryStore store = getBinaryStore.apply(repo);
 
         if (store == null) {
             return blobs.build();
@@ -126,12 +126,14 @@ public class LowLevelStorageService {
 
         // if we have an Infinispan store, it may have multiple stores (or cluster nodes)
         if (store instanceof InfinispanBinaryStore) {
-            InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
+            final InfinispanBinaryStore ispnStore =
+                    (InfinispanBinaryStore) store;
 
             //seems like we have to start it, not sure why.
             ispnStore.start();
 
-            for (Cache<?, ?> c : ImmutableSet.copyOf(ispnStore.getCaches())) {
+            for (final Cache<?, ?> c : ImmutableSet.copyOf(ispnStore
+                    .getCaches())) {
 
                 final CacheStore cacheStore = getCacheStore.apply(c);
 
@@ -140,7 +142,8 @@ public class LowLevelStorageService {
                     final ChainingCacheStore chainingCacheStore =
                             (ChainingCacheStore) cacheStore;
                     // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
-                    for (CacheStore s : chainingCacheStore.getStores().keySet()) {
+                    for (final CacheStore s : chainingCacheStore.getStores()
+                            .keySet()) {
                         blobs.add(new LowLevelCacheEntry(store, s, key));
                     }
                 } else {
@@ -159,7 +162,7 @@ public class LowLevelStorageService {
     public final void getSession() {
         try {
             readOnlySession = repo.login();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -169,7 +172,7 @@ public class LowLevelStorageService {
         readOnlySession.logout();
     }
 
-    public void setRepository(Repository repository) {
+    public void setRepository(final Repository repository) {
         if (readOnlySession != null) {
             logoutSession();
         }
@@ -179,7 +182,7 @@ public class LowLevelStorageService {
     }
 
     public Collection<FixityResult> runFixityAndFixProblems(
-            Datastream datastream) throws RepositoryException {
+            final Datastream datastream) throws RepositoryException {
         Set<FixityResult> fixityResults;
         Set<FixityResult> goodEntries;
         final URI digestUri = datastream.getContentDigest();
@@ -190,7 +193,7 @@ public class LowLevelStorageService {
 
         try {
             digest = getInstance(datastream.getContentDigestType());
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new RepositoryException(e.getMessage(), e);
         }
 
@@ -230,7 +233,7 @@ public class LowLevelStorageService {
                 } else {
                     fixityErrorCounter.inc();
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 logger.warn("Exception repairing low-level cache entry: {}", e);
             }
         }

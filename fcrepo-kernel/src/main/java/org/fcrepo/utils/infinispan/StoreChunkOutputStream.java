@@ -32,7 +32,8 @@ public class StoreChunkOutputStream extends OutputStream {
     private final InternalEntryFactory entryFactory =
             new InternalEntryFactoryImpl();
 
-    public StoreChunkOutputStream(CacheStore blobCache, String keyPrefix) {
+    public StoreChunkOutputStream(final CacheStore blobCache,
+            final String keyPrefix) {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.keyPrefix = keyPrefix;
@@ -47,7 +48,7 @@ public class StoreChunkOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(final int b) throws IOException {
         if (chunkBuffer.size() == CHUNKSIZE) {
             storeBufferInBLOBCache();
         }
@@ -55,11 +56,12 @@ public class StoreChunkOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len)
+            throws IOException {
         if (len + chunkBuffer.size() <= CHUNKSIZE) {
             chunkBuffer.write(b, off, len);
         } else {
-            int storeLength = CHUNKSIZE - chunkBuffer.size();
+            final int storeLength = CHUNKSIZE - chunkBuffer.size();
             write(b, off, storeLength);
             storeBufferInBLOBCache();
             write(b, off + storeLength, len - storeLength);
@@ -83,8 +85,8 @@ public class StoreChunkOutputStream extends OutputStream {
     private void storeBufferInBLOBCache() throws IOException {
         final byte[] chunk = chunkBuffer.toByteArray();
         try {
-            String chunkKey = keyPrefix + "-" + chunkIndex;
-            InternalCacheEntry c = blobCache.load(chunkKey);
+            final String chunkKey = keyPrefix + "-" + chunkIndex;
+            final InternalCacheEntry c = blobCache.load(chunkKey);
             final InternalCacheEntry cacheEntry;
             if (c == null) {
                 cacheEntry =
@@ -96,7 +98,7 @@ public class StoreChunkOutputStream extends OutputStream {
 
             logger.debug("Store chunk {0}", chunkKey);
             blobCache.store(cacheEntry);
-        } catch (CacheLoaderException e) {
+        } catch (final CacheLoaderException e) {
             throw new IOException(e);
         }
 

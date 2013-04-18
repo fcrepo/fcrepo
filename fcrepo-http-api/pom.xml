@@ -42,13 +42,11 @@
     <dependency>
     	<groupId>com.sun.jersey</groupId>
     	<artifactId>jersey-core</artifactId>
-    	<version>1.17.1</version>
-    </dependency>
+    	</dependency>
     <dependency>
     	<groupId>com.sun.jersey.contribs</groupId>
     	<artifactId>jersey-multipart</artifactId>
-    	<version>1.17.1</version>
-    </dependency>
+    	</dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
@@ -78,25 +76,21 @@
     <dependency>
       <groupId>com.sun.grizzly</groupId>
       <artifactId>grizzly-servlet-webserver</artifactId>
-      <version>1.9.57</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-grizzly</artifactId>
-      <version>1.17.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>javax.mail</groupId>
       <artifactId>mail</artifactId>
-      <version>1.4.4</version>
       <scope>test</scope>
     </dependency>
 	<dependency>
 		<groupId>com.sun.jersey.contribs</groupId>
 		<artifactId>jersey-spring</artifactId>
-		<version>1.17.1</version>
 		<scope>test</scope>
 		<exclusions>
 			<exclusion>

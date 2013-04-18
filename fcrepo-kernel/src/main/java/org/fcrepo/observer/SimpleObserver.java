@@ -56,7 +56,7 @@ public class SimpleObserver implements EventListener {
 
     @PostConstruct
     public void buildListener() throws RepositoryException {
-        Session session = repository.login();
+        final Session session = repository.login();
         session.getWorkspace().getObservationManager().addEventListener(this,
                 eventTypes, "/", true, null, null, false);
         session.save();
@@ -64,7 +64,7 @@ public class SimpleObserver implements EventListener {
     }
 
     @Override
-    public void onEvent(EventIterator events) {
+    public void onEvent(final EventIterator events) {
 
         for (final Event e : filter(new FedoraEventIterator(events),
                 eventFilter)) {

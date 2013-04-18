@@ -37,7 +37,7 @@ public class DatastreamIT extends AbstractIT {
     public void testLabel() throws Exception {
         Session session = repo.login();
         objectService.createObjectNode(session, "testDatastreamObject");
-        Node dsNode =
+        final Node dsNode =
                 datastreamService.createDatastreamNode(session,
                         "/objects/testDatastreamObject/testDatastreamNode",
                         "application/octet-stream", new ByteArrayInputStream(
@@ -74,7 +74,7 @@ public class DatastreamIT extends AbstractIT {
     @Test
     public void testDatastreamContent() throws IOException,
             RepositoryException, InvalidChecksumException {
-        Session session = repo.login();
+        final Session session = repo.login();
         objectService.createObjectNode(session, "testDatastreamObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testDatastreamObject/testDatastreamNode1",
@@ -86,7 +86,7 @@ public class DatastreamIT extends AbstractIT {
         final Datastream ds =
                 datastreamService.getDatastream("testDatastreamObject",
                         "testDatastreamNode1");
-        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("asdf", contentString);
 
@@ -95,7 +95,7 @@ public class DatastreamIT extends AbstractIT {
     @Test
     public void testDatastreamContentDigestAndLength() throws IOException,
             RepositoryException, InvalidChecksumException {
-        Session session = repo.login();
+        final Session session = repo.login();
         objectService.createObjectNode(session, "testDatastreamObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testDatastreamObject/testDatastreamNode2",
@@ -111,7 +111,7 @@ public class DatastreamIT extends AbstractIT {
                 .getContentDigest().toString());
         assertEquals(4L, ds.getContentSize());
 
-        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("asdf", contentString);
     }
@@ -119,7 +119,7 @@ public class DatastreamIT extends AbstractIT {
     @Test
     public void testModifyDatastreamContentDigestAndLength()
             throws IOException, RepositoryException, InvalidChecksumException {
-        Session session = repo.login();
+        final Session session = repo.login();
         objectService.createObjectNode(session, "testDatastreamObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testDatastreamObject/testDatastreamNode3",
@@ -137,7 +137,7 @@ public class DatastreamIT extends AbstractIT {
                 .getContentDigest().toString());
         assertEquals(10L, ds.getContentSize());
 
-        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("0123456789", contentString);
     }
@@ -145,7 +145,7 @@ public class DatastreamIT extends AbstractIT {
     @Test
     public void testDatastreamContentWithChecksum() throws IOException,
             RepositoryException, InvalidChecksumException {
-        Session session = repo.login();
+        final Session session = repo.login();
         objectService.createObjectNode(session, "testDatastreamObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testDatastreamObject/testDatastreamNode4",
@@ -161,7 +161,7 @@ public class DatastreamIT extends AbstractIT {
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
 
-        String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("asdf", contentString);
     }

@@ -55,25 +55,26 @@ public class FedoraFieldSearch extends AbstractResource implements
     @POST
     @Produces(TEXT_HTML)
     public String searchSubmit(@FormParam("terms")
-    String terms, @FormParam("offSet")
+    final String terms, @FormParam("offSet")
     String offSet, @FormParam("maxResults")
-    String maxResults) throws LoginException, RepositoryException {
+    final String maxResults) throws LoginException, RepositoryException {
 
         final Session session = getAuthenticatedSession();
-        QueryManager queryManager = session.getWorkspace().getQueryManager();
-        ValueFactory valueFactory = session.getValueFactory();
-        VelocityViewer view = new VelocityViewer();
+        final QueryManager queryManager =
+                session.getWorkspace().getQueryManager();
+        final ValueFactory valueFactory = session.getValueFactory();
+        final VelocityViewer view = new VelocityViewer();
 
         logger.debug("Searching for " + terms);
 
-        Query query = getQuery(queryManager, valueFactory, terms);
+        final Query query = getQuery(queryManager, valueFactory, terms);
         logger.debug("statement is " + query.getStatement());
 
         if (offSet == null) {
             offSet = "0";
         }
 
-        FieldSearchResult fsr =
+        final FieldSearchResult fsr =
                 search(query, parseInt(offSet), parseInt(maxResults));
         fsr.setSearchTerms(terms);
 
@@ -82,9 +83,10 @@ public class FedoraFieldSearch extends AbstractResource implements
         return view.getFieldSearch(fsr);
     }
 
-    Query getQuery(QueryManager queryManager, ValueFactory valueFactory,
-            String terms) throws InvalidQueryException, RepositoryException {
-        Query query = queryManager.createQuery(QUERY_STRING, JCR_SQL2);
+    Query getQuery(final QueryManager queryManager,
+            final ValueFactory valueFactory, final String terms)
+            throws InvalidQueryException, RepositoryException {
+        final Query query = queryManager.createQuery(QUERY_STRING, JCR_SQL2);
         query.bindValue("sterm", valueFactory.createValue("%" + terms + "%"));
         logger.debug("statement is " + query.getStatement());
         return query;
@@ -99,34 +101,34 @@ public class FedoraFieldSearch extends AbstractResource implements
      * @throws LoginException
      * @throws RepositoryException
      */
-    public FieldSearchResult search(Query query, int offSet, int maxResults)
-            throws LoginException, RepositoryException {
+    public FieldSearchResult search(final Query query, final int offSet,
+            final int maxResults) throws LoginException, RepositoryException {
 
-        ImmutableList.Builder<ObjectFields> fieldObjects = builder();
+        final ImmutableList.Builder<ObjectFields> fieldObjects = builder();
 
-        QueryResult queryResults = query.execute();
+        final QueryResult queryResults = query.execute();
 
-        NodeIterator nodeIter = queryResults.getNodes();
-        int size = (int) nodeIter.getSize();
+        final NodeIterator nodeIter = queryResults.getNodes();
+        final int size = (int) nodeIter.getSize();
         logger.debug(size + " results found");
 
         //add the next set of results to the fieldObjects starting at offSet for pagination
         int i = offSet;
         nodeIter.skip(offSet);
         while (nodeIter.hasNext() && i < offSet + maxResults) {
-            ObjectFields obj = new ObjectFields();
+            final ObjectFields obj = new ObjectFields();
             try {
-                Node node = nodeIter.nextNode();
+                final Node node = nodeIter.nextNode();
                 obj.setPid(node.getName());
                 obj.setPath(node.getPath());
                 fieldObjects.add(obj);
-            } catch (RepositoryException ex) {
+            } catch (final RepositoryException ex) {
                 logger.error(ex.getMessage());
             }
             i++;
         }
 
-        FieldSearchResult fsr =
+        final FieldSearchResult fsr =
                 new FieldSearchResult(fieldObjects.build(), offSet, maxResults,
                         size);
         fsr.setStart(offSet);
@@ -137,7 +139,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     public static String buildQueryString() {
         //TODO expand to more fields
-        String sqlExpression =
+        final String sqlExpression =
                 "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE [" +
                         DC_IDENTIFIER + "] like $sterm OR [" + DC_TITLE +
                         "] like $sterm";

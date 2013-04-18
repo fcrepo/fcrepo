@@ -1,3 +1,4 @@
+
 package org.fcrepo.audit;
 
 import javax.jcr.RepositoryException;
@@ -18,6 +19,6 @@ public interface Auditor {
      * 
      * @throws RepositoryException 
      */
-	@Subscribe
-    void recordEvent(Event e) throws RepositoryException;
+    @Subscribe
+    void recordEvent(final Event e) throws RepositoryException;
 }

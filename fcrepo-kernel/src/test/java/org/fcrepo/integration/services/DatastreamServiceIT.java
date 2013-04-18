@@ -52,7 +52,7 @@ public class DatastreamServiceIT extends AbstractIT {
     @Test
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
-        InputStream is = new ByteArrayInputStream("asdf".getBytes());
+        final InputStream is = new ByteArrayInputStream("asdf".getBytes());
         objectService.createObjectNode(session, "testDatastreamServiceObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testDatastreamServiceObject/testDatastreamNode",

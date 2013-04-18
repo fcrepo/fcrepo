@@ -8,10 +8,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -34,7 +32,6 @@ import org.openrdf.sail.memory.model.MemValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -48,7 +45,7 @@ public class DatastreamRdfGenerator extends AbstractResource {
 
     final private Logger logger = LoggerFactory
             .getLogger(DatastreamRdfGenerator.class);
-    
+
     @Autowired
     DatastreamService datastreamService;
 
@@ -83,9 +80,9 @@ public class DatastreamRdfGenerator extends AbstractResource {
                     ds.getNode().getSession().getWorkspace()
                             .getNamespaceRegistry();
             for (final String prefix : nReg.getPrefixes()) {
-                String nsURI = nReg.getURI(prefix);
-                if ( nsURI != null && !nsURI.equals("")
-                    && !prefix.equals("xmlns") ) {
+                final String nsURI = nReg.getURI(prefix);
+                if (nsURI != null && !nsURI.equals("") &&
+                        !prefix.equals("xmlns")) {
                     writer.receiveNamespace(prefix, nsURI, context);
                 }
             }
@@ -109,7 +106,8 @@ public class DatastreamRdfGenerator extends AbstractResource {
 
     }
 
-    public void setDsGenerators(List<TripleSource<Datastream>> dsGenerators) {
+    public void setDsGenerators(
+            final List<TripleSource<Datastream>> dsGenerators) {
         this.dsGenerators = dsGenerators;
     }
 

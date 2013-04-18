@@ -78,9 +78,9 @@ public class DatastreamProfile {
      * @return the lexical form of the XSD dateTime value, e.g.
      *         "2006-11-13T09:40:55.001Z".
      */
-    public static String convertDateToXSDString(long date) {
+    public static String convertDateToXSDString(final long date) {
         final DateTime dt = new DateTime(date);
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+        final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
         return fmt.print(dt);
     }
 

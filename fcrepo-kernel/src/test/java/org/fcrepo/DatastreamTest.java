@@ -64,7 +64,7 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Before
     public void setUp() {
-        String relPath =
+        final String relPath =
                 getDatastreamJcrNodePath(testPid, testDsId).substring(1);
 
         mockSession = mock(Session.class);
@@ -77,7 +77,7 @@ public class DatastreamTest implements FedoraJcrTypes {
             when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
             testObj = new Datastream(mockSession, "testObj", "testDs");
             verify(mockRootNode).getNode(relPath);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -97,10 +97,10 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test
     public void testGetContent() throws RepositoryException, IOException {
-        String expected = "asdf";
-        Node mockContent = getContentNodeMock(expected);
+        final String expected = "asdf";
+        final Node mockContent = getContentNodeMock(expected);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        String actual = IOUtils.toString(testObj.getContent());
+        final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
         verify(mockDsNode).getNode(JCR_CONTENT);
         verify(mockContent).getProperty(JCR_DATA);
@@ -109,29 +109,29 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void testSetContent() throws RepositoryException,
             InvalidChecksumException {
-        org.modeshape.jcr.api.Binary mockBin =
+        final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         PowerMockito.mockStatic(FedoraTypesUtils.class);
         when(
                 FedoraTypesUtils.getBinary(any(Node.class),
                         any(InputStream.class))).thenReturn(mockBin);
-        InputStream content = mock(InputStream.class);
-        Node mockContent = getContentNodeMock(8);
+        final InputStream content = mock(InputStream.class);
+        final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        ValueFactory mockVF = mock(ValueFactory.class);
+        final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
-        Property mockSize = mock(Property.class);
+        final Property mockSize = mock(Property.class);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockSize);
         testObj.setContent(content);
     }
 
     @Test
     public void getContentSize() throws RepositoryException {
-        int expectedContentLength = 2;
-        Node mockContent = getContentNodeMock(expectedContentLength);
+        final int expectedContentLength = 2;
+        final Node mockContent = getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        long actual = testObj.getContentSize();
+        final long actual = testObj.getContentSize();
         verify(mockDsNode).getNode(JCR_CONTENT);
         verify(mockContent).getProperty(CONTENT_SIZE);
         assertEquals(expectedContentLength, actual);
@@ -139,11 +139,11 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test
     public void getContentDigest() throws RepositoryException {
-        String content = "asdf";
-        URI expected = URI.create("urn:sha1:" + checksumString(content));
-        Node mockContent = getContentNodeMock(content);
+        final String content = "asdf";
+        final URI expected = URI.create("urn:sha1:" + checksumString(content));
+        final Node mockContent = getContentNodeMock(content);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        URI actual = testObj.getContentDigest();
+        final URI actual = testObj.getContentDigest();
         assertEquals(expected, actual);
         verify(mockContent).getProperty(DIGEST_ALGORITHM);
         verify(mockContent).getProperty(DIGEST_VALUE);
@@ -151,25 +151,25 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test
     public void getContentDigestType() throws RepositoryException {
-        String expected = "SHA-1";
-        Node mockContent = getContentNodeMock(8);
+        final String expected = "SHA-1";
+        final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        String actual = testObj.getContentDigestType();
+        final String actual = testObj.getContentDigestType();
         assertEquals(expected, actual);
         verify(mockContent).getProperty(DIGEST_ALGORITHM);
     }
 
     @Test
     public void testGetDsId() throws RepositoryException {
-        String actual = testObj.getDsId();
+        final String actual = testObj.getDsId();
         assertEquals(testDsId, actual);
     }
 
     @Test
     public void testGetObject() throws RepositoryException {
-        Node mockObjectNode = mock(Node.class);
+        final Node mockObjectNode = mock(Node.class);
         when(mockDsNode.getParent()).thenReturn(mockObjectNode);
-        FedoraObject actual = testObj.getObject();
+        final FedoraObject actual = testObj.getObject();
         assertNotNull(actual);
         assertEquals(actual.getNode(), mockObjectNode);
         verify(mockDsNode).getParent();
@@ -190,32 +190,32 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void testSetLabel() throws ValueFormatException, VersionException,
             LockException, ConstraintViolationException, RepositoryException {
-        String expected = "foo";
+        final String expected = "foo";
         testObj.setLabel(expected);
         verify(mockDsNode).setProperty(DC_TITLE, expected);
     }
 
     @Test
     public void testGetCreatedDate() throws RepositoryException {
-        Date expected = new Date();
-        Calendar cal = Calendar.getInstance();
+        final Date expected = new Date();
+        final Calendar cal = Calendar.getInstance();
         cal.setTime(expected);
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
         when(mockDsNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        Date actual = testObj.getCreatedDate();
+        final Date actual = testObj.getCreatedDate();
         assertEquals(expected.getTime(), actual.getTime());
     }
 
     @Test
     public void testGetLastModifiedDate() throws RepositoryException {
-        Date expected = new Date();
-        Calendar cal = Calendar.getInstance();
+        final Date expected = new Date();
+        final Calendar cal = Calendar.getInstance();
         cal.setTime(expected);
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
         when(mockDsNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
-        Date actual = testObj.getLastModifiedDate();
+        final Date actual = testObj.getLastModifiedDate();
         assertEquals(expected.getTime(), actual.getTime());
     }
 
@@ -229,18 +229,19 @@ public class DatastreamTest implements FedoraJcrTypes {
     public void testGetSize() throws RepositoryException {
         final int expectedProps = 1;
         final int expectedContentLength = 2;
-        Node mockContent = getContentNodeMock(expectedContentLength);
+        final Node mockContent = getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.getProperties()).thenAnswer(
                 new Answer<PropertyIterator>() {
 
                     @Override
-                    public PropertyIterator answer(InvocationOnMock invocation) {
+                    public PropertyIterator answer(
+                            final InvocationOnMock invocation) {
                         return TestHelpers
                                 .getPropertyIterator(1, expectedProps);
                     }
                 });
-        long actual = testObj.getSize();
+        final long actual = testObj.getSize();
         verify(mockDsNode, times(1)).getNode(JCR_CONTENT);
         verify(mockDsNode, times(1)).getProperties();
         assertEquals(3, actual);

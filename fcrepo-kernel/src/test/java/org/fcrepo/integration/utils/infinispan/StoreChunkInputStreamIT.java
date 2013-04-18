@@ -19,12 +19,12 @@ public class StoreChunkInputStreamIT {
 
     @Test
     public void tryRetrievingContentFromInfinispanIT() throws IOException {
-        EmbeddedCacheManager cm =
+        final EmbeddedCacheManager cm =
                 new DefaultCacheManager("test_infinispan_configuration.xml");
 
-        Cache<String, byte[]> ispn = cm.getCache("FedoraRepository");
+        final Cache<String, byte[]> ispn = cm.getCache("FedoraRepository");
 
-        CacheStore cs =
+        final CacheStore cs =
                 ispn.getAdvancedCache().getComponentRegistry().getComponent(
                         CacheLoaderManager.class).getCacheStore();
 
@@ -35,9 +35,9 @@ public class StoreChunkInputStreamIT {
         ispn.put("key-data-4", "4".getBytes());
         ispn.put("key-data-5", "5".getBytes());
 
-        InputStream is = new StoreChunkInputStream(cs, "key-data");
+        final InputStream is = new StoreChunkInputStream(cs, "key-data");
 
-        String data = IOUtils.toString(is);
+        final String data = IOUtils.toString(is);
 
         assertEquals("012345", data);
     }

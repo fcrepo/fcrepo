@@ -43,7 +43,7 @@ public class DefaultDatastreamGenerator implements TripleSource<Datastream> {
                 new Function<Triple, Triple>() {
 
                     @Override
-                    public Triple apply(Triple t) {
+                    public Triple apply(final Triple t) {
                         if (t == null) {
                             return null;
                         }

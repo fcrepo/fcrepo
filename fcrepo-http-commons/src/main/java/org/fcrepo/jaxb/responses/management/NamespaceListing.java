@@ -14,7 +14,7 @@ public class NamespaceListing {
     @XmlElement(name = "namespace")
     public Set<Namespace> namespaces;
 
-    public NamespaceListing(Set<Namespace> nses) {
+    public NamespaceListing(final Set<Namespace> nses) {
         namespaces = nses;
     }
 
@@ -29,7 +29,7 @@ public class NamespaceListing {
         @XmlAttribute(name = "URI")
         public URI uri;
 
-        public Namespace(String prefix, URI uri) {
+        public Namespace(final String prefix, final URI uri) {
             this.prefix = prefix;
             this.uri = uri;
         }

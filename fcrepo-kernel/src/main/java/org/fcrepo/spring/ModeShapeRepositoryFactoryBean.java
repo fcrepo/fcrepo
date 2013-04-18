@@ -39,7 +39,7 @@ public class ModeShapeRepositoryFactoryBean implements
     }
 
     private void setupInitialNodes() throws RepositoryException {
-        Session s = repository.login();
+        final Session s = repository.login();
         final Node objectStore =
                 new JcrTools(true).findOrCreateNode(s, "/objects");
 
@@ -70,7 +70,8 @@ public class ModeShapeRepositoryFactoryBean implements
         return true;
     }
 
-    public void setRepositoryConfiguration(Resource repositoryConfiguration) {
+    public void setRepositoryConfiguration(
+            final Resource repositoryConfiguration) {
         this.repositoryConfiguration = repositoryConfiguration;
     }
 }

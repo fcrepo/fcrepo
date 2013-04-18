@@ -16,12 +16,12 @@ public class CheckCacheEntryFixityTest {
 
     @Test
     public void testApply() throws BinaryStoreException {
-        MessageDigest mockDigest = mock(MessageDigest.class);
-        URI testUri = URI.create("urn:foo:bar");
-        long testSize = new SecureRandom().nextLong();
-        CheckCacheEntryFixity testObj =
+        final MessageDigest mockDigest = mock(MessageDigest.class);
+        final URI testUri = URI.create("urn:foo:bar");
+        final long testSize = new SecureRandom().nextLong();
+        final CheckCacheEntryFixity testObj =
                 new CheckCacheEntryFixity(mockDigest, testUri, testSize);
-        LowLevelCacheEntry mockEntry = mock(LowLevelCacheEntry.class);
+        final LowLevelCacheEntry mockEntry = mock(LowLevelCacheEntry.class);
         testObj.apply(mockEntry);
         verify(mockEntry).checkFixity(testUri, testSize, mockDigest);
     }

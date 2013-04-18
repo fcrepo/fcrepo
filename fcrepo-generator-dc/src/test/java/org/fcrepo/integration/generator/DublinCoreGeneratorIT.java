@@ -18,12 +18,12 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
-        int status = getStatus(postObjMethod("DublinCoreTest1"));
+        final int status = getStatus(postObjMethod("DublinCoreTest1"));
         assertEquals(201, status);
-        HttpGet getWorstCaseOaiMethod =
+        final HttpGet getWorstCaseOaiMethod =
                 new HttpGet(serverOAIAddress + "objects/DublinCoreTest1/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
-        HttpResponse response = client.execute(getWorstCaseOaiMethod);
+        final HttpResponse response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String content = EntityUtils.toString(response.getEntity());
@@ -36,13 +36,15 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testWellKnownPathOaiDc() throws Exception {
-        HttpResponse response = client.execute(postObjMethod("DublinCoreTest2"));
+        HttpResponse response =
+                client.execute(postObjMethod("DublinCoreTest2"));
         assertEquals(201, response.getStatusLine().getStatusCode());
-        response = client.execute(postDSMethod("DublinCoreTest2", "DC",
-                "marbles for everyone"));
+        response =
+                client.execute(postDSMethod("DublinCoreTest2", "DC",
+                        "marbles for everyone"));
         assertEquals(201, response.getStatusLine().getStatusCode());
 
-        HttpGet getWorstCaseOaiMethod =
+        final HttpGet getWorstCaseOaiMethod =
                 new HttpGet(serverOAIAddress + "objects/DublinCoreTest2/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         response = client.execute(getWorstCaseOaiMethod);

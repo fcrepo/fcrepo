@@ -24,13 +24,13 @@ import com.google.common.base.Function;
 
 public class ServiceHelpers {
 
-    public static Long getNodePropertySize(Node node)
+    public static Long getNodePropertySize(final Node node)
             throws RepositoryException {
         Long size = 0L;
         for (final PropertyIterator i = node.getProperties(); i.hasNext();) {
             final Property p = i.nextProperty();
             if (p.isMultiple()) {
-                for (Value v : p.getValues()) {
+                for (final Value v : p.getValues()) {
                     size += v.getBinary().getSize();
                 }
             } else {
@@ -45,7 +45,7 @@ public class ServiceHelpers {
      * @return object size in bytes
      * @throws RepositoryException
      */
-    public static Long getObjectSize(Node obj) throws RepositoryException {
+    public static Long getObjectSize(final Node obj) throws RepositoryException {
         return getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
@@ -54,7 +54,8 @@ public class ServiceHelpers {
      * @return object's datastreams' total size in bytes
      * @throws RepositoryException
      */
-    private static Long getObjectDSSize(Node obj) throws RepositoryException {
+    private static Long getObjectDSSize(final Node obj)
+            throws RepositoryException {
         Long size = 0L;
         for (final NodeIterator i = obj.getNodes(); i.hasNext();) {
             size += getDatastreamSize(i.nextNode());
@@ -62,13 +63,15 @@ public class ServiceHelpers {
         return size;
     }
 
-    public static Long getDatastreamSize(Node ds) throws ValueFormatException,
-            PathNotFoundException, RepositoryException {
+    public static Long getDatastreamSize(final Node ds)
+            throws ValueFormatException, PathNotFoundException,
+            RepositoryException {
         return getNodePropertySize(ds) + getContentSize(ds);
     }
 
-    public static Long getContentSize(Node ds) throws ValueFormatException,
-            PathNotFoundException, RepositoryException {
+    public static Long getContentSize(final Node ds)
+            throws ValueFormatException, PathNotFoundException,
+            RepositoryException {
         return ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getSize();
     }

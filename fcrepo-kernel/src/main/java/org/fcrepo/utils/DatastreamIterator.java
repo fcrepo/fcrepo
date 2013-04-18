@@ -10,7 +10,7 @@ public class DatastreamIterator implements RangeIterator {
 
     private final NodeIterator nodes;
 
-    public DatastreamIterator(NodeIterator nodes) {
+    public DatastreamIterator(final NodeIterator nodes) {
         this.nodes = nodes;
     }
 
@@ -34,7 +34,7 @@ public class DatastreamIterator implements RangeIterator {
     }
 
     @Override
-    public void skip(long skipNum) {
+    public void skip(final long skipNum) {
         nodes.skip(skipNum);
     }
 

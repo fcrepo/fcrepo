@@ -62,13 +62,13 @@ public class FedoraObjectTest implements FedoraJcrTypes {
     @Before
     public void setUp() throws LoginException, RepositoryException {
         isOwned = FedoraTypesUtils.isOwned;
-        String relPath = getObjectJcrNodePath(testPid).substring(1);
+        final String relPath = getObjectJcrNodePath(testPid).substring(1);
 
         mockSession = mock(Session.class);
         mockRootNode = mock(Node.class);
         mockObjNode = mock(Node.class);
         @SuppressWarnings("unchecked")
-        Predicate<Node> mockPredicate = mock(Predicate.class);
+        final Predicate<Node> mockPredicate = mock(Predicate.class);
 
         try {
 
@@ -90,7 +90,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
             when(mockPredicate.apply(mockObjNode)).thenReturn(true);
             FedoraTypesUtils.isOwned = mockPredicate;
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
@@ -119,26 +119,26 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     @Test
     public void testSetOwnerId() throws RepositoryException {
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockObjNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
-        String expected = "resuKcom";
+        final String expected = "resuKcom";
         testFedoraObject.setOwnerId(expected);
         verify(mockObjNode).setProperty(FEDORA_OWNERID, expected);
     }
 
     @Test
     public void testGetOwnerId() throws RepositoryException {
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockObjNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
         when(mockProp.getString()).thenReturn(mockUser);
-        String actual = testFedoraObject.getOwnerId();
+        final String actual = testFedoraObject.getOwnerId();
         assertEquals(mockUser, actual);
         verify(mockObjNode).getProperty(FEDORA_OWNERID);
     }
 
     @Test
     public void testGetLabel() throws RepositoryException {
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockObjNode.hasProperty(DC_TITLE)).thenReturn(true);
         when(mockObjNode.getProperty(DC_TITLE)).thenReturn(mockProp);
         when(mockProp.getString()).thenReturn("mockTitle");
@@ -148,7 +148,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     @Test
     public void testGetCreated() throws RepositoryException {
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockProp.getString()).thenReturn("mockDate");
         when(mockObjNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         testFedoraObject.getCreated();
@@ -157,7 +157,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     @Test
     public void testGetLastModified() throws RepositoryException {
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         when(mockProp.getString()).thenReturn("mockDate");
         testFedoraObject.getLastModified();
@@ -168,13 +168,13 @@ public class FedoraObjectTest implements FedoraJcrTypes {
     public void testGetSize() throws RepositoryException {
         PowerMockito.mockStatic(ServiceHelpers.class);
         when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(-8L); // obviously not a real value
-        long actual = testFedoraObject.getSize();
+        final long actual = testFedoraObject.getSize();
         assertEquals(-8, actual);
     }
 
     @Test
     public void testGetModels() throws RepositoryException {
-        Collection<String> actual = testFedoraObject.getModels();
+        final Collection<String> actual = testFedoraObject.getModels();
         assertNotNull(actual);
     }
 

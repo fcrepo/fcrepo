@@ -45,7 +45,7 @@ public class LowLevelStorageServiceIT {
     @Test
     public void testChecksumBlobs() throws Exception {
 
-        Session session = repo.login();
+        final Session session = repo.login();
         objectService.createObjectNode(session, "testLLObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testLLObject/testRepositoryContent",
@@ -65,7 +65,7 @@ public class LowLevelStorageServiceIT {
 
         assertNotEquals(0, fixityResults.size());
 
-        for (FixityResult fixityResult : fixityResults) {
+        for (final FixityResult fixityResult : fixityResults) {
             assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
                     fixityResult.computedChecksum.toString());
         }
@@ -73,7 +73,7 @@ public class LowLevelStorageServiceIT {
 
     @Test
     public void testGetBinaryBlobs() throws Exception {
-        Session session = repo.login();
+        final Session session = repo.login();
         objectService.createObjectNode(session, "testLLObject");
         datastreamService.createDatastreamNode(session,
                 "/objects/testLLObject/testRepositoryContent",
@@ -86,14 +86,14 @@ public class LowLevelStorageServiceIT {
                 datastreamService.getDatastream("testLLObject",
                         "testRepositoryContent");
 
-        Iterator<LowLevelCacheEntry> inputStreamList =
+        final Iterator<LowLevelCacheEntry> inputStreamList =
                 lowLevelService.getBinaryBlobs(ds.getNode()).iterator();
 
         int i = 0;
         while (inputStreamList.hasNext()) {
-            InputStream is = inputStreamList.next().getInputStream();
+            final InputStream is = inputStreamList.next().getInputStream();
 
-            String myString = IOUtils.toString(is, "UTF-8");
+            final String myString = IOUtils.toString(is, "UTF-8");
 
             assertEquals("0123456789", myString);
 

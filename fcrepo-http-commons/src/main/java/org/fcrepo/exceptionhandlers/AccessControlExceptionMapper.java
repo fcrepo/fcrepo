@@ -14,7 +14,7 @@ public class AccessControlExceptionMapper implements
         ExceptionMapper<AccessControlException> {
 
     @Override
-    public Response toResponse(AccessControlException arg0) {
+    public Response toResponse(final AccessControlException arg0) {
         return status(FORBIDDEN).build();
     }
 

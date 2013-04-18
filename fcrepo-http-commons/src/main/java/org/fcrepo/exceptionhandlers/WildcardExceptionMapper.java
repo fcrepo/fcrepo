@@ -11,16 +11,16 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
-    Boolean showStackTrace=true;
+    Boolean showStackTrace = true;
 
     @Override
-    public Response toResponse(Exception e) {
+    public Response toResponse(final Exception e) {
 
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();
     }
 
-    public void setShowStackTrace(Boolean showStackTrace) {
+    public void setShowStackTrace(final Boolean showStackTrace) {
         this.showStackTrace = showStackTrace;
     }
 }

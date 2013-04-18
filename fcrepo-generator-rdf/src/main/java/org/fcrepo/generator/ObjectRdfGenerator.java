@@ -30,8 +30,6 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -76,11 +74,11 @@ public class ObjectRdfGenerator extends AbstractResource {
                     obj.getNode().getSession().getWorkspace()
                             .getNamespaceRegistry();
             for (final String prefix : nReg.getPrefixes()) {
-				String nsURI = nReg.getURI(prefix);
-				if ( nsURI != null && !nsURI.equals("")
-					&& !prefix.equals("xmlns") ) {
-                	writer.receiveNamespace(prefix, nsURI, context);
-				}
+                final String nsURI = nReg.getURI(prefix);
+                if (nsURI != null && !nsURI.equals("") &&
+                        !prefix.equals("xmlns")) {
+                    writer.receiveNamespace(prefix, nsURI, context);
+                }
             }
 
             // add triples from each TripleSource
@@ -103,7 +101,7 @@ public class ObjectRdfGenerator extends AbstractResource {
     }
 
     public void setObjectGenerators(
-            List<TripleSource<FedoraObject>> objectGenerators) {
+            final List<TripleSource<FedoraObject>> objectGenerators) {
         this.objectGenerators = objectGenerators;
     }
 

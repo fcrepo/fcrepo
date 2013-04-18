@@ -43,7 +43,7 @@ public class FedoraFieldSearchTest {
     @Before
     public void setUp() throws LoginException, RepositoryException {
         mockSession = getQuerySessionMock();
-        SessionFactory mockSessions = mock(SessionFactory.class);
+        final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
                 mockSessions.getSession(any(SecurityContext.class),
@@ -59,22 +59,23 @@ public class FedoraFieldSearchTest {
 
     @Test
     public void testSearchSubmit() throws RepositoryException {
-        String actual = testObj.searchSubmit("foo", "1", "1");
+        final String actual = testObj.searchSubmit("foo", "1", "1");
         assertTrue("actual.length = " + actual.length() + "; expected > 0",
                 actual.length() > 0);
     }
 
     @Test
     public void testGetQuery() throws RepositoryException {
-        QueryManager queryManager = mock(QueryManager.class);
-        ValueFactory valueFactory = mock(ValueFactory.class);
-        Value mockValue = mock(Value.class);
-        String terms = "foo";
-        Query mockQuery = mock(Query.class);
+        final QueryManager queryManager = mock(QueryManager.class);
+        final ValueFactory valueFactory = mock(ValueFactory.class);
+        final Value mockValue = mock(Value.class);
+        final String terms = "foo";
+        final Query mockQuery = mock(Query.class);
         when(queryManager.createQuery(anyString(), eq(Query.JCR_SQL2)))
                 .thenReturn(mockQuery);
         when(valueFactory.createValue("%" + terms + "%")).thenReturn(mockValue);
-        Query actual = testObj.getQuery(queryManager, valueFactory, terms);
+        final Query actual =
+                testObj.getQuery(queryManager, valueFactory, terms);
         assertNotNull(actual);
         verify(queryManager).createQuery(anyString(), eq(Query.JCR_SQL2));
         verify(valueFactory).createValue("%" + terms + "%");
@@ -83,12 +84,12 @@ public class FedoraFieldSearchTest {
 
     @Test
     public void testSearch() throws RepositoryException {
-        Query mockQ = getQueryMock();
-        NodeIterator mockNodes = mockQ.execute().getNodes();
-        FieldSearchResult actual = testObj.search(mockQ, 1, 1);
-        List<ObjectFields> oFieldsList = actual.getObjectFieldsList();
+        final Query mockQ = getQueryMock();
+        final NodeIterator mockNodes = mockQ.execute().getNodes();
+        final FieldSearchResult actual = testObj.search(mockQ, 1, 1);
+        final List<ObjectFields> oFieldsList = actual.getObjectFieldsList();
         assertEquals(1, oFieldsList.size());
-        ObjectFields oFields = oFieldsList.get(0);
+        final ObjectFields oFields = oFieldsList.get(0);
         // because the mock nodeIterator doesn't respond to skip
         assertEquals("node1", oFields.getPid());
         // the first time, unfortunately, is at the beginning of this test to get the NodeIterator mock

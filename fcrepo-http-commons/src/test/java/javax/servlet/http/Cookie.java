@@ -3,7 +3,7 @@ package javax.servlet.http;
 
 public class Cookie {
 
-    public Cookie(String name, String value) {
+    public Cookie(final String name, final String value) {
     }
 
     public String getComment() {
@@ -38,27 +38,27 @@ public class Cookie {
         return 0;
     }
 
-    public void setComment(String comment) {
+    public void setComment(final String comment) {
     }
 
-    public void setDomain(String domain) {
+    public void setDomain(final String domain) {
     }
 
-    public void setMaxAge(int maxAge) {
+    public void setMaxAge(final int maxAge) {
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
     }
 
-    public void setPath(String path) {
+    public void setPath(final String path) {
     }
 
-    public void setSecure(boolean secure) {
+    public void setSecure(final boolean secure) {
     }
 
-    public void setValue(String value) {
+    public void setValue(final String value) {
     }
 
-    public void setVersion(int version) {
+    public void setVersion(final int version) {
     }
 }

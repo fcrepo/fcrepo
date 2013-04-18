@@ -38,14 +38,14 @@ public class LowLevelCacheEntry {
 
     private final BinaryKey key;
 
-    public LowLevelCacheEntry(BinaryStore store, CacheStore lowLevelStore,
-            BinaryKey key) {
+    public LowLevelCacheEntry(final BinaryStore store,
+            final CacheStore lowLevelStore, final BinaryKey key) {
         this.store = store;
         cacheStore = lowLevelStore;
         this.key = key;
     }
 
-    public LowLevelCacheEntry(BinaryStore store, BinaryKey key) {
+    public LowLevelCacheEntry(final BinaryStore store, final BinaryKey key) {
         this.store = store;
         cacheStore = null;
         this.key = key;
@@ -84,10 +84,10 @@ public class LowLevelCacheEntry {
         }
     }
 
-    public void storeValue(InputStream stream) throws BinaryStoreException,
-            IOException {
+    public void storeValue(final InputStream stream)
+            throws BinaryStoreException, IOException {
         if (store instanceof InfinispanBinaryStore) {
-            OutputStream outputStream =
+            final OutputStream outputStream =
                     new StoreChunkOutputStream(cacheStore, key.toString() +
                             DATA_SUFFIX);
             IOUtils.copy(stream, outputStream);
@@ -102,7 +102,7 @@ public class LowLevelCacheEntry {
 
         if (store instanceof InfinispanBinaryStore) {
 
-            CacheStoreConfig config = cacheStore.getCacheStoreConfig();
+            final CacheStoreConfig config = cacheStore.getCacheStoreConfig();
 
             String externalId = null;
             if (config instanceof AbstractCacheStoreConfig) {
@@ -131,8 +131,8 @@ public class LowLevelCacheEntry {
         }
     }
 
-    public FixityResult checkFixity(URI checksum, long size,
-            MessageDigest digest) throws BinaryStoreException {
+    public FixityResult checkFixity(final URI checksum, final long size,
+            final MessageDigest digest) throws BinaryStoreException {
         FixityResult result = null;
         FixityInputStream ds = null;
         try {
@@ -167,9 +167,9 @@ public class LowLevelCacheEntry {
 
             logger.debug("Got " + result.toString());
             ds.close();
-        } catch (CloneNotSupportedException e) {
+        } catch (final CloneNotSupportedException e) {
             logger.warn("Could not clone MessageDigest: {}", e);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
 

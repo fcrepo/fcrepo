@@ -18,7 +18,7 @@ public interface TripleSource<T> {
      * @return A List of Triples.
      * @throws RepositoryException
      */
-    List<Triple> getTriples(T source, UriInfo... uriInfo)
+    List<Triple> getTriples(final T source, final UriInfo... uriInfo)
             throws RepositoryException;
 
     /**

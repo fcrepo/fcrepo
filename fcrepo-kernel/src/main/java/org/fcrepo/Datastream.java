@@ -56,12 +56,12 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     LowLevelStorageService llStore;
 
-    public Datastream(Node n) {
+    public Datastream(final Node n) {
         super(false); // turn off debug logging
         node = n;
     }
 
-    public Datastream(final Session session, String pid, String dsId)
+    public Datastream(final Session session, final String pid, final String dsId)
             throws RepositoryException {
         this(session, getDatastreamJcrNodePath(pid, dsId));
     }
@@ -106,9 +106,9 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @param content
      * @throws RepositoryException
      */
-    public void setContent(InputStream content, String checksumType,
-            String checksum) throws RepositoryException,
-            InvalidChecksumException {
+    public void setContent(final InputStream content,
+            final String checksumType, final String checksum)
+            throws RepositoryException, InvalidChecksumException {
         final Node contentNode =
                 findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
@@ -125,7 +125,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
          * implement this public interface, so feel free to cast the values to
          * gain access to the additional methods."
          */
-        Binary binary = (Binary) getBinary(node, content);
+        final Binary binary = (Binary) getBinary(node, content);
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -142,9 +142,9 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
          * code may still be useful to us for an asynchronous method that we
          * develop later.
          */
-        Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
+        final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
-        String dsChecksum = binary.getHexHash();
+        final String dsChecksum = binary.getHexHash();
         if (checksum != null && !checksum.equals("") &&
                 !checksum.equals(binary.getHexHash())) {
             logger.debug("Failed checksum test");
@@ -162,14 +162,14 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     }
 
-    public void setContent(InputStream content) throws RepositoryException,
-            InvalidChecksumException {
+    public void setContent(final InputStream content)
+            throws RepositoryException, InvalidChecksumException {
         setContent(content, null, null);
     }
 
-    public void setContent(InputStream content, String mimeType,
-            String checksumType, String checksum) throws RepositoryException,
-            InvalidChecksumException {
+    public void setContent(final InputStream content, final String mimeType,
+            final String checksumType, final String checksum)
+            throws RepositoryException, InvalidChecksumException {
         setContent(content, checksumType, checksum);
         node.setProperty(FEDORA_CONTENTTYPE, mimeType);
     }
@@ -226,7 +226,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
 
-            Property labels = node.getProperty(DC_TITLE);
+            final Property labels = node.getProperty(DC_TITLE);
             String label;
             if (!labels.isMultiple()) {
                 label = node.getProperty(DC_TITLE).getString();
@@ -246,7 +246,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      */
     public String getOwnerId() throws RepositoryException {
         if (node.hasProperty(FEDORA_OWNERID)) {
-            Property ownerIds = node.getProperty(FEDORA_OWNERID);
+            final Property ownerIds = node.getProperty(FEDORA_OWNERID);
             String ownerId;
             if (!ownerIds.isMultiple()) {
                 ownerId = node.getProperty(FEDORA_OWNERID).getString();
@@ -259,7 +259,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    public void setLabel(String label) throws ValueFormatException,
+    public void setLabel(final String label) throws ValueFormatException,
             VersionException, LockException, ConstraintViolationException,
             RepositoryException {
         node.setProperty(DC_TITLE, label);

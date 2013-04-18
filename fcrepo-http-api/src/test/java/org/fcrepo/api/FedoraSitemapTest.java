@@ -34,7 +34,7 @@ public class FedoraSitemapTest {
         testObj = new FedoraSitemap();
         testObj.objectService = mockObjects;
         mockSession = mock(Session.class);
-        SessionFactory mockSessions = mock(SessionFactory.class);
+        final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
                 mockSessions.getSession(any(SecurityContext.class),

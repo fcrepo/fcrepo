@@ -1,8 +1,6 @@
 
 package org.fcrepo.generator.dublincore;
 
-import org.slf4j.Logger;
-
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -13,9 +11,12 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import org.slf4j.Logger;
+
 public class WellKnownDatastreamGenerator implements DCGenerator {
 
-    private static final Logger logger = getLogger(WellKnownDatastreamGenerator.class);
+    private static final Logger logger =
+            getLogger(WellKnownDatastreamGenerator.class);
 
     private String wellKnownDsid;
 
@@ -24,7 +25,7 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
 
         try {
             return getContentInputStream(node);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
 
             logger.warn("logged exception", e);
 
@@ -34,10 +35,10 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
 
     private InputStream getContentInputStream(final Node node)
             throws RepositoryException {
-        if (node.hasNode(this.wellKnownDsid)) {
-            final Node dc = node.getNode(this.wellKnownDsid);
+        if (node.hasNode(wellKnownDsid)) {
+            final Node dc = node.getNode(wellKnownDsid);
 
-            Binary binary =
+            final Binary binary =
                     dc.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
 
             return binary.getStream();
@@ -46,7 +47,7 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
         }
     }
 
-    public void setWellKnownDsid(String wellKnownDsid) {
+    public void setWellKnownDsid(final String wellKnownDsid) {
         this.wellKnownDsid = wellKnownDsid;
     }
 }
