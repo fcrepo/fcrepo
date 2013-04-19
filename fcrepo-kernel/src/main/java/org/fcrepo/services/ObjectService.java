@@ -3,7 +3,6 @@ package org.fcrepo.services;
 
 import static com.google.common.collect.ImmutableSet.builder;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
-import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Set;

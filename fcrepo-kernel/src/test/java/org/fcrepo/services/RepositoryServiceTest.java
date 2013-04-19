@@ -1,7 +1,6 @@
 
 package org.fcrepo.services;
 
-import static org.fcrepo.TestHelpers.getContentNodeMock;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -9,7 +8,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -18,7 +16,6 @@ import java.util.Map;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
