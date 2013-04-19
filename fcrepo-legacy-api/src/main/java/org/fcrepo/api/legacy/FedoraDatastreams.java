@@ -117,8 +117,6 @@ public class FedoraDatastreams extends AbstractResource {
         final Session session = getAuthenticatedSession();
         InputStream src = null;
         try {
-            Long oldObjectSize =
-                    getObjectSize(session.getNode(getObjectJcrNodePath(pid)));
 
             for (BodyPart part : multipart.getBodyParts()) {
                 final String dsid = part.getContentDisposition().getParameters().get("name");
@@ -317,7 +315,6 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream);
-            boolean created = session.nodeExists(dsPath);
             session.save();
         } finally {
             session.logout();
