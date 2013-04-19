@@ -62,12 +62,14 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
         try {
             node = findOrCreateNode(session, path, NT_FOLDER);
-            node.addMixin(FEDORA_OBJECT);
-            node.addMixin(FEDORA_OWNED);
-            node.setProperty(FEDORA_OWNERID, session.getUserID());
-            node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
-            node.setProperty(DC_IDENTIFIER, new String[] {node.getIdentifier(),
-                    node.getName()});
+            if(node.isNew()) {
+                node.addMixin(FEDORA_OBJECT);
+                node.addMixin(FEDORA_OWNED);
+                node.setProperty(FEDORA_OWNERID, session.getUserID());
+                node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
+                node.setProperty(DC_IDENTIFIER, new String[] {node.getIdentifier(),
+                        node.getName()});
+            }
         } finally {
             context.stop();
         }
