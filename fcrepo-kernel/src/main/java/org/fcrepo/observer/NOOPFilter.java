@@ -11,6 +11,11 @@ import javax.jcr.observation.Event;
  */
 public class NOOPFilter implements EventFilter {
 
+    /**
+     * A no-op filter that passes every Event through.
+     * @param event
+     * @return
+     */
     @Override
     public boolean apply(final Event event) {
         return true;

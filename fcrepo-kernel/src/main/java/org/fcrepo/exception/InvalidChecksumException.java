@@ -1,6 +1,9 @@
 
 package org.fcrepo.exception;
 
+/**
+ * Exception when the calculated digest does not match the stored digest
+ */
 public class InvalidChecksumException extends Exception {
 
     private static final long serialVersionUID = 1L;

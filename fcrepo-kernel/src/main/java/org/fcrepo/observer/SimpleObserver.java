@@ -51,6 +51,9 @@ public class SimpleObserver implements EventListener {
 
     static final private Logger logger = getLogger(SimpleObserver.class);
 
+    /**
+     * A simple counter of events that pass through this observer
+     */
     static final Counter eventCounter = metrics.counter(name(
             SimpleObserver.class, "onEvent"));
 
@@ -63,6 +66,11 @@ public class SimpleObserver implements EventListener {
         session.logout();
     }
 
+    /**
+     * Filter JCR events and transform them into our own FedoraEvents.
+     *
+     * @param events
+     */
     @Override
     public void onEvent(final EventIterator events) {
 

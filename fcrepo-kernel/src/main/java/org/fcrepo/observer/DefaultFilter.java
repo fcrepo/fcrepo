@@ -33,6 +33,12 @@ public class DefaultFilter implements EventFilter {
     // the state of the repository
     private Session session;
 
+    /**
+     * Filter observer events to only include events on a FedoraObject or Datastream
+     *
+     * @param event the original event
+     * @return
+     */
     @Override
     public boolean apply(final Event event) {
 

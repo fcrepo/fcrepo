@@ -54,18 +54,33 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     Node node;
 
-    LowLevelStorageService llStore;
-
+    /**
+     * The JCR node for this datastream
+     * @param n an existing JCR node
+     */
     public Datastream(final Node n) {
         super(false); // turn off debug logging
         node = n;
     }
 
+    /**
+     * Find or create a Datastream from a pid and dsid
+     * @param session
+     * @param pid object persistent identifier
+     * @param dsId datastream identifier
+     * @throws RepositoryException
+     */
     public Datastream(final Session session, final String pid, final String dsId)
             throws RepositoryException {
         this(session, getDatastreamJcrNodePath(pid, dsId));
     }
 
+    /**
+     * Find or create a Datastream object at the given JCR path
+     * @param session
+     * @param dsPath the absolute path for the datastream
+     * @throws RepositoryException
+     */
     public Datastream(final Session session, final String dsPath)
             throws RepositoryException {
         super(false);
@@ -162,11 +177,26 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     }
 
+    /**
+     * Set the datastream's binary content payload
+     * @param content binary payload
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     */
     public void setContent(final InputStream content)
             throws RepositoryException, InvalidChecksumException {
         setContent(content, null, null);
     }
 
+    /**
+     * Set the datastream's bianry content payload, and check it against a provided digest
+     * @param content binary paylod
+     * @param mimeType the mimetype given for the content inputstream
+     * @param checksumType one of: SHA-1
+     * @param checksum the digest of content
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     */
     public void setContent(final InputStream content, final String mimeType,
             final String checksumType, final String checksum)
             throws RepositoryException, InvalidChecksumException {
@@ -182,6 +212,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE).getLong();
     }
 
+    /**
+     * Get the pre-calculated content digest for the binary payload
+     * @return a URI with the format algorithm:value
+     * @throws RepositoryException
+     */
     public URI getContentDigest() throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
         return ContentDigest
@@ -189,6 +224,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
                         contentNode.getProperty(DIGEST_VALUE).getString());
     }
 
+    /**
+     * Get the digest algorithm used to calculate the primary digest of the binary payload
+     * @return
+     * @throws RepositoryException
+     */
     public String getContentDigestType() throws RepositoryException {
         return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
                 .getString();
@@ -259,17 +299,36 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         }
     }
 
+    /**
+     * Set an administrative label for this object
+     * @param label
+     * @throws ValueFormatException
+     * @throws VersionException
+     * @throws LockException
+     * @throws ConstraintViolationException
+     * @throws RepositoryException
+     */
     public void setLabel(final String label) throws ValueFormatException,
             VersionException, LockException, ConstraintViolationException,
             RepositoryException {
         node.setProperty(DC_TITLE, label);
     }
 
+    /**
+     * Get the date this datastream was created
+     * @return
+     * @throws RepositoryException
+     */
     public Date getCreatedDate() throws RepositoryException {
         return new Date(node.getProperty(JCR_CREATED).getDate()
                 .getTimeInMillis());
     }
 
+    /**
+     * Get the date this datastream was last modified
+     * @return
+     * @throws RepositoryException
+     */
     public Date getLastModifiedDate() throws RepositoryException {
         return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
                 .getTimeInMillis());

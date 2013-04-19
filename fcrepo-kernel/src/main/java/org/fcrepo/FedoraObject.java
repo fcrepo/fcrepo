@@ -35,13 +35,26 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
     private Node node;
 
+    /**
+     * Timer for the time to create/initialize a FedoraObject
+     */
     final static Timer timer = metrics.timer(name(FedoraObject.class,
             "FedoraObject"));
 
+    /**
+     * Construct a FedoraObject from an existing JCR Node
+     * @param n an existing JCR node to treat as an fcrepo object
+     */
     public FedoraObject(final Node n) {
         node = n;
     }
 
+    /**
+     * Create or find a FedoraObject at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
     public FedoraObject(final Session session, final String path)
             throws RepositoryException {
 
@@ -75,6 +88,11 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         return node;
     }
 
+    /**
+     * Get the purported owner of this object
+     * @return the owner id
+     * @throws RepositoryException
+     */
     public String getOwnerId() throws RepositoryException {
         if (isOwned.apply(node)) {
             return node.getProperty(FEDORA_OWNERID).getString();
@@ -83,6 +101,11 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         }
     }
 
+    /**
+     * Set the owner id for the object
+     * @param ownerId
+     * @throws RepositoryException
+     */
     public void setOwnerId(final String ownerId) throws RepositoryException {
         if (isOwned.apply(node)) {
             node.setProperty(FEDORA_OWNERID, ownerId);
@@ -92,6 +115,11 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         }
     }
 
+    /**
+     * Get the "label" (read: administrative title) of the object
+     * @return object label
+     * @throws RepositoryException
+     */
     public String getLabel() throws RepositoryException {
         if (node.hasProperty(DC_TITLE)) {
             final Property dcTitle = node.getProperty(DC_TITLE);
@@ -104,22 +132,47 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         return null;
     }
 
+    /**
+     * Set the "label" (read: administrative title) for the object
+     * @param label
+     * @throws RepositoryException
+     */
     public void setLabel(final String label) throws RepositoryException {
         node.setProperty(DC_TITLE, label);
     }
 
+    /**
+     * Get the date this object was created
+     * @return
+     * @throws RepositoryException
+     */
     public String getCreated() throws RepositoryException {
         return node.getProperty(JCR_CREATED).getString();
     }
 
+    /**
+     * Get the date this object was last modified (whatever that means)
+     * @return
+     * @throws RepositoryException
+     */
     public String getLastModified() throws RepositoryException {
         return node.getProperty(JCR_LASTMODIFIED).getString();
     }
 
+    /**
+     * Get the total size of this object and its datastreams
+     * @return size in bytes
+     * @throws RepositoryException
+     */
     public long getSize() throws RepositoryException {
         return getObjectSize(node);
     }
 
+    /**
+     * Get the mixins this object uses
+     * @return a collection of mixin names
+     * @throws RepositoryException
+     */
     public Collection<String> getModels() throws RepositoryException {
         return map(node.getMixinNodeTypes(), nodetype2name);
     }
