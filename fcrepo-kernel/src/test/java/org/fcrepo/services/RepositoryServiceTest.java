@@ -16,6 +16,7 @@ import java.util.Map;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -29,6 +30,7 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
 
+import org.fcrepo.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
@@ -150,8 +152,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     public void testUpdateRepositorySize() throws PathNotFoundException,
             RepositoryException {
         final String content = "asdf";
-        final Node mockContent = getContentNodeMock(content);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        final Node mockContent = TestHelpers.getContentNodeMock(content);
+        when(mockDsNode.getNode(Node.JCR_CONTENT)).thenReturn(mockContent);
         testObj.updateRepositorySize(expectedSize, mockSession);
         assertEquals(expectedSize, testObj.getRepositorySize(mockSession));
     }
