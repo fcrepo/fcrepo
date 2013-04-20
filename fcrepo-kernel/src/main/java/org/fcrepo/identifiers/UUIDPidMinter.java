@@ -15,7 +15,7 @@ import com.yammer.metrics.Timer;
  */
 public class UUIDPidMinter extends BasePidMinter {
 
-    final static Timer timer = metrics.timer(name(UUIDPidMinter.class, "mint"));
+    static final Timer timer = metrics.timer(name(UUIDPidMinter.class, "mint"));
 
     /**
      * Mint a unique identifier as a UUID

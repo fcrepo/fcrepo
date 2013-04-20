@@ -1,6 +1,7 @@
 
 package org.fcrepo.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
@@ -21,23 +22,21 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
 /**
- * Convenience class with methods for manipulating Fedora types in the JCR.
+ * Convenience class with static methods for manipulating Fedora types in the JCR.
  * 
  * @author ajs6f
  *
  */
-public class FedoraTypesUtils {
+public abstract class FedoraTypesUtils {
 
     /**
-     * Predicate for determining whether this node is a Fedora object.
+     * Predicate for determining whether this {@link Node} is a Fedora object.
      */
-    static public Predicate<Node> isFedoraObject = new Predicate<Node>() {
+    public static Predicate<Node> isFedoraObject = new Predicate<Node>() {
 
         @Override
         public boolean apply(final Node node) {
-            if (node == null) {
-                return false;
-            }
+            checkArgument(node != null, "null cannot be a Fedora object!");
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OBJECT);
@@ -48,15 +47,13 @@ public class FedoraTypesUtils {
     };
 
     /**
-     * Predicate for determining whether this node is a Fedora datastream.
+     * Predicate for determining whether this {@link Node} is a Fedora datastream.
      */
-    static public Predicate<Node> isFedoraDatastream = new Predicate<Node>() {
+    public static Predicate<Node> isFedoraDatastream = new Predicate<Node>() {
 
         @Override
         public boolean apply(final Node node) {
-            if (node == null) {
-                return false;
-            }
+            checkArgument(node != null, "null cannot be a Fedora datastream!");
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_DATASTREAM);
@@ -67,15 +64,13 @@ public class FedoraTypesUtils {
     };
 
     /**
-     * Predicate for determining whether this node is owned in the Fedora sense.
+     * Predicate for determining whether this {@link Node} is owned in the Fedora sense.
      */
-    static public Predicate<Node> isOwned = new Predicate<Node>() {
+    public static Predicate<Node> isOwned = new Predicate<Node>() {
 
         @Override
         public boolean apply(final Node node) {
-            if (node == null) {
-                return false;
-            }
+            checkArgument(node != null, "null cannot be owned by anyone!");
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OWNED);
@@ -86,19 +81,20 @@ public class FedoraTypesUtils {
     };
 
     /**
-     * Translates a node type to its name. 
+     * Translates a {@link NodeType} to its {@link String} name. 
      */
-    static public Function<NodeType, String> nodetype2name =
+    public static Function<NodeType, String> nodetype2name =
             new Function<NodeType, String>() {
 
                 @Override
                 public String apply(final NodeType t) {
-                    return t == null ? null : t.getName();
+                    checkArgument(t != null, "null has no name!");
+                    return t.getName();
                 }
             };
 
     /**
-     * Translates a JCR value to its string expression. 
+     * Translates a JCR {@link Value} to its {@link String} expression. 
      */
     public static Function<Value, String> value2string =
             new Function<Value, String>() {
@@ -106,29 +102,46 @@ public class FedoraTypesUtils {
                 @Override
                 public String apply(final Value v) {
                     try {
-                        return v == null ? null : v.getString();
+                        checkArgument(v != null,
+                                "null has no appropriate String representation!");
+                        return v.getString();
                     } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
             };
 
+    /**
+     * Retrieves a JCR {@link ValueFactory} for use with a {@ link Node}
+     */
     public static Function<Node, ValueFactory> getValueFactory =
             new Function<Node, ValueFactory>() {
 
                 @Override
                 public ValueFactory apply(final Node n) {
                     try {
-                        return n == null ? null : n.getSession()
-                                .getValueFactory();
+                        checkArgument(n != null,
+                                "null has no ValueFactory associated with it!");
+                        return n.getSession().getValueFactory();
                     } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
             };
 
+    /**
+     * Creates a JCR {@link Binary}
+     * 
+     * @param n a {@link Node}
+     * @param i an {@link InputStream}
+     * @return a JCR {@link Binary}
+     */
     public static Binary getBinary(final Node n, final InputStream i) {
         try {
+            checkArgument(n != null,
+                    "null cannot have a Binary created for it!");
+            checkArgument(i != null,
+                    "null cannot have a Binary created from it!");
             return n.getSession().getValueFactory().createBinary(i);
         } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
@@ -136,15 +149,15 @@ public class FedoraTypesUtils {
     }
 
     /**
-     * Convenience method for transforming collections into 
-     * immutable sets through a mapping function.
+     * Convenience method for transforming arrays into 
+     * {@link Collection}s through a mapping {@link Function}.
      * 
      * @param input A Collection<F>.
      * @param f A Function<F,T>.
      * @return An ImmutableSet copy of input after transformation by f
      */
-    public static <From, To> Collection<To> map(final From[] input,
-            final Function<From, To> f) {
+    public static <F, T> Collection<T> map(final F[] input,
+            final Function<F, T> f) {
         return transform(copyOf(input), f);
     }
 

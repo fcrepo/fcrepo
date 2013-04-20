@@ -2,6 +2,7 @@
 package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.RepositoryService.metrics;
@@ -24,10 +25,6 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.version.VersionException;
 
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
@@ -46,19 +43,23 @@ import com.yammer.metrics.Histogram;
  */
 public class Datastream extends JcrTools implements FedoraJcrTypes {
 
-    private final static Logger logger = getLogger(Datastream.class);
+    private static final Logger logger = getLogger(Datastream.class);
 
-    final static Histogram contentSizeHistogram = metrics.histogram(name(
+    static final Histogram contentSizeHistogram = metrics.histogram(name(
             Datastream.class, "content-size"));
 
-    Node node;
+    private Node node;
 
     /**
      * The JCR node for this datastream
-     * @param n an existing JCR node
+     * @param n an existing {@link Node}
      */
     public Datastream(final Node n) {
-        super(false); // turn off debug logging
+        // turn off debug logging
+        super(false);
+        if (node != null) {
+            logger.debug("Supporting a Fedora Datastream with null backing Node!");
+        }
         node = n;
     }
 
@@ -83,6 +84,11 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     public Datastream(final Session session, final String dsPath)
             throws RepositoryException {
         super(false);
+        checkArgument(session != null,
+                "null cannot create a Fedora Datastream!");
+        checkArgument(dsPath != null,
+                "A Fedora Datastream cannot be created at null path!");
+
         node = findOrCreateNode(session, dsPath, NT_FILE);
         if (node.isNew()) {
             node.addMixin(FEDORA_DATASTREAM);
@@ -123,6 +129,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     public void setContent(final InputStream content,
             final String checksumType, final String checksum)
             throws RepositoryException, InvalidChecksumException {
+
         final Node contentNode =
                 findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
@@ -301,15 +308,9 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     /**
      * Set an administrative label for this object
      * @param label
-     * @throws ValueFormatException
-     * @throws VersionException
-     * @throws LockException
-     * @throws ConstraintViolationException
      * @throws RepositoryException
      */
-    public void setLabel(final String label) throws ValueFormatException,
-            VersionException, LockException, ConstraintViolationException,
-            RepositoryException {
+    public void setLabel(final String label) throws RepositoryException {
         node.setProperty(DC_TITLE, label);
     }
 

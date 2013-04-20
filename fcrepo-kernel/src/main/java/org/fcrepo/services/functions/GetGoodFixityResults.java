@@ -15,25 +15,22 @@ import com.google.common.base.Predicate;
 public class GetGoodFixityResults implements
         Function<Collection<FixityResult>, Set<FixityResult>> {
 
-    private IsGoodFixity predicate = new IsGoodFixity();
-
     public boolean isGood(final FixityResult input) {
-        return predicate.apply(input);
+        return isGoodFixity.apply(input);
     }
 
     @Override
     public Set<FixityResult> apply(final Collection<FixityResult> input) {
-        return copyOf(filter(input, predicate));
+        return copyOf(filter(input, isGoodFixity));
     }
 
-    static class IsGoodFixity implements Predicate<FixityResult> {
+    static Predicate<FixityResult> isGoodFixity =
+            new Predicate<FixityResult>() {
 
-        @Override
-        public boolean apply(final FixityResult input) {
-            return input.computedChecksum.equals(input.dsChecksum) &&
-                    input.computedSize == input.dsSize;
-        }
-
-    }
-
+                @Override
+                public boolean apply(final FixityResult input) {
+                    return input.computedChecksum.equals(input.dsChecksum) &&
+                            input.computedSize == input.dsSize;
+                }
+            };
 }

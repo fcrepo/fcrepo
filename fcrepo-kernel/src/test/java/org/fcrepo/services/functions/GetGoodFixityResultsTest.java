@@ -11,15 +11,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.fcrepo.services.functions.GetGoodFixityResults.IsGoodFixity;
 import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
+
+import com.google.common.base.Predicate;
 
 public class GetGoodFixityResultsTest {
 
     @Test
     public void testPredicate() {
-        final IsGoodFixity testPred = new IsGoodFixity();
+        final Predicate<FixityResult> testPred =
+                GetGoodFixityResults.isGoodFixity;
         final FixityResult mockFixity = mock(FixityResult.class);
         final URI uri = URI.create("urn:foo:bar");
         final URI otherUri = URI.create("urn:does:not:match");

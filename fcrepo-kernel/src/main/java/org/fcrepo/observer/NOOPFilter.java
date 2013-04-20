@@ -14,7 +14,7 @@ public class NOOPFilter implements EventFilter {
     /**
      * A no-op filter that passes every Event through.
      * @param event
-     * @return
+     * @return true under all circumstances
      */
     @Override
     public boolean apply(final Event event) {

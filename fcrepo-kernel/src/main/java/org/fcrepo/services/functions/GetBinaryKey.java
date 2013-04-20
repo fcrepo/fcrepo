@@ -1,6 +1,7 @@
 
 package org.fcrepo.services.functions;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
@@ -16,6 +17,7 @@ public class GetBinaryKey implements Function<Node, BinaryKey> {
 
     @Override
     public BinaryKey apply(final Node input) {
+        checkArgument(input != null, "null cannot have a Binarykey!");
         try {
             return ((BinaryValue) input.getNode(JCR_CONTENT).getProperty(
                     JCR_DATA).getBinary()).getKey();

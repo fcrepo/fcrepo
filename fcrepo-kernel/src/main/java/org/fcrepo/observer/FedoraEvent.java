@@ -1,6 +1,8 @@
 
 package org.fcrepo.observer;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
@@ -19,6 +21,7 @@ public class FedoraEvent implements Event {
     private Event e;
 
     public FedoraEvent(final Event e) {
+        checkArgument(e != null, "null cannot support a FedoraEvent!");
         this.e = e;
     }
 

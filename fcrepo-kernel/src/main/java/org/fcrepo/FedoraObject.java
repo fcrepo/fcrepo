@@ -2,6 +2,7 @@
 package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
@@ -10,6 +11,7 @@ import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -21,6 +23,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
 
 import com.yammer.metrics.Timer;
 
@@ -33,10 +36,12 @@ import com.yammer.metrics.Timer;
  */
 public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
+    static final Logger logger = getLogger(FedoraObject.class);
+
     /**
      * Timer for the time to create/initialize a FedoraObject
      */
-    final static Timer timer = metrics.timer(name(FedoraObject.class,
+    static final Timer timer = metrics.timer(name(FedoraObject.class,
             "FedoraObject"));
 
     private Node node;
@@ -46,6 +51,9 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      * @param n an existing JCR node to treat as an fcrepo object
      */
     public FedoraObject(final Node n) {
+        if (node != null) {
+            logger.debug("Supporting a FedoraObject with null backing Node!");
+        }
         node = n;
     }
 
@@ -57,6 +65,9 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      */
     public FedoraObject(final Session session, final String path)
             throws RepositoryException {
+
+        checkArgument(session != null, "null cannot create a Fedora object!");
+        checkArgument(path != null, "Cannot create a Fedora object at null!");
 
         final Timer.Context context = timer.time();
 

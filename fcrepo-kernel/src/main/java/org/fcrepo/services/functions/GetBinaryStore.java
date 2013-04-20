@@ -1,6 +1,8 @@
 
 package org.fcrepo.services.functions;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import javax.jcr.Repository;
 
 import org.modeshape.jcr.JcrRepository;
@@ -16,6 +18,7 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
      */
     @Override
     public BinaryStore apply(final Repository input) {
+        checkArgument(input != null, "null cannot have a BinaryStore!");
         try {
             return ((JcrRepository) input).getConfiguration()
                     .getBinaryStorage().getBinaryStore();
