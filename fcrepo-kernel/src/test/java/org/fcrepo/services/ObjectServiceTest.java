@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-import java.security.SecureRandom;
 import java.util.Set;
 
 import javax.jcr.Node;
@@ -123,7 +122,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final Session mockSession = mock(Session.class);
         final Node mockRootNode = mock(Node.class);
         final Node mockObjectsNode = mock(Node.class);
-        final Property mockProp = mock(Property.class);
+        mock(Property.class);
         final Node mockObjNode = mock(Node.class);
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockRootNode.getNode("objects")).thenReturn(mockObjectsNode);

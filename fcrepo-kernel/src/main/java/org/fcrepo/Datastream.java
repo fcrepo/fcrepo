@@ -30,7 +30,6 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.version.VersionException;
 
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.Binary;

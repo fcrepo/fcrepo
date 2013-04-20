@@ -4,13 +4,12 @@ package org.fcrepo.utils;
 import java.util.Iterator;
 
 import javax.jcr.observation.Event;
-import javax.jcr.observation.EventIterator;
 
-public class FedoraEventIterator implements Iterator<Event>, Iterable<Event> {
+public class EventIterator implements Iterator<Event>, Iterable<Event> {
 
-    EventIterator i;
+    javax.jcr.observation.EventIterator i;
 
-    public FedoraEventIterator(final EventIterator i) {
+    public EventIterator(final javax.jcr.observation.EventIterator i) {
         this.i = i;
     }
 

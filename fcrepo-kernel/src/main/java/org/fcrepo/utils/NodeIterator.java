@@ -4,13 +4,12 @@ package org.fcrepo.utils;
 import java.util.Iterator;
 
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 
-public class FedoraNodeIterator implements Iterator<Node> {
+public class NodeIterator implements Iterator<Node> {
 
-    NodeIterator i;
+    javax.jcr.NodeIterator i;
 
-    public FedoraNodeIterator(final NodeIterator i) {
+    public NodeIterator(final javax.jcr.NodeIterator i) {
         this.i = i;
     }
 

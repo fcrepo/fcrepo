@@ -17,10 +17,9 @@ import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
-import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.EventListener;
 
-import org.fcrepo.utils.FedoraEventIterator;
+import org.fcrepo.utils.EventIterator;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
@@ -72,10 +71,9 @@ public class SimpleObserver implements EventListener {
      * @param events
      */
     @Override
-    public void onEvent(final EventIterator events) {
+    public void onEvent(final javax.jcr.observation.EventIterator events) {
 
-        for (final Event e : filter(new FedoraEventIterator(events),
-                eventFilter)) {
+        for (final Event e : filter(new EventIterator(events), eventFilter)) {
 
             eventCounter.inc();
 

@@ -16,7 +16,6 @@ import java.util.Map;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -30,7 +29,6 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
 
-import org.fcrepo.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
