@@ -18,10 +18,10 @@ public class SitemapEntry {
     private final Calendar lastmod;
 
     @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
-    private final String changefreq = "monthly";
+    private static final String changefreq = "monthly";
 
     @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
-    private final double priority = 0.8;
+    private static final double priority = 0.8;
 
     public SitemapEntry() {
         loc = null;

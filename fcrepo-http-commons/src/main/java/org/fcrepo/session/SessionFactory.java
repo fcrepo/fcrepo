@@ -1,9 +1,10 @@
 
 package org.fcrepo.session;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -12,11 +13,10 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SessionFactory {
 
-    final private Logger logger = LoggerFactory.getLogger(SessionFactory.class);
+    private static final Logger logger = getLogger(SessionFactory.class);
 
     @Inject
     private Repository repo;
@@ -37,7 +37,7 @@ public class SessionFactory {
         this.repo = repo;
     }
 
-    public Session getSession() throws LoginException, RepositoryException {
+    public Session getSession() throws RepositoryException {
         return repo.login();
     }
 

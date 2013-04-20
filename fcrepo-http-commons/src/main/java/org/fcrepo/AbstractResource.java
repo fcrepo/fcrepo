@@ -2,10 +2,9 @@
 package org.fcrepo;
 
 import static javax.ws.rs.core.Response.noContent;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
-import javax.jcr.LoginException;
-import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -20,7 +19,6 @@ import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -32,8 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public abstract class AbstractResource {
 
-    final private Logger logger = LoggerFactory
-            .getLogger(AbstractResource.class);
+    private static final Logger logger = getLogger(AbstractResource.class);
 
     /**
      * Useful for constructing URLs
@@ -66,11 +63,10 @@ public abstract class AbstractResource {
      * A convenience object provided by ModeShape for acting against the JCR
      * repository.
      */
-    final static protected JcrTools jcrTools = new JcrTools(true);
+    protected static final JcrTools jcrTools = new JcrTools(true);
 
     @PostConstruct
-    public void initialize() throws LoginException, NoSuchWorkspaceException,
-            RepositoryException {
+    public void initialize() throws RepositoryException {
 
         final Session session = sessions.getSession();
         session.getWorkspace().getNamespaceRegistry().registerNamespace("test",
