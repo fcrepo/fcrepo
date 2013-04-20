@@ -36,7 +36,7 @@ import com.yammer.metrics.Counter;
  */
 public class SimpleObserver implements EventListener {
 
-    static final private Logger logger = getLogger(SimpleObserver.class);
+    private static final Logger logger = getLogger(SimpleObserver.class);
 
     /**
      * A simple counter of events that pass through this observer

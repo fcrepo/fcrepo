@@ -11,7 +11,7 @@ import org.slf4j.Logger;
  * @author cbeer
  *
  */
-public class PathService {
+public abstract class PathService {
 
     public static final String OBJECT_PATH = "/objects";
 

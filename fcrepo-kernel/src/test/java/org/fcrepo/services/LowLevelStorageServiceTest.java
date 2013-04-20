@@ -62,8 +62,8 @@ public class LowLevelStorageServiceTest {
         when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.getBinaryStore = mockStoreFunc;
-        testObj.getBinaryKey = mockKeyFunc;
+        testObj.setGetBinaryStore(mockStoreFunc);
+        testObj.setGetBinaryKey(mockKeyFunc);
         testObj.setRepository(mockRepo);
         final MessageDigest mockDigest = mock(MessageDigest.class);
         final URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
@@ -97,8 +97,8 @@ public class LowLevelStorageServiceTest {
         when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.getBinaryStore = mockStoreFunc;
-        testObj.getBinaryKey = mockKeyFunc;
+        testObj.setGetBinaryStore(mockStoreFunc);
+        testObj.setGetBinaryKey(mockKeyFunc);
         testObj.setRepository(mockRepo);
         @SuppressWarnings("unchecked")
         final Function<LowLevelCacheEntry, String> testFunc =
@@ -122,8 +122,8 @@ public class LowLevelStorageServiceTest {
         when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.getBinaryStore = mockStoreFunc;
-        testObj.getBinaryKey = mockKeyFunc;
+        testObj.setGetBinaryStore(mockStoreFunc);
+        testObj.setGetBinaryKey(mockKeyFunc);
         testObj.setRepository(mockRepo);
         final Set<LowLevelCacheEntry> actual = testObj.getBinaryBlobs(mockNode);
         assertEquals("foo", actual.iterator().next().getExternalIdentifier());
@@ -195,8 +195,8 @@ public class LowLevelStorageServiceTest {
         when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.getBinaryStore = mockStoreFunc;
-        testObj.getBinaryKey = mockKeyFunc;
+        testObj.setGetBinaryStore(mockStoreFunc);
+        testObj.setGetBinaryKey(mockKeyFunc);
         testObj.setRepository(mockRepo);
         mock(MessageDigest.class);
         final URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
@@ -209,8 +209,8 @@ public class LowLevelStorageServiceTest {
                         any(MessageDigest.class), any(URI.class),
                         any(Long.class))).thenReturn(mockFixityFunc);
         final GetGoodFixityResults goodMock = mock(GetGoodFixityResults.class);
-        testObj.getGoodFixityResults = goodMock;
-        testObj.getCacheStore = mockCacheStoreFunc;
+        testObj.setGetGoodFixityResults(goodMock);
+        testObj.setGetCacheStore(mockCacheStoreFunc);
         final Datastream mockDs = mock(Datastream.class);
         final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObj.getName()).thenReturn("mockObject");

@@ -31,7 +31,7 @@ import com.yammer.metrics.MetricRegistry;
 
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
-    final private Logger logger = LoggerFactory
+    private static final Logger logger = LoggerFactory
             .getLogger(RepositoryService.class);
 
     public static final MetricRegistry metrics = RegistryService.getMetrics();

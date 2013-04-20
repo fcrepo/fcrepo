@@ -20,7 +20,7 @@ import org.fcrepo.utils.LowLevelCacheEntry;
 
 import com.google.common.base.Function;
 
-public class ServiceHelpers {
+public abstract class ServiceHelpers {
 
     public static Long getNodePropertySize(final Node node)
             throws RepositoryException {

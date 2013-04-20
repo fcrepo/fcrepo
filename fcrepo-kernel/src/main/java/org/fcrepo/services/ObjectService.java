@@ -9,7 +9,6 @@ import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -117,7 +116,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
     }
 
     public void deleteObject(final String pid, final Session session)
-            throws PathNotFoundException, RepositoryException {
+            throws RepositoryException {
         final Node obj = session.getNode(getObjectJcrNodePath(pid));
         obj.remove();
         session.save();

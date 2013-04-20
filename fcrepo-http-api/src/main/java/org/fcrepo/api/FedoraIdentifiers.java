@@ -9,8 +9,6 @@ import static com.google.common.collect.Range.closed;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 
-import java.io.IOException;
-
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;

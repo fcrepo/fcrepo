@@ -17,7 +17,8 @@ public class StoreChunkOutputStream extends OutputStream {
 
     protected final Logger logger;
 
-    public static final int CHUNKSIZE = 1024 * 1024 * 1; // 1 MB
+    // 1 MB
+    public static final int CHUNKSIZE = 1024 * 1024 * 1;
 
     protected final CacheStore blobCache;
 

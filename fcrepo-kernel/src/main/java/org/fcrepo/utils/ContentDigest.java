@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
 
-public class ContentDigest {
+public abstract class ContentDigest {
 
     private static final Logger logger = getLogger(ContentDigest.class);
 

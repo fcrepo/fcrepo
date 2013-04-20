@@ -52,28 +52,29 @@ public class LowLevelStorageService {
     private static final Logger logger =
             getLogger(LowLevelStorageService.class);
 
-    final static Counter fixityCheckCounter = metrics.counter(name(
+    static final Counter fixityCheckCounter = metrics.counter(name(
             LowLevelStorageService.class, "fixity-check-counter"));
 
-    final static Timer timer = metrics.timer(name(Datastream.class,
+    static final Timer timer = metrics.timer(name(Datastream.class,
             "fixity-check-time"));
 
-    final static Counter fixityRepairedCounter = metrics.counter(name(
+    static final Counter fixityRepairedCounter = metrics.counter(name(
             LowLevelStorageService.class, "fixity-repaired-counter"));
 
-    final static Counter fixityErrorCounter = metrics.counter(name(
+    static final Counter fixityErrorCounter = metrics.counter(name(
             LowLevelStorageService.class, "fixity-error-counter"));
 
     @Inject
     private Repository repo;
 
-    GetBinaryStore getBinaryStore = new GetBinaryStore();
+    private GetBinaryStore getBinaryStore = new GetBinaryStore();
 
-    GetBinaryKey getBinaryKey = new GetBinaryKey();
+    private GetBinaryKey getBinaryKey = new GetBinaryKey();
 
-    GetCacheStore getCacheStore = new GetCacheStore();
+    private GetCacheStore getCacheStore = new GetCacheStore();
 
-    GetGoodFixityResults getGoodFixityResults = new GetGoodFixityResults();
+    private GetGoodFixityResults getGoodFixityResults =
+            new GetGoodFixityResults();
 
     /**
      * For use with non-mutating methods.
@@ -239,6 +240,22 @@ public class LowLevelStorageService {
         }
 
         return fixityResults;
+    }
+
+    public void setGetBinaryStore(final GetBinaryStore getBinaryStore) {
+        this.getBinaryStore = getBinaryStore;
+    }
+
+    public void setGetBinaryKey(final GetBinaryKey getBinaryKey) {
+        this.getBinaryKey = getBinaryKey;
+    }
+
+    public void setGetCacheStore(final GetCacheStore getCacheStore) {
+        this.getCacheStore = getCacheStore;
+    }
+
+    public void setGetGoodFixityResults(final GetGoodFixityResults res) {
+        this.getGoodFixityResults = res;
     }
 
 }

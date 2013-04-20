@@ -7,7 +7,6 @@ import static javax.jcr.query.Query.JCR_SQL2;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -55,9 +54,9 @@ public class FedoraFieldSearch extends AbstractResource implements
     @POST
     @Produces(TEXT_HTML)
     public String searchSubmit(@FormParam("terms")
-    final String terms, final @FormParam("offSet")
+    final String terms, @FormParam("offSet")
     @DefaultValue("0")
-    String offSet, @FormParam("maxResults")
+    final String offSet, @FormParam("maxResults")
     final String maxResults) throws RepositoryException {
 
         final Session session = getAuthenticatedSession();
