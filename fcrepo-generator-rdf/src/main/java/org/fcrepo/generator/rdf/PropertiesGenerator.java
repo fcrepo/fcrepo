@@ -7,6 +7,7 @@ import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableList.builder;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.concat;
+import static org.fcrepo.utils.FedoraTypesUtils.isMultipleValuedProperty;
 
 import java.util.List;
 
@@ -21,12 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList.Builder;
 
 public class PropertiesGenerator implements TripleSource<Node> {
 
-    final private Logger logger = LoggerFactory
+    private final Logger logger = LoggerFactory
             .getLogger(PropertiesGenerator.class);
 
     @Override
@@ -40,10 +40,10 @@ public class PropertiesGenerator implements TripleSource<Node> {
         final List<Property> properties = copyOf(source.getProperties());
         logger.debug("Retrieved properties: " + properties.toString());
 
-        triples.addAll(transform(filter(properties, not(isMultiple)),
-                singlevaluedprop2triple));
-        triples.addAll(concat(transform(filter(properties, isMultiple),
-                multivaluedprop2triples)));
+        triples.addAll(transform(filter(properties,
+                not(isMultipleValuedProperty)), singlevaluedprop2triple));
+        triples.addAll(concat(transform(filter(properties,
+                isMultipleValuedProperty), multivaluedprop2triples)));
 
         logger.trace("Leaving getTriples().");
         return triples.build();
@@ -101,17 +101,5 @@ public class PropertiesGenerator implements TripleSource<Node> {
         return name.replaceFirst(predicatePrefix + ":", nReg
                 .getURI(predicatePrefix));
     }
-
-    private static Predicate<Property> isMultiple = new Predicate<Property>() {
-
-        @Override
-        public boolean apply(final Property p) {
-            try {
-                return p == null ? false : p.isMultiple();
-            } catch (final RepositoryException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    };
 
 }

@@ -13,6 +13,7 @@ import java.util.Collection;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
@@ -107,6 +108,21 @@ public abstract class FedoraTypesUtils {
                         return v.getString();
                     } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
+                    }
+                }
+            };
+
+    public static Predicate<Property> isMultipleValuedProperty =
+            new Predicate<Property>() {
+
+                @Override
+                public boolean apply(final Property p) {
+                    checkArgument(p != null,
+                            "null is neither multiple or not multiple!");
+                    try {
+                        return p.isMultiple();
+                    } catch (final RepositoryException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             };

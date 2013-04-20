@@ -39,15 +39,12 @@ import org.springframework.stereotype.Component;
 @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
 public class DatastreamRdfGenerator extends AbstractResource {
 
-    List<TripleSource<Datastream>> dsGenerators;
+    private List<TripleSource<Datastream>> dsGenerators;
 
-    final private static ValueFactory valFactory = new MemValueFactory();
+    private static final ValueFactory valFactory = new MemValueFactory();
 
-    final private Logger logger = LoggerFactory
+    private final Logger logger = LoggerFactory
             .getLogger(DatastreamRdfGenerator.class);
-
-    @Autowired
-    DatastreamService datastreamService;
 
     @GET
     @Path("/")

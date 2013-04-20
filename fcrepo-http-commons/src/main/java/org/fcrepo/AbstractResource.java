@@ -15,6 +15,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
+import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
@@ -46,6 +47,12 @@ public abstract class AbstractResource {
      */
     @Autowired
     protected ObjectService objectService;
+
+    /**
+     * The fcrepo datastream service
+     */
+    @Autowired
+    protected DatastreamService datastreamService;
 
     /**
      * A resource that can mint new Fedora PIDs.

@@ -10,7 +10,7 @@ import org.apache.any23.writer.RDFXMLWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TurtleWriter;
 
-public class Utils {
+public abstract class Utils {
 
     public static TripleHandler selectWriter(final String mimeType,
             final OutputStream out) {
