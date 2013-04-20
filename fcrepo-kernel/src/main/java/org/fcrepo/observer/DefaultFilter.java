@@ -7,7 +7,6 @@ import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -48,16 +47,15 @@ public class DefaultFilter implements EventFilter {
                     isFedoraDatastream.apply(resource);
 
         } catch (final PathNotFoundException e) {
-            return false; // not a node in the fedora workspace
-        } catch (final LoginException e) {
-            throw new SystemFailureException(e);
+            // not a node in the fedora workspace
+            return false;
         } catch (final RepositoryException e) {
             throw new SystemFailureException(e);
         }
     }
 
     @PostConstruct
-    public void acquireSession() throws LoginException, RepositoryException {
+    public void acquireSession() throws RepositoryException {
         session = repository.login();
     }
 

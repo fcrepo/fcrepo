@@ -33,13 +33,13 @@ import com.yammer.metrics.Timer;
  */
 public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
-    private Node node;
-
     /**
      * Timer for the time to create/initialize a FedoraObject
      */
     final static Timer timer = metrics.timer(name(FedoraObject.class,
             "FedoraObject"));
+
+    private Node node;
 
     /**
      * Construct a FedoraObject from an existing JCR Node

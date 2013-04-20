@@ -15,7 +15,7 @@ import com.google.common.base.Predicate;
 public class GetGoodFixityResults implements
         Function<Collection<FixityResult>, Set<FixityResult>> {
 
-    IsGoodFixity predicate = new IsGoodFixity();
+    private IsGoodFixity predicate = new IsGoodFixity();
 
     public boolean isGood(final FixityResult input) {
         return predicate.apply(input);

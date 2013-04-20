@@ -13,8 +13,8 @@ import com.google.common.base.Function;
  */
 public interface PidMinter {
 
-    public String mintPid();
+    String mintPid();
 
-    public Function<Object, String> makePid();
+    Function<Object, String> makePid();
 
 }

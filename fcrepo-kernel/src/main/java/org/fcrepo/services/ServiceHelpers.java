@@ -9,12 +9,10 @@ import java.security.MessageDigest;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
 
 import org.fcrepo.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.utils.FixityResult;
@@ -64,14 +62,11 @@ public class ServiceHelpers {
     }
 
     public static Long getDatastreamSize(final Node ds)
-            throws ValueFormatException, PathNotFoundException,
-            RepositoryException {
+            throws RepositoryException {
         return getNodePropertySize(ds) + getContentSize(ds);
     }
 
-    public static Long getContentSize(final Node ds)
-            throws ValueFormatException, PathNotFoundException,
-            RepositoryException {
+    public static Long getContentSize(final Node ds) throws RepositoryException {
         return ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getSize();
     }

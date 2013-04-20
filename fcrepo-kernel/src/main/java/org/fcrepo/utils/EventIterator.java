@@ -7,7 +7,7 @@ import javax.jcr.observation.Event;
 
 public class EventIterator implements Iterator<Event>, Iterable<Event> {
 
-    javax.jcr.observation.EventIterator i;
+    private javax.jcr.observation.EventIterator i;
 
     public EventIterator(final javax.jcr.observation.EventIterator i) {
         this.i = i;

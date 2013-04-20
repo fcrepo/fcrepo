@@ -16,7 +16,7 @@ import javax.jcr.observation.Event;
  */
 public class FedoraEvent implements Event {
 
-    Event e;
+    private Event e;
 
     public FedoraEvent(final Event e) {
         this.e = e;

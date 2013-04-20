@@ -36,7 +36,15 @@ import com.yammer.metrics.Counter;
  */
 public class SimpleObserver implements EventListener {
 
-    final private Integer eventTypes = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
+    static final private Logger logger = getLogger(SimpleObserver.class);
+
+    /**
+     * A simple counter of events that pass through this observer
+     */
+    static final Counter eventCounter = metrics.counter(name(
+            SimpleObserver.class, "onEvent"));
+
+    static final Integer eventTypes = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
             PROPERTY_ADDED + PROPERTY_CHANGED + PROPERTY_REMOVED;
 
     @Inject
@@ -47,14 +55,6 @@ public class SimpleObserver implements EventListener {
 
     @Inject
     private EventFilter eventFilter;
-
-    static final private Logger logger = getLogger(SimpleObserver.class);
-
-    /**
-     * A simple counter of events that pass through this observer
-     */
-    static final Counter eventCounter = metrics.counter(name(
-            SimpleObserver.class, "onEvent"));
 
     @PostConstruct
     public void buildListener() throws RepositoryException {

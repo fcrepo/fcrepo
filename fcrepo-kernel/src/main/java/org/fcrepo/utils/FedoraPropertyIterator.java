@@ -8,7 +8,7 @@ import javax.jcr.PropertyIterator;
 
 public class FedoraPropertyIterator implements Iterator<Property> {
 
-    PropertyIterator i;
+    private PropertyIterator i;
 
     public FedoraPropertyIterator(final PropertyIterator i) {
         this.i = i;

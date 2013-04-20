@@ -27,8 +27,8 @@ public enum EventType {
                 return NODE_MOVED;
             case 0x40:
                 return PERSIST;
-
-            default: // no default
+                // no default
+            default:
                 throw new IllegalArgumentException("Invalid JCR event type: " +
                         i);
         }
@@ -55,8 +55,8 @@ public enum EventType {
                 return "node moved";
             case PERSIST:
                 return "persist";
-
-            default: // no default
+                // no default
+            default:
                 throw new IllegalArgumentException("Invalid JCR event type: " +
                         jcrEvent);
         }
