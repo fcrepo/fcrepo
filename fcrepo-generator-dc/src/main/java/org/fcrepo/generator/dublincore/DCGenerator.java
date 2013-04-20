@@ -7,6 +7,6 @@ import javax.jcr.Node;
 
 public interface DCGenerator {
 
-    public abstract InputStream getStream(final Node node);
+    InputStream getStream(final Node node);
 
 }

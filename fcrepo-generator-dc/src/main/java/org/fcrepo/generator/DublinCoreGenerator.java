@@ -28,10 +28,10 @@ import org.springframework.stereotype.Component;
 public class DublinCoreGenerator extends AbstractResource {
 
     @Resource
-    List<DCGenerator> dcgenerators;
+    private List<DCGenerator> dcgenerators;
 
     @Autowired
-    ObjectService objectService;
+    private ObjectService objectService;
 
     @GET
     @Produces(TEXT_XML)
