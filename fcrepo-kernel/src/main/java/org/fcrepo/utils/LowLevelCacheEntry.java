@@ -1,6 +1,7 @@
 
 package org.fcrepo.utils;
 
+import static java.util.Objects.hash;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
@@ -67,12 +68,7 @@ public class LowLevelCacheEntry {
 
     @Override
     public int hashCode() {
-        int hash = 1;
-        hash = hash * 31 + store.hashCode();
-        hash = hash * 31 + (cacheStore == null ? 0 : cacheStore.hashCode());
-        hash = hash * 31 + key.hashCode();
-
-        return hash;
+        return hash(store, cacheStore, key);
     }
 
     public InputStream getInputStream() throws BinaryStoreException {

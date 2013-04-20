@@ -27,7 +27,7 @@
     <dependency>
       <groupId>org.jboss.jbossts</groupId>
       <artifactId>jbossjta</artifactId>
-      <version>4.16.6.Final</version>
+      <version>4.16.6.Final</version><!--$NO-MVN-MAN-VER$-->
     </dependency>
     <dependency>
       <groupId>org.modeshape</groupId>

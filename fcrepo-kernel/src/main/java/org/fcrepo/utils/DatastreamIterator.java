@@ -1,12 +1,13 @@
 
 package org.fcrepo.utils;
 
+import java.util.Iterator;
+
 import javax.jcr.NodeIterator;
-import javax.jcr.RangeIterator;
 
 import org.fcrepo.Datastream;
 
-public class DatastreamIterator implements RangeIterator {
+public class DatastreamIterator implements Iterator<Datastream> {
 
     private final NodeIterator nodes;
 
@@ -24,7 +25,7 @@ public class DatastreamIterator implements RangeIterator {
     }
 
     @Override
-    public Object next() {
+    public Datastream next() {
         return new Datastream(nodes.nextNode());
     }
 
@@ -33,17 +34,14 @@ public class DatastreamIterator implements RangeIterator {
         nodes.remove();
     }
 
-    @Override
     public void skip(final long skipNum) {
         nodes.skip(skipNum);
     }
 
-    @Override
     public long getSize() {
         return nodes.getSize();
     }
 
-    @Override
     public long getPosition() {
         return nodes.getPosition();
     }

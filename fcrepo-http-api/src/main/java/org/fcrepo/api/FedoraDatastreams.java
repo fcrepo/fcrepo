@@ -1,10 +1,12 @@
 
 package org.fcrepo.api;
 
-import static com.google.common.collect.ImmutableSet.builder;
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.transform;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
@@ -51,13 +53,12 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FixityResult;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.base.Function;
 import com.sun.jersey.multipart.BodyPart;
 import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
@@ -82,7 +83,6 @@ public class FedoraDatastreams extends AbstractResource {
      * @return the list of datastreams
      * @throws RepositoryException
      * @throws IOException
-     * @throws TemplateException
      */
 
     @GET
@@ -92,15 +92,11 @@ public class FedoraDatastreams extends AbstractResource {
     final String pid) throws RepositoryException, IOException {
 
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
-        final Builder<DatastreamElement> datastreams = builder();
 
-        final DatastreamIterator i = datastreamService.getDatastreamsFor(pid);
-        while (i.hasNext()) {
-            final Datastream ds = i.nextDatastream();
-            datastreams.add(new DatastreamElement(ds.getDsId(), ds.getDsId(),
-                    ds.getMimeType()));
-        }
-        objectDatastreams.datastreams = datastreams.build();
+        objectDatastreams.datastreams =
+                copyOf(transform(datastreamService
+                        .getDatastreamsFor(pid), ds2dsElement));
+
         return objectDatastreams;
 
     }
@@ -115,7 +111,7 @@ public class FedoraDatastreams extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             for (final String dsid : dsidList) {
-                logger.debug("purging datastream " + dsid);
+                logger.debug("Purging datastream: " + dsid);
                 datastreamService.purgeDatastream(session, pid, dsid);
             }
 
@@ -123,7 +119,7 @@ public class FedoraDatastreams extends AbstractResource {
                 final String dsid =
                         part.getContentDisposition().getParameters()
                                 .get("name");
-                logger.debug("adding datastream " + dsid);
+                logger.debug("Adding datastream: " + dsid);
                 final String dsPath = getDatastreamJcrNodePath(pid, dsid);
                 final Object obj = part.getEntity();
                 InputStream src = null;
@@ -139,7 +135,7 @@ public class FedoraDatastreams extends AbstractResource {
             }
 
             session.save();
-            return created(uriInfo.getAbsolutePath()).build();
+            return created(uriInfo.getRequestUri()).build();
         } finally {
             session.logout();
         }
@@ -192,8 +188,7 @@ public class FedoraDatastreams extends AbstractResource {
 
             }
         }
-
-        return Response.ok(multipart, MediaType.MULTIPART_FORM_DATA).build();
+        return Response.ok(multipart, MULTIPART_FORM_DATA).build();
     }
 
     /**
@@ -228,7 +223,7 @@ public class FedoraDatastreams extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             final String dsPath = getDatastreamJcrNodePath(pid, dsid);
-            logger.info("addDatastream {}", dsPath);
+            logger.debug("addDatastream {}", dsPath);
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream, checksumType, checksum);
             session.save();
@@ -431,5 +426,19 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.dsCreateDate = ds.getCreatedDate().toString();
         return dsProfile;
     }
+
+    private Function<Datastream, DatastreamElement> ds2dsElement =
+            new Function<Datastream, DatastreamElement>() {
+
+                @Override
+                public DatastreamElement apply(Datastream ds) {
+                    try {
+                        return new DatastreamElement(ds.getDsId(),
+                                ds.getDsId(), ds.getMimeType());
+                    } catch (RepositoryException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
 
 }
