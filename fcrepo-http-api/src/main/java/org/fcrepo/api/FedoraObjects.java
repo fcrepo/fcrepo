@@ -40,7 +40,7 @@ public class FedoraObjects extends AbstractResource {
     private static final Logger logger = getLogger(FedoraObjects.class);
 
     @Autowired
-    ObjectService objectService;
+    private ObjectService objectService;
 
     /**
      * 
@@ -166,6 +166,16 @@ public class FedoraObjects extends AbstractResource {
         objectService.deleteObject(pid, session);
         session.save();
         return noContent().build();
+    }
+
+    
+    public ObjectService getObjectService() {
+        return objectService;
+    }
+
+    
+    public void setObjectService(ObjectService objectService) {
+        this.objectService = objectService;
     }
 
 }

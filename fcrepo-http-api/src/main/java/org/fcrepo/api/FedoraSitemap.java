@@ -37,7 +37,7 @@ public class FedoraSitemap extends AbstractResource {
     public static final long entriesPerPage = 50000;
 
     @Autowired
-    ObjectService objectService;
+    private ObjectService objectService;
 
     @GET
     @Produces(TEXT_XML)
@@ -117,6 +117,11 @@ public class FedoraSitemap extends AbstractResource {
                 FedoraObjects.class).path(FedoraObjects.class, "getObject")
                 .build(r.getNode().getName()), r.getValue("jcr:lastModified")
                 .getDate());
+    }
+
+    
+    public void setObjectService(ObjectService objectService) {
+        this.objectService = objectService;
     }
 
 }

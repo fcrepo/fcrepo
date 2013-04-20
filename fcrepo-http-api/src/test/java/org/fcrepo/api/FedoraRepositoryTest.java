@@ -42,7 +42,7 @@ public class FedoraRepositoryTest {
         testFedoraRepo = new FedoraRepository();
         testFedoraRepo.setUriInfo(TestHelpers.getUriInfoImpl());
         mockObjects = mock(ObjectService.class);
-        testFedoraRepo.objectService = mockObjects;
+        testFedoraRepo.setObjectService(mockObjects);
         mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
         final SessionFactory mockSessions = mock(SessionFactory.class);

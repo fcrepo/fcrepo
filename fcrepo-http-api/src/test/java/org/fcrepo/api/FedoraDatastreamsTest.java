@@ -79,10 +79,10 @@ public class FedoraDatastreamsTest {
         mockLow = mock(LowLevelStorageService.class);
 
         testObj = new FedoraDatastreams();
-        testObj.datastreamService = mockDatastreams;
+        testObj.setDatastreamService(mockDatastreams);
         testObj.setSecurityContext(mockSecurityContext);
         testObj.setHttpServletRequest(mockServletRequest);
-        testObj.llStoreService = mockLow;
+        testObj.setLlStoreService(mockLow);
         //mockRepo = mock(Repository.class);
         final SessionFactory mockSessions = mock(SessionFactory.class);
         testObj.setSessionFactory(mockSessions);

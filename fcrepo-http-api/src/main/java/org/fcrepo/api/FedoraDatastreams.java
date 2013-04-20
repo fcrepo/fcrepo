@@ -70,10 +70,10 @@ public class FedoraDatastreams extends AbstractResource {
     private final Logger logger = getLogger(FedoraDatastreams.class);
 
     @Autowired
-    DatastreamService datastreamService;
+    private DatastreamService datastreamService;
 
     @Autowired
-    LowLevelStorageService llStoreService;
+    private LowLevelStorageService llStoreService;
 
     /**
      * Returns a list of datastreams for the object
@@ -436,9 +436,29 @@ public class FedoraDatastreams extends AbstractResource {
                         return new DatastreamElement(ds.getDsId(),
                                 ds.getDsId(), ds.getMimeType());
                     } catch (RepositoryException e) {
-                        throw new RuntimeException(e);
+                        throw new IllegalStateException(e);
                     }
                 }
             };
+
+    
+    public DatastreamService getDatastreamService() {
+        return datastreamService;
+    }
+
+    
+    public void setDatastreamService(DatastreamService datastreamService) {
+        this.datastreamService = datastreamService;
+    }
+
+    
+    public LowLevelStorageService getLlStoreService() {
+        return llStoreService;
+    }
+
+    
+    public void setLlStoreService(LowLevelStorageService llStoreService) {
+        this.llStoreService = llStoreService;
+    }
 
 }

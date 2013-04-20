@@ -32,7 +32,7 @@ public class FedoraSitemapTest {
     public void setUp() throws LoginException, RepositoryException {
         mockObjects = mock(ObjectService.class);
         testObj = new FedoraSitemap();
-        testObj.objectService = mockObjects;
+        testObj.setObjectService(mockObjects);
         mockSession = mock(Session.class);
         final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);

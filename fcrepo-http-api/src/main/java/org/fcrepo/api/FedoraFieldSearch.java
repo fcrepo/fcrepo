@@ -13,10 +13,10 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
-import javax.jcr.query.InvalidQueryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -48,16 +48,17 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     @GET
     @Produces(TEXT_HTML)
-    public String searchForm() throws LoginException, RepositoryException {
+    public String searchForm() throws RepositoryException {
         return new VelocityViewer().getFieldSearch(null);
     }
 
     @POST
     @Produces(TEXT_HTML)
     public String searchSubmit(@FormParam("terms")
-    final String terms, @FormParam("offSet")
+    final String terms, final @FormParam("offSet")
+    @DefaultValue("0")
     String offSet, @FormParam("maxResults")
-    final String maxResults) throws LoginException, RepositoryException {
+    final String maxResults) throws RepositoryException {
 
         final Session session = getAuthenticatedSession();
         final QueryManager queryManager =
@@ -70,10 +71,6 @@ public class FedoraFieldSearch extends AbstractResource implements
         final Query query = getQuery(queryManager, valueFactory, terms);
         logger.debug("statement is " + query.getStatement());
 
-        if (offSet == null) {
-            offSet = "0";
-        }
-
         final FieldSearchResult fsr =
                 search(query, parseInt(offSet), parseInt(maxResults));
         fsr.setSearchTerms(terms);
@@ -85,7 +82,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     Query getQuery(final QueryManager queryManager,
             final ValueFactory valueFactory, final String terms)
-            throws InvalidQueryException, RepositoryException {
+            throws RepositoryException {
         final Query query = queryManager.createQuery(QUERY_STRING, JCR_SQL2);
         query.bindValue("sterm", valueFactory.createValue("%" + terms + "%"));
         logger.debug("statement is " + query.getStatement());
@@ -102,7 +99,7 @@ public class FedoraFieldSearch extends AbstractResource implements
      * @throws RepositoryException
      */
     public FieldSearchResult search(final Query query, final int offSet,
-            final int maxResults) throws LoginException, RepositoryException {
+            final int maxResults) throws RepositoryException {
 
         final ImmutableList.Builder<ObjectFields> fieldObjects = builder();
 

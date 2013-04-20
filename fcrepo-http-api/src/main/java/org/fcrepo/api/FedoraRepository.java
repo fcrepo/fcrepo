@@ -13,7 +13,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
-import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -24,8 +23,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
@@ -43,15 +40,14 @@ public class FedoraRepository extends AbstractResource {
     private static final Logger logger = getLogger(FedoraRepository.class);
 
     @Autowired
-    Repository repo;
+    private Repository repo;
 
     @Autowired
-    ObjectService objectService;
+    private ObjectService objectService;
 
     @GET
     @Path("modeshape")
-    public Response describeModeshape() throws JsonGenerationException,
-            JsonMappingException, IOException, RepositoryException {
+    public Response describeModeshape() throws IOException, RepositoryException {
         final Session session = getAuthenticatedSession();
         logger.debug("Repository name: " + repo.getDescriptor(REP_NAME_DESC));
         final Builder<String, Object> repoproperties = builder();
@@ -80,8 +76,7 @@ public class FedoraRepository extends AbstractResource {
 
     @GET
     @Produces({TEXT_XML, APPLICATION_XML, APPLICATION_JSON})
-    public DescribeRepository describe() throws LoginException,
-            RepositoryException {
+    public DescribeRepository describe() throws RepositoryException {
 
         final Session session = getAuthenticatedSession();
         final DescribeRepository description = new DescribeRepository();
@@ -98,7 +93,7 @@ public class FedoraRepository extends AbstractResource {
 
     @GET
     @Produces(TEXT_HTML)
-    public String describeHtml() throws LoginException, RepositoryException {
+    public String describeHtml() throws RepositoryException {
 
         final VelocityViewer view = new VelocityViewer();
         return view.getRepoInfo(describe());
@@ -110,6 +105,11 @@ public class FedoraRepository extends AbstractResource {
      */
     public void setRepository(final Repository repo) {
         this.repo = repo;
+    }
+
+    
+    public void setObjectService(ObjectService objectService) {
+        this.objectService = objectService;
     }
 
 }

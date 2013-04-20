@@ -58,7 +58,7 @@ public class FedoraObjectsTest {
         mockPrincipal = mock(Principal.class);
         mockObjects = mock(ObjectService.class);
         testObj = new FedoraObjects();
-        testObj.objectService = mockObjects;
+        testObj.setObjectService(mockObjects);
         mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
         when(mockSession.getUserID()).thenReturn(mockUser);

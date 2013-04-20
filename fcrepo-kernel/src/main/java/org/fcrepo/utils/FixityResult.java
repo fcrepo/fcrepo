@@ -1,14 +1,14 @@
 
 package org.fcrepo.utils;
 
+import static java.util.Objects.hash;
+
 import java.net.URI;
 import java.util.EnumSet;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import com.google.common.primitives.Longs;
 
 @XmlRootElement(name = "DatastreamFixityStatus")
 public class FixityResult {
@@ -79,11 +79,7 @@ public class FixityResult {
 
     @Override
     public int hashCode() {
-        int hash = 1;
-        hash = hash * 31 + Longs.hashCode(computedSize);
-        hash = hash * 31 + computedChecksum.hashCode();
-
-        return hash;
+        return hash(computedSize, computedChecksum);
     }
 
     @Override
