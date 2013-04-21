@@ -27,7 +27,7 @@ public interface TripleSource<T> {
      * @author ajs6f
      *
      */
-    public static class Triple {
+    static class Triple {
 
         public Triple(final String s, final String p, final String o) {
             subject = s;

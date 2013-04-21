@@ -3,6 +3,7 @@ package org.fcrepo.generator;
 
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,7 +30,6 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -37,12 +37,11 @@ import org.springframework.stereotype.Component;
 @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
 public class ObjectRdfGenerator extends AbstractResource {
 
-    List<TripleSource<FedoraObject>> objectGenerators;
+    private List<TripleSource<FedoraObject>> objectGenerators;
 
-    final private static ValueFactory valFactory = new MemValueFactory();
+    private static final ValueFactory valFactory = new MemValueFactory();
 
-    final private Logger logger = LoggerFactory
-            .getLogger(ObjectRdfGenerator.class);
+    private static final Logger logger = getLogger(ObjectRdfGenerator.class);
 
     @GET
     @Path("/")

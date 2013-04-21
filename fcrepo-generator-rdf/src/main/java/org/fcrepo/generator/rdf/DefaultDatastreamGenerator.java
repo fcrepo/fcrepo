@@ -4,6 +4,7 @@ package org.fcrepo.generator.rdf;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.transform;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
 
@@ -14,20 +15,18 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.Datastream;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Function;
 
 public class DefaultDatastreamGenerator implements TripleSource<Datastream> {
 
-    final private static PropertiesGenerator propertiesGenerator =
+    private static final PropertiesGenerator propertiesGenerator =
             new PropertiesGenerator();
 
-    final private static NodeTypesGenerator nodeTypesGenerator =
+    private static final NodeTypesGenerator nodeTypesGenerator =
             new NodeTypesGenerator();
 
-    final private Logger logger = LoggerFactory
-            .getLogger(DefaultDatastreamGenerator.class);
+    private static final Logger logger =
+            getLogger(DefaultDatastreamGenerator.class);
 
     @Override
     public List<Triple> getTriples(final Datastream ds,
