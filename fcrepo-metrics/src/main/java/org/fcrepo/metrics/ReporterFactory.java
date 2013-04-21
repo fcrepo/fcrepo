@@ -1,7 +1,9 @@
 
 package org.fcrepo.metrics;
 
-import java.util.concurrent.TimeUnit;
+import static com.yammer.metrics.graphite.GraphiteReporter.forRegistry;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 
 import com.yammer.metrics.ScheduledReporter;
 import com.yammer.metrics.graphite.Graphite;
@@ -11,11 +13,8 @@ public class ReporterFactory {
 
     public ScheduledReporter registerGraphiteReporter(final Graphite g,
             final String prefix) {
-        final GraphiteReporter r =
-                GraphiteReporter.forRegistry(RegistryService.getMetrics())
-                        .build(g);
-
-        r.start(1, TimeUnit.MINUTES);
+        final GraphiteReporter r = forRegistry(getMetrics()).build(g);
+        r.start(1, MINUTES);
         return r;
     }
 

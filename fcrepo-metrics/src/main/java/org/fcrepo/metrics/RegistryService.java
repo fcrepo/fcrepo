@@ -7,9 +7,9 @@ import com.yammer.metrics.ConsoleReporter;
 import com.yammer.metrics.MetricFilter;
 import com.yammer.metrics.MetricRegistry;
 
-public class RegistryService {
+public abstract class RegistryService {
 
-    private final static MetricRegistry metrics = new MetricRegistry("fcrepo");
+    private static final MetricRegistry metrics = new MetricRegistry("fcrepo");
 
     public static MetricRegistry getMetrics() {
         return metrics;
