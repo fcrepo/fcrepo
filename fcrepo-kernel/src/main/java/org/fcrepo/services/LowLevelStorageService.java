@@ -1,6 +1,7 @@
 
 package org.fcrepo.services;
 
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.google.common.collect.ImmutableSet.copyOf;
@@ -164,7 +165,7 @@ public class LowLevelStorageService {
         try {
             readOnlySession = repo.login();
         } catch (final RepositoryException e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
     }
 

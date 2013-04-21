@@ -2,6 +2,7 @@
 package org.fcrepo.services.functions;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Throwables.propagate;
 
 import javax.jcr.Repository;
 
@@ -23,7 +24,7 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
             return ((JcrRepository) input).getConfiguration()
                     .getBinaryStorage().getBinaryStore();
         } catch (final Exception e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
     }
 

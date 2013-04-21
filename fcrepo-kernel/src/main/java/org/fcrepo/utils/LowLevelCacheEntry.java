@@ -1,6 +1,7 @@
 
 package org.fcrepo.utils;
 
+import static com.google.common.base.Throwables.propagate;
 import static java.util.Objects.hash;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
@@ -165,8 +166,9 @@ public class LowLevelCacheEntry {
             ds.close();
         } catch (final CloneNotSupportedException e) {
             logger.warn("Could not clone MessageDigest: {}", e);
+            throw propagate(e);
         } catch (final IOException e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
 
         return result;

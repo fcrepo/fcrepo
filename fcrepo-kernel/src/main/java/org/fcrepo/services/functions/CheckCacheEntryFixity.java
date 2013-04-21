@@ -1,6 +1,7 @@
 
 package org.fcrepo.services.functions;
 
+import static com.google.common.base.Throwables.propagate;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -42,7 +43,7 @@ public class CheckCacheEntryFixity implements
             result = input.checkFixity(dsChecksum, dsSize, digest);
         } catch (final BinaryStoreException e) {
             logger.error("Exception checking low-level fixity: {}", e);
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
         return result;
     }

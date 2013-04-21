@@ -1,6 +1,7 @@
 
 package org.fcrepo.services;
 
+import static com.google.common.base.Throwables.propagate;
 import static javax.jcr.query.Query.JCR_SQL2;
 
 import java.io.PrintStream;
@@ -82,8 +83,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         try {
             return getAllObjectsDatastreamSize();
         } catch (final RepositoryException e) {
-            logger.warn(e.toString());
-            return -1L;
+            throw propagate(e);
         }
     }
 
@@ -91,8 +91,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         try {
             return session.getNode("/objects").getNodes().getSize();
         } catch (final RepositoryException e) {
-            logger.warn(e.toString());
-            return -1L;
+            throw propagate(e);
         }
     }
 
@@ -121,7 +120,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         try {
             readOnlySession = repo.login();
         } catch (final RepositoryException e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
     }
 

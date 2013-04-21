@@ -1,6 +1,7 @@
 
 package org.fcrepo.utils;
 
+import static com.google.common.base.Throwables.propagate;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -27,7 +28,7 @@ public abstract class ContentDigest {
         } catch (final URISyntaxException unlikelyException) {
             logger.warn("Exception creating checksum URI: {}",
                     unlikelyException);
-            return null;
+            throw propagate(unlikelyException);
         }
     }
 

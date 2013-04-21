@@ -1,6 +1,7 @@
 
 package org.fcrepo.observer;
 
+import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
 
@@ -13,7 +14,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import org.modeshape.common.SystemFailureException;
 import org.modeshape.jcr.api.Repository;
 
 /**
@@ -50,7 +50,7 @@ public class DefaultFilter implements EventFilter {
             // not a node in the fedora workspace
             return false;
         } catch (final RepositoryException e) {
-            throw new SystemFailureException(e);
+            throw propagate(e);
         }
     }
 
