@@ -1,6 +1,7 @@
 
 package org.fcrepo.messaging.legacy;
 
+import static com.google.common.base.Throwables.propagate;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
@@ -53,19 +54,19 @@ public class LegacyMethod {
     //TODO get this out of the build properties
     public static final String SERVER_VERSION = "4.0.0-SNAPSHOT";
 
-    private final static String TYPES_NS =
+    private static final String TYPES_NS =
             "http://www.fedora.info/definitions/1/0/types/";
 
-    private final static String VERSION_PREDICATE =
+    private static final String VERSION_PREDICATE =
             "info:fedora/fedora-system:def/view#version";
 
-    private final static String XSD_NS = "http://www.w3.org/2001/XMLSchema";
+    private static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
 
-    private static String[] METHODS = new String[] {"ingest", "modifyObject",
-            "purgeObject", "addDatastream", "modifyDatastream",
+    private static final String[] METHODS = new String[] {"ingest",
+            "modifyObject", "purgeObject", "addDatastream", "modifyDatastream",
             "purgeDatastream"};
 
-    private final static List<String> METHOD_NAMES = Arrays.asList(METHODS);
+    private static final List<String> METHOD_NAMES = Arrays.asList(METHODS);
 
     private static final Logger logger = getLogger(LegacyMethod.class);
 
@@ -77,8 +78,8 @@ public class LegacyMethod {
                 LegacyMethod.class.getResourceAsStream(MAP_PROPERTIES)) {
             FEDORA_TYPES.load(is);
         } catch (final IOException e) {
-            throw new RuntimeException(e);
-            // it's in the jar.
+            // it's in the jar.s
+            throw propagate(e);
         }
     }
 
@@ -224,6 +225,7 @@ public class LegacyMethod {
         if (obj == null) {
             return "null";
         }
+        // TODO how is this not a String or subclass?
         final String javaType = obj.getClass().getCanonicalName();
         String term;
         //TODO Most of these types are not yet relevant to FCR4, but we can borrow their serializations as necessary
@@ -311,7 +313,7 @@ public class LegacyMethod {
                             .getStringProperty("methodName"));
         } catch (final JMSException e) {
             logger.info("Could not parse message: {}", jmsMessage);
-            return false;
+            throw propagate(e);
         }
     }
 

@@ -1,6 +1,8 @@
 
 package org.fcrepo.observer;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 
 import javax.annotation.PostConstruct;
@@ -18,15 +20,13 @@ import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 public class JMSTopicPublisher {
 
     @Inject
-    EventBus eventBus;
+    private EventBus eventBus;
 
     @Inject
     private Repository repo;
@@ -43,8 +43,7 @@ public class JMSTopicPublisher {
 
     private MessageProducer producer;
 
-    final private Logger logger = LoggerFactory
-            .getLogger(JMSTopicPublisher.class);
+    final private Logger logger = getLogger(JMSTopicPublisher.class);
 
     private javax.jcr.Session session;
 

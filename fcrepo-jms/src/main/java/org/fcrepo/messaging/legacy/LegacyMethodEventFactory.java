@@ -1,6 +1,8 @@
 
 package org.fcrepo.messaging.legacy;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -13,12 +15,10 @@ import javax.jms.TextMessage;
 
 import org.fcrepo.observer.JMSEventMessageFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LegacyMethodEventFactory implements JMSEventMessageFactory {
 
-    final private Logger logger = LoggerFactory
-            .getLogger(LegacyMethodEventFactory.class);
+    final private Logger logger = getLogger(LegacyMethodEventFactory.class);
 
     public LegacyMethodEventFactory() {
     }

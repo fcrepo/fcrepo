@@ -117,16 +117,20 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     @PostConstruct
     public final void getSession() {
+        logger.trace("Logging in read only session...");
         try {
             readOnlySession = repo.login();
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
+        logger.trace("Logged in read only session.");
     }
 
     @PreDestroy
     public final void logoutSession() {
+        logger.trace("Logging out read only session...");
         readOnlySession.logout();
+        logger.trace("Logged out read only session.");
     }
 
     public void setRepository(final Repository repository) {
