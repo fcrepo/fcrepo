@@ -77,7 +77,7 @@ public abstract class AbstractResourceIT {
                 ds);
     }
 
-    protected int getStatus(HttpUriRequest method)
+    protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());

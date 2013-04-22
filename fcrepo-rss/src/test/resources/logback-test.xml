@@ -13,9 +13,6 @@
     <logger name="org.modeshape" additivity="false" level="WARN">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="org.apache.cxf" additivity="false" level="WARN">
-        <appender-ref ref="STDOUT"/>
-    </logger>
     <logger name="org.apache.http.client" additivity="false" level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </logger>

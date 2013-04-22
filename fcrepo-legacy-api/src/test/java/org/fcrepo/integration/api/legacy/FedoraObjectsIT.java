@@ -75,7 +75,7 @@ public class FedoraObjectsIT extends AbstractResourceIT {
                         .toString());
         v.addSchemaSource(new StreamSource(new File(this.getClass()
                 .getResource("/xsd/objectProfile.xsd").getFile())));
-        for (Object e : v.getInstanceErrors(new StreamSource(
+        for (final Object e : v.getInstanceErrors(new StreamSource(
                 new ByteArrayInputStream(profile.getBytes())))) {
             logger.debug("Found SAXParseException in objectProfile response: " +
                     e.toString());
