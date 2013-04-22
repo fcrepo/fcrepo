@@ -1,6 +1,7 @@
 
 package org.fcrepo.syndication;
 
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.utils.EventType.getEventType;
@@ -19,7 +20,6 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.fcrepo.AbstractResource;
 import org.joda.time.DateTime;
-import org.modeshape.common.SystemFailureException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,7 +48,7 @@ public class RSSPublisher extends AbstractResource {
     private static final String FEED_DESCRIPTION = FEED_TITLE;
 
     @Autowired
-    EventBus eventBus;
+    private EventBus eventBus;
 
     private final BlockingQueue<Event> feedQueue =
             new ArrayBlockingQueue<Event>(FEED_LENGTH);
@@ -82,7 +82,7 @@ public class RSSPublisher extends AbstractResource {
                                 .toString());
                         entry.setDescription(description);
                     } catch (final RepositoryException e) {
-                        throw new SystemFailureException(e);
+                        throw propagate(e);
                     }
                     return entry;
                 }
