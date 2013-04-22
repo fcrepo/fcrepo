@@ -214,9 +214,16 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @return The size in bytes of content associated with this datastream.
      * @throws RepositoryException
      */
-    public long getContentSize() throws RepositoryException {
-        return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE).getLong();
-    }
+	public long getContentSize() {
+		try {
+			return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
+					.getLong();
+		} catch (RepositoryException e) {
+			logger.error("Could not get contentSize() - " + e.getMessage());
+		}
+		// TODO Size is not stored, recalculate size?
+		return 0L;
+	}
 
     /**
      * Get the pre-calculated content digest for the binary payload
@@ -225,9 +232,20 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      */
     public URI getContentDigest() throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
-        return ContentDigest
-                .asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(),
-                        contentNode.getProperty(DIGEST_VALUE).getString());
+        try {
+	        return ContentDigest
+	                .asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(),
+	                        contentNode.getProperty(DIGEST_VALUE).getString());
+        } catch (RepositoryException e) {
+        	logger.error("Could not get content digest - " + e.getMessage());
+        }
+        //TODO checksum not stored. recalculating checksum, 
+        //however, this would defeat the purpose validating against the checksum
+        Binary binary = (Binary) contentNode.getProperty(JCR_DATA)
+        					.getBinary();
+        String dsChecksum = binary.getHexHash();
+
+        return ContentDigest.asURI("SHA-1",dsChecksum);
     }
 
     /**
@@ -235,9 +253,16 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public String getContentDigestType() throws RepositoryException {
-        return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
-                .getString();
+    public String getContentDigestType() {
+    	try {
+    		return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
+    				.getString();
+    	} catch (RepositoryException e) {
+    		logger.error("Could not get content digest type - " + e.getMessage());
+    	}
+    	//only supporting sha-1
+    	logger.debug("Using default digest type of SHA-1");
+        return "SHA-1";
     }
 
     /**
@@ -329,9 +354,25 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Date getLastModifiedDate() throws RepositoryException {
-        return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
-                .getTimeInMillis());
+    public Date getLastModifiedDate() {
+    	//TODO no modified date stored
+    	//attempt to set as created date?
+    	try {
+	        return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
+	                .getTimeInMillis());
+    	} catch (RepositoryException e) {
+    		logger.error("Could not get last modified date");
+    	}
+    	logger.debug("Setting modified date");
+    	try {
+    		Date createdDate = getCreatedDate();
+    		node.setProperty(JCR_LASTMODIFIED, createdDate.toString());
+    		node.getSession().save();
+    		return createdDate;
+    	} catch(RepositoryException e) {
+    		logger.error("Could not set new modified date - " + e.getMessage());
+    	}
+    	return null;
     }
 
     /**

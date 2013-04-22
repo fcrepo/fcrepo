@@ -42,12 +42,22 @@ public class ModeShapeRepositoryFactoryBean implements
         final Session s = repository.login();
         final Node objectStore =
                 new JcrTools(true).findOrCreateNode(s, "/objects");
+        final Node federatedStore = 
+        		new JcrTools(true).findOrCreateNode(s, "/federated");
 
         if (objectStore.canAddMixin("fedora:objectStore")) {
             objectStore.addMixin("fedora:objectStore");
 
             if (!objectStore.hasProperty("fedora:size")) {
                 objectStore.setProperty("fedora:size", 0L);
+            }
+        }
+        
+        if(federatedStore.canAddMixin("fedora:objectStore")) {
+        	federatedStore.addMixin("fedora:objectStore");
+
+            if(!federatedStore.hasProperty("fedora:size")) {
+            	federatedStore.setProperty("fedora:size", 0L);
             }
         }
 

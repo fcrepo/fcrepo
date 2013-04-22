@@ -824,6 +824,17 @@
       <timezone>-4</timezone>
     </developer>
     <developer>
+      <id>vincentng</id>
+      <name>Vincent Nguyen</name>
+      <email>vng0 @ (domain of organization url)</email>
+      <organization>US Centers for Disease Control and Prevention</organization>
+      <organizationUrl>http://stacks.cdc.gov/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
       <id>nigelgbanks</id>
       <name>Nigel Banks</name>
       <organization>Discovery Garden</organization>
