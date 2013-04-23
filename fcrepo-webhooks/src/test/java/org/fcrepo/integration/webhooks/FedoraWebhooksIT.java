@@ -97,7 +97,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(create_method));
 
         try {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 25; i++) {
 
                 Thread.sleep(200);
 
