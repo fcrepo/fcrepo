@@ -6,6 +6,7 @@ import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,7 +25,7 @@ public class RdfGeneratorIT extends AbstractResourceIT {
         client.execute(postObjMethod("RdfTest1"));
 
         final HttpGet getRdfMethod =
-                new HttpGet(serverAddress + "objects/RdfTest1/rdf");
+                new HttpGet(serverAddress + "objects/RdfTest1/fcr:rdf");
         getRdfMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getRdfMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -44,7 +45,7 @@ public class RdfGeneratorIT extends AbstractResourceIT {
         client.execute(postObjMethod("RdfTest2"));
 
         final HttpGet getRdfMethod =
-                new HttpGet(serverAddress + "objects/RdfTest2/rdf");
+                new HttpGet(serverAddress + "objects/RdfTest2/fcr:rdf");
         final HttpResponse response = client.execute(getRdfMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -61,7 +62,7 @@ public class RdfGeneratorIT extends AbstractResourceIT {
         client.execute(postObjMethod("RdfTest3"));
 
         final HttpGet getRdfMethod =
-                new HttpGet(serverAddress + "objects/RdfTest3/rdf");
+                new HttpGet(serverAddress + "objects/RdfTest3/fcr:rdf");
         getRdfMethod.setHeader("Accept", "text/turtle");
 
         final HttpResponse response = client.execute(getRdfMethod);
@@ -83,7 +84,7 @@ public class RdfGeneratorIT extends AbstractResourceIT {
         client.execute(postDSMethod("RdfTest4", "testDS", "foobar"));
         final HttpGet getRdfMethod =
                 new HttpGet(serverAddress +
-                        "objects/RdfTest4/datastreams/testDS/rdf");
+                        "objects/RdfTest4/fcr:datastreams/testDS/fcr:rdf");
         getRdfMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getRdfMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());

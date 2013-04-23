@@ -25,6 +25,7 @@ public abstract class PathService {
      */
     public static String getObjectJcrNodePath(final String pid) {
         logger.trace("Executing getObjectJcrNodePath() with pid: " + pid);
+        if (pid.startsWith("/")) return pid; // already absolute
         return OBJECT_PATH + "/" + pid;
     }
 
@@ -37,6 +38,10 @@ public abstract class PathService {
             final String dsId) {
         logger.trace("Executing getDatastreamJcrNodePath() with pid: " + pid +
                 " and dsId: " + dsId);
+        if (pid.startsWith("/")) {
+            // absolute path
+            return pid + "/" + dsId;
+        }
         return getObjectJcrNodePath(pid) + "/" + dsId;
     }
     

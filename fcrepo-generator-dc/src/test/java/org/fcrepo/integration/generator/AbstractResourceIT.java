@@ -60,13 +60,13 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + "objects/" + pid +
-                        "/datastreams/" + ds);
+                        "/fcr:datastreams/" + ds);
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + "/datastreams/" +
+        return new HttpPut(serverAddress + "objects/" + pid + "/fcr:datastreams/" +
                 ds);
     }
 

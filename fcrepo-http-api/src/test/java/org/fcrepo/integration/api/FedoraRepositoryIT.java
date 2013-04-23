@@ -24,7 +24,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjects() throws Exception {
-        assertEquals(200, getStatus(new HttpGet(serverAddress + "objects")));
+        assertEquals(200, getStatus(new HttpGet(serverAddress + "objects/fcr:children")));
     }
 
     @Test

@@ -24,6 +24,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
                 new HttpGet(serverOAIAddress + "objects/DublinCoreTest1/oai_dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getWorstCaseOaiMethod);
+
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String content = EntityUtils.toString(response.getEntity());

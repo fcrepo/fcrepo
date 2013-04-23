@@ -11,7 +11,10 @@ import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DELETE;
@@ -23,6 +26,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
@@ -33,28 +38,16 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.ImmutableList;
+
 @Component
-@Path("/rest/objects")
+@Path("/rest/{path: .*(?!(fcr\\:))}")
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraObjects.class);
 
     @Autowired
     private ObjectService objectService;
-
-    /**
-     * 
-     * Provides a serialized list of JCR names for all objects in the repo.
-     * 
-     * @return 200
-     * @throws RepositoryException
-     */
-    @GET
-    public Response getObjects() throws RepositoryException {
-
-        return ok(objectService.getObjectNames().toString()).build();
-
-    }
 
     /**
      * Creates a new object with a repo-chosen PID
@@ -64,8 +57,26 @@ public class FedoraObjects extends AbstractResource {
      */
     @POST
     @Path("/new")
-    public Response ingestAndMint() throws RepositoryException {
-        return ingest(pidMinter.mintPid(), "");
+    public Response ingestAndMint(@PathParam("path")
+    final List<PathSegment> pathList) throws RepositoryException {
+        final String pid = pidMinter.mintPid();
+        PathSegment path = new PathSegment() {
+
+            @Override
+            public String getPath() {
+                return pid;
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getMatrixParameters() {
+                return null;
+            }
+            
+        };
+        ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
+        segments.addAll(pathList);
+        segments.add(path);
+        return ingest(segments.build(), "");
     }
 
     /**
@@ -76,9 +87,9 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @PUT
-    @Path("/{pid}")
-    public Response modify(@PathParam("pid")
-    final String pid) throws RepositoryException {
+    @Path("")
+    public Response modify(@PathParam("path")
+    final List<PathSegment> pathList) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
             // TODO do something with awful mess of fcrepo3 query params
@@ -97,24 +108,26 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
-    @Path("/{pid}")
-    public Response ingest(@PathParam("pid")
-    final String pid, @QueryParam("label")
+    @Path("")
+    public Response ingest(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("label")
     @DefaultValue("")
     final String label) throws RepositoryException {
-
-        logger.debug("Attempting to ingest with pid: {}", pid);
+        
+        String path = toPath(pathList);
+        logger.debug("Attempting to ingest with path: {}", path);
 
         final Session session = getAuthenticatedSession();
+        
         try {
             final FedoraObject result =
-                    objectService.createObject(session, pid);
+                    objectService.createObject(session, path);
             if (label != null && !"".equals(label)) {
                 result.setLabel(label);
             }
             session.save();
-            logger.debug("Finished ingest with pid: {}", pid);
-            return created(uriInfo.getRequestUri()).entity(pid).build();
+            logger.debug("Finished ingest with path: {}", path);
+            return created(uriInfo.getRequestUri()).entity(path).build();
 
         } finally {
             session.logout();
@@ -130,14 +143,15 @@ public class FedoraObjects extends AbstractResource {
      * @throws IOException
      */
     @GET
-    @Path("/{pid}")
+    @Path("")
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
-    public ObjectProfile getObject(@PathParam("pid")
-    final String pid) throws RepositoryException, IOException {
+    public ObjectProfile getObject(@PathParam("path")
+    final List<PathSegment> path) throws RepositoryException, IOException {
 
+        logger.trace("getting object profile {}", toPath(path));
         final ObjectProfile objectProfile = new ObjectProfile();
-        final FedoraObject obj = objectService.getObject(pid);
-        objectProfile.pid = pid;
+        final FedoraObject obj = objectService.getObjectByPath(toPath(path));
+        objectProfile.pid = obj.getName();
         objectProfile.objLabel = obj.getLabel();
         objectProfile.objOwnerId = obj.getOwnerId();
         objectProfile.objCreateDate = obj.getCreated();
@@ -159,11 +173,11 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @DELETE
-    @Path("/{pid}")
-    public Response deleteObject(@PathParam("pid")
-    final String pid) throws RepositoryException {
+    @Path("")
+    public Response deleteObject(@PathParam("path")
+    final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();
-        objectService.deleteObject(pid, session);
+        objectService.deleteObjectByPath(toPath(path), session);
         session.save();
         return noContent().build();
     }
@@ -177,5 +191,5 @@ public class FedoraObjects extends AbstractResource {
     public void setObjectService(ObjectService objectService) {
         this.objectService = objectService;
     }
-
+    
 }

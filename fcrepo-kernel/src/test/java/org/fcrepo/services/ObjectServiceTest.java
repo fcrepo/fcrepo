@@ -110,7 +110,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         when(mockSession.getNode(objPath)).thenReturn(mockRoot);
         final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockSession;
-        final Set<String> actual = testObj.getObjectNames();
+        final Set<String> actual = testObj.getObjectNames("");
         verify(mockSession).getNode(objPath);
         assertEquals(1, actual.size());
         assertEquals("foo", actual.iterator().next());

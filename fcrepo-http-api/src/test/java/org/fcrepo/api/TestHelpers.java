@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -23,6 +25,8 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -31,7 +35,9 @@ import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
 import com.sun.jersey.api.uri.UriBuilderImpl;
+import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
