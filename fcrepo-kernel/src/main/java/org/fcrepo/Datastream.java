@@ -461,6 +461,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     
     public static boolean hasMixin(Node node) throws RepositoryException {
         NodeType[] nodeTypes = node.getMixinNodeTypes();
+        if (nodeTypes == null) return false;
         for (NodeType nodeType: nodeTypes) {
             if (FEDORA_DATASTREAM.equals(nodeType.getName())) {
                 return true;

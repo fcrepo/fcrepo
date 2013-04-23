@@ -146,11 +146,12 @@ public class FedoraObjects extends AbstractResource {
     @Path("")
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
     public ObjectProfile getObject(@PathParam("path")
-    final List<PathSegment> path) throws RepositoryException, IOException {
+    final List<PathSegment> pathList) throws RepositoryException, IOException {
 
-        logger.trace("getting object profile {}", toPath(path));
+        final String path = toPath(pathList);
+        logger.trace("getting object profile {}", path);
         final ObjectProfile objectProfile = new ObjectProfile();
-        final FedoraObject obj = objectService.getObjectByPath(toPath(path));
+        final FedoraObject obj = objectService.getObjectByPath(path);
         objectProfile.pid = obj.getName();
         objectProfile.objLabel = obj.getLabel();
         objectProfile.objOwnerId = obj.getOwnerId();

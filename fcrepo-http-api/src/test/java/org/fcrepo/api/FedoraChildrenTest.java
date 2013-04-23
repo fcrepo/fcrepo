@@ -82,7 +82,7 @@ public class FedoraChildrenTest {
         final Response actual = testObj.getObjects(createPathList("objects"));
         assertNotNull(actual);
         assertEquals(Status.OK.getStatusCode(), actual.getStatus());
-        verify(mockObjects).getObjectNames("");
+        verify(mockObjects).getObjectNames("/objects");
         verify(mockSession, never()).save();
     }
     

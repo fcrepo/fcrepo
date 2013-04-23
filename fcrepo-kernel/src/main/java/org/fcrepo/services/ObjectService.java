@@ -118,8 +118,11 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
 
         final Node objects = readOnlySession.getNode(getObjectJcrNodePath(path));
         final Builder<String> b = builder();
-        for (final NodeIterator i = objects.getNodes(); i.hasNext();) {
-            b.add(i.nextNode().getName());
+        final NodeIterator i = objects.getNodes();
+        while (i.hasNext()) {
+            Node n = i.nextNode();
+            logger.info("child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
+            if (n.isNodeType("nt:folder")) b.add(n.getName());
         }
         return b.build();
 

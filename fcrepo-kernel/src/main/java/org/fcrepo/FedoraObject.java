@@ -52,10 +52,24 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      * @param n an existing JCR node to treat as an fcrepo object
      */
     public FedoraObject(final Node n) {
-        if (node != null) {
-            logger.debug("Supporting a FedoraObject with null backing Node!");
-        }
         node = n;
+        try {
+            if (node.isNew() || !hasMixin(node)) {
+                logger.debug("Setting fedora:object properties on a nt:folder node {}...", node.getPath());
+                node.addMixin(FEDORA_OBJECT);
+                node.addMixin(FEDORA_OWNED);
+                node.setProperty(FEDORA_OWNERID, "System");
+                node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
+                node.setProperty(DC_IDENTIFIER, new String[] {
+                        node.getIdentifier(), node.getName()});
+            }
+        } catch(RepositoryException e) {
+            try {
+                logger.error("Could not add fedora:object mixin properties on {}", node.getPath());
+            } catch (RepositoryException e1) {
+                e1.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -75,6 +89,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         try {
             node = findOrCreateNode(session, path, NT_FOLDER);
             if (node.isNew() || !hasMixin(node)) {
+                logger.debug("Setting fedora:object properties on a nt:folder node {}...", node.getPath());
                 node.addMixin(FEDORA_OBJECT);
                 node.addMixin(FEDORA_OWNED);
                 node.setProperty(FEDORA_OWNERID, session.getUserID());
@@ -198,6 +213,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
     
     public static boolean hasMixin(Node node) throws RepositoryException {
         NodeType[] nodeTypes = node.getMixinNodeTypes();
+        if (nodeTypes == null) return false;
         for (NodeType nodeType: nodeTypes) {
             if (FEDORA_OBJECT.equals(nodeType.getName())) {
                 return true;

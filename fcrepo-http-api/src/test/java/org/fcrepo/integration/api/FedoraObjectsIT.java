@@ -75,4 +75,5 @@ public class FedoraObjectsIT extends AbstractResourceIT {
         final ObjectProfile obj = getObject("FedoraObjectsTest4");
         assertEquals("Wrong label!", "Awesome_Object", obj.objLabel);
     }
+    
 }

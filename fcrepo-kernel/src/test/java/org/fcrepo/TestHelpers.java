@@ -45,7 +45,6 @@ public class TestHelpers {
         final Datastream mockDs = mockDatastream(pid, dsId, content);
         when(mockIter.hasNext()).thenReturn(true, false);
         when(mockIter.next()).thenReturn(mockDs);
-        when(mockIter.nextDatastream()).thenReturn(mockDs);
         return mockIter;
     }
 

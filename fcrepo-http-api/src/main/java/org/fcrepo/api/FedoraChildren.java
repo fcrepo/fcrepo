@@ -61,8 +61,9 @@ public class FedoraChildren extends AbstractResource {
     public Response getObjects(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
 
-        logger.trace("children of {}", toPath(pathList));
-        return ok(objectService.getObjectNames(toPath(pathList.subList(0, pathList.size()-1))).toString()).build();
+        final String path = toPath(pathList);
+        logger.info("getting children of {}", path);
+        return ok(objectService.getObjectNames(path).toString()).build();
 
     }
 

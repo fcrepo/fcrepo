@@ -92,11 +92,13 @@ public class FedoraDatastreams extends AbstractResource {
     public ObjectDatastreams getDatastreams(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException, IOException {
 
+        final String path = toPath(pathList);
+        logger.info("getting datastreams of {}", path);
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
         objectDatastreams.datastreams =
                 copyOf(transform(datastreamService
-                        .getDatastreamsForPath(toPath(pathList)), ds2dsElement));
+                        .getDatastreamsForPath(path), ds2dsElement));
 
         return objectDatastreams;
 
