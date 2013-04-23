@@ -29,7 +29,7 @@
     <enunciate.version>1.26.2</enunciate.version>
     <infinispan.version>5.3.0.Alpha1</infinispan.version>
     <jgroups.version>3.3.0.CR1</jgroups.version>
-    <modeshape.version>3.2-SNAPSHOT</modeshape.version>
+    <modeshape.version>3.3-SNAPSHOT</modeshape.version>
     <sesame.version>2.7.0</sesame.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
