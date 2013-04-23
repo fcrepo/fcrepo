@@ -30,6 +30,7 @@ import javax.jcr.ValueFactory;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionException;
 
 import org.apache.tika.io.IOUtils;
@@ -70,7 +71,9 @@ public class DatastreamTest implements FedoraJcrTypes {
         mockSession = mock(Session.class);
         mockRootNode = mock(Node.class);
         mockDsNode = mock(Node.class);
+        NodeType[] nodeTypes = new NodeType[0];
         try {
+            when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
@@ -102,7 +105,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
-        verify(mockDsNode).getNode(JCR_CONTENT);
+        verify(mockDsNode, times(2)).getNode(JCR_CONTENT);
         verify(mockContent).getProperty(JCR_DATA);
     }
 
@@ -132,7 +135,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         final Node mockContent = getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
-        verify(mockDsNode).getNode(JCR_CONTENT);
+        verify(mockDsNode, times(2)).getNode(JCR_CONTENT);
         verify(mockContent).getProperty(CONTENT_SIZE);
         assertEquals(expectedContentLength, actual);
     }
@@ -172,7 +175,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         final FedoraObject actual = testObj.getObject();
         assertNotNull(actual);
         assertEquals(actual.getNode(), mockObjectNode);
-        verify(mockDsNode).getParent();
+        verify(mockDsNode, times(2)).getParent();
     }
 
     @Test
@@ -242,7 +245,7 @@ public class DatastreamTest implements FedoraJcrTypes {
                     }
                 });
         final long actual = testObj.getSize();
-        verify(mockDsNode, times(1)).getNode(JCR_CONTENT);
+        verify(mockDsNode, times(2)).getNode(JCR_CONTENT);
         verify(mockDsNode, times(1)).getProperties();
         assertEquals(3, actual);
     }

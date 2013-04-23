@@ -25,6 +25,11 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFormatException;
+import javax.jcr.lock.LockException;
+import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.VersionException;
 
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
@@ -61,6 +66,26 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             logger.debug("Supporting a Fedora Datastream with null backing Node!");
         }
         node = n;
+        try {
+        if (!hasMixin(node)) {
+            logger.debug("Setting fedora:datastream properties on a nt:file node...");
+            node.addMixin(FEDORA_DATASTREAM);
+            node.addMixin(FEDORA_OWNED);
+            node.setProperty(FEDORA_OWNERID, node.getSession().getUserID());
+
+            node.setProperty("jcr:lastModified", Calendar.getInstance());
+
+            // TODO: I guess we should also have the PID + DSID..
+            String[] ids = (node.getParent() != null)
+                  ? new String[]{node.getIdentifier(), node.getParent().getName() + "/" + node.getName()}
+                  : new String[]{node.getIdentifier()};
+            node.setProperty(DC_IDENTIFIER, ids);
+            Node contentNode = node.getNode(JCR_CONTENT);
+            decorateContentNode(contentNode);
+        }
+        } catch (RepositoryException ex) {
+            logger.warn("Could not decorate jcr:content with fedora:datastream properties: " + ex.getMessage());
+        }
     }
 
     /**
@@ -91,6 +116,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
         node = findOrCreateNode(session, dsPath, NT_FILE);
         if (node.isNew()) {
+            logger.debug("Setting fedora:datastream properties on a new DS node...");
             node.addMixin(FEDORA_DATASTREAM);
             node.addMixin(FEDORA_OWNED);
             node.setProperty(FEDORA_OWNERID, session.getUserID());
@@ -100,7 +126,26 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             // TODO: I guess we should also have the PID + DSID..
             node.setProperty(DC_IDENTIFIER, new String[] {node.getIdentifier(),
                     node.getParent().getName() + "/" + node.getName()});
+            if (node.hasNode(JCR_CONTENT)) {
+                decorateContentNode(node.getNode(JCR_CONTENT));
+            }
+        } else if (!hasMixin(node)) {
+            logger.debug("Setting fedora:datastream properties on a nt:file node...");
+            node.addMixin(FEDORA_DATASTREAM);
+            node.addMixin(FEDORA_OWNED);
+            node.setProperty(FEDORA_OWNERID, session.getUserID());
+
+            node.setProperty("jcr:lastModified", Calendar.getInstance());
+
+            // TODO: I guess we should also have the PID + DSID..
+            String[] ids = (node.getParent() != null)
+                  ? new String[]{node.getIdentifier(), node.getParent().getName() + "/" + node.getName()}
+                  : new String[]{node.getIdentifier()};
+            node.setProperty(DC_IDENTIFIER, ids);
+            Node contentNode = node.getNode(JCR_CONTENT);
+            decorateContentNode(contentNode);
         }
+        
     }
 
     /**
@@ -391,4 +436,37 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         return getNodePropertySize(node) + getContentSize();
 
     }
+    
+    private void decorateContentNode(Node contentNode) throws RepositoryException {
+        if (contentNode == null) {
+            logger.warn("{}/jcr:content appears to be null!");
+            return;
+        }
+        if (contentNode.canAddMixin(FEDORA_CHECKSUM)) {
+            contentNode.addMixin(FEDORA_CHECKSUM);
+        }
+
+        final Property dataProperty = contentNode.getProperty(JCR_DATA);
+        Binary binary = (Binary) dataProperty.getBinary();
+        final String dsChecksum = binary.getHexHash();
+
+        contentSizeHistogram.update(dataProperty.getLength());
+
+        contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
+        contentNode.setProperty(DIGEST_VALUE, dsChecksum);
+        contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
+
+        logger.debug("Decorated data property at path: " + dataProperty.getPath());
+    }
+    
+    public static boolean hasMixin(Node node) throws RepositoryException {
+        NodeType[] nodeTypes = node.getMixinNodeTypes();
+        for (NodeType nodeType: nodeTypes) {
+            if (FEDORA_DATASTREAM.equals(nodeType.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

@@ -20,6 +20,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
@@ -73,7 +74,7 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
         try {
             node = findOrCreateNode(session, path, NT_FOLDER);
-            if (node.isNew()) {
+            if (node.isNew() || !hasMixin(node)) {
                 node.addMixin(FEDORA_OBJECT);
                 node.addMixin(FEDORA_OWNED);
                 node.setProperty(FEDORA_OWNERID, session.getUserID());
@@ -169,7 +170,12 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public String getLastModified() throws RepositoryException {
-        return node.getProperty(JCR_LASTMODIFIED).getString();
+        if (node.hasProperty(JCR_LASTMODIFIED)) {
+            return node.getProperty(JCR_LASTMODIFIED).getString();
+        } else {
+            logger.warn("{} was loaded as a Fedora object, but does not have {} defined.", node.getName(), JCR_LASTMODIFIED);
+            return null;
+        }
     }
 
     /**
@@ -188,6 +194,16 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      */
     public Collection<String> getModels() throws RepositoryException {
         return map(node.getMixinNodeTypes(), nodetype2name);
+    }
+    
+    public static boolean hasMixin(Node node) throws RepositoryException {
+        NodeType[] nodeTypes = node.getMixinNodeTypes();
+        for (NodeType nodeType: nodeTypes) {
+            if (FEDORA_OBJECT.equals(nodeType.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
