@@ -94,8 +94,8 @@ public class FedoraDatastreams extends AbstractResource {
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
         objectDatastreams.datastreams =
-                copyOf(transform(datastreamService
-                        .getDatastreamsFor(pid), ds2dsElement));
+                copyOf(transform(datastreamService.getDatastreamsFor(pid),
+                        ds2dsElement));
 
         return objectDatastreams;
 
@@ -227,7 +227,7 @@ public class FedoraDatastreams extends AbstractResource {
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream, checksumType, checksum);
             session.save();
-            return created(uriInfo.getRequestUri()).build();
+            return created(uriInfo.getAbsolutePath()).build();
         } finally {
             session.logout();
         }
@@ -431,33 +431,29 @@ public class FedoraDatastreams extends AbstractResource {
             new Function<Datastream, DatastreamElement>() {
 
                 @Override
-                public DatastreamElement apply(Datastream ds) {
+                public DatastreamElement apply(final Datastream ds) {
                     try {
                         return new DatastreamElement(ds.getDsId(),
                                 ds.getDsId(), ds.getMimeType());
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
             };
 
-    
     public DatastreamService getDatastreamService() {
         return datastreamService;
     }
 
-    
-    public void setDatastreamService(DatastreamService datastreamService) {
+    public void setDatastreamService(final DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
 
-    
     public LowLevelStorageService getLlStoreService() {
         return llStoreService;
     }
 
-    
-    public void setLlStoreService(LowLevelStorageService llStoreService) {
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
         this.llStoreService = llStoreService;
     }
 
