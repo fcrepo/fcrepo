@@ -23,6 +23,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
@@ -47,6 +48,7 @@ public class FedoraRepository extends AbstractResource {
 
     @GET
     @Path("modeshape")
+	@Timed
     public Response describeModeshape() throws IOException, RepositoryException {
         final Session session = getAuthenticatedSession();
         logger.debug("Repository name: " + repo.getDescriptor(REP_NAME_DESC));
@@ -75,6 +77,7 @@ public class FedoraRepository extends AbstractResource {
     }
 
     @GET
+	@Timed
     @Produces({TEXT_XML, APPLICATION_XML, APPLICATION_JSON})
     public DescribeRepository describe() throws RepositoryException {
 
@@ -92,6 +95,7 @@ public class FedoraRepository extends AbstractResource {
     }
 
     @GET
+	@Timed
     @Produces(TEXT_HTML)
     public String describeHtml() throws RepositoryException {
 

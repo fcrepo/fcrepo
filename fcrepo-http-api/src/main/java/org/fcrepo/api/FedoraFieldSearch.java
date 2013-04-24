@@ -22,6 +22,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.fcrepo.jaxb.search.ObjectFields;
@@ -46,12 +47,14 @@ public class FedoraFieldSearch extends AbstractResource implements
     private static final String QUERY_STRING = buildQueryString();
 
     @GET
+	@Timed
     @Produces(TEXT_HTML)
     public String searchForm() throws RepositoryException {
         return new VelocityViewer().getFieldSearch(null);
     }
 
     @POST
+	@Timed
     @Produces(TEXT_HTML)
     public String searchSubmit(@FormParam("terms")
     final String terms, @FormParam("offSet")

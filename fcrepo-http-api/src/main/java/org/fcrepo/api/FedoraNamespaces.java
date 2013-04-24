@@ -20,6 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
 import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;
@@ -50,6 +51,7 @@ public class FedoraNamespaces extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
+	@Timed
     @Path("/{prefix}")
     public Response registerObjectNamespace(@PathParam("prefix")
     final String prefix, final String uri) throws RepositoryException {
@@ -73,6 +75,7 @@ public class FedoraNamespaces extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
+	@Timed
     @Consumes({TEXT_XML, APPLICATION_JSON})
     public Response registerObjectNamespaces(final NamespaceListing nses)
             throws RepositoryException {
@@ -99,6 +102,7 @@ public class FedoraNamespaces extends AbstractResource {
      */
     @GET
     @Path("/{prefix}")
+	@Timed
     @Produces(APPLICATION_JSON)
     public Namespace retrieveObjectNamespace(@PathParam("ns")
     final String prefix) throws RepositoryException {
@@ -123,6 +127,7 @@ public class FedoraNamespaces extends AbstractResource {
      * @throws IOException
      */
     @GET
+	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public NamespaceListing getNamespaces() throws RepositoryException,
             IOException {

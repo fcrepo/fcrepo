@@ -43,6 +43,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -87,6 +88,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     @GET
     @Path("/")
+	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public ObjectDatastreams getDatastreams(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
@@ -103,6 +105,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     @POST
     @Path("/")
+	@Timed
     public Response modifyDatastreams(@PathParam("pid")
     final String pid, @QueryParam("delete")
     final List<String> dsidList, final MultiPart multipart)
@@ -143,6 +146,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     @DELETE
     @Path("/")
+	@Timed
     public Response deleteDatastreams(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     final List<String> dsidList) throws RepositoryException {
@@ -162,6 +166,7 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/__content__")
     @Produces("multipart/mixed")
+	@Timed
     public Response getDatastreamsContents(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     final List<String> dsids) throws RepositoryException, IOException {
@@ -209,6 +214,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @POST
     @Path("/{dsid}")
+	@Timed
     public Response addDatastream(@PathParam("pid")
     final String pid, @QueryParam("checksumType")
     final String checksumType, @QueryParam("checksum")
@@ -252,6 +258,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @PUT
     @Path("/{dsid}")
+	@Timed
     public Response modifyDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
@@ -288,6 +295,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @GET
     @Path("/{dsid}")
+	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public DatastreamProfile getDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
@@ -348,6 +356,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @GET
     @Path("/{dsid}/versions")
+	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public DatastreamHistory getDatastreamHistory(@PathParam("pid")
     final String pid, @PathParam("dsid")
@@ -363,6 +372,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     @GET
     @Path("/{dsid}/fixity")
+	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public DatastreamFixity getDatastreamFixity(@PathParam("pid")
     final String pid, @PathParam("dsid")
@@ -393,6 +403,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @DELETE
     @Path("/{dsid}")
+	@Timed
     public Response deleteDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException {
