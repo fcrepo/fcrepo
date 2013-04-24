@@ -25,6 +25,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
@@ -50,6 +51,7 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @GET
+	@Timed
     public Response getObjects() throws RepositoryException {
 
         return ok(objectService.getObjectNames().toString()).build();
@@ -64,6 +66,7 @@ public class FedoraObjects extends AbstractResource {
      */
     @POST
     @Path("/new")
+	@Timed
     public Response ingestAndMint() throws RepositoryException {
         return ingest(pidMinter.mintPid(), "");
     }
@@ -77,6 +80,7 @@ public class FedoraObjects extends AbstractResource {
      */
     @PUT
     @Path("/{pid}")
+	@Timed
     public Response modify(@PathParam("pid")
     final String pid) throws RepositoryException {
         final Session session = getAuthenticatedSession();
@@ -98,6 +102,7 @@ public class FedoraObjects extends AbstractResource {
      */
     @POST
     @Path("/{pid}")
+	@Timed
     public Response ingest(@PathParam("pid")
     final String pid, @QueryParam("label")
     @DefaultValue("")
@@ -131,6 +136,7 @@ public class FedoraObjects extends AbstractResource {
      */
     @GET
     @Path("/{pid}")
+	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
     public ObjectProfile getObject(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
@@ -160,6 +166,7 @@ public class FedoraObjects extends AbstractResource {
      */
     @DELETE
     @Path("/{pid}")
+	@Timed
     public Response deleteObject(@PathParam("pid")
     final String pid) throws RepositoryException {
         final Session session = getAuthenticatedSession();

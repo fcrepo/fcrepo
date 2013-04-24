@@ -19,6 +19,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
+import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
@@ -40,6 +41,7 @@ public class FedoraSitemap extends AbstractResource {
     private ObjectService objectService;
 
     @GET
+	@Timed
     @Produces(TEXT_XML)
     public SitemapIndex getSitemapIndex() throws RepositoryException {
         logger.trace("Executing getSitemapIndex()...");
@@ -67,6 +69,7 @@ public class FedoraSitemap extends AbstractResource {
 
     @GET
     @Path("/{page}")
+	@Timed
     @Produces(TEXT_XML)
     public SitemapUrlSet getSitemap(@PathParam("page")
     final String page) throws RepositoryException {

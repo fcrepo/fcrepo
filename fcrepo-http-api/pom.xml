@@ -44,6 +44,11 @@
     	<artifactId>jersey-core</artifactId>
     	</dependency>
     <dependency>
+      <groupId>com.yammer.metrics</groupId>
+      <artifactId>metrics-jersey</artifactId>
+      <version>${metrics.version}</version>
+    </dependency>
+    <dependency>
     	<groupId>com.sun.jersey.contribs</groupId>
     	<artifactId>jersey-multipart</artifactId>
     	</dependency>
