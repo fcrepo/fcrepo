@@ -31,6 +31,7 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionException;
 
+import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -191,7 +192,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
          * implement this public interface, so feel free to cast the values to
          * gain access to the additional methods."
          */
-        final Binary binary = (Binary) getBinary(node, content);
+        final Binary binary = (Binary) getBinary(node, content, PolicyDecisionPoint.getInstance().evaluatePolicies(node));
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -251,8 +252,8 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     public void setContent(final InputStream content, final String mimeType,
             final String checksumType, final String checksum)
             throws RepositoryException, InvalidChecksumException {
+		node.setProperty(FEDORA_CONTENTTYPE, mimeType);
         setContent(content, checksumType, checksum);
-        node.setProperty(FEDORA_CONTENTTYPE, mimeType);
     }
 
     /**

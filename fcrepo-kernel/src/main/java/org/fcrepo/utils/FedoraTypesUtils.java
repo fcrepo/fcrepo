@@ -21,6 +21,8 @@ import javax.jcr.nodetype.NodeType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import org.modeshape.jcr.JcrValueFactory;
+import org.modeshape.jcr.value.binary.StrategyHint;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the JCR.
@@ -163,6 +165,26 @@ public abstract class FedoraTypesUtils {
             throw new IllegalStateException(e);
         }
     }
+
+	/**
+	 * Creates a JCR {@link Binary}
+	 *
+	 * @param n a {@link Node}
+	 * @param i an {@link InputStream}
+	 * @return a JCR {@link Binary}
+	 */
+	public static Binary getBinary(final Node n, final InputStream i, final StrategyHint hint) {
+		try {
+			checkArgument(n != null,
+								 "null cannot have a Binary created for it!");
+			checkArgument(i != null,
+								 "null cannot have a Binary created from it!");
+			JcrValueFactory jcrValueFactory = ((JcrValueFactory)n.getSession().getValueFactory());
+			return jcrValueFactory.createBinary(i, hint);
+		} catch (final RepositoryException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
     /**
      * Convenience method for transforming arrays into 

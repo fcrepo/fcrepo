@@ -43,6 +43,12 @@
       <version>${project.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-storage-policy</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- Logging: we'll use LogBack (which implements the SLF4J API); ModeShape 
       knows what to do. -->
     <dependency>
