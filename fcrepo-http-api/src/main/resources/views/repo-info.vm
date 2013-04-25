@@ -18,6 +18,36 @@
 			<td align="right">Sample OAI URL</td>
 			<td>${repo.sampleOAIURL}</td>
 		</tr>
+		#if($repo.clusterConfiguration)
+			<tr>
+				<td align="right">Cluster Name</td>
+				<td>${repo.clusterConfiguration.clusterName}</td>
+			</tr>
+			<tr>
+				<td align="right">Cache Mode</td>
+				<td>${repo.clusterConfiguration.cacheMode}</td>
+			</tr>
+			<tr>
+				<td align="right">Node Address</td>
+				<td>${repo.clusterConfiguration.nodeAddress}</td>
+			</tr>
+			<tr>
+				<td align="right">Physical Address</td>
+				<td>${repo.clusterConfiguration.physicalAddress}</td>
+			</tr>
+			<tr>
+				<td align="right">Node View</td>
+				<td>${repo.clusterConfiguration.nodeView}</td>
+			</tr>
+			<tr>
+				<td align="right">Cluster Size</td>
+				<td>${repo.clusterConfiguration.clusterSize}</td>
+			</tr>
+			<tr>
+				<td align="right">Cluster Members</td>
+				<td>${repo.clusterConfiguration.clusterMembers}</td>
+			</tr>
+		#end
 	</table>
 </center>
 #include("views/common/footer.vm")

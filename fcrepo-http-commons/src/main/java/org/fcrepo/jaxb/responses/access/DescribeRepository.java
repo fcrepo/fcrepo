@@ -8,6 +8,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.fcrepo.jaxb.responses.access.DescribeCluster;
+
 @XmlRootElement(name = "fedoraRepository")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class DescribeRepository {
@@ -28,6 +30,9 @@ public class DescribeRepository {
 
     @XmlElement(name = "sampleOAI-URL")
     public URI sampleOAIURL;
+    
+    @XmlElement(name = "clusterConfiguration")
+    public DescribeCluster clusterConfiguration = null;
 
     public URI getRepositoryBaseURL() {
         return repositoryBaseURL;
@@ -67,6 +72,14 @@ public class DescribeRepository {
 
     public void setSampleOAIURL(final URI sampleOAIURL) {
         this.sampleOAIURL = sampleOAIURL;
+    }
+    
+    public DescribeCluster getClusterConfiguration() {
+    	return clusterConfiguration;
+    }
+    
+    public void setClusterConfiguration(final DescribeCluster clusterConfiguration) {
+    	this.clusterConfiguration = clusterConfiguration;
     }
 
 }
