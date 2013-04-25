@@ -84,7 +84,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         final String description = EntityUtils.toString(response.getEntity());
         logger.debug("Found a repository description:\n" + description);
         final Matcher check =
-                compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)
+                compile("<.*repositorySize>([0-9]+)<.*repositorySize>", DOTALL)
                         .matcher(description);
         Long oldSize = null;
         while (check.find()) {
@@ -103,7 +103,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
                 EntityUtils.toString(response.getEntity());
         logger.debug("Found another repository description:\n" + newDescription);
         Matcher newCheck =
-                compile("<repositorySize>([0-9]+)</repositorySize>", DOTALL)
+                compile("<.*repositorySize>([0-9]+)<.*repositorySize>", DOTALL)
                         .matcher(newDescription);
         Long newSize = null;
         while (newCheck.find()) {
