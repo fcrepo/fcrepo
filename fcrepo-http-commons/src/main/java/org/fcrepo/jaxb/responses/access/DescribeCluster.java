@@ -47,11 +47,11 @@ public class DescribeCluster {
 	
 	//Getters and setters mainly used for velocity template access
 	public String getCacheMode() {
-		return cacheModeToDisplay.get(cacheMode);
+		return cacheMode;
 	}
 
 	public void setCacheMode(String cacheMode) {
-		this.cacheMode = cacheMode;
+		this.cacheMode = cacheModeToDisplay.get(cacheMode);
 	}
 
 	public String getClusterName() {

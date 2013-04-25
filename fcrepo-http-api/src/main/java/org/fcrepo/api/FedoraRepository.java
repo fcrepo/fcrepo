@@ -129,10 +129,10 @@ public class FedoraRepository extends AbstractResource {
 	    	
 	    	DescribeCluster clusterConfig = new DescribeCluster();
 	    	
-	    	clusterConfig.cacheMode = cm.getCache()
+	    	clusterConfig.setCacheMode(cm.getCache()
 	    			.getCacheConfiguration()
 	    			.clustering()
-	    			.cacheMode().toString();
+	    			.cacheMode().toString());
 	    	clusterConfig.clusterName = cm.getClusterName();
 	    	clusterConfig.nodeAddress = cm.getNodeAddress();
 	    	clusterConfig.physicalAddress = cm.getPhysicalAddresses();
