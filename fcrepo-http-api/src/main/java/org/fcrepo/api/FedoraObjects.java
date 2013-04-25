@@ -41,43 +41,13 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.ImmutableList;
 
 @Component
-@Path("/rest/{path: .*(?!(fcr\\:))}")
+@Path("/rest/{path: .*}")
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraObjects.class);
 
     @Autowired
     private ObjectService objectService;
-
-    /**
-     * Creates a new object with a repo-chosen PID
-     * 
-     * @return 201
-     * @throws RepositoryException
-     */
-    @POST
-    @Path("/new")
-    public Response ingestAndMint(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException {
-        final String pid = pidMinter.mintPid();
-        PathSegment path = new PathSegment() {
-
-            @Override
-            public String getPath() {
-                return pid;
-            }
-
-            @Override
-            public MultivaluedMap<String, String> getMatrixParameters() {
-                return null;
-            }
-            
-        };
-        ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
-        segments.addAll(pathList);
-        segments.add(path);
-        return ingest(segments.build(), "");
-    }
 
     /**
      * Does nothing yet-- must be improved to handle the FCREPO3 PUT to /objects/{pid}

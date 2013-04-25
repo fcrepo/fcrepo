@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.ImmutableList;
 
 @Component
-@Path("/rest/{path: .*(?!(fcr\\:))}/fcr:children")
+@Path("/rest/fcr:children/{path: .*}")
 public class FedoraChildren extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraChildren.class);

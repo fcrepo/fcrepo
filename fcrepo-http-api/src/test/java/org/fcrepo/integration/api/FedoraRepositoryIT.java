@@ -33,17 +33,17 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
     @Test
     public void testDescribeModeshape() throws Exception {
         assertEquals(200, getStatus(new HttpGet(serverAddress +
-                "describe/modeshape")));
+                "fcr:describe/modeshape")));
     }
 
     @Test
     public void testGetObjects() throws Exception {
-        assertEquals(200, getStatus(new HttpGet(serverAddress + "objects/fcr:children")));
+        assertEquals(200, getStatus(new HttpGet(serverAddress + "objects")));
     }
 
     @Test
     public void testDescribe() throws Exception {
-        final HttpGet method = new HttpGet(serverAddress + "describe");
+        final HttpGet method = new HttpGet(serverAddress + "fcr:describe");
         method.addHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -56,7 +56,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeHtml() throws Exception {
-        final HttpGet method = new HttpGet(serverAddress + "describe");
+        final HttpGet method = new HttpGet(serverAddress + "fcr:describe");
         method.addHeader("Accept", "text/html");
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -68,7 +68,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeSize() throws Exception {
-        final HttpGet describeMethod = new HttpGet(serverAddress + "describe");
+        final HttpGet describeMethod = new HttpGet(serverAddress + "fcr:describe");
         describeMethod.addHeader("Accept", TEXT_XML);
         HttpResponse response = client.execute(describeMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -119,13 +119,15 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
      */
     @Test
     public void testGetProjectedNode() throws Exception {
-        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1/fcr:children");
+        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
+        method.addHeader("Accept-Mixin", "fcr:object");
         HttpResponse response = execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
         Collection<String> childNames = parseChildren(response.getEntity());
         assertEquals(1, childNames.size());
         assertEquals("TestSubdir", childNames.iterator().next());
-        method = new HttpGet(serverAddress + "files/FileSystem1/fcr:datastreams");
+        method = new HttpGet(serverAddress + "files/FileSystem1");
+        method.addHeader("Accept-Mixin", "fcr:datastream");
         response = execute(method);
         childNames = parseDatastreams(response.getEntity());
         assertEquals(2, childNames.size());

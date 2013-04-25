@@ -25,11 +25,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.version.VersionException;
 
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;

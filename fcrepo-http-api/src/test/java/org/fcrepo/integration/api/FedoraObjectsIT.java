@@ -31,12 +31,17 @@ public class FedoraObjectsIT extends AbstractResourceIT {
 
     @Test
     public void testIngestWithNew() throws Exception {
-        final HttpPost method = postObjMethod("new");
+        final HttpPost method = postObjMethod("fcr:new");
         final HttpResponse response = client.execute(method);
-        assertEquals(201, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
+        int status = response.getStatusLine().getStatusCode();
+        if (201 != status) {
+            logger.error(content);
+        }
+        assertEquals(201, status);
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
+        assertTrue("new object did not mint a PID", !content.endsWith("/fcr:new"));
     }
 
     @Test
