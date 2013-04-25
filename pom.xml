@@ -206,6 +206,11 @@
         <artifactId>jersey-spring</artifactId>
         <version>${jersey.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-json</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
 
       <!-- sesame/openrdf dependencies that were previously provided by the Aduna 
         Maven repo -->

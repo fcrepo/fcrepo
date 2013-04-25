@@ -3,6 +3,7 @@ package org.fcrepo.integration.api;
 
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,6 +38,19 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         logger.debug("Found the repository description:\n" + description);
         assertTrue("Failed to find a proper repo version", compile(
                 "<repositoryVersion>.*?</repositoryVersion>").matcher(
+                description).find());
+    }
+
+    @Test
+    public void testDescribeJSON() throws Exception {
+        final HttpGet method = new HttpGet(serverAddress + "describe");
+        method.addHeader("Accept", APPLICATION_JSON);
+        final HttpResponse response = client.execute(method);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String description = EntityUtils.toString(response.getEntity());
+        logger.debug("HERE WE ARE: Found the repository description:\n" + description);
+        assertTrue("Failed to find a proper repo version", compile(
+                "\"repositoryVersion\"\\s*:\\s*\".*\"").matcher(
                 description).find());
     }
 
