@@ -62,7 +62,7 @@ public class FedoraObjects extends AbstractResource {
     @GET
     public Response getObjects() throws RepositoryException {
 
-        return ok(objectService.getObjectNames().toString()).build();
+        return ok(objectService.getObjectNames("/objects").toString()).build();
 
     }
 

@@ -2,6 +2,7 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -82,17 +83,8 @@ public class FedoraObjectsTest {
     }
 
     @Test
-    public void testGetObjects() throws RepositoryException {
-        final Response actual = testObj.getObjects();
-        assertNotNull(actual);
-        assertEquals(Status.OK.getStatusCode(), actual.getStatus());
-        verify(mockObjects).getObjectNames();
-        verify(mockSession, never()).save();
-    }
-
-    @Test
     public void testIngestAndMint() throws RepositoryException {
-        final Response actual = testObj.ingestAndMint();
+        final Response actual = testObj.ingestAndMint(createPathList("objects"));
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockSession).save();
@@ -101,7 +93,7 @@ public class FedoraObjectsTest {
     @Test
     public void testModify() throws RepositoryException {
         final String pid = "testObject";
-        final Response actual = testObj.modify(pid);
+        final Response actual = testObj.modify(createPathList("objects", pid));
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -112,33 +104,37 @@ public class FedoraObjectsTest {
     @Test
     public void testIngest() throws RepositoryException {
         final String pid = "testObject";
-        final Response actual = testObj.ingest(pid, null);
+        final String path = "/objects/" + pid;
+        final Response actual = testObj.ingest(createPathList("objects", pid), null);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
-        verify(mockObjects).createObject(mockSession, pid);
+        verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();
     }
 
     @Test
     public void testGetObject() throws RepositoryException, IOException {
         final String pid = "testObject";
+        final String path = "/objects/" + pid;
         final FedoraObject mockObj = mock(FedoraObject.class);
-        when(mockObjects.getObject(pid)).thenReturn(mockObj);
-        final ObjectProfile actual = testObj.getObject(pid);
+        when(mockObj.getName()).thenReturn(pid);
+        when(mockObjects.getObjectByPath(path)).thenReturn(mockObj);
+        final ObjectProfile actual = testObj.getObject(createPathList("objects", pid));
         assertNotNull(actual);
         assertEquals(pid, actual.pid);
-        verify(mockObjects).getObject(pid);
         verify(mockSession, never()).save();
     }
 
     @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = "testObject";
-        final Response actual = testObj.deleteObject(pid);
+        final String path = "/objects/" + pid;
+        final Response actual = testObj.deleteObject(createPathList("objects", pid));
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObjects).deleteObject(pid, mockSession);
+        verify(mockObjects).deleteObjectByPath(path, mockSession);
         verify(mockSession).save();
     }
+    
 }

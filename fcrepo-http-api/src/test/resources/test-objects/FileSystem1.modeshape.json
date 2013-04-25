@@ -1,0 +1,39 @@
+{
+    "properties": {
+        "http://www.jcp.org/jcr/1.0": {
+            "createdBy": "<anonymous>",
+            "uuid": "b0e430beaa9871/testfedobj",
+            "isCheckedOut": true,
+            "lastModifiedBy": "<anonymous>",
+            "predecessors": {
+                "$ref": "b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa987187a0a8c317f1e72fcebfb9-33f3-410f-93ad-35e2d9461112",
+                "$foreign": true
+            },
+            "baseVersion": {
+                "$ref": "b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa987187a0a8c317f1e72fcebfb9-33f3-410f-93ad-35e2d9461112",
+                "$foreign": true
+            },
+            "mixinTypes": [
+                {
+                    "$name": "{info:fedora/}object"
+                },
+                {
+                    "$name": "{info:fedora/}owned"
+                }
+            ],
+            "versionHistory": {
+                "$ref": "b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa9871b0e430beaa987187a0a8c317f1e7/testfedobj",
+                "$foreign": true
+            }
+        },
+        "http://purl.org/dc/terms/": {
+            "identifier": [
+                "b0e430beaa9871/testfedobj",
+                "testfedobj"
+            ]
+        },
+        "info:fedora/": {
+            "ownerId": "<anonymous>"
+        }
+    }
+}

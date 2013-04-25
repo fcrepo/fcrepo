@@ -39,6 +39,7 @@ import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -64,7 +65,7 @@ import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
 
 @Component
-@Path("/rest/objects/{pid}/datastreams")
+@Path("/rest/{path: .*(?!(fcr\\:))}/fcr:datastreams")
 public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
@@ -88,14 +89,16 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public ObjectDatastreams getDatastreams(@PathParam("pid")
-    final String pid) throws RepositoryException, IOException {
+    public ObjectDatastreams getDatastreams(@PathParam("path")
+    final List<PathSegment> pathList) throws RepositoryException, IOException {
 
+        final String path = toPath(pathList);
+        logger.info("getting datastreams of {}", path);
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
         objectDatastreams.datastreams =
                 copyOf(transform(datastreamService
-                        .getDatastreamsFor(pid), ds2dsElement));
+                        .getDatastreamsForPath(path), ds2dsElement));
 
         return objectDatastreams;
 
@@ -103,16 +106,17 @@ public class FedoraDatastreams extends AbstractResource {
 
     @POST
     @Path("/")
-    public Response modifyDatastreams(@PathParam("pid")
-    final String pid, @QueryParam("delete")
+    public Response modifyDatastreams(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("delete")
     final List<String> dsidList, final MultiPart multipart)
             throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = getAuthenticatedSession();
+        final String path = toPath(pathList);
         try {
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
-                datastreamService.purgeDatastream(session, pid, dsid);
+                datastreamService.purgeDatastream(session, path, dsid);
             }
 
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -120,7 +124,7 @@ public class FedoraDatastreams extends AbstractResource {
                         part.getContentDisposition().getParameters()
                                 .get("name");
                 logger.debug("Adding datastream: " + dsid);
-                final String dsPath = getDatastreamJcrNodePath(pid, dsid);
+                final String dsPath = getDatastreamJcrNodePath(path, dsid);
                 final Object obj = part.getEntity();
                 InputStream src = null;
                 if (obj instanceof BodyPartEntity) {
@@ -143,14 +147,15 @@ public class FedoraDatastreams extends AbstractResource {
 
     @DELETE
     @Path("/")
-    public Response deleteDatastreams(@PathParam("pid")
-    final String pid, @QueryParam("dsid")
+    public Response deleteDatastreams(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("dsid")
     final List<String> dsidList) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
+            String path = toPath(pathList);
             for (final String dsid : dsidList) {
-                logger.debug("purging datastream " + dsid);
-                datastreamService.purgeDatastream(session, pid, dsid);
+                logger.debug("purging datastream {}{}", path, dsid);
+                datastreamService.purgeDatastream(session, path, dsid);
             }
             session.save();
             return noContent().build();
@@ -162,12 +167,13 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/__content__")
     @Produces("multipart/mixed")
-    public Response getDatastreamsContents(@PathParam("pid")
-    final String pid, @QueryParam("dsid")
+    public Response getDatastreamsContents(@PathParam("path")
+    List<PathSegment> pathList, @QueryParam("dsid")
     final List<String> dsids) throws RepositoryException, IOException {
-
+        
+        String path = toPath(pathList);
         if (dsids.isEmpty()) {
-            final NodeIterator ni = objectService.getObjectNode(pid).getNodes();
+            final NodeIterator ni = objectService.getObjectByPath(path).getNode().getNodes();
             while (ni.hasNext()) {
                 dsids.add(ni.nextNode().getName());
             }
@@ -181,7 +187,7 @@ public class FedoraDatastreams extends AbstractResource {
 
             try {
                 final Datastream ds =
-                        datastreamService.getDatastream(pid, dsid);
+                        datastreamService.getDatastream(path, dsid);
                 multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
                         .getMimeType()));
             } catch (final PathNotFoundException e) {
@@ -209,8 +215,8 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @POST
     @Path("/{dsid}")
-    public Response addDatastream(@PathParam("pid")
-    final String pid, @QueryParam("checksumType")
+    public Response addDatastream(@PathParam("path")
+    List<PathSegment> pathList, @QueryParam("checksumType")
     final String checksumType, @QueryParam("checksum")
     final String checksum, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
@@ -222,7 +228,8 @@ public class FedoraDatastreams extends AbstractResource {
 
         final Session session = getAuthenticatedSession();
         try {
-            final String dsPath = getDatastreamJcrNodePath(pid, dsid);
+            String path = toPath(pathList);
+            final String dsPath = getDatastreamJcrNodePath(path, dsid);
             logger.debug("addDatastream {}", dsPath);
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream, checksumType, checksum);
@@ -252,17 +259,18 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @PUT
     @Path("/{dsid}")
-    public Response modifyDatastream(@PathParam("pid")
-    final String pid, @PathParam("dsid")
+    public Response modifyDatastream(@PathParam("path")
+    List<PathSegment> pathList, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
     final MediaType requestContentType, final InputStream requestBodyStream)
             throws RepositoryException, IOException, InvalidChecksumException {
         final Session session = getAuthenticatedSession();
         try {
+            String path = toPath(pathList);
             final MediaType contentType =
                     requestContentType != null ? requestContentType
                             : APPLICATION_OCTET_STREAM_TYPE;
-            final String dsPath = getDatastreamJcrNodePath(pid, dsid);
+            final String dsPath = getDatastreamJcrNodePath(path, dsid);
 
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream);
@@ -289,11 +297,12 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/{dsid}")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public DatastreamProfile getDatastream(@PathParam("pid")
-    final String pid, @PathParam("dsid")
+    public DatastreamProfile getDatastream(@PathParam("path")
+    List<PathSegment> pathList, @PathParam("dsid")
     final String dsId) throws RepositoryException, IOException {
+        String path = toPath(pathList);
         logger.trace("Executing getDatastream() with dsId: " + dsId);
-        return getDSProfile(datastreamService.getDatastream(pid, dsId));
+        return getDSProfile(datastreamService.getDatastream(path, dsId));
 
     }
 
@@ -309,12 +318,13 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @GET
     @Path("/{dsid}/content")
-    public Response getDatastreamContent(@PathParam("pid")
-    final String pid, @PathParam("dsid")
+    public Response getDatastreamContent(@PathParam("path")
+    List<PathSegment> pathList, @PathParam("dsid")
     final String dsid, @Context
     final Request request) throws RepositoryException {
 
-        final Datastream ds = datastreamService.getDatastream(pid, dsid);
+        String path = toPath(pathList);
+        final Datastream ds = datastreamService.getDatastream(path, dsid);
 
         final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         final Date date = ds.getLastModifiedDate();
@@ -349,29 +359,31 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/{dsid}/versions")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public DatastreamHistory getDatastreamHistory(@PathParam("pid")
-    final String pid, @PathParam("dsid")
+    public DatastreamHistory getDatastreamHistory(@PathParam("path")
+    List<PathSegment> pathList, @PathParam("dsid")
     final String dsId) throws RepositoryException, IOException {
+        String path = toPath(pathList);
         // TODO implement this after deciding on a versioning model
-        final Datastream ds = datastreamService.getDatastream(pid, dsId);
+        final Datastream ds = datastreamService.getDatastream(path, dsId);
         final DatastreamHistory dsHistory =
                 new DatastreamHistory(singletonList(getDSProfile(ds)));
         dsHistory.dsID = dsId;
-        dsHistory.pid = pid;
+        dsHistory.pid = pathList.get(pathList.size() - 1).getPath();
         return dsHistory;
     }
 
     @GET
     @Path("/{dsid}/fixity")
     @Produces({TEXT_XML, APPLICATION_JSON})
-    public DatastreamFixity getDatastreamFixity(@PathParam("pid")
-    final String pid, @PathParam("dsid")
+    public DatastreamFixity getDatastreamFixity(@PathParam("path")
+    List<PathSegment> pathList, @PathParam("dsid")
     final String dsid) throws RepositoryException {
 
-        final Datastream ds = datastreamService.getDatastream(pid, dsid);
+        final String path = toPath(pathList);
+        final Datastream ds = datastreamService.getDatastream(path, dsid);
 
         final DatastreamFixity dsf = new DatastreamFixity();
-        dsf.objectId = pid;
+        dsf.objectId = pathList.get(pathList.size() - 1).getPath();
         dsf.dsId = dsid;
         dsf.timestamp = new Date();
 
@@ -393,12 +405,14 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @DELETE
     @Path("/{dsid}")
-    public Response deleteDatastream(@PathParam("pid")
-    final String pid, @PathParam("dsid")
+    public Response deleteDatastream(@PathParam("path")
+    List<PathSegment> pathList, @PathParam("dsid")
     final String dsid) throws RepositoryException {
+        
         final Session session = getAuthenticatedSession();
+        final String path = toPath(pathList);
         try {
-            datastreamService.purgeDatastream(session, pid, dsid);
+            datastreamService.purgeDatastream(session, path, dsid);
             session.save();
             return noContent().build();
         } finally {

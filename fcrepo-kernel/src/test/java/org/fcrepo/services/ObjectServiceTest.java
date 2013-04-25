@@ -72,7 +72,10 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     public void testGetObject() throws RepositoryException {
         final Session mockSession = mock(Session.class);
         final Session mockROSession = mock(Session.class);
+        final Node mockNode = mock(Node.class);
         final String testPath = getObjectJcrNodePath("foo");
+        when(mockSession.getNode(testPath)).thenReturn(mockNode);
+        when(mockROSession.getNode(testPath)).thenReturn(mockNode);
         final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockROSession;
         testObj.getObject("foo");
@@ -102,6 +105,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final Node mockRoot = mock(Node.class);
         final Node mockObj = mock(Node.class);
         when(mockObj.getName()).thenReturn("foo");
+        when(mockObj.isNodeType("nt:folder")).thenReturn(true);
         final NodeIterator mockIter = mock(NodeIterator.class);
         when(mockIter.hasNext()).thenReturn(true, false);
         when(mockIter.nextNode()).thenReturn(mockObj).thenThrow(
@@ -110,7 +114,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         when(mockSession.getNode(objPath)).thenReturn(mockRoot);
         final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockSession;
-        final Set<String> actual = testObj.getObjectNames();
+        final Set<String> actual = testObj.getObjectNames("");
         verify(mockSession).getNode(objPath);
         assertEquals(1, actual.size());
         assertEquals("foo", actual.iterator().next());

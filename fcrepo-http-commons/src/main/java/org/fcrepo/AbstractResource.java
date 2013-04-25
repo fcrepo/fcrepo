@@ -4,12 +4,15 @@ package org.fcrepo;
 import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
@@ -141,6 +144,15 @@ public abstract class AbstractResource {
      */
     public void setHttpServletRequest(final HttpServletRequest servletRequest) {
         this.servletRequest = servletRequest;
+    }
+    
+    public static final String toPath(List<PathSegment> paths) {
+        StringBuffer result = new StringBuffer();
+        for (PathSegment path: paths) {
+            result.append('/');
+            result.append(path.getPath());
+        }
+        return result.toString();
     }
 
 }
