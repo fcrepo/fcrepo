@@ -4,13 +4,12 @@ package org.fcrepo.utils;
 import java.util.Iterator;
 
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 
-public class FedoraPropertyIterator implements Iterator<Property> {
+public class PropertyIterator implements Iterator<Property> {
 
-    private PropertyIterator i;
+    private javax.jcr.PropertyIterator i;
 
-    public FedoraPropertyIterator(final PropertyIterator i) {
+    public PropertyIterator(final javax.jcr.PropertyIterator i) {
         this.i = i;
     }
 
