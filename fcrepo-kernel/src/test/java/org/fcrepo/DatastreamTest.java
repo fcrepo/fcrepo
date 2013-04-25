@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.modeshape.jcr.value.binary.StrategyHint;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -117,7 +118,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         PowerMockito.mockStatic(FedoraTypesUtils.class);
         when(
                 FedoraTypesUtils.getBinary(any(Node.class),
-                        any(InputStream.class))).thenReturn(mockBin);
+                        any(InputStream.class), any(StrategyHint.class))).thenReturn(mockBin);
         final InputStream content = mock(InputStream.class);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
