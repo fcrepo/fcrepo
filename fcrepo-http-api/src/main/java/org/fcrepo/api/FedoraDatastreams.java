@@ -87,8 +87,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
 
     @GET
-    @Path("/")
-	@Timed
+    @Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public ObjectDatastreams getDatastreams(@PathParam("pid")
     final String pid) throws RepositoryException, IOException {
@@ -96,16 +95,15 @@ public class FedoraDatastreams extends AbstractResource {
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
         objectDatastreams.datastreams =
-                copyOf(transform(datastreamService
-                        .getDatastreamsFor(pid), ds2dsElement));
+                copyOf(transform(datastreamService.getDatastreamsFor(pid),
+                        ds2dsElement));
 
         return objectDatastreams;
 
     }
 
     @POST
-    @Path("/")
-	@Timed
+    @Timed
     public Response modifyDatastreams(@PathParam("pid")
     final String pid, @QueryParam("delete")
     final List<String> dsidList, final MultiPart multipart)
@@ -145,8 +143,7 @@ public class FedoraDatastreams extends AbstractResource {
     }
 
     @DELETE
-    @Path("/")
-	@Timed
+    @Timed
     public Response deleteDatastreams(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     final List<String> dsidList) throws RepositoryException {
@@ -166,7 +163,7 @@ public class FedoraDatastreams extends AbstractResource {
     @GET
     @Path("/__content__")
     @Produces("multipart/mixed")
-	@Timed
+    @Timed
     public Response getDatastreamsContents(@PathParam("pid")
     final String pid, @QueryParam("dsid")
     final List<String> dsids) throws RepositoryException, IOException {
@@ -214,7 +211,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @POST
     @Path("/{dsid}")
-	@Timed
+    @Timed
     public Response addDatastream(@PathParam("pid")
     final String pid, @QueryParam("checksumType")
     final String checksumType, @QueryParam("checksum")
@@ -258,7 +255,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @PUT
     @Path("/{dsid}")
-	@Timed
+    @Timed
     public Response modifyDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
     final String dsid, @HeaderParam("Content-Type")
@@ -295,7 +292,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @GET
     @Path("/{dsid}")
-	@Timed
+    @Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public DatastreamProfile getDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
@@ -356,7 +353,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @GET
     @Path("/{dsid}/versions")
-	@Timed
+    @Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public DatastreamHistory getDatastreamHistory(@PathParam("pid")
     final String pid, @PathParam("dsid")
@@ -372,7 +369,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     @GET
     @Path("/{dsid}/fixity")
-	@Timed
+    @Timed
     @Produces({TEXT_XML, APPLICATION_JSON})
     public DatastreamFixity getDatastreamFixity(@PathParam("pid")
     final String pid, @PathParam("dsid")
@@ -403,7 +400,7 @@ public class FedoraDatastreams extends AbstractResource {
      */
     @DELETE
     @Path("/{dsid}")
-	@Timed
+    @Timed
     public Response deleteDatastream(@PathParam("pid")
     final String pid, @PathParam("dsid")
     final String dsid) throws RepositoryException {
@@ -442,33 +439,29 @@ public class FedoraDatastreams extends AbstractResource {
             new Function<Datastream, DatastreamElement>() {
 
                 @Override
-                public DatastreamElement apply(Datastream ds) {
+                public DatastreamElement apply(final Datastream ds) {
                     try {
                         return new DatastreamElement(ds.getDsId(),
                                 ds.getDsId(), ds.getMimeType());
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
                     }
                 }
             };
 
-    
     public DatastreamService getDatastreamService() {
         return datastreamService;
     }
 
-    
-    public void setDatastreamService(DatastreamService datastreamService) {
+    public void setDatastreamService(final DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
 
-    
     public LowLevelStorageService getLlStoreService() {
         return llStoreService;
     }
 
-    
-    public void setLlStoreService(LowLevelStorageService llStoreService) {
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
         this.llStoreService = llStoreService;
     }
 

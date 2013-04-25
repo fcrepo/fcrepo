@@ -44,7 +44,6 @@ public class ObjectRdfGenerator extends AbstractResource {
     private static final Logger logger = getLogger(ObjectRdfGenerator.class);
 
     @GET
-    @Path("/")
     @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
     public String getRdfXml(@PathParam("pid")
     final String pid, @HeaderParam("Accept")

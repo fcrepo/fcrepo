@@ -25,13 +25,11 @@ import org.fcrepo.Datastream;
 import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.generator.rdf.TripleSource.Triple;
 import org.fcrepo.generator.rdf.Utils;
-import org.fcrepo.services.DatastreamService;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -47,7 +45,6 @@ public class DatastreamRdfGenerator extends AbstractResource {
             .getLogger(DatastreamRdfGenerator.class);
 
     @GET
-    @Path("/")
     @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
     public String getRdfXml(@PathParam("pid")
     final String pid, @PathParam("dsid")
