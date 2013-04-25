@@ -65,26 +65,23 @@ public class AtomJMSIT implements MessageListener {
 
     static Parser parser = new Abdera().getParser();
 
-    private Entry entry;
+    private volatile Entry entry;
 
     final private Logger logger = LoggerFactory.getLogger(AtomJMSIT.class);
 
     @Test
-    public void testAtomStream() throws LoginException, RepositoryException {
+    public void testAtomStream() throws LoginException, RepositoryException, InterruptedException {
         Session session = repository.login();
         session.getRootNode().addNode("test1").addMixin(FEDORA_OBJECT);
         session.save();
-        session.logout();
-
-        // we're relying on the onMessage handler to populate entry
-        while (entry == null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        if (entry == null) { // must not have rec'vd event yet
+            synchronized(this) {
+                this.wait(1000);
             }
         }
+        session.logout();
 
+        if (entry == null) fail("Waited a second, got no messages");
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         final String title = entry.getTitle();
         entry = null;
@@ -102,7 +99,7 @@ public class AtomJMSIT implements MessageListener {
     @Test
     public void testDatastreamTerm() throws NoSuchNodeTypeException,
             VersionException, ConstraintViolationException, LockException,
-            ItemExistsException, PathNotFoundException, RepositoryException {
+            ItemExistsException, PathNotFoundException, RepositoryException, InterruptedException {
         Session session = repository.login();
         final Node object = session.getRootNode().addNode("test2");
         object.addMixin(FEDORA_OBJECT);
@@ -110,16 +107,14 @@ public class AtomJMSIT implements MessageListener {
         ds.addMixin(FEDORA_DATASTREAM);
         ds.addNode(JCR_CONTENT).setProperty(JCR_DATA, "fake data");
         session.save();
-        session.logout();
-
-        // we're relying on the onMessage handler to populate entry
-        while (entry == null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        if (entry == null) { // must not have rec'vd event yet
+            synchronized(this) {
+                this.wait(1000);
             }
         }
+        session.logout();
+        if (entry == null) fail("Waited a second, got no messages");
+
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         entry = null;
         String path = null;
@@ -155,7 +150,9 @@ public class AtomJMSIT implements MessageListener {
             logger.error("Exception receiving message: {}", e);
             fail(e.getMessage());
         }
-
+        synchronized(this) {
+            this.notify();
+        }
     }
 
     @Before
