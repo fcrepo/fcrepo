@@ -229,28 +229,6 @@ public class FedoraDatastreams extends AbstractResource {
         return dsHistory;
     }
 
-    @GET
-    @Path("/{dsid}/fixity")
-    @Timed
-    @Produces({TEXT_XML, APPLICATION_JSON})
-    public DatastreamFixity getDatastreamFixity(@PathParam("path")
-    List<PathSegment> pathList, @PathParam("dsid")
-    final String dsid) throws RepositoryException {
-
-        final String path = toPath(pathList);
-        final Datastream ds = datastreamService.getDatastream(path, dsid);
-
-        final DatastreamFixity dsf = new DatastreamFixity();
-        dsf.objectId = pathList.get(pathList.size() - 1).getPath();
-        dsf.dsId = dsid;
-        dsf.timestamp = new Date();
-
-        final Collection<FixityResult> blobs =
-                llStoreService.runFixityAndFixProblems(ds);
-        dsf.statuses = new ArrayList<FixityResult>(blobs);
-        return dsf;
-    }
-
     private DatastreamProfile getDSProfile(final Datastream ds)
             throws RepositoryException, IOException {
         logger.trace("Executing getDSProfile() with node: " + ds.getDsId());

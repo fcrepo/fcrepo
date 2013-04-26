@@ -189,18 +189,5 @@ public class FedoraDatastreamsTest {
         verify(mockSession, never()).save();
     }
 
-    @Test
-    public void testGetDatastreamFixity() throws RepositoryException,
-            IOException {
-        final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid;
-        final String dsId = "testDS";
-        final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
-        when(mockDatastreams.getDatastream(path, dsId)).thenReturn(mockDs);
-        final DatastreamFixity actual = testObj.getDatastreamFixity(createPathList("objects",pid), dsId);
-        assertNotNull(actual);
-        verify(mockLow).runFixityAndFixProblems(mockDs);
-        verify(mockSession, never()).save();
-    }
 
 }
