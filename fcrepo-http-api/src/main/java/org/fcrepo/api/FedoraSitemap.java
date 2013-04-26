@@ -123,7 +123,7 @@ public class FedoraSitemap extends AbstractResource {
         }
         Calendar lastKnownDate = (lkDateValue != null) ? lkDateValue.getDate() : null;
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
-                FedoraObjects.class).path(FedoraObjects.class, "getObject")
+                FedoraDescribe.class)
                 .build(r.getNode().getName()), lastKnownDate);
     }
 
