@@ -17,6 +17,7 @@
     </bean>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
+    <bean class="org.fcrepo.binary.PolicyDecisionPoint" />
 
 
 </beans>

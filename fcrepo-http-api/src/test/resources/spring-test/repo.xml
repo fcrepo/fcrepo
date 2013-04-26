@@ -20,5 +20,6 @@
     <bean class="org.fcrepo.services.ObjectService"/>
     <bean class="org.fcrepo.services.LowLevelStorageService"/>
     <bean class="org.fcrepo.services.DatastreamService"/>
+    <bean class="org.fcrepo.binary.PolicyDecisionPoint" />
     
 </beans>
