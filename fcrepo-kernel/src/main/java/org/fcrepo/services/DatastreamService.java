@@ -122,6 +122,17 @@ public class DatastreamService extends RepositoryService {
         return new Datastream(readOnlySession, pid, dsId);
     }
 
+	/**
+	 * Retrieve a Datastream instance by pid and dsid
+	 * @param path jcr path to the datastream
+	 * @return
+	 * @throws RepositoryException
+	 */
+	public Datastream getDatastream(final String path)
+			throws RepositoryException {
+		return new Datastream(readOnlySession, path);
+	}
+
     /**
      * Delete a Datastream
      * @param session jcr session

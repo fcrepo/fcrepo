@@ -104,6 +104,21 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         verifyNew(Datastream.class).withArguments(mockSession, "foo", "bar");
     }
 
+
+	@Test
+	public void testGetDatastreamFromPath() throws Exception {
+		final Session mockSession = mock(Session.class);
+		final Node mockNode = mock(Node.class);
+		final Datastream mockWrapper = mock(Datastream.class);
+		when(mockWrapper.getNode()).thenReturn(mockNode);
+		whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
+				.thenReturn(mockWrapper);
+		final DatastreamService testObj = new DatastreamService();
+		testObj.readOnlySession = mockSession;
+		testObj.getDatastream("/foo/bar");
+		verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
+	}
+
     @Test
     public void testPurgeDatastream() throws Exception {
         final Session mockSession = mock(Session.class);
