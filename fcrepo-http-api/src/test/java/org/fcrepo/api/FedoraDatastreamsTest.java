@@ -2,7 +2,6 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
@@ -24,7 +23,6 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
@@ -33,9 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
-import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.session.SessionFactory;
@@ -126,14 +122,14 @@ public class FedoraDatastreamsTest {
         atts.put(dsId2, "sdfg");
         final MultiPart multipart = TestHelpers.getStringsAsMultipart(atts);
         final Response actual =
-                testObj.modifyDatastreams(createPathList("objects",pid), Arrays.asList(new String[] {
+                testObj.modifyDatastreams(createPathList(pid), Arrays.asList(new String[] {
                         dsId1, dsId2}), multipart);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq(getDatastreamJcrNodePath(pid, dsId1)), anyString(),
+                eq("/" + pid + "/" + dsId1), anyString(),
                 any(InputStream.class));
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq(getDatastreamJcrNodePath(pid, dsId2)), anyString(),
+                eq("/" + pid + "/" + dsId2), anyString(),
                 any(InputStream.class));
         verify(mockSession).save();
     }
@@ -141,13 +137,13 @@ public class FedoraDatastreamsTest {
     @Test
     public void testDeleteDatastreams() throws RepositoryException, IOException {
         final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid;
+        final String path = "/" + pid;
         final List<String> dsidList =
                 Arrays.asList(new String[] {"ds1", "ds2"});
-        final Response actual = testObj.deleteDatastreams(createPathList("objects",pid), dsidList);
+        final Response actual = testObj.deleteDatastreams(createPathList(pid), dsidList);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).purgeDatastream(mockSession, path, "ds1");
-        verify(mockDatastreams).purgeDatastream(mockSession, path, "ds2");
+        verify(mockDatastreams).purgeDatastream(mockSession, path + "/" + "ds1");
+        verify(mockDatastreams).purgeDatastream(mockSession, path + "/" + "ds2");
         verify(mockSession).save();
     }
 
@@ -155,14 +151,14 @@ public class FedoraDatastreamsTest {
     public void testGetDatastreamsContents() throws RepositoryException,
             IOException {
         final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid;
         final String dsId = "testDS";
+		final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
-        when(mockDatastreams.getDatastream(path, dsId)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
 
         final Response resp =
-                testObj.getDatastreamsContents(createPathList("objects",pid), Arrays
+                testObj.getDatastreamsContents(createPathList(pid), Arrays
                         .asList(new String[] {dsId}));
         final MultiPart multipart = (MultiPart) resp.getEntity();
 
@@ -178,14 +174,14 @@ public class FedoraDatastreamsTest {
     public void testGetDatastreamHistory() throws RepositoryException,
             IOException {
         final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid;
         final String dsId = "testDS";
+		final String path = "/" + pid + "/" + dsId;
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
-        when(mockDatastreams.getDatastream(path, dsId)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
         final DatastreamHistory actual =
-                testObj.getDatastreamHistory(createPathList("objects",pid), dsId);
+                testObj.getDatastreamHistory(createPathList(pid), dsId);
         assertNotNull(actual);
-        verify(mockDatastreams).getDatastream(path, dsId);
+        verify(mockDatastreams).getDatastream(path);
         verify(mockSession, never()).save();
     }
 

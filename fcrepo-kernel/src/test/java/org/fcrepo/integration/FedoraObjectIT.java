@@ -28,23 +28,23 @@ public class FedoraObjectIT extends AbstractIT {
     @Test
     public void testCreatedObject() throws RepositoryException, IOException {
         Session session = repo.login();
-        objectService.createObject(session, "testObject");
+        objectService.createObject(session, "/testObject");
         session.save();
         session.logout();
         session = repo.login();
-        final FedoraObject obj = objectService.getObject("testObject");
+        final FedoraObject obj = objectService.getObject("/testObject");
         assertNotNull("Couldn't find object!", obj);
     }
 
     @Test
     public void testOwnerId() throws RepositoryException, IOException {
         Session session = repo.login();
-        objectService.createObject(session, "testObject").setOwnerId("ajs6f");
+        objectService.createObject(session, "/testObject").setOwnerId("ajs6f");
         session.save();
         session.logout();
         session = repo.login();
         final String ownerId =
-                objectService.getObject("testObject").getOwnerId();
+                objectService.getObject("/testObject").getOwnerId();
         assertEquals("Couldn't find object owner ID!", "ajs6f", ownerId);
     }
 }

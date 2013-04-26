@@ -53,25 +53,13 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + "objects/" + pid);
     }
 
-    protected static HttpPost postDSMethod(final String pid, final String ds,
-            final String content) throws UnsupportedEncodingException {
-        final HttpPost post =
-                new HttpPost(serverAddress + "objects/" + pid +
-                        "/fcr:datastreams/" + ds);
-        post.setEntity(new StringEntity(content));
-        return post;
-    }
-
-    protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + "/fcr:datastreams/" +
-                ds);
-    }
-
-    protected int getStatus(final HttpUriRequest method)
-            throws ClientProtocolException, IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " +
-                method.getURI());
-        return client.execute(method).getStatusLine().getStatusCode();
-    }
+	protected static HttpPost postDSMethod(final String pid, final String ds,
+										   final String content) throws UnsupportedEncodingException {
+		final HttpPost post =
+				new HttpPost(serverAddress + "objects/" + pid +
+									 "/" + ds + "/fcr:content");
+		post.setEntity(new StringEntity(content));
+		return post;
+	}
 
 }

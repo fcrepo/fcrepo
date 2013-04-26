@@ -2,9 +2,7 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -16,9 +14,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
@@ -32,20 +27,13 @@ import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
-import org.fcrepo.jaxb.responses.management.DatastreamFixity;
-import org.fcrepo.jaxb.responses.management.DatastreamHistory;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.session.SessionFactory;
-import org.fcrepo.utils.DatastreamIterator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
-
-import com.sun.jersey.multipart.MultiPart;
 
 public class FedoraContentTest {
 
@@ -106,11 +94,11 @@ public class FedoraContentTest {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
-        final String dsPath = getDatastreamJcrNodePath(pid, dsId);
+        final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockDatastreams.exists(dsPath)).thenReturn(true);
         final Response actual =
-                testObj.modifyContent(createPathList("objects",pid, dsId), null, dsContentStream);
+                testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class));
@@ -122,13 +110,13 @@ public class FedoraContentTest {
             IOException {
         final String pid = "FedoraDatastreamsTest1";
 		final String dsId = "testDS";
-        final String path = "/objects/" + pid + "/" + dsId;
+        final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
         final Request mockRequest = mock(Request.class);
         final Response actual =
-                testObj.getContent(createPathList("objects",pid, dsId), mockRequest);
+                testObj.getContent(createPathList(pid, dsId), mockRequest);
         verify(mockDs).getContent();
         verify(mockSession, never()).save();
         final String actualContent =

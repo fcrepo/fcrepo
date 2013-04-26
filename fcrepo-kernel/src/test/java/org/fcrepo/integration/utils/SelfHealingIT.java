@@ -113,15 +113,15 @@ public class SelfHealingIT {
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         final Session session = repo.login();
 
-        objectService.createObjectNode(session, "testSelfHealingObject");
+        objectService.createObject(session, "/testSelfHealingObject");
 
         datastreamService.createDatastreamNode(session,
-                "/objects/testSelfHealingObject/testDatastreamNode4",
+                "/testSelfHealingObject/testDatastreamNode4",
                 "application/octet-stream", new ByteArrayInputStream(
                         "9876543210".getBytes()), "SHA-1",
                 "9cd656169600157ec17231dcf0613c94932efcdc");
         datastreamService.createDatastreamNode(session,
-                "/objects/testSelfHealingObject/testDatastreamNode5",
+                "/testSelfHealingObject/testDatastreamNode5",
                 "application/octet-stream", new ByteArrayInputStream(
                         "0123456789".getBytes()), "SHA-1",
                 "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
@@ -134,12 +134,10 @@ public class SelfHealingIT {
         Thread.sleep(1000);
 
         final Datastream ds =
-                datastreamService.getDatastream("testSelfHealingObject",
-                        "testDatastreamNode5");
+                datastreamService.getDatastream("/testSelfHealingObject/testDatastreamNode5");
 
         final Datastream ds2 =
-                datastreamService.getDatastream("testSelfHealingObject",
-                        "testDatastreamNode4");
+                datastreamService.getDatastream("/testSelfHealingObject/testDatastreamNode4");
 
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);

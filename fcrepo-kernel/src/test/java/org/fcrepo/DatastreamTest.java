@@ -3,7 +3,6 @@ package org.fcrepo;
 
 import static org.fcrepo.TestHelpers.checksumString;
 import static org.fcrepo.TestHelpers.getContentNodeMock;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -67,8 +66,7 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Before
     public void setUp() {
-        final String relPath =
-                getDatastreamJcrNodePath(testPid, testDsId).substring(1);
+        final String path = "/" + testDsId;
 
         mockSession = mock(Session.class);
         mockRootNode = mock(Node.class);
@@ -78,10 +76,7 @@ public class DatastreamTest implements FedoraJcrTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
-            when(mockSession.getRootNode()).thenReturn(mockRootNode);
-            when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
-            testObj = new Datastream(mockSession, "testObj", "testDs");
-            verify(mockRootNode).getNode(relPath);
+            testObj = new Datastream(mockDsNode);
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());

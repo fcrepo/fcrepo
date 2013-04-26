@@ -8,7 +8,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -88,7 +87,7 @@ public class FedoraRepository extends AbstractResource {
         final DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =
-                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
+                uriInfo.getBaseUriBuilder().path("/123/oai_dc")
                         .build();
         description.repositorySize = objectService.getRepositorySize(session);
         description.numberOfObjects =

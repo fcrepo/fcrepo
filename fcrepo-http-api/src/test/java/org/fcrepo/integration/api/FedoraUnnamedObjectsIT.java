@@ -2,16 +2,12 @@
 package org.fcrepo.integration.api;
 
 import static java.util.regex.Pattern.compile;
-import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.junit.Test;
 
 public class FedoraUnnamedObjectsIT extends AbstractResourceIT {

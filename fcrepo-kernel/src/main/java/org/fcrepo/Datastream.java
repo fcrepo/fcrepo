@@ -4,10 +4,8 @@ package org.fcrepo;
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.yammer.metrics.MetricRegistry.name;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
-import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -87,18 +85,6 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
         } catch (RepositoryException ex) {
             logger.warn("Could not decorate jcr:content with fedora:datastream properties: " + ex.getMessage());
         }
-    }
-
-    /**
-     * Find or create a Datastream from a pid and dsid
-     * @param session
-     * @param pid object persistent identifier
-     * @param dsId datastream identifier
-     * @throws RepositoryException
-     */
-    public Datastream(final Session session, final String pid, final String dsId)
-            throws RepositoryException {
-        this(session, getDatastreamJcrNodePath(pid, dsId));
     }
 
     /**

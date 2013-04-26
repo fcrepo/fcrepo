@@ -37,10 +37,10 @@ public class DatastreamIT extends AbstractIT {
     @Test
     public void testLabel() throws Exception {
         Session session = repo.login();
-        objectService.createObjectNode(session, "testDatastreamObject");
+        objectService.createObject(session, "/testDatastreamObject");
         final Node dsNode =
                 datastreamService.createDatastreamNode(session,
-                        "/objects/testDatastreamObject/testDatastreamNode",
+                        "/testDatastreamObject/testDatastreamNode",
                         "application/octet-stream", new ByteArrayInputStream(
                                 "asdf".getBytes()));
         new Datastream(dsNode).setLabel("Best datastream ever!");
@@ -48,8 +48,7 @@ public class DatastreamIT extends AbstractIT {
         session.logout();
         session = repo.login();
         final Datastream ds =
-                datastreamService.getDatastream("testDatastreamObject",
-                        "testDatastreamNode");
+                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode");
         assertEquals("Wrong label!", "Best datastream ever!", ds.getLabel());
     }
 
@@ -57,17 +56,16 @@ public class DatastreamIT extends AbstractIT {
     public void testCreatedDate() throws RepositoryException, IOException,
             InvalidChecksumException {
         Session session = repo.login();
-        objectService.createObjectNode(session, "testDatastreamObject");
+        objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testDatastreamObject/testDatastreamNode1",
+                "/testDatastreamObject/testDatastreamNode1",
                 "application/octet-stream", new ByteArrayInputStream("asdf"
                         .getBytes()));
         session.save();
         session.logout();
         session = repo.login();
         final Datastream ds =
-                datastreamService.getDatastream("testDatastreamObject",
-                        "testDatastreamNode1");
+                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode1");
         assertNotNull("Couldn't find created date on datastream!", ds
                 .getCreatedDate());
     }
@@ -76,17 +74,16 @@ public class DatastreamIT extends AbstractIT {
     public void testDatastreamContent() throws IOException,
             RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObjectNode(session, "testDatastreamObject");
+        objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testDatastreamObject/testDatastreamNode1",
+                "/testDatastreamObject/testDatastreamNode1",
                 "application/octet-stream", new ByteArrayInputStream("asdf"
                         .getBytes()));
 
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("testDatastreamObject",
-                        "testDatastreamNode1");
+                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode1");
         final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("asdf", contentString);
@@ -97,17 +94,16 @@ public class DatastreamIT extends AbstractIT {
     public void testDatastreamContentDigestAndLength() throws IOException,
             RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObjectNode(session, "testDatastreamObject");
+        objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testDatastreamObject/testDatastreamNode2",
+                "/testDatastreamObject/testDatastreamNode2",
                 "application/octet-stream", new ByteArrayInputStream("asdf"
                         .getBytes()));
 
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("testDatastreamObject",
-                        "testDatastreamNode2");
+                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode2");
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
         assertEquals(4L, ds.getContentSize());
@@ -121,17 +117,16 @@ public class DatastreamIT extends AbstractIT {
     public void testModifyDatastreamContentDigestAndLength()
             throws IOException, RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObjectNode(session, "testDatastreamObject");
+        objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testDatastreamObject/testDatastreamNode3",
+                "/testDatastreamObject/testDatastreamNode3",
                 "application/octet-stream", new ByteArrayInputStream("asdf"
                         .getBytes()));
 
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("testDatastreamObject",
-                        "testDatastreamNode3");
+                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode3");
 		Binary b = (Binary)(session.getValueFactory().createBinary(new ByteArrayInputStream("0123456789".getBytes())));
         ds.setContent(b);
 
@@ -148,9 +143,9 @@ public class DatastreamIT extends AbstractIT {
     public void testDatastreamContentWithChecksum() throws IOException,
             RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObjectNode(session, "testDatastreamObject");
+        objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testDatastreamObject/testDatastreamNode4",
+                "/testDatastreamObject/testDatastreamNode4",
                 "application/octet-stream", new ByteArrayInputStream("asdf"
                         .getBytes()), "SHA-1",
                 "3da541559918a808c2402bba5012f6c60b27661c");
@@ -158,8 +153,7 @@ public class DatastreamIT extends AbstractIT {
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("testDatastreamObject",
-                        "testDatastreamNode4");
+                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode4");
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
 

@@ -2,7 +2,6 @@
 package org.fcrepo.integration.api;
 
 import static java.util.regex.Pattern.compile;
-import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -26,7 +25,7 @@ public class FedoraObjectsIT extends AbstractResourceIT {
                 .find());
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals("Got wrong Location header for ingest!", serverAddress +
-                OBJECT_PATH.replace("/", "") + "/FedoraObjectsTest1", location);
+                OBJECT_PATH + "/FedoraObjectsTest1", location);
     }
 
     @Test
