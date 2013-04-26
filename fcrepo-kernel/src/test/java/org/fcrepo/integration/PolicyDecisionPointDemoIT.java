@@ -37,7 +37,7 @@ public class PolicyDecisionPointDemoIT extends AbstractIT {
 
 		Session session = repo.login();
 
-		PolicyDecisionPoint pt = PolicyDecisionPoint.getInstance();
+		PolicyDecisionPoint pt = new PolicyDecisionPoint();
 		pt.addPolicy(new MimeTypePolicy("image/tiff", new NamedHint("tiff-store")));
 
 		final Node dsNode =

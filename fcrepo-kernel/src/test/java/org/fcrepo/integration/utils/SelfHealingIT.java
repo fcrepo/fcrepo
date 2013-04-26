@@ -19,6 +19,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
+import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
@@ -60,6 +61,7 @@ public class SelfHealingIT {
 
         datastreamService = new DatastreamService();
         datastreamService.setRepository(repo);
+		datastreamService.setStoragePolicyDecisionPoint(new PolicyDecisionPoint());
         objectService = new ObjectService();
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();

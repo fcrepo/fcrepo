@@ -22,6 +22,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -60,6 +61,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         whenNew(Datastream.class).withArguments(mockSession, testPath)
                 .thenReturn(mockWrapper);
         final DatastreamService testObj = new DatastreamService();
+		final PolicyDecisionPoint pdp = mock(PolicyDecisionPoint.class);
+		when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
+		testObj.setStoragePolicyDecisionPoint(pdp);
 		PowerMockito.mockStatic(FedoraTypesUtils.class);
 		when(FedoraTypesUtils.getBinary(mockNode, mockIS)).thenReturn(mock(Binary.class));
         final Node actual =

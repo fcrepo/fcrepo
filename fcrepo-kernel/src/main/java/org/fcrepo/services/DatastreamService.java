@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -28,6 +29,9 @@ import org.slf4j.Logger;
  *
  */
 public class DatastreamService extends RepositoryService {
+
+	@Inject
+	PolicyDecisionPoint storagePolicyDecisionPoint;
 
     private static final Logger logger = getLogger(DatastreamService.class);
 
@@ -85,7 +89,7 @@ public class DatastreamService extends RepositoryService {
          * implement this public interface, so feel free to cast the values to
          * gain access to the additional methods."
          */
-		final Binary binary = (Binary) getBinary(node, content, PolicyDecisionPoint.getInstance().evaluatePolicies(node));
+		final Binary binary = (Binary) getBinary(node, content, storagePolicyDecisionPoint.evaluatePolicies(node));
 
 		return binary;
 	}
@@ -204,5 +208,9 @@ public class DatastreamService extends RepositoryService {
             final Session session) throws RepositoryException {
         return session.nodeExists(getDatastreamJcrNodePath(pid, dsId));
     }
+
+	public void setStoragePolicyDecisionPoint(PolicyDecisionPoint pdp) {
+		this.storagePolicyDecisionPoint = pdp;
+	}
 
 }

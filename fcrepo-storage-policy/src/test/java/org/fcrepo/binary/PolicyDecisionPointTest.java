@@ -24,7 +24,7 @@ public class PolicyDecisionPointTest {
 
 	@BeforeClass
 	public static void setupPdp() {
-		pt = PolicyDecisionPoint.getInstance();
+		pt = new PolicyDecisionPoint();
 
 		dummyHint = new NamedHint("dummy-store-id");
 		Policy policy = new MimeTypePolicy("image/x-dummy-type", dummyHint);

@@ -14,20 +14,9 @@ public class PolicyDecisionPoint {
 
 	private List<Policy> policies;
 
-	private static PolicyDecisionPoint instance = null;
-
-
-	protected PolicyDecisionPoint() {
+	public PolicyDecisionPoint() {
 		logger.debug("Initializing binary PolicyDecisionPoint");
 		policies = new ArrayList<Policy>();
-	}
-
-
-	public static PolicyDecisionPoint getInstance() {
-		if(instance == null) {
-			instance = new PolicyDecisionPoint();
-		}
-		return instance;
 	}
 
 	public void addPolicy(Policy p) {
