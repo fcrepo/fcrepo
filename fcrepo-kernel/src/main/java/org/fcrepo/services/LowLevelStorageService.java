@@ -18,6 +18,9 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -40,6 +43,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
+import org.modeshape.jcr.value.binary.CompositeBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
@@ -88,14 +92,14 @@ public class LowLevelStorageService {
                     throws RepositoryException {
         logger.debug("Checking resource: " + resource.getPath());
 
-        return transformBinaryBlobs(resource, ServiceHelpers
-                .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
+        return transformLowLevelCacheEntries(resource, ServiceHelpers
+															   .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
     }
 
-    public <T> Collection<T> transformBinaryBlobs(final Node resource,
-            final Function<LowLevelCacheEntry, T> transform)
+    public <T> Collection<T> transformLowLevelCacheEntries(final Node resource,
+														   final Function<LowLevelCacheEntry, T> transform)
             throws RepositoryException {
-        return transform(getBinaryBlobs(resource), transform);
+        return transform(getLowLevelCacheEntries(resource), transform);
     }
 
     /**
@@ -104,10 +108,10 @@ public class LowLevelStorageService {
      * @return a map of binary stores and input streams
      * @throws RepositoryException
      */
-    public Set<LowLevelCacheEntry> getBinaryBlobs(final Node resource)
+    public Set<LowLevelCacheEntry> getLowLevelCacheEntries(final Node resource)
             throws RepositoryException {
 
-        return getBinaryBlobs(getBinaryKey.apply(resource));
+        return getLowLevelCacheEntries(getBinaryKey.apply(resource));
 
     }
 
@@ -116,49 +120,98 @@ public class LowLevelStorageService {
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
-    public Set<LowLevelCacheEntry> getBinaryBlobs(final BinaryKey key) {
-
-        final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
+    public Set<LowLevelCacheEntry> getLowLevelCacheEntries(final BinaryKey key) {
 
         final BinaryStore store = getBinaryStore.apply(repo);
 
-        if (store == null) {
-            return blobs.build();
-        }
+		if (store == null) {
+			return new HashSet<LowLevelCacheEntry>();
+		}
 
-        // if we have an Infinispan store, it may have multiple stores (or cluster nodes)
-        if (store instanceof InfinispanBinaryStore) {
-            final InfinispanBinaryStore ispnStore =
-                    (InfinispanBinaryStore) store;
-
-            //seems like we have to start it, not sure why.
-            ispnStore.start();
-
-            for (final Cache<?, ?> c : ImmutableSet.copyOf(ispnStore
-                    .getCaches())) {
-
-                final CacheStore cacheStore = getCacheStore.apply(c);
-
-                // A ChainingCacheStore indicates we (may) have multiple CacheStores at play
-                if (cacheStore instanceof ChainingCacheStore) {
-                    final ChainingCacheStore chainingCacheStore =
-                            (ChainingCacheStore) cacheStore;
-                    // the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
-                    for (final CacheStore s : chainingCacheStore.getStores()
-                            .keySet()) {
-                        blobs.add(new LowLevelCacheEntry(store, s, key));
-                    }
-                } else {
-                    // just a nice, simple infinispan cache.
-                    blobs.add(new LowLevelCacheEntry(store, cacheStore, key));
-                }
-            }
-        } else {
-            blobs.add(new LowLevelCacheEntry(store, key));
-        }
-
-        return blobs.build();
+		return getLowLevelCacheEntriesFromStore(store, key);
     }
+
+	/**
+	 *
+	 * @param key a Modeshape BinaryValue's key.
+	 * @return a set of binary stores
+	 */
+	public Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final BinaryStore store, final BinaryKey key) {
+
+		if(store instanceof CompositeBinaryStore) {
+			return getLowLevelCacheEntriesFromStore((CompositeBinaryStore) store, key);
+
+		} else if (store instanceof InfinispanBinaryStore) {
+			return getLowLevelCacheEntriesFromStore((InfinispanBinaryStore) store, key);
+
+		} else {
+			final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
+			blobs.add(new LowLevelCacheEntry(store, key));
+			return blobs.build();
+		}
+
+	}
+
+	/**
+	 *
+	 * @param key a Modeshape BinaryValue's key.
+	 * @return a set of binary stores
+	 */
+	protected Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final CompositeBinaryStore compositeStore, final BinaryKey key) {
+
+		final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
+
+		Iterator<Map.Entry<String,BinaryStore>> it = compositeStore.getNamedStoreIterator();
+
+		while(it.hasNext()) {
+			BinaryStore bs = it.next().getValue();
+
+			if(bs.hasBinary(key)) {
+
+				final Set<LowLevelCacheEntry> binaryBlobs = getLowLevelCacheEntriesFromStore(bs, key);
+
+				for(LowLevelCacheEntry e : binaryBlobs) {
+					blobs.add(e);
+				}
+			}
+		}
+
+		return blobs.build();
+	}
+
+	/**
+	 *
+	 * @param key a Modeshape BinaryValue's key.
+	 * @return a set of binary stores
+	 */
+	protected Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final InfinispanBinaryStore ispnStore, final BinaryKey key) {
+
+		final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
+
+		//seems like we have to start it, not sure why.
+		ispnStore.start();
+
+		for (final Cache<?, ?> c : ImmutableSet.copyOf(ispnStore.getCaches())) {
+
+			final CacheStore cacheStore = getCacheStore.apply(c);
+
+			// A ChainingCacheStore indicates we (may) have multiple CacheStores at play
+			if (cacheStore instanceof ChainingCacheStore) {
+				final ChainingCacheStore chainingCacheStore =
+						(ChainingCacheStore) cacheStore;
+				// the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
+				for (final CacheStore s : chainingCacheStore.getStores()
+												  .keySet()) {
+					blobs.add(new LowLevelCacheEntry(ispnStore, s, key));
+				}
+			} else {
+				// just a nice, simple infinispan cache.
+				blobs.add(new LowLevelCacheEntry(ispnStore, cacheStore, key));
+			}
+		}
+
+		return blobs.build();
+	}
 
     @PostConstruct
     public final void getSession() {

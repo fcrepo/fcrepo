@@ -88,7 +88,7 @@ public class SelfHealingIT {
 
         logger.info("Tampering with node " + node.toString());
         final Set<LowLevelCacheEntry> binaryBlobs =
-                lowLevelService.getBinaryBlobs(node);
+                lowLevelService.getLowLevelCacheEntries(node);
 
         final Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
 

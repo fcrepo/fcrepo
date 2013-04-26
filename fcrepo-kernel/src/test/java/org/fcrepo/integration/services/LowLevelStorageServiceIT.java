@@ -87,7 +87,7 @@ public class LowLevelStorageServiceIT {
                         "testRepositoryContent");
 
         final Iterator<LowLevelCacheEntry> inputStreamList =
-                lowLevelService.getBinaryBlobs(ds.getNode()).iterator();
+                lowLevelService.getLowLevelCacheEntries(ds.getNode()).iterator();
 
         int i = 0;
         while (inputStreamList.hasNext()) {
