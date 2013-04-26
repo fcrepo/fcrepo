@@ -39,4 +39,7 @@ public class PolicyDecisionPoint {
 	}
 
 
+	public void setPolicies(List<Policy> policies) {
+		this.policies = policies;
+	}
 }
