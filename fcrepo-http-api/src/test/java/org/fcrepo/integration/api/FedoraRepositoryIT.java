@@ -55,7 +55,7 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String description = EntityUtils.toString(response.getEntity());
-        logger.debug("HERE WE ARE: Found the repository description:\n" + description);
+        logger.debug("Found the repository description:\n" + description);
         assertTrue("Failed to find a proper repo version", compile(
                 "\"repositoryVersion\"\\s*:\\s*\".*\"").matcher(
                 description).find());

@@ -12,7 +12,7 @@ import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -24,22 +24,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.access.DescribeCluster;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.provider.VelocityViewer;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.services.functions.GetBinaryStore;
-import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
-import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
+import org.fcrepo.services.functions.GetClusterConfiguration;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap.Builder;
+import com.yammer.metrics.annotation.Timed;
 
 @Component
 @Path("/rest/fcr:describe")
@@ -97,56 +93,26 @@ public class FedoraRepository extends AbstractResource {
         description.repositorySize = objectService.getRepositorySize(session);
         description.numberOfObjects =
                 objectService.getRepositoryObjectCount(session);
-        
-        description.clusterConfiguration = getClusterConfig();
-    	
+
+        Map<String, String> clusterConfig = getClusterConfig();
+        if(clusterConfig != null) {
+        	description.setClusterConfiguration(new DescribeCluster(clusterConfig));
+        }
+
         session.logout();
         return description;
     }
-    
+
     /**
      * Gets the cluster configurations
      * @return
      */
-    public DescribeCluster getClusterConfig() {
-    	try {
-	    	//get infinispan binarystore and cachemanager to set cluster configuration information
-	    	GetBinaryStore getBinaryStore = new GetBinaryStore();
-	    	BinaryStore store = getBinaryStore.apply(repo);
-	    	InfinispanBinaryStore ispnStore =
-	                (InfinispanBinaryStore) store;
-	    	
-	    	//seems like we have to start it, not sure why.
-	    	ispnStore.start();
-	    	
-	    	List<Cache<?, ?>> input = ispnStore.getCaches();
-	    	DefaultCacheManager cm = (DefaultCacheManager) input
-	    			.get(0)
-	    			.getCacheManager();
-	    	
-	    	int nodeView = cm.getTransport()
-	    			.getViewId() + 1;
-	    	
-	    	DescribeCluster clusterConfig = new DescribeCluster();
-	    	
-	    	clusterConfig.setCacheMode(cm.getCache()
-	    			.getCacheConfiguration()
-	    			.clustering()
-	    			.cacheMode().toString());
-	    	clusterConfig.clusterName = cm.getClusterName();
-	    	clusterConfig.nodeAddress = cm.getNodeAddress();
-	    	clusterConfig.physicalAddress = cm.getPhysicalAddresses();
-	    	clusterConfig.nodeView = nodeView;
-	    	clusterConfig.clusterSize = cm.getClusterSize();
-	    	clusterConfig.clusterMembers = cm.getClusterMembers();
-	    	
-	    	
-	    	ispnStore.shutdown();
-	    	return clusterConfig;
-    	} catch (Exception e) {
-    		logger.debug("Could not get cluster configuration information");
-    	} 
-    	return null;
+    public Map<String, String> getClusterConfig() {
+		//get infinispan binarystore and cachemanager to set cluster configuration information
+		GetClusterConfiguration getClusterConfig =
+				new GetClusterConfiguration();
+		Map<String, String> result = getClusterConfig.apply(repo);
+		return result;
     }
 
     @GET
@@ -166,7 +132,7 @@ public class FedoraRepository extends AbstractResource {
         this.repo = repo;
     }
 
-    
+
     public void setObjectService(ObjectService objectService) {
         this.objectService = objectService;
     }
