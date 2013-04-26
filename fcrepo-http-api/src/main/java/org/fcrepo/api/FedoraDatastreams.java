@@ -63,6 +63,8 @@ import com.google.common.base.Function;
 import com.sun.jersey.multipart.BodyPart;
 import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
+import java.util.Set;
+import org.fcrepo.jaxb.responses.management.DatastreamProfile.DSStores;
 
 @Component
 @Path("/rest/objects/{pid}/datastreams")
@@ -299,7 +301,6 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsId) throws RepositoryException, IOException {
         logger.trace("Executing getDatastream() with dsId: " + dsId);
         return getDSProfile(datastreamService.getDatastream(pid, dsId));
-
     }
 
     /**
@@ -432,6 +433,8 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.dsMIME = ds.getMimeType();
         dsProfile.dsSize = ds.getSize();
         dsProfile.dsCreateDate = ds.getCreatedDate().toString();
+        dsProfile.dsStores =  new DSStores(ds, 
+                llStoreService.getBinaryBlobs(ds.getNode()));
         return dsProfile;
     }
 
