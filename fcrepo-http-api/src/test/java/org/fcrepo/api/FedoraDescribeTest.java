@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -24,8 +26,10 @@ import javax.ws.rs.core.SecurityContext;
 import org.fcrepo.Datastream;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +42,8 @@ public class FedoraDescribeTest {
     ObjectService mockObjects;
     
     DatastreamService mockDatastreams;
+
+	LowLevelStorageService mockLow;
 
     Repository mockRepo;
 
@@ -58,9 +64,11 @@ public class FedoraDescribeTest {
         mockPrincipal = mock(Principal.class);
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
+		mockLow = mock(LowLevelStorageService.class);
         testObj = new FedoraDescribe();
         testObj.setObjectService(mockObjects);
         testObj.setDatastreamService(mockDatastreams);
+		testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
         when(mockSession.getUserID()).thenReturn(mockUser);
@@ -91,6 +99,7 @@ public class FedoraDescribeTest {
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
         when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
         Node mockNode = mock(Node.class);
+		when(mockDs.getNode()).thenReturn(mockNode);
         when(mockNode.getName()).thenReturn(dsId);
         Node mockParent = mock(Node.class);
         when(mockParent.getPath()).thenReturn(path);
@@ -98,6 +107,7 @@ public class FedoraDescribeTest {
 		when(mockNode.getPath()).thenReturn(path);
         when(mockNode.isNodeType("nt:file")).thenReturn(true);
         when(mockSession.getNode(path)).thenReturn(mockNode);
+		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
         final Response actual = testObj.describe(createPathList(pid, dsId));
         assertNotNull(actual);
         verify(mockDatastreams).getDatastream(path);
