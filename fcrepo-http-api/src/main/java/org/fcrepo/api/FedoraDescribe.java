@@ -28,6 +28,7 @@ import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.provider.VelocityViewer;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,9 @@ public class FedoraDescribe extends AbstractResource {
 
     @Autowired
     private DatastreamService datastreamService;
+
+    @Autowired
+    private LowLevelStorageService llStoreService;
 
     @GET
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
@@ -71,7 +75,7 @@ public class FedoraDescribe extends AbstractResource {
 
     /**
      * Returns an object profile.
-     * 
+     *
      * @param path
      * @return 200
      * @throws RepositoryException
@@ -97,16 +101,16 @@ public class FedoraDescribe extends AbstractResource {
         return objectProfile;
 
     }
-    
+
     public ObjectService getObjectService() {
         return objectService;
     }
 
-    
+
     public void setObjectService(ObjectService objectService) {
         this.objectService = objectService;
     }
-    
+
     public DatastreamProfile getDatastreamProfile(Node node) throws RepositoryException, IOException {
         final String path = node.getParent().getPath();
         final String dsId = node.getName();
@@ -133,6 +137,8 @@ public class FedoraDescribe extends AbstractResource {
         dsProfile.dsMIME = ds.getMimeType();
         dsProfile.dsSize = ds.getSize();
         dsProfile.dsCreateDate = ds.getCreatedDate().toString();
+        dsProfile.dsStores =  new DatastreamProfile.DSStores(ds,
+                llStoreService.getLowLevelCacheEntries(ds.getNode()));
         return dsProfile;
     }
 
@@ -140,7 +146,7 @@ public class FedoraDescribe extends AbstractResource {
         return datastreamService;
     }
 
-    
+
     public void setDatastreamService(DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
@@ -159,12 +165,19 @@ public class FedoraDescribe extends AbstractResource {
         session.logout();
         return description;
     }
-    
+
     //TODO Figure out how to call this
     public String getRepositoryProfileHtml() throws RepositoryException {
 
         final VelocityViewer view = new VelocityViewer();
         return view.getRepoInfo(getRepositoryProfile());
     }
-    
+
+    public LowLevelStorageService getLlStoreService() {
+        return llStoreService;
+    }
+
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
+        this.llStoreService = llStoreService;
+    }
 }
