@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.jcr.LoginException;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -109,6 +110,13 @@ public class FedoraDescribeTest {
         final String dsId = "testDS";
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
         when(mockDatastreams.getDatastream(path, dsId)).thenReturn(mockDs);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getName()).thenReturn(dsId);
+        Node mockParent = mock(Node.class);
+        when(mockParent.getPath()).thenReturn(path);
+        when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockNode.isNodeType("nt:file")).thenReturn(true);
+        when(mockSession.getNode(path + "/" + dsId)).thenReturn(mockNode);
         final Response actual = testObj.describe(createPathList("objects",pid, dsId));
         assertNotNull(actual);
         verify(mockDatastreams).getDatastream(path, dsId);

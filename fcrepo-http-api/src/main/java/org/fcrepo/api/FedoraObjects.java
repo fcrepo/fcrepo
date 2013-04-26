@@ -2,6 +2,7 @@
 package org.fcrepo.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
@@ -83,7 +84,7 @@ public class FedoraObjects extends AbstractResource {
             @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
             @QueryParam("checksumType") final String checksumType,
             @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType contentType,
+            @HeaderParam("Content-Type") final MediaType requestContentType,
             final InputStream requestBodyStream
             ) throws RepositoryException, IOException, InvalidChecksumException {
         
@@ -104,6 +105,9 @@ public class FedoraObjects extends AbstractResource {
                 }
             }
             if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
+                final MediaType contentType =
+                        requestContentType != null ? requestContentType
+                                : APPLICATION_OCTET_STREAM_TYPE;
                 final Node result =
                 datastreamService.createDatastreamNode(session, path, contentType
                         .toString(), requestBodyStream, checksumType, checksum);

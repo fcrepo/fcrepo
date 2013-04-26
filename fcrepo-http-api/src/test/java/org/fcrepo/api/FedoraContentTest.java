@@ -108,6 +108,7 @@ public class FedoraContentTest {
         final String dsContent = "asdf";
         final String dsPath = getDatastreamJcrNodePath(pid, dsId);
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        when(mockDatastreams.exists(dsPath)).thenReturn(true);
         final Response actual =
                 testObj.modifyContent(createPathList("objects",pid, dsId), null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());

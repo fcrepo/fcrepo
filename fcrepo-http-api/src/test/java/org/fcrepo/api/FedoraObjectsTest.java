@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.jcr.LoginException;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -144,9 +145,14 @@ public class FedoraObjectsTest {
         final String dsContent = "asdf";
         final String dsPath = getDatastreamJcrNodePath(pid, dsId);
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockDatastreams.createDatastreamNode(
+                any(Session.class), eq(dsPath), anyString(),
+                eq(dsContentStream), anyString(), anyString())).thenReturn(mockNode);
         final Response actual =
                 testObj.createObject(
-                        createPathList("objects",pid), "test label",
+                        createPathList("objects",pid,dsId), "test label",
                         FedoraJcrTypes.FEDORA_DATASTREAM, null,
                         null, null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
