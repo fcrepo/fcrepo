@@ -9,9 +9,6 @@
     <logger name="org.fcrepo" additivity="false" level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="org.apache.cxf" additivity="false" level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </logger>
     <logger name="org.modeshape" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>

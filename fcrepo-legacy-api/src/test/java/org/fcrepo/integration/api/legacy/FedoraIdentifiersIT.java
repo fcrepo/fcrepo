@@ -18,7 +18,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextPidResponds() throws Exception {
-        HttpPost method = new HttpPost(serverAddress + "nextPID");
+        final HttpPost method = new HttpPost(serverAddress + "nextPID");
         method.addHeader("Accepts", "text/xml");
         logger.debug("Executed testGetNextPidResponds()");
         assertEquals(SC_OK, getStatus(method));
@@ -27,22 +27,25 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextPidHasAPid() throws IOException, XpathException,
             SAXException {
-        HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=1");
+        final HttpPost method =
+                new HttpPost(serverAddress + "nextPID?numPids=1");
         method.addHeader("Accepts", "text/xml");
-        HttpResponse response = client.execute(method);
+        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         assertXpathExists("/pids/pid", content);
         logger.debug("Found a PID.");
     }
 
     @Test
-    public void testGetNextPidHasTwoPids() throws IOException, XpathException, SAXException {
-        HttpPost method = new HttpPost(serverAddress + "nextPID?numPids=2");
+    public void testGetNextPidHasTwoPids() throws IOException, XpathException,
+            SAXException {
+        final HttpPost method =
+                new HttpPost(serverAddress + "nextPID?numPids=2");
         method.addHeader("Accepts", "text/xml");
-        HttpResponse response = client.execute(method);
+        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         assertXpathExists("/pids/pid[2]", content);
         logger.debug("Found two PIDs.");
     }

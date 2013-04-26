@@ -9,7 +9,6 @@ import static org.fcrepo.services.PathService.OBJECT_PATH;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
@@ -46,7 +45,7 @@ public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraRepository.class);
-    
+
     @Autowired
     Repository repo;
 
@@ -77,9 +76,9 @@ public class FedoraRepository extends AbstractResource {
         final NodeTypeManager ntmanager =
                 (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
         final Builder<String, String> nodetypes = builder();
-        NodeTypeIterator i = ntmanager.getAllNodeTypes();
+        final NodeTypeIterator i = ntmanager.getAllNodeTypes();
         while (i.hasNext()) {
-            NodeType nt = i.nextNodeType();
+            final NodeType nt = i.nextNodeType();
             nodetypes.put(nt.getName(), nt.toString());
         }
         repoproperties.put("node.types", nodetypes.build());
@@ -94,12 +93,13 @@ public class FedoraRepository extends AbstractResource {
             RepositoryException {
 
         final Session session = getAuthenticatedSession();
-        DescribeRepository description = new DescribeRepository();
+        final DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =
                 uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
                         .build();
-        description.repositorySize = objectService.getAllObjectsDatastreamSize();
+        description.repositorySize =
+                objectService.getAllObjectsDatastreamSize();
         description.numberOfObjects =
                 session.getNode("/objects").getNodes().getSize();
         session.logout();

@@ -8,6 +8,9 @@ import static com.google.common.collect.Ranges.closed;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 
+import java.io.IOException;
+
+import javax.jcr.RepositoryException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -41,18 +44,18 @@ public class FedoraIdentifiers extends AbstractResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     public NextPid getNextPid(@QueryParam("numPids")
     @DefaultValue("1")
-    Integer numPids) {
+    final Integer numPids) {
 
         return new NextPid(copyOf(transform(closed(1, numPids)
                 .asSet(integers()), makePid)));
 
     }
 
-    private Function<Integer, String> makePid =
+    private final Function<Integer, String> makePid =
             new Function<Integer, String>() {
 
                 @Override
-                public String apply(Integer slot) {
+                public String apply(final Integer slot) {
                     return pidMinter.mintPid();
                 }
             };
