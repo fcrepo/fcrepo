@@ -89,11 +89,8 @@ public class FedoraContent extends AbstractResource {
     /**
      * Modify an existing datastream's content
      *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @param contentType
+	 * @param pathList
+     * @param requestContentType
      *            Content-Type header
      * @param requestBodyStream
      *            Binary blob
@@ -132,10 +129,7 @@ public class FedoraContent extends AbstractResource {
     /**
      * Get the binary content of a datastream
      *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
+	 * @param pathList
      * @return Binary blob
      * @throws RepositoryException
      */
@@ -146,10 +140,7 @@ public class FedoraContent extends AbstractResource {
             ) throws RepositoryException {
 
         String path = toPath(pathList);
-        int lastSep = path.lastIndexOf('/');
-        String dsid = path.substring(lastSep + 1);
-        path = path.substring(0, lastSep);
-        final Datastream ds = datastreamService.getDatastream(path, dsid);
+        final Datastream ds = datastreamService.getDatastream(path);
 
         final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         final Date date = ds.getLastModifiedDate();

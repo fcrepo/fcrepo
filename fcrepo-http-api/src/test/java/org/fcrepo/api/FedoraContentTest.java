@@ -121,11 +121,11 @@ public class FedoraContentTest {
     public void testGetContent() throws RepositoryException,
             IOException {
         final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid;
-        final String dsId = "testDS";
+		final String dsId = "testDS";
+        final String path = "/objects/" + pid + "/" + dsId;
         final String dsContent = "asdf";
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
-        when(mockDatastreams.getDatastream(path, dsId)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
         final Request mockRequest = mock(Request.class);
         final Response actual =
                 testObj.getContent(createPathList("objects",pid, dsId), mockRequest);
