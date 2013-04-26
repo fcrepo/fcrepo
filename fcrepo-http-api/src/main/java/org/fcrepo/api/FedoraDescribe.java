@@ -3,7 +3,6 @@ package org.fcrepo.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.fcrepo.services.PathService.OBJECT_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -83,7 +82,7 @@ public class FedoraDescribe extends AbstractResource {
         final String path = node.getPath();
         logger.trace("getting object profile {}", path);
         final ObjectProfile objectProfile = new ObjectProfile();
-        final FedoraObject obj = objectService.getObjectByPath(path);
+        final FedoraObject obj = objectService.getObject(path);
         objectProfile.pid = obj.getName();
         objectProfile.objLabel = obj.getLabel();
         objectProfile.objOwnerId = obj.getOwnerId();
@@ -108,10 +107,9 @@ public class FedoraDescribe extends AbstractResource {
     }
     
     public DatastreamProfile getDatastreamProfile(Node node) throws RepositoryException, IOException {
-        final String path = node.getParent().getPath();
-        final String dsId = node.getName();
-        logger.trace("Executing getDatastream() with path: {}/{}", path, dsId);
-        return getDatastreamProfile(datastreamService.getDatastream(path, dsId));
+        final String path = node.getPath();
+        logger.trace("Executing getDatastream() with path: {}", path);
+        return getDatastreamProfile(datastreamService.getDatastream(path));
 
     }
 
@@ -151,7 +149,7 @@ public class FedoraDescribe extends AbstractResource {
         final DescribeRepository description = new DescribeRepository();
         description.repositoryBaseURL = uriInfo.getBaseUri();
         description.sampleOAIURL =
-                uriInfo.getBaseUriBuilder().path(OBJECT_PATH + "/123/oai_dc")
+                uriInfo.getBaseUriBuilder().path("/123/oai_dc")
                         .build();
         description.repositorySize = objectService.getRepositorySize(session);
         description.numberOfObjects =

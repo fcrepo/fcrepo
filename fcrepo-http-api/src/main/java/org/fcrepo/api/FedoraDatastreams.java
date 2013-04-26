@@ -5,20 +5,15 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.transform;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,21 +23,14 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 
 import com.yammer.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
@@ -50,12 +38,10 @@ import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
-import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.utils.FixityResult;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -117,7 +103,7 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
-                datastreamService.purgeDatastream(session, path, dsid);
+                datastreamService.purgeDatastream(session, path + "/" + dsid);
             }
 
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -125,7 +111,7 @@ public class FedoraDatastreams extends AbstractResource {
                         part.getContentDisposition().getParameters()
                                 .get("name");
                 logger.debug("Adding datastream: " + dsid);
-                final String dsPath = getDatastreamJcrNodePath(path, dsid);
+                final String dsPath = path + "/" +  dsid;
                 final Object obj = part.getEntity();
                 InputStream src = null;
                 if (obj instanceof BodyPartEntity) {
@@ -156,8 +142,8 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             String path = toPath(pathList);
             for (final String dsid : dsidList) {
-                logger.debug("purging datastream {}{}", path, dsid);
-                datastreamService.purgeDatastream(session, path, dsid);
+                logger.debug("purging datastream {}", path  + "/" +  dsid);
+                datastreamService.purgeDatastream(session, path  + "/" +  dsid);
             }
             session.save();
             return noContent().build();
@@ -176,7 +162,7 @@ public class FedoraDatastreams extends AbstractResource {
         
         String path = toPath(pathList);
         if (dsids.isEmpty()) {
-            final NodeIterator ni = objectService.getObjectByPath(path).getNode().getNodes();
+            final NodeIterator ni = objectService.getObject(path).getNode().getNodes();
             while (ni.hasNext()) {
                 dsids.add(ni.nextNode().getName());
             }
@@ -190,7 +176,7 @@ public class FedoraDatastreams extends AbstractResource {
 
             try {
                 final Datastream ds =
-                        datastreamService.getDatastream(path, dsid);
+                        datastreamService.getDatastream(path  + "/" +  dsid);
                 multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
                         .getMimeType()));
             } catch (final PathNotFoundException e) {
@@ -221,7 +207,7 @@ public class FedoraDatastreams extends AbstractResource {
     final String dsId) throws RepositoryException, IOException {
         String path = toPath(pathList);
         // TODO implement this after deciding on a versioning model
-        final Datastream ds = datastreamService.getDatastream(path, dsId);
+        final Datastream ds = datastreamService.getDatastream(path  + "/" +  dsId);
         final DatastreamHistory dsHistory =
                 new DatastreamHistory(singletonList(getDSProfile(ds)));
         dsHistory.dsID = dsId;

@@ -2,7 +2,6 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -10,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -109,7 +107,7 @@ public class FedoraObjectsTest {
     @Test
     public void testModify() throws RepositoryException {
         final String pid = "testObject";
-        final Response actual = testObj.modifyObject(createPathList("objects", pid));
+        final Response actual = testObj.modifyObject(createPathList(pid));
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -120,9 +118,9 @@ public class FedoraObjectsTest {
     @Test
     public void testCreateObject() throws RepositoryException, IOException, InvalidChecksumException {
         final String pid = "testObject";
-        final String path = "/objects/" + pid;
+        final String path = "/" + pid;
         final Response actual = testObj.createObject(
-															createPathList("objects", pid), null,
+															createPathList(pid), null,
 															FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null
 		);
         assertNotNull(actual);
@@ -138,7 +136,7 @@ public class FedoraObjectsTest {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
-        final String dsPath = getDatastreamJcrNodePath(pid, dsId);
+        final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         Node mockNode = mock(Node.class);
         when(mockNode.getSession()).thenReturn(mockSession);
@@ -147,7 +145,7 @@ public class FedoraObjectsTest {
                 eq(dsContentStream), anyString(), anyString())).thenReturn(mockNode);
         final Response actual =
                 testObj.createObject(
-                        createPathList("objects",pid,dsId), "test label",
+                        createPathList(pid,dsId), "test label",
                         FedoraJcrTypes.FEDORA_DATASTREAM, null,
                         null, null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
@@ -162,13 +160,13 @@ public class FedoraObjectsTest {
     public void testGetObjects() throws RepositoryException, IOException {
         final String pid = "testObject";
         final String childPid = "testChild";
-        final String path = "/objects/" + pid;
+        final String path = "/" + pid;
         final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObj.getName()).thenReturn(pid);
         Set<String> mockNames = new HashSet<String>(Arrays.asList(new String[]{childPid}));
         when(mockObjects.getObjectNames(path)).thenReturn(mockNames);
         when(mockObjects.getObjectNames(eq(path), any(String.class))).thenReturn(mockNames);
-        Response actual = testObj.getObjects(createPathList("objects", pid), null);
+        Response actual = testObj.getObjects(createPathList(pid), null);
         assertNotNull(actual);
         String content = (String) actual.getEntity();
         assertTrue(content, content.contains(childPid));
@@ -178,11 +176,11 @@ public class FedoraObjectsTest {
     @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = "testObject";
-        final String path = "/objects/" + pid;
-        final Response actual = testObj.deleteObject(createPathList("objects", pid));
+        final String path = "/" + pid;
+        final Response actual = testObj.deleteObject(createPathList(pid));
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObjects).deleteObjectByPath(mockSession, path);
+        verify(mockObjects).deleteObject(mockSession, path);
         verify(mockSession).save();
     }
     

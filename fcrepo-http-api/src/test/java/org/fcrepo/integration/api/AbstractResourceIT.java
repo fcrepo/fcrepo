@@ -40,6 +40,8 @@ public abstract class AbstractResourceIT {
 
     protected JAXBContext context;
 
+	protected String OBJECT_PATH = "objects";
+
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());

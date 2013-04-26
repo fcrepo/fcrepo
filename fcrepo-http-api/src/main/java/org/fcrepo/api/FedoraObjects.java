@@ -171,7 +171,7 @@ public class FedoraObjects extends AbstractResource {
     public Response deleteObject(@PathParam("path")
     final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();
-        objectService.deleteObjectByPath(session, toPath(path));
+        objectService.deleteObject(session, toPath(path));
         session.save();
         return noContent().build();
     }
