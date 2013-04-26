@@ -43,7 +43,11 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         response =
                 client.execute(postDSMethod("DublinCoreTest2", "DC",
                         "marbles for everyone"));
-        assertEquals(201, response.getStatusLine().getStatusCode());
+        int status = response.getStatusLine().getStatusCode();
+        if (status != 201) {
+            System.err.println(EntityUtils.toString(response.getEntity()));
+        }
+        assertEquals(201, status);
 
         final HttpGet getWorstCaseOaiMethod =
                 new HttpGet(serverOAIAddress + "objects/DublinCoreTest2/oai_dc");

@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/oai/{path: .*(?!(oai_dc))}/oai_dc")
+@Path("/oai/{path: .*}/oai_dc")
 public class DublinCoreGenerator extends AbstractResource {
 
     @Resource

@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -60,14 +61,14 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + "objects/" + pid +
-                        "/fcr:datastreams/" + ds);
+                        "/" + ds + "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + "/fcr:datastreams/" +
-                ds);
+        return new HttpPut(serverAddress + "objects/" + pid +
+                "/" + ds + "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
     }
 
     protected int getStatus(final HttpUriRequest method)
