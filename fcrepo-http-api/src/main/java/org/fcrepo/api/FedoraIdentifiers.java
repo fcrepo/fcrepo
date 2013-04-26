@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * 
  */
 @Component
-@Path("/rest/nextPID")
+@Path("/rest/fcr:nextPID")
 public class FedoraIdentifiers extends AbstractResource {
 
     /**

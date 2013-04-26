@@ -3,10 +3,13 @@ package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
 import java.util.List;
 
@@ -14,6 +17,7 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.exception.InvalidChecksumException;
@@ -62,7 +66,7 @@ public class FedoraUnnamedObjectsTest {
         verify(mockMint).mintPid();
         verify(mockObjects).createObject(
                 any(List.class), any(String.class),
-                FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
+                eq(FedoraJcrTypes.FEDORA_OBJECT), isNull(String.class), isNull(String.class), isNull(MediaType.class), isNull(InputStream.class));
     }
     
 }

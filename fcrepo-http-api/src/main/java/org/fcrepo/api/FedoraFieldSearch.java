@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableList;
  */
 
 @Component
-@Path("/rest/search")
+@Path("/rest/fcr:search")
 public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 

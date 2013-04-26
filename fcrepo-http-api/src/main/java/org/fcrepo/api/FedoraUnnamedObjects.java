@@ -83,7 +83,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
      * @throws RepositoryException 
      */
     @POST
-    @Path("fcr:content")
+    @Path("fcr:content-obsolete")
     public Response createDS(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("checksumType")
     final String checksumType, @QueryParam("checksum")
@@ -94,9 +94,10 @@ public class FedoraUnnamedObjects extends AbstractResource {
         final String dsid = pidMinter.mintPid();
         ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
         segments.addAll(pathList.subList(0, pathList.size() - 2));
-        return datastreamsResource.addDatastream(
-                segments.build(), checksumType,
-                checksum, dsid,
-                requestContentType, requestBodyStream);
+        return null;
+//        return datastreamsResource.addDatastream(
+//                segments.build(), checksumType,
+//                checksum, dsid,
+//                requestContentType, requestBodyStream);
     }
 }

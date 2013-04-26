@@ -65,7 +65,7 @@ import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
 
 @Component
-@Path("/rest/{path: .*(?!(fcr\\:))}/fcr:datastreams")
+@Path("/rest/{path: .*}/fcr:datastreams")
 public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
@@ -87,7 +87,6 @@ public class FedoraDatastreams extends AbstractResource {
      */
 
     @GET
-    @Path("/")
     @Produces({TEXT_XML, APPLICATION_JSON})
     public ObjectDatastreams getDatastreams(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException, IOException {
@@ -105,7 +104,6 @@ public class FedoraDatastreams extends AbstractResource {
     }
 
     @POST
-    @Path("/")
     public Response modifyDatastreams(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("delete")
     final List<String> dsidList, final MultiPart multipart)
@@ -144,12 +142,12 @@ public class FedoraDatastreams extends AbstractResource {
             session.logout();
         }
     }
-
+    
     @DELETE
-    @Path("/")
-    public Response deleteDatastreams(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("dsid")
-    final List<String> dsidList) throws RepositoryException {
+    public Response deleteDatastreams(
+            @PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("dsid") final List<String> dsidList
+            ) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
             String path = toPath(pathList);
@@ -195,153 +193,6 @@ public class FedoraDatastreams extends AbstractResource {
             }
         }
         return Response.ok(multipart, MULTIPART_FORM_DATA).build();
-    }
-
-    /**
-     * Create a new datastream with user provided checksum for validation
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @param contentType
-     *            Content-Type header
-     * @param requestBodyStream
-     *            Binary blob
-     * @return 201 Created
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws InvalidChecksumException
-     */
-    @POST
-    @Path("/{dsid}")
-    public Response addDatastream(@PathParam("path")
-    List<PathSegment> pathList, @QueryParam("checksumType")
-    final String checksumType, @QueryParam("checksum")
-    final String checksum, @PathParam("dsid")
-    final String dsid, @HeaderParam("Content-Type")
-    final MediaType requestContentType, final InputStream requestBodyStream)
-            throws IOException, InvalidChecksumException, RepositoryException {
-        final MediaType contentType =
-                requestContentType != null ? requestContentType
-                        : APPLICATION_OCTET_STREAM_TYPE;
-
-        final Session session = getAuthenticatedSession();
-        try {
-            String path = toPath(pathList);
-            final String dsPath = getDatastreamJcrNodePath(path, dsid);
-            logger.debug("addDatastream {}", dsPath);
-            datastreamService.createDatastreamNode(session, dsPath, contentType
-                    .toString(), requestBodyStream, checksumType, checksum);
-            session.save();
-            return created(uriInfo.getRequestUri()).build();
-        } finally {
-            session.logout();
-        }
-
-    }
-
-    /**
-     * Modify an existing datastream's content
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @param contentType
-     *            Content-Type header
-     * @param requestBodyStream
-     *            Binary blob
-     * @return 201 Created
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws InvalidChecksumException 
-     */
-    @PUT
-    @Path("/{dsid}")
-    public Response modifyDatastream(@PathParam("path")
-    List<PathSegment> pathList, @PathParam("dsid")
-    final String dsid, @HeaderParam("Content-Type")
-    final MediaType requestContentType, final InputStream requestBodyStream)
-            throws RepositoryException, IOException, InvalidChecksumException {
-        final Session session = getAuthenticatedSession();
-        try {
-            String path = toPath(pathList);
-            final MediaType contentType =
-                    requestContentType != null ? requestContentType
-                            : APPLICATION_OCTET_STREAM_TYPE;
-            final String dsPath = getDatastreamJcrNodePath(path, dsid);
-
-            datastreamService.createDatastreamNode(session, dsPath, contentType
-                    .toString(), requestBodyStream);
-            session.save();
-            return created(uriInfo.getRequestUri()).build();
-        } finally {
-            session.logout();
-        }
-
-    }
-
-    /**
-     * Get the datastream profile of a datastream
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @return 200
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws TemplateException
-     */
-    @GET
-    @Path("/{dsid}")
-    @Produces({TEXT_XML, APPLICATION_JSON})
-    public DatastreamProfile getDatastream(@PathParam("path")
-    List<PathSegment> pathList, @PathParam("dsid")
-    final String dsId) throws RepositoryException, IOException {
-        String path = toPath(pathList);
-        logger.trace("Executing getDatastream() with dsId: " + dsId);
-        return getDSProfile(datastreamService.getDatastream(path, dsId));
-
-    }
-
-    /**
-     * Get the binary content of a datastream
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @return Binary blob
-     * @throws RepositoryException
-     */
-    @GET
-    @Path("/{dsid}/content")
-    public Response getDatastreamContent(@PathParam("path")
-    List<PathSegment> pathList, @PathParam("dsid")
-    final String dsid, @Context
-    final Request request) throws RepositoryException {
-
-        String path = toPath(pathList);
-        final Datastream ds = datastreamService.getDatastream(path, dsid);
-
-        final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
-        final Date date = ds.getLastModifiedDate();
-        final Date roundedDate = new Date();
-        roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
-
-        final CacheControl cc = new CacheControl();
-        cc.setMaxAge(0);
-        cc.setMustRevalidate(true);
-
-        if (builder == null) {
-            builder = Response.ok(ds.getContent(), ds.getMimeType());
-        }
-
-        return builder.cacheControl(cc).lastModified(date).tag(etag).build();
     }
 
     /**
@@ -391,33 +242,6 @@ public class FedoraDatastreams extends AbstractResource {
                 llStoreService.runFixityAndFixProblems(ds);
         dsf.statuses = new ArrayList<FixityResult>(blobs);
         return dsf;
-    }
-
-    /**
-     * Purge the datastream
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsid
-     *            datastream identifier
-     * @return 204
-     * @throws RepositoryException
-     */
-    @DELETE
-    @Path("/{dsid}")
-    public Response deleteDatastream(@PathParam("path")
-    List<PathSegment> pathList, @PathParam("dsid")
-    final String dsid) throws RepositoryException {
-        
-        final Session session = getAuthenticatedSession();
-        final String path = toPath(pathList);
-        try {
-            datastreamService.purgeDatastream(session, path, dsid);
-            session.save();
-            return noContent().build();
-        } finally {
-            session.logout();
-        }
     }
 
     private DatastreamProfile getDSProfile(final Datastream ds)

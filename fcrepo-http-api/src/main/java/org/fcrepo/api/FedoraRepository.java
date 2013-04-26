@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.ImmutableMap.Builder;
 
 @Component
-@Path("/rest/describe")
+@Path("/rest/fcr:describe")
 public class FedoraRepository extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraRepository.class);

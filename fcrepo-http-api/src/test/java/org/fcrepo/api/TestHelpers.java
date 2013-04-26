@@ -1,17 +1,20 @@
-
 package org.fcrepo.api;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -25,19 +28,22 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
-import org.apache.tika.io.IOUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.util.EntityUtils;
+import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
+import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
+import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
 import com.sun.jersey.api.uri.UriBuilderImpl;
-import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
@@ -168,6 +174,44 @@ public abstract class TestHelpers {
         when(mockRepo.getDescriptorKeys()).thenReturn(mockKeys);
 
         return mockRepo;
+    }
+
+    public static Collection<String> parseChildren(HttpEntity entity) throws IOException {
+        String body = EntityUtils.toString(entity);
+        System.err.println(body);
+        String [] names = body.replace("[","").replace("]", "").trim().split(",\\s?");
+        return Arrays.asList(names);
+    }
+
+    public static Collection<String> parseDatastreams(HttpEntity entity) throws Exception {
+        String body = EntityUtils.toString(entity);
+        System.err.println(body);
+        final JAXBContext context =
+                JAXBContext.newInstance(ObjectDatastreams.class);
+        final Unmarshaller um = context.createUnmarshaller();
+        final ObjectDatastreams objectDs =
+                (ObjectDatastreams) um.unmarshal(new java.io.StringReader(
+                        body));
+        Set<DatastreamElement> dss = objectDs.datastreams;
+        ArrayList<String> result = new ArrayList<String>(dss.size());
+        for (DatastreamElement ds: dss) {
+            result.add(ds.dsid);
+        }
+        return result;
+    
+    }
+
+    public static DatastreamProfile parseDatastreamProfile(HttpEntity entity) throws Exception {
+        String body = EntityUtils.toString(entity);
+        System.err.println(body);
+        final JAXBContext context =
+                JAXBContext.newInstance(DatastreamProfile.class);
+        final Unmarshaller um = context.createUnmarshaller();
+        final DatastreamProfile result =
+                (DatastreamProfile) um.unmarshal(new java.io.StringReader(
+                        body));
+        return result;
+    
     }
 
 }

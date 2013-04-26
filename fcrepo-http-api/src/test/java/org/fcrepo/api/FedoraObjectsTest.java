@@ -2,11 +2,15 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,7 +18,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
@@ -24,12 +32,16 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
+import org.fcrepo.jaxb.responses.management.DatastreamProfile;
+import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -43,6 +55,8 @@ public class FedoraObjectsTest {
     FedoraObjects testObj;
 
     ObjectService mockObjects;
+    
+    DatastreamService mockDatastreams;
 
     Repository mockRepo;
 
@@ -62,8 +76,10 @@ public class FedoraObjectsTest {
         mockServletRequest = mock(HttpServletRequest.class);
         mockPrincipal = mock(Principal.class);
         mockObjects = mock(ObjectService.class);
+        mockDatastreams = mock(DatastreamService.class);
         testObj = new FedoraObjects();
         testObj.setObjectService(mockObjects);
+        testObj.setDatastreamService(mockDatastreams);
         mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
         when(mockSession.getUserID()).thenReturn(mockUser);
@@ -119,6 +135,27 @@ public class FedoraObjectsTest {
         verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();
     }
+    
+    @Test
+    public void testCreateDatastream() throws RepositoryException, IOException,
+            InvalidChecksumException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "testDS";
+        final String dsContent = "asdf";
+        final String dsPath = getDatastreamJcrNodePath(pid, dsId);
+        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        final Response actual =
+                testObj.createObject(
+                        createPathList("objects",pid), "test label",
+                        FedoraJcrTypes.FEDORA_DATASTREAM, null,
+                        null, null, dsContentStream);
+        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams).createDatastreamNode(any(Session.class),
+                eq(dsPath), anyString(), any(InputStream.class), anyString(),
+                anyString());
+        verify(mockSession).save();
+    }
+
 
     @Test
     public void testGetObjects() throws RepositoryException, IOException {
@@ -127,11 +164,13 @@ public class FedoraObjectsTest {
         final String path = "/objects/" + pid;
         final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObj.getName()).thenReturn(pid);
-        when(mockObjects.getObjectByPath(path)).thenReturn(mockObj);
-        Response actual = testObj.getObjects(createPathList("objects", pid));
+        Set<String> mockNames = new HashSet<String>(Arrays.asList(new String[]{childPid}));
+        when(mockObjects.getObjectNames(path)).thenReturn(mockNames);
+        when(mockObjects.getObjectNames(eq(path), any(String.class))).thenReturn(mockNames);
+        Response actual = testObj.getObjects(createPathList("objects", pid), null);
         assertNotNull(actual);
-        String content = EntityUtils.toString((HttpEntity) actual.getEntity());
-        assertTrue(content.contains(childPid));
+        String content = (String) actual.getEntity();
+        assertTrue(content, content.contains(childPid));
         verify(mockSession, never()).save();
     }
 

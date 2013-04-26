@@ -115,6 +115,10 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Set<String> getObjectNames(String path) throws RepositoryException {
+        return getObjectNames(path, null);
+    }
+    
+    public Set<String> getObjectNames(String path, String mixin) throws RepositoryException {
 
         final Node objects = readOnlySession.getNode(getObjectJcrNodePath(path));
         final Builder<String> b = builder();
@@ -122,7 +126,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         while (i.hasNext()) {
             Node n = i.nextNode();
             logger.info("child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
-            if (n.isNodeType("nt:folder")) b.add(n.getName());
+            if (mixin == null || n.isNodeType(mixin)) b.add(n.getName());
         }
         return b.build();
 

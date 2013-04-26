@@ -19,7 +19,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextPidResponds() throws Exception {
-        final HttpPost method = new HttpPost(serverAddress + "nextPID");
+        final HttpPost method = new HttpPost(serverAddress + "fcr:nextPID");
         method.addHeader("Accepts", "text/xml");
         logger.debug("Executed testGetNextPidResponds()");
         assertEquals(HttpServletResponse.SC_OK, getStatus(method));
@@ -28,7 +28,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasAPid() throws IOException {
         final HttpPost method =
-                new HttpPost(serverAddress + "nextPID?numPids=1");
+                new HttpPost(serverAddress + "fcr:nextPID?numPids=1");
         method.addHeader("Accepts", "text/xml");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
@@ -41,7 +41,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasTwoPids() throws IOException {
         final HttpPost method =
-                new HttpPost(serverAddress + "nextPID?numPids=2");
+                new HttpPost(serverAddress + "fcr:nextPID?numPids=2");
         method.addHeader("Accepts", "text/xml");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");

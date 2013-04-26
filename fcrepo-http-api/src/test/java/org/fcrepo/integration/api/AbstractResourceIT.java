@@ -24,6 +24,7 @@ import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -89,14 +90,14 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + "objects/" + pid +
-                        "/" + ds);
+                        "/" + ds + "/fcr:content");
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + "/" +
-                ds);
+        return new HttpPut(serverAddress + "objects/" + pid + 
+                "/" + ds + "/fcr:content");
     }
 
     protected HttpResponse execute(final HttpUriRequest method)

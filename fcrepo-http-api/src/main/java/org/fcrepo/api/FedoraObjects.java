@@ -35,10 +35,10 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,9 +46,6 @@ import org.springframework.stereotype.Component;
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraObjects.class);
-
-    @Autowired
-    private ObjectService objectService;
 
     /**
      * Does nothing yet-- must be improved to handle the FCREPO3 PUT to /objects/{pid}
@@ -84,8 +81,8 @@ public class FedoraObjects extends AbstractResource {
             @PathParam("path") final List<PathSegment> pathList,
             @QueryParam("label") @DefaultValue("") final String label,
             @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
-            @QueryParam("checksumType") @DefaultValue("") final String checksumType,
-            @QueryParam("checksum") @DefaultValue("") final String checksum,
+            @QueryParam("checksumType") final String checksumType,
+            @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType contentType,
             final InputStream requestBodyStream
             ) throws RepositoryException, IOException, InvalidChecksumException {
@@ -108,12 +105,10 @@ public class FedoraObjects extends AbstractResource {
             }
             if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
                 final Node result =
-                        datastreamService.createDatastreamNode(
-                                session, path,
-                                contentType.getType(), requestBodyStream);
+                datastreamService.createDatastreamNode(session, path, contentType
+                        .toString(), requestBodyStream, checksumType, checksum);
                 Datastream ds = new Datastream(result);
                 ds.setLabel(label);
-                ds.setContent(requestBodyStream,checksumType, checksum);
             }
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
@@ -134,12 +129,22 @@ public class FedoraObjects extends AbstractResource {
      */
     @GET
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
-    public Response getObjects(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException, IOException {
+    public Response getObjects(
+            @PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("mixin") @DefaultValue("") String mixin
+            ) throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
         logger.info("getting children of {}", path);
-        return ok(objectService.getObjectNames(path).toString()).build();
+        if ("".equals(mixin)) {
+            mixin = null;
+        }
+        else if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
+            mixin = "nt:folder";
+        } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
+            mixin = "nt:file";
+        }
+        return ok(objectService.getObjectNames(path, mixin).toString()).build();
 
     }
 
@@ -168,5 +173,14 @@ public class FedoraObjects extends AbstractResource {
     public void setObjectService(ObjectService objectService) {
         this.objectService = objectService;
     }
+
+    public DatastreamService getDatastreamService() {
+        return datastreamService;
+    }
+
     
+    public void setDatastreamService(DatastreamService datastreamService) {
+        this.datastreamService = datastreamService;
+    }
+
 }

@@ -17,12 +17,12 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchForm() throws Exception {
 
-        assertEquals(200, getStatus(new HttpGet(serverAddress + "search")));
+        assertEquals(200, getStatus(new HttpGet(serverAddress + "fcr:search")));
     }
 
     @Test
     public void testSearchSubmit() throws Exception {
-        final HttpPost method = new HttpPost(serverAddress + "search");
+        final HttpPost method = new HttpPost(serverAddress + "fcr:search");
         final List<BasicNameValuePair> list =
                 new ArrayList<BasicNameValuePair>();
 
@@ -37,7 +37,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
     @Test
     public void testSearchSubmitPaging() throws Exception {
-        final HttpPost method = new HttpPost(serverAddress + "search");
+        final HttpPost method = new HttpPost(serverAddress + "fcr:search");
         final List<BasicNameValuePair> list =
                 new ArrayList<BasicNameValuePair>();
 
