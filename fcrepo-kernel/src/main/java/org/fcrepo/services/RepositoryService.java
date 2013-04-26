@@ -52,6 +52,16 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     public static void dumpMetrics(final PrintStream os) {
         RegistryService.dumpMetrics(os);
     }
+    
+    /**
+     * 
+     * @param path
+     * @return whether a node exists at the given path
+     * @throws RepositoryException
+     */
+    public boolean exists(String path) throws RepositoryException {
+        return readOnlySession.nodeExists(path);
+    }
 
     /**
     *

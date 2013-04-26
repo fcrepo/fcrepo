@@ -19,10 +19,12 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -88,14 +90,14 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + "objects/" + pid +
-                        "/datastreams/" + ds);
+                        "/" + ds + "/fcr:content");
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + "/datastreams/" +
-                ds);
+        return new HttpPut(serverAddress + "objects/" + pid + 
+                "/" + ds + "/fcr:content");
     }
 
     protected HttpResponse execute(final HttpUriRequest method)
@@ -107,12 +109,17 @@ public abstract class AbstractResourceIT {
 
     protected int getStatus(final HttpUriRequest method)
             throws ClientProtocolException, IOException {
-        return execute(method).getStatusLine().getStatusCode();
+        HttpResponse response = execute(method);
+        int result = response.getStatusLine().getStatusCode();
+        if (!(result > 199) || !(result < 400)){
+            logger.warn(EntityUtils.toString(response.getEntity()));
+        }
+        return result;
     }
 
     protected ObjectProfile getObject(final String pid)
             throws ClientProtocolException, IOException, JAXBException {
-        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
+        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid + "/fcr:describe");
         final HttpResponse resp = execute(get);
         final Unmarshaller um = context.createUnmarshaller();
         return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());

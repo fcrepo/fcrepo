@@ -1,8 +1,7 @@
 package org.fcrepo.generator;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.Matchers.any;
-
+import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.fail;
 
 import java.io.InputStream;
@@ -37,7 +36,7 @@ public class DublinCoreGeneratorTest {
         testObj.dcgenerators = Arrays.asList(new DCGenerator[]{mockGenerator});
         InputStream mockIS = mock(InputStream.class);
         when(mockGenerator.getStream(any(Node.class))).thenReturn(mockIS);
-        testObj.getObjectAsDublinCore("foo");
+        testObj.getObjectAsDublinCore(createPathList("objects","foo"));
         
     }
     
@@ -45,7 +44,7 @@ public class DublinCoreGeneratorTest {
     public void testNoGenerators() {
         testObj.dcgenerators = Arrays.asList(new DCGenerator[0]);
         try {
-            testObj.getObjectAsDublinCore("foo");
+            testObj.getObjectAsDublinCore(createPathList("objects","foo"));
             fail("Should have failed without a generator configured!");
         } catch (PathNotFoundException ex) {
             // this is what we expect

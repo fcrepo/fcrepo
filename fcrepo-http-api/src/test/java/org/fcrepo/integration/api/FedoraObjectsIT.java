@@ -31,19 +31,24 @@ public class FedoraObjectsIT extends AbstractResourceIT {
 
     @Test
     public void testIngestWithNew() throws Exception {
-        final HttpPost method = postObjMethod("new");
+        final HttpPost method = postObjMethod("fcr:new");
         final HttpResponse response = client.execute(method);
-        assertEquals(201, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
+        int status = response.getStatusLine().getStatusCode();
+        if (201 != status) {
+            logger.error(content);
+        }
+        assertEquals(201, status);
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
+        assertTrue("new object did not mint a PID", !content.endsWith("/fcr:new"));
     }
 
     @Test
     public void testGetObjectInXML() throws Exception {
         client.execute(postObjMethod("FedoraObjectsTest2"));
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/FedoraObjectsTest2");
+                new HttpGet(serverAddress + "objects/FedoraObjectsTest2/fcr:describe");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -75,4 +80,6 @@ public class FedoraObjectsIT extends AbstractResourceIT {
         final ObjectProfile obj = getObject("FedoraObjectsTest4");
         assertEquals("Wrong label!", "Awesome_Object", obj.objLabel);
     }
+
+    
 }

@@ -110,7 +110,12 @@ public class DatastreamService extends RepositoryService {
      */
     public void purgeDatastream(final Session session, final String pid,
             final String dsId) throws RepositoryException {
-        new Datastream(session, pid, dsId).purge();
+        if (pid.startsWith("/")) {
+            // absolute path to object
+            new Datastream(session, pid + "/" + dsId).purge();
+        } else {
+            new Datastream(session, pid, dsId).purge();
+        }
     }
 
     /**
@@ -121,10 +126,32 @@ public class DatastreamService extends RepositoryService {
      */
     public DatastreamIterator getDatastreamsFor(final String pid,
             final Session session) throws RepositoryException {
-        return new DatastreamIterator(new FedoraObject(session,
-                getObjectJcrNodePath(pid)).getNode().getNodes());
+        return getDatastreamsForPath(getObjectJcrNodePath(pid), session);
     }
 
+    /**
+     * @param path path to the DS node
+     * @param session jcr session
+     * @return an iterator of the Datastream objects for a FedoraObject
+     * @throws RepositoryException
+     */
+    public DatastreamIterator getDatastreamsForPath(final String path)
+           throws RepositoryException {
+        return new DatastreamIterator(new FedoraObject(readOnlySession,
+                path).getNode().getNodes());
+    }
+
+    /**
+     * @param path path to the DS node
+     * @param session jcr session
+     * @return an iterator of the Datastream objects for a FedoraObject
+     * @throws RepositoryException
+     */
+    public DatastreamIterator getDatastreamsForPath(final String path,
+            final Session session) throws RepositoryException {
+        return new DatastreamIterator(new FedoraObject(session,
+                path).getNode().getNodes());
+    }
     /**
      * Get
      * @param pid FedoraObject persistent identifier

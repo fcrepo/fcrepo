@@ -25,11 +25,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.version.VersionException;
 
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -462,6 +458,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
     
     public static boolean hasMixin(Node node) throws RepositoryException {
         NodeType[] nodeTypes = node.getMixinNodeTypes();
+        if (nodeTypes == null) return false;
         for (NodeType nodeType: nodeTypes) {
             if (FEDORA_DATASTREAM.equals(nodeType.getName())) {
                 return true;

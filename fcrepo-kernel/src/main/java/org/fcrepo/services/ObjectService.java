@@ -99,17 +99,34 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         logger.trace("Executing getObject() with pid: " + pid);
         return new FedoraObject(getObjectNode(session, pid));
     }
+    
+    public FedoraObject getObjectByPath(final Session session, final String path)
+            throws RepositoryException {
+        return new FedoraObject(session, path);
+    }
+    
+    public FedoraObject getObjectByPath(String path)
+            throws RepositoryException {
+        return new FedoraObject(readOnlySession, path);
+    }
 
     /**
      * @return A Set of object names (identifiers)
      * @throws RepositoryException
      */
-    public Set<String> getObjectNames() throws RepositoryException {
+    public Set<String> getObjectNames(String path) throws RepositoryException {
+        return getObjectNames(path, null);
+    }
+    
+    public Set<String> getObjectNames(String path, String mixin) throws RepositoryException {
 
-        final Node objects = readOnlySession.getNode(getObjectJcrNodePath(""));
+        final Node objects = readOnlySession.getNode(getObjectJcrNodePath(path));
         final Builder<String> b = builder();
-        for (final NodeIterator i = objects.getNodes(); i.hasNext();) {
-            b.add(i.nextNode().getName());
+        final NodeIterator i = objects.getNodes();
+        while (i.hasNext()) {
+            Node n = i.nextNode();
+            logger.info("child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
+            if (mixin == null || n.isNodeType(mixin)) b.add(n.getName());
         }
         return b.build();
 
@@ -122,4 +139,10 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         session.save();
     }
 
+    public void deleteObjectByPath(final String path, final Session session)
+            throws RepositoryException {
+        final Node obj = session.getNode(path);
+        obj.remove();
+        session.save();
+    }
 }

@@ -2,74 +2,52 @@
 package org.fcrepo.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import com.yammer.metrics.annotation.Timed;
+import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/rest/objects")
+@Path("/rest/{path: .*}")
 public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraObjects.class);
-
-    @Autowired
-    private ObjectService objectService;
-
-    /**
-     * 
-     * Provides a serialized list of JCR names for all objects in the repo.
-     * 
-     * @return 200
-     * @throws RepositoryException
-     */
-    @GET
-	@Timed
-    public Response getObjects() throws RepositoryException {
-
-        return ok(objectService.getObjectNames().toString()).build();
-
-    }
-
-    /**
-     * Creates a new object with a repo-chosen PID
-     * 
-     * @return 201
-     * @throws RepositoryException
-     */
-    @POST
-    @Path("/new")
-	@Timed
-    public Response ingestAndMint() throws RepositoryException {
-        return ingest(pidMinter.mintPid(), "");
-    }
 
     /**
      * Does nothing yet-- must be improved to handle the FCREPO3 PUT to /objects/{pid}
@@ -79,10 +57,9 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @PUT
-    @Path("/{pid}")
 	@Timed
-    public Response modify(@PathParam("pid")
-    final String pid) throws RepositoryException {
+    public Response modifyObject(@PathParam("path")
+    final List<PathSegment> pathList) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
             // TODO do something with awful mess of fcrepo3 query params
@@ -99,27 +76,50 @@ public class FedoraObjects extends AbstractResource {
      * @param pid
      * @return 201
      * @throws RepositoryException
+     * @throws InvalidChecksumException 
+     * @throws IOException 
      */
     @POST
-    @Path("/{pid}")
 	@Timed
-    public Response ingest(@PathParam("pid")
-    final String pid, @QueryParam("label")
-    @DefaultValue("")
-    final String label) throws RepositoryException {
-
-        logger.debug("Attempting to ingest with pid: {}", pid);
+    public Response createObject(
+            @PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("label") @DefaultValue("") final String label,
+            @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
+            @QueryParam("checksumType") final String checksumType,
+            @QueryParam("checksum") final String checksum,
+            @HeaderParam("Content-Type") final MediaType requestContentType,
+            final InputStream requestBodyStream
+            ) throws RepositoryException, IOException, InvalidChecksumException {
+        
+        String path = toPath(pathList);
+        logger.debug("Attempting to ingest with path: {}", path);
 
         final Session session = getAuthenticatedSession();
+        
         try {
-            final FedoraObject result =
-                    objectService.createObject(session, pid);
-            if (label != null && !"".equals(label)) {
-                result.setLabel(label);
+            if (objectService.exists(path)) {
+                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+            }
+            if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
+                final FedoraObject result =
+                        objectService.createObject(session, path);
+                if (label != null && !"".equals(label)) {
+                    result.setLabel(label);
+                }
+            }
+            if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
+                final MediaType contentType =
+                        requestContentType != null ? requestContentType
+                                : APPLICATION_OCTET_STREAM_TYPE;
+                final Node result =
+                datastreamService.createDatastreamNode(session, path, contentType
+                        .toString(), requestBodyStream, checksumType, checksum);
+                Datastream ds = new Datastream(result);
+                ds.setLabel(label);
             }
             session.save();
-            logger.debug("Finished ingest with pid: {}", pid);
-            return created(uriInfo.getRequestUri()).entity(pid).build();
+            logger.debug("Finished creating {} with path: {}", mixin, path);
+            return created(uriInfo.getRequestUri()).entity(path).build();
 
         } finally {
             session.logout();
@@ -127,33 +127,35 @@ public class FedoraObjects extends AbstractResource {
     }
 
     /**
-     * Returns an object profile.
+     * Returns a list of the first-generation
+     * descendants of an object, filtered by
+     * an optional mixin parameter
      * 
-     * @param pid
+     * @param pathList
+     * @param mixin
      * @return 200
      * @throws RepositoryException
      * @throws IOException
      */
     @GET
-    @Path("/{pid}")
 	@Timed
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
-    public ObjectProfile getObject(@PathParam("pid")
-    final String pid) throws RepositoryException, IOException {
+    public Response getObjects(
+            @PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("mixin") @DefaultValue("") String mixin
+            ) throws RepositoryException, IOException {
 
-        final ObjectProfile objectProfile = new ObjectProfile();
-        final FedoraObject obj = objectService.getObject(pid);
-        objectProfile.pid = pid;
-        objectProfile.objLabel = obj.getLabel();
-        objectProfile.objOwnerId = obj.getOwnerId();
-        objectProfile.objCreateDate = obj.getCreated();
-        objectProfile.objLastModDate = obj.getLastModified();
-        objectProfile.objSize = obj.getSize();
-        objectProfile.objItemIndexViewURL =
-                uriInfo.getAbsolutePathBuilder().path("datastreams").build();
-        objectProfile.objState = A;
-        objectProfile.objModels = obj.getModels();
-        return objectProfile;
+        final String path = toPath(pathList);
+        logger.info("getting children of {}", path);
+        if ("".equals(mixin)) {
+            mixin = null;
+        }
+        else if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
+            mixin = "nt:folder";
+        } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
+            mixin = "nt:file";
+        }
+        return ok(objectService.getObjectNames(path, mixin).toString()).build();
 
     }
 
@@ -165,12 +167,11 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @DELETE
-    @Path("/{pid}")
 	@Timed
-    public Response deleteObject(@PathParam("pid")
-    final String pid) throws RepositoryException {
+    public Response deleteObject(@PathParam("path")
+    final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();
-        objectService.deleteObject(pid, session);
+        objectService.deleteObjectByPath(toPath(path), session);
         session.save();
         return noContent().build();
     }
@@ -183,6 +184,15 @@ public class FedoraObjects extends AbstractResource {
     
     public void setObjectService(ObjectService objectService) {
         this.objectService = objectService;
+    }
+
+    public DatastreamService getDatastreamService() {
+        return datastreamService;
+    }
+
+    
+    public void setDatastreamService(DatastreamService datastreamService) {
+        this.datastreamService = datastreamService;
     }
 
 }

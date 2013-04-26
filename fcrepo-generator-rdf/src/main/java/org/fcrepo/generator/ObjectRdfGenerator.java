@@ -17,6 +17,7 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.PathSegment;
 
 import org.apache.any23.extractor.ExtractionContext;
 import org.apache.any23.writer.TripleHandler;
@@ -33,7 +34,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/rest/objects/{pid}/rdf")
+@Path("/rest/{path: .*(?!(fcr\\:))}/fcr:rdf")
 @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
 public class ObjectRdfGenerator extends AbstractResource {
 
@@ -45,14 +46,15 @@ public class ObjectRdfGenerator extends AbstractResource {
 
     @GET
     @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
-    public String getRdfXml(@PathParam("pid")
-    final String pid, @HeaderParam("Accept")
+    public String getRdfXml(@PathParam("path")
+    final List<PathSegment> pathList, @HeaderParam("Accept")
     @DefaultValue(TEXT_XML)
     final String mimeType) throws IOException, RepositoryException,
             TripleHandlerException {
 
-        final FedoraObject obj = objectService.getObject(pid);
-        final URI docURI = valFactory.createURI("info:" + pid);
+        final String path = toPath(pathList);
+        final FedoraObject obj = objectService.getObject(path);
+        final URI docURI = valFactory.createURI("info:" + path);
         logger.debug("Using ValueFactory: " + valFactory.toString());
         final ExtractionContext context =
                 new ExtractionContext("Fedora Serialization Context", docURI);

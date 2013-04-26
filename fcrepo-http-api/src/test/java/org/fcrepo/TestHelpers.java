@@ -1,4 +1,3 @@
-
 package org.fcrepo;
 
 import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;

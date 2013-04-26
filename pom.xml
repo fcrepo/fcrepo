@@ -38,6 +38,7 @@
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <powermock.version>1.5</powermock.version>
+    <metrics.version>3.0.0-BETA1</metrics.version>
   </properties>
 
   <modules>

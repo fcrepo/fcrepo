@@ -15,6 +15,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
@@ -24,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/oai/objects/{pid}/oai_dc")
+@Path("/oai/{path: .*}/oai_dc")
 public class DublinCoreGenerator extends AbstractResource {
 
     @Resource
@@ -35,10 +36,11 @@ public class DublinCoreGenerator extends AbstractResource {
 
     @GET
     @Produces(TEXT_XML)
-    public Response getObjectAsDublinCore(@PathParam("pid")
-    final String pid) throws RepositoryException {
-
-        final Node obj = objectService.getObjectNode(pid);
+    public Response getObjectAsDublinCore(@PathParam("path")
+    final List<PathSegment> pathList) throws RepositoryException {
+        
+        final String path = toPath(pathList);
+        final Node obj = objectService.getObjectNode(path);
 
         for (final DCGenerator indexer : dcgenerators) {
             final InputStream inputStream = indexer.getStream(obj);

@@ -15,6 +15,16 @@
             "metadataCacheName" : "FedoraRepository"
         }
     },
+    "externalSources" : {
+      "fileSystem" : {
+        "classname" : "org.modeshape.connector.filesystem.FileSystemConnector",
+        "directoryPath" : "target/test-classes/test-objects",
+        "readonly" : false,
+        "extraPropertiesStorage": "json",
+        "cacheTtlSeconds" : 5,
+        "projections" : [ "default:/files => /" ]
+      }
+    },
     "security" : {
         "anonymous" : {
             "roles" : ["readonly","readwrite","admin"],

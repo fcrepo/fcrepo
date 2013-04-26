@@ -7,8 +7,11 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -116,10 +119,15 @@ public class FedoraSitemap extends AbstractResource {
 
     private SitemapEntry getSitemapEntry(final Row r)
             throws RepositoryException {
+        Value lkDateValue = r.getValue("jcr:lastModified");
+        if (lkDateValue == null) {
+            logger.warn("no value for jcr:lastModified on {}", r.getNode().getPath());
+            lkDateValue = r.getValue("jcr:created");
+        }
+        Calendar lastKnownDate = (lkDateValue != null) ? lkDateValue.getDate() : null;
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
-                FedoraObjects.class).path(FedoraObjects.class, "getObject")
-                .build(r.getNode().getName()), r.getValue("jcr:lastModified")
-                .getDate());
+                FedoraDescribe.class)
+                .build(r.getNode().getName()), lastKnownDate);
     }
 
     
