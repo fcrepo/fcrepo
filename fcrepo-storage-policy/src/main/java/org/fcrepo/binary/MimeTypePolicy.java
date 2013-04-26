@@ -32,6 +32,7 @@ public class MimeTypePolicy implements Policy {
 				return hint;
 			}
 		} catch (RepositoryException e) {
+			logger.warn("Got Exception evaluating policy: {}", e);
 			return null;
 		}
 
