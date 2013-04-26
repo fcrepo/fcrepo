@@ -34,14 +34,9 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.util.EntityUtils;
-import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
@@ -127,9 +122,9 @@ public class FedoraObjectsTest {
         final String pid = "testObject";
         final String path = "/objects/" + pid;
         final Response actual = testObj.createObject(
-                createPathList("objects", pid), null,
-                FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null
-                );
+															createPathList("objects", pid), null,
+															FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null
+		);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -157,8 +152,8 @@ public class FedoraObjectsTest {
                         null, null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq(dsPath), anyString(), any(InputStream.class), anyString(),
-                anyString());
+															eq(dsPath), anyString(), any(InputStream.class), anyString(),
+															anyString());
         verify(mockSession).save();
     }
 
@@ -187,7 +182,7 @@ public class FedoraObjectsTest {
         final Response actual = testObj.deleteObject(createPathList("objects", pid));
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObjects).deleteObjectByPath(path, mockSession);
+        verify(mockObjects).deleteObjectByPath(mockSession, path);
         verify(mockSession).save();
     }
     
