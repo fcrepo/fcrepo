@@ -1,7 +1,6 @@
 
 package org.fcrepo;
 
-import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -18,7 +17,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.services.ObjectService;
 import org.fcrepo.services.ServiceHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -26,7 +24,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.modeshape.jcr.api.Repository;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -39,13 +36,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     String testPid = "testObj";
 
-    String testDsId = "testDs";
-
     String mockUser = "mockUser";
-
-    Repository mockRepo;
-
-    ObjectService mockObjservice;
 
     Session mockSession;
 
@@ -62,7 +53,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
     @Before
     public void setUp() throws LoginException, RepositoryException {
         isOwned = FedoraTypesUtils.isOwned;
-        final String relPath = getObjectJcrNodePath(testPid).substring(1);
+        final String relPath = "/" + testPid;
 
         mockSession = mock(Session.class);
         mockRootNode = mock(Node.class);
@@ -79,9 +70,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
             when(mockRootNode.getNode(relPath)).thenReturn(mockObjNode);
             when(mockSession.getUserID()).thenReturn(mockUser);
-            testFedoraObject = new FedoraObject(mockSession, relPath);
-
-            verify(mockRootNode).getNode(relPath);
+            testFedoraObject = new FedoraObject(mockObjNode);
 
             mockNodetypes = new NodeType[2];
             mockNodetypes[0] = mock(NodeType.class);

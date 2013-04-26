@@ -1,7 +1,6 @@
 
 package org.fcrepo.services;
 
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
@@ -67,8 +66,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Before
     public void setUp() {
-        final String relPath =
-                getDatastreamJcrNodePath(testPid, testDsId).substring(1);
+        final String relPath = "/" + testPid + "/" + testDsId;
         final String[] mockPrefixes = {mockPrefix};
         expectedNS = new HashMap<String, String>();
 

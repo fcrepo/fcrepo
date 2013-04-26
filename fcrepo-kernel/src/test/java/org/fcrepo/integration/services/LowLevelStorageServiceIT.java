@@ -46,17 +46,15 @@ public class LowLevelStorageServiceIT {
     public void testChecksumBlobs() throws Exception {
 
         final Session session = repo.login();
-        objectService.createObjectNode(session, "testLLObject");
+        objectService.createObject(session, "/testLLObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testLLObject/testRepositoryContent",
+                "/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
                         "0123456789".getBytes()));
 
         session.save();
 
-        final Datastream ds =
-                datastreamService.getDatastream("testLLObject",
-                        "testRepositoryContent");
+        final Datastream ds = datastreamService.getDatastream("/testLLObject/testRepositoryContent");
 
         final Collection<FixityResult> fixityResults =
                 lowLevelService.getFixity(ds.getNode(), MessageDigest
@@ -74,17 +72,16 @@ public class LowLevelStorageServiceIT {
     @Test
     public void testGetBinaryBlobs() throws Exception {
         final Session session = repo.login();
-        objectService.createObjectNode(session, "testLLObject");
+        objectService.createObject(session, "/testLLObject");
         datastreamService.createDatastreamNode(session,
-                "/objects/testLLObject/testRepositoryContent",
+                "/testLLObject/testRepositoryContent",
                 "application/octet-stream", new ByteArrayInputStream(
                         "0123456789".getBytes()));
 
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("testLLObject",
-                        "testRepositoryContent");
+                datastreamService.getDatastream("/testLLObject/testRepositoryContent");
 
         final Iterator<LowLevelCacheEntry> inputStreamList =
                 lowLevelService.getLowLevelCacheEntries(ds.getNode()).iterator();

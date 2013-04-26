@@ -1,7 +1,6 @@
 
 package org.fcrepo.services;
 
-import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -45,12 +44,12 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     public void testCreateObjectNode() throws Exception {
         final Node mockNode = mock(Node.class);
         final Session mockSession = mock(Session.class);
-        final String testPath = getObjectJcrNodePath("foo");
+        final String testPath = "/foo";
         final FedoraObject mockWrapper = new FedoraObject(mockNode);
         whenNew(FedoraObject.class).withArguments(mockSession, testPath)
                 .thenReturn(mockWrapper);
         final ObjectService testObj = new ObjectService();
-        final Node actual = testObj.createObjectNode(mockSession, "foo");
+        final Node actual = testObj.createObject(mockSession, "/foo").getNode();
         assertEquals(mockNode, actual);
         verifyNew(FedoraObject.class).withArguments(mockSession, testPath);
     }
@@ -59,12 +58,12 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     public void testCreateObject() throws Exception {
         final Node mockNode = mock(Node.class);
         final Session mockSession = mock(Session.class);
-        final String testPath = getObjectJcrNodePath("foo");
+        final String testPath = "/foo";
         final FedoraObject mockWrapper = new FedoraObject(mockNode);
         whenNew(FedoraObject.class).withArguments(any(Session.class),
                 any(String.class)).thenReturn(mockWrapper);
         final ObjectService testObj = new ObjectService();
-        testObj.createObject(mockSession, "foo");
+        testObj.createObject(mockSession, "/foo");
         verifyNew(FedoraObject.class).withArguments(mockSession, testPath);
     }
 
@@ -73,13 +72,13 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final Session mockSession = mock(Session.class);
         final Session mockROSession = mock(Session.class);
         final Node mockNode = mock(Node.class);
-        final String testPath = getObjectJcrNodePath("foo");
+		final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         when(mockROSession.getNode(testPath)).thenReturn(mockNode);
         final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockROSession;
-        testObj.getObject("foo");
-        testObj.getObject(mockSession, "foo");
+        testObj.getObject("/foo");
+        testObj.getObject(mockSession, "/foo");
         verify(mockROSession).getNode(testPath);
         verify(mockSession).getNode(testPath);
     }
@@ -88,11 +87,11 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     public void testGetObjectNode() throws RepositoryException {
         final Session mockSession = mock(Session.class);
         final Session mockROSession = mock(Session.class);
-        final String testPath = getObjectJcrNodePath("foo");
+		final String testPath = "/foo";
         final ObjectService testObj = new ObjectService();
         testObj.readOnlySession = mockROSession;
-        testObj.getObjectNode("foo");
-        testObj.getObjectNode(mockSession, "foo");
+        testObj.getObjectNode("/foo");
+        testObj.getObjectNode(mockSession, "/foo");
         verify(mockROSession).getNode(testPath);
         verify(mockSession).getNode(testPath);
     }
@@ -100,7 +99,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @SuppressWarnings("unchecked")
     @Test
     public void testGetObjectNames() throws RepositoryException {
-        final String objPath = getObjectJcrNodePath("");
+        final String objPath = "";
         final Session mockSession = mock(Session.class);
         final Node mockRoot = mock(Node.class);
         final Node mockObj = mock(Node.class);
@@ -122,7 +121,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testDeleteOBject() throws RepositoryException {
-        final String objPath = getObjectJcrNodePath("foo");
+        final String objPath = "foo";
         final Session mockSession = mock(Session.class);
         final Node mockRootNode = mock(Node.class);
         final Node mockObjectsNode = mock(Node.class);
@@ -133,7 +132,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         when(mockSession.getNode(objPath)).thenReturn(mockObjNode);
         PowerMockito.mockStatic(ServiceHelpers.class);
         final ObjectService testObj = new ObjectService();
-        testObj.deleteObject("foo", mockSession);
+        testObj.deleteObject(mockSession, "foo");
         verify(mockSession).getNode(objPath);
         verify(mockObjNode).remove();
     }

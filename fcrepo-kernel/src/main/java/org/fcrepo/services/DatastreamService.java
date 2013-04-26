@@ -1,8 +1,6 @@
 
 package org.fcrepo.services;
 
-import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
-import static org.fcrepo.services.PathService.getObjectJcrNodePath;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -96,31 +94,19 @@ public class DatastreamService extends RepositoryService {
 
 	/**
 	 * retrieve the JCR node for a Datastream by pid and dsid
-	 * @param pid object persistent identifier
-	 * @param dsId datastream identifier
+	 * @param path
 	 * @return
 	 * @throws RepositoryException
 	 */
-	public Node getDatastreamNode(final String pid, final String dsId)
+	public Node getDatastreamNode(final String path)
 			throws RepositoryException {
-		logger.trace("Executing getDatastreamNode() with pid: {} and dsId: {}",
-							pid, dsId);
-		final Node dsNode = getDatastream(pid, dsId).getNode();
+		logger.trace("Executing getDatastreamNode() with path: {}",
+							path);
+		final Node dsNode = getDatastream(path).getNode();
 		logger.trace("Retrieved datastream node: {}", dsNode.getName());
 		return dsNode;
 	}
 
-    /**
-     * Retrieve a Datastream instance by pid and dsid
-     * @param pid object persistent identifier
-     * @param dsId datastream identifier
-     * @return
-     * @throws RepositoryException
-     */
-    public Datastream getDatastream(final String pid, final String dsId)
-            throws RepositoryException {
-        return new Datastream(readOnlySession, pid, dsId);
-    }
 
 	/**
 	 * Retrieve a Datastream instance by pid and dsid
@@ -136,88 +122,56 @@ public class DatastreamService extends RepositoryService {
     /**
      * Delete a Datastream
      * @param session jcr session
-     * @param pid object persistent identifier
-     * @param dsId datastream identifier
+     * @param path
      * @throws RepositoryException
      */
-    public void purgeDatastream(final Session session, final String pid,
-            final String dsId) throws RepositoryException {
-        if (pid.startsWith("/")) {
-            // absolute path to object
-            new Datastream(session, pid + "/" + dsId).purge();
-        } else {
-            new Datastream(session, pid, dsId).purge();
-        }
-    }
-
-    /**
-     * @param pid object persistent identifier
-     * @param session jcr session
-     * @return an iterator of the Datastream objects for a FedoraObject
-     * @throws RepositoryException
-     */
-    public DatastreamIterator getDatastreamsFor(final String pid,
-            final Session session) throws RepositoryException {
-        return getDatastreamsForPath(getObjectJcrNodePath(pid), session);
+    public void purgeDatastream(final Session session, final String path) throws RepositoryException {
+    	new Datastream(session, path).purge();
     }
 
     /**
      * @param path path to the DS node
-     * @param session jcr session
      * @return an iterator of the Datastream objects for a FedoraObject
      * @throws RepositoryException
      */
     public DatastreamIterator getDatastreamsForPath(final String path)
            throws RepositoryException {
-        return new DatastreamIterator(new FedoraObject(readOnlySession,
-                path).getNode().getNodes());
+        return getDatastreamsForPath(readOnlySession, path);
     }
 
     /**
-     * @param path path to the DS node
-     * @param session jcr session
-     * @return an iterator of the Datastream objects for a FedoraObject
+     *
+	 * @param session jcr session
+	 * @param path path to the DS node
+	 * @return an iterator of the Datastream objects for a FedoraObject
      * @throws RepositoryException
      */
-    public DatastreamIterator getDatastreamsForPath(final String path,
-            final Session session) throws RepositoryException {
+    public DatastreamIterator getDatastreamsForPath(final Session session, final String path) throws RepositoryException {
         return new DatastreamIterator(new FedoraObject(session,
                 path).getNode().getNodes());
     }
+
     /**
-     * Get
-     * @param pid FedoraObject persistent identifier
-     * @return a read-only iterator of Datastream objects for a FedoraObject
+     * Check if a datastream exists in the repository
+     * @param path
+     * @return
      * @throws RepositoryException
      */
-    public DatastreamIterator getDatastreamsFor(final String pid)
+    public boolean exists(final String path)
             throws RepositoryException {
-        return getDatastreamsFor(pid, readOnlySession);
+        return exists(readOnlySession, path);
     }
 
     /**
      * Check if a datastream exists in the repository
-     * @param pid object persistent identifier
-     * @param dsId datastream identifier
-     * @return
+     *
+	 * @param session jcr session
+	 * @param path
+	 * @return
      * @throws RepositoryException
      */
-    public boolean exists(final String pid, final String dsId)
-            throws RepositoryException {
-        return exists(pid, dsId, readOnlySession);
-    }
-
-    /**
-     * Check if a datastream exists in the repository
-     * @param pid object persistent identifier
-     * @param dsId datastream identifier
-     * @param session jcr session
-     * @return
-     * @throws RepositoryException
-     */
-    public boolean exists(final String pid, final String dsId,
-            final Session session) throws RepositoryException {
-        return session.nodeExists(getDatastreamJcrNodePath(pid, dsId));
+    public boolean exists(final Session session, final String path) throws RepositoryException {
+        return session.nodeExists(path);
     }
 
 	public void setStoragePolicyDecisionPoint(PolicyDecisionPoint pdp) {
