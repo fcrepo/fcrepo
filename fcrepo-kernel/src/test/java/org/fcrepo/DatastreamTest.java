@@ -21,6 +21,7 @@ import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
@@ -119,7 +120,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(
                 FedoraTypesUtils.getBinary(any(Node.class),
                         any(InputStream.class), any(StrategyHint.class))).thenReturn(mockBin);
-        final InputStream content = mock(InputStream.class);
+        final Binary content = mock(Binary.class);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final ValueFactory mockVF = mock(ValueFactory.class);
@@ -127,7 +128,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
         final Property mockSize = mock(Property.class);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockSize);
-        testObj.setContent(content);
+        testObj.setContent(mockBin);
     }
 
     @Test

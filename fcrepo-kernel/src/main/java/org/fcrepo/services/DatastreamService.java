@@ -3,6 +3,7 @@ package org.fcrepo.services;
 
 import static org.fcrepo.services.PathService.getDatastreamJcrNodePath;
 import static org.fcrepo.services.PathService.getObjectJcrNodePath;
+import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -14,8 +15,10 @@ import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.DatastreamIterator;
+import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
 
 /**
@@ -28,66 +31,80 @@ public class DatastreamService extends RepositoryService {
 
     private static final Logger logger = getLogger(DatastreamService.class);
 
-    /**
-     * Create a new Datastream node in the JCR store
-     * @param session the jcr session to use
-     * @param dsPath the absolute path to put the datastream
-     * @param contentType the mime-type for the requestBodyStream
-     * @param requestBodyStream binary payload for the datastream
-     * @return
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws InvalidChecksumException
-     */
-    public Node createDatastreamNode(final Session session,
-            final String dsPath, final String contentType,
-            final InputStream requestBodyStream) throws RepositoryException,
-            IOException, InvalidChecksumException {
 
-        return createDatastreamNode(session, dsPath, contentType,
-                requestBodyStream, null, null);
-    }
+	/**
+	 * Create a new Datastream node in the JCR store
+	 * @param session the jcr session to use
+	 * @param dsPath the absolute path to put the datastream
+	 * @param contentType the mime-type for the requestBodyStream
+	 * @param requestBodyStream binary payload for the datastream
+	 * @return
+	 * @throws RepositoryException
+	 * @throws IOException
+	 * @throws InvalidChecksumException
+	 */
+	public Node createDatastreamNode(final Session session,
+									 final String dsPath, final String contentType,
+									 final InputStream requestBodyStream) throws RepositoryException,
+																						 IOException, InvalidChecksumException {
 
-    /**
-     * Create a new Datastream node in the JCR store
-     * @param session the jcr session to use
-     * @param dsPath the absolute path to put the datastream
-     * @param contentType the mime-type for the requestBodyStream
-     * @param requestBodyStream binary payload for the datastream
-     * @param checksumType digest algorithm used to calculate the checksum
-     * @param checksum the digest for the binary payload
-     * @return
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws InvalidChecksumException
-     */
-    public Node createDatastreamNode(final Session session,
-            final String dsPath, final String contentType,
-            final InputStream requestBodyStream, final String checksumType,
-            final String checksum) throws RepositoryException, IOException,
-            InvalidChecksumException {
+		return createDatastreamNode(session, dsPath, contentType,
+										   requestBodyStream, null, null);
+	}
 
-        final Datastream ds = new Datastream(session, dsPath);
-        final Node result = ds.getNode();
-        ds.setContent(requestBodyStream, contentType, checksumType, checksum);
-        return result;
-    }
+	/**
+	 * Create a new Datastream node in the JCR store
+	 * @param session the jcr session to use
+	 * @param dsPath the absolute path to put the datastream
+	 * @param contentType the mime-type for the requestBodyStream
+	 * @param requestBodyStream binary payload for the datastream
+	 * @param checksumType digest algorithm used to calculate the checksum
+	 * @param checksum the digest for the binary payload
+	 * @return
+	 * @throws RepositoryException
+	 * @throws IOException
+	 * @throws InvalidChecksumException
+	 */
+	public Node createDatastreamNode(final Session session,
+									 final String dsPath, final String contentType,
+									 final InputStream requestBodyStream, final String checksumType,
+									 final String checksum) throws RepositoryException, IOException,
+																		   InvalidChecksumException {
 
-    /**
-     * retrieve the JCR node for a Datastream by pid and dsid
-     * @param pid object persistent identifier
-     * @param dsId datastream identifier
-     * @return
-     * @throws RepositoryException
-     */
-    public Node getDatastreamNode(final String pid, final String dsId)
-            throws RepositoryException {
-        logger.trace("Executing getDatastreamNode() with pid: {} and dsId: {}",
-                pid, dsId);
-        final Node dsNode = getDatastream(pid, dsId).getNode();
-        logger.trace("Retrieved datastream node: {}", dsNode.getName());
-        return dsNode;
-    }
+		final Datastream ds = new Datastream(session, dsPath);
+		final Node result = ds.getNode();
+		ds.setContent(createBinary(result, requestBodyStream), contentType, checksumType, checksum);
+		return result;
+	}
+
+	private Binary createBinary(final Node node, final InputStream content) {
+        /*
+         * https://docs.jboss.org/author/display/MODE/Binary+values#Binaryvalues-
+         * ExtendedBinaryinterface
+         * promises: "All javax.jcr.Binary values returned by ModeShape will
+         * implement this public interface, so feel free to cast the values to
+         * gain access to the additional methods."
+         */
+		final Binary binary = (Binary) getBinary(node, content, PolicyDecisionPoint.getInstance().evaluatePolicies(node));
+
+		return binary;
+	}
+
+	/**
+	 * retrieve the JCR node for a Datastream by pid and dsid
+	 * @param pid object persistent identifier
+	 * @param dsId datastream identifier
+	 * @return
+	 * @throws RepositoryException
+	 */
+	public Node getDatastreamNode(final String pid, final String dsId)
+			throws RepositoryException {
+		logger.trace("Executing getDatastreamNode() with pid: {} and dsId: {}",
+							pid, dsId);
+		final Node dsNode = getDatastream(pid, dsId).getNode();
+		logger.trace("Retrieved datastream node: {}", dsNode.getName());
+		return dsNode;
+	}
 
     /**
      * Retrieve a Datastream instance by pid and dsid

@@ -25,7 +25,11 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFormatException;
+import javax.jcr.lock.LockException;
+import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.VersionException;
 
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -168,7 +172,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @param content
      * @throws RepositoryException
      */
-    public void setContent(final InputStream content,
+    public void setContent(final javax.jcr.Binary binary,
             final String checksumType, final String checksum)
             throws RepositoryException, InvalidChecksumException {
 
@@ -181,14 +185,6 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
         logger.debug("Created content node at path: " + contentNode.getPath());
 
-        /*
-         * https://docs.jboss.org/author/display/MODE/Binary+values#Binaryvalues-
-         * ExtendedBinaryinterface
-         * promises: "All javax.jcr.Binary values returned by ModeShape will
-         * implement this public interface, so feel free to cast the values to
-         * gain access to the additional methods."
-         */
-        final Binary binary = (Binary) getBinary(node, content, PolicyDecisionPoint.getInstance().evaluatePolicies(node));
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -207,19 +203,23 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
          */
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
-        final String dsChecksum = binary.getHexHash();
-        if (checksum != null && !checksum.equals("") &&
-                !checksum.equals(binary.getHexHash())) {
-            logger.debug("Failed checksum test");
-            throw new InvalidChecksumException("Checksum Mismatch of " +
-                    dsChecksum + " and " + checksum);
-        }
+		if(binary instanceof Binary) {
+			Binary modeBinary = (Binary)binary;
+			final String dsChecksum = modeBinary.getHexHash();
+			if (checksum != null && !checksum.equals("") &&
+					!checksum.equals(modeBinary.getHexHash())) {
+				logger.debug("Failed checksum test");
+				throw new InvalidChecksumException("Checksum Mismatch of " +
+						dsChecksum + " and " + checksum);
+			}
+
+			contentNode.setProperty(DIGEST_VALUE, dsChecksum);
+			contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
+		}
 
         contentSizeHistogram.update(dataProperty.getLength());
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-        contentNode.setProperty(DIGEST_VALUE, dsChecksum);
-        contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
 
         logger.debug("Created data property at path: " + dataProperty.getPath());
 
@@ -231,7 +231,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
-    public void setContent(final InputStream content)
+    public void setContent(final javax.jcr.Binary content)
             throws RepositoryException, InvalidChecksumException {
         setContent(content, null, null);
     }
@@ -245,7 +245,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
-    public void setContent(final InputStream content, final String mimeType,
+    public void setContent(final javax.jcr.Binary content, final String mimeType,
             final String checksumType, final String checksum)
             throws RepositoryException, InvalidChecksumException {
 		node.setProperty(FEDORA_CONTENTTYPE, mimeType);

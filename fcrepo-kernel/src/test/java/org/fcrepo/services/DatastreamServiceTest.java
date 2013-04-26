@@ -15,6 +15,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import java.io.InputStream;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -28,6 +29,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -58,12 +60,14 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         whenNew(Datastream.class).withArguments(mockSession, testPath)
                 .thenReturn(mockWrapper);
         final DatastreamService testObj = new DatastreamService();
+		PowerMockito.mockStatic(FedoraTypesUtils.class);
+		when(FedoraTypesUtils.getBinary(mockNode, mockIS)).thenReturn(mock(Binary.class));
         final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,
                         MOCK_CONTENT_TYPE, mockIS);
         assertEquals(mockNode, actual);
         verifyNew(Datastream.class).withArguments(mockSession, testPath);
-        verify(mockWrapper).setContent(eq(mockIS), any(String.class),
+        verify(mockWrapper).setContent(any(Binary.class), any(String.class),
                 any(String.class), any(String.class));
     }
 

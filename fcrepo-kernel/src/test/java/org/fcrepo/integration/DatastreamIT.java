@@ -19,6 +19,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
+import org.modeshape.jcr.api.Binary;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
@@ -131,7 +132,8 @@ public class DatastreamIT extends AbstractIT {
         final Datastream ds =
                 datastreamService.getDatastream("testDatastreamObject",
                         "testDatastreamNode3");
-        ds.setContent(new ByteArrayInputStream("0123456789".getBytes()));
+		Binary b = (Binary)(session.getValueFactory().createBinary(new ByteArrayInputStream("0123456789".getBytes())));
+        ds.setContent(b);
 
         assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds
                 .getContentDigest().toString());
