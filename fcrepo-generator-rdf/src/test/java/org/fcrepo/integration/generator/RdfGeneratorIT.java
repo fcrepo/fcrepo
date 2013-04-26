@@ -84,7 +84,7 @@ public class RdfGeneratorIT extends AbstractResourceIT {
         client.execute(postDSMethod("RdfTest4", "testDS", "foobar"));
         final HttpGet getRdfMethod =
                 new HttpGet(serverAddress +
-                        "objects/RdfTest4/fcr:datastreams/testDS/fcr:rdf");
+                        "objects/RdfTest4/testDS/fcr:rdf");
         getRdfMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getRdfMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());

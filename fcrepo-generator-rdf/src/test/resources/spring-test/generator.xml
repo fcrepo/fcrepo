@@ -11,23 +11,19 @@
 
   <context:annotation-config />
 
-  <bean class="org.fcrepo.generator.ObjectRdfGenerator">
+  <bean class="org.fcrepo.generator.FedoraRdfGenerator">
     <property name="objectGenerators">
       <list value-type="org.fcrepo.generator.rdf.TripleSource">
         <bean id="objectRdf" class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator" />
       </list>
-    </property> 
-  </bean>
+    </property>
 
-  <bean class="org.fcrepo.generator.DatastreamRdfGenerator">
     <property name="dsGenerators">
       <list>
         <bean id="datastreamRdf" class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator" />
       </list>
-    </property>  
+    </property>
   </bean>
- 
-  
 
   <bean class="org.fcrepo.session.SessionFactory" />
 
