@@ -24,11 +24,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,7 +97,7 @@ public class FedoraObjectsTest {
     @Test
     public void testModify() throws RepositoryException {
         final String pid = "testObject";
-        final Response actual = testObj.modify(createPathList("objects", pid));
+        final Response actual = testObj.modifyObject(createPathList("objects", pid));
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -102,10 +106,13 @@ public class FedoraObjectsTest {
     }
 
     @Test
-    public void testIngest() throws RepositoryException {
+    public void testCreateObject() throws RepositoryException, IOException, InvalidChecksumException {
         final String pid = "testObject";
         final String path = "/objects/" + pid;
-        final Response actual = testObj.ingest(createPathList("objects", pid), null);
+        final Response actual = testObj.createObject(
+                createPathList("objects", pid), null,
+                FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null
+                );
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -114,15 +121,17 @@ public class FedoraObjectsTest {
     }
 
     @Test
-    public void testGetObject() throws RepositoryException, IOException {
+    public void testGetObjects() throws RepositoryException, IOException {
         final String pid = "testObject";
+        final String childPid = "testChild";
         final String path = "/objects/" + pid;
         final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObj.getName()).thenReturn(pid);
         when(mockObjects.getObjectByPath(path)).thenReturn(mockObj);
-        final ObjectProfile actual = testObj.getObject(createPathList("objects", pid));
+        Response actual = testObj.getObjects(createPathList("objects", pid));
         assertNotNull(actual);
-        assertEquals(pid, actual.pid);
+        String content = EntityUtils.toString((HttpEntity) actual.getEntity());
+        assertTrue(content.contains(childPid));
         verify(mockSession, never()).save();
     }
 

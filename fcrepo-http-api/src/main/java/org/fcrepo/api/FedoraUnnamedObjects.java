@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -59,12 +60,20 @@ public class FedoraUnnamedObjects extends AbstractResource {
             public MultivaluedMap<String, String> getMatrixParameters() {
                 return null;
             }
-            
+
         };
         ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
         segments.addAll(pathList.subList(0, pathList.size() - 1));
         segments.add(path);
-        return objectsResource.ingest(segments.build(), "");
+        try {
+            return objectsResource.createObject(
+                    segments.build(), "test label",
+                    FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
+        } catch (IOException e) {
+            throw new RepositoryException(e.getMessage(), e);
+        } catch (InvalidChecksumException e) {
+            throw new RepositoryException(e.getMessage(), e);
+        }
     }
 
     /**

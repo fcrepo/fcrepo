@@ -7,11 +7,10 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.jaxb.responses.access.ObjectProfile.ObjectStates.A;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -20,25 +19,27 @@ import javax.jcr.Session;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.google.common.collect.ImmutableList;
 
 @Component
 @Path("/rest/{path: .*}")
@@ -57,8 +58,7 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @PUT
-    @Path("")
-    public Response modify(@PathParam("path")
+    public Response modifyObject(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
@@ -76,13 +76,19 @@ public class FedoraObjects extends AbstractResource {
      * @param pid
      * @return 201
      * @throws RepositoryException
+     * @throws InvalidChecksumException 
+     * @throws IOException 
      */
     @POST
-    @Path("")
-    public Response ingest(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("label")
-    @DefaultValue("")
-    final String label) throws RepositoryException {
+    public Response createObject(
+            @PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("label") @DefaultValue("") final String label,
+            @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
+            @QueryParam("checksumType") @DefaultValue("") final String checksumType,
+            @QueryParam("checksum") @DefaultValue("") final String checksum,
+            @HeaderParam("Content-Type") final MediaType contentType,
+            final InputStream requestBodyStream
+            ) throws RepositoryException, IOException, InvalidChecksumException {
         
         String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);
@@ -90,13 +96,27 @@ public class FedoraObjects extends AbstractResource {
         final Session session = getAuthenticatedSession();
         
         try {
-            final FedoraObject result =
-                    objectService.createObject(session, path);
-            if (label != null && !"".equals(label)) {
-                result.setLabel(label);
+            if (objectService.exists(path)) {
+                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+            }
+            if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
+                final FedoraObject result =
+                        objectService.createObject(session, path);
+                if (label != null && !"".equals(label)) {
+                    result.setLabel(label);
+                }
+            }
+            if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
+                final Node result =
+                        datastreamService.createDatastreamNode(
+                                session, path,
+                                contentType.getType(), requestBodyStream);
+                Datastream ds = new Datastream(result);
+                ds.setLabel(label);
+                ds.setContent(requestBodyStream,checksumType, checksum);
             }
             session.save();
-            logger.debug("Finished ingest with path: {}", path);
+            logger.debug("Finished creating {} with path: {}", mixin, path);
             return created(uriInfo.getRequestUri()).entity(path).build();
 
         } finally {
@@ -113,26 +133,13 @@ public class FedoraObjects extends AbstractResource {
      * @throws IOException
      */
     @GET
-    @Path("")
     @Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
-    public ObjectProfile getObject(@PathParam("path")
+    public Response getObjects(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
-        logger.trace("getting object profile {}", path);
-        final ObjectProfile objectProfile = new ObjectProfile();
-        final FedoraObject obj = objectService.getObjectByPath(path);
-        objectProfile.pid = obj.getName();
-        objectProfile.objLabel = obj.getLabel();
-        objectProfile.objOwnerId = obj.getOwnerId();
-        objectProfile.objCreateDate = obj.getCreated();
-        objectProfile.objLastModDate = obj.getLastModified();
-        objectProfile.objSize = obj.getSize();
-        objectProfile.objItemIndexViewURL =
-                uriInfo.getAbsolutePathBuilder().path("datastreams").build();
-        objectProfile.objState = A;
-        objectProfile.objModels = obj.getModels();
-        return objectProfile;
+        logger.info("getting children of {}", path);
+        return ok(objectService.getObjectNames(path).toString()).build();
 
     }
 
@@ -144,7 +151,6 @@ public class FedoraObjects extends AbstractResource {
      * @throws RepositoryException
      */
     @DELETE
-    @Path("")
     public Response deleteObject(@PathParam("path")
     final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();

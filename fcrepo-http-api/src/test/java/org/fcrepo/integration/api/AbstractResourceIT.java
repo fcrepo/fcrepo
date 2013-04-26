@@ -89,13 +89,13 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + "objects/" + pid +
-                        "/fcr:datastreams/" + ds);
+                        "/" + ds);
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + "/fcr:datastreams/" +
+        return new HttpPut(serverAddress + "objects/" + pid + "/" +
                 ds);
     }
 
@@ -118,7 +118,7 @@ public abstract class AbstractResourceIT {
 
     protected ObjectProfile getObject(final String pid)
             throws ClientProtocolException, IOException, JAXBException {
-        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
+        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid + "/fcr:describe");
         final HttpResponse resp = execute(get);
         final Unmarshaller um = context.createUnmarshaller();
         return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());

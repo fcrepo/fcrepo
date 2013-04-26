@@ -48,7 +48,7 @@ public class FedoraObjectsIT extends AbstractResourceIT {
     public void testGetObjectInXML() throws Exception {
         client.execute(postObjMethod("FedoraObjectsTest2"));
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/FedoraObjectsTest2");
+                new HttpGet(serverAddress + "objects/FedoraObjectsTest2/fcr:describe");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
