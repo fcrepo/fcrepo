@@ -17,7 +17,6 @@ import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -48,7 +47,7 @@ public class FedoraObjects extends AbstractResource {
 
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraObjects.class);
-    
+
     @Autowired
     ObjectService objectService;
 
@@ -149,7 +148,7 @@ public class FedoraObjects extends AbstractResource {
 
         objectProfile.pid = pid;
         if (obj.hasProperty(DC_TITLE)) {
-            Property dcTitle = obj.getProperty(DC_TITLE);
+            final Property dcTitle = obj.getProperty(DC_TITLE);
             if (!dcTitle.isMultiple()) {
                 objectProfile.objLabel = obj.getProperty(DC_TITLE).getString();
             } else {
@@ -194,7 +193,7 @@ public class FedoraObjects extends AbstractResource {
      * @return object size in bytes
      * @throws RepositoryException
      */
-    static Long getObjectSize(Node obj) throws RepositoryException {
+    static Long getObjectSize(final Node obj) throws RepositoryException {
         return getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
@@ -203,11 +202,12 @@ public class FedoraObjects extends AbstractResource {
      * @return object's datastreams' total size in bytes
      * @throws RepositoryException
      */
-    private static Long getObjectDSSize(Node obj) throws RepositoryException {
+    private static Long getObjectDSSize(final Node obj)
+            throws RepositoryException {
         Long size = 0L;
-        NodeIterator i = obj.getNodes();
+        final NodeIterator i = obj.getNodes();
         while (i.hasNext()) {
-            Node ds = i.nextNode();
+            final Node ds = i.nextNode();
             size = size + getNodePropertySize(ds);
             size = size + getContentSize(ds);
         }

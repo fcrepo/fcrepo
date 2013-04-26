@@ -230,7 +230,7 @@ public class FedoraDatastreams extends AbstractResource {
             datastreamService.createDatastreamNode(session, dsPath, contentType
                     .toString(), requestBodyStream, checksumType, checksum);
             session.save();
-            return created(uriInfo.getRequestUri()).build();
+            return created(uriInfo.getAbsolutePath()).build();
         } finally {
             session.logout();
         }
