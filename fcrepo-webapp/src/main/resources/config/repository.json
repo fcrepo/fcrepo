@@ -2,7 +2,7 @@
     "name" : "repo",
     "jndiName" : "",
     "workspaces" : {
-        "predefined" : [],
+        "predefined" : ["default"],
         "default" : "default",
         "allowCreation" : true
     },
