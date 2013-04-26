@@ -38,7 +38,7 @@ import com.google.common.collect.ImmutableSet.Builder;
  * 
  */
 @Component
-@Path("/rest/namespaces")
+@Path("/rest/fcr:namespaces")
 public class FedoraNamespaces extends AbstractResource {
 
     /**
@@ -100,7 +100,7 @@ public class FedoraNamespaces extends AbstractResource {
     @GET
     @Path("/{prefix}")
     @Produces(APPLICATION_JSON)
-    public Namespace retrieveObjectNamespace(@PathParam("ns")
+    public Namespace retrieveObjectNamespace(@PathParam("prefix")
     final String prefix) throws RepositoryException {
 
         final Session session = getAuthenticatedSession();

@@ -5,13 +5,13 @@ import java.net.URI;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "namespaceRegistry")
 public class NamespaceListing {
 
-    @XmlElement(name = "namespace")
+    @XmlElementRef
     public Set<Namespace> namespaces;
 
     public NamespaceListing(final Set<Namespace> nses) {
@@ -21,9 +21,9 @@ public class NamespaceListing {
     public NamespaceListing() {
     }
 
+    @XmlRootElement(name = "namespace")
     public static class Namespace {
 
-        @XmlAttribute
         public String prefix;
 
         @XmlAttribute(name = "URI")

@@ -124,9 +124,12 @@ public class FedoraObjects extends AbstractResource {
     }
 
     /**
-     * Returns an object profile.
+     * Returns a list of the first-generation
+     * descendants of an object, filtered by
+     * an optional mixin parameter
      * 
-     * @param pid
+     * @param pathList
+     * @param mixin
      * @return 200
      * @throws RepositoryException
      * @throws IOException
