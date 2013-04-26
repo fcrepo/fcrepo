@@ -2,8 +2,8 @@
     "name" : "repo",
     "jndiName" : "",
     "workspaces" : {
-        "predefined" : ["fedora"],
-        "default" : "fedora",
+        "predefined" : [],
+        "default" : "default",
         "allowCreation" : true
     },
     "storage" : {
