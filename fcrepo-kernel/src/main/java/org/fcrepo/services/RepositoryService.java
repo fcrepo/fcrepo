@@ -62,6 +62,10 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     public boolean exists(String path) throws RepositoryException {
         return readOnlySession.nodeExists(path);
     }
+    
+    public boolean isFile(String path) throws RepositoryException {
+        return readOnlySession.getNode(path).isNodeType("nt:file");
+    }
 
     /**
     *

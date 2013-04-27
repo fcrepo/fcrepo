@@ -16,14 +16,13 @@
       <list value-type="org.fcrepo.generator.rdf.TripleSource">
         <bean id="objectRdf" class="org.fcrepo.generator.rdf.DefaultFedoraObjectGenerator" />
       </list>
-    </property>
-
-    <property name="dsGenerators">
+    </property> 
+    <property name="datastreamGenerators">
       <list>
         <bean id="datastreamRdf" class="org.fcrepo.generator.rdf.DefaultDatastreamGenerator" />
       </list>
-    </property>
-  </bean>
+    </property>  
+  </bean>  
 
   <bean class="org.fcrepo.session.SessionFactory" />
 

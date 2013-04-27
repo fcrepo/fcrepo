@@ -31,9 +31,10 @@ public class RdfGeneratorIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String content = EntityUtils.toString(response.getEntity());
-
-        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
-                .matcher(content).find());
+logger.debug(content);
+        String rdfAbout = "rdf:about=\"" + getRdfMethod.getURI().toString().replace("/fcr:rdf","") + "\""; 
+        assertTrue("Didn't find identifier: " + rdfAbout,
+                content.contains(rdfAbout));
         logger.debug("Finished testXMLObjectTriples().");
 
     }
@@ -51,8 +52,9 @@ public class RdfGeneratorIT extends AbstractResourceIT {
 
         final String content = EntityUtils.toString(response.getEntity());
 
-        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
-                .matcher(content).find());
+        String rdfAbout = "rdf:about=\"" + getRdfMethod.getURI().toString().replace("/fcr:rdf","") + "\""; 
+        assertTrue("Didn't find identifier: " + rdfAbout,
+                content.contains(rdfAbout));
         logger.debug("Finished testNTriplesObjectTriples().");
     }
 
@@ -70,9 +72,9 @@ public class RdfGeneratorIT extends AbstractResourceIT {
 
         final String content = EntityUtils.toString(response.getEntity());
 
-        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
-                .matcher(content).find());
-
+        String rdfAbout = "<" + getRdfMethod.getURI().toString().replace("/fcr:rdf","") + ">"; 
+        assertTrue("Didn't find identifier: " + rdfAbout,
+                content.contains(rdfAbout));
         logger.debug("Finished testTurtleObjectTriples().");
     }
 
@@ -87,12 +89,16 @@ public class RdfGeneratorIT extends AbstractResourceIT {
                         "objects/RdfTest4/testDS/fcr:rdf");
         getRdfMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getRdfMethod);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        int status = response.getStatusLine().getStatusCode();
         final String content = EntityUtils.toString(response.getEntity());
+        if (status != 200) {
+            logger.error(content);
+        }
+        assertEquals(200, status);
 
-        assertTrue("Didn't find identifier!", compile("identifier", DOTALL)
-                .matcher(content).find());
+        String rdfAbout = "rdf:about=\"" + getRdfMethod.getURI().toString().replace("/fcr:rdf","") + "\""; 
+        assertTrue("Didn't find identifier: " + rdfAbout,
+                content.contains(rdfAbout));
         logger.debug("Finished testXMLDSTriples().");
 
     }

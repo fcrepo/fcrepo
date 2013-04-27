@@ -168,4 +168,26 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
                 testObj.getRepositoryNamespaces(mockSession);
         assertEquals(expectedNS, actual);
     }
+    
+    @Test
+    public void testExists() throws RepositoryException {
+        String existsPath = "/foo/bar/exists";
+        when(mockSession.nodeExists(existsPath)).thenReturn(true);
+        assertEquals(true, testObj.exists(existsPath));
+        assertEquals(false, testObj.exists("/foo/bar"));
+    }
+
+    @Test
+    public void testIsFile() throws RepositoryException {
+        String filePath = "/foo/bar/file";
+        String folderPath = "/foo/bar/folder";
+        Node mockFile = mock(Node.class);
+        when(mockFile.isNodeType("nt:file")).thenReturn(true);
+        Node mockFolder = mock(Node.class);
+        when(mockFolder.isNodeType("nt:file")).thenReturn(false);
+        when(mockSession.getNode(filePath)).thenReturn(mockFile);
+        when(mockSession.getNode(folderPath)).thenReturn(mockFolder);
+        assertEquals(true, testObj.isFile(filePath));
+        assertEquals(false, testObj.isFile(folderPath));
+    }
 }

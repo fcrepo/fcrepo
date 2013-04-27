@@ -47,7 +47,7 @@ public class DefaultFedoraObjectGenerator implements TripleSource<FedoraObject> 
                         if (t == null) {
                             return null;
                         }
-                        return new Triple(uriInfo.getBaseUriBuilder().path(
+                        return new Triple(uriInfo.getBaseUriBuilder().path("rest").path(
                                 t.subject).build().toString(), t.predicate,
                                 t.object);
                     }

@@ -12,7 +12,6 @@ import java.util.List;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -30,6 +29,8 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.generator.rdf.TripleSource.Triple;
 import org.fcrepo.generator.rdf.Utils;
+import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.ObjectService;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
@@ -41,106 +42,119 @@ import org.springframework.stereotype.Component;
 @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
 public class FedoraRdfGenerator extends AbstractResource {
 
-    private List<TripleSource<FedoraObject>> objectGenerators;
-	private List<TripleSource<Datastream>> dsGenerators;
-
     private static final ValueFactory valFactory = new MemValueFactory();
 
     private static final Logger logger = getLogger(FedoraRdfGenerator.class);
+    
+    private List<TripleSource<FedoraObject>> objectGenerators;
+    
+    private List<TripleSource<Datastream>> datastreamGenerators;
 
     @GET
     @Produces({TEXT_XML, "text/turtle", TEXT_PLAIN})
-    public String getRdfXml(@PathParam("path")
-    final List<PathSegment> pathList, @HeaderParam("Accept")
-    @DefaultValue(TEXT_XML)
-    final String mimeType) throws IOException, RepositoryException,
-            TripleHandlerException {
+    public String getRdfXml(
+            @PathParam("path") final List<PathSegment> pathList,
+            @HeaderParam("Accept") @DefaultValue(TEXT_XML) final String mimeType
+            ) throws IOException, RepositoryException, TripleHandlerException {
 
         final String path = toPath(pathList);
-		final Session session = getAuthenticatedSession();
-		Node node = session.getNode(path);
+        final java.net.URI itemUri = uriInfo.getBaseUriBuilder().build("/rest" + path);
+        final URI docURI = valFactory.createURI(itemUri.toString());
+        logger.debug("Using ValueFactory: " + valFactory.toString());
+        final ExtractionContext context =
+                new ExtractionContext("Fedora Serialization Context", docURI);
+        logger.debug("Using ExtractionContext: {}", context.toString());
 
-		final URI docURI = valFactory.createURI("info:" + path);
-		logger.debug("Using ValueFactory: " + valFactory.toString());
-		final ExtractionContext context =
-				new ExtractionContext("Fedora Serialization Context", docURI);
-		logger.debug("Using ExtractionContext: " + context.toString());
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            // possible serializations
+            final TripleHandler writer = Utils.selectWriter(mimeType, out);
+            logger.trace("Created RDF Writer: {}", writer.getClass().getName());
+
+            writer.openContext(context);
+            writer.startDocument(docURI);
+
+            if (objectService.isFile(path)) {
+                writeDatastreamTriples(path, writer, context);
+            } else {
+                writeObjectTriples(path, writer, context);
+            }
 
 
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-
-			// possible serializations
-			final TripleHandler writer = Utils.selectWriter(mimeType, out);
-			logger.trace("Created RDF Writer: " + writer.getClass().getName());
-
-			writer.openContext(context);
-			writer.startDocument(docURI);
-
-			// add JCR-managed namespaces
-			final NamespaceRegistry nReg =
-					node.getSession().getWorkspace()
-							.getNamespaceRegistry();
-			for (final String prefix : nReg.getPrefixes()) {
-				final String nsURI = nReg.getURI(prefix);
-				if (nsURI != null && !nsURI.equals("") &&
-							!prefix.equals("xmlns")) {
-					writer.receiveNamespace(prefix, nsURI, context);
-				}
-			}
-
-		if(node.isNodeType("nt:file")) {
-			writeDatastreamRdfXml(datastreamService.getDatastream(path), writer, context);
-		} else if(node.isNodeType("nt:folder")) {
-			writeObjectRdfXml(objectService.getObject(path), writer, context);
-		} else {
-			throw new RepositoryException("Could not find object");
-		}
-
-			writer.endDocument(docURI);
-			writer.close();
-			logger.debug("Generated RDF: " + out.toString());
-			return out.toString();
-		}
-
+            writer.endDocument(docURI);
+            writer.close();
+            logger.debug("Generated RDF: {}", out.toString());
+            return out.toString();
+        }
 
     }
+    
+    // add JCR-managed namespaces
+    private void writeNamespaces(Node node, TripleHandler writer, ExtractionContext context)
+            throws TripleHandlerException, RepositoryException {
+        final NamespaceRegistry nReg =
+                node.getSession().getWorkspace()
+                        .getNamespaceRegistry();
+        for (final String prefix : nReg.getPrefixes()) {
+            final String nsURI = nReg.getURI(prefix);
+            if (nsURI != null && !nsURI.equals("") &&
+                    !prefix.equals("xmlns")) {
+                writer.receiveNamespace(prefix, nsURI, context);
+            }
+        }
+    }
+    
+    private void writeDatastreamTriples(String path, TripleHandler writer, ExtractionContext context)
+            throws TripleHandlerException, RepositoryException {
 
-	private void writeObjectRdfXml(final FedoraObject obj, TripleHandler writer, ExtractionContext context) throws TripleHandlerException, RepositoryException {
+        final Datastream obj = datastreamService.getDatastream(path);
+        // add namespaces
+        writeNamespaces(obj.getNode(), writer, context);
+        // add triples from each TripleSource
+        for (final TripleSource<Datastream> tripleSource : datastreamGenerators) {
+            logger.trace("Using TripleSource: {}",
+                    tripleSource.getClass().getName());
+            for (final Triple t : tripleSource.getTriples(obj, uriInfo)) {
+                writer.receiveTriple(valFactory.createURI(t.subject),
+                        valFactory.createURI(t.predicate), valFactory
+                                .createLiteral(t.object), null, context);
+            }
+        }
+    }
 
-			// add triples from each TripleSource
-			for (final TripleSource<FedoraObject> tripleSource : objectGenerators) {
-				logger.trace("Using TripleSource: " +
-									 tripleSource.getClass().getName());
-				for (final Triple t : tripleSource.getTriples(obj, uriInfo)) {
-					writer.receiveTriple(valFactory.createURI(t.subject),
-												valFactory.createURI(t.predicate), valFactory
-																						   .createLiteral(t.object), null, context);
-				}
-			}
+    private void writeObjectTriples(String path, TripleHandler writer, ExtractionContext context)
+            throws TripleHandlerException, RepositoryException {
+        final FedoraObject obj = objectService.getObject(path);
+        // add namespaces
+        writeNamespaces(obj.getNode(), writer, context);
+        // add triples from each TripleSource
+        for (final TripleSource<FedoraObject> tripleSource : objectGenerators) {
+            logger.trace("Using TripleSource: {}",
+                    tripleSource.getClass().getName());
+            for (final Triple t : tripleSource.getTriples(obj, uriInfo)) {
+                writer.receiveTriple(valFactory.createURI(t.subject),
+                        valFactory.createURI(t.predicate), valFactory
+                                .createLiteral(t.object), null, context);
+            }
+        }        
+    }
 
-	}
-
-	private void writeDatastreamRdfXml(final Datastream ds, TripleHandler writer, ExtractionContext context) throws RepositoryException, TripleHandlerException {
-		// add triples from each TripleSource
-		for (final TripleSource<Datastream> tripleSource : dsGenerators) {
-			logger.trace("Using TripleSource: " +
-								 tripleSource.getClass().getName());
-			for (final Triple t : tripleSource.getTriples(ds, uriInfo)) {
-				writer.receiveTriple(valFactory.createURI(t.subject),
-											valFactory.createURI(t.predicate), valFactory
-																					   .createLiteral(t.object), null, context);
-			}
-		}
-	}
-
-	public void setObjectGenerators(
+    public void setObjectGenerators(
             final List<TripleSource<FedoraObject>> objectGenerators) {
         this.objectGenerators = objectGenerators;
     }
 
-	public void setDsGenerators(
-									   final List<TripleSource<Datastream>> dsGenerators) {
-		this.dsGenerators = dsGenerators;
-	}
+    public void setDatastreamGenerators(
+            final List<TripleSource<Datastream>> dsGenerators) {
+        this.datastreamGenerators = dsGenerators;
+    }
+
+    void setObjectService(ObjectService objectService) {
+        this.objectService = objectService;
+    }
+
+    void setDatastreamService(DatastreamService datastreamService) {
+        this.datastreamService = datastreamService;
+    }
 
 }

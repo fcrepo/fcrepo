@@ -11,7 +11,6 @@ import static org.fcrepo.utils.FedoraTypesUtils.isMultipleValuedProperty;
 
 import java.util.List;
 
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -33,12 +32,12 @@ public class PropertiesGenerator implements TripleSource<Node> {
     public List<Triple> getTriples(final Node source, final UriInfo... uriInfo)
             throws RepositoryException {
         logger.trace("Entering getTriples()...");
-        logger.debug("Generating triples for node: " + source.getPath());
+        logger.debug("Generating triples for node: {}", source.getPath());
         final Builder<Triple> triples = builder();
 
         @SuppressWarnings("unchecked")
         final List<Property> properties = copyOf(source.getProperties());
-        logger.debug("Retrieved properties: " + properties.toString());
+        logger.debug("Retrieved properties: {}", properties.toString());
 
         triples.addAll(transform(filter(properties,
                 not(isMultipleValuedProperty)), singlevaluedprop2triple));
@@ -60,8 +59,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
                     try {
                         return new Triple(
                                 p.getParent().getPath(),
-                                expandJCRNamespace(p.getName(), p.getSession()
-                                        .getWorkspace().getNamespaceRegistry()),
+                                Utils.expandJCRNamespace(p),
                                 p.getString());
                     } catch (final RepositoryException e) {
                         throw new IllegalStateException(e);
@@ -82,9 +80,7 @@ public class PropertiesGenerator implements TripleSource<Node> {
                     try {
                         for (final Value v : p.getValues()) {
                             triples.add(new Triple(p.getParent().getPath(),
-                                    expandJCRNamespace(p.getName(), p
-                                            .getSession().getWorkspace()
-                                            .getNamespaceRegistry()), v
+                                    Utils.expandJCRNamespace(p), v
                                             .getString()));
                         }
                         return triples.build();
@@ -94,12 +90,5 @@ public class PropertiesGenerator implements TripleSource<Node> {
                 }
 
             };
-
-    private static String expandJCRNamespace(final String name,
-            final NamespaceRegistry nReg) throws RepositoryException {
-        final String predicatePrefix = name.substring(0, name.indexOf(':'));
-        return name.replaceFirst(predicatePrefix + ":", nReg
-                .getURI(predicatePrefix));
-    }
 
 }

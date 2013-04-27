@@ -48,8 +48,7 @@ public class DefaultDatastreamGenerator implements TripleSource<Datastream> {
                         }
                         try {
                             return new Triple(uriInfo.getBaseUriBuilder().path(
-                                    "objects").path(ds.getObject().getName())
-                                    .path("datastreams").path(ds.getDsId())
+                                    "rest").path(node.getPath())
                                     .build().toString(), t.predicate, t.object);
                         } catch (UriBuilderException | RepositoryException e) {
                             throw new IllegalStateException(e);
