@@ -53,6 +53,12 @@ public class LegacyMethod {
 
     //TODO get this out of the build properties
     public static final String SERVER_VERSION = "4.0.0-SNAPSHOT";
+    
+    public static final String FEDORA_ID_SCHEME = "xsd:string";
+    
+    public static final String DSID_CATEGORY_LABEL = "fedora-types:dsID";
+
+    public static final String PID_CATEGORY_LABEL = "fedora-types:pid";
 
     private static final String TYPES_NS =
             "http://www.fedora.info/definitions/1/0/types/";
@@ -158,51 +164,54 @@ public class LegacyMethod {
     public String getMethodName() {
         return delegate.getTitle();
     }
+    
+    private void setLabelledCategory(String label, String val) {
+        final List<Category> vals = delegate.getCategories(FEDORA_ID_SCHEME);
+        Category found = null;
+        if (vals != null && !vals.isEmpty()) {
+            for(Category c: vals) {
+                if (label.equals(c.getLabel())) {
+                    found = c.setTerm(val);
+                }
+            }
+        }
+        if (found == null) {
+            delegate.addCategory(FEDORA_ID_SCHEME, val, label);
+        }
+    }
+    
+    private String getLabelledCategory(String label) {
+        final List<Category> categories = delegate.getCategories(FEDORA_ID_SCHEME);
+        for (final Category c : categories) {
+            if (label.equals(c.getLabel())) {
+                return c.getTerm();
+            }
+        }
+        return null;
+    }
 
     public void setPid(final String val) {
-        final List<Category> vals = delegate.getCategories("fedora-types:pid");
-        if (vals == null || vals.isEmpty()) {
-            delegate.addCategory("xsd:string", val, "fedora-types:pid");
-        } else {
-            vals.get(0).setTerm(val);
-        }
+        setLabelledCategory(PID_CATEGORY_LABEL, val);
         delegate.setSummary(val);
     }
 
     public String getPid() {
-        final List<Category> categories = delegate.getCategories("xsd:string");
-        for (final Category c : categories) {
-            if ("fedora-types:pid".equals(c.getLabel())) {
-                return c.getTerm();
-            }
-        }
-        return null;
+        return getLabelledCategory(PID_CATEGORY_LABEL);
     }
 
     public void setDsId(final String val) {
-        final List<Category> vals = delegate.getCategories("fedora-types:dsID");
-        if (vals == null || vals.isEmpty()) {
-            delegate.addCategory("xsd:string", val, "fedora-types:dsID");
-        } else {
-            vals.get(0).setTerm(val);
-        }
+        setLabelledCategory(DSID_CATEGORY_LABEL, val);
     }
 
     public String getDsId() {
-        final List<Category> categories = delegate.getCategories("xsd:string");
-        for (final Category c : categories) {
-            if ("fedora-types:dsID".equals(c.getLabel())) {
-                return c.getTerm();
-            }
-        }
-        return null;
+        return getLabelledCategory(DSID_CATEGORY_LABEL);
     }
 
     public void writeTo(final Writer writer) throws IOException {
         delegate.writeTo(writer);
     }
 
-    private static Entry newEntry() {
+    static Entry newEntry() {
         final Entry entry = abdera.newEntry();
         entry.declareNS(XSD_NS, "xsd");
         entry.declareNS(TYPES_NS, "fedora-types");
