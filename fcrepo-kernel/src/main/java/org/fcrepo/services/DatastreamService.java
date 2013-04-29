@@ -19,6 +19,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.DatastreamIterator;
 import org.modeshape.jcr.api.Binary;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -28,7 +29,7 @@ import org.slf4j.Logger;
  */
 public class DatastreamService extends RepositoryService {
 
-	@Inject
+	@Autowired(required=false)
 	PolicyDecisionPoint storagePolicyDecisionPoint;
 
     private static final Logger logger = getLogger(DatastreamService.class);
@@ -79,6 +80,12 @@ public class DatastreamService extends RepositoryService {
 		return result;
 	}
 
+	/**
+	 * Pre-create a Binary value to hand off to Datastream
+	 * @param node the JCR node to attach the Binary to
+	 * @param content a binary payload for the Binary
+	 * @return a JCR Binary reference
+	 */
 	private Binary createBinary(final Node node, final InputStream content) {
         /*
          * https://docs.jboss.org/author/display/MODE/Binary+values#Binaryvalues-
@@ -87,9 +94,21 @@ public class DatastreamService extends RepositoryService {
          * implement this public interface, so feel free to cast the values to
          * gain access to the additional methods."
          */
-		final Binary binary = (Binary) getBinary(node, content, storagePolicyDecisionPoint.evaluatePolicies(node));
+		final Binary binary = (Binary) getBinary(node, content, getStoragePolicyDecisionPoint().evaluatePolicies(node));
 
 		return binary;
+	}
+
+	/**
+	 * Get the Policy Decision Point for this service. Initialize it if Spring didn't wire it in for us.
+	 * @return a PolicyDecisionPoint
+	 */
+	private PolicyDecisionPoint getStoragePolicyDecisionPoint() {
+		if(storagePolicyDecisionPoint == null) {
+			storagePolicyDecisionPoint = new PolicyDecisionPoint();
+		}
+
+		return storagePolicyDecisionPoint;
 	}
 
 	/**
