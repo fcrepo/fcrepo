@@ -32,7 +32,7 @@ import javax.jcr.Session;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.services.functions.GetBinaryKey;
-import org.fcrepo.services.functions.GetBinaryStore;
+import org.modeshape.jcr.GetBinaryStore;
 import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.FixityResult;

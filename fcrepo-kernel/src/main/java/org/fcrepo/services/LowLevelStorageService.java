@@ -33,7 +33,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.services.functions.GetBinaryKey;
-import org.fcrepo.services.functions.GetBinaryStore;
+import org.modeshape.jcr.GetBinaryStore;
 import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.FixityResult;
@@ -161,9 +161,6 @@ public class LowLevelStorageService {
 
 		final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
-		//seems like we have to start it, not sure why.
-		compositeStore.start();
-
 		Iterator<Map.Entry<String,BinaryStore>> it = compositeStore.getNamedStoreIterator();
 
 		while(it.hasNext()) {
@@ -190,9 +187,6 @@ public class LowLevelStorageService {
 	protected Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final InfinispanBinaryStore ispnStore, final BinaryKey key) {
 
 		final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
-
-		//seems like we have to start it, not sure why.
-		ispnStore.start();
 
 		for (final Cache<?, ?> c : ImmutableSet.copyOf(ispnStore.getCaches())) {
 

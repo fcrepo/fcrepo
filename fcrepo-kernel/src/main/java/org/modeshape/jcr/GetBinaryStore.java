@@ -1,5 +1,5 @@
 
-package org.fcrepo.services.functions;
+package org.modeshape.jcr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Throwables.propagate;
@@ -21,8 +21,10 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
     public BinaryStore apply(final Repository input) {
         checkArgument(input != null, "null cannot have a BinaryStore!");
         try {
-            return ((JcrRepository) input).getConfiguration()
-                    .getBinaryStorage().getBinaryStore();
+			assert(input != null);
+			JcrRepository.RunningState runningState = ((JcrRepository)input).runningState();
+
+            return runningState.binaryStore();
         } catch (final Exception e) {
             throw propagate(e);
         }
