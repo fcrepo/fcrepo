@@ -21,7 +21,7 @@ public class FedoraDescribeIT extends AbstractResourceIT {
 		final String content = EntityUtils.toString(response.getEntity());
 		logger.debug("Retrieved object profile:\n" + content);
 		assertTrue("Object had wrong PID!", compile(
-														   "pid=\"FedoraObjectsTest2\"").matcher(content).find());
+														   "pid=\"FedoraDescribeTest1\"").matcher(content).find());
 	}
 
 
