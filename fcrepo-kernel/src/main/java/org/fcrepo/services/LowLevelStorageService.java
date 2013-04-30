@@ -161,6 +161,9 @@ public class LowLevelStorageService {
 
 		final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
+		//seems like we have to start it, not sure why.
+		compositeStore.start();
+
 		Iterator<Map.Entry<String,BinaryStore>> it = compositeStore.getNamedStoreIterator();
 
 		while(it.hasNext()) {
