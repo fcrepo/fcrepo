@@ -3,6 +3,8 @@ package org.fcrepo.messaging.legacy;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -77,23 +79,7 @@ public class LegacyMethodTest {
         // construct the test object
         testObj = new LegacyMethod(mockEvent, mockSource);
     }
-    
-    public void testCanParse() throws JMSException {
-        // Should the static tests be broken out into a separate test class, so we can use PowerMock with better scope?
-        Message mockYes = mock(Message.class);
-        when(mockYes.getJMSType()).thenReturn(LegacyMethod.FORMAT);
-        when(mockYes.getStringProperty("methodName")).thenReturn("ingest");
-        assertEquals(true, LegacyMethod.canParse(mockYes));
-        Message mockNoFormat = mock(Message.class);
-        when(mockYes.getJMSType()).thenReturn("crazyType");
-        when(mockYes.getStringProperty("methodName")).thenReturn("ingest");
-        assertEquals(false, LegacyMethod.canParse(mockNoFormat));
-        Message mockNoMessage = mock(Message.class);
-        when(mockYes.getJMSType()).thenReturn(LegacyMethod.FORMAT);
-        when(mockYes.getStringProperty("methodName")).thenReturn("destroyEverything");
-        assertEquals(false, LegacyMethod.canParse(mockNoMessage));
-    }
-    
+        
     @Test
     public void testPidAccessors() {
         String newPid = "newPid";
@@ -158,5 +144,12 @@ public class LegacyMethodTest {
     public void testSetContent() {
         testObj.setContent("foo");
         verify(mockDelegate).setContent("foo");
+    }
+    
+    @Test
+    public void testWriteTo() throws IOException {
+    	Writer mockWriter = mock(Writer.class);
+    	testObj.writeTo(mockWriter);
+    	verify(mockDelegate).writeTo(mockWriter);
     }
 }

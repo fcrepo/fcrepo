@@ -616,6 +616,7 @@
         <artifactId>maven-surefire-report-plugin</artifactId>
         <version>2.14</version>
         <configuration>
+          <argLine>-XX:-UseSplitVerifier</argLine>
           <outputName>surefire-report</outputName>
           <aggregate>true</aggregate>
           <reportsDirectories>
