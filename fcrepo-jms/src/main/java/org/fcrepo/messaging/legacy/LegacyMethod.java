@@ -37,11 +37,12 @@ import org.slf4j.Logger;
 
 public class LegacyMethod {
 
-    private static final Abdera abdera = new Abdera();
+    private static final Abdera ABDERA = new Abdera();
 
-    private static final Parser abderaParser = abdera.getParser();
+    private static final Parser ABDERA_PARSER = ABDERA.getParser();
 
-    private static final String BASE_URL = "http://localhost:8080/rest"; //TODO Figure out where to get the base url
+    //TODO Figure out where to get the base url
+    private static final String BASE_URL = "http://localhost:8080/rest";
 
     private static final Properties FEDORA_TYPES = new Properties();
 
@@ -68,13 +69,25 @@ public class LegacyMethod {
 
     private static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
 
-    private static final String[] METHODS = new String[] {"ingest",
-            "modifyObject", "purgeObject", "addDatastream", "modifyDatastream",
-            "purgeDatastream"};
+    private static final String INGEST_METHOD = "ingest";
+    
+    private static final String MODIFY_OBJ_METHOD = "modifyObject";
+    
+    private static final String PURGE_OBJ_METHOD = "purgeObject";
+    
+    private static final String ADD_DS_METHOD = "addDatastream";
+    
+    private static final String MODIFY_DS_METHOD = "modifyDatastream";
+    
+    private static final String PURGE_DS_METHOD = "purgeDatastream";
+    
+    private static final String[] METHODS = new String[] {INGEST_METHOD,
+    	MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD, MODIFY_DS_METHOD,
+    	PURGE_DS_METHOD};
 
     private static final List<String> METHOD_NAMES = Arrays.asList(METHODS);
 
-    private static final Logger logger = getLogger(LegacyMethod.class);
+    private static final Logger LOGGER = getLogger(LegacyMethod.class);
 
     private static final String MAP_PROPERTIES =
             "/org/fcrepo/messaging/legacy/map.properties";
@@ -102,7 +115,7 @@ public class LegacyMethod {
                         !isDatastreamNode;
 
         if (isDatastreamNode || isObjectNode) {
-            setMethodName(mapMethodName(jcrEvent, isObjectNode));
+            setMethodName(mapMethodName(jcrEvent.getType(), isObjectNode));
             final String returnValue = getReturnValue(jcrEvent, resource);
             setContent(getEntryContent(getMethodName(), returnValue));
             if (isDatastreamNode) {
@@ -126,7 +139,7 @@ public class LegacyMethod {
 
     public LegacyMethod(final String atomEntry) {
         delegate =
-                (Entry) abderaParser.parse(new StringReader(atomEntry))
+                (Entry) ABDERA_PARSER.parse(new StringReader(atomEntry))
                         .getRoot();
     }
 
@@ -140,9 +153,10 @@ public class LegacyMethod {
 
     public void setUserId(String val) {
         if (val == null) {
-            val = "unknown";
+            delegate.addAuthor("unknown", null, BASE_URL);
+        } else {
+        	delegate.addAuthor(val, null, BASE_URL);
         }
-        delegate.addAuthor(val, null, BASE_URL);
     }
 
     public String getUserID() {
@@ -212,7 +226,7 @@ public class LegacyMethod {
     }
 
     static Entry newEntry() {
-        final Entry entry = abdera.newEntry();
+        final Entry entry = ABDERA.newEntry();
         entry.declareNS(XSD_NS, "xsd");
         entry.declareNS(TYPES_NS, "fedora-types");
         entry.setId("urn:uuid:" + UUID.randomUUID().toString());
@@ -223,7 +237,6 @@ public class LegacyMethod {
 
     private static String getEntryContent(final String methodName,
             final String returnVal) {
-        //String parm = (String)FEDORA_TYPES.get(methodName + ".parm");
         final String datatype =
                 (String) FEDORA_TYPES.get(methodName + ".datatype");
         return objectToString(returnVal, datatype);
@@ -238,7 +251,8 @@ public class LegacyMethod {
         final String javaType = obj.getClass().getCanonicalName();
         String term;
         //TODO Most of these types are not yet relevant to FCR4, but we can borrow their serializations as necessary
-        if (javaType != null && javaType.equals("java.util.Date")) { // several circumstances yield null canonical names
+        // several circumstances yield null canonical names
+        if (javaType != null && javaType.equals("java.util.Date")) { 
             //term = convertDateToXSDString((Date) obj);
             term = "[UNSUPPORTED" + xsdType + "]";
         } else if (xsdType.equals("fedora-types:ArrayOfString")) {
@@ -287,19 +301,19 @@ public class LegacyMethod {
         return null;
     }
 
-    private static String mapMethodName(final Event jcrEvent,
+    private static String mapMethodName(final int eventType,
             final boolean isObjectNode) {
-        switch (jcrEvent.getType()) {
+        switch (eventType) {
             case NODE_ADDED:
-                return isObjectNode ? "ingest" : "addDatastream";
+                return isObjectNode ? INGEST_METHOD : ADD_DS_METHOD;
             case NODE_REMOVED:
-                return isObjectNode ? "purgeObject" : "purgeDatastream";
+                return isObjectNode ? PURGE_OBJ_METHOD : PURGE_DS_METHOD;
             case PROPERTY_ADDED:
-                return isObjectNode ? "modifyObject" : "modifyDatastream";
+                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
             case PROPERTY_CHANGED:
-                return isObjectNode ? "modifyObject" : "modifyDatastream";
+                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
             case PROPERTY_REMOVED:
-                return isObjectNode ? "modifyObject" : "modifyDatastream";
+                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
         }
         return null;
     }
@@ -321,7 +335,7 @@ public class LegacyMethod {
                     METHOD_NAMES.contains(jmsMessage
                             .getStringProperty("methodName"));
         } catch (final JMSException e) {
-            logger.info("Could not parse message: {}", jmsMessage);
+            LOGGER.info("Could not parse message: {}", jmsMessage);
             throw propagate(e);
         }
     }
