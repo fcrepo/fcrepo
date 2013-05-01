@@ -645,6 +645,7 @@
         <artifactId>cobertura-maven-plugin</artifactId>
         <version>2.5.2</version>
         <configuration>
+          <argLine>-XX:-UseSplitVerifier</argLine>
           <aggregate>true</aggregate>
           <forceMojoExecution>true</forceMojoExecution>
           <inherited>true</inherited>
