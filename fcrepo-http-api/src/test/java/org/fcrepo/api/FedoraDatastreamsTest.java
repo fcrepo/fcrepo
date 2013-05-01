@@ -103,9 +103,9 @@ public class FedoraDatastreamsTest {
         final String dsid = "testDS";
         final DatastreamIterator mockIter =
                 org.fcrepo.TestHelpers.mockDatastreamIterator(pid, dsid, "asdf");
-        when(mockDatastreams.getDatastreamsForPath(path)).thenReturn(mockIter);
+        when(mockDatastreams.getDatastreamsForPath(mockSession, path)).thenReturn(mockIter);
         final ObjectDatastreams actual = testObj.getDatastreams(createPathList("objects",pid));
-        verify(mockDatastreams).getDatastreamsForPath(path);
+        verify(mockDatastreams).getDatastreamsForPath(mockSession, path);
         verify(mockSession, never()).save();
         assertEquals(1, actual.datastreams.size());
         assertEquals(dsid, actual.datastreams.iterator().next().dsid);
@@ -155,7 +155,7 @@ public class FedoraDatastreamsTest {
 		final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
-        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
 
         final Response resp =
                 testObj.getDatastreamsContents(createPathList(pid), Arrays
@@ -177,11 +177,11 @@ public class FedoraDatastreamsTest {
         final String dsId = "testDS";
 		final String path = "/" + pid + "/" + dsId;
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
-        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
         final DatastreamHistory actual =
                 testObj.getDatastreamHistory(createPathList(pid), dsId);
         assertNotNull(actual);
-        verify(mockDatastreams).getDatastream(path);
+        verify(mockDatastreams).getDatastream(mockSession, path);
         verify(mockSession, never()).save();
     }
 

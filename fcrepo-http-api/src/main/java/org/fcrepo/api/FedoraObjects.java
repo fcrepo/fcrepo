@@ -97,7 +97,7 @@ public class FedoraObjects extends AbstractResource {
         final Session session = getAuthenticatedSession();
         
         try {
-            if (objectService.exists(path)) {
+            if (objectService.exists(session, path)) {
                 return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
             }
             if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
@@ -145,6 +145,8 @@ public class FedoraObjects extends AbstractResource {
             @QueryParam("mixin") @DefaultValue("") String mixin
             ) throws RepositoryException, IOException {
 
+
+		final Session session = getAuthenticatedSession();
         final String path = toPath(pathList);
         logger.info("getting children of {}", path);
         if ("".equals(mixin)) {
@@ -155,7 +157,7 @@ public class FedoraObjects extends AbstractResource {
         } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
             mixin = "nt:file";
         }
-        return ok(objectService.getObjectNames(path, mixin).toString()).build();
+        return ok(objectService.getObjectNames(session, path, mixin).toString()).build();
 
     }
 

@@ -11,6 +11,7 @@ import javax.annotation.Resource;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -38,9 +39,10 @@ public class DublinCoreGenerator extends AbstractResource {
     @Produces(TEXT_XML)
     public Response getObjectAsDublinCore(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
-        
+		final Session session = getAuthenticatedSession();
+
         final String path = toPath(pathList);
-        final Node obj = objectService.getObjectNode(path);
+        final Node obj = objectService.getObjectNode(session, path);
 
         for (final DCGenerator indexer : dcgenerators) {
             final InputStream inputStream = indexer.getStream(obj);

@@ -24,6 +24,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.any23.writer.TripleHandlerException;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.TestHelpers;
 import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
@@ -41,10 +42,12 @@ public class FedoraRdfGeneratorTest {
     private DatastreamService mockDatastreams;
     
     private UriInfo mockURIs;
-    
-    @Before
-    public void setUp() throws IllegalArgumentException, UriBuilderException, URISyntaxException {
+	private Session mockSession;
+
+	@Before
+    public void setUp() throws IllegalArgumentException, UriBuilderException, URISyntaxException, RepositoryException {
         testObj = new FedoraRdfGenerator();
+		mockSession = TestHelpers.mockSession(testObj);
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
         mockURIs = mock(UriInfo.class);
@@ -80,7 +83,6 @@ public class FedoraRdfGeneratorTest {
     public void testGetRdfXml() throws IOException, RepositoryException, TripleHandlerException {
         List<PathSegment> pathList = PathSegmentImpl.createPathList("objects", "foo");
         FedoraObject mockObj = mock(FedoraObject.class);
-        Session mockSession = mock(Session.class);
         Workspace mockWS = mock(Workspace.class);
         NamespaceRegistry mockNS = mock(NamespaceRegistry.class);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
@@ -89,7 +91,7 @@ public class FedoraRdfGeneratorTest {
         Node mockNode = mock(Node.class);
         when(mockObj.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockObjects.getObject("/objects/foo")).thenReturn(mockObj);
+        when(mockObjects.getObject(mockSession, "/objects/foo")).thenReturn(mockObj);
 
         @SuppressWarnings("unchecked")
         TripleSource<FedoraObject>[] gens = new TripleSource[0];

@@ -49,19 +49,9 @@ public class FedoraDescribeTest {
 
     Session mockSession;
 
-    SecurityContext mockSecurityContext;
-
-    HttpServletRequest mockServletRequest;
-
-    Principal mockPrincipal;
-
-    String mockUser = "testuser";
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockSecurityContext = mock(SecurityContext.class);
-        mockServletRequest = mock(HttpServletRequest.class);
-        mockPrincipal = mock(Principal.class);
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
 		mockLow = mock(LowLevelStorageService.class);
@@ -70,20 +60,10 @@ public class FedoraDescribeTest {
         testObj.setDatastreamService(mockDatastreams);
 		testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
-        mockSession = mock(Session.class);
-        when(mockSession.getUserID()).thenReturn(mockUser);
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(mockUser);
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        when(
-                mockSessions.getSession(any(SecurityContext.class),
-                        any(HttpServletRequest.class))).thenReturn(mockSession);
-        testObj.setSessionFactory(mockSessions);
         testObj.setUriInfo(getUriInfoImpl());
         testObj.setPidMinter(new UUIDPidMinter());
-        testObj.setHttpServletRequest(mockServletRequest);
-        testObj.setSecurityContext(mockSecurityContext);
+
+		mockSession = org.fcrepo.TestHelpers.mockSession(testObj);
     }
 
     @After
@@ -97,8 +77,9 @@ public class FedoraDescribeTest {
         final String dsId = "testDS";
 		final String path = "/" + pid + "/" + dsId;
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
-        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
         Node mockNode = mock(Node.class);
+		when(mockNode.getSession()).thenReturn(mockSession);
 		when(mockDs.getNode()).thenReturn(mockNode);
         when(mockNode.getName()).thenReturn(dsId);
         Node mockParent = mock(Node.class);
@@ -110,7 +91,7 @@ public class FedoraDescribeTest {
 		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
         final Response actual = testObj.describe(createPathList(pid, dsId));
         assertNotNull(actual);
-        verify(mockDatastreams).getDatastream(path);
+        verify(mockDatastreams).getDatastream(mockSession, path);
         verify(mockSession, never()).save();
     }
 

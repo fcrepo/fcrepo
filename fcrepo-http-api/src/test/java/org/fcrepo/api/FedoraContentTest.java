@@ -96,7 +96,7 @@ public class FedoraContentTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockDatastreams.exists(dsPath)).thenReturn(true);
+        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
                 testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
@@ -113,7 +113,7 @@ public class FedoraContentTest {
         final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
         final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
-        when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
         final Request mockRequest = mock(Request.class);
         final Response actual =
                 testObj.getContent(createPathList(pid, dsId), mockRequest);

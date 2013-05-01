@@ -79,13 +79,14 @@ public class FedoraDatastreams extends AbstractResource {
     public ObjectDatastreams getDatastreams(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException, IOException {
 
+		final Session session = getAuthenticatedSession();
         final String path = toPath(pathList);
         logger.info("getting datastreams of {}", path);
         final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
         objectDatastreams.datastreams =
                 copyOf(transform(datastreamService
-                        .getDatastreamsForPath(path), ds2dsElement));
+                        .getDatastreamsForPath(session, path), ds2dsElement));
 
         return objectDatastreams;
 
@@ -159,10 +160,11 @@ public class FedoraDatastreams extends AbstractResource {
     public Response getDatastreamsContents(@PathParam("path")
     List<PathSegment> pathList, @QueryParam("dsid")
     final List<String> dsids) throws RepositoryException, IOException {
-        
+
+		final Session session = getAuthenticatedSession();
         String path = toPath(pathList);
         if (dsids.isEmpty()) {
-            final NodeIterator ni = objectService.getObject(path).getNode().getNodes();
+            final NodeIterator ni = objectService.getObject(session, path).getNode().getNodes();
             while (ni.hasNext()) {
                 dsids.add(ni.nextNode().getName());
             }
@@ -176,7 +178,7 @@ public class FedoraDatastreams extends AbstractResource {
 
             try {
                 final Datastream ds =
-                        datastreamService.getDatastream(path  + "/" +  dsid);
+                        datastreamService.getDatastream(session, path  + "/" +  dsid);
                 multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
                         .getMimeType()));
             } catch (final PathNotFoundException e) {
@@ -205,9 +207,10 @@ public class FedoraDatastreams extends AbstractResource {
     public DatastreamHistory getDatastreamHistory(@PathParam("path")
     List<PathSegment> pathList, @PathParam("dsid")
     final String dsId) throws RepositoryException, IOException {
+		final Session session = getAuthenticatedSession();
         String path = toPath(pathList);
         // TODO implement this after deciding on a versioning model
-        final Datastream ds = datastreamService.getDatastream(path  + "/" +  dsId);
+        final Datastream ds = datastreamService.getDatastream(session, path  + "/" +  dsId);
         final DatastreamHistory dsHistory =
                 new DatastreamHistory(singletonList(getDSProfile(ds)));
         dsHistory.dsID = dsId;

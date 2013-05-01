@@ -108,7 +108,7 @@ public class FedoraContent extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             String path = toPath(pathList);
-            if (!datastreamService.exists(path)) {
+            if (!datastreamService.exists(session, path)) {
                 return Response.status(404).entity("No datastream to mutate at " + path).build();
             }
             final MediaType contentType =
@@ -139,8 +139,9 @@ public class FedoraContent extends AbstractResource {
             @Context final Request request
             ) throws RepositoryException {
 
+		final Session session = getAuthenticatedSession();
         String path = toPath(pathList);
-        final Datastream ds = datastreamService.getDatastream(path);
+        final Datastream ds = datastreamService.getDatastream(session, path);
 
         final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
         final Date date = ds.getLastModifiedDate();

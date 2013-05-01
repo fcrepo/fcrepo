@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
 
 import javax.jcr.LoginException;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -53,6 +54,9 @@ public class FedoraFixityTest {
 		testObj.setLlStoreService(mockLow);
 
 		testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+
+
+		mockSession = org.fcrepo.TestHelpers.mockSession(testObj);
 	}
 
 	@After
@@ -66,7 +70,10 @@ public class FedoraFixityTest {
 		final String path = "/objects/" + pid + "/testDS";
 		final String dsId = "testDS";
 		final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
-		when(mockDatastreams.getDatastream(path)).thenReturn(mockDs);
+		Node mockNode = mock(Node.class);
+		when(mockNode.getSession()).thenReturn(mockSession);
+		when(mockDs.getNode()).thenReturn(mockNode);
+		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
 		final DatastreamFixity actual = testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"));
 		assertNotNull(actual);
 		verify(mockLow).runFixityAndFixProblems(mockDs);

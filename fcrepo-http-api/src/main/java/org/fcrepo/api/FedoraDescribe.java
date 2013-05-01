@@ -86,7 +86,7 @@ public class FedoraDescribe extends AbstractResource {
         final String path = node.getPath();
         logger.trace("getting object profile {}", path);
         final ObjectProfile objectProfile = new ObjectProfile();
-        final FedoraObject obj = objectService.getObject(path);
+        final FedoraObject obj = objectService.getObject(node.getSession(), path);
         objectProfile.pid = obj.getName();
         objectProfile.objLabel = obj.getLabel();
         objectProfile.objOwnerId = obj.getOwnerId();
@@ -113,7 +113,7 @@ public class FedoraDescribe extends AbstractResource {
     public DatastreamProfile getDatastreamProfile(Node node) throws RepositoryException, IOException {
         final String path = node.getPath();
         logger.trace("Executing getDatastream() with path: {}", path);
-        return getDatastreamProfile(datastreamService.getDatastream(path));
+        return getDatastreamProfile(datastreamService.getDatastream(node.getSession(), path));
 
     }
 
@@ -157,7 +157,7 @@ public class FedoraDescribe extends AbstractResource {
         description.sampleOAIURL =
                 uriInfo.getBaseUriBuilder().path("/123/oai_dc")
                         .build();
-        description.repositorySize = objectService.getRepositorySize(session);
+        description.repositorySize = objectService.getRepositorySize();
         description.numberOfObjects =
                 objectService.getRepositoryObjectCount(session);
         session.logout();

@@ -172,7 +172,7 @@ public class FedoraWebhooks extends AbstractResource {
         try {
             logger.debug("Webhooks received event: {}", event);
             final Node resource =
-                    jcrTools.findOrCreateNode(readOnlySession, event.getPath());
+                    jcrTools.findOrCreateNode(readOnlySession.getRepository().login(), event.getPath());
 
             runHooks(resource, event);
         } catch (final RepositoryException e) {

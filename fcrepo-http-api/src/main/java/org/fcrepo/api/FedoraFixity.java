@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -40,9 +41,10 @@ public class FedoraFixity extends AbstractResource {
 	public DatastreamFixity getDatastreamFixity(@PathParam("path")
 												List<PathSegment> pathList) throws RepositoryException {
 
+		final Session session = getAuthenticatedSession();
 		final String path = toPath(pathList);
 
-		final Datastream ds = datastreamService.getDatastream(path);
+		final Datastream ds = datastreamService.getDatastream(session, path);
 
 		final DatastreamFixity dsf = new DatastreamFixity();
 		dsf.path = path;

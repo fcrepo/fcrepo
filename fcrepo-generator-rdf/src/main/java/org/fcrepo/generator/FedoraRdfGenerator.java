@@ -12,6 +12,7 @@ import java.util.List;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -57,6 +58,7 @@ public class FedoraRdfGenerator extends AbstractResource {
             @HeaderParam("Accept") @DefaultValue(TEXT_XML) final String mimeType
             ) throws IOException, RepositoryException, TripleHandlerException {
 
+		final Session session = getAuthenticatedSession();
         final String path = toPath(pathList);
         final java.net.URI itemUri = uriInfo.getBaseUriBuilder().build("/rest" + path);
         final URI docURI = valFactory.createURI(itemUri.toString());
@@ -74,7 +76,7 @@ public class FedoraRdfGenerator extends AbstractResource {
             writer.openContext(context);
             writer.startDocument(docURI);
 
-            if (objectService.isFile(path)) {
+            if (objectService.isFile(session, path)) {
                 writeDatastreamTriples(path, writer, context);
             } else {
                 writeObjectTriples(path, writer, context);
@@ -107,7 +109,9 @@ public class FedoraRdfGenerator extends AbstractResource {
     private void writeDatastreamTriples(String path, TripleHandler writer, ExtractionContext context)
             throws TripleHandlerException, RepositoryException {
 
-        final Datastream obj = datastreamService.getDatastream(path);
+		final Session session = getAuthenticatedSession();
+
+        final Datastream obj = datastreamService.getDatastream(session, path);
         // add namespaces
         writeNamespaces(obj.getNode(), writer, context);
         // add triples from each TripleSource
@@ -124,7 +128,10 @@ public class FedoraRdfGenerator extends AbstractResource {
 
     private void writeObjectTriples(String path, TripleHandler writer, ExtractionContext context)
             throws TripleHandlerException, RepositoryException {
-        final FedoraObject obj = objectService.getObject(path);
+
+		final Session session = getAuthenticatedSession();
+
+        final FedoraObject obj = objectService.getObject(session, path);
         // add namespaces
         writeNamespaces(obj.getNode(), writer, context);
         // add triples from each TripleSource

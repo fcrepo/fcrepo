@@ -164,8 +164,8 @@ public class FedoraObjectsTest {
         final FedoraObject mockObj = mock(FedoraObject.class);
         when(mockObj.getName()).thenReturn(pid);
         Set<String> mockNames = new HashSet<String>(Arrays.asList(new String[]{childPid}));
-        when(mockObjects.getObjectNames(path)).thenReturn(mockNames);
-        when(mockObjects.getObjectNames(eq(path), any(String.class))).thenReturn(mockNames);
+        when(mockObjects.getObjectNames(mockSession, path)).thenReturn(mockNames);
+        when(mockObjects.getObjectNames(eq(mockSession), eq(path), any(String.class))).thenReturn(mockNames);
         Response actual = testObj.getObjects(createPathList(pid), null);
         assertNotNull(actual);
         String content = (String) actual.getEntity();

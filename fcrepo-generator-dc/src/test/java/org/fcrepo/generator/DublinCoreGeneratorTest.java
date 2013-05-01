@@ -11,6 +11,7 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.TestHelpers;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.services.ObjectService;
 import org.junit.Before;
@@ -23,8 +24,9 @@ public class DublinCoreGeneratorTest {
     DCGenerator mockGenerator;
     
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         testObj = new DublinCoreGenerator();
+		TestHelpers.mockSession(testObj);
         mockGenerator = mock(DCGenerator.class);
         mockObjects = mock(ObjectService.class);
         testObj.objectService = mockObjects;
