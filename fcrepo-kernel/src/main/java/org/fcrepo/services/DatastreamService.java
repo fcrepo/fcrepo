@@ -117,15 +117,14 @@ public class DatastreamService extends RepositoryService {
 	 * @return
 	 * @throws RepositoryException
 	 */
-	public Node getDatastreamNode(final String path)
+	public Node getDatastreamNode(final Session session, final String path)
 			throws RepositoryException {
 		logger.trace("Executing getDatastreamNode() with path: {}",
 							path);
-		final Node dsNode = getDatastream(path).getNode();
+		final Node dsNode = getDatastream(session, path).getNode();
 		logger.trace("Retrieved datastream node: {}", dsNode.getName());
 		return dsNode;
 	}
-
 
 	/**
 	 * Retrieve a Datastream instance by pid and dsid
@@ -133,9 +132,9 @@ public class DatastreamService extends RepositoryService {
 	 * @return
 	 * @throws RepositoryException
 	 */
-	public Datastream getDatastream(final String path)
+	public Datastream getDatastream(final Session session, final String path)
 			throws RepositoryException {
-		return new Datastream(readOnlySession, path);
+		return new Datastream(session, path);
 	}
 
     /**
@@ -149,16 +148,6 @@ public class DatastreamService extends RepositoryService {
     }
 
     /**
-     * @param path path to the DS node
-     * @return an iterator of the Datastream objects for a FedoraObject
-     * @throws RepositoryException
-     */
-    public DatastreamIterator getDatastreamsForPath(final String path)
-           throws RepositoryException {
-        return getDatastreamsForPath(readOnlySession, path);
-    }
-
-    /**
      *
 	 * @param session jcr session
 	 * @param path path to the DS node
@@ -168,17 +157,6 @@ public class DatastreamService extends RepositoryService {
     public DatastreamIterator getDatastreamsForPath(final Session session, final String path) throws RepositoryException {
         return new DatastreamIterator(new FedoraObject(session,
                 path).getNode().getNodes());
-    }
-
-    /**
-     * Check if a datastream exists in the repository
-     * @param path
-     * @return
-     * @throws RepositoryException
-     */
-    public boolean exists(final String path)
-            throws RepositoryException {
-        return exists(readOnlySession, path);
     }
 
     /**

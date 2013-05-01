@@ -62,7 +62,7 @@ public class DatastreamServiceIT extends AbstractIT {
         session.logout();
         session = repository.login();
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamServiceObject/testDatastreamNode");
+                datastreamService.getDatastream(session, "/testDatastreamServiceObject/testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(ds.getContent(), "UTF-8"));
         session.logout();
     }

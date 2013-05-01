@@ -32,7 +32,7 @@ public class FedoraObjectIT extends AbstractIT {
         session.save();
         session.logout();
         session = repo.login();
-        final FedoraObject obj = objectService.getObject("/testObject");
+        final FedoraObject obj = objectService.getObject(session, "/testObject");
         assertNotNull("Couldn't find object!", obj);
     }
 
@@ -44,7 +44,7 @@ public class FedoraObjectIT extends AbstractIT {
         session.logout();
         session = repo.login();
         final String ownerId =
-                objectService.getObject("/testObject").getOwnerId();
+                objectService.getObject(session, "/testObject").getOwnerId();
         assertEquals("Couldn't find object owner ID!", "ajs6f", ownerId);
     }
 }

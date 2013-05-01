@@ -38,16 +38,6 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         return new FedoraObject(session, path);
     }
 
-    /**
-     * @param path
-     * @return The JCR node behind the FedoraObject with the proffered PID
-     * @throws RepositoryException
-     */
-    public Node getObjectNode(final String path) throws RepositoryException {
-        logger.trace("Executing getObjectNode() at path: {}", path);
-        return getObjectNode(readOnlySession, path);
-    }
-
 	/**
 	 * @param path
 	 * @return The JCR node behind the FedoraObject with the proffered PID
@@ -56,16 +46,6 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
     public Node getObjectNode(final Session session, final String path)
             throws RepositoryException {
         return session.getNode(path);
-    }
-
-    /**
-     * @param path
-     * @return A FedoraObject with the proffered PID
-     * @throws RepositoryException
-     */
-    public FedoraObject getObject(final String path) throws RepositoryException {
-        logger.trace("Executing getObject() at path: {}", path);
-        return new FedoraObject(getObjectNode(path));
     }
 
     /**
@@ -84,13 +64,13 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      * @return A Set of object names (identifiers)
      * @throws RepositoryException
      */
-    public Set<String> getObjectNames(String path) throws RepositoryException {
-        return getObjectNames(path, null);
+    public Set<String> getObjectNames(final Session session, String path) throws RepositoryException {
+        return getObjectNames(session, path, null);
     }
     
-    public Set<String> getObjectNames(String path, String mixin) throws RepositoryException {
+    public Set<String> getObjectNames(final Session session, String path, String mixin) throws RepositoryException {
 
-        final Node objects = readOnlySession.getNode(path);
+        final Node objects = session.getNode(path);
         final Builder<String> b = builder();
         final NodeIterator i = objects.getNodes();
         while (i.hasNext()) {

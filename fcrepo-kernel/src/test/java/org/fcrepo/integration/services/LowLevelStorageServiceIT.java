@@ -54,7 +54,7 @@ public class LowLevelStorageServiceIT {
 
         session.save();
 
-        final Datastream ds = datastreamService.getDatastream("/testLLObject/testRepositoryContent");
+        final Datastream ds = datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
 
         final Collection<FixityResult> fixityResults =
                 lowLevelService.getFixity(ds.getNode(), MessageDigest
@@ -75,13 +75,13 @@ public class LowLevelStorageServiceIT {
         objectService.createObject(session, "/testLLObject");
         datastreamService.createDatastreamNode(session,
                 "/testLLObject/testRepositoryContent",
-                "application/octet-stream", new ByteArrayInputStream(
-                        "0123456789".getBytes()));
+                "image/tiff", new ByteArrayInputStream(
+                        "0123456789987654321012345678900987654321".getBytes()));
 
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("/testLLObject/testRepositoryContent");
+                datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
 
         final Iterator<LowLevelCacheEntry> inputStreamList =
                 lowLevelService.getLowLevelCacheEntries(ds.getNode()).iterator();
@@ -92,7 +92,7 @@ public class LowLevelStorageServiceIT {
 
             final String myString = IOUtils.toString(is, "UTF-8");
 
-            assertEquals("0123456789", myString);
+            assertEquals("0123456789987654321012345678900987654321", myString);
 
             i++;
         }

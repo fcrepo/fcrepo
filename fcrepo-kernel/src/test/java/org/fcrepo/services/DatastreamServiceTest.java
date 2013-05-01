@@ -78,8 +78,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
                 .thenReturn(mockWrapper);
         final DatastreamService testObj = new DatastreamService();
-        testObj.readOnlySession = mockSession;
-        testObj.getDatastreamNode("/foo/bar");
+        testObj.getDatastreamNode(mockSession, "/foo/bar");
         verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
         verify(mockWrapper).getNode();
     }
@@ -93,8 +92,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
                 .thenReturn(mockWrapper);
         final DatastreamService testObj = new DatastreamService();
-        testObj.readOnlySession = mockSession;
-        testObj.getDatastream("/foo/bar");
+        testObj.getDatastream(mockSession, "/foo/bar");
         verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
     }
 
@@ -108,8 +106,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 		whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
 				.thenReturn(mockWrapper);
 		final DatastreamService testObj = new DatastreamService();
-		testObj.readOnlySession = mockSession;
-		testObj.getDatastream("/foo/bar");
+		testObj.getDatastream(mockSession, "/foo/bar");
 		verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
 	}
 
@@ -132,8 +129,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     public void testExists() throws RepositoryException {
         final Session mockSession = mock(Session.class);
         final DatastreamService testObj = new DatastreamService();
-        testObj.readOnlySession = mockSession;
-        testObj.exists("/foo/bar");
+        testObj.exists(mockSession, "/foo/bar");
         verify(mockSession).nodeExists("/foo/bar");
     }
 }

@@ -134,10 +134,10 @@ public class SelfHealingIT {
         Thread.sleep(1000);
 
         final Datastream ds =
-                datastreamService.getDatastream("/testSelfHealingObject/testDatastreamNode5");
+                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode5");
 
         final Datastream ds2 =
-                datastreamService.getDatastream("/testSelfHealingObject/testDatastreamNode4");
+                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode4");
 
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);

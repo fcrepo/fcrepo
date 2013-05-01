@@ -99,15 +99,12 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
             mockNTI = mock(NodeTypeIterator.class);
             testObj = new RepositoryService();
             testObj.setRepository(mockRepo);
-            testObj.readOnlySession = mockSession;
 
             when(mockSession.getNode("/objects")).thenReturn(mockRootNode);
             when(mockRootNode.getNodes()).thenReturn(mockNI);
             when(mockNI.getSize()).thenReturn(expectedSize);
             when(testObj.findOrCreateNode(mockSession, "/objects")).thenReturn(
                     mockRootNode);
-            when(testObj.readOnlySession.getWorkspace()).thenReturn(
-                    mockWorkspace);
             when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
             when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
             when(mockWorkspace.getNodeTypeManager()).thenReturn(
@@ -146,7 +143,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetRepositorySize() throws RepositoryException {
-        final Long actual = testObj.getRepositorySize(mockSession);
+        final Long actual = testObj.getRepositorySize();
         assertEquals(expectedSize, actual);
     }
 
@@ -173,8 +170,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     public void testExists() throws RepositoryException {
         String existsPath = "/foo/bar/exists";
         when(mockSession.nodeExists(existsPath)).thenReturn(true);
-        assertEquals(true, testObj.exists(existsPath));
-        assertEquals(false, testObj.exists("/foo/bar"));
+        assertEquals(true, testObj.exists(mockSession, existsPath));
+        assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
     }
 
     @Test
@@ -187,7 +184,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockFolder.isNodeType("nt:file")).thenReturn(false);
         when(mockSession.getNode(filePath)).thenReturn(mockFile);
         when(mockSession.getNode(folderPath)).thenReturn(mockFolder);
-        assertEquals(true, testObj.isFile(filePath));
-        assertEquals(false, testObj.isFile(folderPath));
+        assertEquals(true, testObj.isFile(mockSession, filePath));
+        assertEquals(false, testObj.isFile(mockSession, folderPath));
     }
 }

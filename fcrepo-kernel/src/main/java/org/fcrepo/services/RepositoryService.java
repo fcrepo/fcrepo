@@ -40,10 +40,6 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     @Inject
     protected Repository repo;
 
-    /**
-     * For use with non-mutating methods.
-     */
-    protected Session readOnlySession;
 
     public static MetricRegistry getMetrics() {
         return metrics;
@@ -59,12 +55,12 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @return whether a node exists at the given path
      * @throws RepositoryException
      */
-    public boolean exists(String path) throws RepositoryException {
-        return readOnlySession.nodeExists(path);
+    public boolean exists(Session session, String path) throws RepositoryException {
+        return session.nodeExists(path);
     }
     
-    public boolean isFile(String path) throws RepositoryException {
-        return readOnlySession.getNode(path).isNodeType("nt:file");
+    public boolean isFile(Session session, String path) throws RepositoryException {
+        return session.getNode(path).isNodeType("nt:file");
     }
 
     /**
@@ -74,9 +70,10 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     */
     public long getAllObjectsDatastreamSize() throws RepositoryException {
 
+		final Session session = repo.login();
         long sum = 0;
         final QueryManager queryManager =
-                readOnlySession.getWorkspace().getQueryManager();
+                session.getWorkspace().getQueryManager();
 
         final String querystring =
                 "\n" + "SELECT [" + FEDORA_SIZE + "] FROM [" + FEDORA_CHECKSUM +
@@ -90,10 +87,12 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
             sum += value.getLong();
         }
 
+		session.logout();
+
         return sum;
     }
 
-    public Long getRepositorySize(final Session session) {
+    public Long getRepositorySize() {
         try {
             return getAllObjectsDatastreamSize();
         } catch (final RepositoryException e) {
@@ -129,30 +128,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return result;
     }
 
-    @PostConstruct
-    public final void getSession() {
-        logger.trace("Logging in read only session...");
-        try {
-            readOnlySession = repo.login();
-        } catch (final RepositoryException e) {
-            throw propagate(e);
-        }
-        logger.trace("Logged in read only session.");
-    }
-
-    @PreDestroy
-    public final void logoutSession() {
-        logger.trace("Logging out read only session...");
-        readOnlySession.logout();
-        logger.trace("Logged out read only session.");
-    }
-
     public void setRepository(final Repository repository) {
-        if (readOnlySession != null) {
-            logoutSession();
-        }
         repo = repository;
-        getSession();
     }
 
 }

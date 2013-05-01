@@ -48,7 +48,7 @@ public class DatastreamIT extends AbstractIT {
         session.logout();
         session = repo.login();
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode");
+                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode");
         assertEquals("Wrong label!", "Best datastream ever!", ds.getLabel());
     }
 
@@ -65,7 +65,7 @@ public class DatastreamIT extends AbstractIT {
         session.logout();
         session = repo.login();
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode1");
+                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode1");
         assertNotNull("Couldn't find created date on datastream!", ds
                 .getCreatedDate());
     }
@@ -83,7 +83,7 @@ public class DatastreamIT extends AbstractIT {
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode1");
+                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode1");
         final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("asdf", contentString);
@@ -103,7 +103,7 @@ public class DatastreamIT extends AbstractIT {
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode2");
+                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode2");
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
         assertEquals(4L, ds.getContentSize());
@@ -126,7 +126,7 @@ public class DatastreamIT extends AbstractIT {
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode3");
+                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode3");
 		Binary b = (Binary)(session.getValueFactory().createBinary(new ByteArrayInputStream("0123456789".getBytes())));
         ds.setContent(b);
 
@@ -153,7 +153,7 @@ public class DatastreamIT extends AbstractIT {
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream("/testDatastreamObject/testDatastreamNode4");
+                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode4");
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
 
