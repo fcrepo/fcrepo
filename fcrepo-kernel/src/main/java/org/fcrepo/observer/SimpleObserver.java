@@ -36,15 +36,15 @@ import com.yammer.metrics.Counter;
  */
 public class SimpleObserver implements EventListener {
 
-    private static final Logger logger = getLogger(SimpleObserver.class);
+    private static final Logger LOGGER = getLogger(SimpleObserver.class);
 
     /**
      * A simple counter of events that pass through this observer
      */
-    static final Counter eventCounter = metrics.counter(name(
+    static final Counter EVENT_COUNTER = metrics.counter(name(
             SimpleObserver.class, "onEvent"));
 
-    static final Integer eventTypes = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
+    static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
             PROPERTY_ADDED + PROPERTY_CHANGED + PROPERTY_REMOVED;
 
     @Inject
@@ -60,7 +60,7 @@ public class SimpleObserver implements EventListener {
     public void buildListener() throws RepositoryException {
         final Session session = repository.login();
         session.getWorkspace().getObservationManager().addEventListener(this,
-                eventTypes, "/", true, null, null, false);
+                EVENT_TYPES, "/", true, null, null, false);
         session.save();
         session.logout();
     }
@@ -75,9 +75,9 @@ public class SimpleObserver implements EventListener {
 
         for (final Event e : filter(new EventIterator(events), eventFilter)) {
 
-            eventCounter.inc();
+            EVENT_COUNTER.inc();
 
-            logger.debug("Putting event: " + e.toString() + " on the bus.");
+            LOGGER.debug("Putting event: " + e.toString() + " on the bus.");
             eventBus.post(new FedoraEvent(e));
         }
     }
