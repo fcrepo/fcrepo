@@ -56,7 +56,11 @@ public abstract class ServiceHelpers {
             throws RepositoryException {
         Long size = 0L;
         for (final NodeIterator i = obj.getNodes(); i.hasNext();) {
-            size += getDatastreamSize(i.nextNode());
+            final Node node = i.nextNode();
+
+            if (node.isNodeType("nt:file")) {
+                size += getDatastreamSize(node);
+		    }
         }
         return size;
     }
@@ -67,8 +71,17 @@ public abstract class ServiceHelpers {
     }
 
     public static Long getContentSize(final Node ds) throws RepositoryException {
-        return ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
+		long size = 0L;
+		if(ds.hasNode(JCR_CONTENT)) {
+			final Node contentNode = ds.getNode(JCR_CONTENT);
+
+            if(contentNode.hasProperty(JCR_DATA)) {
+                size = ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
                 .getSize();
+            }
+		}
+
+        return size;
     }
 
     public static Function<LowLevelCacheEntry, FixityResult>
