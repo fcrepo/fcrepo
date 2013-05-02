@@ -496,16 +496,6 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>cobertura-maven-plugin</artifactId>
-          <version>2.5.2</version>
-          <configuration>
-            <aggregate>true</aggregate>
-            <forceMojoExecution>true</forceMojoExecution>
-            <inherited>true</inherited>
-          </configuration>
-        </plugin>
-        <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
           <version>1.0.0</version>
@@ -567,12 +557,20 @@
 	      <artifactId>jacoco-maven-plugin</artifactId>
 	      <version>0.6.2.201302030002</version>
 	      <configuration>
-	        <destFile>${project.basedir}/../target/jacoco.exec</destFile>
+	        <destFile>${project.basedir}/target/jacoco.exec</destFile>
 	      </configuration>
 	      <executions>
 	        <execution>
+	          <id>jacoco-initialize</id>
 	          <goals>
 	            <goal>prepare-agent</goal>
+	          </goals>
+	        </execution>
+	        <execution>
+	          <id>jacoco-report</id>
+	          <phase>verify</phase>
+	          <goals>
+	            <goal>report</goal>
 	          </goals>
 	        </execution>
 	      </executions>
@@ -605,10 +603,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
       </plugin>
       <plugin>
 	    <groupId>org.jacoco</groupId>
@@ -657,16 +651,6 @@
         <configuration>
           <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
           <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
-        <version>2.5.2</version>
-        <configuration>
-          <aggregate>true</aggregate>
-          <forceMojoExecution>true</forceMojoExecution>
-          <inherited>true</inherited>
         </configuration>
       </plugin>
       <plugin>
