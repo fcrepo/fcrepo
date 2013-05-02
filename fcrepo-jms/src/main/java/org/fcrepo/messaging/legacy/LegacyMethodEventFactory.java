@@ -44,9 +44,9 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
             tm.setStringProperty("pid", pid);
         }
         tm.setStringProperty("methodName", legacy.getMethodName());
-        tm.setJMSType(LegacyMethod.FORMAT);
+        tm.setJMSType(EntryFactory.FORMAT);
         tm.setStringProperty("fcrepo.server.version",
-                LegacyMethod.SERVER_VERSION);
+        		EntryFactory.SERVER_VERSION);
         logger.trace("Successfully created JMS message from event.");
         return tm;
     }

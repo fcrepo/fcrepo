@@ -40,7 +40,7 @@ public class LegacyMethodStaticTest {
         // Should the static tests be broken out into a separate test class, so we can use PowerMock with better scope?
     	boolean result;
         Message mockYes = mock(Message.class);
-        when(mockYes.getJMSType()).thenReturn(LegacyMethod.FORMAT);
+        when(mockYes.getJMSType()).thenReturn(EntryFactory.FORMAT);
         when(mockYes.getStringProperty("methodName")).thenReturn("ingest");
         result = LegacyMethod.canParse(mockYes);
         assertEquals(true, result);
@@ -50,7 +50,7 @@ public class LegacyMethodStaticTest {
         result = LegacyMethod.canParse(mockNoFormat);
         assertEquals(false, result);
         Message mockNoMessage = mock(Message.class);
-        when(mockNoMessage.getJMSType()).thenReturn(LegacyMethod.FORMAT);
+        when(mockNoMessage.getJMSType()).thenReturn(EntryFactory.FORMAT);
         when(mockNoMessage.getStringProperty("methodName")).thenReturn("destroyEverything");
         result = LegacyMethod.canParse(mockNoMessage);
         assertEquals(false, result);

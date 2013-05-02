@@ -1,7 +1,7 @@
 package org.fcrepo.messaging.legacy;
 
+import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import java.io.IOException;
 
@@ -21,8 +21,6 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({LegacyMethodEventFactory.class})
 public class LegacyMethodEventFactoryTest {
 
     private LegacyMethodEventFactory testObj;
@@ -41,6 +39,7 @@ public class LegacyMethodEventFactoryTest {
         when(mockJMS.createTextMessage(anyString())).thenReturn(mockText);
         Event mockEvent = mock(Event.class);
         when(mockEvent.getPath()).thenReturn(testPath);
+        when(mockEvent.getType()).thenReturn(NODE_ADDED);
         Session mockJCR = mock(Session.class);
         Node mockSource = mock(Node.class);
         NodeType mockType = mock(NodeType.class);
@@ -48,10 +47,7 @@ public class LegacyMethodEventFactoryTest {
         NodeType[] mockTypes = new NodeType[]{mockType};
         when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);
         when(mockJCR.getNode(testPath)).thenReturn(mockSource);
-        LegacyMethod mockMethod = mock(LegacyMethod.class);
-        whenNew(LegacyMethod.class).withArguments(mockEvent, mockSource).thenReturn(mockMethod);
-        when(mockMethod.getMethodName()).thenReturn("foo-method");
         Message actual = testObj.getMessage(mockEvent, mockJCR, mockJMS);
-        verify(mockText).setStringProperty("methodName", "foo-method");
+        verify(mockText).setStringProperty("methodName", "ingest");
     }
 }

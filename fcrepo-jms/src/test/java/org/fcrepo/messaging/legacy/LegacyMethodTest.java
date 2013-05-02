@@ -30,7 +30,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({LegacyMethod.class})
+@PrepareForTest({EntryFactory.class})
 public class LegacyMethodTest {
 
     private LegacyMethod testObj;
@@ -66,8 +66,8 @@ public class LegacyMethodTest {
         Text mockText = mock(Text.class);
         when(mockDelegate.setTitle(anyString())).thenReturn(mockText);
         // make sure the delegate Entry can be instrumented for tests
-        PowerMockito.mockStatic(LegacyMethod.class);
-        when(LegacyMethod.newEntry()).thenReturn(mockDelegate);
+        PowerMockito.mockStatic(EntryFactory.class);
+        when(EntryFactory.newEntry()).thenReturn(mockDelegate);
         mockPidCategory = mock(Category.class);
         when(mockPidCategory.getLabel()).thenReturn(LegacyMethod.PID_CATEGORY_LABEL);
         when(mockPidCategory.getTerm()).thenReturn(SOURCE_PID);

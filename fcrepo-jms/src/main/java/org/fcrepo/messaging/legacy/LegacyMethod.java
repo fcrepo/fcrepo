@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -25,10 +24,8 @@ import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.apache.abdera.Abdera;
 import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
-import org.apache.abdera.parser.Parser;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -37,37 +34,16 @@ import org.slf4j.Logger;
 
 public class LegacyMethod {
 
-    private static final Abdera ABDERA = new Abdera();
-
-    private static final Parser ABDERA_PARSER = ABDERA.getParser();
-
     //TODO Figure out where to get the base url
     private static final String BASE_URL = "http://localhost:8080/rest";
 
     private static final Properties FEDORA_TYPES = new Properties();
 
-    public static final String FORMAT =
-            "info:fedora/fedora-system:ATOM-APIM-1.0";
-
-    private static final String FORMAT_PREDICATE =
-            "http://www.fedora.info/definitions/1/0/types/formatURI";
-
-    //TODO get this out of the build properties
-    public static final String SERVER_VERSION = "4.0.0-SNAPSHOT";
-    
     public static final String FEDORA_ID_SCHEME = "xsd:string";
     
     public static final String DSID_CATEGORY_LABEL = "fedora-types:dsID";
 
     public static final String PID_CATEGORY_LABEL = "fedora-types:pid";
-
-    private static final String TYPES_NS =
-            "http://www.fedora.info/definitions/1/0/types/";
-
-    private static final String VERSION_PREDICATE =
-            "info:fedora/fedora-system:def/view#version";
-
-    private static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
 
     private static final String INGEST_METHOD = "ingest";
     
@@ -106,7 +82,7 @@ public class LegacyMethod {
 
     public LegacyMethod(final Event jcrEvent, final Node resource)
             throws RepositoryException {
-        this(newEntry());
+        this(EntryFactory.newEntry());
 
         final boolean isDatastreamNode =
                 FedoraTypesUtils.isFedoraDatastream.apply(resource);
@@ -139,8 +115,7 @@ public class LegacyMethod {
 
     public LegacyMethod(final String atomEntry) {
         delegate =
-                (Entry) ABDERA_PARSER.parse(new StringReader(atomEntry))
-                        .getRoot();
+                EntryFactory.parse(new StringReader(atomEntry));
     }
 
     public Entry getEntry() {
@@ -223,16 +198,6 @@ public class LegacyMethod {
 
     public void writeTo(final Writer writer) throws IOException {
         delegate.writeTo(writer);
-    }
-
-    static Entry newEntry() {
-        final Entry entry = ABDERA.newEntry();
-        entry.declareNS(XSD_NS, "xsd");
-        entry.declareNS(TYPES_NS, "fedora-types");
-        entry.setId("urn:uuid:" + UUID.randomUUID().toString());
-        entry.addCategory(FORMAT_PREDICATE, FORMAT, "format");
-        entry.addCategory(VERSION_PREDICATE, SERVER_VERSION, "version");
-        return entry;
     }
 
     private static String getEntryContent(final String methodName,
@@ -331,7 +296,7 @@ public class LegacyMethod {
 
     public static boolean canParse(final Message jmsMessage) {
         try {
-            return FORMAT.equals(jmsMessage.getJMSType()) &&
+            return EntryFactory.FORMAT.equals(jmsMessage.getJMSType()) &&
                     METHOD_NAMES.contains(jmsMessage
                             .getStringProperty("methodName"));
         } catch (final JMSException e) {
