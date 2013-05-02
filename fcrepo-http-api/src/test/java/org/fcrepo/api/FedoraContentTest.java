@@ -30,6 +30,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,7 +113,7 @@ public class FedoraContentTest {
 		final String dsId = "testDS";
         final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
-        final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
+        final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
         final Request mockRequest = mock(Request.class);
         final Response actual =

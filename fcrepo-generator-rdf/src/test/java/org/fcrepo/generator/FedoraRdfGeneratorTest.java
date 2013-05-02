@@ -24,11 +24,11 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.any23.writer.TripleHandlerException;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
-import org.fcrepo.TestHelpers;
 import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.PathSegmentImpl;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -22,6 +22,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

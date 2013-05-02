@@ -21,6 +21,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Test;
 
@@ -214,7 +215,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
                         "objects/FedoraDatastreamsTest7?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        Collection<String> result = org.fcrepo.api.TestHelpers.parseChildren(response.getEntity());
+        Collection<String> result = TestHelpers.parseChildren(response.getEntity());
         assertTrue("Didn't find the first datastream! ", result.contains("ds1"));
         assertTrue("Didn't find the second datastream! ", result.contains("ds2"));
     }

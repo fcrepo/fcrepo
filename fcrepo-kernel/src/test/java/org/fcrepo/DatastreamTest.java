@@ -1,8 +1,6 @@
 
 package org.fcrepo;
 
-import static org.fcrepo.TestHelpers.checksumString;
-import static org.fcrepo.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -37,6 +35,7 @@ import org.apache.tika.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
+import org.fcrepo.utils.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,7 +97,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void testGetContent() throws RepositoryException, IOException {
         final String expected = "asdf";
-        final Node mockContent = getContentNodeMock(expected);
+        final Node mockContent = TestHelpers.getContentNodeMock(expected);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
@@ -116,7 +115,7 @@ public class DatastreamTest implements FedoraJcrTypes {
                 FedoraTypesUtils.getBinary(any(Node.class),
                         any(InputStream.class), any(StrategyHint.class))).thenReturn(mockBin);
         final Binary content = mock(Binary.class);
-        final Node mockContent = getContentNodeMock(8);
+        final Node mockContent = TestHelpers.getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
@@ -129,7 +128,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
-        final Node mockContent = getContentNodeMock(expectedContentLength);
+        final Node mockContent = TestHelpers.getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
         verify(mockDsNode, times(2)).getNode(JCR_CONTENT);
@@ -140,8 +139,8 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void getContentDigest() throws RepositoryException {
         final String content = "asdf";
-        final URI expected = URI.create("urn:sha1:" + checksumString(content));
-        final Node mockContent = getContentNodeMock(content);
+        final URI expected = URI.create("urn:sha1:" + TestHelpers.checksumString(content));
+        final Node mockContent = TestHelpers.getContentNodeMock(content);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final URI actual = testObj.getContentDigest();
         assertEquals(expected, actual);
@@ -152,7 +151,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void getContentDigestType() throws RepositoryException {
         final String expected = "SHA-1";
-        final Node mockContent = getContentNodeMock(8);
+        final Node mockContent = TestHelpers.getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final String actual = testObj.getContentDigestType();
         assertEquals(expected, actual);
@@ -229,7 +228,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     public void testGetSize() throws RepositoryException {
         final int expectedProps = 1;
         final int expectedContentLength = 2;
-        final Node mockContent = getContentNodeMock(expectedContentLength);
+        final Node mockContent = TestHelpers.getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.getProperties()).thenAnswer(
                 new Answer<PropertyIterator>() {

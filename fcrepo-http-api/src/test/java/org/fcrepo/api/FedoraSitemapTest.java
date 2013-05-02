@@ -1,7 +1,6 @@
 
 package org.fcrepo.api;
 
-import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -16,6 +15,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class FedoraSitemapTest {
                 mockSessions.getSession(any(SecurityContext.class),
                         any(HttpServletRequest.class))).thenReturn(mockSession);
         testObj.setSessionFactory(mockSessions);
-        testObj.setUriInfo(getUriInfoImpl());
+        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
 
     @After

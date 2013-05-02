@@ -1,10 +1,6 @@
 
 package org.fcrepo.api;
 
-import static org.fcrepo.api.TestHelpers.MOCK_PREFIX;
-import static org.fcrepo.api.TestHelpers.MOCK_URI_STRING;
-import static org.fcrepo.api.TestHelpers.getSessionMock;
-import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
@@ -29,6 +25,7 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
 import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,13 +40,13 @@ public class FedoraNamespacesTest {
     public void setUp() throws LoginException, RepositoryException,
             URISyntaxException {
         mockNs = new Namespace();
-        mockNs.prefix = MOCK_PREFIX;
-        mockNs.uri = new URI(MOCK_URI_STRING);
+        mockNs.prefix = TestHelpers.MOCK_PREFIX;
+        mockNs.uri = new URI(TestHelpers.MOCK_URI_STRING);
 
         testObj = new FedoraNamespaces();
-        testObj.setUriInfo(getUriInfoImpl());
+        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
         final SessionFactory mockSessions = mock(SessionFactory.class);
-        final Session mockSession = getSessionMock();
+        final Session mockSession = TestHelpers.getSessionMock();
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
                 mockSessions.getSession(any(SecurityContext.class),
@@ -66,7 +63,7 @@ public class FedoraNamespacesTest {
     @Test
     public void testRegisterObjectNamespace() throws RepositoryException {
         final Response actual =
-                testObj.registerObjectNamespace(MOCK_PREFIX, MOCK_URI_STRING);
+                testObj.registerObjectNamespace(TestHelpers.MOCK_PREFIX, TestHelpers.MOCK_URI_STRING);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
     }
@@ -84,8 +81,8 @@ public class FedoraNamespacesTest {
 
     @Test
     public void testRetrieveObjectNamespace() throws RepositoryException {
-        testObj.registerObjectNamespace(MOCK_PREFIX, MOCK_URI_STRING);
-        final Namespace actual = testObj.retrieveObjectNamespace(MOCK_PREFIX);
+        testObj.registerObjectNamespace(TestHelpers.MOCK_PREFIX, TestHelpers.MOCK_URI_STRING);
+        final Namespace actual = testObj.retrieveObjectNamespace(TestHelpers.MOCK_PREFIX);
         assertNotNull(actual);
         assertEquals(actual.uri, mockNs.uri);
     }

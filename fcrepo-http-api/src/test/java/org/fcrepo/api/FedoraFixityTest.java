@@ -1,14 +1,13 @@
 package org.fcrepo.api;
 
-import org.fcrepo.Datastream;
-import org.fcrepo.jaxb.responses.management.DatastreamFixity;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.session.SessionFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.modeshape.jcr.api.Repository;
+import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.security.Principal;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -16,14 +15,16 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
-import java.io.IOException;
-import java.security.Principal;
 
-import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.mock;
+import org.fcrepo.Datastream;
+import org.fcrepo.jaxb.responses.management.DatastreamFixity;
+import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.test.util.TestHelpers;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.modeshape.jcr.api.Repository;
 
 public class FedoraFixityTest {
 	FedoraFixity testObj;
@@ -56,7 +57,7 @@ public class FedoraFixityTest {
 		testObj.setUriInfo(TestHelpers.getUriInfoImpl());
 
 
-		mockSession = org.fcrepo.TestHelpers.mockSession(testObj);
+		mockSession = TestHelpers.mockSession(testObj);
 	}
 
 	@After
@@ -69,7 +70,7 @@ public class FedoraFixityTest {
 		final String pid = "FedoraDatastreamsTest1";
 		final String path = "/objects/" + pid + "/testDS";
 		final String dsId = "testDS";
-		final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
+		final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
 		Node mockNode = mock(Node.class);
 		when(mockNode.getSession()).thenReturn(mockSession);
 		when(mockDs.getNode()).thenReturn(mockNode);

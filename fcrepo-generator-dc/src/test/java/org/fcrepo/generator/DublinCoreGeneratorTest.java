@@ -1,8 +1,10 @@
 package org.fcrepo.generator;
 
-import static org.mockito.Mockito.*;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -11,9 +13,9 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.TestHelpers;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 

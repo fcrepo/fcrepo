@@ -35,6 +35,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.DatastreamIterator;
 import org.junit.After;
 import org.junit.Before;
@@ -102,7 +103,7 @@ public class FedoraDatastreamsTest {
         final String path = "/objects/" + pid;
         final String dsid = "testDS";
         final DatastreamIterator mockIter =
-                org.fcrepo.TestHelpers.mockDatastreamIterator(pid, dsid, "asdf");
+                TestHelpers.mockDatastreamIterator(pid, dsid, "asdf");
         when(mockDatastreams.getDatastreamsForPath(mockSession, path)).thenReturn(mockIter);
         final ObjectDatastreams actual = testObj.getDatastreams(createPathList("objects",pid));
         verify(mockDatastreams).getDatastreamsForPath(mockSession, path);
@@ -154,7 +155,7 @@ public class FedoraDatastreamsTest {
         final String dsId = "testDS";
 		final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
-        final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, dsContent);
+        final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
 
         final Response resp =
@@ -176,7 +177,7 @@ public class FedoraDatastreamsTest {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
 		final String path = "/" + pid + "/" + dsId;
-        final Datastream mockDs = org.fcrepo.TestHelpers.mockDatastream(pid, dsId, null);
+        final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
         final DatastreamHistory actual =
                 testObj.getDatastreamHistory(createPathList(pid), dsId);

@@ -1,7 +1,6 @@
 
 package org.fcrepo.api;
 
-import static org.fcrepo.api.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -38,6 +37,7 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
@@ -85,7 +85,7 @@ public class FedoraObjectsTest {
                 mockSessions.getSession(any(SecurityContext.class),
                         any(HttpServletRequest.class))).thenReturn(mockSession);
         testObj.setSessionFactory(mockSessions);
-        testObj.setUriInfo(getUriInfoImpl());
+        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
         testObj.setPidMinter(new UUIDPidMinter());
         testObj.setHttpServletRequest(mockServletRequest);
         testObj.setSecurityContext(mockSecurityContext);

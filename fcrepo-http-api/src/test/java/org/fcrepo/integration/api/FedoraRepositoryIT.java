@@ -9,16 +9,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 
-
 import org.apache.http.HttpResponse;
-import org.apache.http.ParseException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.api.TestHelpers;
-import org.fcrepo.jaxb.responses.management.DatastreamFixity;
+import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Test;
 

@@ -1,8 +1,6 @@
 
 package org.fcrepo.api;
 
-import static org.fcrepo.api.TestHelpers.getQueryMock;
-import static org.fcrepo.api.TestHelpers.getQuerySessionMock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -30,6 +28,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.fcrepo.jaxb.search.ObjectFields;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +41,7 @@ public class FedoraFieldSearchTest {
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockSession = getQuerySessionMock();
+        mockSession = TestHelpers.getQuerySessionMock();
         final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(
@@ -84,7 +83,7 @@ public class FedoraFieldSearchTest {
 
     @Test
     public void testSearch() throws RepositoryException {
-        final Query mockQ = getQueryMock();
+        final Query mockQ = TestHelpers.getQueryMock();
         final NodeIterator mockNodes = mockQ.execute().getNodes();
         final FieldSearchResult actual = testObj.search(mockQ, 1, 1);
         final List<ObjectFields> oFieldsList = actual.getObjectFieldsList();
