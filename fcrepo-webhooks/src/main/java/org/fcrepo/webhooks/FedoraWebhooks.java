@@ -44,6 +44,12 @@ import com.google.common.eventbus.Subscribe;
 @Path("/webhooks")
 @Component
 public class FedoraWebhooks extends AbstractResource {
+    
+    public static final String WEBHOOK_SEARCH = "webhook:*";
+    
+    public static final String WEBHOOK_CALLBACK_PROPERTY = "webhook:callbackUrl";
+    
+    public static final String WEBHOOK_JCR_TYPE = "webhook:callback";
 
     static final private Logger logger = LoggerFactory
             .getLogger(FedoraWebhooks.class);
@@ -83,13 +89,14 @@ public class FedoraWebhooks extends AbstractResource {
 
     public static void runHooks(final Node resource, final FedoraEvent event)
             throws RepositoryException {
+        if (resource == null) logger.warn("resource node is null; event path is {}", event.getPath());
         final NodeIterator webhooksIterator =
-                resource.getSession().getRootNode().getNodes("webhook:*");
+                resource.getSession().getRootNode().getNodes(WEBHOOK_SEARCH);
 
         while (webhooksIterator.hasNext()) {
             final Node hook = webhooksIterator.nextNode();
             final String callbackUrl =
-                    hook.getProperty("webhook:callbackUrl").getString();
+                    hook.getProperty(WEBHOOK_CALLBACK_PROPERTY).getString();
             final HttpPost method = new HttpPost(callbackUrl);
             final LegacyMethod eventSerialization =
                     new LegacyMethod(event, resource);
@@ -158,7 +165,7 @@ public class FedoraWebhooks extends AbstractResource {
 
         final Node n =
                 jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" +
-                        id, "webhook:callback");
+                        id, WEBHOOK_JCR_TYPE);
         n.remove();
 
         session.save();
