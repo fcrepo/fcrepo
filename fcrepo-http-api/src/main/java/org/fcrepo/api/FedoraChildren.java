@@ -54,18 +54,22 @@ public class FedoraChildren extends AbstractResource {
 
 
 		final Session session = getAuthenticatedSession();
-		final String path = toPath(pathList);
-		logger.info("getting children of {}", path);
-		if ("".equals(mixin)) {
-			mixin = null;
-		}
-		else if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
-			mixin = "nt:folder";
-		} else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
-			mixin = "nt:file";
-		}
-		return ok(objectService.getObjectNames(session, path, mixin).toString()).build();
 
+		try {
+			final String path = toPath(pathList);
+			logger.info("getting children of {}", path);
+			if ("".equals(mixin)) {
+				mixin = null;
+			}
+			else if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
+				mixin = "nt:folder";
+			} else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
+				mixin = "nt:file";
+			}
+			return ok(objectService.getObjectNames(session, path, mixin).toString()).build();
+		} finally {
+			session.logout();
+		}
 	}
 
 

@@ -80,15 +80,20 @@ public class FedoraDatastreams extends AbstractResource {
     final List<PathSegment> pathList) throws RepositoryException, IOException {
 
 		final Session session = getAuthenticatedSession();
-        final String path = toPath(pathList);
-        logger.info("getting datastreams of {}", path);
-        final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
-        objectDatastreams.datastreams =
-                copyOf(transform(datastreamService
-                        .getDatastreamsForPath(session, path), ds2dsElement));
+		try {
+			final String path = toPath(pathList);
+			logger.info("getting datastreams of {}", path);
+			final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
 
-        return objectDatastreams;
+			objectDatastreams.datastreams =
+					copyOf(transform(datastreamService
+							.getDatastreamsForPath(session, path), ds2dsElement));
+
+			return objectDatastreams;
+		} finally {
+			session.logout();
+		}
 
     }
 
@@ -162,30 +167,35 @@ public class FedoraDatastreams extends AbstractResource {
     final List<String> dsids) throws RepositoryException, IOException {
 
 		final Session session = getAuthenticatedSession();
-        String path = toPath(pathList);
-        if (dsids.isEmpty()) {
-            final NodeIterator ni = objectService.getObject(session, path).getNode().getNodes();
-            while (ni.hasNext()) {
-                dsids.add(ni.nextNode().getName());
-            }
-        }
 
-        final MultiPart multipart = new MultiPart();
+		try {
+			String path = toPath(pathList);
+			if (dsids.isEmpty()) {
+				final NodeIterator ni = objectService.getObject(session, path).getNode().getNodes();
+				while (ni.hasNext()) {
+					dsids.add(ni.nextNode().getName());
+				}
+			}
 
-        final Iterator<String> i = dsids.iterator();
-        while (i.hasNext()) {
-            final String dsid = i.next();
+			final MultiPart multipart = new MultiPart();
 
-            try {
-                final Datastream ds =
-                        datastreamService.getDatastream(session, path  + "/" +  dsid);
-                multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
-                        .getMimeType()));
-            } catch (final PathNotFoundException e) {
+			final Iterator<String> i = dsids.iterator();
+			while (i.hasNext()) {
+				final String dsid = i.next();
 
-            }
-        }
-        return Response.ok(multipart, MULTIPART_FORM_DATA).build();
+				try {
+					final Datastream ds =
+							datastreamService.getDatastream(session, path  + "/" +  dsid);
+					multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
+							.getMimeType()));
+				} catch (final PathNotFoundException e) {
+
+				}
+			}
+			return Response.ok(multipart, MULTIPART_FORM_DATA).build();
+		} finally {
+			session.logout();
+		}
     }
 
     /**
@@ -208,14 +218,19 @@ public class FedoraDatastreams extends AbstractResource {
     List<PathSegment> pathList, @PathParam("dsid")
     final String dsId) throws RepositoryException, IOException {
 		final Session session = getAuthenticatedSession();
-        String path = toPath(pathList);
-        // TODO implement this after deciding on a versioning model
-        final Datastream ds = datastreamService.getDatastream(session, path  + "/" +  dsId);
-        final DatastreamHistory dsHistory =
-                new DatastreamHistory(singletonList(getDSProfile(ds)));
-        dsHistory.dsID = dsId;
-        dsHistory.pid = pathList.get(pathList.size() - 1).getPath();
-        return dsHistory;
+
+		try {
+			String path = toPath(pathList);
+			// TODO implement this after deciding on a versioning model
+			final Datastream ds = datastreamService.getDatastream(session, path  + "/" +  dsId);
+			final DatastreamHistory dsHistory =
+					new DatastreamHistory(singletonList(getDSProfile(ds)));
+			dsHistory.dsID = dsId;
+			dsHistory.pid = pathList.get(pathList.size() - 1).getPath();
+			return dsHistory;
+		} finally {
+			session.logout();
+		}
     }
 
     private DatastreamProfile getDSProfile(final Datastream ds)

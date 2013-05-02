@@ -68,14 +68,21 @@ public class FedoraNodes extends AbstractResource {
 			return Response.ok(getRepositoryProfile()).build();
 		}
 		final Session session = getAuthenticatedSession();
-		Node node = session.getNode(path);
-		if (node.isNodeType("nt:file")) {
-			return Response.ok(getDatastreamProfile(node)).build();
+		try {
+			Node node = session.getNode(path);
+
+			if (node.isNodeType("nt:file")) {
+				return Response.ok(getDatastreamProfile(node)).build();
+			}
+
+			if (node.isNodeType("nt:folder")) {
+				return Response.ok(getObjectProfile(node)).build();
+			}
+
+			return Response.status(406).entity("Unexpected node type: " + node.getPrimaryNodeType()).build();
+		} finally {
+			session.logout();
 		}
-		if (node.isNodeType("nt:folder")) {
-			return Response.ok(getObjectProfile(node)).build();
-		}
-		return Response.status(406).entity("Unexpected node type: " + node.getPrimaryNodeType()).build();
 	}
 
 	/**
@@ -103,6 +110,7 @@ public class FedoraNodes extends AbstractResource {
 				uriInfo.getAbsolutePathBuilder().path("datastreams").build();
 		objectProfile.objState = ObjectProfile.ObjectStates.A;
 		objectProfile.objModels = obj.getModels();
+
 		return objectProfile;
 
 	}
