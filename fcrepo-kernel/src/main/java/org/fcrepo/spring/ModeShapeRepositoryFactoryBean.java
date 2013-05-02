@@ -10,6 +10,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.services.ObjectService;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.api.JcrTools;
@@ -39,27 +40,11 @@ public class ModeShapeRepositoryFactoryBean implements
     }
 
     private void setupInitialNodes() throws RepositoryException {
+
         final Session s = repository.login();
-        final Node objectStore =
-                new JcrTools(true).findOrCreateNode(s, "/objects");
-        final Node federatedStore = 
-        		new JcrTools(true).findOrCreateNode(s, "/federated");
 
-        if (objectStore.canAddMixin("fedora:objectStore")) {
-            objectStore.addMixin("fedora:objectStore");
-
-            if (!objectStore.hasProperty("fedora:size")) {
-                objectStore.setProperty("fedora:size", 0L);
-            }
-        }
-        
-        if(federatedStore.canAddMixin("fedora:objectStore")) {
-        	federatedStore.addMixin("fedora:objectStore");
-
-            if(!federatedStore.hasProperty("fedora:size")) {
-            	federatedStore.setProperty("fedora:size", 0L);
-            }
-        }
+        getObjectService().createObject(s, "/objects");
+        getObjectService().createObject(s, "/federated");
 
         s.save();
         s.logout();
@@ -84,4 +69,11 @@ public class ModeShapeRepositoryFactoryBean implements
             final Resource repositoryConfiguration) {
         this.repositoryConfiguration = repositoryConfiguration;
     }
+
+	private ObjectService getObjectService() {
+
+        final ObjectService objectService = new ObjectService();
+        objectService.setRepository(repository);
+        return objectService;
+	}
 }
