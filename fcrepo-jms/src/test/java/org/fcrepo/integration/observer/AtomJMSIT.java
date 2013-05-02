@@ -74,11 +74,9 @@ public class AtomJMSIT implements MessageListener {
         Session session = repository.login();
         session.getRootNode().addNode("test1").addMixin(FEDORA_OBJECT);
         session.save();
-        if (entry == null) { // must not have rec'vd event yet
-            synchronized(this) {
-                this.wait(1000);
-            }
-        }
+
+		waitForEntry();
+
         session.logout();
 
         if (entry == null) fail("Waited a second, got no messages");
@@ -107,11 +105,9 @@ public class AtomJMSIT implements MessageListener {
         ds.addMixin(FEDORA_DATASTREAM);
         ds.addNode(JCR_CONTENT).setProperty(JCR_DATA, "fake data");
         session.save();
-        if (entry == null) { // must not have rec'vd event yet
-            synchronized(this) {
-                this.wait(1000);
-            }
-        }
+
+		waitForEntry();
+
         session.logout();
         if (entry == null) fail("Waited a second, got no messages");
 
@@ -172,5 +168,17 @@ public class AtomJMSIT implements MessageListener {
         session.close();
         connection.close();
     }
+
+	private void waitForEntry() throws InterruptedException {
+		for(int i = 0; i < 5; i++) {
+			if (entry == null) { // must not have rec'vd event yet
+				synchronized(this) {
+					this.wait(1000);
+				}
+			} else {
+				break;
+			}
+		}
+	}
 
 }
