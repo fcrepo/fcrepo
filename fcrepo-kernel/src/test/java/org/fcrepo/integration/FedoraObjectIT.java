@@ -3,6 +3,7 @@ package org.fcrepo.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -47,4 +48,19 @@ public class FedoraObjectIT extends AbstractIT {
                 objectService.getObject(session, "/testObject").getOwnerId();
         assertEquals("Couldn't find object owner ID!", "ajs6f", ownerId);
     }
+
+
+	@Test
+	public void testGetSizeWhenInATree() throws Exception {
+
+		final Session session = repo.login();
+		final FedoraObject object = objectService.createObject(session, "/parentObject");
+		final long originalSize = object.getSize();
+		objectService.createObject(session, "/parentObject/testChildObject");
+
+		session.save();
+
+		assertTrue(objectService.getObject(session, "/parentObject").getSize() > originalSize);
+
+	}
 }

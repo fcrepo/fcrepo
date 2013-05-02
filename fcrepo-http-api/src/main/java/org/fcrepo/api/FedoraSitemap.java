@@ -126,7 +126,7 @@ public class FedoraSitemap extends AbstractResource {
         }
         Calendar lastKnownDate = (lkDateValue != null) ? lkDateValue.getDate() : null;
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
-                FedoraDescribe.class)
+                FedoraNodes.class)
                 .build(r.getNode().getName()), lastKnownDate);
     }
 

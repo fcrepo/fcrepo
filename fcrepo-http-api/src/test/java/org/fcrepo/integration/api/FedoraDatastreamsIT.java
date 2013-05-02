@@ -212,7 +212,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest7?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+                        "objects/FedoraDatastreamsTest7/fcr:children?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         Collection<String> result = TestHelpers.parseChildren(response.getEntity());

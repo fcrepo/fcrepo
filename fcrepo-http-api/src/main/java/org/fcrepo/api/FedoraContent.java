@@ -81,6 +81,7 @@ public class FedoraContent extends AbstractResource {
                     .toString(), requestBodyStream, checksumType, checksum);
         } finally {
             session.save();
+			session.logout();
         }
         return created(uriInfo.getBaseUriBuilder().path("/rest" + path).build()).build();
     }
@@ -140,26 +141,30 @@ public class FedoraContent extends AbstractResource {
             ) throws RepositoryException {
 
 		final Session session = getAuthenticatedSession();
-        String path = toPath(pathList);
-        final Datastream ds = datastreamService.getDatastream(session, path);
+		try {
+			String path = toPath(pathList);
+			final Datastream ds = datastreamService.getDatastream(session, path);
 
-        final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
-        final Date date = ds.getLastModifiedDate();
-        final Date roundedDate = new Date();
-        roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
+			final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
+			final Date date = ds.getLastModifiedDate();
+			final Date roundedDate = new Date();
+			roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+			ResponseBuilder builder =
+					request.evaluatePreconditions(roundedDate, etag);
 
-        final CacheControl cc = new CacheControl();
-        cc.setMaxAge(0);
-        cc.setMustRevalidate(true);
+			final CacheControl cc = new CacheControl();
+			cc.setMaxAge(0);
+			cc.setMustRevalidate(true);
 
-        if (builder == null) {
-            builder = Response.ok(ds.getContent(), ds.getMimeType());
-        }
+			if (builder == null) {
+				builder = Response.ok(ds.getContent(), ds.getMimeType());
+			}
 
-        return builder.cacheControl(cc).lastModified(date).tag(etag).build();
-    }
+			return builder.cacheControl(cc).lastModified(date).tag(etag).build();
+		} finally {
+			session.logout();
+		}
+	}
     
     public DatastreamService getDatastreamService() {
         return datastreamService;

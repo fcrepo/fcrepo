@@ -32,7 +32,7 @@ public class FedoraUnnamedObjectsTest {
 
     FedoraUnnamedObjects testObj;
 
-    FedoraObjects mockObjects;
+    FedoraNodes mockObjects;
 
     Repository mockRepo;
 
@@ -48,7 +48,7 @@ public class FedoraUnnamedObjectsTest {
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockObjects = mock(FedoraObjects.class);
+        mockObjects = mock(FedoraNodes.class);
         testObj = new FedoraUnnamedObjects();
         testObj.objectsResource = mockObjects;
     }

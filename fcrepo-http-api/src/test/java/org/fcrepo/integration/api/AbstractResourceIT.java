@@ -121,7 +121,7 @@ public abstract class AbstractResourceIT {
 
     protected ObjectProfile getObject(final String pid)
             throws ClientProtocolException, IOException, JAXBException {
-        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid + "/fcr:describe");
+        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
         final HttpResponse resp = execute(get);
         final Unmarshaller um = context.createUnmarshaller();
         return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());

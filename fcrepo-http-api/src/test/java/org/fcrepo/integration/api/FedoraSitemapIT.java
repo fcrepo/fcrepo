@@ -12,7 +12,7 @@ public class FedoraSitemapIT extends AbstractResourceIT {
     @Test
     public void testGetSitemapIndex() throws Exception {
 
-        getStatus(postObjMethod("new"));
+        getStatus(postObjMethod("fcr:new"));
         final HttpGet httpGet = new HttpGet(serverAddress + "sitemap");
 
         assertEquals(200, getStatus(httpGet));
@@ -25,7 +25,7 @@ public class FedoraSitemapIT extends AbstractResourceIT {
     public void testGetSitemap() throws Exception {
 
         getStatus(postObjMethod("test:1"));
-        getStatus(postObjMethod("new"));
+        getStatus(postObjMethod("fcr:new"));
 
         final HttpGet httpGet = new HttpGet(serverAddress + "sitemap/1");
 

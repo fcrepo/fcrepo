@@ -31,22 +31,25 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
 
-public class FedoraObjectsTest {
+public class FedoraNodesTest {
 
-    FedoraObjects testObj;
+    FedoraNodes testObj;
 
     ObjectService mockObjects;
     
@@ -56,39 +59,21 @@ public class FedoraObjectsTest {
 
     Session mockSession;
 
-    SecurityContext mockSecurityContext;
-
-    HttpServletRequest mockServletRequest;
-
-    Principal mockPrincipal;
-
-    String mockUser = "testuser";
+	LowLevelStorageService mockLow;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockSecurityContext = mock(SecurityContext.class);
-        mockServletRequest = mock(HttpServletRequest.class);
-        mockPrincipal = mock(Principal.class);
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
-        testObj = new FedoraObjects();
+		mockLow = mock(LowLevelStorageService.class);
+        testObj = new FedoraNodes();
+		mockSession = TestHelpers.mockSession(testObj);
         testObj.setObjectService(mockObjects);
         testObj.setDatastreamService(mockDatastreams);
+		testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
-        mockSession = mock(Session.class);
-        when(mockSession.getUserID()).thenReturn(mockUser);
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(mockUser);
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        when(
-                mockSessions.getSession(any(SecurityContext.class),
-                        any(HttpServletRequest.class))).thenReturn(mockSession);
-        testObj.setSessionFactory(mockSessions);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
         testObj.setPidMinter(new UUIDPidMinter());
-        testObj.setHttpServletRequest(mockServletRequest);
-        testObj.setSecurityContext(mockSecurityContext);
     }
 
     @After
@@ -157,23 +142,6 @@ public class FedoraObjectsTest {
 
 
     @Test
-    public void testGetObjects() throws RepositoryException, IOException {
-        final String pid = "testObject";
-        final String childPid = "testChild";
-        final String path = "/" + pid;
-        final FedoraObject mockObj = mock(FedoraObject.class);
-        when(mockObj.getName()).thenReturn(pid);
-        Set<String> mockNames = new HashSet<String>(Arrays.asList(new String[]{childPid}));
-        when(mockObjects.getObjectNames(mockSession, path)).thenReturn(mockNames);
-        when(mockObjects.getObjectNames(eq(mockSession), eq(path), any(String.class))).thenReturn(mockNames);
-        Response actual = testObj.getObjects(createPathList(pid), null);
-        assertNotNull(actual);
-        String content = (String) actual.getEntity();
-        assertTrue(content, content.contains(childPid));
-        verify(mockSession, never()).save();
-    }
-
-    @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = "testObject";
         final String path = "/" + pid;
@@ -183,5 +151,29 @@ public class FedoraObjectsTest {
         verify(mockObjects).deleteObject(mockSession, path);
         verify(mockSession).save();
     }
+
+	@Test
+	public void testDescribeDatastream() throws RepositoryException, IOException {
+		final String pid = "FedoraDatastreamsTest1";
+		final String dsId = "testDS";
+		final String path = "/" + pid + "/" + dsId;
+		final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
+		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
+		Node mockNode = mock(Node.class);
+		when(mockNode.getSession()).thenReturn(mockSession);
+		when(mockDs.getNode()).thenReturn(mockNode);
+		when(mockNode.getName()).thenReturn(dsId);
+		Node mockParent = mock(Node.class);
+		when(mockParent.getPath()).thenReturn(path);
+		when(mockNode.getParent()).thenReturn(mockParent);
+		when(mockNode.getPath()).thenReturn(path);
+		when(mockNode.isNodeType("nt:file")).thenReturn(true);
+		when(mockSession.getNode(path)).thenReturn(mockNode);
+		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
+		final Response actual = testObj.describe(createPathList(pid, dsId));
+		assertNotNull(actual);
+		verify(mockDatastreams).getDatastream(mockSession, path);
+		verify(mockSession, never()).save();
+	}
     
 }

@@ -42,18 +42,23 @@ public class FedoraFixity extends AbstractResource {
 												List<PathSegment> pathList) throws RepositoryException {
 
 		final Session session = getAuthenticatedSession();
-		final String path = toPath(pathList);
 
-		final Datastream ds = datastreamService.getDatastream(session, path);
+		try {
+			final String path = toPath(pathList);
 
-		final DatastreamFixity dsf = new DatastreamFixity();
-		dsf.path = path;
-		dsf.timestamp = new Date();
+			final Datastream ds = datastreamService.getDatastream(session, path);
 
-		final Collection<FixityResult> blobs =
-				llStoreService.runFixityAndFixProblems(ds);
-		dsf.statuses = new ArrayList<FixityResult>(blobs);
-		return dsf;
+			final DatastreamFixity dsf = new DatastreamFixity();
+			dsf.path = path;
+			dsf.timestamp = new Date();
+
+			final Collection<FixityResult> blobs =
+					llStoreService.runFixityAndFixProblems(ds);
+			dsf.statuses = new ArrayList<FixityResult>(blobs);
+			return dsf;
+		} finally {
+			session.logout();
+		}
 	}
 
 	public DatastreamService getDatastreamService() {

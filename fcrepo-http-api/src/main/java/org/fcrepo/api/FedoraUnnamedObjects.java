@@ -37,7 +37,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
     FedoraDatastreams datastreamsResource;
 
     @Autowired
-    FedoraObjects objectsResource;
+	FedoraNodes objectsResource;
 
     /**
      * Create an anonymous object with a newly minted name

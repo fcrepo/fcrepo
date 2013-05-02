@@ -122,13 +122,13 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
      */
     @Test
     public void testGetProjectedNode() throws Exception {
-        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1?mixin=" + FedoraJcrTypes.FEDORA_OBJECT);
+        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1/fcr:children?mixin=" + FedoraJcrTypes.FEDORA_OBJECT);
         HttpResponse response = execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
         Collection<String> childNames = TestHelpers.parseChildren(response.getEntity());
         assertEquals(1, childNames.size());
         assertEquals("TestSubdir", childNames.iterator().next());
-        method = new HttpGet(serverAddress + "files/FileSystem1?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+        method = new HttpGet(serverAddress + "files/FileSystem1/fcr:children?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
         response = execute(method);
         childNames = TestHelpers.parseChildren(response.getEntity());
         assertEquals(2, childNames.size());
