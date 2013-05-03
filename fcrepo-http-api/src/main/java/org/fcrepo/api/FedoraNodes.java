@@ -10,6 +10,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -25,11 +26,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.Variant;
 
+import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.UpdateAction;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
+import org.apache.jena.riot.WebContent;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
@@ -37,6 +48,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
+import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
@@ -169,12 +181,22 @@ public class FedoraNodes extends AbstractResource {
     @PUT
 	@Timed
     public Response modifyObject(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList, final InputStream requestBodyStream) throws RepositoryException, IOException {
         final Session session = getAuthenticatedSession();
+		String path = toPath(pathList);
+		logger.debug("Modifying object with path: {}", path);
+
         try {
-            // TODO do something with awful mess of fcrepo3 query params
+
+			final FedoraObject result =
+					objectService.getObject(session, path);
+
+			if (requestBodyStream != null) {
+				UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
+			}
             session.save();
-            return created(uriInfo.getRequestUri()).build();
+
+			return Response.temporaryRedirect(uriInfo.getRequestUri()).build();
         } finally {
             session.logout();
         }
@@ -208,14 +230,32 @@ public class FedoraNodes extends AbstractResource {
         
         try {
             if (objectService.exists(session, path)) {
-                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+
+				if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
+
+					final FedoraObject result = objectService.getObject(session, path);
+
+					UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
+
+					session.save();
+
+					return Response.ok().build();
+				} else {
+                	return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+				}
             }
+
             if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
                 final FedoraObject result =
                         objectService.createObject(session, path);
                 if (label != null && !"".equals(label)) {
                     result.setLabel(label);
                 }
+
+				if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
+					UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
+				}
+
             }
             if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
                 final MediaType contentType =

@@ -16,14 +16,25 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Calendar;
 import java.util.Collection;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.modeshape.jcr.api.JcrTools;
+import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Timer;
@@ -221,5 +232,61 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
         }
         return false;
     }
+
+	public Model getPropertiesModel() throws RepositoryException {
+
+		final Resource subject = getGraphSubject();
+
+		final Model model = ModelFactory.createDefaultModel();
+
+		final NamespaceRegistry namespaceRegistry = getNode().getSession().getWorkspace().getNamespaceRegistry();
+		for (final String prefix : namespaceRegistry.getPrefixes()) {
+			final String nsURI = namespaceRegistry.getURI(prefix);
+			if (nsURI != null && !nsURI.equals("") &&
+						!prefix.equals("xmlns")) {
+				model.setNsPrefix(prefix, nsURI);
+			}
+		}
+
+		final PropertyIterator properties = node.getProperties();
+
+		while (properties.hasNext()) {
+			final Property property = properties.nextProperty();
+
+			Namespaced nsProperty = (Namespaced)property;
+			if (property.isMultiple()) {
+				final Value[] values = property.getValues();
+
+				for(Value v : values) {
+					model.add(subject, ResourceFactory.createProperty(nsProperty.getNamespaceURI(), nsProperty.getLocalName()), v.getString());
+				}
+
+			} else {
+				final Value value = property.getValue();
+				model.add(subject, ResourceFactory.createProperty(nsProperty.getNamespaceURI(), nsProperty.getLocalName()), value.getString());
+			}
+
+		}
+
+		model.register(new JcrPropertyStatementListener(subject, getNode()));
+
+		return model;
+	}
+
+	public Resource getGraphSubject() throws RepositoryException {
+		return ResourceFactory.createResource("info:fedora" + node.getPath());
+	}
+
+	public GraphStore getGraphStore() throws RepositoryException {
+		GraphStore graphStore = GraphStoreFactory.create(getPropertiesModel());
+
+		return graphStore;
+	}
+
+	public void setGraphStore() {
+
+	}
+
+
 
 }
