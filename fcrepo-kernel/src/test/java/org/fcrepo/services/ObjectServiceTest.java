@@ -28,43 +28,35 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ObjectService.class, ServiceHelpers.class})
+@PrepareForTest({ServiceHelpers.class})
 public class ObjectServiceTest implements FedoraJcrTypes {
 
+    private Session mockSession;
+    
+    private Node mockRoot;
+    
+    private ObjectService testObj;
+
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
+    	testObj = new ObjectService();
+    	mockSession = mock(Session.class);
+    	mockRoot = mock(Node.class);
+    	when(mockSession.getRootNode()).thenReturn(mockRoot);
     }
 
     @After
     public void tearDown() {
-
-    }
-
-    @Test
-    public void testCreateObjectNode() throws Exception {
-        final Node mockNode = mock(Node.class);
-        final Session mockSession = mock(Session.class);
-        final String testPath = "/foo";
-        final FedoraObject mockWrapper = new FedoraObject(mockNode);
-        whenNew(FedoraObject.class).withArguments(mockSession, testPath)
-                .thenReturn(mockWrapper);
-        final ObjectService testObj = new ObjectService();
-        final Node actual = testObj.createObject(mockSession, "/foo").getNode();
-        assertEquals(mockNode, actual);
-        verifyNew(FedoraObject.class).withArguments(mockSession, testPath);
     }
 
     @Test
     public void testCreateObject() throws Exception {
         final Node mockNode = mock(Node.class);
-        final Session mockSession = mock(Session.class);
         final String testPath = "/foo";
-        final FedoraObject mockWrapper = new FedoraObject(mockNode);
-        whenNew(FedoraObject.class).withArguments(any(Session.class),
-                any(String.class)).thenReturn(mockWrapper);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         final ObjectService testObj = new ObjectService();
-        testObj.createObject(mockSession, "/foo");
-        verifyNew(FedoraObject.class).withArguments(mockSession, testPath);
+        final Node actual = testObj.createObject(mockSession, testPath).getNode();
+        assertEquals(mockNode, actual);
     }
 
     @Test

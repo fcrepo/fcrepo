@@ -3,6 +3,7 @@ package org.fcrepo.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,8 +12,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import java.io.InputStream;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -24,19 +25,35 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.value.binary.StrategyHint;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DatastreamService.class, FedoraTypesUtils.class,
+@PrepareForTest({FedoraTypesUtils.class,
         ServiceHelpers.class})
 public class DatastreamServiceTest implements FedoraJcrTypes {
 
     private static final String MOCK_CONTENT_TYPE = "application/test-data";
+    
+    private static final String JCR_CONTENT = "jcr:content";
+    
+    private static final String JCR_DATA = "jcr:data";
+    
+    private Session mockSession;
+    
+    private Node mockRoot;
+    
+    private DatastreamService testObj;
 
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
+    	testObj = new DatastreamService();
+    	mockSession = mock(Session.class);
+    	mockRoot = mock(Node.class);
+    	when(mockSession.getRootNode()).thenReturn(mockRoot);
     }
 
     @After
@@ -46,89 +63,75 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testCreateDatastreamNode() throws Exception {
-        final Node mockNode = mock(Node.class);
-        final Session mockSession = mock(Session.class);
-        final InputStream mockIS = mock(InputStream.class);
         final String testPath = "/foo/bar";
-        final Datastream mockWrapper = mock(Datastream.class);
-        when(mockWrapper.getNode()).thenReturn(mockNode);
-        whenNew(Datastream.class).withArguments(mockSession, testPath)
-                .thenReturn(mockWrapper);
-        final DatastreamService testObj = new DatastreamService();
+        final Node mockNode = mock(Node.class);
+        final Node mockContent = mock(Node.class);
+        Property mockData = mock(Property.class);
+        Binary mockBinary = mock(Binary.class);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
+        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockData.getBinary()).thenReturn(mockBinary);
+        final InputStream mockIS = mock(InputStream.class);
+        when(mockContent.setProperty(JCR_DATA, mockBinary)).thenReturn(mockData);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
 		final PolicyDecisionPoint pdp = mock(PolicyDecisionPoint.class);
 		when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
 		testObj.setStoragePolicyDecisionPoint(pdp);
 		PowerMockito.mockStatic(FedoraTypesUtils.class);
-		when(FedoraTypesUtils.getBinary(mockNode, mockIS)).thenReturn(mock(Binary.class));
+		when(FedoraTypesUtils.getBinary(eq(mockNode), eq(mockIS), any(StrategyHint.class))).thenReturn(mockBinary);
+
         final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,
                         MOCK_CONTENT_TYPE, mockIS);
         assertEquals(mockNode, actual);
-        verifyNew(Datastream.class).withArguments(mockSession, testPath);
-        verify(mockWrapper).setContent(any(InputStream.class), any(String.class),
-                any(String.class), any(String.class), any(PolicyDecisionPoint.class));
+        
+        verify(mockContent).setProperty(JCR_DATA, mockBinary);
     }
 
     @Test
     public void testGetDatastreamNode() throws Exception {
-        final Session mockSession = mock(Session.class);
+        final String testPath = "/foo/bar";
         final Node mockNode = mock(Node.class);
-        final Datastream mockWrapper = mock(Datastream.class);
-        when(mockWrapper.getNode()).thenReturn(mockNode);
-        whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
-                .thenReturn(mockWrapper);
+        when(mockSession.getNode(testPath)).thenReturn(mockNode);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         final DatastreamService testObj = new DatastreamService();
-        testObj.getDatastreamNode(mockSession, "/foo/bar");
-        verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
-        verify(mockWrapper).getNode();
+        testObj.getDatastreamNode(mockSession, testPath);
+        verify(mockRoot).getNode(testPath.substring(1));
     }
 
     @Test
     public void testGetDatastream() throws Exception {
-        final Session mockSession = mock(Session.class);
+        final String testPath = "/foo/bar";
         final Node mockNode = mock(Node.class);
-        final Datastream mockWrapper = mock(Datastream.class);
-        when(mockWrapper.getNode()).thenReturn(mockNode);
-        whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
-                .thenReturn(mockWrapper);
-        final DatastreamService testObj = new DatastreamService();
-        testObj.getDatastream(mockSession, "/foo/bar");
-        verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
+        testObj.getDatastream(mockSession, testPath);
+        verify(mockRoot).getNode(testPath.substring(1));
     }
 
 
 	@Test
-	public void testGetDatastreamFromPath() throws Exception {
-		final Session mockSession = mock(Session.class);
-		final Node mockNode = mock(Node.class);
-		final Datastream mockWrapper = mock(Datastream.class);
-		when(mockWrapper.getNode()).thenReturn(mockNode);
-		whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
-				.thenReturn(mockWrapper);
+	public void testGetDatastreamsForPath() throws Exception {
+        final String testPath = "/foo/bar";
+        final Node mockNode = mock(Node.class);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
 		final DatastreamService testObj = new DatastreamService();
-		testObj.getDatastream(mockSession, "/foo/bar");
-		verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
+		testObj.getDatastreamsForPath(mockSession, "/foo/bar");
+		verify(mockNode).getNodes();
 	}
 
     @Test
     public void testPurgeDatastream() throws Exception {
-        final Session mockSession = mock(Session.class);
+        final String testPath = "/foo/bar";
         final Node mockNode = mock(Node.class);
-        final Datastream mockWrapper = mock(Datastream.class);
-        when(mockWrapper.getNode()).thenReturn(mockNode);
-        whenNew(Datastream.class).withArguments(mockSession, "/foo/bar")
-                .thenReturn(mockWrapper);
-        final DatastreamService testObj = new DatastreamService();
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         testObj.purgeDatastream(mockSession, "/foo/bar");
-        verifyNew(Datastream.class).withArguments(mockSession, "/foo/bar");
-        verify(mockWrapper).purge();
+        verify(mockNode).remove();
     }
 
 
     @Test
     public void testExists() throws RepositoryException {
         final Session mockSession = mock(Session.class);
-        final DatastreamService testObj = new DatastreamService();
         testObj.exists(mockSession, "/foo/bar");
         verify(mockSession).nodeExists("/foo/bar");
     }
