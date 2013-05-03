@@ -127,8 +127,9 @@ public class DatastreamIT extends AbstractIT {
 
         final Datastream ds =
                 datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode3");
-		Binary b = (Binary)(session.getValueFactory().createBinary(new ByteArrayInputStream("0123456789".getBytes())));
-        ds.setContent(b);
+
+
+        ds.setContent(new ByteArrayInputStream("0123456789".getBytes()));
 
         assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds
                 .getContentDigest().toString());

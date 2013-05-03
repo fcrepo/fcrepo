@@ -110,6 +110,7 @@ public class DatastreamTest implements FedoraJcrTypes {
             InvalidChecksumException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
+		final InputStream mockStream = mock(InputStream.class);
         PowerMockito.mockStatic(FedoraTypesUtils.class);
         when(
                 FedoraTypesUtils.getBinary(any(Node.class),
@@ -122,7 +123,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
         final Property mockSize = mock(Property.class);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockSize);
-        testObj.setContent(mockBin);
+        testObj.setContent(mockStream);
     }
 
     @Test

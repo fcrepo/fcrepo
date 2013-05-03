@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.yammer.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
+import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -14,6 +15,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Calendar;
@@ -35,6 +37,7 @@ import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
+import org.modeshape.jcr.value.binary.StrategyHint;
 import org.slf4j.Logger;
 
 import com.yammer.metrics.Histogram;
@@ -97,7 +100,7 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
             throws RepositoryException {
         super(false);
         checkArgument(session != null,
-                "null cannot create a Fedora Datastream!");
+							 "null cannot create a Fedora Datastream!");
         checkArgument(dsPath != null,
                 "A Fedora Datastream cannot be created at null path!");
 
@@ -158,8 +161,8 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
      * @param content
      * @throws RepositoryException
      */
-    public void setContent(final javax.jcr.Binary binary,
-            final String checksumType, final String checksum)
+    public void setContent(final InputStream content, final String contentType,
+            final String checksumType, final String checksum, PolicyDecisionPoint storagePolicyDecisionPoint)
             throws RepositoryException, InvalidChecksumException {
 
         final Node contentNode =
@@ -171,6 +174,16 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
         logger.debug("Created content node at path: " + contentNode.getPath());
 
+		node.setProperty(FEDORA_CONTENTTYPE, contentType);
+
+		StrategyHint hint = null;
+
+
+		if(storagePolicyDecisionPoint != null) {
+			hint = storagePolicyDecisionPoint.evaluatePolicies(node);
+		}
+
+		Binary binary = (Binary) getBinary(node, content, hint);
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -189,19 +202,16 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
          */
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
-		if(binary instanceof Binary) {
-			Binary modeBinary = (Binary)binary;
-			final String dsChecksum = modeBinary.getHexHash();
-			if (checksum != null && !checksum.equals("") &&
-					!checksum.equals(modeBinary.getHexHash())) {
-				logger.debug("Failed checksum test");
-				throw new InvalidChecksumException("Checksum Mismatch of " +
-						dsChecksum + " and " + checksum);
-			}
-
-			contentNode.setProperty(DIGEST_VALUE, dsChecksum);
-			contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
+		final String dsChecksum = binary.getHexHash();
+		if (checksum != null && !checksum.equals("") &&
+					!checksum.equals(binary.getHexHash())) {
+			logger.debug("Failed checksum test");
+			throw new InvalidChecksumException("Checksum Mismatch of " +
+													   dsChecksum + " and " + checksum);
 		}
+
+		contentNode.setProperty(DIGEST_VALUE, dsChecksum);
+		contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
 
         contentSizeHistogram.update(dataProperty.getLength());
 
@@ -211,32 +221,10 @@ public class Datastream extends JcrTools implements FedoraJcrTypes {
 
     }
 
-    /**
-     * Set the datastream's binary content payload
-     * @param content binary payload
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     */
-    public void setContent(final javax.jcr.Binary content)
-            throws RepositoryException, InvalidChecksumException {
-        setContent(content, null, null);
-    }
 
-    /**
-     * Set the datastream's bianry content payload, and check it against a provided digest
-     * @param content binary paylod
-     * @param mimeType the mimetype given for the content inputstream
-     * @param checksumType one of: SHA-1
-     * @param checksum the digest of content
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     */
-    public void setContent(final javax.jcr.Binary content, final String mimeType,
-            final String checksumType, final String checksum)
-            throws RepositoryException, InvalidChecksumException {
-		node.setProperty(FEDORA_CONTENTTYPE, mimeType);
-        setContent(content, checksumType, checksum);
-    }
+	public void setContent(InputStream content) throws InvalidChecksumException, RepositoryException {
+		setContent(content, null, null, null, null);
+	}
 
     /**
      * @return The size in bytes of content associated with this datastream.

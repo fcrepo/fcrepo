@@ -65,8 +65,8 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                         MOCK_CONTENT_TYPE, mockIS);
         assertEquals(mockNode, actual);
         verifyNew(Datastream.class).withArguments(mockSession, testPath);
-        verify(mockWrapper).setContent(any(Binary.class), any(String.class),
-                any(String.class), any(String.class));
+        verify(mockWrapper).setContent(any(InputStream.class), any(String.class),
+                any(String.class), any(String.class), any(PolicyDecisionPoint.class));
     }
 
     @Test

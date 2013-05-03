@@ -75,40 +75,8 @@ public class DatastreamService extends RepositoryService {
 																		   InvalidChecksumException {
 
 		final Datastream ds = new Datastream(session, dsPath);
-		final Node result = ds.getNode();
-		ds.setContent(createBinary(result, requestBodyStream), contentType, checksumType, checksum);
-		return result;
-	}
-
-	/**
-	 * Pre-create a Binary value to hand off to Datastream
-	 * @param node the JCR node to attach the Binary to
-	 * @param content a binary payload for the Binary
-	 * @return a JCR Binary reference
-	 */
-	private Binary createBinary(final Node node, final InputStream content) {
-        /*
-         * https://docs.jboss.org/author/display/MODE/Binary+values#Binaryvalues-
-         * ExtendedBinaryinterface
-         * promises: "All javax.jcr.Binary values returned by ModeShape will
-         * implement this public interface, so feel free to cast the values to
-         * gain access to the additional methods."
-         */
-		final Binary binary = (Binary) getBinary(node, content, getStoragePolicyDecisionPoint().evaluatePolicies(node));
-
-		return binary;
-	}
-
-	/**
-	 * Get the Policy Decision Point for this service. Initialize it if Spring didn't wire it in for us.
-	 * @return a PolicyDecisionPoint
-	 */
-	private PolicyDecisionPoint getStoragePolicyDecisionPoint() {
-		if(storagePolicyDecisionPoint == null) {
-			storagePolicyDecisionPoint = new PolicyDecisionPoint();
-		}
-
-		return storagePolicyDecisionPoint;
+		ds.setContent(requestBodyStream, contentType, checksumType, checksum, getStoragePolicyDecisionPoint());
+		return ds.getNode();
 	}
 
 	/**
@@ -175,4 +143,16 @@ public class DatastreamService extends RepositoryService {
 		this.storagePolicyDecisionPoint = pdp;
 	}
 
+
+	/**
+	 * Get the Policy Decision Point for this service. Initialize it if Spring didn't wire it in for us.
+	 * @return a PolicyDecisionPoint
+	 */
+	private PolicyDecisionPoint getStoragePolicyDecisionPoint() {
+		if(storagePolicyDecisionPoint == null) {
+			storagePolicyDecisionPoint = new PolicyDecisionPoint();
+		}
+
+		return storagePolicyDecisionPoint;
+	}
 }
