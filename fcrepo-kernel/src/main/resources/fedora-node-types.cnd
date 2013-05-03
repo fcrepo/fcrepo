@@ -23,6 +23,7 @@
  */
 <fedora = 'info:fedora/'>
 
+<fedorarelsext = 'info:fedora/fedora-system:def/relations-external#'>
 
 /*
  * Any Fedora resource.
@@ -33,12 +34,10 @@
 	 * Temporary for us until we better understand the use of jcr:created.
 	 */
 	- fedora:created (STRING) COPY
-	
-	/*
-	 * See: http://dublincore.org/documents/dcmi-terms/#elements-identifier
-	 */
-	- dc:identifier (STRING) multiple COPY
-	- dc:title (STRING) COPY
+
+	- fedorarelsext:isPartOf (REFERENCE) multiple COPY
+	- * (STRING) multiple COPY
+	- * (STRING) COPY
 
 
 /*
