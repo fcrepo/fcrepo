@@ -1,0 +1,37 @@
+{
+    "name" : "self-healing-repo",
+    "jndiName" : "asdfg",
+    "workspaces" : {
+        "predefined" : ["fedora"],
+        "default" : "fedora",
+        "allowCreation" : true
+    },
+    "storage" : {
+        "cacheName" : "FedoraRepository",
+        "cacheConfiguration" : "infinispan_selfhealing_configuration.xml",
+        "binaryStorage" : {
+            "type" : "composite",
+            "minimumBinarySizeInBytes" : 1,
+            "namedStores" : {
+                "default" : {
+                    "type" : "transient"
+                },
+                "tiff-store" : {
+                    "type" : "file",
+                    "directory":"${fcrepo.tiff-store:target/tiff-binaries}"
+                }
+            }
+
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        },
+        "providers" : [
+            { "classname" : "servlet" }
+        ]
+    },
+	"node-types" : ["fedora-node-types.cnd"]
+}
