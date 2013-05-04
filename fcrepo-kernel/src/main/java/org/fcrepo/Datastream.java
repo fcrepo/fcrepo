@@ -3,7 +3,7 @@ package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.yammer.metrics.MetricRegistry.name;
+import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
@@ -40,7 +40,7 @@ import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.value.binary.StrategyHint;
 import org.slf4j.Logger;
 
-import com.yammer.metrics.Histogram;
+import com.codahale.metrics.Histogram;
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.

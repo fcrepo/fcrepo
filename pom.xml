@@ -33,12 +33,11 @@
     <sesame.version>2.7.0</sesame.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
-    <metrics.version>3.0.0-BETA1</metrics.version>
+    <metrics.version>3.0.0-BETA2</metrics.version>
 
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <powermock.version>1.5</powermock.version>
-    <metrics.version>3.0.0-BETA1</metrics.version>
   </properties>
 
   <modules>

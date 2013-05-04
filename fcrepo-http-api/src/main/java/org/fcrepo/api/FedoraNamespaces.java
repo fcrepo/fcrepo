@@ -20,7 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
 import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;

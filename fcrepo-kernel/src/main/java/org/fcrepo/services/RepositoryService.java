@@ -28,7 +28,7 @@ import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.yammer.metrics.MetricRegistry;
+import com.codahale.metrics.MetricRegistry;
 
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 

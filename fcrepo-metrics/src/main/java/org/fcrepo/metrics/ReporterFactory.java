@@ -1,13 +1,13 @@
 
 package org.fcrepo.metrics;
 
-import static com.yammer.metrics.graphite.GraphiteReporter.forRegistry;
+import static com.codahale.metrics.graphite.GraphiteReporter.forRegistry;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 
-import com.yammer.metrics.ScheduledReporter;
-import com.yammer.metrics.graphite.Graphite;
-import com.yammer.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 
 public class ReporterFactory {
 

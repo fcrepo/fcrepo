@@ -22,7 +22,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;

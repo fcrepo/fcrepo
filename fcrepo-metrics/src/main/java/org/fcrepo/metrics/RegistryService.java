@@ -3,13 +3,13 @@ package org.fcrepo.metrics;
 
 import java.io.PrintStream;
 
-import com.yammer.metrics.ConsoleReporter;
-import com.yammer.metrics.MetricFilter;
-import com.yammer.metrics.MetricRegistry;
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
 
 public abstract class RegistryService {
 
-    private static final MetricRegistry metrics = new MetricRegistry("fcrepo");
+    private static final MetricRegistry metrics = new MetricRegistry();
 
     public static MetricRegistry getMetrics() {
         return metrics;

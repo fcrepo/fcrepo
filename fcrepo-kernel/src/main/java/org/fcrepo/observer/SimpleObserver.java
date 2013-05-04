@@ -2,7 +2,7 @@
 package org.fcrepo.observer;
 
 import static com.google.common.collect.Iterables.filter;
-import static com.yammer.metrics.MetricRegistry.name;
+import static com.codahale.metrics.MetricRegistry.name;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
@@ -24,7 +24,7 @@ import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
 import com.google.common.eventbus.EventBus;
-import com.yammer.metrics.Counter;
+import com.codahale.metrics.Counter;
 
 /**
  * Simple JCR EventListener that filters JCR Events through a Fedora

@@ -3,7 +3,7 @@ package org.fcrepo;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.yammer.metrics.MetricRegistry.name;
+import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.utils.FedoraTypesUtils.isOwned;
@@ -26,7 +26,7 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.yammer.metrics.Timer;
+import com.codahale.metrics.Timer;
 
 /**
  * An abstraction that represents a Fedora Object backed by

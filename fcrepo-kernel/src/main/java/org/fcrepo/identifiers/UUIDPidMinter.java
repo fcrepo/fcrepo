@@ -1,11 +1,11 @@
 
 package org.fcrepo.identifiers;
 
-import static com.yammer.metrics.MetricRegistry.name;
+import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.services.RepositoryService.metrics;
 
-import com.yammer.metrics.Timer;
+import com.codahale.metrics.Timer;
 
 /**
  * Simple PidMinter that replies on Java's inbuilt UUID minting.

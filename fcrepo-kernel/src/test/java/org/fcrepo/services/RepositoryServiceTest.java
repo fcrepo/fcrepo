@@ -34,7 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
-import com.yammer.metrics.MetricRegistry;
+import com.codahale.metrics.MetricRegistry;
 
 public class RepositoryServiceTest implements FedoraJcrTypes {
 

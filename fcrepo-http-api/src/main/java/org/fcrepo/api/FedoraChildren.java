@@ -1,6 +1,6 @@
 package org.fcrepo.api;
 
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FedoraJcrTypes;

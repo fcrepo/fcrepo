@@ -6,7 +6,7 @@ import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
-import static com.yammer.metrics.MetricRegistry.name;
+import static com.codahale.metrics.MetricRegistry.name;
 import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
@@ -49,8 +49,8 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
-import com.yammer.metrics.Counter;
-import com.yammer.metrics.Timer;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
 
 public class LowLevelStorageService {
 

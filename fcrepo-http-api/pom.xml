@@ -48,12 +48,12 @@
     	<artifactId>jersey-json</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
+      <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-jersey</artifactId>
       <version>${metrics.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
+      <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-jersey</artifactId>
       <version>${metrics.version}</version>
     </dependency>
