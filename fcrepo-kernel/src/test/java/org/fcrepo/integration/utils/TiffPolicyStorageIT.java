@@ -1,21 +1,18 @@
 
 package org.fcrepo.integration.utils;
 
-import org.fcrepo.Datastream;
 import org.fcrepo.binary.MimeTypePolicy;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.services.functions.GetBinaryKey;
-import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
-import org.modeshape.jcr.api.Binary;
-import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.NamedHint;
 import org.slf4j.Logger;
@@ -27,15 +24,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.io.ByteArrayInputStream;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 public class TiffPolicyStorageIT {
 
@@ -81,6 +74,7 @@ public class TiffPolicyStorageIT {
     }
 
     @Test
+	@Ignore
     public void testPolicyDrivenStorage() throws Exception {
         final Session session = repo.login();
 
@@ -114,27 +108,21 @@ public class TiffPolicyStorageIT {
 
 		final Iterator<LowLevelCacheEntry> iterator = lowLevelContentEntries.iterator();
 
+		assertEquals(1, lowLevelContentEntries.size());
 
 		final Set<LowLevelCacheEntry> lowLevelTiffEntries = lowLevelService.getLowLevelCacheEntries(tiffKey);
 
 		final Iterator<LowLevelCacheEntry> tiffIterator = lowLevelTiffEntries.iterator();
 
-		while(iterator.hasNext()) {
-			LowLevelCacheEntry e = iterator.next();
-			logger.info(e.getExternalIdentifier());
-		}
+		assertEquals(1, lowLevelTiffEntries.size());
 
+		LowLevelCacheEntry e = iterator.next();
 
+		assertThat(e.getExternalIdentifier(), containsString("TransientBinaryStore"));
 
+		LowLevelCacheEntry tiffEntry = tiffIterator.next();
+		assertThat(tiffEntry.getExternalIdentifier(), containsString("FileSystemBinaryStore"));
 
-		while(tiffIterator.hasNext()) {
-			LowLevelCacheEntry e = tiffIterator.next();
-			logger.info(e.getExternalIdentifier());
-		}
-
-		assertTrue(!(tiffKey.equals(key)));
-
-		assert(true);
 
 	}
 }
