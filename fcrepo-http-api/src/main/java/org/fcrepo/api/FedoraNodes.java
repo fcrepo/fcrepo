@@ -58,7 +58,7 @@ public class FedoraNodes extends AbstractResource {
 	private LowLevelStorageService llStoreService;
 
 	@GET
-	@Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
+	@Produces({TEXT_XML, APPLICATION_JSON})
 	public Response describe(@PathParam("path")
 							 final List<PathSegment> pathList) throws RepositoryException, IOException {
 
