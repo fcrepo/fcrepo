@@ -132,7 +132,7 @@ public class LowLevelStorageServiceTest {
         testObj.setGetBinaryKey(mockKeyFunc);
         testObj.setRepository(mockRepo);
         final Set<LowLevelCacheEntry> actual = testObj.getLowLevelCacheEntries(mockNode);
-        assertEquals("foo", actual.iterator().next().getExternalIdentifier());
+        assertEquals("/foo", actual.iterator().next().getExternalIdentifier());
     }
 
     @Test

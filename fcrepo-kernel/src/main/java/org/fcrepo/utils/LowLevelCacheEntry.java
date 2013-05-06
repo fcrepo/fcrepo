@@ -11,6 +11,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.util.Properties;
@@ -25,6 +26,7 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
+import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
@@ -38,6 +40,8 @@ public class LowLevelCacheEntry {
 
     private final CacheStore cacheStore;
 
+	private String externalId;
+
     private final BinaryKey key;
 
     public LowLevelCacheEntry(final BinaryStore store,
@@ -45,12 +49,14 @@ public class LowLevelCacheEntry {
         this.store = store;
         cacheStore = lowLevelStore;
         this.key = key;
+		this.externalId = "";
     }
 
     public LowLevelCacheEntry(final BinaryStore store, final BinaryKey key) {
         this.store = store;
         cacheStore = null;
         this.key = key;
+		this.externalId = "";
     }
 
     @Override
@@ -99,9 +105,11 @@ public class LowLevelCacheEntry {
 
         if (store instanceof InfinispanBinaryStore) {
 
+			final InfinispanBinaryStore ispnStore = (InfinispanBinaryStore)store;
+
             final CacheStoreConfig config = cacheStore.getCacheStoreConfig();
 
-            String externalId = null;
+            String ispnExternalId = null;
             if (config instanceof AbstractCacheStoreConfig) {
                 final Properties properties =
                         ((AbstractCacheStoreConfig) config).getProperties();
@@ -111,20 +119,34 @@ public class LowLevelCacheEntry {
 
             }
 
-            if (externalId == null && config instanceof FileCacheStoreConfig) {
-                externalId = ((FileCacheStoreConfig) config).getLocation();
+            if (config instanceof FileCacheStoreConfig) {
+                ispnExternalId = ((FileCacheStoreConfig) config).getLocation();
             }
 
-            if (externalId == null) {
-                externalId = config.toString();
+            if (ispnExternalId == null) {
+				ispnExternalId = config.toString();
             }
 
-            return store.getClass().getName() + ":" +
-                    cacheStore.getCacheStoreConfig().getCacheLoaderClassName() +
-                    ":" + externalId;
+			String blobCacheName = "";
+			try {
+				Field blobCacheNameField = ispnStore.getClass().getDeclaredField("blobCacheName");
+				blobCacheNameField.setAccessible(true);
+				blobCacheName = (String)blobCacheNameField.get(ispnStore);
+			} catch (IllegalAccessException e) {
+				logger.warn("Got exception doing some questionable reflection to get the blob cache name", e);
+			} catch (NoSuchFieldException e) {
+				logger.warn("Got exception doing some questionable reflection  to get the blob cache name", e);
+			}
 
+
+			return getExternalId() + "/" + store.getClass().getName() + ":" + blobCacheName + ":" +
+                    config.getCacheLoaderClassName() +
+                    ":" + ispnExternalId;
+		} else if ( store instanceof FileSystemBinaryStore) {
+			final FileSystemBinaryStore fsStore = (FileSystemBinaryStore)store;
+			return getExternalId() + "/" + store.getClass().getName() + ":" + ((FileSystemBinaryStore) store).getDirectory().toPath();
         } else {
-            return store.toString();
+            return getExternalId() + "/" + store.toString();
         }
     }
 
@@ -173,4 +195,12 @@ public class LowLevelCacheEntry {
 
         return result;
     }
+
+	public void setExternalId(String externalId) {
+		this.externalId = externalId;
+	}
+
+	public String getExternalId() {
+		return externalId;
+	}
 }

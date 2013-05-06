@@ -41,8 +41,8 @@ public class LowLevelCacheEntryIT {
 
         final LowLevelCacheEntry cs =
                 new LowLevelCacheEntry(store, new BinaryKey("asd"));
-        assertEquals("org.modeshape.jcr.value.binary.TransientBinaryStore", cs
-                .getExternalIdentifier().split("@")[0]);
+        assertEquals("/org.modeshape.jcr.value.binary.TransientBinaryStore", cs
+                .getExternalIdentifier().split(":")[0]);
     }
 
     @Test
@@ -137,7 +137,7 @@ public class LowLevelCacheEntryIT {
         final LowLevelCacheEntry cs =
                 new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
         assertEquals(
-                "org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore:org.infinispan.loaders.file.FileCacheStore:target/FedoraRepository/storage",
+                "/org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore:FedoraRepository:org.infinispan.loaders.file.FileCacheStore:target/FedoraRepository/storage",
                 cs.getExternalIdentifier());
     }
 

@@ -164,13 +164,16 @@ public class LowLevelStorageService {
 		Iterator<Map.Entry<String,BinaryStore>> it = compositeStore.getNamedStoreIterator();
 
 		while(it.hasNext()) {
-			BinaryStore bs = it.next().getValue();
+			Map.Entry<String,BinaryStore> entry = it.next();
+
+			BinaryStore bs = entry.getValue();
 
 			if(bs.hasBinary(key)) {
 
 				final Set<LowLevelCacheEntry> binaryBlobs = getLowLevelCacheEntriesFromStore(bs, key);
 
 				for(LowLevelCacheEntry e : binaryBlobs) {
+					e.setExternalId(entry.getKey());
 					blobs.add(e);
 				}
 			}
