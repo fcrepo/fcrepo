@@ -13,10 +13,7 @@ import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
@@ -24,18 +21,13 @@ import org.fcrepo.api.FedoraVersions.Version;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Predicate;
-
 public class FedoraVersionsTest {
 	
-	FedoraVersions fedoraVersions;
+	FedoraVersions testObj;
 	
 	ObjectService mockObjects;
 	
@@ -50,15 +42,12 @@ public class FedoraVersionsTest {
     public void setUp() throws LoginException, RepositoryException {
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
-        fedoraVersions = new FedoraVersions();
-        mockSession = mock(Session.class);
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        when(mockSessions.getSession(any(SecurityContext.class),any(HttpServletRequest.class))).thenReturn(mockSession);
-        fedoraVersions.setSessionFactory(mockSessions);
-        fedoraVersions.setUriInfo(TestHelpers.getUriInfoImpl());
-        fedoraVersions.setObjectService(mockObjects);
-        fedoraVersions.setDatastreamService(mockDatastreams);
+        testObj = new FedoraVersions();
+
+		mockSession = TestHelpers.mockSession(testObj);
+        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        testObj.setObjectService(mockObjects);
+        testObj.setDatastreamService(mockDatastreams);
         
         mockObject = mock(FedoraObject.class);
     }
@@ -66,7 +55,13 @@ public class FedoraVersionsTest {
     @Test
     public void testGetObjectVersion() throws Exception {
     	String path = "objects/fedoradatastreamtest1";
-    	
+
+
+		Node mockNode = mock(Node.class);
+		when(mockNode.getSession()).thenReturn(mockSession);
+		when(mockNode.isNodeType("nt:folder")).thenReturn(true);
+		when(mockSession.getNode("/" + path)).thenReturn(mockNode);
+
     	when(mockObject.getCreated()).thenReturn("2013-05-06T15:21:27.480+02:00");
     	when(mockObject.getName()).thenReturn(path);
     	when(mockObject.getLabel()).thenReturn(path);
@@ -76,7 +71,7 @@ public class FedoraVersionsTest {
     	when(mockObject.getSize()).thenReturn(1291l);
     	when(mockObjects.getObject(mockSession, "/" + path)).thenReturn(mockObject);
 
-    	fedoraVersions.getVersion(createPathList(path),path);
+    	testObj.getVersion(createPathList(path), path);
     	
     	verify(mockObjects).getObject(mockSession, "/" + path);
     }
@@ -88,10 +83,17 @@ public class FedoraVersionsTest {
     	String dsid = "ds1";
     	String content ="emptem";
     	Datastream mockds = TestHelpers.mockDatastream(pid, dsid, content);
+
+		Node mockNode = mock(Node.class);
+		when(mockNode.getSession()).thenReturn(mockSession);
+		when(mockNode.isNodeType("nt:file")).thenReturn(true);
+		when(mockSession.getNode("/" + path)).thenReturn(mockNode);
+
+
+
+		when(mockDatastreams.getDatastream(mockSession, "/" + path)).thenReturn(mockds);
     	
-    	when(mockDatastreams.getDatastream(mockSession, "/" + path)).thenReturn(mockds);
-    	
-    	Response resp = fedoraVersions.getVersion(createPathList(path),path);
+    	Response resp = testObj.getVersion(createPathList(path),path);
     	
     	verify(mockDatastreams).getDatastream(mockSession, "/" + path);
     	assertTrue(resp.getStatus() == 200);
@@ -105,10 +107,17 @@ public class FedoraVersionsTest {
     	String dsid = "ds1";
     	String content ="emptem";
     	Datastream mockds = TestHelpers.mockDatastream(pid, dsid, content);
-    	
-    	when(mockDatastreams.getDatastream(mockSession, "/" + path)).thenReturn(mockds);
 
-    	List<Version> versions = fedoraVersions.getVersionProfile(createPathList(path));
+
+		Node mockNode = mock(Node.class);
+		when(mockNode.getSession()).thenReturn(mockSession);
+		when(mockNode.isNodeType("nt:file")).thenReturn(true);
+		when(mockSession.getNode("/" + path)).thenReturn(mockNode);
+
+
+		when(mockDatastreams.getDatastream(mockSession, "/" + path)).thenReturn(mockds);
+
+    	List<Version> versions = testObj.getVersionProfile(createPathList(path));
     	
     	verify(mockDatastreams).getDatastream(mockSession, "/" + path);
     	assertTrue(versions.size() == 1);

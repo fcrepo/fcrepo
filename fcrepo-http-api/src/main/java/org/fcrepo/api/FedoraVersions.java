@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -47,9 +48,6 @@ public class FedoraVersions extends AbstractResource {
 	private static final Logger logger = LoggerFactory.getLogger(FedoraVersions.class);
 
 	private DateTimeFormatter jcrDateFormat = ISODateTimeFormat.dateTime();
-	
-	Pattern dspattern = Pattern.compile("/objects/[^/]+?/[^/]+?");
-
 
 	@Autowired
 	private DatastreamService datastreamService;
@@ -69,39 +67,53 @@ public class FedoraVersions extends AbstractResource {
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 	public List<Version> getVersionProfile(@PathParam("path") final List<PathSegment> segments) throws RepositoryException {
 		final String path = toPath(segments);
-		final Session sess = getAuthenticatedSession();
-		// TODO: this shoul dbe done otherwise but the path constraints are forcing this one me atm
-		Matcher m = dspattern.matcher(path);
-		if (m.find()) {
-			/* TODO: this should be moved to datastreamservice */
-			Datastream ds = datastreamService.getDatastream(sess, path);
-			Version v = new Version(path, ds.getDsId(), ds.getLabel(), ds.getCreatedDate());
-			return Arrays.asList(v);
-		} else {
-			/* TODO: this should be moved to object service */
-			FedoraObject obj = objectService.getObject(sess, path);
-			Version v = new Version(path, obj.getName(), obj.getName(), jcrDateFormat.parseDateTime(obj.getCreated()).toDate());
-			return Arrays.asList(v);
+		final Session session = getAuthenticatedSession();
+		try {
+			final Node node = session.getNode(path);
+
+			if (node.isNodeType("nt:file")) {
+				Datastream ds = datastreamService.getDatastream(session, path);
+				Version v = new Version(path, ds.getDsId(), ds.getLabel(), ds.getCreatedDate());
+				return Arrays.asList(v);
+			}
+			if (node.isNodeType("nt:folder")) {
+				FedoraObject obj = objectService.getObject(session, path);
+				Version v = new Version(path, obj.getName(), obj.getName(), jcrDateFormat.parseDateTime(obj.getCreated()).toDate());
+				return Arrays.asList(v);
+			}
+		} finally {
+			session.logout();
 		}
 
+		return Arrays.asList();
 	}
 
 	@Path("/{id}")
 	@GET
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_XML })
-	public Response getVersion(@PathParam("path") final List<PathSegment> segments, @PathParam("id") final String id)
+	public Response getVersion(@PathParam("path") final List<PathSegment> segments, @PathParam("id") final String versionId)
 			throws RepositoryException, IOException {
 		final String path = toPath(segments);
-		final Session sess = getAuthenticatedSession();
-		Matcher m = dspattern.matcher(path);
-		if (m.find()) {
-			/* TODO: this should be moved to datastreamservice */
-			Datastream ds = datastreamService.getDatastream(sess, path);
-			return Response.ok(getDSProfile(ds)).build();
-		} else {
-			/* TODO: this should be moved to objectservice */
-			return Response.ok(getObjectProfile(objectService.getObject(sess, path))).build();
+		final Session session = getAuthenticatedSession();
+
+		try {
+			final Node node = session.getNode(path);
+
+			if (node.isNodeType("nt:file")) {
+				/* TODO: this should be moved to datastreamservice */
+				Datastream ds = datastreamService.getDatastream(session, path);
+				return Response.ok(getDSProfile(ds)).build();
+			}
+
+			if (node.isNodeType("nt:folder")) {
+				/* TODO: this should be moved to objectservice */
+				return Response.ok(getObjectProfile(objectService.getObject(session, path))).build();
+			}
+		} finally {
+			session.logout();
 		}
+
+		return Response.status(Response.Status.NOT_FOUND).build();
 	}
 
 	private ObjectProfile getObjectProfile(FedoraObject object) throws RepositoryException {
