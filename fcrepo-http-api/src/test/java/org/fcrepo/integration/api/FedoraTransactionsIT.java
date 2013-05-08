@@ -1,13 +1,13 @@
 package org.fcrepo.integration.api;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jettison.json.JSONObject;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
 import org.junit.Test;
@@ -31,7 +31,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		HttpGet getTx = new HttpGet(serverAddress + "fcr:tx/" + tx.getId());
 		resp = execute(getTx);
 		Transaction fetched = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
-		/* and parse that one using JSON */
 		assertEquals(tx.getId(), fetched.getId());
 		assertEquals(tx.getState(), fetched.getState());
 		assertEquals(tx.getCreated(), fetched.getCreated());
@@ -51,10 +50,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertNotNull(tx.getCreated());
 		assertTrue(tx.getState() == State.NEW);
 
-		/* fetch the create dtx from the endpoint */
+		/* commit the tx */
 		HttpPost commitTx = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/fcr:commit");
 		resp = execute(commitTx);
-		/* and parse that one using JSON */
 		Transaction committed = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
 		assertEquals(committed.getState(), State.COMMITED);
 	}
