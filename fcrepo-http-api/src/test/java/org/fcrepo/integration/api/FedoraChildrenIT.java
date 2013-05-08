@@ -1,11 +1,11 @@
 package org.fcrepo.integration.api;
 
+import static org.junit.Assert.assertEquals;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class FedoraChildrenIT  extends AbstractResourceIT {
 

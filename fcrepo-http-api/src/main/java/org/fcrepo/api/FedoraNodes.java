@@ -3,11 +3,9 @@ package org.fcrepo.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -31,7 +29,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
-import com.codahale.metrics.annotation.Timed;
 import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
@@ -47,6 +44,8 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
 
 @Component
 @Path("/rest/{path: .*}")

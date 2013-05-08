@@ -1,19 +1,17 @@
 package org.fcrepo.integration.api;
 
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
-import org.springframework.test.context.ContextConfiguration;
-
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
 
 public class FedoraExportIT extends AbstractResourceIT {
 

@@ -1,11 +1,9 @@
 
 package org.fcrepo.api;
 
-import static javax.ws.rs.core.Response.created;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
@@ -15,17 +13,14 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
