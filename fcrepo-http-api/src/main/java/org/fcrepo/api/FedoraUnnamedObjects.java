@@ -58,9 +58,11 @@ public class FedoraUnnamedObjects extends AbstractResource {
             }
 
         };
-        ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
-        segments.addAll(pathList.subList(0, pathList.size() - 1));
+
+		ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
+        segments.addAll(pathList);
         segments.add(path);
+
         try {
             return objectsResource.createObject(
                     segments.build(), "test label",

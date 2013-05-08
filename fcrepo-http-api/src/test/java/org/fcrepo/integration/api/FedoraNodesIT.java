@@ -41,6 +41,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
         assertTrue("new object did not mint a PID", !content.endsWith("/fcr:new"));
+
+		assertEquals("Object wasn't created!", 200,
+							getStatus(new HttpGet(serverAddress + content)));
     }
 
     @Test

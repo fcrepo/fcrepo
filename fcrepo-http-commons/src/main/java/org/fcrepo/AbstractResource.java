@@ -149,8 +149,12 @@ public abstract class AbstractResource {
     public static final String toPath(List<PathSegment> paths) {
         StringBuffer result = new StringBuffer();
         for (PathSegment path: paths) {
-            result.append('/');
-            result.append(path.getPath());
+			final String p = path.getPath();
+
+			if(!p.equals("")) {
+            	result.append('/');
+            	result.append(p);
+			}
         }
         return result.toString();
     }
