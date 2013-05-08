@@ -91,6 +91,7 @@ public class FedoraTransactions extends AbstractResource {
 		}
 		final String path = toPath(pathlist);
 		final FedoraObject obj = objectService.createObject(tx.getSession(), path);
+		tx.setState(State.DIRTY);
 		return Response.ok(path).build();
 	}
 
