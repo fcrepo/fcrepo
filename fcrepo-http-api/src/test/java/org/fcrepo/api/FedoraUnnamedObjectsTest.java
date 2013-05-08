@@ -58,15 +58,18 @@ public class FedoraUnnamedObjectsTest {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void testIngestAndMint() throws RepositoryException, IOException, InvalidChecksumException {
-        UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
+    public void testIngestAndMint() throws RepositoryException, IOException,
+            InvalidChecksumException {
+        final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
         testObj.setPidMinter(mockMint);
         testObj.ingestAndMint(createPathList("objects", "fcr:new"));
         verify(mockMint).mintPid();
-        verify(mockObjects).createObject(
-                any(List.class), any(String.class),
-                eq(FedoraJcrTypes.FEDORA_OBJECT), isNull(String.class), isNull(String.class), isNull(MediaType.class), isNull(InputStream.class));
+        verify(mockObjects).createObject(any(List.class), any(String.class),
+                eq(FedoraJcrTypes.FEDORA_OBJECT), isNull(String.class),
+                isNull(String.class), isNull(MediaType.class),
+                isNull(InputStream.class));
     }
-    
+
 }

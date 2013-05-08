@@ -1,25 +1,15 @@
 package org.fcrepo.test.util;
 
-import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_ALGORITHM;
-import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_VALUE;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
-import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,16 +17,12 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.jcr.Binary;
 import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
@@ -59,8 +45,6 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.DatastreamIterator;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
 
