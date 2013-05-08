@@ -1,9 +1,7 @@
 
 package org.fcrepo.api;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -71,7 +69,7 @@ public class FedoraNodes extends AbstractResource {
 	private LowLevelStorageService llStoreService;
 
 	@GET
-	@Produces({TEXT_XML, APPLICATION_JSON})
+	@Produces({TEXT_XML, APPLICATION_JSON, APPLICATION_XML})
 	public Response describe(@PathParam("path")
 							 final List<PathSegment> pathList) throws RepositoryException, IOException {
 
