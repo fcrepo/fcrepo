@@ -20,6 +20,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -87,6 +88,10 @@ public abstract class AbstractResource {
 
     protected Session getAuthenticatedSession() {
         return sessions.getSession(securityContext, servletRequest);
+    }
+    
+    protected AuthenticatedSessionProvider getAuthenticatedSessionProvider() {
+    	return sessions.getSessionProvider(securityContext, servletRequest);
     }
 
     protected synchronized Response deleteResource(final Node resource)

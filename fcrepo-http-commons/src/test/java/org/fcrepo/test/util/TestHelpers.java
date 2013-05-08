@@ -42,6 +42,7 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.identifiers.UUIDPidMinter;
+import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.DatastreamIterator;
@@ -188,10 +189,17 @@ public abstract class TestHelpers {
 		when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
 		when(mockPrincipal.getName()).thenReturn(mockUser);
 		final SessionFactory mockSessions = mock(SessionFactory.class);
+		final AuthenticatedSessionProvider mockProvider =
+				mock(AuthenticatedSessionProvider.class);
 		when(mockSessions.getSession()).thenReturn(mockSession);
 		when(
 				mockSessions.getSession(any(SecurityContext.class),
 						any(HttpServletRequest.class))).thenReturn(mockSession);
+		when(
+				mockProvider.getAuthenticatedSession()).thenReturn(mockSession);
+		when(
+				mockSessions.getSessionProvider(any(SecurityContext.class),
+						any(HttpServletRequest.class))).thenReturn(mockProvider);
 		testObj.setSessionFactory(mockSessions);
 		testObj.setUriInfo(getUriInfoImpl());
 		testObj.setPidMinter(new UUIDPidMinter());

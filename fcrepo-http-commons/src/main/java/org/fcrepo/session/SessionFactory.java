@@ -40,26 +40,36 @@ public class SessionFactory {
     public Session getSession() throws RepositoryException {
         return repo.login();
     }
+    
+    private static ServletCredentials getCredentials(final SecurityContext securityContext,
+    		final HttpServletRequest servletRequest) {
+    	if (securityContext.getUserPrincipal() != null) {
+    		logger.debug("Authenticated user: " +
+    				securityContext.getUserPrincipal().getName());
+    		return new ServletCredentials(servletRequest);
+    	} else {
+    		logger.debug("No authenticated user found!");
+    		return null;
+    	}
+    }
 
     public Session getSession(final SecurityContext securityContext,
             final HttpServletRequest servletRequest) {
-        Session session = null;
 
         try {
-            if (securityContext.getUserPrincipal() != null) {
-                logger.debug("Authenticated user: " +
-                        securityContext.getUserPrincipal().getName());
-                final ServletCredentials credentials =
-                        new ServletCredentials(servletRequest);
-
-                session = repo.login(credentials);
-            } else {
-                logger.debug("No authenticated user found!");
-                session = repo.login();
-            }
+        	ServletCredentials creds = getCredentials(securityContext, servletRequest);
+        	return (creds != null) ? repo.login(creds) : repo.login();
         } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }
-        return session;
+    }
+    
+
+    public AuthenticatedSessionProvider getSessionProvider(
+    		final SecurityContext securityContext,
+            final HttpServletRequest servletRequest) {
+
+    	ServletCredentials creds = getCredentials(securityContext, servletRequest);
+    	return new AuthenticatedSessionProviderImpl(repo, creds);
     }
 }

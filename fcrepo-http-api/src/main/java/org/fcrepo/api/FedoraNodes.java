@@ -4,6 +4,7 @@ package org.fcrepo.api;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static org.fcrepo.http.RDFMediaType.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -35,7 +35,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Variant;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
@@ -47,6 +46,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
+import org.fcrepo.provider.GraphStreamingOutput;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
@@ -56,8 +56,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.codahale.metrics.annotation.Timed;
-
 @Component
 @Path("/rest/{path: .*}")
 public class FedoraNodes extends AbstractResource {
@@ -66,6 +64,24 @@ public class FedoraNodes extends AbstractResource {
 
 	@Autowired
 	private LowLevelStorageService llStoreService;
+	
+	/**
+	 * Jersey seems to demote methods that @Produces(WILDCARD), even when
+	 * no methods match the Accept header (eg, when it's null). This is 
+	 * appears to be an interpretation of 
+	 * http://jsr311.java.net/nonav/releases/1.1/spec/spec3.html#x3-360003.7.2
+	 * So this is just a hack to dispatch to the "real" default.
+	 * @param pathList
+	 * @return
+	 * @throws RepositoryException
+	 * @throws IOException
+	 */
+	@GET
+	@Produces(WILDCARD)
+	public Response defaultDescribe(@PathParam("path")
+							 final List<PathSegment> pathList) throws RepositoryException, IOException {
+		return describe(pathList);
+	}
 
 	@GET
 	@Produces({TEXT_XML, APPLICATION_JSON, APPLICATION_XML})
@@ -96,64 +112,19 @@ public class FedoraNodes extends AbstractResource {
 	}
 
 	@GET
-	@Produces({WebContent.contentTypeN3,
-					  WebContent.contentTypeN3Alt1,
-					  WebContent.contentTypeN3Alt2,
-					  WebContent.contentTypeTurtle,
-					  WebContent.contentTypeRDFXML,
-					  WebContent.contentTypeRDFJSON,
-					  WebContent.contentTypeNTriples})
+	@Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
 	public StreamingOutput describeRdf(@PathParam("path") final List<PathSegment> pathList, @Context Request request) throws RepositoryException, IOException {
 
 		final String path = toPath(pathList);
 		logger.trace("getting profile for {}", path);
 
-		final Session session = getAuthenticatedSession();
+		Variant bestPossibleResponse = request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-		try {
-			Node node = session.getNode(path);
-
-			List<Variant> possibleResponseVariants =
-					Variant.mediaTypes(new MediaType(WebContent.contentTypeN3.split("/")[0], WebContent.contentTypeN3.split("/")[1]),
-											  new MediaType(WebContent.contentTypeN3Alt1.split("/")[0], WebContent.contentTypeN3Alt1.split("/")[1]),
-											  new MediaType(WebContent.contentTypeN3Alt2.split("/")[0], WebContent.contentTypeN3Alt2.split("/")[1]),
-											  new MediaType(WebContent.contentTypeTurtle.split("/")[0], WebContent.contentTypeTurtle.split("/")[1]),
-											  new MediaType(WebContent.contentTypeRDFXML.split("/")[0], WebContent.contentTypeRDFXML.split("/")[1]),
-											  new MediaType(WebContent.contentTypeRDFJSON.split("/")[0], WebContent.contentTypeRDFJSON.split("/")[1]),
-											  new MediaType(WebContent.contentTypeNTriples.split("/")[0], WebContent.contentTypeNTriples.split("/")[1]),
-											  new MediaType(WebContent.contentTypeTriG.split("/")[0], WebContent.contentTypeTriG.split("/")[1]),
-											  new MediaType(WebContent.contentTypeNQuads.split("/")[0], WebContent.contentTypeNQuads.split("/")[1])
-					)
-							.add().build();
-			Variant bestPossibleResponse = request.selectVariant(possibleResponseVariants);
-
-
-			final String rdfWriterFormat = WebContent.contentTypeToLang(bestPossibleResponse.getMediaType().toString()).getName().toUpperCase();
-
-			return new StreamingOutput() {
-				@Override
-				public void write(final OutputStream out) throws IOException {
-
-					final Session session = getAuthenticatedSession();
-					try {
-
-						Node node = session.getNode(path);
-
-						final FedoraObject object = objectService.getObject(session, path);
-						final GraphStore graphStore = object.getGraphStore();
-
-						graphStore.toDataset().getDefaultModel().write(out, rdfWriterFormat);
-					} catch (final RepositoryException e) {
-						throw new WebApplicationException(e);
-					} finally {
-						session.logout();
-					}
-				}
-
-			};
-		} finally {
-			session.logout();
-		}
+		return new GraphStreamingOutput(
+				getAuthenticatedSessionProvider(),
+				objectService,
+				path,
+				bestPossibleResponse.getMediaType());
 
 	}
 
