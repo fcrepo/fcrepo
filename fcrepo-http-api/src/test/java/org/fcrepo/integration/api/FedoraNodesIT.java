@@ -93,6 +93,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
 		logger.debug("Retrieved datastream profile:\n" + content);
 	}
 
+	@Test
+	public void testGetObjectGraph() throws Exception {
+		client.execute(postObjMethod("FedoraDescribeTestGraph"));
+		final HttpGet getObjMethod =
+				new HttpGet(serverAddress + "objects/FedoraDescribeTestGraph/fcr:graph");
+		getObjMethod.addHeader("Accept", "application/n-triples");
+		final HttpResponse response = client.execute(getObjMethod);
+		assertEquals(200, response.getStatusLine().getStatusCode());
+		final String content = EntityUtils.toString(response.getEntity());
+		logger.debug("Retrieved object graph:\n" + content);
+
+
+	}
+
+
 
 
 }
