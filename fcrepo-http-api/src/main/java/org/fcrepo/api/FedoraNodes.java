@@ -14,8 +14,10 @@ import java.io.OutputStream;
 import java.util.List;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -94,6 +96,68 @@ public class FedoraNodes extends AbstractResource {
 		} finally {
 			session.logout();
 		}
+	}
+
+	@GET
+	@Produces({WebContent.contentTypeN3,
+					  WebContent.contentTypeN3Alt1,
+					  WebContent.contentTypeN3Alt2,
+					  WebContent.contentTypeTurtle,
+					  WebContent.contentTypeRDFXML,
+					  WebContent.contentTypeRDFJSON,
+					  WebContent.contentTypeNTriples})
+	public StreamingOutput describeRdf(@PathParam("path") final List<PathSegment> pathList, @Context Request request) throws RepositoryException, IOException {
+
+		final String path = toPath(pathList);
+		logger.trace("getting profile for {}", path);
+
+		final Session session = getAuthenticatedSession();
+
+		try {
+			Node node = session.getNode(path);
+
+			List<Variant> possibleResponseVariants =
+					Variant.mediaTypes(new MediaType(WebContent.contentTypeN3.split("/")[0], WebContent.contentTypeN3.split("/")[1]),
+											  new MediaType(WebContent.contentTypeN3Alt1.split("/")[0], WebContent.contentTypeN3Alt1.split("/")[1]),
+											  new MediaType(WebContent.contentTypeN3Alt2.split("/")[0], WebContent.contentTypeN3Alt2.split("/")[1]),
+											  new MediaType(WebContent.contentTypeTurtle.split("/")[0], WebContent.contentTypeTurtle.split("/")[1]),
+											  new MediaType(WebContent.contentTypeRDFXML.split("/")[0], WebContent.contentTypeRDFXML.split("/")[1]),
+											  new MediaType(WebContent.contentTypeRDFJSON.split("/")[0], WebContent.contentTypeRDFJSON.split("/")[1]),
+											  new MediaType(WebContent.contentTypeNTriples.split("/")[0], WebContent.contentTypeNTriples.split("/")[1]),
+											  new MediaType(WebContent.contentTypeTriG.split("/")[0], WebContent.contentTypeTriG.split("/")[1]),
+											  new MediaType(WebContent.contentTypeNQuads.split("/")[0], WebContent.contentTypeNQuads.split("/")[1])
+					)
+							.add().build();
+			Variant bestPossibleResponse = request.selectVariant(possibleResponseVariants);
+
+
+			final String rdfWriterFormat = WebContent.contentTypeToLang(bestPossibleResponse.getMediaType().toString()).getName().toUpperCase();
+
+			return new StreamingOutput() {
+				@Override
+				public void write(final OutputStream out) throws IOException {
+
+					final Session session = getAuthenticatedSession();
+					try {
+
+						Node node = session.getNode(path);
+
+						final FedoraObject object = objectService.getObject(session, path);
+						final GraphStore graphStore = object.getGraphStore();
+
+						graphStore.toDataset().getDefaultModel().write(out, rdfWriterFormat);
+					} catch (final RepositoryException e) {
+						throw new WebApplicationException(e);
+					} finally {
+						session.logout();
+					}
+				}
+
+			};
+		} finally {
+			session.logout();
+		}
+
 	}
 
 	/**
@@ -202,6 +266,52 @@ public class FedoraNodes extends AbstractResource {
         }
     }
 
+	/**
+	 * Update an object using SPARQL-UPDATE
+	 *
+	 * @param pathList
+	 * @return 201
+	 * @throws RepositoryException
+	 * @throws org.fcrepo.exception.InvalidChecksumException
+	 * @throws IOException
+	 */
+	@POST
+	@Consumes({WebContent.contentTypeSPARQLUpdate})
+	@Timed
+	public Response updateSparql(
+										@PathParam("path") final List<PathSegment> pathList,
+										final InputStream requestBodyStream
+	) throws RepositoryException, IOException {
+
+		String path = toPath(pathList);
+		logger.debug("Attempting to ingest with path: {}", path);
+
+		final Session session = getAuthenticatedSession();
+
+		try {
+			if (objectService.exists(session, path)) {
+
+				if(requestBodyStream != null) {
+
+					final FedoraObject result = objectService.getObject(session, path);
+
+					result.updateGraph(IOUtils.toString(requestBodyStream));
+
+					session.save();
+
+					return Response.ok().build();
+				} else {
+					return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+				}
+			} else {
+				return Response.status(HttpStatus.SC_NOT_FOUND).entity(path + " must be an existing resource").build();
+			}
+
+		} finally {
+			session.logout();
+		}
+	}
+
     /**
      * Creates a new object.
      * 
@@ -230,19 +340,7 @@ public class FedoraNodes extends AbstractResource {
         
         try {
             if (objectService.exists(session, path)) {
-
-				if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
-
-					final FedoraObject result = objectService.getObject(session, path);
-
-					UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
-
-					session.save();
-
-					return Response.ok().build();
-				} else {
                 	return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
-				}
             }
 
             if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
@@ -253,7 +351,7 @@ public class FedoraNodes extends AbstractResource {
                 }
 
 				if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
-					UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
+					result.updateGraph(IOUtils.toString(requestBodyStream));
 				}
 
             }

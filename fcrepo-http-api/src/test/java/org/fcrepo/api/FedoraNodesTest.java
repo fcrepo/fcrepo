@@ -14,19 +14,30 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Variant;
 
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
+import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.DatastreamService;
@@ -168,6 +179,52 @@ public class FedoraNodesTest {
 		assertNotNull(actual);
 		verify(mockDatastreams).getDatastream(mockSession, path);
 		verify(mockSession, never()).save();
+	}
+
+	@Test
+	public void testDescribeRdfObject() throws RepositoryException, IOException {
+		final String pid = "FedoraObjectsRdfTest1";
+		final String path = "/" + pid;
+
+		final FedoraObject mockObject = mock(FedoraObject.class);
+
+		final GraphStore mockStore = mock(GraphStore.class);
+		final Dataset mockDataset = mock(Dataset.class);
+		final Model mockModel = mock(Model.class);
+		when(mockStore.toDataset()).thenReturn(mockDataset);
+		when(mockDataset.getDefaultModel()).thenReturn(mockModel);
+
+
+		when(mockObject.getGraphStore()).thenReturn(mockStore);
+		when(mockObjects.getObject(mockSession, path)).thenReturn(mockObject);
+		final Request mockRequest = mock(Request.class);
+
+		when(mockRequest.selectVariant(any(List.class))).thenReturn(new Variant(MediaType.valueOf("application/n-triples"), null, null));
+
+		final OutputStream mockStream = mock(OutputStream.class);
+		testObj.describeRdf(createPathList(pid), mockRequest).write(mockStream);
+
+		verify(mockModel).write(mockStream, "N-TRIPLES");
+
+	}
+
+	@Test
+	public void testSparqlUpdate() throws RepositoryException, IOException {
+		final String pid = "FedoraObjectsRdfTest1";
+		final String path = "/" + pid;
+
+		final FedoraObject mockObject = mock(FedoraObject.class);
+
+		final GraphStore mockStore = mock(GraphStore.class);
+		final InputStream mockStream = new ByteArrayInputStream("my-sparql-statement".getBytes());
+		when(mockObjects.getObject(mockSession, path)).thenReturn(mockObject);
+		when(mockObjects.exists(mockSession, path)).thenReturn(true);
+
+		testObj.updateSparql(createPathList(pid), mockStream);
+
+		verify(mockObject).updateGraph("my-sparql-statement");
+		verify(mockSession).save();
+		verify(mockSession).logout();
 	}
     
 }

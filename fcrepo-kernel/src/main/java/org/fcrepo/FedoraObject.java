@@ -31,6 +31,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
+import com.hp.hpl.jena.update.UpdateAction;
+import org.apache.commons.io.IOUtils;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.modeshape.jcr.api.JcrTools;
@@ -275,6 +277,13 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
 	public Resource getGraphSubject() throws RepositoryException {
 		return ResourceFactory.createResource("info:fedora" + node.getPath());
+	}
+
+	public GraphStore updateGraph(String sparqlUpdateStatement) throws RepositoryException {
+		final GraphStore store = getGraphStore();
+		UpdateAction.parseExecute(sparqlUpdateStatement, store);
+
+		return store;
 	}
 
 	public GraphStore getGraphStore() throws RepositoryException {

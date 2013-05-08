@@ -1,6 +1,7 @@
 
 package org.fcrepo.integration.api;
 
+import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -75,6 +76,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 		client.execute(postObjMethod("FedoraDescribeTest1"));
 		final HttpGet getObjMethod =
 				new HttpGet(serverAddress + "objects/FedoraDescribeTest1");
+		getObjMethod.addHeader("Accept", "text/xml");
 		final HttpResponse response = client.execute(getObjMethod);
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		final String content = EntityUtils.toString(response.getEntity());
@@ -90,6 +92,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 		client.execute(postDSMethod("FedoraDescribeTest2", "ds1", "qwertypoiuytrewqadfghjklmnbvcxz"));
 		final HttpGet getObjMethod =
 				new HttpGet(serverAddress + "objects/FedoraDescribeTest2/ds1");
+		getObjMethod.addHeader("Accept", "text/xml");
 		final HttpResponse response = client.execute(getObjMethod);
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		final String content = EntityUtils.toString(response.getEntity());
@@ -100,13 +103,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
 	public void testGetObjectGraph() throws Exception {
 		client.execute(postObjMethod("FedoraDescribeTestGraph"));
 		final HttpGet getObjMethod =
-				new HttpGet(serverAddress + "objects/FedoraDescribeTestGraph/fcr:graph");
+				new HttpGet(serverAddress + "objects/FedoraDescribeTestGraph");
 		getObjMethod.addHeader("Accept", "application/n-triples");
 		final HttpResponse response = client.execute(getObjMethod);
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		final String content = EntityUtils.toString(response.getEntity());
-		logger.debug("Retrieved object graph:\n" + content);
 
+		assertTrue("Didn't find an expected ntriple", compile("<info:fedora/objects/FedoraDescribeTestGraph> <http://www.jcp.org/jcr/1.0mixinTypes> \"fedora:object\" \\.",
+																	DOTALL).matcher(content).find());
+
+		logger.debug("Retrieved object graph:\n" + content);
 
 	}
 
