@@ -36,18 +36,19 @@ public class FedoraImport extends AbstractResource {
     private final Logger logger = getLogger(this.getClass());
 
     @POST
-    public Response importObject(@PathParam("path") final List<PathSegment> pathList, @QueryParam("format")
+    public Response importObject(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("format")
     @DefaultValue("jcr/xml")
     final String format, final InputStream stream) throws IOException,
             RepositoryException, InvalidChecksumException {
 
-		final String path = toPath(pathList);
-
+        final String path = toPath(pathList);
+        logger.debug("Deserializing at {}", path);
         final Session session = getAuthenticatedSession();
 
         try {
             serializers.get(format).deserialize(session, path, stream);
-			session.save();
+            session.save();
             // TODO return proper URI for new resource
             return created(uriInfo.getAbsolutePath()).build();
         } finally {
