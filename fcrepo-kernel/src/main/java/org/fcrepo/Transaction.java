@@ -1,14 +1,20 @@
 package org.fcrepo;
 
+import java.beans.Transient;
 import java.util.Date;
 import java.util.UUID;
 
 import javax.jcr.Session;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 @XmlRootElement(name = "transaction")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Transaction {
 
 	public enum State {

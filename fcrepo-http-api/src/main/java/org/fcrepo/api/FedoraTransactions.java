@@ -1,5 +1,6 @@
 package org.fcrepo.api;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,13 +12,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
 import org.springframework.stereotype.Component;
-
-import com.sun.jersey.spi.resource.Singleton;
 
 @Component
 @Path("/rest/fcr:tx")
@@ -48,7 +48,7 @@ public class FedoraTransactions extends AbstractResource {
 	}
 
 	@POST
-	@Path("/{txid}/fcr:commmit")
+	@Path("/{txid}/fcr:commit")
 	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
 	public Transaction commit(@PathParam("txid") final String txid) throws RepositoryException {
 		Transaction tx = transactions.remove(txid);
@@ -71,5 +71,11 @@ public class FedoraTransactions extends AbstractResource {
 		tx.setState(State.ROLLED_BACK);
 		return tx;
 	}
-	
+
+	@POST
+	@Path("/{txid}/{path: .*}")
+	public Response doInTransaction(@PathParam("txid") final String txid, @PathParam("path") final String path) {
+		return Response.seeOther(URI.create("/rest/" + path)).build();
+	}
+
 }
