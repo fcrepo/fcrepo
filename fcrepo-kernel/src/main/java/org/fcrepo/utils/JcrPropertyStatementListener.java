@@ -4,6 +4,8 @@ import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.modeshape.common.collection.Problems;
+import org.modeshape.common.collection.SimpleProblems;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
@@ -13,15 +15,15 @@ import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
-import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.PropertyDefinition;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class JcrPropertyStatementListener extends StatementListener {
+
+	private Problems problems;
 
 	private static final Logger logger = getLogger(JcrPropertyStatementListener.class);
 
@@ -31,6 +33,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 	public JcrPropertyStatementListener(final Resource subject, final Node node) {
 		this.node = node;
 		this.subject = subject;
+		this.problems = new SimpleProblems();
 	}
 
 	/**
@@ -49,6 +52,8 @@ public class JcrPropertyStatementListener extends StatementListener {
 
 			// extract the JCR propertyName from the predicate
 			final String propertyName = getPropertyNameFromPredicate(s.getPredicate());
+
+			validateModificationsForPropertyName(propertyName);
 
 			// if it already exists, we can take some shortcuts
 			if (node.hasProperty(propertyName)) {
@@ -102,6 +107,12 @@ public class JcrPropertyStatementListener extends StatementListener {
 
 	}
 
+	private void validateModificationsForPropertyName(String propertyName) {
+		if (propertyName.startsWith("jcr:") || propertyName.startsWith("fedora:")) {
+			problems.addError(org.modeshape.jcr.JcrI18n.couldNotStoreProperty, "", node, propertyName);
+		}
+	}
+
 	/**
 	 * When a statement is removed, remove it from the JCR properties
 	 * @param s
@@ -117,6 +128,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 			}
 
 			final String propertyName = getPropertyNameFromPredicate(s.getPredicate());
+			validateModificationsForPropertyName(propertyName);
 
 			// if the property doesn't exist, we don't need to worry about it.
 			if (node.hasProperty(propertyName)) {
@@ -281,5 +293,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 	}
 
 
-
+	public Problems getProblems() {
+		return problems;
+	}
 }

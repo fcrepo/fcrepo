@@ -10,9 +10,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
 
 public class FedoraNodesIT extends AbstractResourceIT {
 
@@ -116,6 +119,24 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
 	}
 
+
+	@Test
+	public void testGetObjectGraphWithProblems() throws Exception {
+		client.execute(postObjMethod("FedoraDescribeTestGraphUpdate"));
+		final HttpPost getObjMethod =
+				new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphUpdate");
+		getObjMethod.addHeader("Content-Type", "application/sparql-update");
+		BasicHttpEntity e = new BasicHttpEntity();
+		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdate> <http://www.jcp.org/jcr/1.0uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n".getBytes()));
+		getObjMethod.setEntity(e);
+		final HttpResponse response = client.execute(getObjMethod);
+		assertEquals(403, response.getStatusLine().getStatusCode());
+		final String content = EntityUtils.toString(response.getEntity());
+
+
+		logger.debug("Got update response:\n" + content);
+
+	}
 
 
 

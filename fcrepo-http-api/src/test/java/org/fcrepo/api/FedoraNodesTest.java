@@ -216,6 +216,7 @@ public class FedoraNodesTest {
 		final FedoraObject mockObject = mock(FedoraObject.class);
 
 		final GraphStore mockStore = mock(GraphStore.class);
+		when(mockObject.getGraphProblems()).thenReturn(null);
 		final InputStream mockStream = new ByteArrayInputStream("my-sparql-statement".getBytes());
 		when(mockObjects.getObject(mockSession, path)).thenReturn(mockObject);
 		when(mockObjects.exists(mockSession, path)).thenReturn(true);
@@ -226,5 +227,6 @@ public class FedoraNodesTest {
 		verify(mockSession).save();
 		verify(mockSession).logout();
 	}
-    
+
+
 }

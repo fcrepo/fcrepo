@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.util.List;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
@@ -48,11 +47,11 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
-import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -294,6 +293,12 @@ public class FedoraNodes extends AbstractResource {
 					final FedoraObject result = objectService.getObject(session, path);
 
 					result.updateGraph(IOUtils.toString(requestBodyStream));
+					Problems problems = result.getGraphProblems();
+					if (problems != null && problems.hasProblems()) {
+						logger.info("Found these problems updating the properties for {}: {}", path, problems.toString());
+						return Response.status(Response.Status.FORBIDDEN).entity(problems.toString()).build();
+
+					}
 
 					session.save();
 

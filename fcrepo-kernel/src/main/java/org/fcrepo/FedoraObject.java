@@ -35,6 +35,7 @@ import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrPropertyStatementListener;
+import org.modeshape.common.collection.Problems;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
@@ -59,6 +60,8 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
             "FedoraObject"));
 
     private Node node;
+
+	private JcrPropertyStatementListener listener;
 
     /**
      * Construct a FedoraObject from an existing JCR Node
@@ -270,9 +273,19 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
 
 		}
 
-		model.register(new JcrPropertyStatementListener(subject, getNode()));
+		listener = new JcrPropertyStatementListener(subject, getNode());
+
+		model.register(listener);
 
 		return model;
+	}
+
+	public Problems getGraphProblems() throws RepositoryException {
+		if (listener != null) {
+			return listener.getProblems();
+		} else {
+			return null;
+		}
 	}
 
 	public Resource getGraphSubject() throws RepositoryException {
