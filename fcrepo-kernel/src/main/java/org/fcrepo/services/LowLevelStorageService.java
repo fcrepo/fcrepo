@@ -33,6 +33,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.services.functions.GetBinaryKey;
+import org.infinispan.loaders.CacheLoaderException;
 import org.modeshape.jcr.GetBinaryStore;
 import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.services.functions.GetGoodFixityResults;
@@ -195,6 +196,10 @@ public class LowLevelStorageService {
 
 			final CacheStore cacheStore = getCacheStore.apply(c);
 
+			if (cacheStore == null) {
+				continue;
+			}
+
 			// A ChainingCacheStore indicates we (may) have multiple CacheStores at play
 			if (cacheStore instanceof ChainingCacheStore) {
 				final ChainingCacheStore chainingCacheStore =
@@ -202,11 +207,23 @@ public class LowLevelStorageService {
 				// the stores are a map of the cache store and the configuration; i'm just throwing the configuration away..
 				for (final CacheStore s : chainingCacheStore.getStores()
 												  .keySet()) {
-					blobs.add(new LowLevelCacheEntry(ispnStore, s, key));
+					try {
+						if (s.containsKey(key + "-data-0")) {
+							blobs.add(new LowLevelCacheEntry(ispnStore, s, key));
+						}
+					} catch (CacheLoaderException e) {
+						logger.warn("Cache loader raised exception: {}", e);
+					}
 				}
 			} else {
 				// just a nice, simple infinispan cache.
-				blobs.add(new LowLevelCacheEntry(ispnStore, cacheStore, key));
+				try {
+					if (cacheStore.containsKey(key + "-data-0")) {
+						blobs.add(new LowLevelCacheEntry(ispnStore, cacheStore, key));
+					}
+				} catch (CacheLoaderException e) {
+					logger.warn("Cache loader raised exception: {}", e);
+				}
 			}
 		}
 

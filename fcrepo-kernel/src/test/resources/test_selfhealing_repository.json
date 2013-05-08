@@ -11,6 +11,7 @@
         "cacheConfiguration" : "infinispan_selfhealing_configuration.xml",
         "binaryStorage" : {
             "type" : "cache",
+            "minimumBinarySizeInBytes" : 48,
             "dataCacheName" : "FedoraRepository",
             "metadataCacheName" : "FedoraRepository"
         }

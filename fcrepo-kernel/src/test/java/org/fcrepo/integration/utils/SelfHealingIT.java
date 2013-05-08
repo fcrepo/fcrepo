@@ -18,6 +18,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.commons.codec.binary.Hex;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.services.DatastreamService;
@@ -113,18 +114,22 @@ public class SelfHealingIT {
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         final Session session = repo.login();
 
+		final String contentA = "qn8y34jweuytgopfv3oevo29r7ajrp6r7q21jrxkkciggheh7rqqjbolsq09";
+		final String contentB = "2e6sxpys67dslongzydxosx6ndze5vbgb6fnj1rr53buk405i1380a868xsb";
+
+		final String shaA = Hex.encodeHexString(MessageDigest.getInstance("SHA-1").digest(contentA.getBytes()));
+		final String shaB = Hex.encodeHexString(MessageDigest.getInstance("SHA-1").digest(contentB.getBytes()));
         objectService.createObject(session, "/testSelfHealingObject");
 
         datastreamService.createDatastreamNode(session,
                 "/testSelfHealingObject/testDatastreamNode4",
                 "application/octet-stream", new ByteArrayInputStream(
-                        "9876543210".getBytes()), "SHA-1",
-                "9cd656169600157ec17231dcf0613c94932efcdc");
+                        contentA.getBytes()), "SHA-1", shaA
+													  );
         datastreamService.createDatastreamNode(session,
                 "/testSelfHealingObject/testDatastreamNode5",
                 "application/octet-stream", new ByteArrayInputStream(
-                        "0123456789".getBytes()), "SHA-1",
-                "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+                        contentB.getBytes()), "SHA-1", shaB);
 
         session.save();
 
@@ -134,10 +139,10 @@ public class SelfHealingIT {
         Thread.sleep(1000);
 
         final Datastream ds =
-                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode5");
+                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode4");
 
         final Datastream ds2 =
-                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode4");
+                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode5");
 
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);
@@ -153,7 +158,7 @@ public class SelfHealingIT {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
-                            .equals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+                            .equals("urn:sha1:" + shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -166,7 +171,7 @@ public class SelfHealingIT {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
-                            .equals("urn:sha1:9cd656169600157ec17231dcf0613c94932efcdc");
+                            .equals("urn:sha1:" + shaB);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -180,7 +185,7 @@ public class SelfHealingIT {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
-                            .equals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+                            .equals("urn:sha1:" + shaA);
         }
 
         assertFalse("Expected the fixity check to fail.", fixityOk);
@@ -194,7 +199,7 @@ public class SelfHealingIT {
             fixityOk &=
                     fixityResult.computedChecksum
                             .toString()
-                            .equals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+                            .equals("urn:sha1:" + shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
