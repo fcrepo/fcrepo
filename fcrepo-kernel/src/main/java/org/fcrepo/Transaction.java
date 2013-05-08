@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
@@ -27,10 +28,16 @@ public class Transaction {
 	@XmlAttribute(name = "id")
 	private final String id;
 
-	@XmlAttribute(name = "created-date")
+	@XmlAttribute(name = "created")
 	private final Date created;
 
 	private State state = State.NEW;
+	
+	private Transaction(){
+		this.session = null;
+		this.created = null;
+		this.id = null;
+	}
 
 	public Transaction(Session session) {
 		super();
