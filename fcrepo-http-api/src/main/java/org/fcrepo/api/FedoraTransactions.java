@@ -1,6 +1,7 @@
 package org.fcrepo.api;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,16 +13,24 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraObject;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
+import org.fcrepo.jaxb.responses.access.ObjectProfile;
+import org.fcrepo.services.ObjectService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @Path("/rest/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
+	
+	@Autowired
+	private ObjectService objectService;
 
 	/* TODO: since transactions have to be available on all nodes, they have to be either persisted or written to a */
 	/* distributed map or sth, not just this plain hashmap that follows */
@@ -73,9 +82,16 @@ public class FedoraTransactions extends AbstractResource {
 	}
 
 	@POST
-	@Path("/{txid}/{path: .*}")
-	public Response doInTransaction(@PathParam("txid") final String txid, @PathParam("path") final String path) {
-		return Response.seeOther(URI.create("/rest/" + path)).build();
+	@Path("/{txid}/{path: .*}/fcr:newhack")
+	@Produces({MediaType.TEXT_PLAIN})
+	public Response createObjectInTransaction(@PathParam("txid") final String txid, @PathParam("path") final List<PathSegment> pathlist)throws RepositoryException {
+		Transaction tx = transactions.get(txid);
+		if (tx == null) {
+			throw new RepositoryException("Transaction with id " + txid + " is not available");
+		}
+		final String path = toPath(pathlist);
+		final FedoraObject obj = objectService.createObject(tx.getSession(), path);
+		return Response.ok(path).build();
 	}
 
 }

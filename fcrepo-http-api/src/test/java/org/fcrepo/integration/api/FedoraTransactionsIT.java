@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import javax.validation.constraints.AssertTrue;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -49,12 +51,26 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertNotNull(tx.getState());
 		assertNotNull(tx.getCreated());
 		assertTrue(tx.getState() == State.NEW);
+		
+		/* create a new object inside the tx */
+		HttpPost postNew = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/objects/testobj1/fcr:newhack");
+		resp = execute(postNew);
+		assertTrue(resp.getStatusLine().getStatusCode() == 200);
+				
+		/* check if the object is already there, before the commit */
+		HttpGet getObj = new HttpGet(serverAddress + "/objects/testobj1");
+		resp = execute(getObj);
+		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 404);
 
 		/* commit the tx */
 		HttpPost commitTx = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/fcr:commit");
 		resp = execute(commitTx);
 		Transaction committed = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
 		assertEquals(committed.getState(), State.COMMITED);
+
+		/* check if the object is there, after the commit */
+		resp = execute(getObj);
+		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 200);
 	}
 	
 	@Test
