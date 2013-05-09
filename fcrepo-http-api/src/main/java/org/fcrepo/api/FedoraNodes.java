@@ -1,7 +1,6 @@
 
 package org.fcrepo.api;
 
-import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.fcrepo.http.RDFMediaType.*;
@@ -119,6 +118,13 @@ public class FedoraNodes extends AbstractResource {
 		logger.trace("getting profile for {}", path);
 
 		Variant bestPossibleResponse = request.selectVariant(POSSIBLE_RDF_VARIANTS);
+
+		final Session session = getAuthenticatedSession();
+		try {
+			session.getNode(path);
+		} finally {
+			session.logout();
+		}
 
 		return new GraphStreamingOutput(
 				getAuthenticatedSessionProvider(),
