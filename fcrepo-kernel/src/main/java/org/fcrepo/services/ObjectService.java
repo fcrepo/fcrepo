@@ -13,6 +13,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.FedoraObject;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableSet.Builder;
@@ -35,7 +36,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraObject createObject(final Session session, final String path)
             throws RepositoryException {
-        return new FedoraObject(session, path);
+        return new FedoraObject(session, path, JcrConstants.NT_FOLDER);
     }
 
 	/**
@@ -60,33 +61,5 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         return new FedoraObject(getObjectNode(session, path));
     }
 
-    /**
-     * @return A Set of object names (identifiers)
-     * @throws RepositoryException
-     */
-    public Set<String> getObjectNames(final Session session, String path) throws RepositoryException {
-        return getObjectNames(session, path, null);
-    }
-    
-    public Set<String> getObjectNames(final Session session, String path, String mixin) throws RepositoryException {
-
-        final Node objects = session.getNode(path);
-        final Builder<String> b = builder();
-        final NodeIterator i = objects.getNodes();
-        while (i.hasNext()) {
-            Node n = i.nextNode();
-            logger.info("child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
-            if (mixin == null || n.isNodeType(mixin)) b.add(n.getName());
-        }
-        return b.build();
-
-    }
-
-    public void deleteObject(final Session session, final String path)
-            throws RepositoryException {
-        final Node obj = session.getNode(path);
-        obj.remove();
-        session.save();
-    }
 
 }

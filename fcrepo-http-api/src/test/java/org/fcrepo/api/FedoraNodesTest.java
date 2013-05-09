@@ -38,10 +38,12 @@ import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -56,6 +58,8 @@ public class FedoraNodesTest {
     FedoraNodes testObj;
 
     ObjectService mockObjects;
+
+	NodeService mockNodes;
     
     DatastreamService mockDatastreams;
 
@@ -69,10 +73,12 @@ public class FedoraNodesTest {
     public void setUp() throws LoginException, RepositoryException {
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
+		mockNodes = mock(NodeService.class);
 		mockLow = mock(LowLevelStorageService.class);
         testObj = new FedoraNodes();
 		mockSession = TestHelpers.mockSession(testObj);
         testObj.setObjectService(mockObjects);
+		testObj.setNodeService(mockNodes);
         testObj.setDatastreamService(mockDatastreams);
 		testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
@@ -153,7 +159,7 @@ public class FedoraNodesTest {
         final Response actual = testObj.deleteObject(createPathList(pid));
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObjects).deleteObject(mockSession, path);
+        verify(mockNodes).deleteObject(mockSession, path);
         verify(mockSession).save();
     }
 
@@ -165,6 +171,10 @@ public class FedoraNodesTest {
 		final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
 		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
 		Node mockNode = mock(Node.class);
+		FedoraResource mockResource = mock(FedoraResource.class);
+		when(mockResource.hasContent()).thenReturn(true);
+		when(mockResource.getNode()).thenReturn(mockNode);
+		when(mockNodes.getObject(mockSession,path)).thenReturn(mockResource);
 		when(mockNode.getSession()).thenReturn(mockSession);
 		when(mockDs.getNode()).thenReturn(mockNode);
 		when(mockNode.getName()).thenReturn(dsId);
@@ -196,7 +206,7 @@ public class FedoraNodesTest {
 
 
 		when(mockObject.getGraphStore()).thenReturn(mockStore);
-		when(mockObjects.getObject(mockSession, path)).thenReturn(mockObject);
+		when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 		final Request mockRequest = mock(Request.class);
 
 		when(mockRequest.selectVariant(any(List.class))).thenReturn(new Variant(MediaType.valueOf("application/n-triples"), null, null));
@@ -218,8 +228,7 @@ public class FedoraNodesTest {
 		final GraphStore mockStore = mock(GraphStore.class);
 		when(mockObject.getGraphProblems()).thenReturn(null);
 		final InputStream mockStream = new ByteArrayInputStream("my-sparql-statement".getBytes());
-		when(mockObjects.getObject(mockSession, path)).thenReturn(mockObject);
-		when(mockObjects.exists(mockSession, path)).thenReturn(true);
+		when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
 		testObj.updateSparql(createPathList(pid), mockStream);
 

@@ -36,6 +36,7 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.value.binary.StrategyHint;
 import org.slf4j.Logger;
@@ -48,94 +49,70 @@ import com.codahale.metrics.Histogram;
  * @author ajs6f
  *
  */
-public class Datastream extends JcrTools implements FedoraJcrTypes {
+public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     private static final Logger logger = getLogger(Datastream.class);
 
     static final Histogram contentSizeHistogram = metrics.histogram(name(
             Datastream.class, "content-size"));
 
-    private Node node;
-
     /**
      * The JCR node for this datastream
      * @param n an existing {@link Node}
      */
     public Datastream(final Node n) {
-        // turn off debug logging
-        super(false);
-        if (node != null) {
-            logger.debug("Supporting a Fedora Datastream with null backing Node!");
-        }
-        node = n;
-        try {
-        if (!hasMixin(node)) {
-            logger.debug("Setting fedora:datastream properties on a nt:file node...");
-            node.addMixin(FEDORA_DATASTREAM);
-            node.addMixin(FEDORA_OWNED);
-            node.setProperty(FEDORA_OWNERID, node.getSession().getUserID());
+		super(n);
+	}
 
-            node.setProperty("jcr:lastModified", Calendar.getInstance());
+	/**
+	 * Create or find a FedoraDatastream at the given path
+	 * @param session the JCR session to use to retrieve the object
+	 * @param path the absolute path to the object
+	 * @throws RepositoryException
+	 */
+	public Datastream(final Session session, final String path, final String nodeType) throws RepositoryException {
+		super(session, path, nodeType);
+		mixinTypeSpecificCrap();
+	}
 
-            // TODO: I guess we should also have the PID + DSID..
-            String[] ids = (node.getParent() != null)
-                  ? new String[]{node.getIdentifier(), node.getParent().getName() + "/" + node.getName()}
-                  : new String[]{node.getIdentifier()};
-            node.setProperty(DC_IDENTIFIER, ids);
-            Node contentNode = node.getNode(JCR_CONTENT);
-            decorateContentNode(contentNode);
-        }
+	/**
+	 * Create or find a FedoraDatastream at the given path
+	 * @param session the JCR session to use to retrieve the object
+	 * @param path the absolute path to the object
+	 * @throws RepositoryException
+	 */
+	public Datastream(final Session session, final String path) throws RepositoryException {
+		this(session, path, JcrConstants.NT_FILE);
+	}
+
+
+	private void mixinTypeSpecificCrap() {
+		try {
+			if (node.isNew() || !hasMixin(node)) {
+				logger.debug("Setting fedora:datastream properties on a nt:file node...");
+				node.addMixin(FEDORA_DATASTREAM);
+				node.addMixin(FEDORA_OWNED);
+
+				if (node.getSession() != null) {
+					node.setProperty(FEDORA_OWNERID, node.getSession().getUserID());
+				}
+
+				node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
+
+				// TODO: I guess we should also have the PID + DSID..
+				String[] ids = (node.getParent() != null)
+					  ? new String[]{node.getIdentifier(), node.getParent().getName() + "/" + node.getName()}
+					  : new String[]{node.getIdentifier()};
+				node.setProperty(DC_IDENTIFIER, ids);
+
+				if (node.hasNode(JCR_CONTENT)) {
+					Node contentNode = node.getNode(JCR_CONTENT);
+					decorateContentNode(contentNode);
+				}
+			}
         } catch (RepositoryException ex) {
             logger.warn("Could not decorate jcr:content with fedora:datastream properties: " + ex.getMessage());
         }
-    }
-
-    /**
-     * Find or create a Datastream object at the given JCR path
-     * @param session
-     * @param dsPath the absolute path for the datastream
-     * @throws RepositoryException
-     */
-    public Datastream(final Session session, final String dsPath)
-            throws RepositoryException {
-        super(false);
-        checkArgument(session != null,
-							 "null cannot create a Fedora Datastream!");
-        checkArgument(dsPath != null,
-                "A Fedora Datastream cannot be created at null path!");
-
-        node = findOrCreateNode(session, dsPath, NT_FILE);
-        if (node.isNew()) {
-            logger.debug("Setting fedora:datastream properties on a new DS node...");
-            node.addMixin(FEDORA_DATASTREAM);
-            node.addMixin(FEDORA_OWNED);
-            node.setProperty(FEDORA_OWNERID, session.getUserID());
-
-            node.setProperty("jcr:lastModified", Calendar.getInstance());
-
-            // TODO: I guess we should also have the PID + DSID..
-            node.setProperty(DC_IDENTIFIER, new String[] {node.getIdentifier(),
-                    node.getParent().getName() + "/" + node.getName()});
-            if (node.hasNode(JCR_CONTENT)) {
-                decorateContentNode(node.getNode(JCR_CONTENT));
-            }
-        } else if (!hasMixin(node)) {
-            logger.debug("Setting fedora:datastream properties on a nt:file node...");
-            node.addMixin(FEDORA_DATASTREAM);
-            node.addMixin(FEDORA_OWNED);
-            node.setProperty(FEDORA_OWNERID, session.getUserID());
-
-            node.setProperty("jcr:lastModified", Calendar.getInstance());
-
-            // TODO: I guess we should also have the PID + DSID..
-            String[] ids = (node.getParent() != null)
-                  ? new String[]{node.getIdentifier(), node.getParent().getName() + "/" + node.getName()}
-                  : new String[]{node.getIdentifier()};
-            node.setProperty(DC_IDENTIFIER, ids);
-            Node contentNode = node.getNode(JCR_CONTENT);
-            decorateContentNode(contentNode);
-        }
-        
     }
 
     /**

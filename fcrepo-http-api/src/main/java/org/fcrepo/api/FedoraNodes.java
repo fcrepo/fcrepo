@@ -41,6 +41,7 @@ import org.apache.jena.riot.WebContent;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
@@ -94,17 +95,14 @@ public class FedoraNodes extends AbstractResource {
 		}
 		final Session session = getAuthenticatedSession();
 		try {
-			Node node = session.getNode(path);
+			final FedoraResource resource = nodeService.getObject(session, path);
 
-			if (node.isNodeType("nt:file")) {
-				return Response.ok(getDatastreamProfile(node)).build();
+			if (resource.hasContent()) {
+				return Response.ok(getDatastreamProfile(resource.getNode())).build();
+			} else {
+				return Response.ok(getObjectProfile(resource.getNode())).build();
 			}
 
-			if (node.isNodeType("nt:folder")) {
-				return Response.ok(getObjectProfile(node)).build();
-			}
-
-			return Response.status(406).entity("Unexpected node type: " + node.getPrimaryNodeType()).build();
 		} finally {
 			session.logout();
 		}
@@ -128,7 +126,7 @@ public class FedoraNodes extends AbstractResource {
 
 		return new GraphStreamingOutput(
 				getAuthenticatedSessionProvider(),
-				objectService,
+				nodeService,
 				path,
 				bestPossibleResponse.getMediaType());
 
@@ -210,13 +208,13 @@ public class FedoraNodes extends AbstractResource {
 	}
 
 	/**
-     * Does nothing yet-- must be improved to handle the FCREPO3 PUT to /objects/{pid}
-     * 
+     * Does nothing (good) yet -- just runs SPARQL-UPDATE statements
      * @param pid
      * @return 201
      * @throws RepositoryException
      */
     @PUT
+	@Consumes({WebContent.contentTypeSPARQLUpdate})
 	@Timed
     public Response modifyObject(@PathParam("path")
     final List<PathSegment> pathList, final InputStream requestBodyStream) throws RepositoryException, IOException {
@@ -226,8 +224,8 @@ public class FedoraNodes extends AbstractResource {
 
         try {
 
-			final FedoraObject result =
-					objectService.getObject(session, path);
+			final FedoraResource result =
+					nodeService.getObject(session, path);
 
 			if (requestBodyStream != null) {
 				UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
@@ -263,28 +261,24 @@ public class FedoraNodes extends AbstractResource {
 		final Session session = getAuthenticatedSession();
 
 		try {
-			if (objectService.exists(session, path)) {
 
-				if(requestBodyStream != null) {
+			if(requestBodyStream != null) {
 
-					final FedoraObject result = objectService.getObject(session, path);
+				final FedoraResource result = nodeService.getObject(session, path);
 
-					result.updateGraph(IOUtils.toString(requestBodyStream));
-					Problems problems = result.getGraphProblems();
-					if (problems != null && problems.hasProblems()) {
-						logger.info("Found these problems updating the properties for {}: {}", path, problems.toString());
-						return Response.status(Response.Status.FORBIDDEN).entity(problems.toString()).build();
+				result.updateGraph(IOUtils.toString(requestBodyStream));
+				Problems problems = result.getGraphProblems();
+				if (problems != null && problems.hasProblems()) {
+					logger.info("Found these problems updating the properties for {}: {}", path, problems.toString());
+					return Response.status(Response.Status.FORBIDDEN).entity(problems.toString()).build();
 
-					}
-
-					session.save();
-
-					return Response.status(HttpStatus.SC_NO_CONTENT).build();
-				} else {
-					return Response.status(HttpStatus.SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content ").build();
 				}
+
+				session.save();
+
+				return Response.status(HttpStatus.SC_NO_CONTENT).build();
 			} else {
-				return Response.status(HttpStatus.SC_NOT_FOUND).entity(path + " must be an existing resource").build();
+				return Response.status(HttpStatus.SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content ").build();
 			}
 
 		} finally {
@@ -319,8 +313,8 @@ public class FedoraNodes extends AbstractResource {
         final Session session = getAuthenticatedSession();
         
         try {
-            if (objectService.exists(session, path)) {
-                	return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+            if (nodeService.exists(session, path)) {
+                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
             }
 
             if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
@@ -366,9 +360,14 @@ public class FedoraNodes extends AbstractResource {
     public Response deleteObject(@PathParam("path")
     final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();
-        objectService.deleteObject(session, toPath(path));
-        session.save();
-        return noContent().build();
+
+		try {
+			nodeService.deleteObject(session, toPath(path));
+			session.save();
+			return noContent().build();
+		} finally {
+			session.logout();
+		}
     }
 
     

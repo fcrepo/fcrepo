@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
@@ -34,7 +35,7 @@ public class FedoraChildrenTest {
 
 	FedoraChildren testObj;
 
-	ObjectService mockObjects;
+	NodeService mockNodes;
 
 	DatastreamService mockDatastreams;
 
@@ -46,11 +47,11 @@ public class FedoraChildrenTest {
 
 	@Before
 	public void setUp() throws LoginException, RepositoryException {
-		mockObjects = mock(ObjectService.class);
+		mockNodes = mock(NodeService.class);
 		mockDatastreams = mock(DatastreamService.class);
 		mockLow = mock(LowLevelStorageService.class);
 		testObj = new FedoraChildren();
-		testObj.setObjectService(mockObjects);
+		testObj.setNodeService(mockNodes);
 		mockSession = TestHelpers.mockSession(testObj);
 		mockRepo = mock(Repository.class);
 	}
@@ -63,8 +64,8 @@ public class FedoraChildrenTest {
 		final FedoraObject mockObj = mock(FedoraObject.class);
 		when(mockObj.getName()).thenReturn(pid);
 		Set<String> mockNames = new HashSet<String>(Arrays.asList(new String[]{childPid}));
-		when(mockObjects.getObjectNames(mockSession, path)).thenReturn(mockNames);
-		when(mockObjects.getObjectNames(eq(mockSession), eq(path), any(String.class))).thenReturn(mockNames);
+		when(mockNodes.getObjectNames(mockSession, path)).thenReturn(mockNames);
+		when(mockNodes.getObjectNames(eq(mockSession), eq(path), any(String.class))).thenReturn(mockNames);
 		Response actual = testObj.getObjects(createPathList(pid), null);
 		assertNotNull(actual);
 		String content = (String) actual.getEntity();

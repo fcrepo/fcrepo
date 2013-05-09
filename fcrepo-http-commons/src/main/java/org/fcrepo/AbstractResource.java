@@ -19,6 +19,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
@@ -45,6 +46,13 @@ public abstract class AbstractResource {
 
     @Autowired
     protected SessionFactory sessions;
+
+
+	/**
+	 * The fcrepo node service
+	 */
+	@Autowired
+	protected NodeService nodeService;
 
     /**
      * The fcrepo object service
@@ -164,4 +172,7 @@ public abstract class AbstractResource {
         return result.toString();
     }
 
+	public void setNodeService(NodeService nodeService) {
+		this.nodeService = nodeService;
+	}
 }

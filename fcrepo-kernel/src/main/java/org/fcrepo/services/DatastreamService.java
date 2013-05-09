@@ -18,6 +18,7 @@ import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.DatastreamIterator;
 import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 

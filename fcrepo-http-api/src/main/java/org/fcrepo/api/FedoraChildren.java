@@ -68,7 +68,7 @@ public class FedoraChildren extends AbstractResource {
 			} else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
 				mixin = "nt:file";
 			}
-			return ok(objectService.getObjectNames(session, path, mixin).toString()).build();
+			return ok(nodeService.getObjectNames(session, path, mixin).toString()).build();
 		} finally {
 			session.logout();
 		}
