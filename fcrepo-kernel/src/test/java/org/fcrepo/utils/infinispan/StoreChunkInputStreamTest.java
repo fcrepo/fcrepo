@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.security.SecureRandom;
 
+import org.fcrepo.utils.TestHelpers;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -44,7 +45,7 @@ public class StoreChunkInputStreamTest {
 	@Test
 	public void testBufferedRead() throws IOException, CacheLoaderException {
 		InternalCacheEntry mockEntry = mock(InternalCacheEntry.class);
-		byte [] data = SecureRandom.getSeed(DATA_SIZE);
+		byte[] data = TestHelpers.randomData(DATA_SIZE);
 		when(mockEntry.getValue()).thenReturn(data);
 		when(mockStore.load(anyString())).thenReturn(mockEntry).thenReturn(mockEntry).thenReturn(null);
         int partition = 234;
@@ -67,7 +68,7 @@ public class StoreChunkInputStreamTest {
 	
 	@Test
 	public void testAvailable() throws IOException, CacheLoaderException {
-		byte [] data = SecureRandom.getSeed(DATA_SIZE);
+		byte[] data = TestHelpers.randomData(DATA_SIZE);
 		when(mockEntry.getValue()).thenReturn(data);
 		when(mockStore.load(mockFirstChunk)).thenReturn(mockEntry);
 		assertEquals(0, testObj.available());
@@ -86,7 +87,7 @@ public class StoreChunkInputStreamTest {
 	@Test
 	public void testSkip() throws IOException, CacheLoaderException {
 		long expected = (DATA_SIZE - 1);
-		byte [] data = SecureRandom.getSeed(DATA_SIZE);
+		byte[] data = TestHelpers.randomData(DATA_SIZE);
 		when(mockEntry.getValue()).thenReturn(data);
 		when(mockStore.load(mockFirstChunk)).thenReturn(mockEntry);
 		long actual = testObj.skip(expected);
@@ -101,7 +102,7 @@ public class StoreChunkInputStreamTest {
 	@Test
 	public void testSkipMultipleBuffers() throws IOException, CacheLoaderException {
 		InternalCacheEntry mockEntry = mock(InternalCacheEntry.class);
-		byte [] data = SecureRandom.getSeed(DATA_SIZE);
+		byte[] data = TestHelpers.randomData(DATA_SIZE);
 		when(mockEntry.getValue()).thenReturn(data);
 		when(mockStore.load(anyString())).thenReturn(mockEntry).thenReturn(mockEntry).thenReturn(null);
 

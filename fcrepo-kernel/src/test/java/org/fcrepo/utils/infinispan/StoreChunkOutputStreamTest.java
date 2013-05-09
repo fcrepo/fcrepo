@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.security.SecureRandom;
 
+import org.fcrepo.utils.TestHelpers;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
@@ -15,7 +16,7 @@ import org.junit.Test;
 public class StoreChunkOutputStreamTest {
 
 	private static final int DATA_SIZE = 1024;
-
+		
 	private StoreChunkOutputStream testObj;
 	
 	private CacheStore mockStore;
@@ -34,7 +35,7 @@ public class StoreChunkOutputStreamTest {
 	
 	@Test
 	public void testWritingMultipleChunks() throws IOException, CacheLoaderException {
-		byte[] data = SecureRandom.getSeed(DATA_SIZE);
+		byte[] data = TestHelpers.randomData(DATA_SIZE);
 		for (int i=0; i< 1025; i++) {
 			testObj.write(data);
 		}
@@ -45,7 +46,7 @@ public class StoreChunkOutputStreamTest {
 
 	@Test
 	public void testWritingMultipleChunksOnVersionedKey() throws IOException, CacheLoaderException {
-		byte[] data = SecureRandom.getSeed(DATA_SIZE);
+		byte[] data = TestHelpers.randomData(DATA_SIZE);
 		when(mockStore.load(mockKey + "-0")).thenReturn(mockEntry);
 		for (int i=0; i< 1025; i++) {
 			testObj.write(data);
