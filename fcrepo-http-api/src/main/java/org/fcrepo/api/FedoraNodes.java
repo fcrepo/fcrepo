@@ -302,9 +302,9 @@ public class FedoraNodes extends AbstractResource {
 
 					session.save();
 
-					return Response.ok().build();
+					return Response.status(HttpStatus.SC_NO_CONTENT).build();
 				} else {
-					return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+					return Response.status(HttpStatus.SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content ").build();
 				}
 			} else {
 				return Response.status(HttpStatus.SC_NOT_FOUND).entity(path + " must be an existing resource").build();
