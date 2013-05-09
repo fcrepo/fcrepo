@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,11 +26,7 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
-import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.version.VersionException;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -174,23 +171,32 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test
     public void testGetMimeType() throws RepositoryException {
-        testObj.getMimeType();
-        verify(mockDsNode).hasProperty(FEDORA_CONTENTTYPE);
+		final Node mockContent = TestHelpers.getContentNodeMock(8);
+		when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+		when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
+		when(mockContent.hasProperty(JCR_MIME_TYPE)).thenReturn(true);
+
+		Property mockProperty = mock(Property.class);
+		when(mockContent.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+		when(mockProperty.getString()).thenReturn("application/x-mime-type");
+        assertEquals("application/x-mime-type", testObj.getMimeType());
     }
 
-    @Test
-    public void testGetLabel() throws RepositoryException {
-        testObj.getLabel();
-        verify(mockDsNode).hasProperty(DC_TITLE);
-    }
+	@Test
+	public void testGetMimeTypeWithNoContent() throws RepositoryException {
+		when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(false);
+		assertEquals("application/octet-stream", testObj.getMimeType());
+	}
 
-    @Test
-    public void testSetLabel() throws ValueFormatException, VersionException,
-            LockException, ConstraintViolationException, RepositoryException {
-        final String expected = "foo";
-        testObj.setLabel(expected);
-        verify(mockDsNode).setProperty(DC_TITLE, expected);
-    }
+	@Test
+	public void testGetMimeTypeWithDefault() throws RepositoryException {
+		final Node mockContent = TestHelpers.getContentNodeMock(8);
+		when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+		when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
+		when(mockContent.hasProperty(JCR_MIME_TYPE)).thenReturn(false);
+
+		assertEquals("application/octet-stream", testObj.getMimeType());
+	}
 
     @Test
     public void testGetCreatedDate() throws RepositoryException {
@@ -214,12 +220,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockDsNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(expected.getTime(), actual.getTime());
-    }
-
-    @Test
-    public void testPurge() throws RepositoryException {
-        testObj.purge();
-        verify(mockDsNode).remove();
     }
 
     @Test

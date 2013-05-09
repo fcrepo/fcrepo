@@ -8,8 +8,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
@@ -76,14 +74,14 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
                 session.getWorkspace().getQueryManager();
 
         final String querystring =
-                "\n" + "SELECT [" + FEDORA_SIZE + "] FROM [" + FEDORA_CHECKSUM +
+                "\n" + "SELECT [" + CONTENT_SIZE + "] FROM [" + FEDORA_BINARY +
                         "]";
 
         final QueryResult queryResults =
                 queryManager.createQuery(querystring, JCR_SQL2).execute();
 
         for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
-            final Value value = rows.nextRow().getValue(FEDORA_SIZE);
+            final Value value = rows.nextRow().getValue(CONTENT_SIZE);
             sum += value.getLong();
         }
 

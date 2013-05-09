@@ -8,7 +8,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -19,7 +21,6 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.services.ServiceHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.FedoraTypesUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,11 +49,8 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     NodeType[] mockNodetypes;
 
-    Predicate<Node> isOwned;
-
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        isOwned = FedoraTypesUtils.isOwned;
         final String relPath = "/" + testPid;
 
         mockSession = mock(Session.class);
@@ -79,7 +77,6 @@ public class FedoraObjectTest implements FedoraJcrTypes {
             when(mockObjNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
 
             when(mockPredicate.apply(mockObjNode)).thenReturn(true);
-            FedoraTypesUtils.isOwned = mockPredicate;
 
         } catch (final RepositoryException e) {
             e.printStackTrace();
@@ -93,9 +90,6 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         mockSession = null;
         mockRootNode = null;
         mockObjNode = null;
-        if (isOwned != null) {
-            FedoraTypesUtils.isOwned = isOwned;
-        }
     }
 
     @Test
@@ -108,41 +102,12 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         assertEquals(testFedoraObject.getNode(), mockObjNode);
     }
 
-    @Test
-    public void testSetOwnerId() throws RepositoryException {
-        final Property mockProp = mock(Property.class);
-        when(mockObjNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
-        final String expected = "resuKcom";
-        testFedoraObject.setOwnerId(expected);
-        verify(mockObjNode).setProperty(FEDORA_OWNERID, expected);
-    }
-
-    @Test
-    public void testGetOwnerId() throws RepositoryException {
-        final Property mockProp = mock(Property.class);
-        when(mockObjNode.getProperty(FEDORA_OWNERID)).thenReturn(mockProp);
-        when(mockProp.getString()).thenReturn(mockUser);
-        final String actual = testFedoraObject.getOwnerId();
-        assertEquals(mockUser, actual);
-        verify(mockObjNode).getProperty(FEDORA_OWNERID);
-    }
-
-    @Test
-    public void testGetLabel() throws RepositoryException {
-        final Property mockProp = mock(Property.class);
-        when(mockObjNode.hasProperty(DC_TITLE)).thenReturn(true);
-        when(mockObjNode.getProperty(DC_TITLE)).thenReturn(mockProp);
-        when(mockProp.getString()).thenReturn("mockTitle");
-        testFedoraObject.getLabel();
-        verify(mockObjNode).getProperty(DC_TITLE);
-    }
-
-    @Test
+	@Test
     public void testGetCreated() throws RepositoryException {
         final Property mockProp = mock(Property.class);
-        when(mockProp.getString()).thenReturn("mockDate");
+        when(mockProp.getDate()).thenReturn(Calendar.getInstance());
         when(mockObjNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        testFedoraObject.getCreated();
+        testFedoraObject.getCreatedDate();
         verify(mockObjNode).getProperty(JCR_CREATED);
     }
 
@@ -151,8 +116,8 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         final Property mockProp = mock(Property.class);
         when(mockObjNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
-        when(mockProp.getString()).thenReturn("mockDate");
-        testFedoraObject.getLastModified();
+        when(mockProp.getDate()).thenReturn(Calendar.getInstance());
+        testFedoraObject.getLastModifiedDate();
         verify(mockObjNode).getProperty(JCR_LASTMODIFIED);
     }
 

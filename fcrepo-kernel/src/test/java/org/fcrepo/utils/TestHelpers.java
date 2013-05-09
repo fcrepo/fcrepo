@@ -3,9 +3,7 @@ package org.fcrepo.utils;
 import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_ALGORITHM;
 import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_VALUE;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNERID;
-import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATED;
+import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATEDBY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -64,9 +62,7 @@ public abstract class TestHelpers {
 			when(mock.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
 			when(mock.getProperty(DIGEST_ALGORITHM)).thenReturn(mockDigestType);
 			when(mock.getProperty(DIGEST_VALUE)).thenReturn(mockDigest);
-			when(mock.getProperty(FEDORA_OWNERID)).thenReturn(mockOwner);
-			when(mock.getProperty(FEDORA_OWNED)).thenReturn(mockOwner);
-			when(mock.getProperty(JCR_CREATED)).thenReturn(mockCreated);
+			when(mock.getProperty(JCR_CREATEDBY)).thenReturn(mockCreated);
 		} catch (final RepositoryException e) {
 		} // shhh
 		return mock;

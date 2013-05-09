@@ -67,24 +67,6 @@ public class SelfHealingIT {
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();
         lowLevelService.setRepository(repo);
-        setupInitialNodes();
-    }
-
-    private void setupInitialNodes() throws RepositoryException {
-        final Session s = repo.login();
-        final Node objectStore =
-                new JcrTools(true).findOrCreateNode(s, "/objects");
-
-        if (objectStore.canAddMixin("fedora:objectStore")) {
-            objectStore.addMixin("fedora:objectStore");
-
-            if (!objectStore.hasProperty("fedora:size")) {
-                objectStore.setProperty("fedora:size", 0L);
-            }
-        }
-
-        s.save();
-        s.logout();
     }
 
     private void tamperWithNode(final Node node) throws Exception {

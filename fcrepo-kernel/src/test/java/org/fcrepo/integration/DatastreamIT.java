@@ -34,23 +34,6 @@ public class DatastreamIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
-    @Test
-    public void testLabel() throws Exception {
-        Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
-        final Node dsNode =
-                datastreamService.createDatastreamNode(session,
-                        "/testDatastreamObject/testDatastreamNode",
-                        "application/octet-stream", new ByteArrayInputStream(
-                                "asdf".getBytes()));
-        new Datastream(dsNode).setLabel("Best datastream ever!");
-        session.save();
-        session.logout();
-        session = repo.login();
-        final Datastream ds =
-                datastreamService.getDatastream(session, "/testDatastreamObject/testDatastreamNode");
-        assertEquals("Wrong label!", "Best datastream ever!", ds.getLabel());
-    }
 
     @Test
     public void testCreatedDate() throws RepositoryException, IOException,

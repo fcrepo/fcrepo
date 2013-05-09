@@ -10,11 +10,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static junit.framework.Assert.assertNull;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_CONTENTTYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 public class MimeTypePolicyTest {
 	@Test
@@ -29,7 +29,7 @@ public class MimeTypePolicyTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/x-dummy");
-		when(mockDsNode.getProperty(FEDORA_CONTENTTYPE)).thenReturn(mockProperty);
+		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
 
@@ -47,7 +47,7 @@ public class MimeTypePolicyTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("application/x-other");
-		when(mockDsNode.getProperty(FEDORA_CONTENTTYPE)).thenReturn(mockProperty);
+		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
 
@@ -62,7 +62,7 @@ public class MimeTypePolicyTest {
 		Session mockSession = mock(Session.class);
 		Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getProperty(FEDORA_CONTENTTYPE)).thenThrow(new RepositoryException());
+		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenThrow(new RepositoryException());
 
 		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
 

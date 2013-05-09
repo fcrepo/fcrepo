@@ -107,16 +107,6 @@ public class DatastreamService extends RepositoryService {
 	}
 
     /**
-     * Delete a Datastream
-     * @param session jcr session
-     * @param path
-     * @throws RepositoryException
-     */
-    public void purgeDatastream(final Session session, final String path) throws RepositoryException {
-    	new Datastream(session, path).purge();
-    }
-
-    /**
      *
 	 * @param session jcr session
 	 * @param path path to the DS node

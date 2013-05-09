@@ -42,19 +42,6 @@ public class FedoraObjectIT extends AbstractIT {
         assertNotNull("Couldn't find object!", obj);
     }
 
-    @Test
-    public void testOwnerId() throws RepositoryException, IOException {
-        Session session = repo.login();
-        objectService.createObject(session, "/testObject").setOwnerId("ajs6f");
-        session.save();
-        session.logout();
-        session = repo.login();
-        final String ownerId =
-                objectService.getObject(session, "/testObject").getOwnerId();
-        assertEquals("Couldn't find object owner ID!", "ajs6f", ownerId);
-    }
-
-
 	@Test
 	public void testGetSizeWhenInATree() throws Exception {
 
@@ -73,7 +60,6 @@ public class FedoraObjectIT extends AbstractIT {
 	public void testObjectGraph() throws Exception {
 		final Session session = repo.login();
 		final FedoraObject object = objectService.createObject(session, "/graphObject");
-		object.setLabel("my-object-label");
 		final GraphStore graphStore = object.getGraphStore();
 
 		assertEquals("info:fedora/graphObject", object.getGraphSubject().toString());
@@ -85,7 +71,7 @@ public class FedoraObjectIT extends AbstractIT {
 		UpdateAction.parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
 										  "INSERT { <" + object.getGraphSubject().toString() + "> dc:title  \"This is an example title\" } WHERE {}", graphStore);
 
-		assertTrue(object.getNode().getProperty("dc:title").getString(), object.getNode().getProperty("dc:title").getString().equals("This is an example title"));
+		assertTrue(object.getNode().getProperty("dc:title").getValues()[0].getString(), object.getNode().getProperty("dc:title").getValues()[0].getString().equals("This is an example title"));
 
 
 		UpdateAction.parseExecute("PREFIX myurn: <info:myurn/>\n" +

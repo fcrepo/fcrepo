@@ -22,12 +22,14 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
@@ -60,6 +62,28 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 	public FedoraResource(final Session session, final String path, final String nodeType) throws RepositoryException {
 		super(false);
 		this.node = findOrCreateNode(session, path, nodeType);
+
+		if (node.isNew() || !hasMixin(node)) {
+			node.addMixin(FEDORA_RESOURCE);
+
+			if (node.getSession() != null) {
+				node.setProperty(JCR_CREATEDBY, node.getSession().getUserID());
+			}
+
+			node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
+		}
+
+	}
+
+	public static boolean hasMixin(Node node) throws RepositoryException {
+		NodeType[] nodeTypes = node.getMixinNodeTypes();
+		if (nodeTypes == null) return false;
+		for (NodeType nodeType: nodeTypes) {
+			if (FEDORA_RESOURCE.equals(nodeType.getName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public boolean hasContent() throws RepositoryException {
@@ -75,14 +99,41 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
 
 	/**
-	 * Get the date this object was created
+	 * Get the date this datastream was created
 	 * @return
 	 * @throws RepositoryException
 	 */
-	public String getCreated() throws RepositoryException {
-		return node.getProperty(JCR_CREATED).getString();
+	public Date getCreatedDate() throws RepositoryException {
+		return new Date(node.getProperty(JCR_CREATED).getDate()
+								.getTimeInMillis());
 	}
 
+
+	/**
+	 * Get the date this datastream was last modified
+	 * @return
+	 * @throws RepositoryException
+	 */
+	public Date getLastModifiedDate() {
+		//TODO no modified date stored
+		//attempt to set as created date?
+		try {
+			return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
+									.getTimeInMillis());
+		} catch (RepositoryException e) {
+			logger.error("Could not get last modified date");
+		}
+		logger.debug("Setting modified date");
+		try {
+			Date createdDate = getCreatedDate();
+			node.setProperty(JCR_LASTMODIFIED, createdDate.toString());
+			node.getSession().save();
+			return createdDate;
+		} catch(RepositoryException e) {
+			logger.error("Could not set new modified date - " + e.getMessage());
+		}
+		return null;
+	}
 
 	/**
 	 * Get the total size of this object and its datastreams
@@ -91,20 +142,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 	 */
 	public long getSize() throws RepositoryException {
 		return getObjectSize(node);
-	}
-
-	/**
-	 * Get the date this object was last modified (whatever that means)
-	 * @return
-	 * @throws RepositoryException
-	 */
-	public String getLastModified() throws RepositoryException {
-		if (node.hasProperty(JCR_LASTMODIFIED)) {
-			return node.getProperty(JCR_LASTMODIFIED).getString();
-		} else {
-			logger.warn("{} was loaded as a Fedora object, but does not have {} defined.", node.getName(), JCR_LASTMODIFIED);
-			return null;
-		}
 	}
 
 	/**
