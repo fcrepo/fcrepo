@@ -66,7 +66,7 @@ public class FedoraUnnamedObjectsTest {
         testObj.setPidMinter(mockMint);
         testObj.ingestAndMint(createPathList("objects", "fcr:new"));
         verify(mockMint).mintPid();
-        verify(mockObjects).createObject(any(List.class), any(String.class),
+        verify(mockObjects).createObject(any(List.class),
                 eq(FedoraJcrTypes.FEDORA_OBJECT), isNull(String.class),
                 isNull(String.class), isNull(MediaType.class),
                 isNull(InputStream.class));

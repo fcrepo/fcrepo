@@ -15,6 +15,7 @@ import org.apache.http.util.EntityUtils;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 
 public class FedoraNodesIT extends AbstractResourceIT {
@@ -58,20 +59,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals("Object wasn't really deleted!", 404,
                 getStatus(new HttpGet(serverAddress +
                         "objects/FedoraObjectsTest3")));
-    }
-
-    @Test
-    public void testIngestWithLabel() throws Exception {
-        final HttpPost method =
-                postObjMethod("FedoraObjectsTest4", "label=Awesome_Object");
-        final HttpResponse response = client.execute(method);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
-        assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
-                .find());
-
-        final ObjectProfile obj = getObject("FedoraObjectsTest4");
-        assertEquals("Wrong label!", "Awesome_Object", obj.objLabel);
     }
 
 	@Test
@@ -121,13 +108,27 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
 
 	@Test
-	public void testGetObjectGraphWithProblems() throws Exception {
+	public void testUpdateObjectGraph() throws Exception {
 		client.execute(postObjMethod("FedoraDescribeTestGraphUpdate"));
-		final HttpPost getObjMethod =
+		final HttpPost updateObjectGraphMethod =
 				new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphUpdate");
+		updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+		BasicHttpEntity e = new BasicHttpEntity();
+		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdate> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}".getBytes()));
+		updateObjectGraphMethod.setEntity(e);
+		final HttpResponse response = client.execute(updateObjectGraphMethod);
+		assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+
+	}
+
+	@Test
+	public void testUpdateObjectGraphWithProblems() throws Exception {
+		client.execute(postObjMethod("FedoraDescribeTestGraphUpdateBad"));
+		final HttpPost getObjMethod =
+				new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphUpdateBad");
 		getObjMethod.addHeader("Content-Type", "application/sparql-update");
 		BasicHttpEntity e = new BasicHttpEntity();
-		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdate> <http://www.jcp.org/jcr/1.0uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n".getBytes()));
+		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdateBad> <http://www.jcp.org/jcr/1.0uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n".getBytes()));
 		getObjMethod.setEntity(e);
 		final HttpResponse response = client.execute(getObjMethod);
 		assertEquals(403, response.getStatusLine().getStatusCode());

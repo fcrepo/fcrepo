@@ -139,9 +139,7 @@ public class FedoraFieldSearch extends AbstractResource implements
     public static String buildQueryString() {
         //TODO expand to more fields
         final String sqlExpression =
-                "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE [" +
-                        DC_IDENTIFIER + "] like $sterm OR [" + DC_TITLE +
-                        "] like $sterm";
+                "SELECT * FROM [" + FEDORA_RESOURCE + "] WHERE [dc:identifier] like $sterm OR [dc:title] like $sterm";
         return sqlExpression;
     }
 }

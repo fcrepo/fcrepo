@@ -1,6 +1,7 @@
 package org.fcrepo.binary;
 
 import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.binary.NamedHint;
 import org.modeshape.jcr.value.binary.StrategyHint;
 
@@ -29,7 +30,9 @@ public class MimeTypePolicyTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/x-dummy");
-		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
 
@@ -47,7 +50,9 @@ public class MimeTypePolicyTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("application/x-other");
-		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
 
@@ -62,7 +67,7 @@ public class MimeTypePolicyTest {
 		Session mockSession = mock(Session.class);
 		Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenThrow(new RepositoryException());
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenThrow(new RepositoryException());
 
 		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
 

@@ -3,6 +3,7 @@ package org.fcrepo.binary;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.binary.NamedHint;
 import org.modeshape.jcr.value.binary.StrategyHint;
 
@@ -47,7 +48,9 @@ public class PolicyDecisionPointTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/x-dummy-type");
-		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = pt.evaluatePolicies(mockDsNode);
 		assertThat(receivedHint, is(dummyHint));
@@ -63,7 +66,9 @@ public class PolicyDecisionPointTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/tiff");
-		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = pt.evaluatePolicies(mockDsNode);
 		assertThat(receivedHint, is(tiffHint));
@@ -80,7 +85,9 @@ public class PolicyDecisionPointTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/x-other");
-		when(mockDsNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = pt.evaluatePolicies(mockDsNode);
 		assertNull(receivedHint);

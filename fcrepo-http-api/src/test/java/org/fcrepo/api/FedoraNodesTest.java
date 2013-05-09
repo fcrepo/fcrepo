@@ -104,7 +104,7 @@ public class FedoraNodesTest {
         final String pid = "testObject";
         final Response actual = testObj.modifyObject(createPathList(pid), null);
         assertNotNull(actual);
-        assertEquals(Status.TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
+        assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
         // HA!
         // verifyNoMoreInteractions(mockObjects);
@@ -116,7 +116,7 @@ public class FedoraNodesTest {
         final String pid = "testObject";
         final String path = "/" + pid;
         final Response actual = testObj.createObject(
-															createPathList(pid), null,
+															createPathList(pid),
 															FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null
 		);
         assertNotNull(actual);
@@ -141,7 +141,7 @@ public class FedoraNodesTest {
                 eq(dsContentStream), anyString(), anyString())).thenReturn(mockNode);
         final Response actual =
                 testObj.createObject(
-                        createPathList(pid,dsId), "test label",
+                        createPathList(pid,dsId),
                         FedoraJcrTypes.FEDORA_DATASTREAM, null,
                         null, null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());

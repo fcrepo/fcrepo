@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.FedoraResource;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates;
@@ -43,21 +44,9 @@ public class FedoraVersions extends AbstractResource {
     private static final Logger logger = LoggerFactory
             .getLogger(FedoraVersions.class);
 
-    private DateTimeFormatter jcrDateFormat = ISODateTimeFormat.dateTime();
+	@Autowired
+	FedoraNodes objectsResource;
 
-    @Autowired
-    private DatastreamService datastreamService;
-
-    @Autowired
-    private ObjectService objectService;
-
-    public void setDatastreamService(final DatastreamService datastreamService) {
-        this.datastreamService = datastreamService;
-    }
-
-    public void setObjectService(final ObjectService objectService) {
-        this.objectService = objectService;
-    }
 
     @GET
     @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
@@ -66,29 +55,16 @@ public class FedoraVersions extends AbstractResource {
         final String path = toPath(segments);
         final Session session = getAuthenticatedSession();
         try {
-            final Node node = session.getNode(path);
+                final FedoraResource ds =
+                        nodeService.getObject(session, path);
+                final Version v =
+                        new Version(path, ds.getCreatedDate());
+                return Arrays.asList(v);
 
-            if (node.isNodeType("nt:file")) {
-                final Datastream ds =
-                        datastreamService.getDatastream(session, path);
-                final Version v =
-                        new Version(path, ds.getDsId(), ds.getLabel(), ds
-                                .getCreatedDate());
-                return Arrays.asList(v);
-            }
-            if (node.isNodeType("nt:folder")) {
-                final FedoraObject obj = objectService.getObject(session, path);
-                final Version v =
-                        new Version(path, obj.getName(), obj.getName(),
-                                jcrDateFormat.parseDateTime(obj.getCreated())
-                                        .toDate());
-                return Arrays.asList(v);
-            }
         } finally {
             session.logout();
         }
 
-        return Arrays.asList();
     }
 
     @Path("/{id}")
@@ -101,63 +77,17 @@ public class FedoraVersions extends AbstractResource {
         final Session session = getAuthenticatedSession();
 
         try {
-            final Node node = session.getNode(path);
+			final FedoraResource resource = nodeService.getObject(session, path);
 
-            if (node.isNodeType("nt:file")) {
-                /* TODO: this should be moved to datastreamservice */
-                final Datastream ds =
-                        datastreamService.getDatastream(session, path);
-                return Response.ok(getDSProfile(ds)).build();
-            }
-
-            if (node.isNodeType("nt:folder")) {
-                /* TODO: this should be moved to objectservice */
-                return Response
-                        .ok(getObjectProfile(objectService.getObject(session,
-                                path))).build();
-            }
+			if (resource.hasContent()) {
+				return Response.ok(objectsResource.getDatastreamProfile(resource.getNode())).build();
+			} else {
+				return Response.ok(objectsResource.getObjectProfile(resource.getNode())).build();
+			}
         } finally {
             session.logout();
         }
 
-        return Response.status(Response.Status.NOT_FOUND).build();
-    }
-
-    private ObjectProfile getObjectProfile(final FedoraObject object)
-            throws RepositoryException {
-        final ObjectProfile prof = new ObjectProfile();
-        prof.objCreateDate = object.getCreated();
-        prof.objLabel = object.getLabel();
-        prof.objLastModDate = object.getLastModified();
-        prof.objSize = object.getSize();
-        prof.objOwnerId = object.getOwnerId();
-        prof.objModels = object.getModels();
-        return prof;
-    }
-
-    /*
-     * TODO: this is a duplicate of FedoraDatatstreams.getDSProfile and should
-     * be merged into one method
-     */
-    private DatastreamProfile getDSProfile(final Datastream ds)
-            throws RepositoryException, IOException {
-        logger.trace("Executing getDSProfile() with node: " + ds.getDsId());
-        final DatastreamProfile dsProfile = new DatastreamProfile();
-        dsProfile.dsID = ds.getDsId();
-        dsProfile.pid = ds.getObject().getName();
-        logger.trace("Retrieved datastream " + ds.getDsId() + "'s parent: " +
-                dsProfile.pid);
-        dsProfile.dsLabel = ds.getLabel();
-        logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
-                ds.getLabel());
-        dsProfile.dsOwnerId = ds.getOwnerId();
-        dsProfile.dsChecksumType = ds.getContentDigestType();
-        dsProfile.dsChecksum = ds.getContentDigest();
-        dsProfile.dsState = DatastreamStates.A;
-        dsProfile.dsMIME = ds.getMimeType();
-        dsProfile.dsSize = ds.getSize();
-        dsProfile.dsCreateDate = ds.getCreatedDate().toString();
-        return dsProfile;
     }
 
     @XmlRootElement(name = "datastream-version")
@@ -167,21 +97,12 @@ public class FedoraVersions extends AbstractResource {
         @XmlAttribute(name = "path")
         private String path;
 
-        @XmlAttribute(name = "name")
-        private String name;
-
-        @XmlAttribute(name = "pid")
-        private String id;
-
         @XmlAttribute(name = "created")
         private Date created;
 
-        public Version(final String path, final String id, final String name,
-                final Date created) {
+        public Version(final String path, final Date created) {
             super();
             this.path = path;
-            this.name = name;
-            this.id = id;
             this.created = created;
         }
 
@@ -189,16 +110,8 @@ public class FedoraVersions extends AbstractResource {
             super();
         }
 
-        public String getId() {
-            return id;
-        }
-
         public Date getCreated() {
             return created;
-        }
-
-        public String getName() {
-            return name;
         }
 
         public String getPath() {

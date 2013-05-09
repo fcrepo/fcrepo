@@ -109,7 +109,7 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
-                datastreamService.purgeDatastream(session, path + "/" + dsid);
+				nodeService.deleteObject(session, path + "/" + dsid);
             }
 
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -149,7 +149,7 @@ public class FedoraDatastreams extends AbstractResource {
             String path = toPath(pathList);
             for (final String dsid : dsidList) {
                 logger.debug("purging datastream {}", path  + "/" +  dsid);
-                datastreamService.purgeDatastream(session, path  + "/" +  dsid);
+				nodeService.deleteObject(session, path + "/" + dsid);
             }
             session.save();
             return noContent().build();
@@ -241,10 +241,6 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.pid = ds.getObject().getName();
         logger.trace("Retrieved datastream " + ds.getDsId() + "'s parent: " +
                 dsProfile.pid);
-        dsProfile.dsLabel = ds.getLabel();
-        logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
-                ds.getLabel());
-        dsProfile.dsOwnerId = ds.getOwnerId();
         dsProfile.dsChecksumType = ds.getContentDigestType();
         dsProfile.dsChecksum = ds.getContentDigest();
         dsProfile.dsState = A;

@@ -135,7 +135,7 @@ public class FedoraNodes extends AbstractResource {
 	/**
 	 * Returns an object profile.
 	 *
-	 * @param path
+	 * @param node
 	 * @return 200
 	 * @throws RepositoryException
 	 * @throws IOException
@@ -148,10 +148,8 @@ public class FedoraNodes extends AbstractResource {
 		final ObjectProfile objectProfile = new ObjectProfile();
 		final FedoraObject obj = objectService.getObject(node.getSession(), path);
 		objectProfile.pid = obj.getName();
-		objectProfile.objLabel = obj.getLabel();
-		objectProfile.objOwnerId = obj.getOwnerId();
-		objectProfile.objCreateDate = obj.getCreated();
-		objectProfile.objLastModDate = obj.getLastModified();
+		objectProfile.objCreateDate = obj.getCreatedDate();
+		objectProfile.objLastModDate = obj.getLastModifiedDate();
 		objectProfile.objSize = obj.getSize();
 		objectProfile.objItemIndexViewURL =
 				uriInfo.getAbsolutePathBuilder().path("datastreams").build();
@@ -177,10 +175,6 @@ public class FedoraNodes extends AbstractResource {
 		dsProfile.pid = ds.getObject().getName();
 		logger.trace("Retrieved datastream " + ds.getDsId() + "'s parent: " +
 							 dsProfile.pid);
-		dsProfile.dsLabel = ds.getLabel();
-		logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
-							 ds.getLabel());
-		dsProfile.dsOwnerId = ds.getOwnerId();
 		dsProfile.dsChecksumType = ds.getContentDigestType();
 		dsProfile.dsChecksum = ds.getContentDigest();
 		dsProfile.dsState = DatastreamProfile.DatastreamStates.A;
@@ -209,7 +203,8 @@ public class FedoraNodes extends AbstractResource {
 
 	/**
      * Does nothing (good) yet -- just runs SPARQL-UPDATE statements
-     * @param pid
+     * @param pathList
+	 * @param requestBodyStream
      * @return 201
      * @throws RepositoryException
      */
@@ -232,7 +227,7 @@ public class FedoraNodes extends AbstractResource {
 			}
             session.save();
 
-			return Response.temporaryRedirect(uriInfo.getRequestUri()).build();
+			return Response.status(HttpStatus.SC_NO_CONTENT).build();
         } finally {
             session.logout();
         }
@@ -289,7 +284,7 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Creates a new object.
      * 
-     * @param pid
+     * @param pathList
      * @return 201
      * @throws RepositoryException
      * @throws InvalidChecksumException 
@@ -299,7 +294,6 @@ public class FedoraNodes extends AbstractResource {
 	@Timed
     public Response createObject(
             @PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("label") @DefaultValue("") final String label,
             @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
             @QueryParam("checksumType") final String checksumType,
             @QueryParam("checksum") final String checksum,
@@ -320,9 +314,6 @@ public class FedoraNodes extends AbstractResource {
             if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
                 final FedoraObject result =
                         objectService.createObject(session, path);
-                if (label != null && !"".equals(label)) {
-                    result.setLabel(label);
-                }
 
 				if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
 					result.updateGraph(IOUtils.toString(requestBodyStream));
@@ -337,7 +328,6 @@ public class FedoraNodes extends AbstractResource {
                 datastreamService.createDatastreamNode(session, path, contentType
                         .toString(), requestBodyStream, checksumType, checksum);
                 Datastream ds = new Datastream(result);
-                ds.setLabel(label);
             }
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
@@ -351,7 +341,7 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Deletes an object.
      * 
-     * @param pid
+     * @param path
      * @return
      * @throws RepositoryException
      */

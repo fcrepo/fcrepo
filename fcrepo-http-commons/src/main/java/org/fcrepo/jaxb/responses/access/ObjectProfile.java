@@ -3,6 +3,7 @@ package org.fcrepo.jaxb.responses.access;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -26,10 +27,10 @@ public class ObjectProfile {
     public Collection<String> objModels;
 
     @XmlElement
-    public String objCreateDate;
+    public Date objCreateDate;
 
     @XmlElement
-    public String objLastModDate;
+    public Date objLastModDate;
 
     @XmlElement
     public URI objDissIndexViewURL;

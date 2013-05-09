@@ -65,7 +65,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
 
         try {
             return objectsResource.createObject(
-                    segments.build(), "test label",
+                    segments.build(),
                     FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
         } catch (IOException e) {
             throw new RepositoryException(e.getMessage(), e);
