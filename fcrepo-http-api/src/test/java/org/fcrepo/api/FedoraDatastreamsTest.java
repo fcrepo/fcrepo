@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -23,6 +24,8 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
@@ -158,9 +161,10 @@ public class FedoraDatastreamsTest {
         final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
 
+        final Request mockRequest = mock(Request.class);
         final Response resp =
                 testObj.getDatastreamsContents(createPathList(pid), Arrays
-                        .asList(new String[] {dsId}));
+                        .asList(dsId), mockRequest);
         final MultiPart multipart = (MultiPart) resp.getEntity();
 
         verify(mockDs).getContent();
@@ -169,6 +173,31 @@ public class FedoraDatastreamsTest {
         final InputStream actualContent =
                 (InputStream) multipart.getBodyParts().get(0).getEntity();
         assertEquals("asdf", IOUtils.toString(actualContent, "UTF-8"));
+        assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+    }
+
+    @Test
+    public void testGetDatastreamsContentsCached() throws RepositoryException,
+            IOException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "testDS";
+        final String path = "/" + pid + "/" + dsId;
+        final String dsContent = "asdf";
+        final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, dsContent);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
+
+        final Request mockRequest = mock(Request.class);
+        when(mockRequest.evaluatePreconditions(any(Date.class),
+                                               any(EntityTag.class))).thenReturn(
+                Response.notModified());
+
+        final Response resp =
+                testObj.getDatastreamsContents(createPathList(pid), Arrays
+                        .asList(dsId), mockRequest);
+
+        verify(mockDs, never()).getContent();
+        verify(mockSession, never()).save();
+        assertEquals(Status.NOT_MODIFIED.getStatusCode(), resp.getStatus());
     }
 
     @Test

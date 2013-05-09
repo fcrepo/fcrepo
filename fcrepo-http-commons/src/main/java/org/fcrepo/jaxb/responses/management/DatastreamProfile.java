@@ -39,6 +39,9 @@ public class DatastreamProfile {
     public String dsCreateDate;
 
     @XmlElement
+    public String dsLastModifiedDate;
+
+    @XmlElement
     public DatastreamStates dsState;
 
     @XmlElement

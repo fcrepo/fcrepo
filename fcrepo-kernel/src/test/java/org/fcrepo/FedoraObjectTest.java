@@ -8,7 +8,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -151,7 +153,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         final Property mockProp = mock(Property.class);
         when(mockObjNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
-        when(mockProp.getString()).thenReturn("mockDate");
+        when(mockProp.getDate()).thenReturn(Calendar.getInstance());
         testFedoraObject.getLastModified();
         verify(mockObjNode).getProperty(JCR_LASTMODIFIED);
     }

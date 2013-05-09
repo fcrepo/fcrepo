@@ -16,19 +16,17 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.Principal;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
@@ -38,7 +36,6 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.LowLevelCacheEntry;
@@ -170,10 +167,42 @@ public class FedoraNodesTest {
 		when(mockNode.isNodeType("nt:file")).thenReturn(true);
 		when(mockSession.getNode(path)).thenReturn(mockNode);
 		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
-		final Response actual = testObj.describe(createPathList(pid, dsId));
-		assertNotNull(actual);
+
+        final Request mockRequest = mock(Request.class);
+        final Response actual = testObj.describe(createPathList(pid, dsId),
+                                                 mockRequest);
+        assertNotNull(actual);
 		verify(mockDatastreams).getDatastream(mockSession, path);
 		verify(mockSession, never()).save();
 	}
+
+    @Test
+    public void testDescribeNodeCached() throws Exception {
+        final String pid = "FedoraDatastreamsTest1";
+        final String path = "/" + pid;
+        final FedoraObject mockObj = TestHelpers.mockFedoraObject();
+
+        when(mockObjects.getObject(mockSession, path)).thenReturn(mockObj);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockObj.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockNode.isNodeType("nt:file")).thenReturn(false);
+        when(mockNode.isNodeType("nt:folder")).thenReturn(true);
+
+        when(mockSession.getNode(path)).thenReturn(mockNode);
+        when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
+
+        final Request mockRequest = mock(Request.class);
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
+                Response.notModified());
+
+        final Response actual = testObj.describe(createPathList(pid),
+                                                 mockRequest);
+        assertNotNull(actual);
+        verify(mockObjects).getObject(mockSession, path);
+        verify(mockSession, never()).save();
+        assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
+    }
     
 }

@@ -15,6 +15,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -185,8 +186,21 @@ public class FedoraObject extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public String getLastModified() throws RepositoryException {
+        Date date = getLastModifiedDate();
+        if (null != date) {
+            return date.toString();
+        }
+        return null;
+    }
+
+    /**
+     * Get the date this object was last modified (whatever that means)
+     * @return
+     * @throws RepositoryException
+     */
+    public Date getLastModifiedDate() throws RepositoryException {
         if (node.hasProperty(JCR_LASTMODIFIED)) {
-            return node.getProperty(JCR_LASTMODIFIED).getString();
+            return node.getProperty(JCR_LASTMODIFIED).getDate().getTime();
         } else {
             logger.warn("{} was loaded as a Fedora object, but does not have {} defined.", node.getName(), JCR_LASTMODIFIED);
             return null;

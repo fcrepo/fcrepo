@@ -14,6 +14,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,8 +33,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import com.codahale.metrics.annotation.Timed;
@@ -42,6 +51,7 @@ import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.utils.ContentDigest;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -162,9 +172,10 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/__content__")
     @Produces("multipart/mixed")
     @Timed
-    public Response getDatastreamsContents(@PathParam("path")
-    List<PathSegment> pathList, @QueryParam("dsid")
-    final List<String> dsids) throws RepositoryException, IOException {
+    public Response getDatastreamsContents(@PathParam("path") List<PathSegment> pathList,
+                                           @QueryParam("dsid") final List<String> dsids,
+                                           @Context final Request request)
+            throws RepositoryException, IOException {
 
 		final Session session = getAuthenticatedSession();
 
@@ -177,22 +188,67 @@ public class FedoraDatastreams extends AbstractResource {
 				}
 			}
 
-			final MultiPart multipart = new MultiPart();
+            Date date = new Date();
+            final MessageDigest digest = ContentDigest.getSha1Digest();
 
-			final Iterator<String> i = dsids.iterator();
+            // Ensure consistent order of dsids for additive digest creation.
+            Collections.sort(dsids);
+
+            final Iterator<String> i = dsids.iterator();
+            final List<Datastream> datastreams = new ArrayList<>();
 			while (i.hasNext()) {
 				final String dsid = i.next();
 
 				try {
 					final Datastream ds =
 							datastreamService.getDatastream(session, path  + "/" +  dsid);
-					multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
-							.getMimeType()));
-				} catch (final PathNotFoundException e) {
 
+                    datastreams.add(ds);
+
+                    // Maintain a rolling digest
+                    final URI contentDigest = ds.getContentDigest();
+                    if (null != contentDigest) {
+                        digest.update(contentDigest.toString().getBytes());
+                    }
+
+                    // Select the most recent date
+                    if (ds.getLastModifiedDate().after(date)) {
+                        date = ds.getLastModifiedDate();
+                    }
+
+				} catch (final PathNotFoundException e) {
+                  logger.warn("Path not found: {}", e.getMessage());
 				}
 			}
-			return Response.ok(multipart, MULTIPART_FORM_DATA).build();
+
+            final URI digestURI = ContentDigest.asURI(digest.getAlgorithm(),
+                                                      digest.digest());
+            final EntityTag etag = new EntityTag(digestURI.toString());
+
+            final Date roundedDate = new Date();
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+            Response.ResponseBuilder builder =
+                    request.evaluatePreconditions(roundedDate, etag);
+
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+
+            // Preconditions were not met if builder is null
+            if (builder == null) {
+
+                final MultiPart multipart = new MultiPart();
+                for (Datastream ds : datastreams) {
+                    multipart.bodyPart(ds.getContent(),
+                                       MediaType.valueOf(ds.getMimeType()));
+                }
+
+                builder = Response.ok(multipart, MULTIPART_FORM_DATA);
+            }
+
+            return builder.cacheControl(cc).lastModified(date).tag(etag).build();
+
 		} finally {
 			session.logout();
 		}

@@ -7,6 +7,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -39,4 +41,15 @@ public abstract class ContentDigest {
     public static String asString(final byte[] data) {
         return encodeHexString(data);
     }
+
+    public static MessageDigest getSha1Digest() {
+        try {
+            return MessageDigest.getInstance("SHA-1");
+
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Exception creating SHA-1 Digest: {}", e.getMessage());
+            throw propagate(e);
+        }
+    }
+
 }
