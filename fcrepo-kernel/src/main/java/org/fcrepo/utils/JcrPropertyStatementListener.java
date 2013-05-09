@@ -19,6 +19,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static org.fcrepo.utils.FedoraTypesUtils.getJcrNamespaceForRDFNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class JcrPropertyStatementListener extends StatementListener {
@@ -69,7 +70,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 					Collections.addAll(newValues, node.getProperty(propertyName).getValues());
 					newValues.add(newValue);
 
-					property.setValue((Value[]) newValues.toArray(new Value[0]));
+					property.setValue((Value[]) newValues.toArray(new Value[newValues.size()]));
 				} else {
 					// or we'll just overwrite it
 					property.setValue(newValue);
@@ -265,12 +266,14 @@ public class JcrPropertyStatementListener extends StatementListener {
 
 		final String prefix;
 
+		final String namespace = getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
+
 		final NamespaceRegistry namespaceRegistry = getNamespaceRegistry();
 
-		if (namespaceRegistry.isRegisteredUri(predicate.getNameSpace())) {
-			prefix = namespaceRegistry.getPrefix(predicate.getNameSpace());
+		if (namespaceRegistry.isRegisteredUri(namespace)) {
+			prefix = namespaceRegistry.getPrefix(namespace);
 		} else {
-			prefix = namespaceRegistry.registerNamespace(predicate.getNameSpace());
+			prefix = namespaceRegistry.registerNamespace(namespace);
         }
 
 		final String localName = predicate.getLocalName();

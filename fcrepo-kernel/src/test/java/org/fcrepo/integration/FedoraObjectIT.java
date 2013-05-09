@@ -20,6 +20,7 @@ import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.*;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
@@ -62,6 +63,8 @@ public class FedoraObjectIT extends AbstractIT {
 		final FedoraObject object = objectService.createObject(session, "/graphObject");
 		final GraphStore graphStore = object.getGraphStore();
 
+		assertFalse("Graph store should not contain JCR prefixes", compile("jcr").matcher(graphStore.toString()).find());
+		assertFalse("Graph store should contain our fedora-internal prefix", compile("fedora-internal").matcher(graphStore.toString()).find());
 		assertEquals("info:fedora/graphObject", object.getGraphSubject().toString());
 
 		UpdateAction.parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +

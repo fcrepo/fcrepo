@@ -99,7 +99,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		final String content = EntityUtils.toString(response.getEntity());
 
-		assertTrue("Didn't find an expected ntriple", compile("<info:fedora/objects/FedoraDescribeTestGraph> <http://www.jcp.org/jcr/1.0mixinTypes> \"fedora:object\" \\.",
+		assertTrue("Didn't find an expected ntriple", compile("<info:fedora/objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
 																	DOTALL).matcher(content).find());
 
 		logger.debug("Retrieved object graph:\n" + content);
@@ -128,7 +128,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 				new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphUpdateBad");
 		getObjMethod.addHeader("Content-Type", "application/sparql-update");
 		BasicHttpEntity e = new BasicHttpEntity();
-		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdateBad> <http://www.jcp.org/jcr/1.0uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n".getBytes()));
+		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdateBad> <info:fedora/fedora-system:def/internal#uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n".getBytes()));
 		getObjMethod.setEntity(e);
 		final HttpResponse response = client.execute(getObjMethod);
 		assertEquals(403, response.getStatusLine().getStatusCode());

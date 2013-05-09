@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
+import static org.fcrepo.utils.FedoraTypesUtils.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -165,7 +166,12 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 			final String nsURI = namespaceRegistry.getURI(prefix);
 			if (nsURI != null && !nsURI.equals("") &&
 						!prefix.equals("xmlns")) {
-				model.setNsPrefix(prefix, nsURI);
+
+				if (prefix.equals("jcr")) {
+					model.setNsPrefix("fedora-internal", getRDFNamespaceForJcrNamespace(nsURI));
+				} else {
+					model.setNsPrefix(prefix, getRDFNamespaceForJcrNamespace(nsURI));
+				}
 			}
 		}
 
@@ -179,12 +185,12 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 				final Value[] values = property.getValues();
 
 				for(Value v : values) {
-					model.add(subject, ResourceFactory.createProperty(nsProperty.getNamespaceURI(), nsProperty.getLocalName()), v.getString());
+					model.add(subject, ResourceFactory.createProperty(getRDFNamespaceForJcrNamespace(nsProperty.getNamespaceURI()), nsProperty.getLocalName()), v.getString());
 				}
 
 			} else {
 				final Value value = property.getValue();
-				model.add(subject, ResourceFactory.createProperty(nsProperty.getNamespaceURI(), nsProperty.getLocalName()), value.getString());
+				model.add(subject, ResourceFactory.createProperty(getRDFNamespaceForJcrNamespace(nsProperty.getNamespaceURI()), nsProperty.getLocalName()), value.getString());
 			}
 
 		}
