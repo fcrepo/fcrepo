@@ -1,5 +1,6 @@
 package org.fcrepo;
 
+import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -19,6 +20,7 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -47,7 +49,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
 	/**
 	 * Construct a FedoraObject from an existing JCR Node
-	 * @param n an existing JCR node to treat as an fcrepo object
+	 * @param node an existing JCR node to treat as an fcrepo object
 	 */
 	public FedoraResource(final Node node) {
 		super(false);
@@ -177,6 +179,23 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
 		final PropertyIterator properties = node.getProperties();
 
+		addJcrPropertiesToModel(subject, model, properties);
+
+		if (node.hasNode(JcrConstants.JCR_CONTENT)) {
+			final Resource contentSubject = ResourceFactory.createResource("info:fedora" + node.getPath() + "/fcr:content");
+			model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasContent"), contentSubject);
+			final PropertyIterator contentProperties = node.getNode(JcrConstants.JCR_CONTENT).getProperties();
+			addJcrPropertiesToModel(contentSubject, model, contentProperties);
+		}
+
+		listener = new JcrPropertyStatementListener(subject, getNode());
+
+		model.register(listener);
+
+		return model;
+	}
+
+	private void addJcrPropertiesToModel(Resource subject, Model model, PropertyIterator properties) throws RepositoryException {
 		while (properties.hasNext()) {
 			final Property property = properties.nextProperty();
 
@@ -185,21 +204,55 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 				final Value[] values = property.getValues();
 
 				for(Value v : values) {
-					model.add(subject, ResourceFactory.createProperty(getRDFNamespaceForJcrNamespace(nsProperty.getNamespaceURI()), nsProperty.getLocalName()), v.getString());
+					addValueToModel(subject, model, nsProperty, v);
 				}
 
 			} else {
 				final Value value = property.getValue();
-				model.add(subject, ResourceFactory.createProperty(getRDFNamespaceForJcrNamespace(nsProperty.getNamespaceURI()), nsProperty.getLocalName()), value.getString());
+				addValueToModel(subject, model, nsProperty, value);
 			}
 
 		}
+	}
 
-		listener = new JcrPropertyStatementListener(subject, getNode());
+	private Model addValueToModel(final Resource subject, final Model model, final Namespaced nsProperty, Value v) throws RepositoryException {
+		RDFDatatype datatype = null;
+		final com.hp.hpl.jena.rdf.model.Property predicate = ResourceFactory.createProperty(getRDFNamespaceForJcrNamespace(nsProperty.getNamespaceURI()), nsProperty.getLocalName());
 
-		model.register(listener);
+		final String stringValue = v.getString();
 
-		return model;
+		switch (v.getType()) {
+
+			case PropertyType.BOOLEAN:
+				datatype = model.createTypedLiteral(v.getBoolean()).getDatatype();
+				break;
+			case PropertyType.DATE:
+				datatype = model.createTypedLiteral(v.getDate()).getDatatype();
+				break;
+			case PropertyType.DECIMAL:
+				datatype = model.createTypedLiteral(v.getDecimal()).getDatatype();
+				break;
+			case PropertyType.DOUBLE:
+				datatype = model.createTypedLiteral(v.getDouble()).getDatatype();
+				break;
+			case PropertyType.LONG:
+				datatype = model.createTypedLiteral(v.getLong()).getDatatype();
+				break;
+			case PropertyType.URI:
+				return model.add(subject, predicate, model.createResource(stringValue));
+			case PropertyType.REFERENCE:
+			case PropertyType.WEAKREFERENCE:
+				return model.add(subject, predicate, getGraphSubject(node.getSession().getNodeByIdentifier(stringValue)));
+			case PropertyType.PATH:
+				return model.add(subject, predicate, model.createResource("info:fedora" + stringValue));
+
+		}
+
+		if ( datatype == null) {
+			return model.add(subject, predicate, stringValue);
+		} else {
+			return model.add(subject, predicate, stringValue, datatype);
+		}
 	}
 
 	public Problems getGraphProblems() throws RepositoryException {
@@ -210,8 +263,13 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		}
 	}
 
-	public Resource getGraphSubject() throws RepositoryException {
+
+	public static Resource getGraphSubject(final Node node) throws RepositoryException {
 		return ResourceFactory.createResource("info:fedora" + node.getPath());
+	}
+
+	public Resource getGraphSubject() throws RepositoryException {
+		return getGraphSubject(node);
 	}
 
 	public GraphStore updateGraph(String sparqlUpdateStatement) throws RepositoryException {
