@@ -119,7 +119,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
             when(mockQueryResult.getRows()).thenReturn(mockRI);
             when(mockRI.hasNext()).thenReturn(true, false);
             when(mockRI.nextRow()).thenReturn(mockRow);
-            when(mockRow.getValue(FEDORA_SIZE)).thenReturn(mockValue);
+            when(mockRow.getValue(CONTENT_SIZE)).thenReturn(mockValue);
             when(mockValue.getLong()).thenReturn(expectedSize);
 
             expectedNS

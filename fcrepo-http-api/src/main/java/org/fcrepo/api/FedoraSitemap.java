@@ -22,7 +22,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
@@ -31,6 +30,8 @@ import org.fcrepo.services.ObjectService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
 
 @Component
 @Path("/rest/sitemap")

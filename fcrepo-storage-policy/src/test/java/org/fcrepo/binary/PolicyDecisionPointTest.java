@@ -3,6 +3,7 @@ package org.fcrepo.binary;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.binary.NamedHint;
 import org.modeshape.jcr.value.binary.StrategyHint;
 
@@ -11,11 +12,11 @@ import javax.jcr.Property;
 import javax.jcr.Session;
 
 import static junit.framework.Assert.assertNull;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_CONTENTTYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 public class PolicyDecisionPointTest {
 	static PolicyDecisionPoint pt;
@@ -47,7 +48,9 @@ public class PolicyDecisionPointTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/x-dummy-type");
-		when(mockDsNode.getProperty(FEDORA_CONTENTTYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = pt.evaluatePolicies(mockDsNode);
 		assertThat(receivedHint, is(dummyHint));
@@ -63,7 +66,9 @@ public class PolicyDecisionPointTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/tiff");
-		when(mockDsNode.getProperty(FEDORA_CONTENTTYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = pt.evaluatePolicies(mockDsNode);
 		assertThat(receivedHint, is(tiffHint));
@@ -80,7 +85,9 @@ public class PolicyDecisionPointTest {
 		when(mockDsNode.getSession()).thenReturn(mockSession);
 		Property mockProperty = mock(Property.class);
 		when(mockProperty.getString()).thenReturn("image/x-other");
-		when(mockDsNode.getProperty(FEDORA_CONTENTTYPE)).thenReturn(mockProperty);
+		Node mockContentNode = mock(Node.class);
+		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
 		StrategyHint receivedHint = pt.evaluatePolicies(mockDsNode);
 		assertNull(receivedHint);

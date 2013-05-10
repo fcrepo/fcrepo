@@ -19,7 +19,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -44,6 +46,13 @@ public abstract class AbstractResource {
 
     @Autowired
     protected SessionFactory sessions;
+
+
+	/**
+	 * The fcrepo node service
+	 */
+	@Autowired
+	protected NodeService nodeService;
 
     /**
      * The fcrepo object service
@@ -87,6 +96,10 @@ public abstract class AbstractResource {
 
     protected Session getAuthenticatedSession() {
         return sessions.getSession(securityContext, servletRequest);
+    }
+    
+    protected AuthenticatedSessionProvider getAuthenticatedSessionProvider() {
+    	return sessions.getSessionProvider(securityContext, servletRequest);
     }
 
     protected synchronized Response deleteResource(final Node resource)
@@ -149,10 +162,17 @@ public abstract class AbstractResource {
     public static final String toPath(List<PathSegment> paths) {
         StringBuffer result = new StringBuffer();
         for (PathSegment path: paths) {
-            result.append('/');
-            result.append(path.getPath());
+			final String p = path.getPath();
+
+			if(!p.equals("")) {
+            	result.append('/');
+            	result.append(p);
+			}
         }
         return result.toString();
     }
 
+	public void setNodeService(NodeService nodeService) {
+		this.nodeService = nodeService;
+	}
 }

@@ -32,6 +32,7 @@ import javax.jcr.Session;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.services.functions.GetBinaryKey;
+import org.infinispan.loaders.CacheLoaderException;
 import org.modeshape.jcr.GetBinaryStore;
 import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.services.functions.GetGoodFixityResults;
@@ -132,7 +133,7 @@ public class LowLevelStorageServiceTest {
         testObj.setGetBinaryKey(mockKeyFunc);
         testObj.setRepository(mockRepo);
         final Set<LowLevelCacheEntry> actual = testObj.getLowLevelCacheEntries(mockNode);
-        assertEquals("foo", actual.iterator().next().getExternalIdentifier());
+        assertEquals("/foo", actual.iterator().next().getExternalIdentifier());
     }
 
     @Test
@@ -205,7 +206,7 @@ public class LowLevelStorageServiceTest {
 
 
 	@Test
-	public void shouldRetrieveLowLevelCacheStoresForCompositeStore() throws RepositoryException {
+	public void shouldRetrieveLowLevelCacheStoresForCompositeStore() throws RepositoryException, CacheLoaderException {
 
 		final Cache ispnCache1 = mock(Cache.class);
 		final Cache ispnCache2 = mock(Cache.class);
@@ -240,6 +241,8 @@ public class LowLevelStorageServiceTest {
 		when(plainBinaryStore.hasBinary(key)).thenReturn(true);
 		when(plainBinaryStore2.hasBinary(key)).thenReturn(false);
 		when(infinispanBinaryStore.hasBinary(key)).thenReturn(true);
+		when(ispnCacheStore1.containsKey("key-123-data-0")).thenReturn(true);
+		when(ispnCacheStore2.containsKey("key-123-data-0")).thenReturn(true);
 		final Set<LowLevelCacheEntry> entries = testObj.getLowLevelCacheEntriesFromStore(mockStore, key);
 
 		assertEquals(3, entries.size());
@@ -269,12 +272,12 @@ public class LowLevelStorageServiceTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testRunFixityAndFixProblems() throws RepositoryException,
-            IOException {
+																 IOException, CacheLoaderException {
         final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
         final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
         final Node mockNode = mock(Node.class);
         final Repository mockRepo = mock(Repository.class);
-        final BinaryKey mockKey = mock(BinaryKey.class);
+        final BinaryKey mockKey = new BinaryKey("key-123");
         final InfinispanBinaryStore mockStore =
                 mock(InfinispanBinaryStore.class);
         when(mockStore.toString()).thenReturn("foo");
@@ -284,7 +287,9 @@ public class LowLevelStorageServiceTest {
                 new Cache[] {mockGoodCache, mockBadCache};
         final GetCacheStore mockCacheStoreFunc = mock(GetCacheStore.class);
         final CacheStore mockGoodCacheStore = mock(CacheStore.class);
+		when(mockGoodCacheStore.containsKey("key-123-data-0")).thenReturn(true);
         final CacheStore mockBadCacheStore = mock(CacheStore.class);
+		when(mockBadCacheStore.containsKey("key-123-data-0")).thenReturn(true);
         when(mockCacheStoreFunc.apply(mockGoodCache)).thenReturn(
                 mockGoodCacheStore);
         when(mockCacheStoreFunc.apply(mockBadCache)).thenReturn(

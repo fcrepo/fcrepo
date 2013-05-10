@@ -99,6 +99,8 @@ public class StoreChunkOutputStream extends OutputStream {
 
             logger.debug("Store chunk {0}", chunkKey);
             blobCache.store(cacheEntry);
+            chunkIndex++;
+            chunkBuffer.reset();
         } catch (final CacheLoaderException e) {
             throw new IOException(e);
         }

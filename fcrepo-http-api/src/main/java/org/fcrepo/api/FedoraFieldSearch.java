@@ -22,7 +22,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.fcrepo.jaxb.search.ObjectFields;
@@ -31,6 +30,7 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -139,9 +139,7 @@ public class FedoraFieldSearch extends AbstractResource implements
     public static String buildQueryString() {
         //TODO expand to more fields
         final String sqlExpression =
-                "SELECT * FROM [" + FEDORA_OBJECT + "] WHERE [" +
-                        DC_IDENTIFIER + "] like $sterm OR [" + DC_TITLE +
-                        "] like $sterm";
+                "SELECT * FROM [" + FEDORA_RESOURCE + "] WHERE [dc:identifier] like $sterm OR [dc:title] like $sterm";
         return sqlExpression;
     }
 }

@@ -33,8 +33,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ImmutableMap.Builder;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.collect.ImmutableMap.Builder;
 
 @Component
 @Path("/rest/fcr:describe")

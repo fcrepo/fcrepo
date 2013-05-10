@@ -54,6 +54,7 @@
     <module>fcrepo-metrics</module>
     <module>fcrepo-storage-policy</module>
     <module>fcrepo-jcr</module>
+    <module>fcrepo-serialization</module>
   </modules>
 
   <dependencyManagement>

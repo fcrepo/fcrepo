@@ -6,7 +6,6 @@ import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OWNED;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -60,23 +59,6 @@ public abstract class FedoraTypesUtils {
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_DATASTREAM);
-            } catch (final RepositoryException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-    };
-
-    /**
-     * Predicate for determining whether this {@link Node} is owned in the Fedora sense.
-     */
-    public static Predicate<Node> isOwned = new Predicate<Node>() {
-
-        @Override
-        public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be owned by anyone!");
-            try {
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                        FEDORA_OWNED);
             } catch (final RepositoryException e) {
                 throw new IllegalStateException(e);
             }

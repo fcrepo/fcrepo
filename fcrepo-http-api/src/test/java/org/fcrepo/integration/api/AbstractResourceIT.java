@@ -24,7 +24,6 @@ import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.jaxb.responses.management.DatastreamProfile;
-import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -122,6 +121,7 @@ public abstract class AbstractResourceIT {
     protected ObjectProfile getObject(final String pid)
             throws ClientProtocolException, IOException, JAXBException {
         final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
+		get.setHeader("Accept", "text/xml");
         final HttpResponse resp = execute(get);
         final Unmarshaller um = context.createUnmarshaller();
         return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());

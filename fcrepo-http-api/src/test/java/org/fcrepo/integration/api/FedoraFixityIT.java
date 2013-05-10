@@ -1,5 +1,16 @@
 package org.fcrepo.integration.api;
 
+import static java.util.regex.Pattern.DOTALL;
+import static java.util.regex.Pattern.compile;
+import static junit.framework.TestCase.assertFalse;
+import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
+import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -8,17 +19,6 @@ import org.apache.http.util.EntityUtils;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
 import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-
-import static java.util.regex.Pattern.DOTALL;
-import static java.util.regex.Pattern.compile;
-import static junit.framework.TestCase.assertFalse;
-import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
-import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class FedoraFixityIT extends AbstractResourceIT {
 	@Test

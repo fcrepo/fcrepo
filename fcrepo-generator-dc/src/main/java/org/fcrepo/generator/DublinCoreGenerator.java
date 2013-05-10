@@ -20,7 +20,9 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,27 +34,28 @@ public class DublinCoreGenerator extends AbstractResource {
     @Resource
     List<DCGenerator> dcgenerators;
 
-    @Autowired
-    ObjectService objectService;
-
     @GET
     @Produces(TEXT_XML)
     public Response getObjectAsDublinCore(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
 		final Session session = getAuthenticatedSession();
 
-        final String path = toPath(pathList);
-        final Node obj = objectService.getObjectNode(session, path);
+		try {
+			final String path = toPath(pathList);
+			final FedoraResource obj = nodeService.getObject(session, path);
 
-        for (final DCGenerator indexer : dcgenerators) {
-            final InputStream inputStream = indexer.getStream(obj);
+			for (final DCGenerator indexer : dcgenerators) {
+				final InputStream inputStream = indexer.getStream(obj.getNode());
 
-            if (inputStream != null) {
-                return ok(inputStream).build();
-            }
-        }
-        // no indexers = no path for DC
-        throw new PathNotFoundException();
+				if (inputStream != null) {
+					return ok(inputStream).build();
+				}
+			}
+			// no indexers = no path for DC
+			throw new PathNotFoundException();
+		} finally {
+			session.logout();
+		}
 
     }
 

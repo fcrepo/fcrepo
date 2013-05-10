@@ -55,4 +55,13 @@ public class SessionFactoryTest {
         testObj.getSession();
         verify(mockRepo).login();
     }
+    
+    @Test
+    public void testGetSessionProvider() {
+        final SecurityContext mockContext = mock(SecurityContext.class);
+        final Principal mockUser = mock(Principal.class);
+        when(mockContext.getUserPrincipal()).thenReturn(mockUser);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        testObj.getSessionProvider(mockContext, mockRequest);
+    }
 }

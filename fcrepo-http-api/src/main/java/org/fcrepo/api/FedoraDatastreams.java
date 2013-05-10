@@ -41,7 +41,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
-import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -56,6 +55,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Function;
 import com.sun.jersey.multipart.BodyPart;
 import com.sun.jersey.multipart.BodyPartEntity;
@@ -119,7 +119,7 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
-                datastreamService.purgeDatastream(session, path + "/" + dsid);
+				nodeService.deleteObject(session, path + "/" + dsid);
             }
 
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -159,7 +159,7 @@ public class FedoraDatastreams extends AbstractResource {
             String path = toPath(pathList);
             for (final String dsid : dsidList) {
                 logger.debug("purging datastream {}", path  + "/" +  dsid);
-                datastreamService.purgeDatastream(session, path  + "/" +  dsid);
+				nodeService.deleteObject(session, path + "/" + dsid);
             }
             session.save();
             return noContent().build();
@@ -297,10 +297,6 @@ public class FedoraDatastreams extends AbstractResource {
         dsProfile.pid = ds.getObject().getName();
         logger.trace("Retrieved datastream " + ds.getDsId() + "'s parent: " +
                 dsProfile.pid);
-        dsProfile.dsLabel = ds.getLabel();
-        logger.trace("Retrieved datastream " + ds.getDsId() + "'s label: " +
-                ds.getLabel());
-        dsProfile.dsOwnerId = ds.getOwnerId();
         dsProfile.dsChecksumType = ds.getContentDigestType();
         dsProfile.dsChecksum = ds.getContentDigest();
         dsProfile.dsState = A;

@@ -32,6 +32,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.modeshape.common.logging.Logger;
 
+
 /**
  * Merges chunks from cache and provides InputStream-feeling.
  */
@@ -85,8 +86,10 @@ public class StoreChunkInputStream extends InputStream {
         }
         System.arraycopy(buffer, indexInBuffer, b, off, len);
         indexInBuffer += len;
-        if (indexInBuffer >= buffer.length) {
-            fillBuffer();
+        // if we've just exhausted the buffer, make sure we try a new buffer on next skip/read
+        if (indexInBuffer == buffer.length) {
+            buffer = null;
+            indexInBuffer = 0;
         }
         return len;
     }
@@ -94,9 +97,13 @@ public class StoreChunkInputStream extends InputStream {
     @Override
     public int available() throws IOException {
         if (buffer == null) {
-            fillBuffer();
+            return 0;
         }
-        return buffer.length - indexInBuffer;
+        if (indexInBuffer >= 0) {
+        	return buffer.length - indexInBuffer;
+        } else {
+            return -1;
+        }
     }
 
     @Override
@@ -108,14 +115,17 @@ public class StoreChunkInputStream extends InputStream {
             fillBuffer();
             return skip(n);
         }
-        if (buffer.length + n > indexInBuffer) {
-            n = buffer.length - indexInBuffer;
+        // do not load a new buffer if skippable bytes remain in current buffer
+        if (indexInBuffer + n >= buffer.length) {
+            long skipped = buffer.length - indexInBuffer;
+            // but make sure a new buffer is loaded on next skip/read
+            buffer = null;
+            indexInBuffer = 0;
+            return skipped;
+        } else {
+        	indexInBuffer += n;
+        	return n;
         }
-        if (n < 0) {
-            return 0;
-        }
-        indexInBuffer += n;
-        return n;
     }
 
     private void fillBuffer() throws IOException {

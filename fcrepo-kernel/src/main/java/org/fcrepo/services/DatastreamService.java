@@ -18,6 +18,7 @@ import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.DatastreamIterator;
 import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -104,16 +105,6 @@ public class DatastreamService extends RepositoryService {
 			throws RepositoryException {
 		return new Datastream(session, path);
 	}
-
-    /**
-     * Delete a Datastream
-     * @param session jcr session
-     * @param path
-     * @throws RepositoryException
-     */
-    public void purgeDatastream(final Session session, final String path) throws RepositoryException {
-    	new Datastream(session, path).purge();
-    }
 
     /**
      *

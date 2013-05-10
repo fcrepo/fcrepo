@@ -1,11 +1,13 @@
 package org.fcrepo.api;
 
-import com.codahale.metrics.annotation.Timed;
-import org.fcrepo.AbstractResource;
-import org.fcrepo.services.ObjectService;
-import org.fcrepo.utils.FedoraJcrTypes;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.Response.ok;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -17,14 +19,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.List;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static javax.ws.rs.core.Response.ok;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.AbstractResource;
+import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
 
 
 @Component
@@ -66,7 +68,7 @@ public class FedoraChildren extends AbstractResource {
 			} else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
 				mixin = "nt:file";
 			}
-			return ok(objectService.getObjectNames(session, path, mixin).toString()).build();
+			return ok(nodeService.getObjectNames(session, path, mixin).toString()).build();
 		} finally {
 			session.logout();
 		}

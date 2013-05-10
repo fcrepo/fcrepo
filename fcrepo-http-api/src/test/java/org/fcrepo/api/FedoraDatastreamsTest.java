@@ -37,6 +37,7 @@ import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.management.DatastreamHistory;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.DatastreamIterator;
@@ -52,6 +53,8 @@ public class FedoraDatastreamsTest {
     FedoraDatastreams testObj;
 
     DatastreamService mockDatastreams;
+
+	NodeService mockNodes;
 
     LowLevelStorageService mockLow;
 
@@ -75,9 +78,11 @@ public class FedoraDatastreamsTest {
         //Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
         mockDatastreams = mock(DatastreamService.class);
         mockLow = mock(LowLevelStorageService.class);
+		mockNodes = mock(NodeService.class);
 
         testObj = new FedoraDatastreams();
         testObj.setDatastreamService(mockDatastreams);
+		testObj.setNodeService(mockNodes);
         testObj.setSecurityContext(mockSecurityContext);
         testObj.setHttpServletRequest(mockServletRequest);
         testObj.setLlStoreService(mockLow);
@@ -146,8 +151,8 @@ public class FedoraDatastreamsTest {
                 Arrays.asList(new String[] {"ds1", "ds2"});
         final Response actual = testObj.deleteDatastreams(createPathList(pid), dsidList);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).purgeDatastream(mockSession, path + "/" + "ds1");
-        verify(mockDatastreams).purgeDatastream(mockSession, path + "/" + "ds2");
+        verify(mockNodes).deleteObject(mockSession, path + "/" + "ds1");
+        verify(mockNodes).deleteObject(mockSession, path + "/" + "ds2");
         verify(mockSession).save();
     }
 

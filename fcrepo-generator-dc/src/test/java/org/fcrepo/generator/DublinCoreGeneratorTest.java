@@ -12,8 +12,11 @@ import java.util.Arrays;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
+import org.fcrepo.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
+import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
@@ -22,16 +25,18 @@ import org.junit.Test;
 public class DublinCoreGeneratorTest {
 
     DublinCoreGenerator testObj;
-    ObjectService mockObjects;
+	NodeService mockNodeService;
     DCGenerator mockGenerator;
+	Session mockSession;
     
     @Before
     public void setUp() throws RepositoryException {
+		mockNodeService = mock(NodeService.class);
         testObj = new DublinCoreGenerator();
-		TestHelpers.mockSession(testObj);
+		testObj.setNodeService(mockNodeService);
+
+		mockSession = TestHelpers.mockSession(testObj);
         mockGenerator = mock(DCGenerator.class);
-        mockObjects = mock(ObjectService.class);
-        testObj.objectService = mockObjects;
         testObj.dcgenerators = Arrays.asList(new DCGenerator[]{mockGenerator});
     }
     
@@ -39,6 +44,9 @@ public class DublinCoreGeneratorTest {
     public void testGetObjectAsDublinCore() throws RepositoryException {
         testObj.dcgenerators = Arrays.asList(new DCGenerator[]{mockGenerator});
         InputStream mockIS = mock(InputStream.class);
+		FedoraResource mockResource = mock(FedoraResource.class);
+		when(mockResource.getNode()).thenReturn(mock(Node.class));
+		when(mockNodeService.getObject(mockSession, "/objects/foo")).thenReturn(mockResource);
         when(mockGenerator.getStream(any(Node.class))).thenReturn(mockIS);
         testObj.getObjectAsDublinCore(createPathList("objects","foo"));
         

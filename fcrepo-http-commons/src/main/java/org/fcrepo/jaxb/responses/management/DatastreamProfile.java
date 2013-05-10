@@ -10,9 +10,9 @@ import java.util.Set;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
 import org.fcrepo.Datastream;
 import org.fcrepo.utils.LowLevelCacheEntry;
-
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -73,9 +73,9 @@ public class DatastreamProfile {
 
     @XmlElement
     public URI dsChecksum;
-    
-    @XmlElement 
-    public DSStores dsStores;  
+
+    @XmlElement
+    public DSStores dsStores;
 
     public static enum DatastreamControlGroup {
         M, E, R
@@ -95,7 +95,7 @@ public class DatastreamProfile {
         final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
         return fmt.print(dt);
     }
-    
+
     /**
      * adds the datastream store information to the datastream profile output.
      * 
@@ -103,20 +103,21 @@ public class DatastreamProfile {
      * fcrepo3.x 
      * 
      */
-    public static class DSStores {   
-   
-    @XmlElement(name = "dsStore")
-    public List<String> storeIdentifiers ;
+    public static class DSStores {
 
-    public DSStores(){
-       this.storeIdentifiers = new ArrayList();
-    }
+        @XmlElement(name = "dsStore")
+        public List<String> storeIdentifiers;
 
-    public DSStores(Datastream datastream, Set cacheEntries)  {
-        this.storeIdentifiers = new ArrayList();
-        for (Iterator it = cacheEntries.iterator(); it.hasNext();) {
-            LowLevelCacheEntry cacheEntry = (LowLevelCacheEntry) it.next();
-            storeIdentifiers.add(cacheEntry.getExternalIdentifier());
+        public DSStores() {
+            this.storeIdentifiers = new ArrayList<String>();
+        }
+
+        public DSStores(final Datastream datastream, final Set cacheEntries) {
+            this.storeIdentifiers = new ArrayList<String>();
+            for (final Iterator it = cacheEntries.iterator(); it.hasNext();) {
+                final LowLevelCacheEntry cacheEntry =
+                        (LowLevelCacheEntry) it.next();
+                storeIdentifiers.add(cacheEntry.getExternalIdentifier());
             }
         }
     }

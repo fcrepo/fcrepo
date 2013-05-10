@@ -3,16 +3,12 @@ package org.fcrepo.api;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
@@ -62,12 +58,14 @@ public class FedoraUnnamedObjects extends AbstractResource {
             }
 
         };
-        ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
-        segments.addAll(pathList.subList(0, pathList.size() - 1));
+
+		ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
+        segments.addAll(pathList);
         segments.add(path);
+
         try {
             return objectsResource.createObject(
-                    segments.build(), "test label",
+                    segments.build(),
                     FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
         } catch (IOException e) {
             throw new RepositoryException(e.getMessage(), e);
