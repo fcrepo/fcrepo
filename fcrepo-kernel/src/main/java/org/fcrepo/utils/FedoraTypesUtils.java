@@ -6,6 +6,7 @@ import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -14,15 +15,20 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.PropertyDefinition;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.modeshape.jcr.JcrValueFactory;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.modeshape.jcr.api.Namespaced;
 import org.modeshape.jcr.value.binary.StrategyHint;
 
 /**
@@ -32,28 +38,6 @@ import org.modeshape.jcr.value.binary.StrategyHint;
  *
  */
 public abstract class FedoraTypesUtils {
-
-	public static BiMap<String, String> jcrNamespacesToRDFNamespaces = ImmutableBiMap.of(
-		"http://www.jcp.org/jcr/1.0", "info:fedora/fedora-system:def/internal#"
-	);
-
-	public static BiMap<String, String> rdfNamespacesToJcrNamespaces = jcrNamespacesToRDFNamespaces.inverse();
-
-	public static String getJcrNamespaceForRDFNamespace(final String rdfNamespaceUri) {
-		if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {
-			return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);
-		} else {
-			return rdfNamespaceUri;
-		}
-	}
-
-	public static String getRDFNamespaceForJcrNamespace(final String jcrNamespaceUri) {
-		if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {
-			return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);
-		} else {
-			return jcrNamespaceUri;
-		}
-	}
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
@@ -135,6 +119,7 @@ public abstract class FedoraTypesUtils {
                 }
             };
 
+
     /**
      * Retrieves a JCR {@link ValueFactory} for use with a {@ link Node}
      */
@@ -152,6 +137,41 @@ public abstract class FedoraTypesUtils {
                     }
                 }
             };
+
+
+    /**
+     * We need the Modeshape NamespaceRegistry, because it allows us to register anonymous namespaces.
+     * @return
+     * @throws RepositoryException
+     */
+    public static Function<Node, org.modeshape.jcr.api.NamespaceRegistry> getNamespaceRegistry =
+            new Function<Node, org.modeshape.jcr.api.NamespaceRegistry>() {
+                @Override
+                public org.modeshape.jcr.api.NamespaceRegistry apply(final Node n) {
+                    try {
+                        checkArgument(n != null,
+                                             "null has no Namespace Registry associated with it!");
+                        return (org.modeshape.jcr.api.NamespaceRegistry)n.getSession().getWorkspace().getNamespaceRegistry();
+                    } catch (final RepositoryException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+
+            };
+
+    public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty = new Function<Property,com.hp.hpl.jena.rdf.model.Property>() {
+        @Override
+        public com.hp.hpl.jena.rdf.model.Property apply(final Property property) {
+            final Namespaced nsProperty = (Namespaced)property;
+
+            try {
+                return ResourceFactory.createProperty(getRDFNamespaceForJcrNamespace(nsProperty.getNamespaceURI()), nsProperty.getLocalName());
+            } catch (RepositoryException e) {
+                throw new IllegalStateException(e);
+            }
+
+        }
+    };
 
     /**
      * Creates a JCR {@link Binary}
@@ -191,6 +211,24 @@ public abstract class FedoraTypesUtils {
 			throw new IllegalStateException(e);
 		}
 	}
+
+
+    /**
+     * Get the property definition information (containing type and multi-value information)
+     * @param propertyName
+     * @return
+     * @throws javax.jcr.RepositoryException
+     */
+    public static PropertyDefinition getDefinitionForPropertyName(final Node node, final String propertyName) throws RepositoryException {
+        final PropertyDefinition[] propertyDefinitions = node.getSession().getWorkspace().getNodeTypeManager().getNodeType("fedora:resource").getPropertyDefinitions();
+
+        for (PropertyDefinition p : propertyDefinitions) {
+            if (p.getName().equals(propertyName)) {
+                return p;
+            }
+        }
+        return null;
+    }
 
     /**
      * Convenience method for transforming arrays into 
