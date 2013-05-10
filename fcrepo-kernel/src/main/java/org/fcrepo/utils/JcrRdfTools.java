@@ -7,9 +7,7 @@ import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;

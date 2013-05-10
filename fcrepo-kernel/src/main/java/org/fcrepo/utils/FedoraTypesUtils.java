@@ -15,7 +15,6 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
@@ -23,11 +22,8 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.modeshape.jcr.JcrValueFactory;
-import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Namespaced;
 import org.modeshape.jcr.value.binary.StrategyHint;
 
