@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -25,6 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -78,30 +80,48 @@ public class FedoraNodes extends AbstractResource {
 	 */
 	@GET
 	@Produces(WILDCARD)
-	public Response defaultDescribe(@PathParam("path")
-							 final List<PathSegment> pathList) throws RepositoryException, IOException {
-		return describe(pathList);
+	public Response defaultDescribe(@PathParam("path") final List<PathSegment> pathList,
+									@Context final Request request) throws RepositoryException, IOException {
+		return describe(pathList, request);
 	}
 
 	@GET
 	@Produces({TEXT_XML, APPLICATION_JSON, APPLICATION_XML})
-	public Response describe(@PathParam("path")
-							 final List<PathSegment> pathList) throws RepositoryException, IOException {
+	public Response describe(@PathParam("path") final List<PathSegment> pathList,
+							 @Context final Request request) throws RepositoryException, IOException {
 
 		final String path = toPath(pathList);
 		logger.trace("getting profile for {}", path);
+
 		if ("/".equals(path)) {
 			return Response.ok(getRepositoryProfile()).build();
 		}
+
+
 		final Session session = getAuthenticatedSession();
+
 		try {
 			final FedoraResource resource = nodeService.getObject(session, path);
 
-			if (resource.hasContent()) {
-				return Response.ok(getDatastreamProfile(resource.getNode())).build();
-			} else {
-				return Response.ok(getObjectProfile(resource.getNode())).build();
+			final Date date = resource.getLastModifiedDate();
+			final Date roundedDate = new Date();
+			roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+			Response.ResponseBuilder builder = request.evaluatePreconditions(roundedDate);
+
+			if (builder == null) {
+				if (resource.hasContent()) {
+					builder = Response.ok(getDatastreamProfile(resource.getNode()));
+				} else {
+					builder = Response.ok(getObjectProfile(resource.getNode()));
+				}
 			}
+
+			final CacheControl cc = new CacheControl();
+			cc.setMaxAge(0);
+			cc.setMustRevalidate(true);
+
+			return builder.cacheControl(cc).lastModified(date).build();
 
 		} finally {
 			session.logout();
