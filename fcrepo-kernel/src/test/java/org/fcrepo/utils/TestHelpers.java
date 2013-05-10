@@ -25,6 +25,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public abstract class TestHelpers {
+
+	private static final SecureRandom GARBAGE_GENERATOR = new SecureRandom("G4RbAG3".getBytes());
+
 	public static Node getContentNodeMock(final int size) {
 		return getContentNodeMock(randomData(size));
 	}
@@ -116,7 +119,7 @@ public abstract class TestHelpers {
 
 	public static byte[] randomData(final int byteLength) {
 		final byte[] bytes = new byte[byteLength];
-		new SecureRandom().nextBytes(bytes);
+		GARBAGE_GENERATOR.nextBytes(bytes);
 		return bytes;
 	}
 }

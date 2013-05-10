@@ -20,6 +20,8 @@ import javax.jcr.nodetype.NodeType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.value.binary.StrategyHint;
 
@@ -30,6 +32,28 @@ import org.modeshape.jcr.value.binary.StrategyHint;
  *
  */
 public abstract class FedoraTypesUtils {
+
+	public static BiMap<String, String> jcrNamespacesToRDFNamespaces = ImmutableBiMap.of(
+		"http://www.jcp.org/jcr/1.0", "info:fedora/fedora-system:def/internal#"
+	);
+
+	public static BiMap<String, String> rdfNamespacesToJcrNamespaces = jcrNamespacesToRDFNamespaces.inverse();
+
+	public static String getJcrNamespaceForRDFNamespace(final String rdfNamespaceUri) {
+		if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {
+			return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);
+		} else {
+			return rdfNamespaceUri;
+		}
+	}
+
+	public static String getRDFNamespaceForJcrNamespace(final String jcrNamespaceUri) {
+		if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {
+			return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);
+		} else {
+			return jcrNamespaceUri;
+		}
+	}
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.

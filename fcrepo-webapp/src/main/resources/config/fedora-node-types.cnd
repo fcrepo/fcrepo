@@ -12,32 +12,51 @@
 <foaf = 'http://xmlns.com/foaf/0.1/'>
 
 /*
- * Generic Fedora namespace
- */
-<fedora = 'info:fedora'>
-
-/*
  * Dublin Core. See:
  * 
  * http://dublincore.org/documents/dcmi-namespace/
  */
 <dc = 'http://purl.org/dc/terms/'>
 
+/*
+ * Generic Fedora namespace
+ */
+<fedora = 'info:fedora/'>
+
+<fedorarelsext = 'info:fedora/fedora-system:def/relations-external#'>
+
+
+[fedora:relations] mixin
+
+	- fedorarelsext:isPartOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasPart (REFERENCE) multiple COPY
+	- fedorarelsext:isConstituentOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasConstituent (REFERENCE) multiple COPY
+	- fedorarelsext:isMemberOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasMember (REFERENCE) multiple COPY
+	- fedorarelsext:isSubsetOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasSubset (REFERENCE) multiple COPY
+	- fedorarelsext:isMemberOfCollection (REFERENCE) multiple COPY
+	- fedorarelsext:hasCollectionMember (REFERENCE) multiple COPY
+	- fedorarelsext:isDerivationOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasDerivation (REFERENCE) multiple COPY
+	- fedorarelsext:isDependentOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasDependent (REFERENCE) multiple COPY
+	- fedorarelsext:isDescriptionOf (REFERENCE) multiple COPY
+	- fedorarelsext:HasDescription (REFERENCE) multiple COPY
+	- fedorarelsext:isMetadataFor (REFERENCE) multiple COPY
+	- fedorarelsext:HasMetadata (REFERENCE) multiple COPY
+	- fedorarelsext:isAnnotationOf (REFERENCE) multiple COPY
+	- fedorarelsext:HasAnnotation (REFERENCE) multiple COPY
+	- fedorarelsext:hasEquivalent (REFERENCE) multiple COPY
 
 /*
  * Any Fedora resource.
  */
-[fedora:resource] > mix:created, mix:lastModified, mix:lockable, mix:versionable mixin abstract
-	
-	/*
-	 * Temporary for us until we better understand the use of jcr:created.
-	 */
-	- fedora:created (STRING) COPY
-	
-	/*
-	 * See: http://dublincore.org/documents/dcmi-terms/#elements-identifier
-	 */
-	- dc:identifier (STRING) multiple COPY
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable mixin
+
+	- * (STRING) multiple COPY
+	- * (STRING) COPY
 
 
 /*
@@ -50,36 +69,11 @@
  * A Fedora datastream.
  */
 [fedora:datastream] > fedora:resource, nt:file mixin
-	
-	/*
-	 * The MIMEtype of this datastream.
-	 */
-	- fedora:contentType (STRING) COPY
-
 
 /*
- * Indicates that this resource is owned.
+ * Some content that can have a checksum
  */
-[fedora:owned] mixin noquery
-	
-	/*
-	 * The owner of this owned resource.
-	 */
-	- fedora:owner (REFERENCE) COPY
-	
-	/*
-	 * For use for when the owner-entities are not managed in the repository.
-	 */
-	- fedora:ownerId (STRING) COPY
-
-
-/*
- * Some entity that owns a Fedora resource.
- */
-[fedora:owner] primaryitem foaf:name
-	
-	/*
-	 * The name of this owner.
-	 */
-	- foaf:name (STRING) multiple COPY
-
+[fedora:binary] > nt:resource mixin
+  - fedora:size (LONG) COPY
+  - fedora:digest (STRING) COPY
+  - fedora:digestAlgorithm (STRING) COPY
