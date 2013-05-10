@@ -106,6 +106,17 @@ public class DatastreamService extends RepositoryService {
 		return new Datastream(session, path);
 	}
 
+	/**
+	 * Retrieve a Datastream instance by pid and dsid
+	 * @param node datastream node
+	 * @return
+	 * @throws RepositoryException
+	 */
+	public Datastream asDatastream(final Node node)
+			throws RepositoryException {
+		return new Datastream(node);
+	}
+
     /**
      *
 	 * @param session jcr session

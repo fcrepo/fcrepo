@@ -3,22 +3,24 @@ package org.fcrepo.api;
 
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.transform;
-import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates.A;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DELETE;
@@ -28,8 +30,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
@@ -37,12 +43,9 @@ import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
 import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
-import org.fcrepo.jaxb.responses.management.DatastreamHistory;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.utils.ContentDigest;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -56,12 +59,6 @@ import com.sun.jersey.multipart.MultiPart;
 public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
-
-    @Autowired
-    private DatastreamService datastreamService;
-
-    @Autowired
-    private LowLevelStorageService llStoreService;
 
     /**
      * Returns a list of datastreams for the object
@@ -99,9 +96,9 @@ public class FedoraDatastreams extends AbstractResource {
 
     @POST
     @Timed
-    public Response modifyDatastreams(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("delete")
-    final List<String> dsidList, final MultiPart multipart)
+    public Response modifyDatastreams(@PathParam("path") final List<PathSegment> pathList,
+									  @QueryParam("delete") final List<String> dsidList,
+									  final MultiPart multipart)
             throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = getAuthenticatedSession();
@@ -162,92 +159,81 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/__content__")
     @Produces("multipart/mixed")
     @Timed
-    public Response getDatastreamsContents(@PathParam("path")
-    List<PathSegment> pathList, @QueryParam("dsid")
-    final List<String> dsids) throws RepositoryException, IOException {
+    public Response getDatastreamsContents(@PathParam("path") List<PathSegment> pathList,
+										   @QueryParam("dsid") final List<String> requestedDsids,
+										   @Context final Request request) throws RepositoryException, IOException, NoSuchAlgorithmException {
 
 		final Session session = getAuthenticatedSession();
 
-		try {
-			String path = toPath(pathList);
-			if (dsids.isEmpty()) {
-				final NodeIterator ni = objectService.getObject(session, path).getNode().getNodes();
-				while (ni.hasNext()) {
-					dsids.add(ni.nextNode().getName());
-				}
-			}
-
-			final MultiPart multipart = new MultiPart();
-
-			final Iterator<String> i = dsids.iterator();
-			while (i.hasNext()) {
-				final String dsid = i.next();
-
-				try {
-					final Datastream ds =
-							datastreamService.getDatastream(session, path  + "/" +  dsid);
-					multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
-							.getMimeType()));
-				} catch (final PathNotFoundException e) {
-
-				}
-			}
-			return Response.ok(multipart, MULTIPART_FORM_DATA).build();
-		} finally {
-			session.logout();
-		}
-    }
-
-    /**
-     * Get previous version information for this datastream
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @param dsId
-     *            datastream identifier
-     * @return 200
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws TemplateException
-     */
-    @GET
-    @Path("/{dsid}/versions")
-    @Timed
-    @Produces({TEXT_XML, APPLICATION_JSON})
-    public DatastreamHistory getDatastreamHistory(@PathParam("path")
-    List<PathSegment> pathList, @PathParam("dsid")
-    final String dsId) throws RepositoryException, IOException {
-		final Session session = getAuthenticatedSession();
+		final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();
 
 		try {
 			String path = toPath(pathList);
-			// TODO implement this after deciding on a versioning model
-			final Datastream ds = datastreamService.getDatastream(session, path  + "/" +  dsId);
-			final DatastreamHistory dsHistory =
-					new DatastreamHistory(singletonList(getDSProfile(ds)));
-			dsHistory.dsID = dsId;
-			dsHistory.pid = pathList.get(pathList.size() - 1).getPath();
-			return dsHistory;
+			// TODO: wrap some of this JCR logic in an fcrepo abstraction;
+
+			final Node node = nodeService.getObject(session, path).getNode();
+
+
+			Date date = new Date();
+
+			final MessageDigest digest = MessageDigest.getInstance("SHA-1");
+
+
+			final NodeIterator ni;
+
+			if (requestedDsids.isEmpty()) {
+				ni = node.getNodes();
+			} else {
+				ni = node.getNodes(requestedDsids.toArray(new String[requestedDsids.size()]));
+			}
+
+			// transform the nodes into datastreams, and calculate cache header data
+			while (ni.hasNext()) {
+
+				final Node dsNode = ni.nextNode();
+				final Datastream ds = datastreamService.asDatastream(dsNode);
+
+				if (!ds.hasContent()) {
+					continue;
+				}
+
+				digest.update(ds.getContentDigest().toString().getBytes());
+
+				if (ds.getLastModifiedDate().after(date)) {
+					date = ds.getLastModifiedDate();
+				}
+
+				datastreams.add(ds);
+			}
+
+
+			final URI digestURI = ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
+			final EntityTag etag = new EntityTag(digestURI.toString());
+
+			final Date roundedDate = new Date();
+			roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+			Response.ResponseBuilder builder = request.evaluatePreconditions(roundedDate, etag);
+
+			final CacheControl cc = new CacheControl();
+			cc.setMaxAge(0);
+			cc.setMustRevalidate(true);
+
+			if (builder == null) {
+				final MultiPart multipart = new MultiPart();
+
+				for (Datastream ds : datastreams) {
+					multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds.getMimeType()));
+				}
+
+				builder = Response.ok(multipart, MULTIPART_FORM_DATA);
+			}
+
+			return builder.cacheControl(cc).lastModified(date).tag(etag).build();
+
 		} finally {
 			session.logout();
 		}
-    }
-
-    private DatastreamProfile getDSProfile(final Datastream ds)
-            throws RepositoryException, IOException {
-        logger.trace("Executing getDSProfile() with node: " + ds.getDsId());
-        final DatastreamProfile dsProfile = new DatastreamProfile();
-        dsProfile.dsID = ds.getDsId();
-        dsProfile.pid = ds.getObject().getName();
-        logger.trace("Retrieved datastream " + ds.getDsId() + "'s parent: " +
-                dsProfile.pid);
-        dsProfile.dsChecksumType = ds.getContentDigestType();
-        dsProfile.dsChecksum = ds.getContentDigest();
-        dsProfile.dsState = A;
-        dsProfile.dsMIME = ds.getMimeType();
-        dsProfile.dsSize = ds.getSize();
-        dsProfile.dsCreateDate = ds.getCreatedDate().toString();
-        return dsProfile;
     }
 
     private Function<Datastream, DatastreamElement> ds2dsElement =
@@ -264,20 +250,12 @@ public class FedoraDatastreams extends AbstractResource {
                 }
             };
 
-    public DatastreamService getDatastreamService() {
-        return datastreamService;
-    }
 
-    public void setDatastreamService(final DatastreamService datastreamService) {
-        this.datastreamService = datastreamService;
-    }
+	public DatastreamService getDatastreamService() {
+		return datastreamService;
+	}
 
-    public LowLevelStorageService getLlStoreService() {
-        return llStoreService;
-    }
-
-    public void setLlStoreService(final LowLevelStorageService llStoreService) {
-        this.llStoreService = llStoreService;
-    }
-
+	public void setDatastreamService(final DatastreamService datastreamService) {
+		this.datastreamService = datastreamService;
+	}
 }
