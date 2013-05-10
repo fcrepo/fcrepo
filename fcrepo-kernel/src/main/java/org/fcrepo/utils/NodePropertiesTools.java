@@ -18,6 +18,15 @@ public abstract class NodePropertiesTools {
 
     private static final Logger logger = getLogger(NodePropertiesTools.class);
 
+    /**
+     * Given a JCR node, property and value, either:
+     *  - if the property is single-valued, replace the existing property with the new value
+     *  - if the property is multivalued, append the new value to the property
+     * @param node the JCR node
+     * @param propertyName a name of a JCR property (either pre-existing or otherwise)
+     * @param newValue the JCR value to insert
+     * @throws RepositoryException
+     */
     public static void appendOrReplaceNodeProperty(final Node node, final String propertyName, final Value newValue) throws RepositoryException {
 
         // if it already exists, we can take some shortcuts
@@ -51,6 +60,15 @@ public abstract class NodePropertiesTools {
 
     }
 
+    /**
+     * Given a JCR node, property and value, remove the value (if it exists) from the property, and remove the
+     * property if no values remove
+     *
+     * @param node the JCR node
+     * @param propertyName a name of a JCR property (either pre-existing or otherwise)
+     * @param valueToRemove the JCR value to remove
+     * @throws RepositoryException
+     */
     public static void removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove) throws RepositoryException {
         // if the property doesn't exist, we don't need to worry about it.
         if (node.hasProperty(propertyName)) {
@@ -84,6 +102,14 @@ public abstract class NodePropertiesTools {
         }
     }
 
+    /**
+     * Get the JCR property type ID for a given property name. If unsure, mark it as UNDEFINED.
+     *
+     * @param node the JCR node to add the property on
+     * @param propertyName the property name
+     * @return a PropertyType value
+     * @throws RepositoryException
+     */
     public static int getPropertyType(final Node node, final String propertyName) throws RepositoryException {
         final PropertyDefinition def = getDefinitionForPropertyName(node, propertyName);
 
@@ -94,6 +120,15 @@ public abstract class NodePropertiesTools {
         return def.getRequiredType();
     }
 
+    /**
+     * Determine if a given JCR property name is single- or multi- valued. If unsure, choose the least restrictive
+     * option (multivalued)
+     *
+     * @param node the JCR node to check
+     * @param propertyName the property name (which may or may not already exist)
+     * @return true if the property is (or could be) multivalued
+     * @throws RepositoryException
+     */
     public static boolean isMultivaluedProperty(final Node node, final String propertyName) throws RepositoryException {
         final PropertyDefinition def = getDefinitionForPropertyName(node, propertyName);
 

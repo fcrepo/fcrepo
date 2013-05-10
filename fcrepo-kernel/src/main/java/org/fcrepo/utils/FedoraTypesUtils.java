@@ -6,6 +6,7 @@ import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 
 import java.io.InputStream;
@@ -155,6 +156,9 @@ public abstract class FedoraTypesUtils {
 
             };
 
+    /**
+     * Map a JCR property to an RDF property with the right namespace URI and local name
+     */
     public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty = new Function<Property,com.hp.hpl.jena.rdf.model.Property>() {
         @Override
         public com.hp.hpl.jena.rdf.model.Property apply(final Property property) {
@@ -211,12 +215,13 @@ public abstract class FedoraTypesUtils {
 
     /**
      * Get the property definition information (containing type and multi-value information)
-     * @param propertyName
-     * @return
+     * @param node the node to use for inferring the property definition
+     * @param propertyName the property name to retrieve a definition for
+     * @return a JCR PropertyDefinition, if available, or null
      * @throws javax.jcr.RepositoryException
      */
     public static PropertyDefinition getDefinitionForPropertyName(final Node node, final String propertyName) throws RepositoryException {
-        final PropertyDefinition[] propertyDefinitions = node.getSession().getWorkspace().getNodeTypeManager().getNodeType("fedora:resource").getPropertyDefinitions();
+        final PropertyDefinition[] propertyDefinitions = node.getSession().getWorkspace().getNodeTypeManager().getNodeType(FEDORA_RESOURCE).getPropertyDefinitions();
 
         for (PropertyDefinition p : propertyDefinitions) {
             if (p.getName().equals(propertyName)) {

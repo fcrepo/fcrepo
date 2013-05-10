@@ -96,6 +96,10 @@ public class JcrPropertyStatementListener extends StatementListener {
         return true;
     }
 
+    /**
+     * Get a list of any problems from trying to apply the statement changes to the node's properties
+     * @return
+     */
 	public Problems getProblems() {
 		return problems;
 	}

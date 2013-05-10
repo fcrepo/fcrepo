@@ -31,6 +31,11 @@ public abstract class JcrRdfTools {
 
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces = jcrNamespacesToRDFNamespaces.inverse();
 
+    /**
+     * Convert a Fedora RDF Namespace into its JCR equivalent
+     * @param rdfNamespaceUri a namespace from an RDF document
+     * @return the JCR namespace, or the RDF namespace if no matching JCR namespace is found
+     */
     public static String getJcrNamespaceForRDFNamespace(final String rdfNamespaceUri) {
         if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {
             return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);
@@ -39,6 +44,11 @@ public abstract class JcrRdfTools {
         }
     }
 
+    /**
+     * Convert a JCR namespace into an RDF namespace fit for downstream consumption
+     * @param jcrNamespaceUri a namespace from the JCR NamespaceRegistry
+     * @return an RDF namespace for downstream consumption.
+     */
     public static String getRDFNamespaceForJcrNamespace(final String jcrNamespaceUri) {
         if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {
             return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);
@@ -48,12 +58,13 @@ public abstract class JcrRdfTools {
     }
 
     /**
-     * Create a JCR value from our object data. Presumably we could infer type information from the RDFNode?
+     * Create a JCR value from an RDFNode, either by using the given JCR PropertyType or
+     * by looking at the RDFNode Datatype
      *
-     * @param data
-     * @param type
+     * @param data an RDF Node (possibly with a DataType)
+     * @param type a JCR PropertyType value
      *
-     * @return
+     * @return a JCR Value
      *
      * @throws javax.jcr.RepositoryException
      */
@@ -99,6 +110,14 @@ public abstract class JcrRdfTools {
         }
     }
 
+    /**
+     * Add a JCR property to the given RDF Model (with the given subject)
+     * @param subject the RDF subject to use in the assertions
+     * @param model the RDF graph to insert the triple into
+     * @param property the JCR property (multivalued or not) to convert to triples
+     *
+     * @throws RepositoryException
+     */
     public static void addPropertyToModel(final Resource subject, final Model model, final Property property) throws RepositoryException {
         if (property.isMultiple()) {
             final Value[] values = property.getValues();
@@ -113,6 +132,15 @@ public abstract class JcrRdfTools {
     }
 
 
+    /**
+     * Add a JCR property to the given RDF Model (with the given subject)
+     *
+     * @param subject the RDF subject to use in the assertions
+     * @param model the RDF graph to insert the triple into
+     * @param property the JCR property (multivalued or not) to convert to triples
+     * @param v the actual JCR Value to insert into the graph
+     * @throws RepositoryException
+     */
     public static void addPropertyToModel(final Resource subject, final Model model, final Property property, Value v) throws RepositoryException {
 
         final com.hp.hpl.jena.rdf.model.Property predicate = FedoraTypesUtils.getPredicateForProperty.apply(property);
@@ -160,8 +188,10 @@ public abstract class JcrRdfTools {
 
     /**
      * Given an RDF predicate value (namespace URI + local name), figure out what JCR property to use
-     * @param predicate
-     * @return
+     * @param node the JCR node we want a property for
+     * @param predicate the predicate to map to a property name
+     *
+     * @return the JCR property name
      * @throws RepositoryException
      */
     public static String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
@@ -171,6 +201,8 @@ public abstract class JcrRdfTools {
         final String namespace = getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
 
         final NamespaceRegistry namespaceRegistry = FedoraTypesUtils.getNamespaceRegistry.apply(node);
+
+        assert(namespaceRegistry != null);
 
         if (namespaceRegistry.isRegisteredUri(namespace)) {
             prefix = namespaceRegistry.getPrefix(namespace);
@@ -190,12 +222,12 @@ public abstract class JcrRdfTools {
 
     /**
      * Strip our silly "namespace" stuff from the object
-     * @param node
-     * @param path
-     * @return
+     * @param node an existing JCR node
+     * @param path the RDF URI to look up
+     * @return the JCR node at the given RDF path
      * @throws RepositoryException
      */
-    public static Node getNodeFromObjectPath(final Node node, final String path) throws RepositoryException {
+    private static Node getNodeFromObjectPath(final Node node, final String path) throws RepositoryException {
         return node.getSession().getNode(path.substring("info:fedora".length()));
     }
 }
