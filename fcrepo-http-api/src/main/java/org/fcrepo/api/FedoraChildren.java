@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -62,19 +63,23 @@ public class FedoraChildren extends AbstractResource {
 			final String path = toPath(pathList);
 			logger.info("getting children of {}", path);
 
-            switch (limitByMixinValue) {
-                case "":
-                    mixin = null;
-                    break;
-                case FedoraJcrTypes.FEDORA_OBJECT:
-                    mixin = "nt:folder";
-                    break;
-                case FedoraJcrTypes.FEDORA_DATASTREAM:
-                    mixin = "nt:file";
-                    break;
-                default:
-                    mixin = limitByMixinValue;
-                    break;
+            if (limitByMixinValue != null) {
+                switch (limitByMixinValue) {
+                    case "":
+                        mixin = null;
+                        break;
+                    case FedoraJcrTypes.FEDORA_OBJECT:
+                        mixin = JcrConstants.NT_FOLDER;
+                        break;
+                    case FedoraJcrTypes.FEDORA_DATASTREAM:
+                        mixin = JcrConstants.NT_FILE;
+                        break;
+                    default:
+                        mixin = limitByMixinValue;
+                        break;
+                }
+            } else {
+                mixin = null;
             }
 
 			return ok(nodeService.getObjectNames(session, path, mixin).toString()).build();
