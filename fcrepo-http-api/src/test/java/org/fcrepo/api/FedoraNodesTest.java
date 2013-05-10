@@ -11,12 +11,13 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
+import java.util.HashSet;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,10 @@ import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -185,11 +190,43 @@ public class FedoraNodesTest {
 		when(mockNode.isNodeType("nt:file")).thenReturn(true);
 		when(mockSession.getNode(path)).thenReturn(mockNode);
 		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
-		final Response actual = testObj.describe(createPathList(pid, dsId));
-		assertNotNull(actual);
+
+        final Request mockRequest = mock(Request.class);
+        final Response actual = testObj.describe(createPathList(pid, dsId),
+                                                 mockRequest);
+        assertNotNull(actual);
 		verify(mockDatastreams).getDatastream(mockSession, path);
 		verify(mockSession, never()).save();
 	}
+
+    @Test
+    public void testDescribeNodeCached() throws Exception {
+        final String pid = "FedoraDatastreamsTest1";
+        final String path = "/" + pid;
+        final FedoraObject mockObj = TestHelpers.mockFedoraObject();
+
+        when(mockObjects.getObject(mockSession, path)).thenReturn(mockObj);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockObj.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockNode.isNodeType("nt:file")).thenReturn(false);
+        when(mockNode.isNodeType("nt:folder")).thenReturn(true);
+
+        when(mockSession.getNode(path)).thenReturn(mockNode);
+        when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
+
+        final Request mockRequest = mock(Request.class);
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
+                Response.notModified());
+
+        final Response actual = testObj.describe(createPathList(pid),
+                                                 mockRequest);
+        assertNotNull(actual);
+        verify(mockObjects).getObject(mockSession, path);
+        verify(mockSession, never()).save();
+        assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
+    }
 
 	@Test
 	public void testDescribeRdfObject() throws RepositoryException, IOException {
@@ -236,6 +273,5 @@ public class FedoraNodesTest {
 		verify(mockSession).save();
 		verify(mockSession).logout();
 	}
-
 
 }

@@ -8,6 +8,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -25,6 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -77,36 +79,77 @@ public class FedoraNodes extends AbstractResource {
 	 * @throws IOException
 	 */
 	@GET
-	@Produces(WILDCARD)
-	public Response defaultDescribe(@PathParam("path")
-							 final List<PathSegment> pathList) throws RepositoryException, IOException {
-		return describe(pathList);
-	}
+    @Produces(WILDCARD)
+    public Response defaultDescribe(@PathParam("path") final List<PathSegment> pathList,
+                                    @Context final Request request)
+            throws RepositoryException, IOException {
+        return describe(pathList, request);
+    }
 
 	@GET
 	@Produces({TEXT_XML, APPLICATION_JSON, APPLICATION_XML})
-	public Response describe(@PathParam("path")
-							 final List<PathSegment> pathList) throws RepositoryException, IOException {
-
+    public Response describe(@PathParam("path")
+                             final List<PathSegment> pathList,
+                             @Context final Request request)
+            throws RepositoryException, IOException {
 		final String path = toPath(pathList);
 		logger.trace("getting profile for {}", path);
 		if ("/".equals(path)) {
 			return Response.ok(getRepositoryProfile()).build();
 		}
+
 		final Session session = getAuthenticatedSession();
-		try {
-			final FedoraResource resource = nodeService.getObject(session, path);
+        try {
+            final Node node = session.getNode(path);
 
-			if (resource.hasContent()) {
-				return Response.ok(getDatastreamProfile(resource.getNode())).build();
-			} else {
-				return Response.ok(getObjectProfile(resource.getNode())).build();
-			}
+            if (node.isNodeType("nt:file")) {
+                final Datastream ds = getDatastream(node);
+                final DatastreamProfile profile = getDatastreamProfile(ds);
+                return createResponse(request,
+                                      ds.getLastModifiedDate(),
+                                      profile);
 
-		} finally {
-			session.logout();
-		}
-	}
+            } else if (node.isNodeType("nt:folder")) {
+                final FedoraObject obj = getFedoraObject(node);
+                final ObjectProfile profile = getObjectProfile(obj);
+                return createResponse(request,
+                                      obj.getLastModifiedDate(),
+                                      profile);
+
+            } else {
+                return Response.status(406)
+                        .entity("Unexpected node type: " + node.getPrimaryNodeType())
+                        .build();
+            }
+
+        } finally {
+            session.logout();
+        }
+    }
+
+    private Response createResponse(Request request,
+                                    Date date,
+                                    Object entity) {
+        Response.ResponseBuilder builder = null;
+
+        if (null != date) {
+            final Date roundedDate = new Date();
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+            builder = request.evaluatePreconditions(roundedDate);
+        }
+
+        // Preconditions were not met if builder is null
+        if (null == builder) {
+            builder = Response.ok(entity);
+        }
+
+        final CacheControl cc = new CacheControl();
+        cc.setMaxAge(0);
+        cc.setMustRevalidate(true);
+
+        return builder.cacheControl(cc).lastModified(date).build();
+    }
 
 	@GET
 	@Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
@@ -129,45 +172,43 @@ public class FedoraNodes extends AbstractResource {
 				nodeService,
 				path,
 				bestPossibleResponse.getMediaType());
-
 	}
 
-	/**
-	 * Returns an object profile.
-	 *
-	 * @param node
-	 * @return 200
-	 * @throws RepositoryException
-	 * @throws IOException
-	 */
-	public ObjectProfile getObjectProfile(Node node)
-			throws RepositoryException, IOException {
+    public ObjectProfile getObjectProfile(Node node) throws RepositoryException {
+        return getObjectProfile(getFedoraObject(node));
+    }
 
-		final String path = node.getPath();
-		logger.trace("getting object profile {}", path);
-		final ObjectProfile objectProfile = new ObjectProfile();
-		final FedoraObject obj = objectService.getObject(node.getSession(), path);
-		objectProfile.pid = obj.getName();
-		objectProfile.objCreateDate = obj.getCreatedDate();
-		objectProfile.objLastModDate = obj.getLastModifiedDate();
-		objectProfile.objSize = obj.getSize();
-		objectProfile.objItemIndexViewURL =
-				uriInfo.getAbsolutePathBuilder().path("datastreams").build();
-		objectProfile.objState = ObjectProfile.ObjectStates.A;
-		objectProfile.objModels = obj.getModels();
+	private FedoraObject getFedoraObject(Node node) throws RepositoryException {
+        final String path = node.getPath();
+        logger.trace("getting object profile {}", path);
+        return objectService.getObject(node.getSession(), path);
+    }
 
-		return objectProfile;
+    private ObjectProfile getObjectProfile(FedoraObject obj) throws RepositoryException {
+        final ObjectProfile objectProfile = new ObjectProfile();
+        objectProfile.pid = obj.getName();
+        objectProfile.objCreateDate = obj.getCreatedDate();
+        objectProfile.objLastModDate = obj.getLastModifiedDate();
+        objectProfile.objSize = obj.getSize();
+        objectProfile.objItemIndexViewURL =
+                uriInfo.getAbsolutePathBuilder().path("datastreams").build();
+        objectProfile.objState = ObjectProfile.ObjectStates.A;
+        objectProfile.objModels = obj.getModels();
 
-	}
+        return objectProfile;
+    }
 
-	public DatastreamProfile getDatastreamProfile(Node node) throws RepositoryException, IOException {
-		final String path = node.getPath();
-		logger.trace("Executing getDatastream() with path: {}", path);
-		return getDatastreamProfile(datastreamService.getDatastream(node.getSession(), path));
+    public DatastreamProfile getDatastreamProfile(Node node) throws RepositoryException, IOException {
+        return getDatastreamProfile(getDatastream(node));
+    }
 
-	}
+    private Datastream getDatastream(Node node) throws RepositoryException {
+        final String path = node.getPath();
+        logger.trace("Executing getDatastream() with path: {}", path);
+        return datastreamService.getDatastream(node.getSession(), path);
+    }
 
-	private DatastreamProfile getDatastreamProfile(final Datastream ds)
+    private DatastreamProfile getDatastreamProfile(final Datastream ds)
 			throws RepositoryException, IOException {
 		logger.trace("Executing getDSProfile() with node: " + ds.getDsId());
 		final DatastreamProfile dsProfile = new DatastreamProfile();
@@ -181,6 +222,7 @@ public class FedoraNodes extends AbstractResource {
 		dsProfile.dsMIME = ds.getMimeType();
 		dsProfile.dsSize = ds.getSize();
 		dsProfile.dsCreateDate = ds.getCreatedDate().toString();
+        dsProfile.dsLastModifiedDate = ds.getLastModifiedDate().toString();
 		dsProfile.dsStores =  new DatastreamProfile.DSStores(ds,
 																	llStoreService.getLowLevelCacheEntries(ds.getNode()));
 		return dsProfile;

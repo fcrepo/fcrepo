@@ -252,4 +252,11 @@ public abstract class TestHelpers {
 		}
 		return mockDs;
 	}
+
+    public static FedoraObject mockFedoraObject() throws RepositoryException {
+        final FedoraObject mockObj = mock(FedoraObject.class);
+        when(mockObj.getLastModifiedDate()).thenReturn(new Date());
+
+        return mockObj;
+    }
 }

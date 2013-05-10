@@ -6,6 +6,7 @@ import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
+import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -96,7 +97,5 @@ public class FedoraObject extends FedoraResource {
         }
         return false;
     }
-
-
 
 }
