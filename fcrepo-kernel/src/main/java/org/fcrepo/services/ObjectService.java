@@ -1,13 +1,9 @@
 
 package org.fcrepo.services;
 
-import static com.google.common.collect.ImmutableSet.builder;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Set;
-
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 

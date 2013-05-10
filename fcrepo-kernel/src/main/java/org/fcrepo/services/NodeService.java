@@ -1,7 +1,6 @@
 package org.fcrepo.services;
 
 import com.google.common.collect.ImmutableSet;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;

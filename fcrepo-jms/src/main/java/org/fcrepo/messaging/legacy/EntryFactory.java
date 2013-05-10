@@ -1,7 +1,6 @@
 package org.fcrepo.messaging.legacy;
 
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.UUID;
 
 import org.apache.abdera.Abdera;

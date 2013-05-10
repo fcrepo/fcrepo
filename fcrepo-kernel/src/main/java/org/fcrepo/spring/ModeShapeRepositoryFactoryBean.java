@@ -13,7 +13,6 @@ import javax.jcr.Session;
 import org.fcrepo.services.ObjectService;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrRepositoryFactory;
-import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.RepositoryFactory;
 import org.springframework.beans.factory.FactoryBean;

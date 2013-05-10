@@ -1,8 +1,6 @@
 
 package org.fcrepo;
 
-import static com.google.common.base.Joiner.on;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
@@ -12,7 +10,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.Property;

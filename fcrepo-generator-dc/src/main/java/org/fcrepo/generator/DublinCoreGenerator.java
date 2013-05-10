@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.Resource;
-import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -22,9 +21,6 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
-import org.fcrepo.services.NodeService;
-import org.fcrepo.services.ObjectService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component

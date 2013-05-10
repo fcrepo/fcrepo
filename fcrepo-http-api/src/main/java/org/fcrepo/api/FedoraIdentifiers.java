@@ -9,9 +9,6 @@ import static com.google.common.collect.Range.closed;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 
-import java.io.IOException;
-
-import javax.jcr.RepositoryException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -35,11 +32,8 @@ import com.codahale.metrics.annotation.Timed;
 public class FedoraIdentifiers extends AbstractResource {
 
     /**
-     * @param numPids
+     * @param numPids number of PIDs to return
      * @return HTTP 200 with block of PIDs
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws TemplateException
      */
     @POST
 	@Timed

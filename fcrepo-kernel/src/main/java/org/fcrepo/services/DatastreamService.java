@@ -1,13 +1,11 @@
 
 package org.fcrepo.services;
 
-import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -17,8 +15,6 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.DatastreamIterator;
-import org.modeshape.jcr.api.Binary;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 

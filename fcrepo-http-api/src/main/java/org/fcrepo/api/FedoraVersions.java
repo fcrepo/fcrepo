@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -22,18 +21,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.Datastream;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile.DatastreamStates;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.ObjectService;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
