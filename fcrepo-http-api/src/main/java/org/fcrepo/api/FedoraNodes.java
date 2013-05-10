@@ -180,7 +180,8 @@ public class FedoraNodes extends AbstractResource {
 		dsProfile.dsState = DatastreamProfile.DatastreamStates.A;
 		dsProfile.dsMIME = ds.getMimeType();
 		dsProfile.dsSize = ds.getSize();
-		dsProfile.dsCreateDate = ds.getCreatedDate().toString();
+		dsProfile.dsCreateDate = ds.getCreatedDate();
+		dsProfile.dsLastModifiedDate = ds.getLastModifiedDate();
 		dsProfile.dsStores =  new DatastreamProfile.DSStores(ds,
 																	llStoreService.getLowLevelCacheEntries(ds.getNode()));
 		return dsProfile;

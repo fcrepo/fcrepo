@@ -3,6 +3,7 @@ package org.fcrepo.jaxb.responses.management;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -36,10 +37,10 @@ public class DatastreamProfile {
     public String dsVersionID;
 
 	@XmlElement
-	public String dsLastModifiedDate;
+	public Date dsLastModifiedDate;
 
     @XmlElement
-    public String dsCreateDate;
+    public Date dsCreateDate;
 
     @XmlElement
     public DatastreamStates dsState;
