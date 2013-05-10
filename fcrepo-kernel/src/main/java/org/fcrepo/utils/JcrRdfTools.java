@@ -20,7 +20,7 @@ import javax.jcr.ValueFactory;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class JcrRdfTools {
+public abstract class JcrRdfTools {
 
     private static final Logger logger = getLogger(JcrRdfTools.class);
 

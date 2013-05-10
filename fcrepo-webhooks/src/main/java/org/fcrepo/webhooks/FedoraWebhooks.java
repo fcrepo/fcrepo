@@ -89,7 +89,11 @@ public class FedoraWebhooks extends AbstractResource {
 
     public static void runHooks(final Node resource, final FedoraEvent event)
             throws RepositoryException {
-        if (resource == null) logger.warn("resource node is null; event path is {}", event.getPath());
+        if (resource == null) {
+            logger.warn("resource node is null; event path is {}", event.getPath());
+            return;
+        }
+
         final NodeIterator webhooksIterator =
                 resource.getSession().getRootNode().getNodes(WEBHOOK_SEARCH);
 
@@ -106,14 +110,14 @@ public class FedoraWebhooks extends AbstractResource {
                 eventSerialization.writeTo(writer);
                 method.setEntity(new StringEntity(writer.toString()));
             } catch (final IOException e) {
-                e.printStackTrace();
+                logger.warn("Got exception generating webhook body: {}", e);
             }
 
             try {
                 logger.debug("Firing callback for" + hook.getName());
                 client.execute(method);
             } catch (final IOException e) {
-                e.printStackTrace();
+                logger.warn("Got exception running webhook callback for {}: {}", hook.getName(), e);
             }
 
         }

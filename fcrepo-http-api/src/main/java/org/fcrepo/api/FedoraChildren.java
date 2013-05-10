@@ -51,23 +51,32 @@ public class FedoraChildren extends AbstractResource {
 	@Produces({TEXT_XML, APPLICATION_JSON, TEXT_HTML})
 	public Response getObjects(
 									  @PathParam("path") final List<PathSegment> pathList,
-									  @QueryParam("mixin") @DefaultValue("") String mixin
+									  @QueryParam("mixin") @DefaultValue("") final String limitByMixinValue
 	) throws RepositoryException, IOException {
 
 
 		final Session session = getAuthenticatedSession();
 
+        final String mixin;
 		try {
 			final String path = toPath(pathList);
 			logger.info("getting children of {}", path);
-			if ("".equals(mixin)) {
-				mixin = null;
-			}
-			else if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
-				mixin = "nt:folder";
-			} else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
-				mixin = "nt:file";
-			}
+
+            switch (limitByMixinValue) {
+                case "":
+                    mixin = null;
+                    break;
+                case FedoraJcrTypes.FEDORA_OBJECT:
+                    mixin = "nt:folder";
+                    break;
+                case FedoraJcrTypes.FEDORA_DATASTREAM:
+                    mixin = "nt:file";
+                    break;
+                default:
+                    mixin = limitByMixinValue;
+                    break;
+            }
+
 			return ok(nodeService.getObjectNames(session, path, mixin).toString()).build();
 		} finally {
 			session.logout();

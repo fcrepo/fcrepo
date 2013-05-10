@@ -106,12 +106,11 @@ public class FedoraRepository extends AbstractResource {
      * Gets the cluster configurations
      * @return
      */
-    public Map<String, String> getClusterConfig() {
+    private Map<String, String> getClusterConfig() {
 		//get infinispan binarystore and cachemanager to set cluster configuration information
 		GetClusterConfiguration getClusterConfig =
 				new GetClusterConfiguration();
-		Map<String, String> result = getClusterConfig.apply(repo);
-		return result;
+		return getClusterConfig.apply(repo);
     }
 
     @GET

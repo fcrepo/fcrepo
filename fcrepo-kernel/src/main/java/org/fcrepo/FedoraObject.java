@@ -15,8 +15,6 @@ import javax.jcr.nodetype.NodeType;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
-import com.codahale.metrics.Timer;
-
 /**
  * An abstraction that represents a Fedora Object backed by
  * a JCR node.

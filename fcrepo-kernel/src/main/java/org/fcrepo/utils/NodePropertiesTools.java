@@ -14,7 +14,7 @@ import java.util.Collections;
 import static org.fcrepo.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class NodePropertiesTools {
+public abstract class NodePropertiesTools {
 
     private static final Logger logger = getLogger(NodePropertiesTools.class);
 

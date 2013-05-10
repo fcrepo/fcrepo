@@ -31,7 +31,7 @@ public class ObjectServiceIT extends AbstractIT {
     public void testGetAllObjectsDatastreamSize() throws Exception {
         Session session = repository.login();
 
-        final double originalSize = objectService.getAllObjectsDatastreamSize();
+        final double originalSize = objectService.getRepositorySize();
 
         datastreamService.createDatastreamNode(session,
                 "testObjectServiceNode", "application/octet-stream",
@@ -41,7 +41,7 @@ public class ObjectServiceIT extends AbstractIT {
 
         session = repository.login();
 
-        final double afterSize = objectService.getAllObjectsDatastreamSize();
+        final double afterSize = objectService.getRepositorySize();
 
         assertEquals(4.0, afterSize - originalSize);
 

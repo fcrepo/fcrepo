@@ -41,9 +41,6 @@ import org.springframework.stereotype.Component;
 @Path("/rest/{path: .*}/fcr:versions")
 public class FedoraVersions extends AbstractResource {
 
-    private static final Logger logger = LoggerFactory
-            .getLogger(FedoraVersions.class);
-
 	@Autowired
 	FedoraNodes objectsResource;
 

@@ -345,10 +345,9 @@ public class FedoraNodes extends AbstractResource {
                 final MediaType contentType =
                         requestContentType != null ? requestContentType
                                 : APPLICATION_OCTET_STREAM_TYPE;
-                final Node result =
+
                 datastreamService.createDatastreamNode(session, path, contentType
                         .toString(), requestBodyStream, checksumType, checksum);
-                Datastream ds = new Datastream(result);
             }
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);

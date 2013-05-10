@@ -177,7 +177,7 @@ public class LowLevelCacheEntry {
 						   ":" + ispnExternalId;
 		} else if ( store instanceof FileSystemBinaryStore) {
 			final FileSystemBinaryStore fsStore = (FileSystemBinaryStore)store;
-			return getExternalId() + "/" + store.getClass().getName() + ":" + ((FileSystemBinaryStore) store).getDirectory().toPath();
+			return getExternalId() + "/" + store.getClass().getName() + ":" + fsStore.getDirectory().toPath();
 		} else {
 			return getExternalId() + "/" + store.toString();
 		}

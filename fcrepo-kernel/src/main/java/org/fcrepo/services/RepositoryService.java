@@ -1,6 +1,7 @@
 
 package org.fcrepo.services;
 
+import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static javax.jcr.query.Query.JCR_SQL2;
 
@@ -19,6 +20,7 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
+import com.codahale.metrics.Timer;
 import org.fcrepo.metrics.RegistryService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
@@ -34,6 +36,9 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
             .getLogger(RepositoryService.class);
 
     public static final MetricRegistry metrics = RegistryService.getMetrics();
+
+    private final Timer objectSizeCalculationTimer = metrics.timer(name(RepositoryService.class, "objectSizeCalculation"));
+
 
     @Inject
     protected Repository repo;
@@ -66,28 +71,35 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     * @return a double of the size of the fedora:datastream binary content
     * @throws RepositoryException
     */
-    public long getAllObjectsDatastreamSize() throws RepositoryException {
+    private long getAllObjectsDatastreamSize() throws RepositoryException {
 
-		final Session session = repo.login();
-        long sum = 0;
-        final QueryManager queryManager =
-                session.getWorkspace().getQueryManager();
+        final Timer.Context context = objectSizeCalculationTimer.time();
+        logger.info("Calculating repository size from index");
 
-        final String querystring =
-                "\n" + "SELECT [" + CONTENT_SIZE + "] FROM [" + FEDORA_BINARY +
-                        "]";
+        try {
+            final Session session = repo.login();
+            long sum = 0;
+            final QueryManager queryManager =
+                    session.getWorkspace().getQueryManager();
 
-        final QueryResult queryResults =
-                queryManager.createQuery(querystring, JCR_SQL2).execute();
+            final String querystring =
+                    "\n" + "SELECT [" + CONTENT_SIZE + "] FROM [" + FEDORA_BINARY +
+                            "]";
 
-        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
-            final Value value = rows.nextRow().getValue(CONTENT_SIZE);
-            sum += value.getLong();
+            final QueryResult queryResults =
+                    queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+            for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
+                final Value value = rows.nextRow().getValue(CONTENT_SIZE);
+                sum += value.getLong();
+            }
+
+            session.logout();
+
+            return sum;
+        } finally {
+            context.stop();
         }
-
-		session.logout();
-
-        return sum;
     }
 
     public Long getRepositorySize() {

@@ -7,8 +7,14 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 
 import org.fcrepo.Datastream;
+import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class DatastreamIterator implements Iterator<Datastream> {
+
+    private static final Logger logger = getLogger(DatastreamIterator.class);
 
     private final NodeIterator nodes;
     
@@ -41,8 +47,11 @@ public class DatastreamIterator implements Iterator<Datastream> {
         while (nextNode == null && nodes.hasNext()) {
             try {
                 Node n = nodes.nextNode();
-                if (n.isNodeType("nt:file")) nextNode = n;
-                else System.out.println("rejected node of type " + n.getPrimaryNodeType());
+                if (n.isNodeType(JcrConstants.NT_FILE)) {
+                    nextNode = n;
+                } else {
+                    logger.debug("skipping node of type {}", n.getPrimaryNodeType());
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
