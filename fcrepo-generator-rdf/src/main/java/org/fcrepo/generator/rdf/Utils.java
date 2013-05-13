@@ -13,6 +13,7 @@ import org.apache.any23.writer.NTriplesWriter;
 import org.apache.any23.writer.RDFXMLWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TurtleWriter;
+import org.fcrepo.utils.NamespaceTools;
 
 public abstract class Utils {
 
@@ -30,7 +31,7 @@ public abstract class Utils {
 
     public static String expandJCRNamespace(Property p) throws RepositoryException {
         String name = p.getName();
-        NamespaceRegistry nReg = p.getSession().getWorkspace().getNamespaceRegistry();
+        NamespaceRegistry nReg = NamespaceTools.getNamespaceRegistry(p.getSession());
         final String predicatePrefix = name.substring(0, name.indexOf(':'));
         return name.replaceFirst(predicatePrefix + ":", nReg
                 .getURI(predicatePrefix));

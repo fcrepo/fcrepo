@@ -137,26 +137,6 @@ public abstract class FedoraTypesUtils {
 
 
     /**
-     * We need the Modeshape NamespaceRegistry, because it allows us to register anonymous namespaces.
-     * @return
-     * @throws RepositoryException
-     */
-    public static Function<Node, org.modeshape.jcr.api.NamespaceRegistry> getNamespaceRegistry =
-            new Function<Node, org.modeshape.jcr.api.NamespaceRegistry>() {
-                @Override
-                public org.modeshape.jcr.api.NamespaceRegistry apply(final Node n) {
-                    try {
-                        checkArgument(n != null,
-                                             "null has no Namespace Registry associated with it!");
-                        return (org.modeshape.jcr.api.NamespaceRegistry)n.getSession().getWorkspace().getNamespaceRegistry();
-                    } catch (final RepositoryException e) {
-                        throw new IllegalStateException(e);
-                    }
-                }
-
-            };
-
-    /**
      * Map a JCR property to an RDF property with the right namespace URI and local name
      */
     public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty = new Function<Property,com.hp.hpl.jena.rdf.model.Property>() {

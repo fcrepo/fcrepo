@@ -9,6 +9,7 @@ import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.UpdateAction;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrPropertyStatementListener;
+import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.common.collection.Problems;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
@@ -126,12 +127,9 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		}
 		logger.debug("Setting modified date");
 		try {
-			Date createdDate = getCreatedDate();
-			node.setProperty(JCR_LASTMODIFIED, createdDate.toString());
-			node.getSession().save();
-			return createdDate;
+			return getCreatedDate();
 		} catch(RepositoryException e) {
-			logger.error("Could not set new modified date - " + e.getMessage());
+			logger.error("Could not fall back to created date - {}", e.getMessage());
 		}
 		return null;
 	}
@@ -161,7 +159,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
 		final Model model = ModelFactory.createDefaultModel();
 
-		final NamespaceRegistry namespaceRegistry = getNode().getSession().getWorkspace().getNamespaceRegistry();
+		final NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry(getNode());
 		for (final String prefix : namespaceRegistry.getPrefixes()) {
 			final String nsURI = namespaceRegistry.getURI(prefix);
 			if (nsURI != null && !nsURI.equals("") &&
@@ -252,10 +250,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		GraphStore graphStore = GraphStoreFactory.create(getPropertiesModel());
 
 		return graphStore;
-	}
-
-	public void setGraphStore() {
-
 	}
 
 }

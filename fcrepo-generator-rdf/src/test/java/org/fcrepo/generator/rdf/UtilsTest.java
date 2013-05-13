@@ -2,10 +2,10 @@ package org.fcrepo.generator.rdf;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.OutputStream;
 
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -15,8 +15,15 @@ import org.apache.any23.writer.NTriplesWriter;
 import org.apache.any23.writer.RDFXMLWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TurtleWriter;
+import org.fcrepo.utils.NamespaceTools;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({NamespaceTools.class})
 public class UtilsTest {
 
     @Test
@@ -35,13 +42,12 @@ public class UtilsTest {
     public void testExpandJcrNamespace() throws RepositoryException {
         Property mockProp = mock(Property.class);
         Session mockSession = mock(Session.class);
-        Workspace mockWS = mock(Workspace.class);
         NamespaceRegistry mockNSR = mock(NamespaceRegistry.class);
         when(mockProp.getName()).thenReturn("foo:bar");
         when(mockProp.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNamespaceRegistry()).thenReturn(mockNSR);
         when(mockNSR.getURI("foo")).thenReturn("http://foo.gov/");
+        mockStatic(NamespaceTools.class);
+        when(NamespaceTools.getNamespaceRegistry(mockSession)).thenReturn(mockNSR);
         String actual = Utils.expandJCRNamespace(mockProp);
         String expected = "http://foo.gov/bar";
         assertEquals(expected, actual);

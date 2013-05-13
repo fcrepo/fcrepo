@@ -200,7 +200,7 @@ public abstract class JcrRdfTools {
 
         final String namespace = getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
 
-        final NamespaceRegistry namespaceRegistry = FedoraTypesUtils.getNamespaceRegistry.apply(node);
+        final NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry.apply(node);
 
         assert(namespaceRegistry != null);
 

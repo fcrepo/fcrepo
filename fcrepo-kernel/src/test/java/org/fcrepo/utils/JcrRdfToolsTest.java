@@ -51,14 +51,14 @@ public class JcrRdfToolsTest {
         mockNsProc = mock(Function.class);
         when(mockNsProc.apply(mockNode)).thenReturn(mockNsRegistry);
 
-        holdNsRegistry = FedoraTypesUtils.getNamespaceRegistry;
-        FedoraTypesUtils.getNamespaceRegistry = mockNsProc;
+        holdNsRegistry = NamespaceTools.getNamespaceRegistry;
+        NamespaceTools.getNamespaceRegistry = mockNsProc;
 
     }
 
     @After
     public void cleanUp() {
-        FedoraTypesUtils.getNamespaceRegistry = holdNsRegistry;
+        NamespaceTools.getNamespaceRegistry = holdNsRegistry;
     }
 
     @Test

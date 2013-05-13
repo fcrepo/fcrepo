@@ -12,7 +12,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
@@ -32,6 +31,7 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
 import com.codahale.metrics.MetricRegistry;

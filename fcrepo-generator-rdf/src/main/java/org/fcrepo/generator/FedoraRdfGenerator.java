@@ -32,6 +32,7 @@ import org.fcrepo.generator.rdf.TripleSource.Triple;
 import org.fcrepo.generator.rdf.Utils;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.NamespaceTools;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.sail.memory.model.MemValueFactory;
@@ -95,8 +96,7 @@ public class FedoraRdfGenerator extends AbstractResource {
     private void writeNamespaces(Node node, TripleHandler writer, ExtractionContext context)
             throws TripleHandlerException, RepositoryException {
         final NamespaceRegistry nReg =
-                node.getSession().getWorkspace()
-                        .getNamespaceRegistry();
+                NamespaceTools.getNamespaceRegistry(node);
         for (final String prefix : nReg.getPrefixes()) {
             final String nsURI = nReg.getURI(prefix);
             if (nsURI != null && !nsURI.equals("") &&

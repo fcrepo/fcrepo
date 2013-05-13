@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -21,13 +23,23 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.jaxb.responses.access.DescribeRepository;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.services.RepositoryService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
+import org.fcrepo.utils.JcrRdfTools;
+import org.fcrepo.utils.NamespaceTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({RepositoryService.class})
 public class FedoraRepositoryTest {
 
     FedoraRepository testFedoraRepo;
@@ -53,7 +65,9 @@ public class FedoraRepositoryTest {
                         any(HttpServletRequest.class))).thenReturn(mockSession);
         testFedoraRepo.setSessionFactory(mockSessions);
         when(mockRepo.getDescriptorKeys()).thenReturn(new String[0]);
-        when(mockObjects.getRepositoryNamespaces(mockSession)).thenReturn(
+        mockStatic(RepositoryService.class);
+        
+        when(RepositoryService.getRepositoryNamespaces(mockSession)).thenReturn(
                 new HashMap<String, String>(0));
         final NodeTypeIterator mockNT = mock(NodeTypeIterator.class);
         when(mockObjects.getAllNodeTypes(mockSession)).thenReturn(mockNT);

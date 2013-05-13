@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.management.NamespaceListing;
 import org.fcrepo.jaxb.responses.management.NamespaceListing.Namespace;
+import org.fcrepo.utils.NamespaceTools;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -59,7 +60,7 @@ public class FedoraNamespaces extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             final NamespaceRegistry r =
-                    session.getWorkspace().getNamespaceRegistry();
+                    NamespaceTools.getNamespaceRegistry(session);
             r.registerNamespace(prefix, uri);
         } finally {
             session.logout();
@@ -83,7 +84,7 @@ public class FedoraNamespaces extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             final NamespaceRegistry r =
-                    session.getWorkspace().getNamespaceRegistry();
+                    NamespaceTools.getNamespaceRegistry(session);
             for (final Namespace ns : nses.namespaces) {
                 r.registerNamespace(ns.prefix, ns.uri.toString());
             }
@@ -109,7 +110,7 @@ public class FedoraNamespaces extends AbstractResource {
 
         final Session session = getAuthenticatedSession();
         final NamespaceRegistry r =
-                session.getWorkspace().getNamespaceRegistry();
+                NamespaceTools.getNamespaceRegistry(session);
 
         try {
             final Namespace ns =
@@ -135,7 +136,7 @@ public class FedoraNamespaces extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             final NamespaceRegistry r =
-                    session.getWorkspace().getNamespaceRegistry();
+                    NamespaceTools.getNamespaceRegistry(session);
 
             for (final String prefix : r.getPrefixes()) {
                 b.add(new Namespace(prefix, URI.create(r.getURI(prefix))));

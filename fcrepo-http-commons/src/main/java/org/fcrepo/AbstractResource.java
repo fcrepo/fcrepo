@@ -23,6 +23,7 @@ import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public abstract class AbstractResource {
 
-    private static final Logger logger = getLogger(AbstractResource.class);
+    private static final Logger LOGGER = getLogger(AbstractResource.class);
+    
+    public static final String TEST_NS_PREFIX = "test";
+    
+    public static final String TEST_NS_URI = "info:fedora/test/";
 
     /**
      * Useful for constructing URLs
@@ -88,8 +93,8 @@ public abstract class AbstractResource {
     public void initialize() throws RepositoryException {
 
         final Session session = sessions.getSession();
-        session.getWorkspace().getNamespaceRegistry().registerNamespace("test",
-                "info:fedora/test");
+        NamespaceTools.getNamespaceRegistry(session).registerNamespace(TEST_NS_PREFIX,
+                TEST_NS_URI);
         session.save();
         session.logout();
     }
@@ -105,7 +110,7 @@ public abstract class AbstractResource {
     protected synchronized Response deleteResource(final Node resource)
             throws RepositoryException {
 
-        logger.debug("Attempting to delete resource at path: " +
+        LOGGER.debug("Attempting to delete resource at path: " +
                 resource.getPath());
         final Session session = resource.getSession();
 

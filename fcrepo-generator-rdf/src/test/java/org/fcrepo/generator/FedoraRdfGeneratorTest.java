@@ -3,6 +3,7 @@ package org.fcrepo.generator;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -11,7 +12,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -29,10 +29,17 @@ import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.PathSegmentImpl;
 import org.fcrepo.test.util.TestHelpers;
+import org.fcrepo.utils.NamespaceTools;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({NamespaceTools.class})
 public class FedoraRdfGeneratorTest {
 
     private FedoraRdfGenerator testObj;
@@ -83,12 +90,12 @@ public class FedoraRdfGeneratorTest {
     public void testGetRdfXml() throws IOException, RepositoryException, TripleHandlerException {
         List<PathSegment> pathList = PathSegmentImpl.createPathList("objects", "foo");
         FedoraObject mockObj = mock(FedoraObject.class);
-        Workspace mockWS = mock(Workspace.class);
         NamespaceRegistry mockNS = mock(NamespaceRegistry.class);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNamespaceRegistry()).thenReturn(mockNS);
         when(mockNS.getPrefixes()).thenReturn(new String[]{});
         Node mockNode = mock(Node.class);
+        mockStatic(NamespaceTools.class);
+        when(NamespaceTools.getNamespaceRegistry(mockNode))
+        .thenReturn(mockNS);
         when(mockObj.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockObjects.getObject(mockSession, "/objects/foo")).thenReturn(mockObj);

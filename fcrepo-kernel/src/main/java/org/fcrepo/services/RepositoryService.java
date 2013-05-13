@@ -23,6 +23,7 @@ import javax.jcr.query.RowIterator;
 import com.codahale.metrics.Timer;
 import org.fcrepo.metrics.RegistryService;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
@@ -125,10 +126,10 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return ntmanager.getAllNodeTypes();
     }
 
-    public Map<String, String> getRepositoryNamespaces(final Session session)
+    public static Map<String, String> getRepositoryNamespaces(final Session session)
             throws RepositoryException {
         final NamespaceRegistry reg =
-                session.getWorkspace().getNamespaceRegistry();
+                NamespaceTools.getNamespaceRegistry(session);
         final String[] prefixes = reg.getPrefixes();
         final HashMap<String, String> result =
                 new HashMap<String, String>(prefixes.length);
