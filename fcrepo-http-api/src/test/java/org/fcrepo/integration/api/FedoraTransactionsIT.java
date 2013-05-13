@@ -87,6 +87,16 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertNotNull(tx.getCreated());
 		assertTrue(tx.getState() == State.NEW);
 
+		/* create a new object inside the tx */
+		HttpPost postNew = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/objects/testobj2/fcr:newhack");
+		resp = execute(postNew);
+		assertTrue(resp.getStatusLine().getStatusCode() == 200);
+				
+		/* check if the object is already there, before the commit */
+		HttpGet getObj = new HttpGet(serverAddress + "/objects/testobj2");
+		resp = execute(getObj);
+		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 404);
+
 		/* and rollback */
 		HttpPost rollbackTx = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/fcr:rollback");
 		resp = execute(rollbackTx);
@@ -94,5 +104,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertEquals(rolledBack.getId(),tx.getId());
 		assertTrue(rolledBack.getState() == State.ROLLED_BACK);
 		
+		/* check if the object is there, after the rollback */
+		resp = execute(getObj);
+		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 404);
 	}
 }
