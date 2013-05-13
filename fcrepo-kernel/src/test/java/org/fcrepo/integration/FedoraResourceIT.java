@@ -3,6 +3,7 @@ package org.fcrepo.integration;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Literal;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
@@ -130,7 +131,12 @@ public class FedoraResourceIT extends AbstractIT {
 		o = Node.createLiteral("fedora:datastream");
 		assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
 
+        // structure
+        p = Node.createURI("info:fedora/fedora-system:def/internal#numberOfChildren");
+        RDFDatatype long_datatype = ResourceFactory.createTypedLiteral(0L).getDatatype();
+        o = Node.createLiteral("0", long_datatype);
 
+        assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
 		// relations
 		p = Node.createURI("info:fedora/fedora-system:def/relations-external#isPartOf");
 		o = Node.createURI("info:fedora/testDatastreamGraphParent");

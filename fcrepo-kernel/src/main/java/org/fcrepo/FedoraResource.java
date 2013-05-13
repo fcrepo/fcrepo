@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -185,14 +186,37 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 			addJcrPropertiesToModel(contentSubject, model, contentProperties);
 		}
 
-		listener = new JcrPropertyStatementListener(subject, getNode());
+        addJcrTreePropertiesToModel(subject, model);
+
+        listener = new JcrPropertyStatementListener(subject, getNode());
 
 		model.register(listener);
 
 		return model;
 	}
 
-	private void addJcrPropertiesToModel(Resource subject, Model model, PropertyIterator properties) throws RepositoryException {
+    private void addJcrTreePropertiesToModel(final Resource subject, final Model model) throws RepositoryException {
+        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasParent"), getGraphSubject(node.getParent()));
+
+        final NodeIterator nodeIterator = node.getNodes();
+
+        long numberOfChildren = 0L;
+
+        while (nodeIterator.hasNext()) {
+            final Node childNode = nodeIterator.nextNode();
+
+            if (childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
+                continue;
+            }
+
+            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasChild"), getGraphSubject(childNode));
+            numberOfChildren += 1;
+        }
+
+        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#numberOfChildren"), ResourceFactory.createTypedLiteral(numberOfChildren));
+    }
+
+    private void addJcrPropertiesToModel(Resource subject, Model model, PropertyIterator properties) throws RepositoryException {
 		while (properties.hasNext()) {
 			final Property property = properties.nextProperty();
 
