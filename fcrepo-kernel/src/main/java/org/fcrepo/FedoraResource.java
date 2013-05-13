@@ -1,25 +1,18 @@
 package org.fcrepo;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.UpdateAction;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrPropertyStatementListener;
-import org.fcrepo.utils.NamespaceTools;
+import org.fcrepo.utils.JcrRdfTools;
 import org.modeshape.common.collection.Problems;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -30,8 +23,6 @@ import java.util.Date;
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
-import static org.fcrepo.utils.JcrRdfTools.addPropertyToModel;
-import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
@@ -152,91 +143,12 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		return map(node.getMixinNodeTypes(), nodetype2name);
 	}
 
-
-	public Model getPropertiesModel() throws RepositoryException {
-
-		final Resource subject = getGraphSubject();
-
-		final Model model = ModelFactory.createDefaultModel();
-
-		final NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry(getNode());
-		for (final String prefix : namespaceRegistry.getPrefixes()) {
-			final String nsURI = namespaceRegistry.getURI(prefix);
-			if (nsURI != null && !nsURI.equals("") &&
-						!prefix.equals("xmlns")) {
-
-				if (prefix.equals("jcr")) {
-					model.setNsPrefix("fedora-internal", getRDFNamespaceForJcrNamespace(nsURI));
-				} else {
-					model.setNsPrefix(prefix, getRDFNamespaceForJcrNamespace(nsURI));
-				}
-			}
-		}
-
-		final PropertyIterator properties = node.getProperties();
-
-		addJcrPropertiesToModel(subject, model, properties);
-
-		if (node.hasNode(JcrConstants.JCR_CONTENT)) {
-			final Resource contentSubject = ResourceFactory.createResource("info:fedora" + node.getPath() + "/fcr:content");
-			model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasContent"), contentSubject);
-			final PropertyIterator contentProperties = node.getNode(JcrConstants.JCR_CONTENT).getProperties();
-			addJcrPropertiesToModel(contentSubject, model, contentProperties);
-		}
-
-        addJcrTreePropertiesToModel(subject, model);
-
-        listener = new JcrPropertyStatementListener(subject, getNode());
-
-		model.register(listener);
-
-		return model;
-	}
-
-    private void addJcrTreePropertiesToModel(final Resource subject, final Model model) throws RepositoryException {
-        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasParent"), getGraphSubject(node.getParent()));
-
-        final NodeIterator nodeIterator = node.getNodes();
-
-        long numberOfChildren = 0L;
-
-        while (nodeIterator.hasNext()) {
-            final Node childNode = nodeIterator.nextNode();
-
-            if (childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
-                continue;
-            }
-
-            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasChild"), getGraphSubject(childNode));
-            numberOfChildren += 1;
-        }
-
-        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#numberOfChildren"), ResourceFactory.createTypedLiteral(numberOfChildren));
-    }
-
-    private void addJcrPropertiesToModel(Resource subject, Model model, PropertyIterator properties) throws RepositoryException {
-		while (properties.hasNext()) {
-			final Property property = properties.nextProperty();
-
-            addPropertyToModel(subject, model, property);
-		}
-	}
-
 	public Problems getGraphProblems() throws RepositoryException {
 		if (listener != null) {
 			return listener.getProblems();
 		} else {
 			return null;
 		}
-	}
-
-
-	public static Resource getGraphSubject(final Node node) throws RepositoryException {
-		return ResourceFactory.createResource("info:fedora" + node.getPath());
-	}
-
-	public Resource getGraphSubject() throws RepositoryException {
-		return getGraphSubject(node);
 	}
 
 	public GraphStore updateGraph(String sparqlUpdateStatement) throws RepositoryException {
@@ -247,7 +159,14 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 	}
 
 	public GraphStore getGraphStore() throws RepositoryException {
-		GraphStore graphStore = GraphStoreFactory.create(getPropertiesModel());
+
+        final Model model = JcrRdfTools.getJcrPropertiesModel(node);
+
+        listener = new JcrPropertyStatementListener(node);
+
+        model.register(listener);
+
+		GraphStore graphStore = GraphStoreFactory.create(model);
 
 		return graphStore;
 	}

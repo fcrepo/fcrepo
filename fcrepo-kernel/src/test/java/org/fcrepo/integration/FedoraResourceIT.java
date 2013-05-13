@@ -60,8 +60,6 @@ public class FedoraResourceIT extends AbstractIT {
 
 		final FedoraResource object = nodeService.findOrCreateObject(session, "/testNodeGraph");
 
-		assertEquals("info:fedora/testNodeGraph", object.getGraphSubject().toString());
-
 		logger.warn(object.getGraphStore().toString());
 		Node s = Node.createURI("info:fedora/testNodeGraph");
 		Node p = Node.createURI("info:fedora/fedora-system:def/internal#primaryType");
@@ -75,8 +73,6 @@ public class FedoraResourceIT extends AbstractIT {
 		Session session = repo.login();
 
 		final FedoraResource object = objectService.createObject(session, "/testObjectGraph");
-
-		assertEquals("info:fedora/testObjectGraph", object.getGraphSubject().toString());
 
 		logger.warn(object.getGraphStore().toString());
 
@@ -111,8 +107,6 @@ public class FedoraResourceIT extends AbstractIT {
 		final FedoraResource object = nodeService.getObject(session, "/testDatastreamGraph");
 
 		object.getNode().setProperty("fedorarelsext:isPartOf", session.getNode("/testDatastreamGraphParent"));
-
-		assertEquals("info:fedora/testDatastreamGraph", object.getGraphSubject().toString());
 
 		logger.warn(object.getGraphStore().toString());
 

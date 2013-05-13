@@ -10,18 +10,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.NamespaceRegistry;
+import org.powermock.api.mockito.PowerMockito;
 
-import javax.jcr.Node;
-import javax.jcr.PropertyType;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
+import javax.jcr.*;
+import javax.jcr.PropertyIterator;
 
 import java.util.Arrays;
 import java.util.Calendar;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.*;
 
 
@@ -48,17 +46,10 @@ public class JcrRdfToolsTest {
         when(mockNsRegistry.getPrefix("http://www.jcp.org/jcr/1.0")).thenReturn("jcr");
         when(mockNsRegistry.getPrefix("registered-uri#")).thenReturn("some-prefix");
 
-        mockNsProc = mock(Function.class);
-        when(mockNsProc.apply(mockNode)).thenReturn(mockNsRegistry);
+        Workspace mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNsRegistry);
 
-        holdNsRegistry = NamespaceTools.getNamespaceRegistry;
-        NamespaceTools.getNamespaceRegistry = mockNsProc;
-
-    }
-
-    @After
-    public void cleanUp() {
-        NamespaceTools.getNamespaceRegistry = holdNsRegistry;
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
     }
 
     @Test
@@ -96,6 +87,71 @@ public class JcrRdfToolsTest {
         when(mockNsRegistry.registerNamespace("not-registered-uri#")).thenReturn("ns001");
         Property p = ResourceFactory.createProperty("not-registered-uri#", "uuid");
         assertEquals("ns001:uuid", JcrRdfTools.getPropertyNameFromPredicate(mockNode, p));
+    }
+
+    @Test
+    public void shouldMapJcrNodeNamestoRDFResources() throws RepositoryException {
+        when(mockNode.getPath()).thenReturn("/abc");
+
+        assertEquals("info:fedora/abc", JcrRdfTools.getGraphSubject(mockNode).toString());
+    }
+
+
+    @Test
+    public void shouldMapJcrContentNodeNamestoRDFResourcesIntheFcrNamespace() throws RepositoryException {
+        when(mockNode.getPath()).thenReturn("/abc/jcr:content");
+
+        assertEquals("info:fedora/abc/fcr:content", JcrRdfTools.getGraphSubject(mockNode).toString());
+    }
+
+    @Test
+    public void shouldMapRDFResourcesToJcrNodes() throws RepositoryException {
+        when(mockSession.nodeExists("/abc")).thenReturn(true);
+        when(mockSession.getNode("/abc")).thenReturn(mockNode);
+        assertEquals(mockNode, JcrRdfTools.getNodeFromGraphSubject(mockSession, ResourceFactory.createResource("info:fedora/abc")));
+    }
+
+    @Test
+    public void shouldMapRDFContentResourcesToJcrContentNodes() throws RepositoryException {
+        when(mockSession.nodeExists("/abc/jcr:content")).thenReturn(true);
+        when(mockSession.getNode("/abc/jcr:content")).thenReturn(mockNode);
+        assertEquals(mockNode, JcrRdfTools.getNodeFromGraphSubject(mockSession, ResourceFactory.createResource("info:fedora/abc/fcr:content")));
+    }
+
+
+    @Test
+    public void shouldReturnNullIfItFailstoMapRDFResourcesToJcrNodes() throws RepositoryException {
+        when(mockSession.nodeExists("/does-not-exist")).thenReturn(false);
+        assertNull("should receive null for a non-JCR resource", JcrRdfTools.getNodeFromGraphSubject(mockSession, ResourceFactory.createResource("this-is-not-a-fedora-node/abc")));
+        assertNull("should receive null a JCR node that isn't found", JcrRdfTools.getNodeFromGraphSubject(mockSession, ResourceFactory.createResource("info:fedora/does-not-exist")));
+    }
+
+
+    @Test
+    public void testGetPropertiesModel() throws RepositoryException {
+        String fakeInternalUri = "info:fedora/test/jcr";
+        Node mockParent = mock(Node.class);
+        when(mockParent.getPath()).thenReturn("/test");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+        when(mockNode.getParent()).thenReturn(mockParent);
+        javax.jcr.NodeIterator mockNodes = mock(javax.jcr.NodeIterator.class);
+        when(mockNode.getNodes()).thenReturn(mockNodes);
+        PowerMockito.mockStatic(NamespaceTools.class);
+        NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
+        String[] testPrefixes = new String[]{"jcr"};
+        when(mockNames.getPrefixes()).thenReturn(testPrefixes);
+        when(mockNames.getURI("jcr")).thenReturn(fakeInternalUri);
+        when(NamespaceTools.getNamespaceRegistry(mockNode)).thenReturn(mockNames);
+        javax.jcr.PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockNode.getProperties()).thenReturn(mockProperties);
+        when(mockParent.getProperties()).thenReturn(mockProperties);
+        when(mockProperties.hasNext()).thenReturn(false);
+
+        Model actual = JcrRdfTools.getJcrPropertiesModel(mockNode);
+        assertEquals(fakeInternalUri, actual.getNsPrefixURI("fedora-internal"));
+
+        //TODO exercise the jcr:content child node logic
+        //TODO exercise non-empty PropertyIterator
     }
 
     @Test

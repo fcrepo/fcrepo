@@ -155,14 +155,6 @@ public class FedoraResourceTest {
     }
     
     @Test
-    public void testGetGraphSubject() throws RepositoryException {
-        String testPath = "/foo/bar/baz";
-        when(mockNode.getPath()).thenReturn(testPath);
-        Resource actual = testObj.getGraphSubject();
-        assertEquals("baz", actual.getLocalName());
-    }
-    
-    @Test
     public void testGetGraphProblems() throws RepositoryException {
         Problems actual = testObj.getGraphProblems();
         assertEquals(null, actual);
@@ -171,29 +163,6 @@ public class FedoraResourceTest {
         setField("listener", FedoraResource.class, mockListener, testObj);
         testObj.getGraphProblems();
         verify(mockListener).getProblems();
-    }
-    
-    @Test
-    public void testGetPropertiesModel() throws RepositoryException {        
-        String fakeInternalUri = "info:fedora/test/jcr/";
-        Node mockParent = mock(Node.class);
-        when(mockNode.getParent()).thenReturn(mockParent);
-        NodeIterator mockNodes = mock(NodeIterator.class);
-        when(mockNode.getNodes()).thenReturn(mockNodes);
-        PowerMockito.mockStatic(NamespaceTools.class);
-        NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
-        String[] testPrefixes = new String[]{"jcr"};
-        when(mockNames.getPrefixes()).thenReturn(testPrefixes);
-        when(mockNames.getURI("jcr")).thenReturn(fakeInternalUri);
-        when(NamespaceTools.getNamespaceRegistry(mockNode)).thenReturn(mockNames);
-        PropertyIterator mockProperties = mock(PropertyIterator.class);
-        when(mockNode.getProperties()).thenReturn(mockProperties);
-
-        Model actual = testObj.getPropertiesModel();
-        assertEquals(fakeInternalUri, actual.getNsPrefixURI("fedora-internal"));
-
-        //TODO exercise the jcr:content child node logic
-        //TODO exercise non-empty PropertyIterator
     }
     
     private static void setField(String name, Class clazz, Object value, Object object) {

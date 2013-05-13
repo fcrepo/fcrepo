@@ -11,7 +11,10 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
+import static org.fcrepo.utils.JcrRdfTools.getGraphSubject;
+import static org.fcrepo.utils.JcrRdfTools.getNodeFromGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
+import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.utils.NodePropertiesTools.removeNodeProperty;
@@ -24,11 +27,9 @@ public class JcrPropertyStatementListener extends StatementListener {
 	private static final Logger logger = getLogger(JcrPropertyStatementListener.class);
 
 	private final Node node;
-	private final Resource subject;
 
-	public JcrPropertyStatementListener(final Resource subject, final Node node) {
+	public JcrPropertyStatementListener(final Node node) throws RepositoryException {
 		this.node = node;
-		this.subject = subject;
 		this.problems = new SimpleProblems();
 	}
 
@@ -41,17 +42,21 @@ public class JcrPropertyStatementListener extends StatementListener {
 		logger.trace(">> added statement " + s);
 
 		try {
-			// if it's not about our node, ignore it.
-			if(!s.getSubject().equals(subject)) {
+            final Resource subject = s.getSubject();
+
+            // if it's not about a node, ignore it.
+            if(!isFedoraGraphSubject.apply(subject)) {
 				return;
 			}
 
+            final Node subjectNode = getNodeFromGraphSubject(node.getSession(), subject);
+
 			// extract the JCR propertyName from the predicate
-			final String propertyName = getPropertyNameFromPredicate(node, s.getPredicate());
+			final String propertyName = getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
 			if(validateModificationsForPropertyName(propertyName)) {
-                final Value v = JcrRdfTools.createValue(node, s.getObject(), getPropertyType(node, propertyName));
-                appendOrReplaceNodeProperty(node, propertyName, v);
+                final Value v = JcrRdfTools.createValue(subjectNode, s.getObject(), getPropertyType(subjectNode, propertyName));
+                appendOrReplaceNodeProperty(subjectNode, propertyName, v);
             }
 		} catch (RepositoryException e) {
 			throw new RuntimeException(e);
@@ -68,17 +73,21 @@ public class JcrPropertyStatementListener extends StatementListener {
 		logger.trace(">> removed statement " + s);
 
 		try {
-			// if it's not about our node, we don't care.
-			if(!s.getSubject().equals(subject)) {
-				return;
-			}
+            final Resource subject = s.getSubject();
 
-			final String propertyName = getPropertyNameFromPredicate(node, s.getPredicate());
+            // if it's not about a node, we don't care.
+            if(!isFedoraGraphSubject.apply(subject)) {
+                return;
+            }
+
+            final Node subjectNode = getNodeFromGraphSubject(node.getSession(), subject);
+
+			final String propertyName = getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
 			// if the property doesn't exist, we don't need to worry about it.
-			if (node.hasProperty(propertyName) && validateModificationsForPropertyName(propertyName)) {
-                final Value v = JcrRdfTools.createValue(node, s.getObject(), getPropertyType(node, propertyName));
-                removeNodeProperty(node, propertyName, v);
+			if (subjectNode.hasProperty(propertyName) && validateModificationsForPropertyName(propertyName)) {
+                final Value v = JcrRdfTools.createValue(subjectNode, s.getObject(), getPropertyType(subjectNode, propertyName));
+                removeNodeProperty(subjectNode, propertyName, v);
             }
 
 		} catch (RepositoryException e) {

@@ -62,23 +62,24 @@ public class FedoraObjectIT extends AbstractIT {
 		final Session session = repo.login();
 		final FedoraObject object = objectService.createObject(session, "/graphObject");
 		final GraphStore graphStore = object.getGraphStore();
+        
+        final String graphSubject = "info:fedora/graphObject";
 
 		assertFalse("Graph store should not contain JCR prefixes", compile("jcr").matcher(graphStore.toString()).find());
 		assertFalse("Graph store should contain our fedora-internal prefix", compile("fedora-internal").matcher(graphStore.toString()).find());
-		assertEquals("info:fedora/graphObject", object.getGraphSubject().toString());
 
 		UpdateAction.parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
 										  "INSERT { <http://example/egbook> dc:title  \"This is an example of an update that will be ignored\" } WHERE {}", graphStore);
 
 
 		UpdateAction.parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
-										  "INSERT { <" + object.getGraphSubject().toString() + "> dc:title  \"This is an example title\" } WHERE {}", graphStore);
+										  "INSERT { <" + graphSubject + "> dc:title  \"This is an example title\" } WHERE {}", graphStore);
 
 		assertTrue(object.getNode().getProperty("dc:title").getValues()[0].getString(), object.getNode().getProperty("dc:title").getValues()[0].getString().equals("This is an example title"));
 
 
 		UpdateAction.parseExecute("PREFIX myurn: <info:myurn/>\n" +
-										  "INSERT { <" + object.getGraphSubject().toString() + "> myurn:info  \"This is some example data\";" +
+										  "INSERT { <" + graphSubject + "> myurn:info  \"This is some example data\";" +
 										  "					myurn:info  \"And so it this\"	 } WHERE {}", graphStore);
 
 		final Value[] values = object.getNode().getProperty(object.getNode().getSession().getNamespacePrefix("info:myurn/") + ":info").getValues();
@@ -88,17 +89,17 @@ public class FedoraObjectIT extends AbstractIT {
 
 
 		UpdateAction.parseExecute("PREFIX fedora-rels-ext: <info:fedora/fedora-system:def/relations-external#>\n" +
-										  "INSERT { <" + object.getGraphSubject().toString() + "> fedora-rels-ext:isPartOf <" + object.getGraphSubject().toString() + "> } WHERE {}", graphStore);
+										  "INSERT { <" + graphSubject + "> fedora-rels-ext:isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
 		assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf").getValues()[0].getString(), object.getNode().getProperty("fedorarelsext:isPartOf").getValues()[0].getString().equals(object.getNode().getIdentifier()));
 
 
 		UpdateAction.parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
-										  "DELETE { <" + object.getGraphSubject().toString() + "> dc:title  \"This is an example title\" } WHERE {}", graphStore);
+										  "DELETE { <" + graphSubject + "> dc:title  \"This is an example title\" } WHERE {}", graphStore);
 
 		assertFalse("Found unexpected dc:title", object.getNode().hasProperty("dc:title"));
 
 		UpdateAction.parseExecute("PREFIX fedora-rels-ext: <info:fedora/fedora-system:def/relations-external#>\n" +
-										  "DELETE { <" + object.getGraphSubject().toString() + "> fedora-rels-ext:isPartOf <" + object.getGraphSubject().toString() + "> } WHERE {}", graphStore);
+										  "DELETE { <" + graphSubject + "> fedora-rels-ext:isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
 		assertFalse("found unexpected reference", object.getNode().hasProperty("fedorarelsext:isPartOf"));
 
 
