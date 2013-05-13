@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -26,15 +25,11 @@ import org.fcrepo.services.ObjectService;
 import org.fcrepo.services.RepositoryService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.JcrRdfTools;
-import org.fcrepo.utils.NamespaceTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
