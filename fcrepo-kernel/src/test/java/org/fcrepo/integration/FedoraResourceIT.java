@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
@@ -154,4 +155,38 @@ public class FedoraResourceIT extends AbstractIT {
 
 		session.logout();
 	}
+
+    @Test
+    public void testUpdatingObjectGraph() throws RepositoryException {
+
+        Session session = repo.login();
+
+        final FedoraResource object = objectService.createObject(session, "/testObjectGraphUpdates");
+
+        logger.warn(object.getGraphStore().toString());
+
+        object.updateGraph("INSERT { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> \"a\" } WHERE {} ");
+
+
+        logger.warn(object.getGraphStore().toString());
+
+        // jcr property
+        Node s = Node.createURI("info:fedora/testObjectGraphUpdates");
+        Node p = Node.createURI("info:fcrepo/zyx");
+        Node o = Node.createLiteral("a");
+        assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
+
+
+
+        object.updateGraph("DELETE { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> ?o }\nINSERT { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> \"b\" } WHERE { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> ?o } ");
+
+
+        logger.warn(object.getGraphStore().toString());
+
+        assertFalse("found value we should have removed", object.getGraphStore().getDefaultGraph().contains(s, p, o));
+        o = Node.createLiteral("b");
+        assertTrue("could not find new value", object.getGraphStore().getDefaultGraph().contains(s, p, o));
+
+        session.logout();
+    }
 }

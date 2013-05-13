@@ -4,6 +4,7 @@ package org.fcrepo.integration.api;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.HttpResponse;
@@ -120,6 +121,46 @@ public class FedoraNodesIT extends AbstractResourceIT {
 		assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
 
 	}
+
+    @Test
+    public void testUpdateAndReplaceObjectGraph() throws Exception {
+        client.execute(postObjMethod("FedoraDescribeTestGraphReplace"));
+
+        final HttpPost updateObjectGraphMethod =
+                new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphReplace");
+
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+
+        BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> \"asdfg\" } WHERE {}".getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+        client.execute(updateObjectGraphMethod);
+
+
+        e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(("DELETE { <info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> ?p}\n" +
+                                                      "INSERT {<info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> \"qwerty\"} \n" +
+                                                      "WHERE { <info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> ?p}").getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "objects/FedoraDescribeTestGraphReplace");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+        assertEquals(200, getResponse.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(getResponse.getEntity());
+        logger.debug("Retrieved object graph:\n" + content);
+
+
+        assertFalse("Found a triple we thought we deleted.", compile("<info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> \"asdfg\" \\.",
+                                                                            DOTALL).matcher(content).find());
+
+
+
+    }
 
 	@Test
 	public void testUpdateObjectGraphWithProblems() throws Exception {

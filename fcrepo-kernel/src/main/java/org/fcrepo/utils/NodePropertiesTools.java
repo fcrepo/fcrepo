@@ -40,9 +40,11 @@ public abstract class NodePropertiesTools {
                 // if the property is multi-valued, go ahead and append to it.
                 ArrayList<Value> newValues = new ArrayList<Value>();
                 Collections.addAll(newValues, node.getProperty(propertyName).getValues());
-                newValues.add(newValue);
 
-                property.setValue((Value[]) newValues.toArray(new Value[newValues.size()]));
+                if (!newValues.contains(newValue)) {
+                    newValues.add(newValue);
+                    property.setValue((Value[]) newValues.toArray(new Value[newValues.size()]));
+                }
             } else {
                 // or we'll just overwrite it
                 logger.debug("Overwriting {} property {} with new value {}", PropertyType.nameFromValue(property.getType()), propertyName, newValue);
@@ -79,8 +81,15 @@ public abstract class NodePropertiesTools {
 
                 ArrayList<Value> newValues = new ArrayList<Value>();
 
-                Collections.addAll(newValues, node.getProperty(propertyName).getValues());
-                final boolean remove = newValues.remove(valueToRemove);
+                boolean remove = false;
+
+                for ( Value v : node.getProperty(propertyName).getValues() ) {
+                    if (v.equals(valueToRemove)) {
+                        remove = true;
+                    } else {
+                        newValues.add(v);
+                    }
+                }
 
                 // we only need to update the property if we did anything.
                 if (remove) {
