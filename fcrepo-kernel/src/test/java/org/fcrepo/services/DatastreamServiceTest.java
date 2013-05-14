@@ -7,8 +7,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.verifyNew;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import java.io.InputStream;
 
@@ -17,7 +15,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -26,7 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.Binary;
-import org.modeshape.jcr.value.binary.StrategyHint;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -80,7 +76,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 		when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
 		testObj.setStoragePolicyDecisionPoint(pdp);
 		PowerMockito.mockStatic(FedoraTypesUtils.class);
-		when(FedoraTypesUtils.getBinary(eq(mockNode), eq(mockIS), any(StrategyHint.class))).thenReturn(mockBinary);
+		when(FedoraTypesUtils.getBinary(eq(mockNode), eq(mockIS), any(String.class))).thenReturn(mockBinary);
 
         final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,

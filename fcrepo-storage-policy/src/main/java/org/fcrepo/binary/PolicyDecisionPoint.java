@@ -3,7 +3,6 @@ package org.fcrepo.binary;
 import javax.jcr.Node;
 import java.util.ArrayList;
 import java.util.List;
-import org.modeshape.jcr.value.binary.StrategyHint;
 import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -23,9 +22,9 @@ public class PolicyDecisionPoint {
 		policies.add(p);
 	}
 
-	public StrategyHint evaluatePolicies(Node n) {
+	public String evaluatePolicies(Node n) {
 		for(Policy p : policies) {
-			StrategyHint h = p.evaluatePolicy(n);
+			String h = p.evaluatePolicy(n);
 			if(h != null) {
 				return h;
 			}

@@ -1,6 +1,5 @@
 package org.fcrepo.binary;
 
-import org.modeshape.jcr.value.binary.StrategyHint;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -15,15 +14,15 @@ public class MimeTypePolicy implements Policy {
 	private static final Logger logger = getLogger(MimeTypePolicy.class);
 
 	private final String mimeType;
-	private final StrategyHint hint;
+	private final String hint;
 
-	public MimeTypePolicy(final String mimeType, final StrategyHint hint) {
+	public MimeTypePolicy(final String mimeType, final String hint) {
 		this.mimeType = mimeType;
 		this.hint = hint;
 	}
 
-	public StrategyHint evaluatePolicy(final Node n) {
-		logger.debug("Evaluating MimeTypePolicy for {} -> {}", mimeType, hint.toString());
+	public String evaluatePolicy(final Node n) {
+		logger.debug("Evaluating MimeTypePolicy for {} -> {}", mimeType, hint);
 		try {
 			final String nodeMimeType = n.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString();
 			logger.debug("Found mime type {}", nodeMimeType);

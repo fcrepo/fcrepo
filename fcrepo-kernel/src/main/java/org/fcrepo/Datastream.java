@@ -23,7 +23,6 @@ import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.value.binary.StrategyHint;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Histogram;
@@ -128,7 +127,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
 		LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
-		StrategyHint hint = null;
+		String hint = null;
 
 
 		if(storagePolicyDecisionPoint != null) {

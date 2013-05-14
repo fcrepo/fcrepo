@@ -19,7 +19,6 @@ import javax.jcr.nodetype.PropertyDefinition;
 import org.junit.Test;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.Namespaced;
-import org.modeshape.jcr.value.binary.StrategyHint;
 
 import com.google.common.base.Predicate;
 
@@ -76,7 +75,7 @@ public class FedoraTypesUtilsTest {
         // try it with hints
         JcrValueFactory mockJVF = mock(JcrValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockJVF);
-        StrategyHint mockHint = mock(StrategyHint.class);
+        String mockHint = "storage-hint";
         FedoraTypesUtils.getBinary(mockNode, mockInput, mockHint);
         verify(mockJVF).createBinary(mockInput, mockHint);
     }

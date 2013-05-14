@@ -8,13 +8,11 @@ import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.utils.LowLevelCacheEntry;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.value.BinaryKey;
-import org.modeshape.jcr.value.binary.NamedHint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +60,7 @@ public class TiffPolicyStorageIT {
                         null);
 
 		pdp = new PolicyDecisionPoint();
-		pdp.addPolicy(new MimeTypePolicy("image/tiff", new NamedHint("tiff-store")));
+		pdp.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
 
         datastreamService = new DatastreamService();
         datastreamService.setRepository(repo);

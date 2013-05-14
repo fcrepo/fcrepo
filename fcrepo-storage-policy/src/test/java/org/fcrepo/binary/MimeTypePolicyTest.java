@@ -2,8 +2,6 @@ package org.fcrepo.binary;
 
 import org.junit.Test;
 import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.value.binary.NamedHint;
-import org.modeshape.jcr.value.binary.StrategyHint;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -20,7 +18,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 public class MimeTypePolicyTest {
 	@Test
 	public void shouldEvaluatePolicyAndReturnHint() throws Exception {
-		StrategyHint hint = new NamedHint("store-id");
+		String hint = "store-id";
 		Policy policy = new MimeTypePolicy("image/x-dummy", hint);
 
 		Session mockSession = mock(Session.class);
@@ -34,14 +32,14 @@ public class MimeTypePolicyTest {
 		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
 		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
+		String receivedHint = policy.evaluatePolicy(mockDsNode);
 
 		assertThat(receivedHint, is(hint));
 	}
 
 	@Test
 	public void shouldEvaluatePolicyAndReturnNoHint() throws Exception {
-		StrategyHint hint = new NamedHint("store-id");
+        String hint = "store-id";
 		Policy policy = new MimeTypePolicy("image/x-dummy", hint);
 
 		Session mockSession = mock(Session.class);
@@ -54,14 +52,14 @@ public class MimeTypePolicyTest {
 		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
 		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
+		String receivedHint = policy.evaluatePolicy(mockDsNode);
 
 		assertNull(receivedHint);
 	}
 
 	@Test
 	public void shouldEvaluatePolicyAndReturnNoHintOnException() throws Exception {
-		StrategyHint hint = new NamedHint("store-id");
+        String hint = "store-id";
 		Policy policy = new MimeTypePolicy("image/x-dummy", hint);
 
 		Session mockSession = mock(Session.class);
@@ -69,7 +67,7 @@ public class MimeTypePolicyTest {
 
 		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenThrow(new RepositoryException());
 
-		StrategyHint receivedHint = policy.evaluatePolicy(mockDsNode);
+		String receivedHint = policy.evaluatePolicy(mockDsNode);
 
 		assertNull(receivedHint);
 	}

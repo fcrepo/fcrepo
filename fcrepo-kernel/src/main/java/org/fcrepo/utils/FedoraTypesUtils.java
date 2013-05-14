@@ -26,7 +26,6 @@ import com.google.common.base.Predicate;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.Namespaced;
-import org.modeshape.jcr.value.binary.StrategyHint;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the JCR.
@@ -179,7 +178,7 @@ public abstract class FedoraTypesUtils {
 	 * @param i an {@link InputStream}
 	 * @return a JCR {@link Binary}
 	 */
-	public static Binary getBinary(final Node n, final InputStream i, final StrategyHint hint) {
+	public static Binary getBinary(final Node n, final InputStream i, final String hint) {
 		try {
 			checkArgument(n != null,
 								 "null cannot have a Binary created for it!");
