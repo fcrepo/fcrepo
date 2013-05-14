@@ -43,7 +43,13 @@ public class Transaction {
 		super();
 		this.session = session;
 		this.created = new Date();
-		this.expires = new Date(System.currentTimeMillis() + (1000 * 60 * 3));
+		long duration;
+		if (System.getProperty("fcrepo4.tx.timeout") != null){
+		    duration = Long.parseLong(System.getProperty("fcrepo4.tx.timeout"));
+		}else{
+		    duration = 1000l * 60l * 3l;
+		}
+		this.expires = new Date(System.currentTimeMillis() + duration);
 		this.id = UUID.randomUUID().toString();
 	}
 
