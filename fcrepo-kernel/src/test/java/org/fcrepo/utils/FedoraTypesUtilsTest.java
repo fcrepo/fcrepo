@@ -5,6 +5,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -103,5 +105,14 @@ public class FedoraTypesUtilsTest {
                 FedoraTypesUtils.getDefinitionForPropertyName(mockNode, mockPropertyName + ":fail");
         assertEquals(null, actual);
         
+    }
+    
+    @Test
+    public void testConvertDateToXSDString() {
+    	String expected = "2006-11-13T09:40:55.001Z";
+    	Calendar date = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+    	date.set(2006, 10, 13, 9, 40, 55);
+    	date.set(Calendar.MILLISECOND, 1);
+    	assertEquals(expected, FedoraTypesUtils.convertDateToXSDString(date.getTimeInMillis()));
     }
 }

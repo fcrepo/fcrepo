@@ -7,6 +7,7 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.utils.FedoraTypesUtils.convertDateToXSDString;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -207,66 +208,46 @@ public class LegacyMethod {
         return objectToString(returnVal, datatype);
     }
 
-    private static String
-            objectToString(final String obj, final String xsdType) {
+    protected static String objectToString(
+    		final String obj, final String xsdType) {
         if (obj == null) {
             return "null";
         }
-        // TODO how is this not a String or subclass?
-        final String javaType = obj.getClass().getCanonicalName();
         String term;
         //TODO Most of these types are not yet relevant to FCR4, but we can borrow their serializations as necessary
         // several circumstances yield null canonical names
-        if (javaType != null && javaType.equals("java.util.Date")) { 
-            //term = convertDateToXSDString((Date) obj);
-            term = "[UNSUPPORTED" + xsdType + "]";
-        } else if (xsdType.equals("fedora-types:ArrayOfString")) {
-            //term = array2string(obj);
+        if (xsdType.equals("fedora-types:ArrayOfString")) {
             term = "[UNSUPPORTED" + xsdType + "]";
         } else if (xsdType.equals("xsd:boolean")) {
             term = obj;
         } else if (xsdType.equals("xsd:nonNegativeInteger")) {
             term = obj;
         } else if (xsdType.equals("fedora-types:RelationshipTuple")) {
-            //RelationshipTuple[] tuples = (RelationshipTuple[]) obj;
-            //TupleArrayTripleIterator iter =
-            //		new TupleArrayTripleIterator(new ArrayList<RelationshipTuple>(Arrays
-            //				.asList(tuples)));
-            //ByteArrayOutputStream os = new ByteArrayOutputStream();
-            //try {
-            //	iter.toStream(os, RDFFormat.NOTATION_3, false);
-            //} catch (TrippiException e) {
-            //	e.printStackTrace();
-            //}
-            //term = new String(os.toByteArray());
             term = "[UNSUPPORTED" + xsdType + "]";
-        } else if (javaType != null && javaType.equals("java.lang.String")) {
+        } else {
             term = obj;
             term = term.replaceAll("\"", "'");
-        } else {
-            term = "[OMITTED]";
         }
+
         return term;
     }
 
-    private static String getReturnValue(final Event jcrEvent,
+    protected static String getReturnValue(final Event jcrEvent,
             final Node jcrNode) throws RepositoryException {
         switch (jcrEvent.getType()) {
             case NODE_ADDED:
                 return jcrNode.getName();
             case NODE_REMOVED:
-                return convertDateToXSDString(jcrEvent.getDate());
             case PROPERTY_ADDED:
-                return convertDateToXSDString(jcrEvent.getDate());
             case PROPERTY_CHANGED:
-                return convertDateToXSDString(jcrEvent.getDate());
             case PROPERTY_REMOVED:
                 return convertDateToXSDString(jcrEvent.getDate());
+            default:
+            	return null;
         }
-        return null;
     }
 
-    private static String mapMethodName(final int eventType,
+    protected static String mapMethodName(final int eventType,
             final boolean isObjectNode) {
         switch (eventType) {
             case NODE_ADDED:
@@ -281,17 +262,6 @@ public class LegacyMethod {
                 return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
         }
         return null;
-    }
-
-    /**
-     * @param date Instance of java.util.Date.
-     * @return the lexical form of the XSD dateTime value, e.g.
-     *         "2006-11-13T09:40:55.001Z".
-     */
-    private static String convertDateToXSDString(final long date) {
-        final DateTime dt = new DateTime(date);
-        final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-        return fmt.print(dt);
     }
 
     public static boolean canParse(final Message jmsMessage) {

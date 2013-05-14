@@ -1,13 +1,20 @@
 package org.fcrepo.messaging.legacy;
 
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -22,6 +29,7 @@ import org.apache.abdera.model.Entry;
 import org.apache.abdera.model.Person;
 import org.apache.abdera.model.Text;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,5 +62,46 @@ public class LegacyMethodStaticTest {
         when(mockNoMessage.getStringProperty("methodName")).thenReturn("destroyEverything");
         result = LegacyMethod.canParse(mockNoMessage);
         assertEquals(false, result);
+    }
+    
+    @Test
+    public void testObjectToString() {
+    	String test = null;
+    	String testType = null;
+    	assertEquals("null", LegacyMethod.objectToString(test, testType));
+    	testType = "fedora-types:ArrayOfString";
+    	test = "fo\"o";
+    	assertEquals("[UNSUPPORTED" + testType + "]", LegacyMethod.objectToString(test, testType));
+    	testType = "fedora-types:RelationshipTuple";
+    	assertEquals("[UNSUPPORTED" + testType + "]", LegacyMethod.objectToString(test, testType));
+    	testType = "xsd:boolean";
+    	assertEquals(test, LegacyMethod.objectToString(test, testType));
+    	testType = "xsd:nonNegativeInteger";
+    	assertEquals(test, LegacyMethod.objectToString(test, testType));
+    	testType = "xsd:string";
+    	assertEquals("fo'o", LegacyMethod.objectToString(test, testType));
+    }
+    
+    @Test
+    public void testGetReturnValue() throws RepositoryException {
+    	String testName = "test:nodeName";
+    	long testDate = new Date().getTime();
+    	String testXSDDate = FedoraTypesUtils.convertDateToXSDString(testDate);
+    	Node mockNode = mock(Node.class);
+    	Event mockEvent = mock(Event.class);
+    	when(mockEvent.getDate()).thenReturn(testDate);
+    	when(mockEvent.getType()).thenReturn(NODE_ADDED);
+    	when(mockNode.getName()).thenReturn(testName);
+    	assertEquals(testName, LegacyMethod.getReturnValue(mockEvent, mockNode));
+    	when(mockEvent.getType()).thenReturn(NODE_REMOVED);
+    	assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent, mockNode));
+    	when(mockEvent.getType()).thenReturn(PROPERTY_ADDED);
+    	assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent, mockNode));
+    	when(mockEvent.getType()).thenReturn(PROPERTY_CHANGED);
+    	assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent, mockNode));
+    	when(mockEvent.getType()).thenReturn(PROPERTY_REMOVED);
+    	assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent, mockNode));
+    	when(mockEvent.getType()).thenReturn(Integer.MAX_VALUE);
+    	assertEquals(null, LegacyMethod.getReturnValue(mockEvent, mockNode));
     }
 }
