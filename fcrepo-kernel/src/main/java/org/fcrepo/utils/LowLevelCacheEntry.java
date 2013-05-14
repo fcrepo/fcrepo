@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.poi.util.IOUtils;
@@ -74,10 +75,10 @@ public class LowLevelCacheEntry {
 		if (other instanceof LowLevelCacheEntry) {
 			final LowLevelCacheEntry that = (LowLevelCacheEntry) other;
 
-			return key.equals(that.key) &&
-						   store.equals(that.store) &&
-						   (cacheStore == null && that.cacheStore == null || cacheStore != null &&
-																					 cacheStore.equals(that.cacheStore));
+			return key.equals(that.getKey()) &&
+						   store.equals(that.getStore()) &&
+						   (cacheStore == null && that.getLowLevelStore() == null || cacheStore != null &&
+																					 cacheStore.equals(that.getLowLevelStore()));
 		} else {
 			return false;
 		}
@@ -256,4 +257,16 @@ public class LowLevelCacheEntry {
 	public String getExternalId() {
 		return externalId;
 	}
+
+    BinaryKey getKey() {
+        return key;
+    }
+
+    BinaryStore getStore() {
+        return store;
+    }
+
+    CacheStore getLowLevelStore() {
+        return cacheStore;
+    }
 }
