@@ -7,7 +7,7 @@ this project's coding conventions to your workspace.
 
 1. Check "Add @Override ...", and leave other checkboxes unchecked.
 1. Make sure "Exception variable name" is e.
-1. Import and apply the Clean-up, Code Templates and Formatter preference files.
+1. Import and apply the Clean-up, Code Templates and Formatter preference files from fcrepo/etc.
 
 ### Under Java -> Editor -> Save Actions:
 
