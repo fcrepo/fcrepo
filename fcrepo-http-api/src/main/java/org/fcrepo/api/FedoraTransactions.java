@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -28,6 +29,8 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
 import org.fcrepo.services.ObjectService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -71,7 +74,6 @@ public class FedoraTransactions extends AbstractResource {
 
     @GET
     @Path("/{txid}")
-    @Produces({APPLICATION_JSON, TEXT_XML})
     public Transaction getTransaction(@PathParam("txid")
     final String txid) throws RepositoryException {
         final Transaction tx = transactions.get(txid);
