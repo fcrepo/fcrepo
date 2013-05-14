@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import javax.validation.constraints.AssertTrue;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -14,7 +12,10 @@ import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
 import org.junit.Test;
 
+
 public class FedoraTransactionsIT extends AbstractResourceIT {
+
+
 	@Test
 	public void testCreateAndGetTransaction() throws Exception {
 		/* create a tx */
@@ -23,19 +24,48 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertTrue(resp.getStatusLine().getStatusCode() == 200);
 		ObjectMapper mapper = new ObjectMapper();
 		Transaction tx = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+		createTx.releaseConnection();
 		assertNotNull(tx);
 		assertNotNull(tx.getId());
 		assertNotNull(tx.getState());
 		assertNotNull(tx.getCreated());
 		assertTrue(tx.getState() == State.NEW);
 
-		/* fetch the create dtx from the endpoint */
+		/* fetch the created tx from the endpoint */
 		HttpGet getTx = new HttpGet(serverAddress + "fcr:tx/" + tx.getId());
 		resp = execute(getTx);
 		Transaction fetched = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+		getTx.releaseConnection();
 		assertEquals(tx.getId(), fetched.getId());
 		assertEquals(tx.getState(), fetched.getState());
 		assertEquals(tx.getCreated(), fetched.getCreated());
+	}
+
+
+	@Test
+	public void testCreateAndTimeoutTransaction() throws Exception {
+	    System.setProperty("fcrepo4.tx.timeout", "10");
+        /* create a tx */
+        HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        HttpResponse resp = execute(createTx);
+        assertTrue(resp.getStatusLine().getStatusCode() == 200);
+        ObjectMapper mapper = new ObjectMapper();
+        Transaction tx = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+        assertNotNull(tx);
+        assertNotNull(tx.getId());
+        assertNotNull(tx.getState());
+        assertNotNull(tx.getCreated());
+        assertTrue(tx.getState() == State.NEW);
+        createTx.releaseConnection();
+
+        Thread.sleep(200); // wait for the tx to expire
+
+        /* check that the tx is removed */
+        HttpGet getTx = new HttpGet(serverAddress + "fcr:tx/" + tx.getId());
+        resp = execute(getTx);
+        getTx.releaseConnection();
+        assertEquals(404, resp.getStatusLine().getStatusCode());
+        System.clearProperty("fcrepo4.tx.timeout");
 	}
 
 	@Test
@@ -46,33 +76,39 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertTrue(resp.getStatusLine().getStatusCode() == 200);
 		ObjectMapper mapper = new ObjectMapper();
 		Transaction tx = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+		createTx.releaseConnection();
 		assertNotNull(tx);
 		assertNotNull(tx.getId());
 		assertNotNull(tx.getState());
 		assertNotNull(tx.getCreated());
 		assertTrue(tx.getState() == State.NEW);
-		
+
 		/* create a new object inside the tx */
 		HttpPost postNew = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/objects/testobj1/fcr:newhack");
 		resp = execute(postNew);
+		postNew.releaseConnection();
 		assertTrue(resp.getStatusLine().getStatusCode() == 200);
-				
+
 		/* check if the object is already there, before the commit */
 		HttpGet getObj = new HttpGet(serverAddress + "/objects/testobj1");
 		resp = execute(getObj);
+		getObj.releaseConnection();
 		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 404);
 
 		/* commit the tx */
 		HttpPost commitTx = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/fcr:commit");
 		resp = execute(commitTx);
+		assertTrue(resp.getStatusLine().getStatusCode() == 200);
 		Transaction committed = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+		commitTx.releaseConnection();
 		assertEquals(committed.getState(), State.COMMITED);
 
 		/* check if the object is there, after the commit */
 		resp = execute(getObj);
 		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 200);
+		getObj.releaseConnection();
 	}
-	
+
 	@Test
 	public void testCreateAndRollbackTransaction() throws Exception {
 		/* create a tx */
@@ -81,6 +117,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		assertTrue(resp.getStatusLine().getStatusCode() == 200);
 		ObjectMapper mapper = new ObjectMapper();
 		Transaction tx = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+		createTx.releaseConnection();
 		assertNotNull(tx);
 		assertNotNull(tx.getId());
 		assertNotNull(tx.getState());
@@ -91,21 +128,25 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 		HttpPost postNew = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/objects/testobj2/fcr:newhack");
 		resp = execute(postNew);
 		assertTrue(resp.getStatusLine().getStatusCode() == 200);
-				
+		postNew.releaseConnection();
+
 		/* check if the object is already there, before the commit */
 		HttpGet getObj = new HttpGet(serverAddress + "/objects/testobj2");
 		resp = execute(getObj);
+		getObj.releaseConnection();
 		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 404);
 
 		/* and rollback */
 		HttpPost rollbackTx = new HttpPost(serverAddress + "fcr:tx/" + tx.getId() + "/fcr:rollback");
 		resp = execute(rollbackTx);
 		Transaction rolledBack = mapper.readValue(resp.getEntity().getContent(), Transaction.class);
+		rollbackTx.releaseConnection();
 		assertEquals(rolledBack.getId(),tx.getId());
 		assertTrue(rolledBack.getState() == State.ROLLED_BACK);
-		
+
 		/* check if the object is there, after the rollback */
 		resp = execute(getObj);
+		getObj.releaseConnection();
 		assertTrue(resp.getStatusLine().toString(),resp.getStatusLine().getStatusCode() == 404);
 	}
 }
