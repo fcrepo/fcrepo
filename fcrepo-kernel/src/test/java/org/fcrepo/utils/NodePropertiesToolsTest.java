@@ -103,6 +103,20 @@ public class NodePropertiesToolsTest {
     }
 
     @Test
+    public void addMultiValuedPropertyWithSameValueAsExistingProperty() throws RepositoryException {
+
+        when(mockProperty.isMultiple()).thenReturn(true);
+        when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
+        final Value previousValue = mockValue;
+        when(mockProperty.getValues()).thenReturn(Arrays.asList(previousValue).toArray(new Value[1]));
+
+        NodePropertiesTools.appendOrReplaceNodeProperty(mockNode, "mockPropertyName", mockValue);
+
+        verify(mockProperty, never()).setValue(any(Value[].class));
+
+    }
+
+    @Test
     public void shouldBeANoopWhenRemovingPropertyThatDoesntExist() throws RepositoryException {
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(false);
 
@@ -166,6 +180,19 @@ public class NodePropertiesToolsTest {
         assertEquals(1, actualValues.size());
         assertTrue("removed the wrong value", actualValues.contains(previousValue));
         assertTrue("found the value we were removing", !actualValues.contains(mockValue));
+
+    }
+
+    @Test
+    public void shouldRemoveAllMatchingValuesFromAMultivaluedProperty() throws RepositoryException {
+
+        when(mockProperty.isMultiple()).thenReturn(true);
+        when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
+        when(mockProperty.getValues()).thenReturn(Arrays.asList(mockValue, mockValue).toArray(new Value[1]));
+
+        NodePropertiesTools.removeNodeProperty(mockNode, "mockPropertyName", mockValue);
+
+        verify(mockProperty).setValue((Value[])null);
 
     }
 }
