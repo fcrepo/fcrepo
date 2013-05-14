@@ -37,7 +37,7 @@ import org.slf4j.Logger;
  */
 public class LowLevelCacheEntry {
 
-	private static final Logger logger = getLogger(LowLevelCacheEntry.class);
+	private static final Logger LOGGER = getLogger(LowLevelCacheEntry.class);
 
 	private static final String DATA_SUFFIX = "-data";
 
@@ -114,7 +114,7 @@ public class LowLevelCacheEntry {
 	public void storeValue(final InputStream stream)
 			throws BinaryStoreException, IOException {
 		// TODO: this is probably an auditable action.
-		logger.info("Doing a low-level write to store {} for key {}", getExternalIdentifier(), key);
+		LOGGER.info("Doing a low-level write to store {} for key {}", getExternalIdentifier(), key);
 
 		if (store instanceof InfinispanBinaryStore) {
 			final OutputStream outputStream =
@@ -167,9 +167,9 @@ public class LowLevelCacheEntry {
 				blobCacheNameField.setAccessible(true);
 				blobCacheName = (String)blobCacheNameField.get(ispnStore);
 			} catch (IllegalAccessException e) {
-				logger.warn("Got exception doing some questionable reflection to get the blob cache name", e);
+				LOGGER.warn("Got exception doing some questionable reflection to get the blob cache name", e);
 			} catch (NoSuchFieldException e) {
-				logger.warn("Got exception doing some questionable reflection  to get the blob cache name", e);
+				LOGGER.warn("Got exception doing some questionable reflection  to get the blob cache name", e);
 			}
 
 
@@ -200,7 +200,7 @@ public class LowLevelCacheEntry {
 		try {
 			ds = new FixityInputStream(getInputStream(), (MessageDigest) digest.clone());
 		} catch (CloneNotSupportedException e) {
-			logger.warn("Could not clone MessageDigest: {}", e);
+			LOGGER.warn("Could not clone MessageDigest: {}", e);
 			throw propagate(e);
 		}
 
@@ -229,7 +229,7 @@ public class LowLevelCacheEntry {
 				result.status.add(SUCCESS);
 			}
 
-			logger.debug("Got " + result.toString());
+			LOGGER.debug("Got {}", result.toString());
 
 			return result;
 		} catch (final IOException e) {
@@ -238,7 +238,7 @@ public class LowLevelCacheEntry {
 			try {
 				ds.close();
 			} catch (IOException e) {
-				logger.debug("Got error closing input stream: {}", e);
+				LOGGER.debug("Got error closing input stream: {}", e);
 			}
 		}
 
