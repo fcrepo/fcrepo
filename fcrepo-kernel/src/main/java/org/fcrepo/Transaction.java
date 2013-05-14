@@ -1,6 +1,5 @@
 package org.fcrepo;
 
-import java.beans.Transient;
 import java.util.Date;
 import java.util.UUID;
 
@@ -10,9 +9,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 @XmlRootElement(name = "transaction")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -31,18 +27,23 @@ public class Transaction {
 	@XmlAttribute(name = "created")
 	private final Date created;
 
+	@XmlAttribute(name = "expires")
+	private final Date expires;
+
 	private State state = State.NEW;
-	
+
 	private Transaction(){
 		this.session = null;
 		this.created = null;
 		this.id = null;
+		this.expires = null;
 	}
 
 	public Transaction(Session session) {
 		super();
 		this.session = session;
 		this.created = new Date();
+		this.expires = new Date(System.currentTimeMillis() + (1000 * 60 * 3));
 		this.id = UUID.randomUUID().toString();
 	}
 
@@ -65,5 +66,9 @@ public class Transaction {
 	public State getState() {
 		return state;
 	}
+
+    public Date getExpires() {
+        return expires;
+    }
 
 }
