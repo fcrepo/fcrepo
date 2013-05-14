@@ -24,7 +24,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
 	private Problems problems;
 
-	private static final Logger logger = getLogger(JcrPropertyStatementListener.class);
+	private static final Logger LOGGER = getLogger(JcrPropertyStatementListener.class);
 
 	private final Node node;
 
@@ -39,13 +39,13 @@ public class JcrPropertyStatementListener extends StatementListener {
 	 */
 	@Override
 	public void addedStatement( Statement s ) {
-		logger.trace(">> added statement " + s);
+	    LOGGER.debug(">> added statement {}", s);
 
 		try {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, ignore it.
-            if(!isFedoraGraphSubject.apply(subject)) {
+            if(!isFedoraGraphSubject(subject)) {
 				return;
 			}
 
@@ -70,13 +70,13 @@ public class JcrPropertyStatementListener extends StatementListener {
 	 */
 	@Override
 	public void removedStatement( Statement s ) {
-		logger.trace(">> removed statement " + s);
+	    LOGGER.trace(">> removed statement {}", s);
 
 		try {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, we don't care.
-            if(!isFedoraGraphSubject.apply(subject)) {
+            if(!isFedoraGraphSubject(subject)) {
                 return;
             }
 

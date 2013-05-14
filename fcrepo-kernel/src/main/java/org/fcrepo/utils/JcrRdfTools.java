@@ -84,7 +84,7 @@ public abstract class JcrRdfTools {
      */
     public static Node getNodeFromGraphSubject(final Session session, final Resource subject) throws RepositoryException {
 
-        if(!isFedoraGraphSubject.apply(subject)) {
+        if(!isFedoraGraphSubject(subject)) {
             return null;
         }
 
@@ -103,16 +103,12 @@ public abstract class JcrRdfTools {
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
-    public static Predicate<Resource> isFedoraGraphSubject = new Predicate<Resource>() {
-
-        @Override
-        public boolean apply(final Resource subject) {
+    public static boolean isFedoraGraphSubject(final Resource subject) {
             checkArgument(subject != null, "null cannot be a Fedora object!");
             assert(subject != null);
 
             return subject.isURIResource() && subject.getURI().startsWith("info:fedora");
-        }
-    };
+    }
 
     /**
      * Get an RDF Model for a node that includes all its own JCR properties, as well as the properties of its
