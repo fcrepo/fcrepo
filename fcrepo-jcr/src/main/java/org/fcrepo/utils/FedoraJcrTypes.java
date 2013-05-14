@@ -30,4 +30,5 @@ public interface FedoraJcrTypes {
 
     String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
 
+    String FCR_CONTENT = "fcr:content";
 }

@@ -5,6 +5,8 @@ import static java.lang.Integer.parseInt;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATED;
+import static org.fcrepo.utils.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Calendar;
@@ -27,6 +29,7 @@ import org.fcrepo.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.jaxb.responses.sitemap.SitemapUrlSet;
 import org.fcrepo.services.ObjectService;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -104,7 +107,7 @@ public class FedoraSitemap extends AbstractResource {
 
         //TODO expand to more fields
         final String sqlExpression =
-                "SELECT [jcr:name],[jcr:lastModified] FROM [" + FEDORA_OBJECT +
+                "SELECT [" + JcrConstants.JCR_NAME + "],[" + JCR_LASTMODIFIED + "] FROM [" + FEDORA_OBJECT +
                         "]";
         final Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);
 
@@ -120,10 +123,10 @@ public class FedoraSitemap extends AbstractResource {
 
     private SitemapEntry getSitemapEntry(final Row r)
             throws RepositoryException {
-        Value lkDateValue = r.getValue("jcr:lastModified");
+        Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
         if (lkDateValue == null) {
-            logger.warn("no value for jcr:lastModified on {}", r.getNode().getPath());
-            lkDateValue = r.getValue("jcr:created");
+            logger.warn("no value for {} on {}", JCR_LASTMODIFIED, r.getNode().getPath());
+            lkDateValue = r.getValue(JCR_CREATED);
         }
         Calendar lastKnownDate = (lkDateValue != null) ? lkDateValue.getDate() : null;
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(

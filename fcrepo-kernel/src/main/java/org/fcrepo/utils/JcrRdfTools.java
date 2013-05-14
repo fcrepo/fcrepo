@@ -19,6 +19,7 @@ import javax.jcr.PropertyIterator;
 
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.fcrepo.utils.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -68,8 +69,8 @@ public abstract class JcrRdfTools {
     public static Resource getGraphSubject(final Node node) throws RepositoryException {
         final String absPath = node.getPath();
 
-        if (absPath.endsWith("jcr:content")) {
-            return ResourceFactory.createResource("info:fedora" + absPath.replace("jcr:content", "fcr:content"));
+        if (absPath.endsWith(JcrConstants.JCR_CONTENT)) {
+            return ResourceFactory.createResource("info:fedora" + absPath.replace(JcrConstants.JCR_CONTENT, FedoraJcrTypes.FCR_CONTENT));
         } else {
             return ResourceFactory.createResource("info:fedora" + absPath);
         }
@@ -90,8 +91,8 @@ public abstract class JcrRdfTools {
 
         final String absPath = subject.getURI().substring("info:fedora".length());
 
-        if (absPath.endsWith("fcr:content")) {
-            return session.getNode(absPath.replace("fcr:content", "jcr:content"));
+        if (absPath.endsWith(FCR_CONTENT)) {
+            return session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT, JcrConstants.JCR_CONTENT));
         } else if (session.nodeExists(absPath)) {
             return session.getNode(absPath);
         } else {

@@ -74,7 +74,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 	private void mixinTypeSpecificCrap() {
 		try {
 			if (node.isNew() || !hasMixin(node)) {
-				LOGGER.debug("Setting fedora:datastream properties on a nt:file node...");
+				LOGGER.debug("Setting {} properties on a {} node...", FEDORA_DATASTREAM, JcrConstants.NT_FILE);
 				node.addMixin(FEDORA_DATASTREAM);
 
 				if (node.hasNode(JCR_CONTENT)) {
@@ -83,7 +83,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 				}
 			}
         } catch (RepositoryException ex) {
-            LOGGER.warn("Could not decorate jcr:content with fedora:datastream properties: {}", ex.getMessage());
+            LOGGER.warn("Could not decorate {} with {} properties: {}" , JCR_CONTENT, FEDORA_DATASTREAM, ex);
         }
     }
 
@@ -265,7 +265,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     
     private void decorateContentNode(Node contentNode) throws RepositoryException {
         if (contentNode == null) {
-            LOGGER.warn("{}/jcr:content appears to be null!");
+            LOGGER.warn("{}/{} appears to be null!", JCR_CONTENT);
             return;
         }
         if (contentNode.canAddMixin(FEDORA_BINARY)) {

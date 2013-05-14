@@ -12,6 +12,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
@@ -59,11 +61,11 @@ public class FedoraObject extends FedoraResource {
 	private void mixinTypeSpecificCrap() {
 		try {
 			if (node.isNew() || !hasMixin(node)) {
-				logger.debug("Setting fedora:object properties on a nt:folder node {}...", node.getPath());
+				logger.debug("Setting {} properties on a {} node {}...", FEDORA_OBJECT, JcrConstants.NT_FOLDER, node.getPath());
 				node.addMixin(FEDORA_OBJECT);
 			}
 		} catch (RepositoryException e) {
-			logger.warn("Could not decorate jcr:content with fedora:object properties: {} ", e);
+			logger.warn("Could not decorate {} with {} properties: {} ", JcrConstants.JCR_CONTENT, FEDORA_OBJECT, e);
 		}
 	}
 
