@@ -4,6 +4,7 @@ package org.fcrepo.services;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -57,5 +58,10 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         return new FedoraObject(getObjectNode(session, path));
     }
 
+    public static ObjectService get(Repository repository) {
+    	ObjectService o = new ObjectService();
+    	o.setRepository(repository);
+    	return o;
+    }
 
 }

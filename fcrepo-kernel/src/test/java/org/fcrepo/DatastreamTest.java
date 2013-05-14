@@ -62,7 +62,6 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Before
     public void setUp() {
-        final String path = "/" + testDsId;
 
         mockSession = mock(Session.class);
         mockRootNode = mock(Node.class);
@@ -111,14 +110,16 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(
                 FedoraTypesUtils.getBinary(any(Node.class),
                         any(InputStream.class), any(StrategyHint.class))).thenReturn(mockBin);
-        final Binary content = mock(Binary.class);
         final Node mockContent = TestHelpers.getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
-        final Property mockSize = mock(Property.class);
-        when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockSize);
+        final Property mockData = mock(Property.class);
+        when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
+        when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream);
     }
 
@@ -149,9 +150,10 @@ public class DatastreamTest implements FedoraJcrTypes {
         final String expected = "SHA-1";
         final Node mockContent = TestHelpers.getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        final String actual = testObj.getContentDigestType();
-        assertEquals(expected, actual);
+        assertEquals(expected, testObj.getContentDigestType());
         verify(mockContent).getProperty(DIGEST_ALGORITHM);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenThrow(RepositoryException.class);
+        assertEquals(expected, testObj.getContentDigestType());
     }
 
     @Test
@@ -241,5 +243,19 @@ public class DatastreamTest implements FedoraJcrTypes {
         final long actual = testObj.getSize();
         verify(mockDsNode, times(1)).getProperties();
         assertEquals(3, actual);
+    }
+    
+    @Test
+    public void testHasMixin() throws RepositoryException {
+    	NodeType mockYes = mock(NodeType.class);
+    	when(mockYes.getName()).thenReturn(FEDORA_DATASTREAM);
+    	NodeType mockNo = mock(NodeType.class);
+    	when(mockNo.getName()).thenReturn("not" + FEDORA_DATASTREAM);
+    	NodeType[] types = new NodeType[]{mockYes};
+    	Node test = mock(Node.class);
+    	when(test.getMixinNodeTypes()).thenReturn(types);
+    	assertEquals(true, Datastream.hasMixin(test));
+    	types[0] = mockNo;
+    	assertEquals(false, Datastream.hasMixin(test));
     }
 }

@@ -42,8 +42,9 @@ public class ModeShapeRepositoryFactoryBean implements
 
         final Session s = repository.login();
 
-        getObjectService().createObject(s, "/objects");
-        getObjectService().createObject(s, "/federated");
+        ObjectService objects = ObjectService.get(repository);
+        objects.createObject(s, "/objects");
+        objects.createObject(s, "/federated");
 
         s.save();
         s.logout();
@@ -69,10 +70,4 @@ public class ModeShapeRepositoryFactoryBean implements
         this.repositoryConfiguration = repositoryConfiguration;
     }
 
-	private ObjectService getObjectService() {
-
-        final ObjectService objectService = new ObjectService();
-        objectService.setRepository(repository);
-        return objectService;
-	}
 }

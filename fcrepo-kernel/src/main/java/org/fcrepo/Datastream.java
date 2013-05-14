@@ -36,7 +36,7 @@ import com.codahale.metrics.Histogram;
  */
 public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
-    private static final Logger logger = getLogger(Datastream.class);
+    private static final Logger LOGGER = getLogger(Datastream.class);
 
     static final Histogram contentSizeHistogram = metrics.histogram(name(
             Datastream.class, "content-size"));
@@ -74,7 +74,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 	private void mixinTypeSpecificCrap() {
 		try {
 			if (node.isNew() || !hasMixin(node)) {
-				logger.debug("Setting fedora:datastream properties on a nt:file node...");
+				LOGGER.debug("Setting fedora:datastream properties on a nt:file node...");
 				node.addMixin(FEDORA_DATASTREAM);
 
 				if (node.hasNode(JCR_CONTENT)) {
@@ -83,7 +83,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 				}
 			}
         } catch (RepositoryException ex) {
-            logger.warn("Could not decorate jcr:content with fedora:datastream properties: " + ex.getMessage());
+            LOGGER.warn("Could not decorate jcr:content with fedora:datastream properties: {}", ex.getMessage());
         }
     }
 
@@ -100,7 +100,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      */
     public InputStream getContent() throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
-        logger.trace("Retrieved datastream content node.");
+        LOGGER.trace("Retrieved datastream content node.");
         return contentNode.getProperty(JCR_DATA).getBinary().getStream();
     }
 
@@ -126,7 +126,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 		}
 
 
-		logger.debug("Created content node at path: " + contentNode.getPath());
+		LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
 		StrategyHint hint = null;
 
@@ -157,19 +157,15 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 		final String dsChecksum = binary.getHexHash();
 		if (checksum != null && !checksum.equals("") &&
 					!checksum.equals(binary.getHexHash())) {
-			logger.debug("Failed checksum test");
+			LOGGER.debug("Failed checksum test");
 			throw new InvalidChecksumException("Checksum Mismatch of " +
 													   dsChecksum + " and " + checksum);
 		}
 
-		contentNode.setProperty(DIGEST_VALUE, dsChecksum);
-		contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
-		contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-
-        contentSizeHistogram.update(dataProperty.getLength());
+		decorateContentNode(contentNode);
 
 
-        logger.debug("Created data property at path: " + dataProperty.getPath());
+        LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 
     }
 
@@ -187,7 +183,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 			return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
 					.getLong();
 		} catch (RepositoryException e) {
-			logger.error("Could not get contentSize() - " + e.getMessage());
+			LOGGER.error("Could not get contentSize() - " + e.getMessage());
 		}
 		// TODO Size is not stored, recalculate size?
 		return 0L;
@@ -205,7 +201,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 	                .asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(),
 	                        contentNode.getProperty(DIGEST_VALUE).getString());
         } catch (RepositoryException e) {
-        	logger.error("Could not get content digest - " + e.getMessage());
+        	LOGGER.error("Could not get content digest - " + e.getMessage());
         }
         //TODO checksum not stored. recalculating checksum, 
         //however, this would defeat the purpose validating against the checksum
@@ -226,10 +222,10 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     		return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
     				.getString();
     	} catch (RepositoryException e) {
-    		logger.error("Could not get content digest type - " + e.getMessage());
+    		LOGGER.error("Could not get content digest type - " + e.getMessage());
     	}
     	//only supporting sha-1
-    	logger.debug("Using default digest type of SHA-1");
+    	LOGGER.debug("Using default digest type of SHA-1");
         return "SHA-1";
     }
 
@@ -269,7 +265,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     
     private void decorateContentNode(Node contentNode) throws RepositoryException {
         if (contentNode == null) {
-            logger.warn("{}/jcr:content appears to be null!");
+            LOGGER.warn("{}/jcr:content appears to be null!");
             return;
         }
         if (contentNode.canAddMixin(FEDORA_BINARY)) {
@@ -286,7 +282,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         contentNode.setProperty(DIGEST_VALUE, dsChecksum);
         contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
 
-        logger.debug("Decorated data property at path: " + dataProperty.getPath());
+        LOGGER.debug("Decorated data property at path: " + dataProperty.getPath());
     }
     
     public static boolean hasMixin(Node node) throws RepositoryException {
