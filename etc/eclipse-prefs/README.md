@@ -14,15 +14,16 @@ this project's coding conventions to your workspace.
 1. Check "Perform the selected actions on save".
 2. Check "Additional actions".
 3. Click "Configure...".
-4. + Under the "Code Organizing" tab, check "Remove trailing whitespace" and "All lines", as well as "Correct indentation".
+4.
+   + Under the "Code Organizing" tab, check "Remove trailing whitespace" and "All lines", as well as "Correct indentation".
    + Under the "Unnecessary Code" tab, check "Remove unused imports". 
    + Under the "Missing Code" tab, ensure that "Add missing Annotations" and '@Override" are checked.
    + Under the "Code Style" tab, check "Use blocks in if/while/for/do statements" and "Always", as well as "Use modifier 'final' where possible and 'Parameter' and 'Local variable'.
 
 ### Under XML -> XML Files -> Editor:
 
-1. Select to Indent using tabs.
-2. Set line width to 72 characters.
+1. Select to "Indent using spaces" with "Indentation size" of 2.
+2. Set line width to 80 characters.
 
 
 
