@@ -30,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Variant;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -240,6 +241,7 @@ public class FedoraNodesTest {
 		when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
 
+        when(mockObject.getLastModifiedDate()).thenReturn(new Date());
 		when(mockObject.getGraphStore()).thenReturn(mockStore);
 		when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 		final Request mockRequest = mock(Request.class);
@@ -247,11 +249,38 @@ public class FedoraNodesTest {
 		when(mockRequest.selectVariant(any(List.class))).thenReturn(new Variant(MediaType.valueOf("application/n-triples"), null, null));
 
 		final OutputStream mockStream = mock(OutputStream.class);
-		testObj.describeRdf(createPathList(pid), mockRequest).write(mockStream);
+        ((StreamingOutput)testObj.describeRdf(createPathList(pid), mockRequest).getEntity()).write(mockStream);
 
 		verify(mockModel).write(mockStream, "N-TRIPLES");
 
 	}
+
+    @Test
+    public void testDescribeRdfCached() throws RepositoryException, IOException {
+        final String pid = "FedoraObjectsRdfTest2";
+        final String path = "/" + pid;
+        final FedoraObject mockObject = mock(FedoraObject.class);
+
+        final GraphStore mockStore = mock(GraphStore.class);
+        final Dataset mockDataset = mock(Dataset.class);
+        final Model mockModel = mock(Model.class);
+        when(mockStore.toDataset()).thenReturn(mockDataset);
+        when(mockDataset.getDefaultModel()).thenReturn(mockModel);
+
+
+        when(mockObject.getLastModifiedDate()).thenReturn(new Date());
+        when(mockObject.getGraphStore()).thenReturn(mockStore);
+        when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
+        final Request mockRequest = mock(Request.class);
+
+        when(mockRequest.selectVariant(any(List.class))).thenReturn(new Variant(MediaType.valueOf("application/n-triples"), null, null));
+
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(Response.notModified());
+        final Response actual = testObj.describeRdf(createPathList(pid), mockRequest);
+        assertNotNull(actual);
+        assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
+        verify(mockSession, never()).save();
+    }
 
 	@Test
 	public void testSparqlUpdate() throws RepositoryException, IOException {

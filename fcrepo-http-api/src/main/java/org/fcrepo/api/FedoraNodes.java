@@ -129,7 +129,7 @@ public class FedoraNodes extends AbstractResource {
 
 	@GET
 	@Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
-	public StreamingOutput describeRdf(@PathParam("path") final List<PathSegment> pathList, @Context Request request) throws RepositoryException, IOException {
+	public Response describeRdf(@PathParam("path") final List<PathSegment> pathList, @Context Request request) throws RepositoryException, IOException {
 
 		final String path = toPath(pathList);
 		logger.trace("getting profile for {}", path);
@@ -138,16 +138,32 @@ public class FedoraNodes extends AbstractResource {
 
 		final Session session = getAuthenticatedSession();
 		try {
-			session.getNode(path);
-		} finally {
-			session.logout();
-		}
+            final FedoraResource resource = nodeService.getObject(session, path);
 
-		return new GraphStreamingOutput(
-				getAuthenticatedSessionProvider(),
-				nodeService,
-				path,
-				bestPossibleResponse.getMediaType());
+            final Date date = resource.getLastModifiedDate();
+            final Date roundedDate = new Date();
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+            Response.ResponseBuilder builder = request.evaluatePreconditions(roundedDate);
+
+            if (builder == null) {
+                builder = Response.ok(new GraphStreamingOutput(
+                            getAuthenticatedSessionProvider(),
+                            nodeService,
+                            path,
+                            bestPossibleResponse.getMediaType()));
+            }
+
+
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+
+        return builder.cacheControl(cc).lastModified(date).build();
+
+        } finally {
+            session.logout();
+        }
 
 	}
 
