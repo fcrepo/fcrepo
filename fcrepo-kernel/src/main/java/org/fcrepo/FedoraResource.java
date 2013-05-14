@@ -162,7 +162,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         final Model model = JcrRdfTools.getJcrPropertiesModel(node);
 
-        listener = new JcrPropertyStatementListener(node);
+        listener = new JcrPropertyStatementListener(node.getSession());
 
         model.register(listener);
 

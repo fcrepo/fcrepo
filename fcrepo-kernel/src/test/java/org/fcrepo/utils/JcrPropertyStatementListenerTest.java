@@ -43,7 +43,7 @@ public class JcrPropertyStatementListenerTest {
         mockNode = mock(Node.class);
         mockSession = mock(Session.class);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = new JcrPropertyStatementListener(mockNode);
+        testObj = new JcrPropertyStatementListener(mockSession);
         mockSubject = mock(Resource.class);
         mockStatement = mock(Statement.class);
         when(mockStatement.getSubject()).thenReturn(mockSubject);
