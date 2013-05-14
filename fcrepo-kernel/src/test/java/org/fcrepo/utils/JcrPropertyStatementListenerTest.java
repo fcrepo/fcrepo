@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -23,6 +24,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({JcrRdfTools.class, NodePropertiesTools.class})
 public class JcrPropertyStatementListenerTest {
 

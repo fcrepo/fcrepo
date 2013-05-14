@@ -3,7 +3,6 @@ package org.fcrepo.spring;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -20,11 +19,13 @@ import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.JcrSession;
 import org.modeshape.jcr.api.Repository;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.core.io.Resource;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ObjectService.class})
 public class ModeShapeRepositoryFactoryBeanTest {
 

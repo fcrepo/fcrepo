@@ -30,7 +30,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
-@PowerMockIgnore({"org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
+@PowerMockIgnore({"org.slf4j.*","org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
 @PrepareForTest({NamespaceTools.class, JcrRdfTools.class})
 public class FedoraResourceTest {
 

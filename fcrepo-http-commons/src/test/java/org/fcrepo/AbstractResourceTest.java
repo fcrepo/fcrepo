@@ -32,8 +32,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-//PowerMock needs to ignore some packages to prevent class-cast errors
-//@PowerMockIgnore({"org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({NamespaceTools.class})
 public class AbstractResourceTest {
 

@@ -19,10 +19,12 @@ import org.fcrepo.utils.NamespaceTools;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.NamespaceRegistry;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({NamespaceTools.class})
 public class UtilsTest {
 

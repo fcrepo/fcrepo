@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.*;
 
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({FedoraTypesUtils.class})
 public class NodePropertiesToolsTest {
 
@@ -85,7 +87,8 @@ public class NodePropertiesToolsTest {
         when(mockProperty.isMultiple()).thenReturn(true);
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
         final Value previousValue = mock(Value.class);
-        when(mockProperty.getValues()).thenReturn(Arrays.asList(previousValue).toArray(new Value[1]));
+        Value[] values = new Value[]{previousValue};
+        when(mockProperty.getValues()).thenReturn(values);
 
         NodePropertiesTools.appendOrReplaceNodeProperty(mockNode, "mockPropertyName", mockValue);
 
@@ -108,7 +111,8 @@ public class NodePropertiesToolsTest {
         when(mockProperty.isMultiple()).thenReturn(true);
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
         final Value previousValue = mockValue;
-        when(mockProperty.getValues()).thenReturn(Arrays.asList(previousValue).toArray(new Value[1]));
+        Value[] values = new Value[]{previousValue};
+        when(mockProperty.getValues()).thenReturn(values);
 
         NodePropertiesTools.appendOrReplaceNodeProperty(mockNode, "mockPropertyName", mockValue);
 
@@ -149,8 +153,8 @@ public class NodePropertiesToolsTest {
         when(mockProperty.isMultiple()).thenReturn(true);
 
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
-
-        when(mockProperty.getValues()).thenReturn(Arrays.asList(mockValue).toArray(new Value[1]));
+        Value[] values = new Value[]{mockValue};
+        when(mockProperty.getValues()).thenReturn(values);
 
         NodePropertiesTools.removeNodeProperty(mockNode, "mockPropertyName", mockValue);
 
@@ -166,8 +170,9 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
 
         final Value previousValue = mock(Value.class);
+        Value[] values = new Value[]{previousValue, mockValue};
 
-        when(mockProperty.getValues()).thenReturn(Arrays.asList(previousValue, mockValue).toArray(new Value[2]));
+        when(mockProperty.getValues()).thenReturn(values);
 
         NodePropertiesTools.removeNodeProperty(mockNode, "mockPropertyName", mockValue);
 
@@ -175,11 +180,11 @@ public class NodePropertiesToolsTest {
 
         verify(mockProperty).setValue(valuesCaptor.capture());
 
-        List<Value> actualValues = Arrays.asList(valuesCaptor.getValue());
+        Value[] actualValues = valuesCaptor.getValue();
 
-        assertEquals(1, actualValues.size());
-        assertTrue("removed the wrong value", actualValues.contains(previousValue));
-        assertTrue("found the value we were removing", !actualValues.contains(mockValue));
+        assertEquals(1, actualValues.length);
+        assertTrue("removed the wrong value", previousValue.equals(actualValues[0]));
+        assertTrue("found the value we were removing", !mockValue.equals(actualValues[0]));
 
     }
 
@@ -188,7 +193,9 @@ public class NodePropertiesToolsTest {
 
         when(mockProperty.isMultiple()).thenReturn(true);
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(true);
-        when(mockProperty.getValues()).thenReturn(Arrays.asList(mockValue, mockValue).toArray(new Value[1]));
+        Value[] values = new Value[]{mockValue, mockValue};
+
+        when(mockProperty.getValues()).thenReturn(values);
 
         NodePropertiesTools.removeNodeProperty(mockNode, "mockPropertyName", mockValue);
 
