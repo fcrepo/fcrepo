@@ -9,6 +9,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.http.RDFMediaType;
 import org.fcrepo.services.NodeService;
@@ -22,30 +23,16 @@ import com.hp.hpl.jena.update.GraphStore;
 
 public class GraphStreamingOutputTest {
 
-	AuthenticatedSessionProvider mockSessions;
-	
-	Session mockSession;
-	
-	NodeService mockNodes;
-	
-	@Before
-	public void setUp(){
-		mockSessions = mock(AuthenticatedSessionProvider.class);
-		mockSession = mock(Session.class);
-		when(mockSessions.getAuthenticatedSession()).thenReturn(mockSession);
-		mockNodes = mock(NodeService.class);
-	}
-	
 	@Test
 	public void testStuff() throws WebApplicationException, IOException, RepositoryException {
-		String testPath = "/does/not/exist";
-		FedoraObject mockObject = mock(FedoraObject.class);
-		when(mockNodes.getObject(mockSession, testPath)).thenReturn(mockObject);
 		GraphStore graph = new GraphStoreNull();
-		when(mockObject.getGraphStore()).thenReturn(graph);
+
+        final Model model = spy(graph.toDataset().getDefaultModel());
+
 		GraphStreamingOutput test =
-				new GraphStreamingOutput(mockSessions, mockNodes, testPath, RDFMediaType.NTRIPLES_TYPE);
+				new GraphStreamingOutput(graph, RDFMediaType.NTRIPLES_TYPE);
 		OutputStream mockOut = mock(OutputStream.class);
 		test.write(mockOut);
+        verify(model.write(mockOut, "N-TRIPLES"));
 	}
 }

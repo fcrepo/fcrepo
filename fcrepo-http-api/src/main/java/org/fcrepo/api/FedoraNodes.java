@@ -148,9 +148,7 @@ public class FedoraNodes extends AbstractResource {
 
             if (builder == null) {
                 builder = Response.ok(new GraphStreamingOutput(
-                            getAuthenticatedSessionProvider(),
-                            nodeService,
-                            path,
+                            resource.getGraphStore(),
                             bestPossibleResponse.getMediaType()));
             }
 
