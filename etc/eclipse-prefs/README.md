@@ -25,5 +25,4 @@ this project's coding conventions to your workspace.
 1. Select to "Indent using spaces" with "Indentation size" of 2.
 2. Set line width to 80 characters.
 
-
-
+### In order to autocreate Javadocs on types, ensure that "Generate comments" is checked in the new type dialog.
