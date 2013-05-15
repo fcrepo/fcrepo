@@ -56,7 +56,7 @@ public class FedoraRepositoryUnnamedObjectsTest {
         when(mockMint.mintPid()).thenReturn("uuid-123");
 
         final Response actual =
-                testObj.ingestAndMint(FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
+                testObj.ingestAndMint(FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null, TestHelpers.getUriInfoImpl());
         assertNotNull(actual);
         assertEquals(Response.Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));

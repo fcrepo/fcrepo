@@ -27,7 +27,11 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 		final HttpPost post = postObjMethod("DublinCoreTest1");
 		post.setHeader("Content-Type", "application/sparql-update");
 		BasicHttpEntity entity = new BasicHttpEntity();
-		entity.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/DublinCoreTest1> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}".getBytes()));
+		String subjectURI = serverAddress + "objects/DublinCoreTest1";
+		entity.setContent(new ByteArrayInputStream(
+				("INSERT { <" + subjectURI +
+				 "> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
+				 .getBytes()));
 		post.setEntity(entity);
 		assertEquals(204, getStatus( post));
         final HttpGet getWorstCaseOaiMethod =

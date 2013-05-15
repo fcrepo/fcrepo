@@ -15,6 +15,8 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
@@ -59,7 +61,7 @@ public class FedoraUnnamedObjectsTest {
 
         final Response actual =
                 testObj.ingestAndMint(createPathList("objects"),
-                                             FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
+                                             FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null, TestHelpers.getUriInfoImpl());
         assertNotNull(actual);
         assertEquals(Response.Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));

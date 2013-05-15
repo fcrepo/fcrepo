@@ -132,10 +132,11 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
         HttpResponse response = execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
+        String subjectURI = serverAddress + "files/FileSystem1";
         GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
-        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/files/FileSystem1"), Node.ANY, Node.createURI("info:fedora/files/FileSystem1/ds1")));
-        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/files/FileSystem1"), Node.ANY, Node.createURI("info:fedora/files/FileSystem1/ds2")));
-        assertTrue("Didn't find the first object! ", result.contains(Node.ANY, Node.createURI("info:fedora/files/FileSystem1"), Node.ANY, Node.createURI("info:fedora/files/FileSystem1/TestSubdir")));
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds2")));
+        assertTrue("Didn't find the first object! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/TestSubdir")));
 
     }
 

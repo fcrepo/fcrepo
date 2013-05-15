@@ -111,7 +111,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		final String content = EntityUtils.toString(response.getEntity());
 
-		assertTrue("Didn't find an expected ntriple", compile("<info:fedora/objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
+		assertTrue("Didn't find an expected ntriple", compile("<" + serverAddress + "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
 																	DOTALL).matcher(content).find());
 
 		logger.debug("Retrieved object graph:\n" + content);
@@ -126,7 +126,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 				new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphUpdate");
 		updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
 		BasicHttpEntity e = new BasicHttpEntity();
-		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdate> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}".getBytes()));
+		e.setContent(new ByteArrayInputStream(("INSERT { <" + serverAddress + "objects/FedoraDescribeTestGraphUpdate> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}").getBytes()));
 		updateObjectGraphMethod.setEntity(e);
 		final HttpResponse response = client.execute(updateObjectGraphMethod);
 		assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
@@ -136,29 +136,32 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testUpdateAndReplaceObjectGraph() throws Exception {
         client.execute(postObjMethod("FedoraDescribeTestGraphReplace"));
-
+        String subjectURI = serverAddress + "objects/FedoraDescribeTestGraphReplace";
         final HttpPost updateObjectGraphMethod =
-                new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphReplace");
+                new HttpPost(subjectURI);
 
         updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
 
         BasicHttpEntity e = new BasicHttpEntity();
-        e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> \"asdfg\" } WHERE {}".getBytes()));
+        e.setContent(new ByteArrayInputStream(
+        		("INSERT { <" + subjectURI + "> <info:rubydora#label> \"asdfg\" } WHERE {}")
+        		 .getBytes()));
         updateObjectGraphMethod.setEntity(e);
         client.execute(updateObjectGraphMethod);
 
 
         e = new BasicHttpEntity();
-        e.setContent(new ByteArrayInputStream(("DELETE { <info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> ?p}\n" +
-                                                      "INSERT {<info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> \"qwerty\"} \n" +
-                                                      "WHERE { <info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> ?p}").getBytes()));
+        e.setContent(new ByteArrayInputStream(
+        		("DELETE { <" + subjectURI + "> <info:rubydora#label> ?p}\n" +
+                 "INSERT {<" + subjectURI + "> <info:rubydora#label> \"qwerty\"} \n" +
+                 "WHERE { <" + subjectURI + "> <info:rubydora#label> ?p}").getBytes()));
         updateObjectGraphMethod.setEntity(e);
 
         final HttpResponse response = client.execute(updateObjectGraphMethod);
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
 
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/FedoraDescribeTestGraphReplace");
+                new HttpGet(subjectURI);
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse getResponse = client.execute(getObjMethod);
         assertEquals(200, getResponse.getStatusLine().getStatusCode());
@@ -166,7 +169,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Retrieved object graph:\n" + content);
 
 
-        assertFalse("Found a triple we thought we deleted.", compile("<info:fedora/objects/FedoraDescribeTestGraphReplace> <info:rubydora#label> \"asdfg\" \\.",
+        assertFalse("Found a triple we thought we deleted.", compile("<" + subjectURI + "> <info:rubydora#label> \"asdfg\" \\.",
                                                                             DOTALL).matcher(content).find());
 
 
@@ -176,11 +179,15 @@ public class FedoraNodesIT extends AbstractResourceIT {
 	@Test
 	public void testUpdateObjectGraphWithProblems() throws Exception {
 		client.execute(postObjMethod("FedoraDescribeTestGraphUpdateBad"));
+        String subjectURI = serverAddress + "objects/FedoraDescribeTestGraphUpdateBad";
 		final HttpPost getObjMethod =
-				new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphUpdateBad");
+				new HttpPost(subjectURI);
 		getObjMethod.addHeader("Content-Type", "application/sparql-update");
 		BasicHttpEntity e = new BasicHttpEntity();
-		e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraDescribeTestGraphUpdateBad> <info:fedora/fedora-system:def/internal#uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n".getBytes()));
+		e.setContent(new ByteArrayInputStream(
+				("INSERT { <" + subjectURI +
+				 "> <info:fedora/fedora-system:def/internal#uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
+				.getBytes()));
 		getObjMethod.setEntity(e);
 		final HttpResponse response = client.execute(getObjMethod);
 		assertEquals(403, response.getStatusLine().getStatusCode());

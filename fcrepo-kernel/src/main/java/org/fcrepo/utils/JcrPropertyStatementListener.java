@@ -13,6 +13,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import org.fcrepo.rdf.GraphSubjects;
 import org.modeshape.common.collection.Problems;
 import org.modeshape.common.collection.SimpleProblems;
 import org.slf4j.Logger;
@@ -27,10 +28,14 @@ public class JcrPropertyStatementListener extends StatementListener {
 
 	private static final Logger LOGGER = getLogger(JcrPropertyStatementListener.class);
 
+	private final GraphSubjects subjects;
+	
 	private final Session session;
 
-	public JcrPropertyStatementListener(final Session session) throws RepositoryException {
+	public JcrPropertyStatementListener(final GraphSubjects subjects,
+			final Session session) throws RepositoryException {
 		this.session = session;
+		this.subjects = subjects;
 		this.problems = new SimpleProblems();
 	}
 
@@ -46,11 +51,11 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, ignore it.
-            if (!isFedoraGraphSubject(subject)) {
+            if (!isFedoraGraphSubject(subjects, subject)) {
 				return;
 			}
 
-            final Node subjectNode = getNodeFromGraphSubject(getSession(), subject);
+            final Node subjectNode = getNodeFromGraphSubject(subjects, getSession(), subject);
 
 			// extract the JCR propertyName from the predicate
 			final String propertyName = getPropertyNameFromPredicate(subjectNode, s.getPredicate());
@@ -77,11 +82,11 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, we don't care.
-            if (!isFedoraGraphSubject(subject)) {
+            if (!isFedoraGraphSubject(subjects, subject)) {
                 return;
             }
 
-            final Node subjectNode = getNodeFromGraphSubject(getSession(), subject);
+            final Node subjectNode = getNodeFromGraphSubject(subjects, getSession(), subject);
 
 			final String propertyName = getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
