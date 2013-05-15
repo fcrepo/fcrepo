@@ -63,34 +63,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
 	@Test
-	public void testGetObjectInXML() throws Exception {
-		client.execute(postObjMethod("FedoraDescribeTest1"));
-		final HttpGet getObjMethod =
-				new HttpGet(serverAddress + "objects/FedoraDescribeTest1");
-		getObjMethod.addHeader("Accept", "text/xml");
-		final HttpResponse response = client.execute(getObjMethod);
-		assertEquals(200, response.getStatusLine().getStatusCode());
-		final String content = EntityUtils.toString(response.getEntity());
-		logger.debug("Retrieved object profile:\n" + content);
-		assertTrue("Object had wrong PID!", compile(
-														   "pid=\"FedoraDescribeTest1\"").matcher(content).find());
-	}
-
-
-	@Test
-	public void testGetDatastreamInXML() throws Exception {
-		client.execute(postObjMethod("FedoraDescribeTest2"));
-		client.execute(postDSMethod("FedoraDescribeTest2", "ds1", "qwertypoiuytrewqadfghjklmnbvcxz"));
-		final HttpGet getObjMethod =
-				new HttpGet(serverAddress + "objects/FedoraDescribeTest2/ds1");
-		getObjMethod.addHeader("Accept", "text/xml");
-		final HttpResponse response = client.execute(getObjMethod);
-		assertEquals(200, response.getStatusLine().getStatusCode());
-		final String content = EntityUtils.toString(response.getEntity());
-		logger.debug("Retrieved datastream profile:\n" + content);
-	}
-
-	@Test
 	public void testGetObjectGraph() throws Exception {
 		client.execute(postObjMethod("FedoraDescribeTestGraph"));
 		final HttpGet getObjMethod =

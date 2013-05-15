@@ -109,21 +109,6 @@ public class FedoraDatastreamsTest {
     }
 
     @Test
-    public void testGetDatastreams() throws RepositoryException, IOException {
-        final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid;
-        final String dsid = "testDS";
-        final DatastreamIterator mockIter =
-                TestHelpers.mockDatastreamIterator(pid, dsid, "asdf");
-        when(mockDatastreams.getDatastreamsForPath(mockSession, path)).thenReturn(mockIter);
-        final ObjectDatastreams actual = testObj.getDatastreams(createPathList("objects",pid));
-        verify(mockDatastreams).getDatastreamsForPath(mockSession, path);
-        verify(mockSession, never()).save();
-        assertEquals(1, actual.datastreams.size());
-        assertEquals(dsid, actual.datastreams.iterator().next().dsid);
-    }
-
-    @Test
     public void testModifyDatastreams() throws RepositoryException,
             IOException, InvalidChecksumException {
         final String pid = "FedoraDatastreamsTest1";

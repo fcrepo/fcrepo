@@ -31,30 +31,6 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
             "The past is never dead. It's not even past.";
 
     @Test
-    public void testGetDatastreams() throws Exception {
-        execute(postObjMethod("FedoraDatastreamsTest1"));
-
-        final HttpPost dsmethod =
-                postDSMethod("FedoraDatastreamsTest1", "zxc", "foo");
-        assertEquals(201, getStatus(dsmethod));
-
-        final HttpGet method =
-                new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest1/fcr:datastreams");
-        assertEquals(200, getStatus(method));
-
-        final HttpResponse response = execute(method);
-
-        final String content =
-                IOUtils.toString(response.getEntity().getContent());
-
-        logger.info(content);
-
-        assertTrue("Found the wrong XML tag", compile("<datastream ", DOTALL)
-                .matcher(content).find());
-    }
-
-    @Test
     public void testAddDatastream() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest2");
         assertEquals(201, getStatus(objMethod));
