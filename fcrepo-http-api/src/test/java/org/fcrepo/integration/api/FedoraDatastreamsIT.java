@@ -11,6 +11,9 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -188,12 +191,13 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest7/fcr:children?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+                        "objects/FedoraDatastreamsTest7");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        Collection<String> result = TestHelpers.parseChildren(response.getEntity());
-        assertTrue("Didn't find the first datastream! ", result.contains("ds1"));
-        assertTrue("Didn't find the second datastream! ", result.contains("ds2"));
+        GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
+        logger.warn(result.toString());
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7/ds2")));
     }
 
     @Test
@@ -223,17 +227,15 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest8/fcr:datastreams");
+                        "objects/FedoraDatastreamsTest8");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
-        assertTrue("Didn't find the first datastream!", compile("dsid=\"ds1\"",
-                DOTALL).matcher(content).find());
-        assertTrue("Didn't find the second datastream!", compile(
-                "dsid=\"ds2\"", DOTALL).matcher(content).find());
 
-        assertFalse("Found the deleted datastream!", compile(
-                "dsid=\"ds_void\"", DOTALL).matcher(content).find());
+        GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8/ds2")));
+        assertFalse("Found the deleted datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8/ds_void")));
+
 
     }
 
