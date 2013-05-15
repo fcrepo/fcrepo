@@ -169,65 +169,6 @@ public class FedoraNodesTest {
     }
 
 	@Test
-	public void testDescribeDatastream() throws RepositoryException, IOException {
-		final String pid = "FedoraDatastreamsTest1";
-		final String dsId = "testDS";
-		final String path = "/" + pid + "/" + dsId;
-		final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
-		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
-		Node mockNode = mock(Node.class);
-		FedoraResource mockResource = mock(FedoraResource.class);
-		when(mockResource.hasContent()).thenReturn(true);
-		when(mockResource.getNode()).thenReturn(mockNode);
-		when(mockResource.getLastModifiedDate()).thenReturn(new Date());
-		when(mockNodes.getObject(mockSession,path)).thenReturn(mockResource);
-		when(mockNode.getSession()).thenReturn(mockSession);
-		when(mockDs.getNode()).thenReturn(mockNode);
-		when(mockNode.getName()).thenReturn(dsId);
-		Node mockParent = mock(Node.class);
-		when(mockParent.getPath()).thenReturn(path);
-		when(mockNode.getParent()).thenReturn(mockParent);
-		when(mockNode.getPath()).thenReturn(path);
-		when(mockNode.isNodeType("nt:file")).thenReturn(true);
-		when(mockSession.getNode(path)).thenReturn(mockNode);
-		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
-		final Response actual = testObj.describe(createPathList(pid, dsId), mockRequest);
-		assertNotNull(actual);
-		verify(mockDatastreams).getDatastream(mockSession, path);
-		verify(mockSession, never()).save();
-	}
-
-	@Test
-	public void testDescribeDatastreamCached() throws RepositoryException, IOException {
-		final String pid = "FedoraDatastreamsTest1";
-		final String dsId = "testDS";
-		final String path = "/" + pid + "/" + dsId;
-		final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
-		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
-		Node mockNode = mock(Node.class);
-		FedoraResource mockResource = mock(FedoraResource.class);
-		when(mockResource.hasContent()).thenReturn(true);
-		when(mockResource.getNode()).thenReturn(mockNode);
-		when(mockResource.getLastModifiedDate()).thenReturn(new Date());
-		when(mockNodes.getObject(mockSession,path)).thenReturn(mockResource);
-		when(mockNode.getSession()).thenReturn(mockSession);
-		when(mockDs.getNode()).thenReturn(mockNode);
-		when(mockNode.getName()).thenReturn(dsId);
-		Node mockParent = mock(Node.class);
-		when(mockParent.getPath()).thenReturn(path);
-		when(mockNode.getParent()).thenReturn(mockParent);
-		when(mockNode.getPath()).thenReturn(path);
-		when(mockNode.isNodeType("nt:file")).thenReturn(true);
-		when(mockSession.getNode(path)).thenReturn(mockNode);
-		when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(Response.notModified());
-		when(mockLow.getLowLevelCacheEntries(mockNode)).thenReturn(new HashSet<LowLevelCacheEntry>());
-		final Response actual = testObj.describe(createPathList(pid, dsId), mockRequest);
-		assertNotNull(actual);
-		assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
-		verify(mockSession, never()).save();
-	}
-
-	@Test
 	public void testDescribeRdfObject() throws RepositoryException, IOException {
 		final String pid = "FedoraObjectsRdfTest1";
 		final String path = "/" + pid;

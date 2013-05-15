@@ -5,12 +5,15 @@ import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.regex.Matcher;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
@@ -122,18 +125,15 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
      */
     @Test
     public void testGetProjectedNode() throws Exception {
-        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1/fcr:children?mixin=" + FedoraJcrTypes.FEDORA_OBJECT);
+        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
         HttpResponse response = execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        Collection<String> childNames = TestHelpers.parseChildren(response.getEntity());
-        assertEquals(1, childNames.size());
-        assertEquals("TestSubdir", childNames.iterator().next());
-        method = new HttpGet(serverAddress + "files/FileSystem1/fcr:children?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
-        response = execute(method);
-        childNames = TestHelpers.parseChildren(response.getEntity());
-        assertEquals(2, childNames.size());
-        assertTrue(childNames.contains("ds1"));
-        assertTrue(childNames.contains("ds2"));
+
+        GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/files/FileSystem1"), Node.ANY, Node.createURI("info:fedora/files/FileSystem1/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/files/FileSystem1"), Node.ANY, Node.createURI("info:fedora/files/FileSystem1/ds2")));
+        assertTrue("Didn't find the first object! ", result.contains(Node.ANY, Node.createURI("info:fedora/files/FileSystem1"), Node.ANY, Node.createURI("info:fedora/files/FileSystem1/TestSubdir")));
+
     }
 
 }

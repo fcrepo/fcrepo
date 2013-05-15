@@ -34,6 +34,10 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -252,4 +256,14 @@ public abstract class TestHelpers {
 		}
 		return mockDs;
 	}
+
+    public static GraphStore parseTriples(final InputStream content) {
+        final Model model = ModelFactory.createDefaultModel();
+
+        model.read(content, "", "N3");
+
+
+        return GraphStoreFactory.create(model);
+
+    }
 }
