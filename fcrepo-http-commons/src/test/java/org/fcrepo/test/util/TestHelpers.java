@@ -34,10 +34,6 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -53,6 +49,10 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;

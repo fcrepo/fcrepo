@@ -4,7 +4,6 @@ package org.fcrepo.jaxb.responses.management;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -14,9 +13,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.utils.LowLevelCacheEntry;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 @XmlRootElement(name = "datastreamProfile", namespace = "http://www.fedora.info/definitions/1/0/management/")
 public class DatastreamProfile {
@@ -36,8 +32,8 @@ public class DatastreamProfile {
     @XmlElement
     public String dsVersionID;
 
-	@XmlElement
-	public Date dsLastModifiedDate;
+    @XmlElement
+    public Date dsLastModifiedDate;
 
     @XmlElement
     public Date dsCreateDate;
@@ -102,11 +98,11 @@ public class DatastreamProfile {
             this.storeIdentifiers = new ArrayList<String>();
         }
 
-        public DSStores(final Datastream datastream, final Set cacheEntries) {
+        public DSStores(final Datastream datastream, final Set<?> cacheEntries) {
             this.storeIdentifiers = new ArrayList<String>();
-            for (final Iterator it = cacheEntries.iterator(); it.hasNext();) {
+            for (final Object name : cacheEntries) {
                 final LowLevelCacheEntry cacheEntry =
-                        (LowLevelCacheEntry) it.next();
+                        (LowLevelCacheEntry) name;
                 storeIdentifiers.add(cacheEntry.getExternalIdentifier());
             }
         }

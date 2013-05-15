@@ -4,6 +4,9 @@ package org.fcrepo.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
@@ -66,126 +69,135 @@ public class FedoraNodes extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraNodes.class);
 
-	@Autowired
-	private LowLevelStorageService llStoreService;
+    @Autowired
+    private LowLevelStorageService llStoreService;
 
-	@GET
-	@Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
-	public Response describeRdf(@PathParam("path") final List<PathSegment> pathList, @Context Request request) throws RepositoryException, IOException {
+    @GET
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    public Response describeRdf(@PathParam("path")
+    final List<PathSegment> pathList, @Context
+    final Request request) throws RepositoryException, IOException {
 
-		final String path = toPath(pathList);
-		logger.trace("getting profile for {}", path);
+        final String path = toPath(pathList);
+        logger.trace("Getting profile for {}", path);
 
-		Variant bestPossibleResponse = request.selectVariant(POSSIBLE_RDF_VARIANTS);
+        final Variant bestPossibleResponse =
+                request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-		final Session session = getAuthenticatedSession();
-		try {
-            final FedoraResource resource = nodeService.getObject(session, path);
+        final Session session = getAuthenticatedSession();
+        try {
+            final FedoraResource resource =
+                    nodeService.getObject(session, path);
 
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
             roundedDate.setTime(date.getTime() - date.getTime() % 1000);
 
-            Response.ResponseBuilder builder = request.evaluatePreconditions(roundedDate);
+            Response.ResponseBuilder builder =
+                    request.evaluatePreconditions(roundedDate);
 
             if (builder == null) {
-                builder = Response.ok(new GraphStreamingOutput(
-                            resource.getGraphStore(),
-                            bestPossibleResponse.getMediaType()));
+                builder =
+                        ok(new GraphStreamingOutput(resource.getGraphStore(),
+                                bestPossibleResponse.getMediaType()));
             }
-
 
             final CacheControl cc = new CacheControl();
             cc.setMaxAge(0);
             cc.setMustRevalidate(true);
 
-        return builder.cacheControl(cc).lastModified(date).build();
+            return builder.cacheControl(cc).lastModified(date).build();
 
         } finally {
             session.logout();
         }
 
-	}
+    }
 
-	/**
+    /**
      * Does nothing (good) yet -- just runs SPARQL-UPDATE statements
      * @param pathList
-	 * @param requestBodyStream
+     * @param requestBodyStream
      * @return 201
      * @throws RepositoryException
      */
     @PUT
-	@Consumes({WebContent.contentTypeSPARQLUpdate})
-	@Timed
+    @Consumes({contentTypeSPARQLUpdate})
+    @Timed
     public Response modifyObject(@PathParam("path")
-    final List<PathSegment> pathList, final InputStream requestBodyStream) throws RepositoryException, IOException {
+    final List<PathSegment> pathList, final InputStream requestBodyStream)
+            throws RepositoryException, IOException {
         final Session session = getAuthenticatedSession();
-		String path = toPath(pathList);
-		logger.debug("Modifying object with path: {}", path);
+        final String path = toPath(pathList);
+        logger.debug("Modifying object with path: {}", path);
 
         try {
 
-			final FedoraResource result =
-					nodeService.getObject(session, path);
+            final FedoraResource result = nodeService.getObject(session, path);
 
-			if (requestBodyStream != null) {
-				UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), result.getGraphStore());
-			}
+            if (requestBodyStream != null) {
+                UpdateAction.parseExecute(IOUtils.toString(requestBodyStream),
+                        result.getGraphStore());
+            }
             session.save();
 
-			return Response.status(HttpStatus.SC_NO_CONTENT).build();
+            return Response.status(HttpStatus.SC_NO_CONTENT).build();
         } finally {
             session.logout();
         }
     }
 
-	/**
-	 * Update an object using SPARQL-UPDATE
-	 *
-	 * @param pathList
-	 * @return 201
-	 * @throws RepositoryException
-	 * @throws org.fcrepo.exception.InvalidChecksumException
-	 * @throws IOException
-	 */
-	@POST
-	@Consumes({WebContent.contentTypeSPARQLUpdate})
-	@Timed
-	public Response updateSparql(
-										@PathParam("path") final List<PathSegment> pathList,
-										final InputStream requestBodyStream
-	) throws RepositoryException, IOException {
+    /**
+     * Update an object using SPARQL-UPDATE
+     *
+     * @param pathList
+     * @return 201
+     * @throws RepositoryException
+     * @throws org.fcrepo.exception.InvalidChecksumException
+     * @throws IOException
+     */
+    @POST
+    @Consumes({contentTypeSPARQLUpdate})
+    @Timed
+    public Response updateSparql(@PathParam("path")
+    final List<PathSegment> pathList, final InputStream requestBodyStream)
+            throws RepositoryException, IOException {
 
-		String path = toPath(pathList);
-		logger.debug("Attempting to ingest with path: {}", path);
+        final String path = toPath(pathList);
+        logger.debug("Attempting to ingest with path: {}", path);
 
-		final Session session = getAuthenticatedSession();
+        final Session session = getAuthenticatedSession();
 
-		try {
+        try {
 
-			if(requestBodyStream != null) {
+            if (requestBodyStream != null) {
 
-				final FedoraResource result = nodeService.getObject(session, path);
+                final FedoraResource result =
+                        nodeService.getObject(session, path);
 
-				result.updateGraph(IOUtils.toString(requestBodyStream));
-				Problems problems = result.getGraphProblems();
-				if (problems != null && problems.hasProblems()) {
-					logger.info("Found these problems updating the properties for {}: {}", path, problems.toString());
-					return Response.status(Response.Status.FORBIDDEN).entity(problems.toString()).build();
+                result.updateGraph(IOUtils.toString(requestBodyStream));
+                final Problems problems = result.getGraphProblems();
+                if (problems != null && problems.hasProblems()) {
+                    logger.info(
+                            "Found these problems updating the properties for {}: {}",
+                            path, problems.toString());
+                    return status(Response.Status.FORBIDDEN).entity(
+                            problems.toString()).build();
 
-				}
+                }
 
-				session.save();
+                session.save();
 
-				return Response.status(HttpStatus.SC_NO_CONTENT).build();
-			} else {
-				return Response.status(HttpStatus.SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content ").build();
-			}
+                return Response.status(HttpStatus.SC_NO_CONTENT).build();
+            } else {
+                return Response.status(HttpStatus.SC_BAD_REQUEST).entity(
+                        "SPARQL-UPDATE requests must have content ").build();
+            }
 
-		} finally {
-			session.logout();
-		}
-	}
+        } finally {
+            session.logout();
+        }
+    }
 
     /**
      * Creates a new object.
@@ -197,42 +209,47 @@ public class FedoraNodes extends AbstractResource {
      * @throws IOException 
      */
     @POST
-	@Timed
-    public Response createObject(
-            @PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
-            @QueryParam("checksumType") final String checksumType,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            final InputStream requestBodyStream
-            ) throws RepositoryException, IOException, InvalidChecksumException {
-        
-        String path = toPath(pathList);
+    @Timed
+    public Response createObject(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("mixin")
+    @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
+    final String mixin, @QueryParam("checksumType")
+    final String checksumType, @QueryParam("checksum")
+    final String checksum, @HeaderParam("Content-Type")
+    final MediaType requestContentType, final InputStream requestBodyStream)
+            throws RepositoryException, IOException, InvalidChecksumException {
+
+        final String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);
 
         final Session session = getAuthenticatedSession();
-        
+
         try {
             if (nodeService.exists(session, path)) {
-                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+                return Response.status(HttpStatus.SC_CONFLICT).entity(
+                        path + " is an existing resource").build();
             }
 
-            if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
+            if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
                 final FedoraObject result =
                         objectService.createObject(session, path);
 
-				if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
-					result.updateGraph(IOUtils.toString(requestBodyStream));
-				}
+                if (requestBodyStream != null &&
+                        requestContentType != null &&
+                        requestContentType.toString().equals(
+                                WebContent.contentTypeSPARQLUpdate)) {
+                    result.updateGraph(IOUtils.toString(requestBodyStream));
+                }
 
             }
-            if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
+            if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
                 final MediaType contentType =
                         requestContentType != null ? requestContentType
                                 : APPLICATION_OCTET_STREAM_TYPE;
 
-                datastreamService.createDatastreamNode(session, path, contentType
-                        .toString(), requestBodyStream, checksumType, checksum);
+                datastreamService.createDatastreamNode(session, path,
+                        contentType.toString(), requestBodyStream,
+                        checksumType, checksum);
             }
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
@@ -251,27 +268,25 @@ public class FedoraNodes extends AbstractResource {
      * @throws RepositoryException
      */
     @DELETE
-	@Timed
+    @Timed
     public Response deleteObject(@PathParam("path")
     final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();
 
-		try {
-			nodeService.deleteObject(session, toPath(path));
-			session.save();
-			return noContent().build();
-		} finally {
-			session.logout();
-		}
+        try {
+            nodeService.deleteObject(session, toPath(path));
+            session.save();
+            return noContent().build();
+        } finally {
+            session.logout();
+        }
     }
 
-    
     public ObjectService getObjectService() {
         return objectService;
     }
 
-    
-    public void setObjectService(ObjectService objectService) {
+    public void setObjectService(final ObjectService objectService) {
         this.objectService = objectService;
     }
 
@@ -279,17 +294,16 @@ public class FedoraNodes extends AbstractResource {
         return datastreamService;
     }
 
-    
-    public void setDatastreamService(DatastreamService datastreamService) {
+    public void setDatastreamService(final DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
 
-	public LowLevelStorageService getLlStoreService() {
-		return llStoreService;
-	}
+    public LowLevelStorageService getLlStoreService() {
+        return llStoreService;
+    }
 
-	public void setLlStoreService(final LowLevelStorageService llStoreService) {
-		this.llStoreService = llStoreService;
-	}
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
+        this.llStoreService = llStoreService;
+    }
 
 }

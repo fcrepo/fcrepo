@@ -1,17 +1,17 @@
 package org.fcrepo;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
 
 import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Workspace;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.SecurityContext;
@@ -21,7 +21,6 @@ import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.PathSegmentImpl;
-import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.NamespaceTools;
 import org.junit.Before;
 import org.junit.Test;

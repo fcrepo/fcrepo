@@ -1,6 +1,7 @@
 package org.fcrepo.session;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
