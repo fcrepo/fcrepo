@@ -1,6 +1,5 @@
 package org.fcrepo.utils;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
@@ -10,20 +9,21 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.services.LowLevelStorageService;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
 import javax.jcr.*;
-import javax.jcr.PropertyIterator;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
 
+import java.util.Set;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.fcrepo.utils.FedoraJcrTypes.FCR_CONTENT;
-import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class JcrRdfTools {
@@ -152,7 +152,28 @@ public abstract class JcrRdfTools {
 
         addJcrTreePropertiesToModel(node, model);
 
+        if (node.hasNode(JcrConstants.JCR_CONTENT)) {
+            addJcrContentLocationInformationToModel(node, model);
+        }
+
         return model;
+    }
+
+    private static void addJcrContentLocationInformationToModel(final Node node, final Model model) throws RepositoryException {
+        final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
+        final Resource contentNodeSubject = getGraphSubject(contentNode);
+
+        // TODO: get this from somewhere else.
+        LowLevelStorageService llstore = new LowLevelStorageService();
+        llstore.setRepository(node.getSession().getRepository());
+
+        final Set<LowLevelCacheEntry> cacheEntries = llstore.getLowLevelCacheEntries(node);
+
+        for (LowLevelCacheEntry e : cacheEntries) {
+            model.add(contentNodeSubject, model.createProperty("info:fedora/fedora-system:def/internal#hasLocation"), e.getExternalIdentifier());
+        }
+
+
     }
 
     /**

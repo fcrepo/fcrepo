@@ -157,6 +157,12 @@ public class FedoraResourceIT extends AbstractIT {
 		o = Node.createLiteral("22", ModelFactory.createDefaultModel().createTypedLiteral(22L).getDatatype());
 		assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
 
+        // location
+
+        p = Node.createURI("info:fedora/fedora-system:def/internal#hasLocation");
+        o = Node.ANY;
+
+        assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
 
 
 		session.logout();
