@@ -1,5 +1,7 @@
+
 package org.fcrepo.utils;
 
+import static org.fcrepo.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
@@ -31,139 +33,162 @@ import org.modeshape.jcr.api.Namespaced;
 import com.google.common.base.Predicate;
 
 public class FedoraTypesUtilsTest {
-    
+
     // unfortunately, we need to be able to cast to two interfaces to perform some tests
     // this testing interface allows mocks to do that
-    static interface PropertyMock extends Property, Namespaced {};
-    
+    static interface PropertyMock extends Property, Namespaced {
+    };
+
     @Test
     public void testIsMultipleValuedProperty() throws RepositoryException {
-        Property mockYes = mock(Property.class);
+        final Property mockYes = mock(Property.class);
         when(mockYes.isMultiple()).thenReturn(true);
-        Property mockNo = mock(Property.class);
-        Predicate<Property> test = FedoraTypesUtils.isMultipleValuedProperty;
+        final Property mockNo = mock(Property.class);
+        final Predicate<Property> test =
+                FedoraTypesUtils.isMultipleValuedProperty;
         try {
             test.apply(null);
             fail("Null values should throw an IllegalArgumentException");
-        } catch (IllegalArgumentException e) {}
+        } catch (final IllegalArgumentException e) {
+        }
         boolean actual = test.apply(mockYes);
         assertEquals(true, actual);
         actual = test.apply(mockNo);
         assertEquals(false, actual);
     }
-    
+
     @Test
     public void testGetValueFactory() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        ValueFactory mockVF = mock(ValueFactory.class);
+        final Node mockNode = mock(Node.class);
+        final Session mockSession = mock(Session.class);
+        final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        ValueFactory actual = FedoraTypesUtils.getValueFactory.apply(mockNode);
+        final ValueFactory actual =
+                FedoraTypesUtils.getValueFactory.apply(mockNode);
         assertEquals(mockVF, actual);
     }
 
     @Test
     public void testGetPredicateForProperty() {
-        PropertyMock mockProp = mock(PropertyMock.class);
-        com.hp.hpl.jena.rdf.model.Property actual = 
-                FedoraTypesUtils.getPredicateForProperty.apply(mockProp);
+        final PropertyMock mockProp = mock(PropertyMock.class);
+        getPredicateForProperty.apply(mockProp);
     }
-    
+
     @Test
     public void testGetBinary() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        ValueFactory mockVF = mock(ValueFactory.class);
+        final Node mockNode = mock(Node.class);
+        final Session mockSession = mock(Session.class);
+        final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        InputStream mockInput = mock(InputStream.class);
+        final InputStream mockInput = mock(InputStream.class);
         FedoraTypesUtils.getBinary(mockNode, mockInput);
         verify(mockVF).createBinary(mockInput);
         // try it with hints
-        JcrValueFactory mockJVF = mock(JcrValueFactory.class);
+        final JcrValueFactory mockJVF = mock(JcrValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockJVF);
-        String mockHint = "storage-hint";
+        final String mockHint = "storage-hint";
         FedoraTypesUtils.getBinary(mockNode, mockInput, mockHint);
         verify(mockJVF).createBinary(mockInput, mockHint);
     }
-    
+
     @Test
     public void testGetDefinitionForPropertyName() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        String mockPropertyName = "mock:property";
-        Session mockSession = mock(Session.class);
+        final Node mockNode = mock(Node.class);
+        final String mockPropertyName = "mock:property";
+        final Session mockSession = mock(Session.class);
         when(mockNode.getSession()).thenReturn(mockSession);
-        Workspace mockWS = mock(Workspace.class);
+        final Workspace mockWS = mock(Workspace.class);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
-        NodeTypeManager mockNTM = mock(NodeTypeManager.class);
+        final NodeTypeManager mockNTM = mock(NodeTypeManager.class);
         when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
-        NodeType mockType = mock(NodeType.class);
+        final NodeType mockType = mock(NodeType.class);
         when(mockNTM.getNodeType(anyString())).thenReturn(mockType);
-        PropertyDefinition mockPD = mock(PropertyDefinition.class);
+        final PropertyDefinition mockPD = mock(PropertyDefinition.class);
         when(mockPD.getName()).thenReturn(mockPropertyName);
-        PropertyDefinition[] PDs = new PropertyDefinition[]{mockPD};
+        final PropertyDefinition[] PDs = new PropertyDefinition[] {mockPD};
         when(mockType.getPropertyDefinitions()).thenReturn(PDs);
         PropertyDefinition actual =
-                FedoraTypesUtils.getDefinitionForPropertyName(mockNode, mockPropertyName);
+                FedoraTypesUtils.getDefinitionForPropertyName(mockNode,
+                        mockPropertyName);
         assertEquals(mockPD, actual);
         actual =
-                FedoraTypesUtils.getDefinitionForPropertyName(mockNode, mockPropertyName + ":fail");
+                FedoraTypesUtils.getDefinitionForPropertyName(mockNode,
+                        mockPropertyName + ":fail");
         assertEquals(null, actual);
-        
+
     }
-    
+
     @Test
     public void testConvertDateToXSDString() {
-    	String expected = "2006-11-13T09:40:55.001Z";
-    	Calendar date = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-    	date.set(2006, 10, 13, 9, 40, 55);
-    	date.set(Calendar.MILLISECOND, 1);
-    	assertEquals(expected, FedoraTypesUtils.convertDateToXSDString(date.getTimeInMillis()));
+        final String expected = "2006-11-13T09:40:55.001Z";
+        final Calendar date = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        date.set(2006, 10, 13, 9, 40, 55);
+        date.set(Calendar.MILLISECOND, 1);
+        assertEquals(expected, FedoraTypesUtils.convertDateToXSDString(date
+                .getTimeInMillis()));
     }
 
     @Test
     public void testGetBaseVersionForNode() throws RepositoryException {
-        Version mockVersion = mock(Version.class);
-        Node mockNode = mock(Node.class);
+        final Version mockVersion = mock(Version.class);
+        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/my/path");
 
         when(mockNode.getSession()).thenReturn(mock(Session.class));
-        when(mockNode.getSession().getWorkspace()).thenReturn(mock(Workspace.class));
-        when(mockNode.getSession().getWorkspace().getVersionManager()).thenReturn(mock(VersionManager.class));
-        when(mockNode.getSession().getWorkspace().getVersionManager().getBaseVersion("/my/path")).thenReturn(mockVersion);
+        when(mockNode.getSession().getWorkspace()).thenReturn(
+                mock(Workspace.class));
+        when(mockNode.getSession().getWorkspace().getVersionManager())
+                .thenReturn(mock(VersionManager.class));
+        when(
+                mockNode.getSession().getWorkspace().getVersionManager()
+                        .getBaseVersion("/my/path")).thenReturn(mockVersion);
 
-        final Version versionHistory = FedoraTypesUtils.getBaseVersion(mockNode);
+        final Version versionHistory =
+                FedoraTypesUtils.getBaseVersion(mockNode);
 
         assertEquals(mockVersion, versionHistory);
     }
 
     @Test
     public void testGetVersionHistoryForNode() throws RepositoryException {
-        VersionHistory mockVersionHistory = mock(VersionHistory.class);
-        Node mockNode = mock(Node.class);
+        final VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/my/path");
 
         when(mockNode.getSession()).thenReturn(mock(Session.class));
-        when(mockNode.getSession().getWorkspace()).thenReturn(mock(Workspace.class));
-        when(mockNode.getSession().getWorkspace().getVersionManager()).thenReturn(mock(VersionManager.class));
-        when(mockNode.getSession().getWorkspace().getVersionManager().getVersionHistory("/my/path")).thenReturn(mockVersionHistory);
+        when(mockNode.getSession().getWorkspace()).thenReturn(
+                mock(Workspace.class));
+        when(mockNode.getSession().getWorkspace().getVersionManager())
+                .thenReturn(mock(VersionManager.class));
+        when(
+                mockNode.getSession().getWorkspace().getVersionManager()
+                        .getVersionHistory("/my/path")).thenReturn(
+                mockVersionHistory);
 
-        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(mockNode);
+        final VersionHistory versionHistory =
+                FedoraTypesUtils.getVersionHistory(mockNode);
 
         assertEquals(mockVersionHistory, versionHistory);
     }
 
     @Test
-    public void testGetVersionHistoryForSessionAndPath() throws RepositoryException {
-        VersionHistory mockVersionHistory = mock(VersionHistory.class);
-        Session mockSession = mock(Session.class);
+    public void testGetVersionHistoryForSessionAndPath()
+            throws RepositoryException {
+        final VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        final Session mockSession = mock(Session.class);
 
         when(mockSession.getWorkspace()).thenReturn(mock(Workspace.class));
-        when(mockSession.getWorkspace().getVersionManager()).thenReturn(mock(VersionManager.class));
-        when(mockSession.getWorkspace().getVersionManager().getVersionHistory("/my/path")).thenReturn(mockVersionHistory);
+        when(mockSession.getWorkspace().getVersionManager()).thenReturn(
+                mock(VersionManager.class));
+        when(
+                mockSession.getWorkspace().getVersionManager()
+                        .getVersionHistory("/my/path")).thenReturn(
+                mockVersionHistory);
 
-        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(mockSession, "/my/path");
+        final VersionHistory versionHistory =
+                FedoraTypesUtils.getVersionHistory(mockSession, "/my/path");
 
         assertEquals(mockVersionHistory, versionHistory);
     }

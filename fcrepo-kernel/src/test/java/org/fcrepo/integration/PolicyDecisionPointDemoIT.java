@@ -1,9 +1,9 @@
+
 package org.fcrepo.integration;
 
 import java.io.ByteArrayInputStream;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 
@@ -17,37 +17,32 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class PolicyDecisionPointDemoIT extends AbstractIT {
 
-	@Inject
-	Repository repo;
+    @Inject
+    Repository repo;
 
-	@Inject
-	DatastreamService datastreamService;
+    @Inject
+    DatastreamService datastreamService;
 
-	@Inject
-	ObjectService objectService;
+    @Inject
+    ObjectService objectService;
 
-	@Test
-	public void shouldDemonstratePolicyDecisionPoints() throws Exception {
+    @Test
+    public void shouldDemonstratePolicyDecisionPoints() throws Exception {
 
-		Session session = repo.login();
+        final Session session = repo.login();
 
-		PolicyDecisionPoint pt = new PolicyDecisionPoint();
-		pt.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
+        final PolicyDecisionPoint pt = new PolicyDecisionPoint();
+        pt.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
 
-		final Node dsNode =
-				datastreamService.createDatastreamNode(session,
-															  "/testDatastreamPolicyNode",
-															  "application/octet-stream",
-															  new ByteArrayInputStream("asdf".getBytes()));
+        datastreamService.createDatastreamNode(session,
+                "/testDatastreamPolicyNode", "application/octet-stream",
+                new ByteArrayInputStream("asdf".getBytes()));
 
-		final Node dsNodeTiff =
-				datastreamService.createDatastreamNode(session,
-															  "/testDatastreamPolicyNode",
-															  "image/tiff",
-															  new ByteArrayInputStream("1234".getBytes()));
+        datastreamService.createDatastreamNode(session,
+                "/testDatastreamPolicyNode", "image/tiff",
+                new ByteArrayInputStream("1234".getBytes()));
 
-		session.save();
+        session.save();
 
-
-	}
+    }
 }

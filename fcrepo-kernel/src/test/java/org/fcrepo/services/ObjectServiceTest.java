@@ -25,17 +25,14 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class ObjectServiceTest implements FedoraJcrTypes {
 
     private Session mockSession;
-    
+
     private Node mockRoot;
-    
-    private ObjectService testObj;
 
     @Before
     public void setUp() throws RepositoryException {
-    	testObj = new ObjectService();
-    	mockSession = mock(Session.class);
-    	mockRoot = mock(Node.class);
-    	when(mockSession.getRootNode()).thenReturn(mockRoot);
+        mockSession = mock(Session.class);
+        mockRoot = mock(Node.class);
+        when(mockSession.getRootNode()).thenReturn(mockRoot);
     }
 
     @After
@@ -48,7 +45,8 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final String testPath = "/foo";
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         final ObjectService testObj = new ObjectService();
-        final Node actual = testObj.createObject(mockSession, testPath).getNode();
+        final Node actual =
+                testObj.createObject(mockSession, testPath).getNode();
         assertEquals(mockNode, actual);
     }
 
@@ -56,7 +54,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     public void testGetObject() throws RepositoryException {
         final Session mockSession = mock(Session.class);
         final Node mockNode = mock(Node.class);
-		final String testPath = "/foo";
+        final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         final ObjectService testObj = new ObjectService();
         testObj.getObject(mockSession, "/foo");
@@ -66,7 +64,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @Test
     public void testGetObjectNode() throws RepositoryException {
         final Session mockSession = mock(Session.class);
-		final String testPath = "/foo";
+        final String testPath = "/foo";
         final ObjectService testObj = new ObjectService();
         testObj.getObjectNode(mockSession, "/foo");
         verify(mockSession).getNode(testPath);

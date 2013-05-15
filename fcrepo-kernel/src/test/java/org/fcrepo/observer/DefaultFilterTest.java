@@ -42,8 +42,10 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldApplyToObject() throws Exception {
+        @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncTrue = mock(Predicate.class);
         when(mockFuncTrue.apply(any(Node.class))).thenReturn(true);
+        @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncFalse = mock(Predicate.class);
         final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
         final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
@@ -65,8 +67,10 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldApplyToDatastream() throws Exception {
+        @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncTrue = mock(Predicate.class);
         when(mockFuncTrue.apply(any(Node.class))).thenReturn(true);
+        @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncFalse = mock(Predicate.class);
         final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
         final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
@@ -101,6 +105,7 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldNotApplyToSystemNodes() throws Exception {
+        @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncFalse = mock(Predicate.class);
         final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
         final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;

@@ -219,8 +219,8 @@ public class LowLevelStorageServiceTest {
     public void shouldRetrieveLowLevelCacheStoresForCompositeStore()
             throws RepositoryException, CacheLoaderException {
 
-        final Cache ispnCache1 = mock(Cache.class);
-        final Cache ispnCache2 = mock(Cache.class);
+        final Cache<?, ?> ispnCache1 = mock(Cache.class);
+        final Cache<?, ?> ispnCache2 = mock(Cache.class);
         final CacheStore ispnCacheStore1 = mock(CacheStore.class);
         final CacheStore ispnCacheStore2 = mock(CacheStore.class);
         final BinaryStore plainBinaryStore = mock(BinaryStore.class);

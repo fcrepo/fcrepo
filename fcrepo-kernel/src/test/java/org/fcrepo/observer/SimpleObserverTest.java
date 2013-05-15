@@ -1,11 +1,14 @@
+
 package org.fcrepo.observer;
 
+import static com.google.common.collect.Iterables.filter;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -35,60 +38,63 @@ import com.google.common.eventbus.EventBus;
 public class SimpleObserverTest {
 
     private SimpleObserver testObj;
-    
+
     ObservationManager mockOM;
-    
-    private static void setField(String name, SimpleObserver obj, Object val) throws Exception {
-        Field field = SimpleObserver.class.getDeclaredField(name);
+
+    private static void setField(final String name, final SimpleObserver obj,
+            final Object val) throws Exception {
+        final Field field = SimpleObserver.class.getDeclaredField(name);
         field.setAccessible(true);
         field.set(obj, val);
     }
-    
+
     @Before
     public void setUp() throws Exception {
-        testObj = new SimpleObserver();        
+        testObj = new SimpleObserver();
     }
-    
+
     @Test
     public void testBuildListener() throws Exception {
-        Repository mockRepository = mock(Repository.class);
-        Session mockSession = mock(Session.class);
-        Workspace mockWS = mock(Workspace.class);
+        final Repository mockRepository = mock(Repository.class);
+        final Session mockSession = mock(Session.class);
+        final Workspace mockWS = mock(Workspace.class);
         mockOM = mock(ObservationManager.class);
         when(mockWS.getObservationManager()).thenReturn(mockOM);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockRepository.login()).thenReturn(mockSession);
         setField("repository", testObj, mockRepository);
         testObj.buildListener();
-        verify(mockOM).addEventListener(testObj, SimpleObserver.EVENT_TYPES , "/", true, null, null, false);
+        verify(mockOM).addEventListener(testObj, SimpleObserver.EVENT_TYPES,
+                "/", true, null, null, false);
     }
-    
+
+    @SuppressWarnings("unchecked")
     @Test
     public void testOnEvent() throws Exception {
-        EventBus mockBus = mock(EventBus.class);
-        EventFilter mockFilter = mock(EventFilter.class);
+        final EventBus mockBus = mock(EventBus.class);
+        final EventFilter mockFilter = mock(EventFilter.class);
         setField("eventBus", testObj, mockBus);
         setField("eventFilter", testObj, mockFilter);
-        Event mockEvent = mock(Event.class);
-        EventIterator mockEvents = mock(EventIterator.class);
-        List<Event> iterable = Arrays.asList(new Event[]{mockEvent});
-        PowerMockito.mockStatic(Iterables.class);
-        when(Iterables.filter(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
+        final Event mockEvent = mock(Event.class);
+        final EventIterator mockEvents = mock(EventIterator.class);
+        final List<Event> iterable = Arrays.asList(new Event[] {mockEvent});
+        mockStatic(Iterables.class);
+        when(filter(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
         testObj.onEvent(mockEvents);
         verify(mockBus).post(any(Event.class));
     }
-    
+
+    @SuppressWarnings("unchecked")
     @Test
     public void testOnEventAllFiltered() throws Exception {
-        EventBus mockBus = mock(EventBus.class);
-        EventFilter mockFilter = mock(EventFilter.class);
+        final EventBus mockBus = mock(EventBus.class);
+        final EventFilter mockFilter = mock(EventFilter.class);
         setField("eventBus", testObj, mockBus);
         setField("eventFilter", testObj, mockFilter);
-        Event mockEvent = mock(Event.class);
-        EventIterator mockEvents = mock(EventIterator.class);
-        List<Event> iterable = Arrays.asList(new Event[0]);
+        final EventIterator mockEvents = mock(EventIterator.class);
+        final List<Event> iterable = Arrays.asList(new Event[0]);
         PowerMockito.mockStatic(Iterables.class);
-        when(Iterables.filter(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
+        when(filter(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
         testObj.onEvent(mockEvents);
         verify(mockBus, never()).post(any(Event.class));
     }

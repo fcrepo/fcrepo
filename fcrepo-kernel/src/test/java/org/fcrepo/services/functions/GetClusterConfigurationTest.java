@@ -1,3 +1,4 @@
+
 package org.fcrepo.services.functions;
 
 import static org.junit.Assert.assertEquals;
@@ -23,41 +24,46 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 public class GetClusterConfigurationTest {
 
-	private GetClusterConfiguration testObj;
-	
-	@Before
-	public void setUp(){
-		testObj = new GetClusterConfiguration();
-	}
-	
-	@Test
-	public void testGood() throws Exception {
-		JcrRepository mockRepo = mock(JcrRepository.class);
-		RepositoryConfiguration mockConfig = mock(RepositoryConfiguration.class);
-		when(mockRepo.getConfiguration()).thenReturn(mockConfig);
-		BinaryStorage mockStorage = mock(BinaryStorage.class);
-		when(mockConfig.getBinaryStorage()).thenReturn(mockStorage);
-		InfinispanBinaryStore mockStore = mock(InfinispanBinaryStore.class);
-		when(mockStorage.getBinaryStore()).thenReturn(mockStore);
-		Cache<Object,Object> mockCache = mock(Cache.class);
-		List<Cache<?,?>> mockCaches = Arrays.asList(new Cache<?,?>[]{mockCache});
-		when(mockStore.getCaches()).thenReturn(mockCaches);
-		DefaultCacheManager mockCM = mock(DefaultCacheManager.class);
-		when(mockCM.getCache()).thenReturn(mockCache);
-		Configuration mockCC = mock(Configuration.class);
-		when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
-		ClusteringConfiguration mockClustering = mock(ClusteringConfiguration.class);
-		when(mockCC.clustering()).thenReturn(mockClustering);
-		when(mockClustering.cacheMode()).thenReturn(CacheMode.LOCAL);
-		when(mockCache.getCacheManager()).thenReturn(mockCM);
-		Map<String, String> actual = testObj.apply(mockRepo);
-		assertNotNull(actual);
-	}
-	
-	@Test
-	public void testBad() {
-		JcrRepository mockRepo = mock(JcrRepository.class);
-		Map<String, String> actual = testObj.apply(mockRepo);
-		assertEquals(null, actual);
-	}
+    private GetClusterConfiguration testObj;
+
+    @Before
+    public void setUp() {
+        testObj = new GetClusterConfiguration();
+    }
+
+    @Test
+    public void testGood() throws Exception {
+        final JcrRepository mockRepo = mock(JcrRepository.class);
+        final RepositoryConfiguration mockConfig =
+                mock(RepositoryConfiguration.class);
+        when(mockRepo.getConfiguration()).thenReturn(mockConfig);
+        final BinaryStorage mockStorage = mock(BinaryStorage.class);
+        when(mockConfig.getBinaryStorage()).thenReturn(mockStorage);
+        final InfinispanBinaryStore mockStore =
+                mock(InfinispanBinaryStore.class);
+        when(mockStorage.getBinaryStore()).thenReturn(mockStore);
+        @SuppressWarnings("unchecked")
+        final Cache<Object, Object> mockCache = mock(Cache.class);
+        final List<Cache<?, ?>> mockCaches =
+                Arrays.asList(new Cache<?, ?>[] {mockCache});
+        when(mockStore.getCaches()).thenReturn(mockCaches);
+        final DefaultCacheManager mockCM = mock(DefaultCacheManager.class);
+        when(mockCM.getCache()).thenReturn(mockCache);
+        final Configuration mockCC = mock(Configuration.class);
+        when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
+        final ClusteringConfiguration mockClustering =
+                mock(ClusteringConfiguration.class);
+        when(mockCC.clustering()).thenReturn(mockClustering);
+        when(mockClustering.cacheMode()).thenReturn(CacheMode.LOCAL);
+        when(mockCache.getCacheManager()).thenReturn(mockCM);
+        final Map<String, String> actual = testObj.apply(mockRepo);
+        assertNotNull(actual);
+    }
+
+    @Test
+    public void testBad() {
+        final JcrRepository mockRepo = mock(JcrRepository.class);
+        final Map<String, String> actual = testObj.apply(mockRepo);
+        assertEquals(null, actual);
+    }
 }

@@ -1,6 +1,7 @@
 
 package org.fcrepo.services;
 
+import static org.fcrepo.services.RepositoryService.getRepositoryNamespaces;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
@@ -161,14 +162,13 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetRepositoryNamespaces() throws RepositoryException {
-        final Map<String, String> actual =
-                testObj.getRepositoryNamespaces(mockSession);
+        final Map<String, String> actual = getRepositoryNamespaces(mockSession);
         assertEquals(expectedNS, actual);
     }
-    
+
     @Test
     public void testExists() throws RepositoryException {
-        String existsPath = "/foo/bar/exists";
+        final String existsPath = "/foo/bar/exists";
         when(mockSession.nodeExists(existsPath)).thenReturn(true);
         assertEquals(true, testObj.exists(mockSession, existsPath));
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
@@ -176,11 +176,11 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testIsFile() throws RepositoryException {
-        String filePath = "/foo/bar/file";
-        String folderPath = "/foo/bar/folder";
-        Node mockFile = mock(Node.class);
+        final String filePath = "/foo/bar/file";
+        final String folderPath = "/foo/bar/folder";
+        final Node mockFile = mock(Node.class);
         when(mockFile.isNodeType("nt:file")).thenReturn(true);
-        Node mockFolder = mock(Node.class);
+        final Node mockFolder = mock(Node.class);
         when(mockFolder.isNodeType("nt:file")).thenReturn(false);
         when(mockSession.getNode(filePath)).thenReturn(mockFile);
         when(mockSession.getNode(folderPath)).thenReturn(mockFolder);

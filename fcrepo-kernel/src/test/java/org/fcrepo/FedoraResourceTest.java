@@ -175,7 +175,7 @@ public class FedoraResourceTest {
         verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", true);
     }
 
-    private static void setField(final String name, final Class clazz,
+    private static void setField(final String name, final Class<?> clazz,
             final Object value, final Object object) {
         try {
             final Field field = clazz.getDeclaredField(name);
