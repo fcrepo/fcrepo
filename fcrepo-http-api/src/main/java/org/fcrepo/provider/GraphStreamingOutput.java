@@ -3,16 +3,11 @@ package org.fcrepo.provider;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.jena.riot.WebContent;
-import org.fcrepo.FedoraResource;
-import org.fcrepo.services.NodeService;
-import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

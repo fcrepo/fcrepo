@@ -1,6 +1,5 @@
 package org.fcrepo.api;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +19,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.fcrepo.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

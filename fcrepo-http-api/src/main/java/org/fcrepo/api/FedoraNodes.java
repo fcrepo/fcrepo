@@ -1,9 +1,17 @@
 
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static org.fcrepo.http.RDFMediaType.*;
+import static org.fcrepo.http.RDFMediaType.N3;
+import static org.fcrepo.http.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.http.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.RDFMediaType.TURTLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -11,7 +19,6 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
@@ -31,22 +38,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Variant;
 
-import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.jena.riot.WebContent;
 import org.fcrepo.AbstractResource;
-import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.jaxb.responses.access.DescribeRepository;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.fcrepo.provider.GraphStreamingOutput;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
@@ -56,6 +56,9 @@ import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.update.UpdateAction;
 
 @Component
 @Path("/rest/{path: .*}")

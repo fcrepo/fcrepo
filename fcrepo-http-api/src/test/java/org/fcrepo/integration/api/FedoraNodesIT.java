@@ -7,17 +7,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+
+import javax.ws.rs.core.Response;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
 import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
 
 public class FedoraNodesIT extends AbstractResourceIT {
 

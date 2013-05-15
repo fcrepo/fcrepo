@@ -1,20 +1,26 @@
 
 package org.fcrepo.api;
 
+import static org.fcrepo.http.RDFMediaType.N3;
+import static org.fcrepo.http.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.http.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.RDFMediaType.TURTLE;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.version.VersionException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
@@ -26,17 +32,6 @@ import org.fcrepo.FedoraResource;
 import org.fcrepo.provider.GraphStreamingOutput;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-
-import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.http.RDFMediaType.N3;
-import static org.fcrepo.http.RDFMediaType.N3_ALT1;
-import static org.fcrepo.http.RDFMediaType.N3_ALT2;
-import static org.fcrepo.http.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
-import static org.fcrepo.http.RDFMediaType.RDF_JSON;
-import static org.fcrepo.http.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.RDFMediaType.TURTLE;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Component
 @Path("/rest/{path: .*}/fcr:versions")
