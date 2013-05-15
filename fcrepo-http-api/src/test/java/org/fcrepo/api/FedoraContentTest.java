@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.security.Principal;
 
 import javax.jcr.LoginException;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -90,19 +91,45 @@ public class FedoraContentTest {
     }
 
     @Test
-    public void testModifyContent() throws RepositoryException, IOException,
+    public void testPutContent() throws RepositoryException, IOException,
             InvalidChecksumException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        Node mockNode = mock(Node.class);
+        when(mockNode.isNew()).thenReturn(true);
+        when(mockDatastreams.createDatastreamNode(any(Session.class),
+                                                          eq(dsPath), anyString(), any(InputStream.class))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
                 testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class));
+        verify(mockSession).save();
+    }
+
+
+    @Test
+    public void testModifyContent() throws RepositoryException, IOException,
+                                                   InvalidChecksumException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "testDS";
+        final String dsContent = "asdf";
+        final String dsPath = "/" + pid + "/" + dsId;
+        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        Node mockNode = mock(Node.class);
+        when(mockNode.isNew()).thenReturn(false);
+        when(mockDatastreams.createDatastreamNode(any(Session.class),
+                                                         eq(dsPath), anyString(), any(InputStream.class))).thenReturn(mockNode);
+        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final Response actual =
+                testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream);
+        assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams).createDatastreamNode(any(Session.class),
+                                                            eq(dsPath), anyString(), any(InputStream.class));
         verify(mockSession).save();
     }
 

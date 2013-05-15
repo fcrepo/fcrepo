@@ -96,9 +96,12 @@ public abstract class AbstractResourceIT {
         return post;
     }
 
-    protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid + 
+    protected static HttpPut putDSMethod(final String pid, final String ds, final String content) throws UnsupportedEncodingException {
+        final HttpPut put = new HttpPut(serverAddress + "objects/" + pid +
                 "/" + ds + "/fcr:content");
+
+        put.setEntity(new StringEntity(content));
+        return put;
     }
 
     protected HttpResponse execute(final HttpUriRequest method)

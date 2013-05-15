@@ -3,6 +3,7 @@ package org.fcrepo.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -109,18 +111,21 @@ public class FedoraContent extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             String path = toPath(pathList);
-            if (!datastreamService.exists(session, path)) {
-                return Response.status(404).entity("No datastream to mutate at " + path).build();
-            }
             final MediaType contentType =
                     requestContentType != null ? requestContentType
                             : APPLICATION_OCTET_STREAM_TYPE;
 
             logger.debug("create Datastream {}", path);
-            datastreamService.createDatastreamNode(session, path, contentType
-                    .toString(), requestBodyStream);
+            final Node datastreamNode = datastreamService.createDatastreamNode(session, path, contentType
+                                                                                                      .toString(), requestBodyStream);
+            final boolean isNew = datastreamNode.isNew();
             session.save();
-            return created(uriInfo.getBaseUriBuilder().path("/rest" + path).build()).build();
+
+            if (isNew) {
+                return created(uriInfo.getBaseUriBuilder().path("/rest" + path).build()).build();
+            } else {
+                return noContent().build();
+            }
         } finally {
             session.logout();
         }

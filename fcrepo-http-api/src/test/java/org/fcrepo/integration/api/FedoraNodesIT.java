@@ -62,6 +62,45 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         "objects/FedoraObjectsTest3")));
     }
 
+    @Test
+    public void testGetDatastream() throws Exception {
+        execute(postObjMethod("FedoraDatastreamsTest4"));
+
+        assertEquals(404, getStatus(new HttpGet(serverAddress +
+                                                        "objects/FedoraDatastreamsTest4/ds1")));
+        assertEquals(201, getStatus(postDSMethod("FedoraDatastreamsTest4",
+                                                        "ds1", "foo")));
+        final HttpResponse response =
+                execute(new HttpGet(serverAddress +
+                                            "objects/FedoraDatastreamsTest4/ds1"));
+        assertEquals(EntityUtils.toString(response.getEntity()), 200, response
+                                                                              .getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testDeleteDatastream() throws Exception {
+        execute(postObjMethod("FedoraDatastreamsTest5"));
+
+        final HttpPost method =
+                postDSMethod("FedoraDatastreamsTest5", "ds1", "foo");
+        assertEquals(201, getStatus(method));
+
+        final HttpGet method_2 =
+                new HttpGet(serverAddress +
+                                    "objects/FedoraDatastreamsTest5/ds1");
+        assertEquals(200, getStatus(method_2));
+
+        final HttpDelete dmethod =
+                new HttpDelete(serverAddress +
+                                       "objects/FedoraDatastreamsTest5/ds1");
+        assertEquals(204, getStatus(dmethod));
+
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                                    "objects/FedoraDatastreamsTest5/ds1");
+        assertEquals(404, getStatus(method_test_get));
+    }
+
 	@Test
 	public void testGetObjectGraph() throws Exception {
 		client.execute(postObjMethod("FedoraDescribeTestGraph"));
