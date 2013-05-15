@@ -14,7 +14,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
-import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.poi.util.IOUtils;

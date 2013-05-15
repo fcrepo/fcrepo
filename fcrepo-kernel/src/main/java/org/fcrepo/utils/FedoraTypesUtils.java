@@ -24,16 +24,16 @@ import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.Namespaced;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the JCR.

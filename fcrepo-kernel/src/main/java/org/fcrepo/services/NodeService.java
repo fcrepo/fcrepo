@@ -1,10 +1,9 @@
 package org.fcrepo.services;
 
-import com.google.common.collect.ImmutableSet;
-import org.fcrepo.FedoraResource;
-import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.FedoraTypesUtils;
-import org.slf4j.Logger;
+import static com.google.common.collect.ImmutableSet.builder;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -12,10 +11,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
-import java.util.Set;
 
-import static com.google.common.collect.ImmutableSet.builder;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.FedoraResource;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
+import org.slf4j.Logger;
+
+import com.google.common.collect.ImmutableSet;
 
 public class NodeService extends RepositoryService implements FedoraJcrTypes {
 

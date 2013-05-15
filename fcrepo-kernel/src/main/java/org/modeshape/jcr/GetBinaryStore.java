@@ -6,7 +6,6 @@ import static com.google.common.base.Throwables.propagate;
 
 import javax.jcr.Repository;
 
-import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.binary.BinaryStore;
 
 import com.google.common.base.Function;

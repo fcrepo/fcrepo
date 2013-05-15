@@ -1,27 +1,27 @@
 
 package org.fcrepo.integration;
 
+import static java.util.regex.Pattern.compile;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.inject.Inject;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.UpdateAction;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
-import static java.util.regex.Pattern.compile;
-import static org.junit.Assert.*;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraObjectIT extends AbstractIT {

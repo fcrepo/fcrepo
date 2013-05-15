@@ -1,18 +1,18 @@
 package org.fcrepo.integration;
 
-import org.fcrepo.binary.MimeTypePolicy;
-import org.fcrepo.binary.PolicyDecisionPoint;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.ObjectService;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.ContextConfiguration;
+import java.io.ByteArrayInputStream;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.Session;
-import java.io.ByteArrayInputStream;
+
+import org.fcrepo.binary.MimeTypePolicy;
+import org.fcrepo.binary.PolicyDecisionPoint;
+import org.fcrepo.services.DatastreamService;
+import org.fcrepo.services.ObjectService;
+import org.junit.Test;
+import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class PolicyDecisionPointDemoIT extends AbstractIT {

@@ -1,6 +1,5 @@
 package org.fcrepo;
 
-import java.beans.Transient;
 import java.util.Date;
 import java.util.UUID;
 
@@ -10,9 +9,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 @XmlRootElement(name = "transaction")
 @XmlAccessorType(XmlAccessType.FIELD)

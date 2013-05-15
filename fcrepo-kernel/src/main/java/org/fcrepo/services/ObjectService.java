@@ -13,8 +13,6 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
-import com.google.common.collect.ImmutableSet.Builder;
-
 /**
  * Service for creating and retrieving FedoraObjects without using the JCR API.
  * 

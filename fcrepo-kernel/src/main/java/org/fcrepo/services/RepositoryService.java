@@ -20,7 +20,6 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
-import com.codahale.metrics.Timer;
 import org.fcrepo.metrics.RegistryService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.NamespaceTools;
@@ -30,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 

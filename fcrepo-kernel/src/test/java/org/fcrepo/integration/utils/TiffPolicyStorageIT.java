@@ -1,6 +1,20 @@
 
 package org.fcrepo.integration.utils;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
+import java.io.ByteArrayInputStream;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
 import org.fcrepo.binary.MimeTypePolicy;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.services.DatastreamService;
@@ -15,18 +29,6 @@ import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.value.BinaryKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import java.io.ByteArrayInputStream;
-import java.net.URL;
-import java.util.Iterator;
-import java.util.Set;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
 
 public class TiffPolicyStorageIT {
 

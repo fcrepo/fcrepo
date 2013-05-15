@@ -2,10 +2,13 @@ package org.fcrepo.utils.infinispan;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 
 import org.fcrepo.utils.TestHelpers;
 import org.infinispan.container.entries.InternalCacheEntry;

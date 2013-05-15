@@ -1,6 +1,7 @@
 package org.fcrepo.utils;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;

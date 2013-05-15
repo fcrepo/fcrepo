@@ -1,3 +1,4 @@
+
 package org.fcrepo;
 
 import static org.junit.Assert.assertEquals;
@@ -34,8 +35,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
-@PowerMockIgnore({"org.slf4j.*","org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({NamespaceTools.class, JcrRdfTools.class, FedoraTypesUtils.class})
+@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
+        "org.xml.sax.*", "javax.management.*"})
+@PrepareForTest({NamespaceTools.class, JcrRdfTools.class,
+        FedoraTypesUtils.class})
 public class FedoraResourceTest {
 
     FedoraResource testObj;
@@ -47,7 +50,7 @@ public class FedoraResourceTest {
     Session mockSession;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         mockSession = mock(Session.class);
         mockNode = mock(Node.class);
         testObj = new FedoraResource(mockNode);
@@ -56,21 +59,21 @@ public class FedoraResourceTest {
 
     @Test
     public void testPathConstructor() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        Node mockRoot = mock(Node.class);
+        final Node mockNode = mock(Node.class);
+        final Node mockRoot = mock(Node.class);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
         when(mockNode.getSession()).thenReturn(mockSession);
-        FedoraResource test = new FedoraResource(mockSession, "/foo/bar", null);
+        new FedoraResource(mockSession, "/foo/bar", null);
     }
 
     @Test
-    public void testHasMixin() throws RepositoryException{
+    public void testHasMixin() throws RepositoryException {
         boolean actual = FedoraResource.hasMixin(mockNode);
         assertEquals(false, actual);
-        NodeType mockType = mock(NodeType.class);
-        NodeType[] mockTypes = new NodeType[]{mockType};
+        final NodeType mockType = mock(NodeType.class);
+        final NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
         actual = FedoraResource.hasMixin(mockNode);
         assertEquals(false, actual);
@@ -87,66 +90,70 @@ public class FedoraResourceTest {
 
     @Test
     public void testGetCreatedDate() throws RepositoryException {
-        Property mockProp = mock(Property.class);
-        Calendar someDate = Calendar.getInstance();
+        final Property mockProp = mock(Property.class);
+        final Calendar someDate = Calendar.getInstance();
         when(mockProp.getDate()).thenReturn(someDate);
-        when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(mockProp);
+        when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(
+                mockProp);
         testObj.getCreatedDate();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void testGetLastModifiedDateDefault() throws RepositoryException{
+    public void testGetLastModifiedDateDefault() throws RepositoryException {
         // test missing JCR_LASTMODIFIED
-        Calendar someDate = Calendar.getInstance();
+        final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
         try {
             when(mockNode.getProperty(FedoraResource.JCR_LASTMODIFIED))
-            .thenThrow(RepositoryException.class);
-            Property mockProp = mock(Property.class);
+                    .thenThrow(RepositoryException.class);
+            final Property mockProp = mock(Property.class);
             when(mockProp.getDate()).thenReturn(someDate);
-            when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(mockProp);
+            when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(
+                    mockProp);
             when(mockNode.getSession()).thenReturn(mockSession);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
-        Date actual = testObj.getLastModifiedDate();
+        final Date actual = testObj.getLastModifiedDate();
         assertEquals(someDate.getTimeInMillis(), actual.getTime());
         // this is a read operation, it must not persist the session
         verify(mockSession, never()).save();
     }
 
     @Test
-    public void testGetLastModifiedDate(){
+    public void testGetLastModifiedDate() {
         // test existing JCR_LASTMODIFIED
-        Calendar someDate = Calendar.getInstance();
+        final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
         try {
-            Property mockProp = mock(Property.class);
+            final Property mockProp = mock(Property.class);
             when(mockProp.getDate()).thenReturn(someDate);
-            when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(mockProp);
+            when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(
+                    mockProp);
             when(mockNode.getSession()).thenReturn(mockSession);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
-        Property mockMod = mock(Property.class);
-        Calendar modDate = Calendar.getInstance();
-        try{
+        final Property mockMod = mock(Property.class);
+        final Calendar modDate = Calendar.getInstance();
+        try {
             when(mockNode.getProperty(FedoraResource.JCR_LASTMODIFIED))
-            .thenReturn(mockMod);
+                    .thenReturn(mockMod);
             when(mockMod.getDate()).thenReturn(modDate);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             System.err.println("What are we doing in the second test?");
             e.printStackTrace();
         }
-        Date actual = testObj.getLastModifiedDate();
+        final Date actual = testObj.getLastModifiedDate();
         assertEquals(modDate.getTimeInMillis(), actual.getTime());
     }
-    
+
     @Test
     public void testGetGraphProblems() throws RepositoryException {
-        Problems actual = testObj.getGraphProblems();
+        final Problems actual = testObj.getGraphProblems();
         assertEquals(null, actual);
-        JcrPropertyStatementListener mockListener =
+        final JcrPropertyStatementListener mockListener =
                 mock(JcrPropertyStatementListener.class);
         setField("listener", FedoraResource.class, mockListener, testObj);
         testObj.getGraphProblems();
@@ -157,22 +164,24 @@ public class FedoraResourceTest {
     public void testAddVersionLabel() throws RepositoryException {
 
         mockStatic(FedoraTypesUtils.class);
-        VersionHistory mockVersionHistory = mock(VersionHistory.class);
-        Version mockVersion = mock(Version.class);
+        final VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        final Version mockVersion = mock(Version.class);
         when(mockVersion.getName()).thenReturn("uuid");
         when(FedoraTypesUtils.getBaseVersion(mockNode)).thenReturn(mockVersion);
-        when(FedoraTypesUtils.getVersionHistory(mockNode)).thenReturn(mockVersionHistory);
+        when(FedoraTypesUtils.getVersionHistory(mockNode)).thenReturn(
+                mockVersionHistory);
 
         testObj.addVersionLabel("v1.0.0");
         verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", true);
     }
-    
-    private static void setField(String name, Class clazz, Object value, Object object) {
-        try{
-            Field field = clazz.getDeclaredField(name);
+
+    private static void setField(final String name, final Class clazz,
+            final Object value, final Object object) {
+        try {
+            final Field field = clazz.getDeclaredField(name);
             field.setAccessible(true);
             field.set(object, value);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             t.printStackTrace();
         }
     }

@@ -1,6 +1,10 @@
 package org.fcrepo.utils;
 
-import org.slf4j.Logger;
+import static org.fcrepo.utils.FedoraTypesUtils.getDefinitionForPropertyName;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -8,11 +12,8 @@ import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.PropertyDefinition;
-import java.util.ArrayList;
-import java.util.Collections;
 
-import static org.fcrepo.utils.FedoraTypesUtils.getDefinitionForPropertyName;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 public abstract class NodePropertiesTools {
 

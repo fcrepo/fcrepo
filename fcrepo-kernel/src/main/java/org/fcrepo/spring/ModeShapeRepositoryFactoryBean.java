@@ -6,7 +6,6 @@ import java.util.Collections;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 

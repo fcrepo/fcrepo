@@ -3,8 +3,10 @@ package org.fcrepo.observer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 
@@ -21,16 +23,17 @@ import org.modeshape.jcr.api.Repository;
 import com.google.common.base.Predicate;
 
 public class DefaultFilterTest {
-    
+
     private DefaultFilter testObj;
-    
+
     private Session mockSession;
+
     @Before
     public void setUp() throws Exception {
         testObj = new DefaultFilter();
-        Field repoF = DefaultFilter.class.getDeclaredField("repository");
+        final Field repoF = DefaultFilter.class.getDeclaredField("repository");
         repoF.setAccessible(true);
-        Repository mockRepo = mock(Repository.class);
+        final Repository mockRepo = mock(Repository.class);
         mockSession = mock(Session.class);
         when(mockRepo.login()).thenReturn(mockSession);
         repoF.set(testObj, mockRepo);
@@ -39,19 +42,19 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldApplyToObject() throws Exception {
-        Predicate<Node> mockFuncTrue = mock(Predicate.class);
+        final Predicate<Node> mockFuncTrue = mock(Predicate.class);
         when(mockFuncTrue.apply(any(Node.class))).thenReturn(true);
-        Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
-        
+        final Predicate<Node> mockFuncFalse = mock(Predicate.class);
+        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
+        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+
         try {
             FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
             FedoraTypesUtils.isFedoraObject = mockFuncTrue;
-            String testPath = "/foo/bar";
-            Event mockEvent = mock(Event.class);
+            final String testPath = "/foo/bar";
+            final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
-            Node mockNode = mock(Node.class);
+            final Node mockNode = mock(Node.class);
             when(mockSession.getNode(testPath)).thenReturn(mockNode);
             assertTrue(testObj.apply(mockEvent));
         } finally {
@@ -62,19 +65,19 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldApplyToDatastream() throws Exception {
-        Predicate<Node> mockFuncTrue = mock(Predicate.class);
+        final Predicate<Node> mockFuncTrue = mock(Predicate.class);
         when(mockFuncTrue.apply(any(Node.class))).thenReturn(true);
-        Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
-        
+        final Predicate<Node> mockFuncFalse = mock(Predicate.class);
+        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
+        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+
         try {
             FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
             FedoraTypesUtils.isFedoraObject = mockFuncTrue;
-            String testPath = "/foo/bar";
-            Event mockEvent = mock(Event.class);
+            final String testPath = "/foo/bar";
+            final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
-            Node mockNode = mock(Node.class);
+            final Node mockNode = mock(Node.class);
             when(mockSession.getNode(testPath)).thenReturn(mockNode);
             assertTrue(testObj.apply(mockEvent));
         } finally {
@@ -82,32 +85,33 @@ public class DefaultFilterTest {
             FedoraTypesUtils.isFedoraObject = holdO;
         }
     }
-    
+
+    @SuppressWarnings("unchecked")
     @Test
     public void shouldNotApplyToNonExistentNodes() throws Exception {
-        
-        String testPath = "/foo/bar";
-        Event mockEvent = mock(Event.class);
+
+        final String testPath = "/foo/bar";
+        final Event mockEvent = mock(Event.class);
         when(mockEvent.getPath()).thenReturn(testPath);
-        Node mockNode = mock(Node.class);
-        when(mockSession.getNode(testPath)).thenThrow(PathNotFoundException.class);
+        when(mockSession.getNode(testPath)).thenThrow(
+                PathNotFoundException.class);
         assertEquals(false, testObj.apply(mockEvent));
         verify(mockSession).getNode(testPath);
     }
-    
+
     @Test
     public void shouldNotApplyToSystemNodes() throws Exception {
-        Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
-        
+        final Predicate<Node> mockFuncFalse = mock(Predicate.class);
+        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
+        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+
         try {
             FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
             FedoraTypesUtils.isFedoraObject = mockFuncFalse;
-            String testPath = "/foo/bar";
-            Event mockEvent = mock(Event.class);
+            final String testPath = "/foo/bar";
+            final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
-            Node mockNode = mock(Node.class);
+            final Node mockNode = mock(Node.class);
             when(mockSession.getNode(testPath)).thenReturn(mockNode);
             assertEquals(false, testObj.apply(mockEvent));
         } finally {

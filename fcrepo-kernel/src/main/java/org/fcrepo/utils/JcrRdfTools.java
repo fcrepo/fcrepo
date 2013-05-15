@@ -1,5 +1,27 @@
 package org.fcrepo.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.fcrepo.utils.FedoraJcrTypes.FCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
+
+import org.fcrepo.services.LowLevelStorageService;
+import org.modeshape.jcr.api.JcrConstants;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.slf4j.Logger;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
@@ -9,22 +31,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.services.LowLevelStorageService;
-import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.api.NamespaceRegistry;
-import org.slf4j.Logger;
-
-import javax.jcr.*;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionIterator;
-
-
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.fcrepo.utils.FedoraJcrTypes.FCR_CONTENT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public abstract class JcrRdfTools {
 

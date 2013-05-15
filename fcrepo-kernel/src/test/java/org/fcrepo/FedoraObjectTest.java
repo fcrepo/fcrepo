@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;

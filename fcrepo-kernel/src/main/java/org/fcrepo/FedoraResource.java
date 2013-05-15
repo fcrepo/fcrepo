@@ -1,9 +1,22 @@
 package org.fcrepo;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.GraphStoreFactory;
-import com.hp.hpl.jena.update.UpdateAction;
+import static org.fcrepo.services.ServiceHelpers.getObjectSize;
+import static org.fcrepo.utils.FedoraTypesUtils.getBaseVersion;
+import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
+import static org.fcrepo.utils.FedoraTypesUtils.map;
+import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.VersionHistory;
+
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.fcrepo.utils.JcrRdfTools;
@@ -12,21 +25,10 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-import javax.jcr.version.VersionHistory;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-
-import static org.fcrepo.services.ServiceHelpers.getObjectSize;
-import static org.fcrepo.utils.FedoraTypesUtils.getBaseVersion;
-import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
-import static org.fcrepo.utils.FedoraTypesUtils.map;
-import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
+import com.hp.hpl.jena.update.UpdateAction;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 

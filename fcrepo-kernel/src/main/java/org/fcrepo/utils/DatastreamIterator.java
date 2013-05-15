@@ -1,6 +1,8 @@
 
 package org.fcrepo.utils;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.Iterator;
 
 import javax.jcr.Node;
@@ -9,8 +11,6 @@ import javax.jcr.NodeIterator;
 import org.fcrepo.Datastream;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class DatastreamIterator implements Iterator<Datastream> {
 

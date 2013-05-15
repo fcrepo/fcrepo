@@ -1,12 +1,12 @@
 
 package org.fcrepo.services;
 
+import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
-import static com.codahale.metrics.MetricRegistry.name;
 import static java.security.MessageDigest.getInstance;
 import static org.fcrepo.services.RepositoryService.metrics;
 import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
@@ -33,25 +33,25 @@ import javax.jcr.Session;
 
 import org.fcrepo.Datastream;
 import org.fcrepo.services.functions.GetBinaryKey;
-import org.infinispan.loaders.CacheLoaderException;
-import org.modeshape.jcr.GetBinaryStore;
 import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
+import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.CompositeBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 
 public class LowLevelStorageService {
 

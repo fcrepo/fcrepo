@@ -1,26 +1,36 @@
 package org.fcrepo.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.Calendar;
+
+import javax.jcr.Node;
+import javax.jcr.PropertyIterator;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
+import javax.jcr.Workspace;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.powermock.api.mockito.PowerMockito;
+
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.modeshape.jcr.api.NamespaceRegistry;
-import org.powermock.api.mockito.PowerMockito;
-
-import javax.jcr.*;
-import javax.jcr.PropertyIterator;
-
-import java.util.Arrays;
-import java.util.Calendar;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.*;
 
 
 public class JcrRdfToolsTest {
