@@ -197,6 +197,38 @@ public class JcrRdfToolsTest {
         //TODO exercise non-empty PropertyIterator
     }
 
+
+    @Test
+    public void shouldExcludeBinaryProperties() throws RepositoryException {
+        String fakeInternalUri = "info:fedora/test/jcr";
+        Node mockParent = mock(Node.class);
+        when(mockParent.getPath()).thenReturn("/test");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+        when(mockNode.getParent()).thenReturn(mockParent);
+        javax.jcr.NodeIterator mockNodes = mock(javax.jcr.NodeIterator.class);
+        when(mockNode.getNodes()).thenReturn(mockNodes);
+        PowerMockito.mockStatic(NamespaceTools.class);
+        NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
+        String[] testPrefixes = new String[]{"jcr"};
+        when(mockNames.getPrefixes()).thenReturn(testPrefixes);
+        when(mockNames.getURI("jcr")).thenReturn(fakeInternalUri);
+        when(NamespaceTools.getNamespaceRegistry(mockNode)).thenReturn(mockNames);
+        javax.jcr.PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockNode.getProperties()).thenReturn(mockProperties);
+        when(mockParent.getProperties()).thenReturn(mockProperties);
+        when(mockProperties.hasNext()).thenReturn(true, false);
+        javax.jcr.Property mockProperty = mock(javax.jcr.Property.class);
+        Value mockValue = mock(Value.class);
+        when(mockProperty.getValue()).thenReturn(mockValue);
+        when(mockValue.getType()).thenReturn(PropertyType.BINARY);
+        when(mockProperties.nextProperty()).thenReturn(mockProperty);
+
+        Model actual = JcrRdfTools.getJcrPropertiesModel(mockNode);
+
+        // we expect 2 statements, both auto-generated
+        assertEquals(2, actual.size());
+    }
+
     @Test
     public void shouldMapRdfValuesToJcrPropertyValues()
             throws RepositoryException {

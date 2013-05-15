@@ -330,6 +330,11 @@ public abstract class JcrRdfTools {
      */
     public static void addPropertyToModel(final Resource subject, final Model model, final Property property, Value v) throws RepositoryException {
 
+        if (v.getType() == PropertyType.BINARY) {
+            // exclude binary types from property serialization
+            return;
+        }
+
         final com.hp.hpl.jena.rdf.model.Property predicate = FedoraTypesUtils.getPredicateForProperty.apply(property);
 
         final String stringValue = v.getString();
