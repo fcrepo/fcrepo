@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.lang.reflect.Field;
 import java.util.Calendar;
@@ -15,7 +16,10 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
 
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.NamespaceTools;
@@ -31,7 +35,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*","org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({NamespaceTools.class, JcrRdfTools.class})
+@PrepareForTest({NamespaceTools.class, JcrRdfTools.class, FedoraTypesUtils.class})
 public class FedoraResourceTest {
 
     FedoraResource testObj;
@@ -147,6 +151,20 @@ public class FedoraResourceTest {
         setField("listener", FedoraResource.class, mockListener, testObj);
         testObj.getGraphProblems();
         verify(mockListener).getProblems();
+    }
+
+    @Test
+    public void testAddVersionLabel() throws RepositoryException {
+
+        mockStatic(FedoraTypesUtils.class);
+        VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        Version mockVersion = mock(Version.class);
+        when(mockVersion.getName()).thenReturn("uuid");
+        when(FedoraTypesUtils.getBaseVersion(mockNode)).thenReturn(mockVersion);
+        when(FedoraTypesUtils.getVersionHistory(mockNode)).thenReturn(mockVersionHistory);
+
+        testObj.addVersionLabel("v1.0.0");
+        verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", true);
     }
     
     private static void setField(String name, Class clazz, Object value, Object object) {

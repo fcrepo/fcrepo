@@ -3,11 +3,14 @@ package org.fcrepo.integration;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Literal;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.util.NodeFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -27,7 +30,10 @@ import javax.jcr.Session;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
+import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -163,12 +169,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         final FedoraResource object = objectService.createObject(session, "/testObjectGraphUpdates");
 
-        logger.warn(object.getGraphStore().toString());
-
         object.updateGraph("INSERT { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> \"a\" } WHERE {} ");
-
-
-        logger.warn(object.getGraphStore().toString());
 
         // jcr property
         Node s = Node.createURI("info:fedora/testObjectGraphUpdates");
@@ -176,16 +177,66 @@ public class FedoraResourceIT extends AbstractIT {
         Node o = Node.createLiteral("a");
         assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
 
-
-
         object.updateGraph("DELETE { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> ?o }\nINSERT { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> \"b\" } WHERE { <info:fedora/testObjectGraphUpdates> <info:fcrepo/zyx> ?o } ");
-
-
-        logger.warn(object.getGraphStore().toString());
 
         assertFalse("found value we should have removed", object.getGraphStore().getDefaultGraph().contains(s, p, o));
         o = Node.createLiteral("b");
         assertTrue("could not find new value", object.getGraphStore().getDefaultGraph().contains(s, p, o));
+
+        session.logout();
+    }
+
+    @Test
+    public void testAddVersionLabel() throws RepositoryException {
+
+        Session session = repo.login();
+
+        final FedoraResource object = objectService.createObject(session, "/testObjectVersionLabel");
+
+        session.save();
+
+        object.addVersionLabel("v0.0.1");
+
+        session.save();
+
+
+        assertTrue(Arrays.asList(getVersionHistory(object.getNode()).getVersionLabels()).contains("v0.0.1"));
+
+        session.logout();
+    }
+
+    @Test
+    public void testGetObjectVersionGraph() throws RepositoryException {
+
+        Session session = repo.login();
+
+        final FedoraResource object = objectService.createObject(session, "/testObjectVersionGraph");
+
+        session.save();
+
+        object.addVersionLabel("v0.0.1");
+
+        session.save();
+
+
+        final GraphStore graphStore = object.getVersionGraphStore();
+
+        logger.info(graphStore.toString());
+
+        // go querying for the version URI
+        Node s = Node.createURI("info:fedora/testObjectVersionGraph");
+        Node p = Node.createURI("info:fedora/fedora-system:def/internal#hasVersion");
+        final ExtendedIterator<Triple> triples = graphStore.getDefaultGraph().find(Triple.createMatch(s, p, Node.ANY));
+
+        List<Triple> list = triples.toList();
+        assertEquals(1, list.size());
+
+        // make sure it matches the label
+        s = list.get(0).getMatchObject();
+        p = Node.createURI("info:fedora/fedora-system:def/internal#hasVersionLabel");
+        Node o = Node.createLiteral("v0.0.1");
+
+        assertTrue(graphStore.getDefaultGraph().contains(s, p, o));
 
         session.logout();
     }

@@ -16,10 +16,13 @@ import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -235,7 +238,6 @@ public abstract class FedoraTypesUtils {
         return transform(copyOf(input), f);
     }
 
-    
     /**
      * @param date Instance of java.util.Date.
      * @return the lexical form of the XSD dateTime value, e.g.
@@ -246,4 +248,15 @@ public abstract class FedoraTypesUtils {
         return FMT.print(dt);
     }
 
+    public static Version getBaseVersion(final Node node) throws RepositoryException {
+        return node.getSession().getWorkspace().getVersionManager().getBaseVersion(node.getPath());
+    }
+
+    public static VersionHistory getVersionHistory(final Node node) throws RepositoryException {
+        return getVersionHistory(node.getSession(), node.getPath());
+    }
+
+    public static VersionHistory getVersionHistory(final Session session, final String path) throws RepositoryException {
+        return session.getWorkspace().getVersionManager().getVersionHistory(path);
+    }
 }

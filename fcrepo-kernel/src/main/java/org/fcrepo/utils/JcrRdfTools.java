@@ -16,6 +16,9 @@ import org.slf4j.Logger;
 
 import javax.jcr.*;
 import javax.jcr.PropertyIterator;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
 
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -111,19 +114,10 @@ public abstract class JcrRdfTools {
             return subject.isURIResource() && subject.getURI().startsWith("info:fedora");
     }
 
-    /**
-     * Get an RDF Model for a node that includes all its own JCR properties, as well as the properties of its
-     * immediate children.
-     *
-     * @param node
-     * @return
-     * @throws RepositoryException
-     */
-    public static Model getJcrPropertiesModel(final Node node) throws RepositoryException {
-
+    private static Model createDefaultJcrModel(final Session session) throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
 
-        final javax.jcr.NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry(node);
+        final javax.jcr.NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry(session);
         assert(namespaceRegistry != null);
 
         for (final String prefix : namespaceRegistry.getPrefixes()) {
@@ -138,6 +132,21 @@ public abstract class JcrRdfTools {
                 }
             }
         }
+
+        return model;
+    }
+
+    /**
+     * Get an RDF Model for a node that includes all its own JCR properties, as well as the properties of its
+     * immediate children.
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static Model getJcrPropertiesModel(final Node node) throws RepositoryException {
+
+        final Model model = createDefaultJcrModel(node.getSession());
 
         addJcrPropertiesToModel(node, model);
 
@@ -380,5 +389,41 @@ public abstract class JcrRdfTools {
      */
     private static Node getNodeFromObjectPath(final Node node, final String path) throws RepositoryException {
         return node.getSession().getNode(path.substring("info:fedora".length()));
+    }
+
+    public static Model getJcrVersionsModel(final Node node) throws RepositoryException {
+
+        final Resource subject = getGraphSubject(node);
+
+        final Model model = createDefaultJcrModel(node.getSession());
+
+        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(node);
+
+        final VersionIterator versionIterator = versionHistory.getAllVersions();
+
+        while (versionIterator.hasNext()) {
+            final Version version = versionIterator.nextVersion();
+            final Node frozenNode = version.getFrozenNode();
+            final Resource versionSubject = getGraphSubject(frozenNode);
+
+            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasVersion"), versionSubject);
+
+            final String[] versionLabels = versionHistory.getVersionLabels(version);
+            for (String label : versionLabels ) {
+                model.add(versionSubject, model.createProperty("info:fedora/fedora-system:def/internal#hasVersionLabel"), label);
+            }
+            final javax.jcr.PropertyIterator properties = frozenNode.getProperties();
+
+            while (properties.hasNext()) {
+                final Property property = properties.nextProperty();
+
+                addPropertyToModel(versionSubject, model, property);
+            }
+
+        }
+
+        return model;
+
+
     }
 }

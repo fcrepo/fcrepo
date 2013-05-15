@@ -3,12 +3,15 @@ package org.fcrepo.services;
 import com.google.common.collect.ImmutableSet;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.builder;
@@ -25,6 +28,22 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 	public FedoraResource getObject(final Session session, final String path) throws RepositoryException {
 		return new FedoraResource(session.getNode(path));
 	}
+
+
+    public FedoraResource getObject(Session session, String path, String versionId) throws RepositoryException {
+        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(session, path);
+
+        if (versionHistory == null) {
+            return null;
+        }
+
+        if (!versionHistory.hasVersionLabel(versionId)) {
+            return null;
+        }
+
+        final Version version = versionHistory.getVersionByLabel(versionId);
+        return new FedoraResource(version.getFrozenNode());
+    }
 
 	/**
 	 * @return A Set of object names (identifiers)
@@ -54,4 +73,5 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 		obj.remove();
 		session.save();
 	}
+
 }

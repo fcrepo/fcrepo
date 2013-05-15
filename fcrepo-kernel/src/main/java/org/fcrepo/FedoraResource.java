@@ -16,11 +16,14 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.VersionHistory;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
+import static org.fcrepo.utils.FedoraTypesUtils.getBaseVersion;
+import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -171,4 +174,16 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		return graphStore;
 	}
 
+    public GraphStore getVersionGraphStore() throws RepositoryException {
+        final Model model = JcrRdfTools.getJcrVersionsModel(node);
+
+        GraphStore graphStore = GraphStoreFactory.create(model);
+
+        return graphStore;
+    }
+
+    public void addVersionLabel(final String label) throws RepositoryException {
+        final VersionHistory versionHistory = getVersionHistory(node);
+        versionHistory.addVersionLabel(getBaseVersion(node).getName(), label, true);
+    }
 }

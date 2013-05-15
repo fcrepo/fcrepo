@@ -17,6 +17,9 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
 
 import org.junit.Test;
 import org.modeshape.jcr.JcrValueFactory;
@@ -114,5 +117,51 @@ public class FedoraTypesUtilsTest {
     	date.set(2006, 10, 13, 9, 40, 55);
     	date.set(Calendar.MILLISECOND, 1);
     	assertEquals(expected, FedoraTypesUtils.convertDateToXSDString(date.getTimeInMillis()));
+    }
+
+    @Test
+    public void testGetBaseVersionForNode() throws RepositoryException {
+        Version mockVersion = mock(Version.class);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/my/path");
+
+        when(mockNode.getSession()).thenReturn(mock(Session.class));
+        when(mockNode.getSession().getWorkspace()).thenReturn(mock(Workspace.class));
+        when(mockNode.getSession().getWorkspace().getVersionManager()).thenReturn(mock(VersionManager.class));
+        when(mockNode.getSession().getWorkspace().getVersionManager().getBaseVersion("/my/path")).thenReturn(mockVersion);
+
+        final Version versionHistory = FedoraTypesUtils.getBaseVersion(mockNode);
+
+        assertEquals(mockVersion, versionHistory);
+    }
+
+    @Test
+    public void testGetVersionHistoryForNode() throws RepositoryException {
+        VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/my/path");
+
+        when(mockNode.getSession()).thenReturn(mock(Session.class));
+        when(mockNode.getSession().getWorkspace()).thenReturn(mock(Workspace.class));
+        when(mockNode.getSession().getWorkspace().getVersionManager()).thenReturn(mock(VersionManager.class));
+        when(mockNode.getSession().getWorkspace().getVersionManager().getVersionHistory("/my/path")).thenReturn(mockVersionHistory);
+
+        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(mockNode);
+
+        assertEquals(mockVersionHistory, versionHistory);
+    }
+
+    @Test
+    public void testGetVersionHistoryForSessionAndPath() throws RepositoryException {
+        VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        Session mockSession = mock(Session.class);
+
+        when(mockSession.getWorkspace()).thenReturn(mock(Workspace.class));
+        when(mockSession.getWorkspace().getVersionManager()).thenReturn(mock(VersionManager.class));
+        when(mockSession.getWorkspace().getVersionManager().getVersionHistory("/my/path")).thenReturn(mockVersionHistory);
+
+        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(mockSession, "/my/path");
+
+        assertEquals(mockVersionHistory, versionHistory);
     }
 }
