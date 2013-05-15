@@ -1,4 +1,12 @@
+
 package org.fcrepo.api;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static org.fcrepo.Transaction.State.COMMITED;
+import static org.fcrepo.Transaction.State.DIRTY;
+import static org.fcrepo.Transaction.State.ROLLED_BACK;
 
 import java.util.List;
 import java.util.Map;
@@ -16,9 +24,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.Transaction;
-import org.fcrepo.Transaction.State;
 import org.fcrepo.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,71 +32,84 @@ import org.springframework.stereotype.Component;
 @Component
 @Path("/rest/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
-	
-	@Autowired
-	private ObjectService objectService;
 
-	/* TODO: since transactions have to be available on all nodes, they have to be either persisted or written to a */
-	/* distributed map or sth, not just this plain hashmap that follows */
-	private static Map<String, Transaction> transactions = new ConcurrentHashMap<String, Transaction>();
+    @Autowired
+    private ObjectService objectService;
 
-	@POST
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
-	public Transaction createTransaction() throws RepositoryException {
-		Session sess = getAuthenticatedSession();
-		Transaction tx = new Transaction(sess);
-		transactions.put(tx.getId(), tx);
-		return tx;
-	}
+    /*
+     * TODO: since transactions have to be available on all nodes, they have to
+     * be either persisted or written to a
+     */
+    /* distributed map or sth, not just this plain hashmap that follows */
+    private static Map<String, Transaction> transactions =
+            new ConcurrentHashMap<String, Transaction>();
 
-	@GET
-	@Path("/{txid}")
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
-	public Transaction getTransaction(@PathParam("txid") final String txid) throws RepositoryException {
-		Transaction tx = transactions.get(txid);
-		if (tx == null) {
-			throw new RepositoryException("Transaction with id " + txid + " is not available");
-		}
-		return tx;
-	}
+    @POST
+    @Produces({APPLICATION_JSON, MediaType.TEXT_XML})
+    public Transaction createTransaction() throws RepositoryException {
+        final Session sess = getAuthenticatedSession();
+        final Transaction tx = new Transaction(sess);
+        transactions.put(tx.getId(), tx);
+        return tx;
+    }
 
-	@POST
-	@Path("/{txid}/fcr:commit")
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
-	public Transaction commit(@PathParam("txid") final String txid) throws RepositoryException {
-		Transaction tx = transactions.remove(txid);
-		if (tx == null) {
-			throw new RepositoryException("Transaction with id " + txid + " is not available");
-		}
-		tx.getSession().save();
-		tx.setState(State.COMMITED);
-		return tx;
-	}
+    @GET
+    @Path("/{txid}")
+    @Produces({APPLICATION_JSON, TEXT_XML})
+    public Transaction getTransaction(@PathParam("txid")
+    final String txid) throws RepositoryException {
+        final Transaction tx = transactions.get(txid);
+        if (tx == null) {
+            throw new RepositoryException("Transaction with id " + txid +
+                    " is not available");
+        }
+        return tx;
+    }
 
-	@POST
-	@Path("/{txid}/fcr:rollback")
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
-	public Transaction rollback(@PathParam("txid") final String txid) throws RepositoryException {
-		Transaction tx = transactions.remove(txid);
-		if (tx == null) {
-			throw new RepositoryException("Transaction with id " + txid + " is not available");
-		}
-		tx.setState(State.ROLLED_BACK);
-		return tx;
-	}
+    @POST
+    @Path("/{txid}/fcr:commit")
+    @Produces({APPLICATION_JSON, TEXT_XML})
+    public Transaction commit(@PathParam("txid")
+    final String txid) throws RepositoryException {
+        final Transaction tx = transactions.remove(txid);
+        if (tx == null) {
+            throw new RepositoryException("Transaction with id " + txid +
+                    " is not available");
+        }
+        tx.getSession().save();
+        tx.setState(COMMITED);
+        return tx;
+    }
 
-	@POST
-	@Path("/{txid}/{path: .*}/fcr:newhack")
-	@Produces({MediaType.TEXT_PLAIN})
-	public Response createObjectInTransaction(@PathParam("txid") final String txid, @PathParam("path") final List<PathSegment> pathlist)throws RepositoryException {
-		Transaction tx = transactions.get(txid);
-		if (tx == null) {
-			throw new RepositoryException("Transaction with id " + txid + " is not available");
-		}
-		final String path = toPath(pathlist);
-		final FedoraObject obj = objectService.createObject(tx.getSession(), path);
-		tx.setState(State.DIRTY);
-		return Response.ok(path).build();
-	}
+    @POST
+    @Path("/{txid}/fcr:rollback")
+    @Produces({APPLICATION_JSON, TEXT_XML})
+    public Transaction rollback(@PathParam("txid")
+    final String txid) throws RepositoryException {
+        final Transaction tx = transactions.remove(txid);
+        if (tx == null) {
+            throw new RepositoryException("Transaction with id " + txid +
+                    " is not available");
+        }
+        tx.setState(ROLLED_BACK);
+        return tx;
+    }
+
+    @POST
+    @Path("/{txid}/{path: .*}/fcr:newhack")
+    @Produces({TEXT_PLAIN})
+    public Response createObjectInTransaction(@PathParam("txid")
+    final String txid, @PathParam("path")
+    final List<PathSegment> pathlist) throws RepositoryException {
+        final Transaction tx = transactions.get(txid);
+        if (tx == null) {
+            throw new RepositoryException("Transaction with id " + txid +
+                    " is not available");
+        }
+        final String path = toPath(pathlist);
+        objectService.createObject(tx.getSession(), path);
+        tx.setState(DIRTY);
+        return Response.ok(path).build();
+    }
 
 }

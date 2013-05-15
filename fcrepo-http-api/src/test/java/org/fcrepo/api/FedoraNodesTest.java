@@ -56,31 +56,31 @@ public class FedoraNodesTest {
 
     ObjectService mockObjects;
 
-	NodeService mockNodes;
-    
+    NodeService mockNodes;
+
     DatastreamService mockDatastreams;
 
     Repository mockRepo;
 
     Session mockSession;
 
-	LowLevelStorageService mockLow;
+    LowLevelStorageService mockLow;
 
-	Request mockRequest;
+    Request mockRequest;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-		mockRequest = mock(Request.class);
+        mockRequest = mock(Request.class);
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
-		mockNodes = mock(NodeService.class);
-		mockLow = mock(LowLevelStorageService.class);
+        mockNodes = mock(NodeService.class);
+        mockLow = mock(LowLevelStorageService.class);
         testObj = new FedoraNodes();
-		mockSession = TestHelpers.mockSession(testObj);
+        mockSession = TestHelpers.mockSession(testObj);
         testObj.setObjectService(mockObjects);
-		testObj.setNodeService(mockNodes);
+        testObj.setNodeService(mockNodes);
         testObj.setDatastreamService(mockDatastreams);
-		testObj.setLlStoreService(mockLow);
+        testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
         testObj.setPidMinter(new UUIDPidMinter());
@@ -112,20 +112,20 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testCreateObject() throws RepositoryException, IOException, InvalidChecksumException {
+    public void testCreateObject() throws RepositoryException, IOException,
+            InvalidChecksumException {
         final String pid = "testObject";
         final String path = "/" + pid;
-        final Response actual = testObj.createObject(
-															createPathList(pid),
-															FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null
-		);
+        final Response actual =
+                testObj.createObject(createPathList(pid),
+                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
         verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();
     }
-    
+
     @Test
     public void testCreateDatastream() throws RepositoryException, IOException,
             InvalidChecksumException {
@@ -134,23 +134,22 @@ public class FedoraNodesTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        Node mockNode = mock(Node.class);
+        final Node mockNode = mock(Node.class);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockDatastreams.createDatastreamNode(
-                any(Session.class), eq(dsPath), anyString(),
-                eq(dsContentStream), anyString(), anyString())).thenReturn(mockNode);
+        when(
+                mockDatastreams.createDatastreamNode(any(Session.class),
+                        eq(dsPath), anyString(), eq(dsContentStream),
+                        anyString(), anyString())).thenReturn(mockNode);
         final Response actual =
-                testObj.createObject(
-                        createPathList(pid,dsId),
-                        FedoraJcrTypes.FEDORA_DATASTREAM, null,
-                        null, null, dsContentStream);
+                testObj.createObject(createPathList(pid, dsId),
+                        FedoraJcrTypes.FEDORA_DATASTREAM, null, null, null,
+                        dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-															eq(dsPath), anyString(), any(InputStream.class), anyString(),
-															anyString());
+                eq(dsPath), anyString(), any(InputStream.class), anyString(),
+                anyString());
         verify(mockSession).save();
     }
-
 
     @Test
     public void testDeleteObject() throws RepositoryException {
@@ -163,34 +162,39 @@ public class FedoraNodesTest {
         verify(mockSession).save();
     }
 
-	@Test
-	public void testDescribeRdfObject() throws RepositoryException, IOException {
-		final String pid = "FedoraObjectsRdfTest1";
-		final String path = "/" + pid;
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testDescribeRdfObject() throws RepositoryException, IOException {
+        final String pid = "FedoraObjectsRdfTest1";
+        final String path = "/" + pid;
 
-		final FedoraObject mockObject = mock(FedoraObject.class);
+        final FedoraObject mockObject = mock(FedoraObject.class);
 
-		final GraphStore mockStore = mock(GraphStore.class);
-		final Dataset mockDataset = mock(Dataset.class);
-		final Model mockModel = mock(Model.class);
-		when(mockStore.toDataset()).thenReturn(mockDataset);
-		when(mockDataset.getDefaultModel()).thenReturn(mockModel);
-
+        final GraphStore mockStore = mock(GraphStore.class);
+        final Dataset mockDataset = mock(Dataset.class);
+        final Model mockModel = mock(Model.class);
+        when(mockStore.toDataset()).thenReturn(mockDataset);
+        when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(new Date());
-		when(mockObject.getGraphStore()).thenReturn(mockStore);
-		when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
-		final Request mockRequest = mock(Request.class);
+        when(mockObject.getGraphStore()).thenReturn(mockStore);
+        when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
+        final Request mockRequest = mock(Request.class);
 
-		when(mockRequest.selectVariant(any(List.class))).thenReturn(new Variant(MediaType.valueOf("application/n-triples"), null, null));
+        when(mockRequest.selectVariant(any(List.class))).thenReturn(
+                new Variant(MediaType.valueOf("application/n-triples"), null,
+                        null));
 
-		final OutputStream mockStream = mock(OutputStream.class);
-        ((StreamingOutput)testObj.describeRdf(createPathList(pid), mockRequest).getEntity()).write(mockStream);
+        final OutputStream mockStream = mock(OutputStream.class);
+        ((StreamingOutput) testObj
+                .describeRdf(createPathList(pid), mockRequest).getEntity())
+                .write(mockStream);
 
-		verify(mockModel).write(mockStream, "N-TRIPLES");
+        verify(mockModel).write(mockStream, "N-TRIPLES");
 
-	}
+    }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testDescribeRdfCached() throws RepositoryException, IOException {
         final String pid = "FedoraObjectsRdfTest2";
@@ -203,39 +207,41 @@ public class FedoraNodesTest {
         when(mockStore.toDataset()).thenReturn(mockDataset);
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
-
         when(mockObject.getLastModifiedDate()).thenReturn(new Date());
         when(mockObject.getGraphStore()).thenReturn(mockStore);
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
 
-        when(mockRequest.selectVariant(any(List.class))).thenReturn(new Variant(MediaType.valueOf("application/n-triples"), null, null));
+        when(mockRequest.selectVariant(any(List.class))).thenReturn(
+                new Variant(MediaType.valueOf("application/n-triples"), null,
+                        null));
 
-        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(Response.notModified());
-        final Response actual = testObj.describeRdf(createPathList(pid), mockRequest);
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
+                Response.notModified());
+        final Response actual =
+                testObj.describeRdf(createPathList(pid), mockRequest);
         assertNotNull(actual);
         assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
         verify(mockSession, never()).save();
     }
 
-	@Test
-	public void testSparqlUpdate() throws RepositoryException, IOException {
-		final String pid = "FedoraObjectsRdfTest1";
-		final String path = "/" + pid;
+    @Test
+    public void testSparqlUpdate() throws RepositoryException, IOException {
+        final String pid = "FedoraObjectsRdfTest1";
+        final String path = "/" + pid;
 
-		final FedoraObject mockObject = mock(FedoraObject.class);
+        final FedoraObject mockObject = mock(FedoraObject.class);
 
-		final GraphStore mockStore = mock(GraphStore.class);
-		when(mockObject.getGraphProblems()).thenReturn(null);
-		final InputStream mockStream = new ByteArrayInputStream("my-sparql-statement".getBytes());
-		when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObject.getGraphProblems()).thenReturn(null);
+        final InputStream mockStream =
+                new ByteArrayInputStream("my-sparql-statement".getBytes());
+        when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
-		testObj.updateSparql(createPathList(pid), mockStream);
+        testObj.updateSparql(createPathList(pid), mockStream);
 
-		verify(mockObject).updateGraph("my-sparql-statement");
-		verify(mockSession).save();
-		verify(mockSession).logout();
-	}
-
+        verify(mockObject).updateGraph("my-sparql-statement");
+        verify(mockSession).save();
+        verify(mockSession).logout();
+    }
 
 }

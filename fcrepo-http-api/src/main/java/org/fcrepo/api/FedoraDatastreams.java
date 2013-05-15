@@ -37,14 +37,12 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.jaxb.responses.access.ObjectDatastreams.DatastreamElement;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.utils.ContentDigest;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Function;
 import com.sun.jersey.multipart.BodyPart;
 import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
@@ -57,9 +55,9 @@ public class FedoraDatastreams extends AbstractResource {
 
     @POST
     @Timed
-    public Response modifyDatastreams(@PathParam("path") final List<PathSegment> pathList,
-									  @QueryParam("delete") final List<String> dsidList,
-									  final MultiPart multipart)
+    public Response modifyDatastreams(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("delete")
+    final List<String> dsidList, final MultiPart multipart)
             throws RepositoryException, IOException, InvalidChecksumException {
 
         final Session session = getAuthenticatedSession();
@@ -67,7 +65,7 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
-				nodeService.deleteObject(session, path + "/" + dsid);
+                nodeService.deleteObject(session, path + "/" + dsid);
             }
 
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -75,7 +73,7 @@ public class FedoraDatastreams extends AbstractResource {
                         part.getContentDisposition().getParameters()
                                 .get("name");
                 logger.debug("Adding datastream: " + dsid);
-                final String dsPath = path + "/" +  dsid;
+                final String dsPath = path + "/" + dsid;
                 final Object obj = part.getEntity();
                 InputStream src = null;
                 if (obj instanceof BodyPartEntity) {
@@ -95,19 +93,18 @@ public class FedoraDatastreams extends AbstractResource {
             session.logout();
         }
     }
-    
+
     @DELETE
     @Timed
-    public Response deleteDatastreams(
-            @PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("dsid") final List<String> dsidList
-            ) throws RepositoryException {
+    public Response deleteDatastreams(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("dsid")
+    final List<String> dsidList) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
-            String path = toPath(pathList);
+            final String path = toPath(pathList);
             for (final String dsid : dsidList) {
-                logger.debug("purging datastream {}", path  + "/" +  dsid);
-				nodeService.deleteObject(session, path + "/" + dsid);
+                logger.debug("purging datastream {}", path + "/" + dsid);
+                nodeService.deleteObject(session, path + "/" + dsid);
             }
             session.save();
             return noContent().build();
@@ -120,103 +117,93 @@ public class FedoraDatastreams extends AbstractResource {
     @Path("/__content__")
     @Produces("multipart/mixed")
     @Timed
-    public Response getDatastreamsContents(@PathParam("path") List<PathSegment> pathList,
-										   @QueryParam("dsid") final List<String> requestedDsids,
-										   @Context final Request request) throws RepositoryException, IOException, NoSuchAlgorithmException {
+    public Response getDatastreamsContents(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("dsid")
+    final List<String> requestedDsids, @Context
+    final Request request) throws RepositoryException, IOException,
+            NoSuchAlgorithmException {
 
-		final Session session = getAuthenticatedSession();
+        final Session session = getAuthenticatedSession();
 
-		final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();
+        final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();
 
-		try {
-			String path = toPath(pathList);
-			// TODO: wrap some of this JCR logic in an fcrepo abstraction;
+        try {
+            final String path = toPath(pathList);
+            // TODO: wrap some of this JCR logic in an fcrepo abstraction;
 
-			final Node node = nodeService.getObject(session, path).getNode();
+            final Node node = nodeService.getObject(session, path).getNode();
 
+            Date date = new Date();
 
-			Date date = new Date();
+            final MessageDigest digest = MessageDigest.getInstance("SHA-1");
 
-			final MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            final NodeIterator ni;
 
+            if (requestedDsids.isEmpty()) {
+                ni = node.getNodes();
+            } else {
+                ni =
+                        node.getNodes(requestedDsids
+                                .toArray(new String[requestedDsids.size()]));
+            }
 
-			final NodeIterator ni;
+            // transform the nodes into datastreams, and calculate cache header data
+            while (ni.hasNext()) {
 
-			if (requestedDsids.isEmpty()) {
-				ni = node.getNodes();
-			} else {
-				ni = node.getNodes(requestedDsids.toArray(new String[requestedDsids.size()]));
-			}
+                final Node dsNode = ni.nextNode();
+                final Datastream ds = datastreamService.asDatastream(dsNode);
 
-			// transform the nodes into datastreams, and calculate cache header data
-			while (ni.hasNext()) {
+                if (!ds.hasContent()) {
+                    continue;
+                }
 
-				final Node dsNode = ni.nextNode();
-				final Datastream ds = datastreamService.asDatastream(dsNode);
+                digest.update(ds.getContentDigest().toString().getBytes());
 
-				if (!ds.hasContent()) {
-					continue;
-				}
+                if (ds.getLastModifiedDate().after(date)) {
+                    date = ds.getLastModifiedDate();
+                }
 
-				digest.update(ds.getContentDigest().toString().getBytes());
+                datastreams.add(ds);
+            }
 
-				if (ds.getLastModifiedDate().after(date)) {
-					date = ds.getLastModifiedDate();
-				}
+            final URI digestURI =
+                    ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
+            final EntityTag etag = new EntityTag(digestURI.toString());
 
-				datastreams.add(ds);
-			}
+            final Date roundedDate = new Date();
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
 
+            Response.ResponseBuilder builder =
+                    request.evaluatePreconditions(roundedDate, etag);
 
-			final URI digestURI = ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
-			final EntityTag etag = new EntityTag(digestURI.toString());
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
 
-			final Date roundedDate = new Date();
-			roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+            if (builder == null) {
+                final MultiPart multipart = new MultiPart();
 
-			Response.ResponseBuilder builder = request.evaluatePreconditions(roundedDate, etag);
+                for (final Datastream ds : datastreams) {
+                    multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
+                            .getMimeType()));
+                }
 
-			final CacheControl cc = new CacheControl();
-			cc.setMaxAge(0);
-			cc.setMustRevalidate(true);
+                builder = Response.ok(multipart, MULTIPART_FORM_DATA);
+            }
 
-			if (builder == null) {
-				final MultiPart multipart = new MultiPart();
+            return builder.cacheControl(cc).lastModified(date).tag(etag)
+                    .build();
 
-				for (Datastream ds : datastreams) {
-					multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds.getMimeType()));
-				}
-
-				builder = Response.ok(multipart, MULTIPART_FORM_DATA);
-			}
-
-			return builder.cacheControl(cc).lastModified(date).tag(etag).build();
-
-		} finally {
-			session.logout();
-		}
+        } finally {
+            session.logout();
+        }
     }
 
-    private Function<Datastream, DatastreamElement> ds2dsElement =
-            new Function<Datastream, DatastreamElement>() {
+    public DatastreamService getDatastreamService() {
+        return datastreamService;
+    }
 
-                @Override
-                public DatastreamElement apply(final Datastream ds) {
-                    try {
-                        return new DatastreamElement(ds.getDsId(),
-                                ds.getDsId(), ds.getMimeType());
-                    } catch (final RepositoryException e) {
-                        throw new IllegalStateException(e);
-                    }
-                }
-            };
-
-
-	public DatastreamService getDatastreamService() {
-		return datastreamService;
-	}
-
-	public void setDatastreamService(final DatastreamService datastreamService) {
-		this.datastreamService = datastreamService;
-	}
+    public void setDatastreamService(final DatastreamService datastreamService) {
+        this.datastreamService = datastreamService;
+    }
 }
