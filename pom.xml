@@ -399,6 +399,12 @@
             <systemPropertyVariables>
               <test.port>${test.port}</test.port>
               <test.context.path>${test.context.path}</test.context.path>
+              <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
+                ${project.build.directory}/object-store-default
+              </com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
+              <com.arjuna.ats.arjuna.objectstore.objectStoreDir>
+                ${project.build.directory}/object-store
+              </com.arjuna.ats.arjuna.objectstore.objectStoreDir>
             </systemPropertyVariables>
           </configuration>
           <executions>
