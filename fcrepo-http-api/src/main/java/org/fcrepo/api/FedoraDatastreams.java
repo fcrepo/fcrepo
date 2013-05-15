@@ -60,40 +60,6 @@ public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
 
-    /**
-     * Returns a list of datastreams for the object
-     *
-     * @param pid
-     *            persistent identifier of the digital object
-     * @return the list of datastreams
-     * @throws RepositoryException
-     * @throws IOException
-     */
-
-    @GET
-    @Timed
-    @Produces({TEXT_XML, APPLICATION_JSON})
-    public ObjectDatastreams getDatastreams(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException, IOException {
-
-		final Session session = getAuthenticatedSession();
-
-		try {
-			final String path = toPath(pathList);
-			logger.info("getting datastreams of {}", path);
-			final ObjectDatastreams objectDatastreams = new ObjectDatastreams();
-
-			objectDatastreams.datastreams =
-					copyOf(transform(datastreamService
-							.getDatastreamsForPath(session, path), ds2dsElement));
-
-			return objectDatastreams;
-		} finally {
-			session.logout();
-		}
-
-    }
-
     @POST
     @Timed
     public Response modifyDatastreams(@PathParam("path") final List<PathSegment> pathList,
