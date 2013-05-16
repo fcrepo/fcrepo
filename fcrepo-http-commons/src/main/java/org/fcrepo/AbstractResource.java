@@ -180,4 +180,8 @@ public abstract class AbstractResource {
 	public void setNodeService(NodeService nodeService) {
 		this.nodeService = nodeService;
 	}
+
+    public void setObjectService(ObjectService objectService) {
+        this.objectService = objectService;
+    }
 }

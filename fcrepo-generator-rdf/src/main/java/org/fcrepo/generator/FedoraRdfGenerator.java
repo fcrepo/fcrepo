@@ -156,10 +156,6 @@ public class FedoraRdfGenerator extends AbstractResource {
         this.datastreamGenerators = dsGenerators;
     }
 
-    void setObjectService(ObjectService objectService) {
-        this.objectService = objectService;
-    }
-
     void setDatastreamService(DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
