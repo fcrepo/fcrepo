@@ -1,9 +1,12 @@
 
 package org.fcrepo;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -12,17 +15,22 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.riot.WebContent;
+import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -105,6 +113,32 @@ public abstract class AbstractResource {
     
     protected AuthenticatedSessionProvider getAuthenticatedSessionProvider() {
     	return sessions.getSessionProvider(securityContext, servletRequest);
+    }
+
+    protected FedoraResource createObjectOrDatastreamFromRequestContent(final Session session, final String path, final String mixin, final InputStream requestBodyStream, final MediaType requestContentType, final String checksumType, final String checksum) throws RepositoryException, InvalidChecksumException, IOException {
+
+        final FedoraResource result;
+
+        if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
+            result = objectService.createObject(session, path);
+
+            if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
+                result.updateGraph(IOUtils.toString(requestBodyStream));
+            }
+
+        } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
+            final MediaType contentType =
+                    requestContentType != null ? requestContentType
+                            : APPLICATION_OCTET_STREAM_TYPE;
+
+            final Node node = datastreamService.createDatastreamNode(session, path, contentType
+                                                                                                      .toString(), requestBodyStream, checksumType, checksum);
+            result = new Datastream(node);
+        } else {
+            result = null;
+        }
+
+        return result;
     }
 
     protected synchronized Response deleteResource(final Node resource)

@@ -230,27 +230,8 @@ public class FedoraNodes extends AbstractResource {
                         path + " is an existing resource").build();
             }
 
-            if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
-                final FedoraObject result =
-                        objectService.createObject(session, path);
+            createObjectOrDatastreamFromRequestContent(session, path, mixin, requestBodyStream, requestContentType, checksumType, checksum);
 
-                if (requestBodyStream != null &&
-                        requestContentType != null &&
-                        requestContentType.toString().equals(
-                                WebContent.contentTypeSPARQLUpdate)) {
-                    result.updateGraph(IOUtils.toString(requestBodyStream));
-                }
-
-            }
-            if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
-                final MediaType contentType =
-                        requestContentType != null ? requestContentType
-                                : APPLICATION_OCTET_STREAM_TYPE;
-
-                datastreamService.createDatastreamNode(session, path,
-                        contentType.toString(), requestBodyStream,
-                        checksumType, checksum);
-            }
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
             return created(uriInfo.getRequestUri()).entity(path).build();

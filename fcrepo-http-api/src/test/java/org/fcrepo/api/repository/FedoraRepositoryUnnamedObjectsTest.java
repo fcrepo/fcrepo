@@ -1,21 +1,6 @@
+package org.fcrepo.api.repository;
 
-package org.fcrepo.api;
-
-import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-
-import javax.jcr.LoginException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.core.Response;
-
+import org.fcrepo.api.FedoraUnnamedObjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.NodeService;
@@ -26,9 +11,22 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FedoraUnnamedObjectsTest {
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 
-    FedoraUnnamedObjects testObj;
+import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+public class FedoraRepositoryUnnamedObjectsTest {
+
+    FedoraRepositoryUnnamedObjects testObj;
 
     Session mockSession;
 
@@ -39,7 +37,7 @@ public class FedoraUnnamedObjectsTest {
     public void setUp() throws RepositoryException {
         mockObjects = mock(ObjectService.class);
         mockNodeService = mock(NodeService.class);
-        testObj = new FedoraUnnamedObjects();
+        testObj = new FedoraRepositoryUnnamedObjects();
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setNodeService(mockNodeService);
         testObj.setObjectService(mockObjects);
@@ -52,21 +50,19 @@ public class FedoraUnnamedObjectsTest {
 
     @Test
     public void testIngestAndMint() throws RepositoryException, IOException,
-            InvalidChecksumException {
+                                                   InvalidChecksumException {
         final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
         testObj.setPidMinter(mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");
 
         final Response actual =
-                testObj.ingestAndMint(createPathList("objects"),
-                                             FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
+                testObj.ingestAndMint(FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
         assertNotNull(actual);
         assertEquals(Response.Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));
-        verify(mockObjects).createObject(mockSession, "/objects/uuid-123");
-        verify(mockNodeService).exists(mockSession, "/objects/uuid-123");
+        verify(mockObjects).createObject(mockSession, "/uuid-123");
+        verify(mockNodeService).exists(mockSession, "/uuid-123");
         verify(mockSession).save();
 
     }
-
 }

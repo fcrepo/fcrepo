@@ -122,6 +122,7 @@ public class FedoraNodesTest {
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
+        verify(mockNodes).exists(mockSession, path);
         verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();
     }

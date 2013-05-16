@@ -1,26 +1,31 @@
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.Response.created;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ImmutableList;
 
 
 @Component
@@ -29,48 +34,39 @@ public class FedoraUnnamedObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraUnnamedObjects.class);
 
-    @Autowired
-    FedoraDatastreams datastreamsResource;
-
-    @Autowired
-	FedoraNodes objectsResource;
-
     /**
      * Create an anonymous object with a newly minted name
      * @param pathList
      * @return 201
      */
     @POST
-    public Response ingestAndMint(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException {
-        logger.debug("Creating a new unnamed object");
+    public Response ingestAndMint(@PathParam("path") final List<PathSegment> pathList,
+    @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
+    @QueryParam("checksumType") final String checksumType,
+    @QueryParam("checksum") final String checksum,
+    @HeaderParam("Content-Type") final MediaType requestContentType,
+    final InputStream requestBodyStream) throws RepositoryException, IOException, InvalidChecksumException {
         final String pid = pidMinter.mintPid();
-        PathSegment path = new PathSegment() {
 
-            @Override
-            public String getPath() {
-                return pid;
-            }
+        String path = toPath(pathList) + "/" + pid;
 
-            @Override
-            public MultivaluedMap<String, String> getMatrixParameters() {
-                return null;
-            }
+        logger.debug("Attempting to ingest with path: {}", path);
 
-        };
-
-		ImmutableList.Builder<PathSegment> segments = ImmutableList.builder();
-        segments.addAll(pathList);
-        segments.add(path);
+        final Session session = getAuthenticatedSession();
 
         try {
-            return objectsResource.createObject(
-                    segments.build(),
-                    FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
-        } catch (IOException e) {
-            throw new RepositoryException(e.getMessage(), e);
-        } catch (InvalidChecksumException e) {
-            throw new RepositoryException(e.getMessage(), e);
+            if (nodeService.exists(session, path)) {
+                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+            }
+
+            createObjectOrDatastreamFromRequestContent(session, path, mixin, requestBodyStream, requestContentType, checksumType, checksum);
+
+            session.save();
+            logger.debug("Finished creating {} with path: {}", mixin, path);
+            return created(uriInfo.getRequestUri()).entity(path).build();
+
+        } finally {
+            session.logout();
         }
     }
 
