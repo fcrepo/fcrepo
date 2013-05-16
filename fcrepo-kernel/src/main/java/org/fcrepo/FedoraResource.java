@@ -34,7 +34,7 @@ import com.hp.hpl.jena.update.UpdateAction;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
-	private static final Logger LOGGER = getLogger(FedoraObject.class);
+	private static final Logger LOGGER = getLogger(FedoraResource.class);
 
     private static final GraphSubjects DEFAULT_SUBJECT_FACTORY =
     		new DefaultGraphSubjects();
