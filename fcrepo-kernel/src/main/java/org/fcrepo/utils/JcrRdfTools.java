@@ -194,6 +194,11 @@ public abstract class JcrRdfTools {
         long excludedNodes = 0L;
         while (nodeIterator.hasNext()) {
             final Node childNode = nodeIterator.nextNode();
+
+            if (FedoraTypesUtils.isInternalNode.apply(childNode)) {
+                continue;
+            }
+
             final Resource childNodeSubject = getGraphSubject(factory, childNode);
 
             addJcrPropertiesToModel(factory, childNode, model);

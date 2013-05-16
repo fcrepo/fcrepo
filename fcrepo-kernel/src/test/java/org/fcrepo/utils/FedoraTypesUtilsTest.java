@@ -3,6 +3,8 @@ package org.fcrepo.utils;
 
 import static org.fcrepo.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -191,5 +193,29 @@ public class FedoraTypesUtilsTest {
                 FedoraTypesUtils.getVersionHistory(mockSession, "/my/path");
 
         assertEquals(mockVersionHistory, versionHistory);
+    }
+
+    @Test
+    public void testInternalNode() throws RepositoryException {
+        Node mockNode = mock(Node.class);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+
+        when(mockNodeType.isNodeType("mode:system")).thenReturn(true);
+
+        assertTrue("mode:system nodes should be treated as internal nodes",
+                          FedoraTypesUtils.isInternalNode.apply(mockNode));
+    }
+
+    @Test
+    public void testNonInternalNode() throws RepositoryException {
+        Node mockNode = mock(Node.class);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+
+        when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
+
+        assertFalse("nodes that are not mode:system types should not be treated as internal nodes",
+                           FedoraTypesUtils.isInternalNode.apply(mockNode));
     }
 }

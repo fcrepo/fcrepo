@@ -124,6 +124,23 @@ public abstract class FedoraTypesUtils {
             };
 
 
+    public static Predicate<Node> isInternalNode =
+            new Predicate<Node>() {
+
+                @Override
+                public boolean apply(final Node n) {
+                    checkArgument(n != null,
+                                         "null is neither multiple or not multiple!");
+                    try {
+                        final NodeType primaryNodeType = n.getPrimaryNodeType();
+                        return primaryNodeType != null && primaryNodeType.isNodeType("mode:system");
+                    } catch (final RepositoryException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+
+
     /**
      * Retrieves a JCR {@link ValueFactory} for use with a {@ link Node}
      */
