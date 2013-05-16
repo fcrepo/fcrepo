@@ -57,6 +57,16 @@ public class FedoraResourceIT extends AbstractIT {
 		logger = LoggerFactory.getLogger(this.getClass());
 	}
 
+
+    @Test
+    public void testGetRootNode() throws IOException, RepositoryException {
+        Session session = repo.login();
+
+        final FedoraResource object = nodeService.getObject(session, "/");
+
+        session.logout();
+    }
+
 	@Test
 	public void testRandomNodeGraph() throws IOException, RepositoryException {
 		Session session = repo.login();

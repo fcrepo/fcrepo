@@ -11,12 +11,15 @@ import java.io.ByteArrayInputStream;
 
 import javax.ws.rs.core.Response;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 
 public class FedoraNodesIT extends AbstractResourceIT {
@@ -99,6 +102,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 new HttpGet(serverAddress +
                                     "objects/FedoraDatastreamsTest5/ds1");
         assertEquals(404, getStatus(method_test_get));
+    }
+
+
+    @Test
+    public void testGetRepositoryGraph() throws Exception {
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
+        logger.debug("Retrieved repository graph:\n" + graphStore.toString());
+
+        assertTrue("expected to find the root node data", graphStore.contains(Node.ANY, Node.ANY, Node.createURI("info:fedora/fedora-system:def/internal#primaryType"), Node.createLiteral("mode:root")));
+
     }
 
 	@Test
