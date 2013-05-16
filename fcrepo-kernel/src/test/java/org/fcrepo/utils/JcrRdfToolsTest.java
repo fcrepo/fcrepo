@@ -21,6 +21,8 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -38,6 +40,8 @@ public class JcrRdfToolsTest {
     private Node mockNode;
 
     private NamespaceRegistry mockNsRegistry;
+    
+    private GraphSubjects testSubjects;
 
     private Session mockSession;
 
@@ -45,6 +49,7 @@ public class JcrRdfToolsTest {
     public void setUp() throws RepositoryException {
 
         mockSession = mock(Session.class);
+        testSubjects = new DefaultGraphSubjects();
         mockNode = mock(Node.class);
         when(mockNode.getSession()).thenReturn(mockSession);
 
@@ -124,7 +129,8 @@ public class JcrRdfToolsTest {
             throws RepositoryException {
         when(mockNode.getPath()).thenReturn("/abc");
 
-        assertEquals("info:fedora/abc", JcrRdfTools.getGraphSubject(mockNode)
+        assertEquals("info:fedora/abc",
+        		JcrRdfTools.getGraphSubject(testSubjects, mockNode)
                 .toString());
     }
 
@@ -134,14 +140,15 @@ public class JcrRdfToolsTest {
         when(mockNode.getPath()).thenReturn("/abc/jcr:content");
 
         assertEquals("info:fedora/abc/fcr:content", JcrRdfTools
-                .getGraphSubject(mockNode).toString());
+                .getGraphSubject(testSubjects, mockNode).toString());
     }
 
     @Test
     public void shouldMapRDFResourcesToJcrNodes() throws RepositoryException {
         when(mockSession.nodeExists("/abc")).thenReturn(true);
         when(mockSession.getNode("/abc")).thenReturn(mockNode);
-        assertEquals(mockNode, JcrRdfTools.getNodeFromGraphSubject(mockSession,
+        assertEquals(mockNode,
+        		JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
                 ResourceFactory.createResource("info:fedora/abc")));
     }
 
@@ -150,7 +157,8 @@ public class JcrRdfToolsTest {
             throws RepositoryException {
         when(mockSession.nodeExists("/abc/jcr:content")).thenReturn(true);
         when(mockSession.getNode("/abc/jcr:content")).thenReturn(mockNode);
-        assertEquals(mockNode, JcrRdfTools.getNodeFromGraphSubject(mockSession,
+        assertEquals(mockNode,
+        		JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
                 ResourceFactory.createResource("info:fedora/abc/fcr:content")));
     }
 
@@ -158,11 +166,12 @@ public class JcrRdfToolsTest {
     public void shouldReturnNullIfItFailstoMapRDFResourcesToJcrNodes()
             throws RepositoryException {
         when(mockSession.nodeExists("/does-not-exist")).thenReturn(false);
-        assertNull("should receive null for a non-JCR resource", JcrRdfTools
-                .getNodeFromGraphSubject(mockSession, ResourceFactory
+        assertNull("should receive null for a non-JCR resource",
+        		JcrRdfTools.getNodeFromGraphSubject(
+        				testSubjects, mockSession, ResourceFactory
                         .createResource("this-is-not-a-fedora-node/abc")));
         assertNull("should receive null a JCR node that isn't found",
-                JcrRdfTools.getNodeFromGraphSubject(mockSession,
+                JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
                         ResourceFactory
                                 .createResource("info:fedora/does-not-exist")));
     }
@@ -190,7 +199,7 @@ public class JcrRdfToolsTest {
         when(mockParent.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(false);
 
-        final Model actual = JcrRdfTools.getJcrPropertiesModel(mockNode);
+        final Model actual = JcrRdfTools.getJcrPropertiesModel(testSubjects, mockNode);
         assertEquals(fakeInternalUri, actual.getNsPrefixURI("fedora-internal"));
 
         //TODO exercise the jcr:content child node logic
@@ -224,7 +233,7 @@ public class JcrRdfToolsTest {
         when(mockValue.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperties.nextProperty()).thenReturn(mockProperty);
 
-        Model actual = JcrRdfTools.getJcrPropertiesModel(mockNode);
+        Model actual = JcrRdfTools.getJcrPropertiesModel(testSubjects, mockNode);
 
         // we expect 2 statements, both auto-generated
         assertEquals(2, actual.size());

@@ -32,6 +32,7 @@ import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.NamespaceTools;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,15 +116,18 @@ public abstract class AbstractResource {
     	return sessions.getSessionProvider(securityContext, servletRequest);
     }
 
-    protected FedoraResource createObjectOrDatastreamFromRequestContent(final Session session, final String path, final String mixin, final InputStream requestBodyStream, final MediaType requestContentType, final String checksumType, final String checksum) throws RepositoryException, InvalidChecksumException, IOException {
+    protected FedoraResource createObjectOrDatastreamFromRequestContent(final Class pathsRelativeTo, final Session session, final String path, final String mixin, final UriInfo uriInfo, final InputStream requestBodyStream, final MediaType requestContentType, final String checksumType, final String checksum) throws RepositoryException, InvalidChecksumException, IOException {
 
         final FedoraResource result;
 
         if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
             result = objectService.createObject(session, path);
 
-            if(requestBodyStream != null && requestContentType != null && requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
-                result.updateGraph(IOUtils.toString(requestBodyStream));
+            if(requestBodyStream != null && 
+                requestContentType != null && 
+                requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
+                result.updateGraph(new HttpGraphSubjects(pathsRelativeTo, uriInfo),
+                            IOUtils.toString(requestBodyStream));
             }
 
         } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
