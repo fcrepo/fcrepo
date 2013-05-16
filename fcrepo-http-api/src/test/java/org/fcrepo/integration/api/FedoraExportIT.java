@@ -39,14 +39,51 @@ public class FedoraExportIT extends AbstractResourceIT {
 		assertEquals(404, response.getStatusLine().getStatusCode());
 
 		// try to import it
-		final HttpPost importMethod = new HttpPost(serverAddress + "objects/fcr:import");
+		HttpPost importMethod = new HttpPost(serverAddress + "objects/fcr:import");
 		importMethod.setEntity(new StringEntity(content));
 		assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
 		//check that we made it
 		response = client.execute(new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1"));
 		assertEquals(200, response.getStatusLine().getStatusCode());
-	}
+
+    }
+
+
+    @Test
+    public void shouldMoveObjectToTheRootLevelUsingTheRepositoryWideApi() throws IOException {
+        final String objName = "JcrXmlSerializerIT2";
+
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, "testDS", "stuff"));
+
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" + "/fcr:export");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
+
+        // delete it
+        client.execute(new HttpDelete(serverAddress + "objects/JcrXmlSerializerIT2"));
+        response = client.execute(new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2"));
+        assertEquals(404, response.getStatusLine().getStatusCode());
+
+        // try to import it
+        HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
+        importMethod.setEntity(new StringEntity(content));
+        assertEquals("Couldn't import!", 201, getStatus(importMethod));
+
+        //check that we made it
+        response = client.execute(new HttpGet(serverAddress + "JcrXmlSerializerIT2"));
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+
+    }
 
 }
 
