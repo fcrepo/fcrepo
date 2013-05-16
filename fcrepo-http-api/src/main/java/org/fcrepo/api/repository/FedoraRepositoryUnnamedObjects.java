@@ -1,12 +1,10 @@
 package org.fcrepo.api.repository;
 
-import org.apache.http.HttpStatus;
-import org.fcrepo.AbstractResource;
-import org.fcrepo.api.FedoraNodes;
-import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.utils.FedoraJcrTypes;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
+import static javax.ws.rs.core.Response.created;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -19,11 +17,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.InputStream;
 
-import static javax.ws.rs.core.Response.created;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.http.HttpStatus;
+import org.fcrepo.AbstractResource;
+import org.fcrepo.api.FedoraNodes;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 @Component
 @Path("/rest/fcr:new")

@@ -1,8 +1,10 @@
 
 package org.fcrepo.integration.webhooks;
 
+import static java.lang.Thread.sleep;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static org.fcrepo.integration.webhooks.TestEndpoint.lastBody;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +28,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration({"/spring-test/test-container.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraWebhooksIT extends AbstractResourceIT {
-
+    
     @Test
     public void registerWebhookCallbackTest() throws IOException {
         final HttpPost method =
@@ -97,11 +99,11 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(create_method));
 
         try {
-            for (int i = 0; i < 25; i++) {
+            for (int i = 0; i < 200; i++) {
 
-                Thread.sleep(200);
+                sleep(200);
 
-                if (TestEndpoint.lastBody != null) {
+                if (lastBody != null) {
                     break;
                 }
             }
@@ -109,11 +111,11 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
             e.printStackTrace();
         }
 
-        System.out.println(TestEndpoint.lastBody);
+        logger.debug(lastBody);
 
-        assertNotNull("Our webhook wasn't called!", TestEndpoint.lastBody);
+        assertNotNull("Our webhook wasn't called!", lastBody);
         assertTrue("Our webhook didn't have the content we expected!", compile(
-                "ingest", DOTALL).matcher(TestEndpoint.lastBody).find());
+                "ingest", DOTALL).matcher(lastBody).find());
 
     }
 }

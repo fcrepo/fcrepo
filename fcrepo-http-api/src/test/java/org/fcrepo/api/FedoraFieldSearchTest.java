@@ -19,13 +19,14 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class FedoraFieldSearchTest {
 

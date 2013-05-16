@@ -1,6 +1,17 @@
 package org.fcrepo.api.repository;
 
-import com.codahale.metrics.annotation.Timed;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.apache.jena.riot.WebContent;
@@ -10,16 +21,7 @@ import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.InputStream;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import com.codahale.metrics.annotation.Timed;
 
 @Component
 @Path("/rest/fcr:properties")

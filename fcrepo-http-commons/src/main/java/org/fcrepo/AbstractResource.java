@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.WebContent;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
@@ -32,7 +33,6 @@ import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.NamespaceTools;
-import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,9 +47,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class AbstractResource {
 
     private static final Logger LOGGER = getLogger(AbstractResource.class);
-    
+
     public static final String TEST_NS_PREFIX = "test";
-    
+
     public static final String TEST_NS_URI = "info:fedora/test/";
 
     /**
@@ -61,12 +61,11 @@ public abstract class AbstractResource {
     @Autowired
     protected SessionFactory sessions;
 
-
-	/**
-	 * The fcrepo node service
-	 */
-	@Autowired
-	protected NodeService nodeService;
+    /**
+     * The fcrepo node service
+     */
+    @Autowired
+    protected NodeService nodeService;
 
     /**
      * The fcrepo object service
@@ -102,8 +101,8 @@ public abstract class AbstractResource {
     public void initialize() throws RepositoryException {
 
         final Session session = sessions.getSession();
-        NamespaceTools.getNamespaceRegistry(session).registerNamespace(TEST_NS_PREFIX,
-                TEST_NS_URI);
+        NamespaceTools.getNamespaceRegistry(session).registerNamespace(
+                TEST_NS_PREFIX, TEST_NS_URI);
         session.save();
         session.logout();
     }
@@ -111,32 +110,41 @@ public abstract class AbstractResource {
     protected Session getAuthenticatedSession() {
         return sessions.getSession(securityContext, servletRequest);
     }
-    
+
     protected AuthenticatedSessionProvider getAuthenticatedSessionProvider() {
-    	return sessions.getSessionProvider(securityContext, servletRequest);
+        return sessions.getSessionProvider(securityContext, servletRequest);
     }
 
-    protected FedoraResource createObjectOrDatastreamFromRequestContent(final Class pathsRelativeTo, final Session session, final String path, final String mixin, final UriInfo uriInfo, final InputStream requestBodyStream, final MediaType requestContentType, final String checksumType, final String checksum) throws RepositoryException, InvalidChecksumException, IOException {
+    protected FedoraResource createObjectOrDatastreamFromRequestContent(
+            final Class<?> pathsRelativeTo, final Session session,
+            final String path, final String mixin, final UriInfo uriInfo,
+            final InputStream requestBodyStream,
+            final MediaType requestContentType, final String checksumType,
+            final String checksum) throws RepositoryException,
+            InvalidChecksumException, IOException {
 
         final FedoraResource result;
 
-        if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)){
+        if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
             result = objectService.createObject(session, path);
 
-            if(requestBodyStream != null && 
-                requestContentType != null && 
-                requestContentType.toString().equals(WebContent.contentTypeSPARQLUpdate)) {
-                result.updateGraph(new HttpGraphSubjects(pathsRelativeTo, uriInfo),
-                            IOUtils.toString(requestBodyStream));
+            if (requestBodyStream != null &&
+                    requestContentType != null &&
+                    requestContentType.toString().equals(
+                            WebContent.contentTypeSPARQLUpdate)) {
+                result.updateGraph(new HttpGraphSubjects(pathsRelativeTo,
+                        uriInfo), IOUtils.toString(requestBodyStream));
             }
 
-        } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)){
+        } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
             final MediaType contentType =
                     requestContentType != null ? requestContentType
                             : APPLICATION_OCTET_STREAM_TYPE;
 
-            final Node node = datastreamService.createDatastreamNode(session, path, contentType
-                                                                                                      .toString(), requestBodyStream, checksumType, checksum);
+            final Node node =
+                    datastreamService.createDatastreamNode(session, path,
+                            contentType.toString(), requestBodyStream,
+                            checksumType, checksum);
             result = new Datastream(node);
         } else {
             result = null;
@@ -201,17 +209,17 @@ public abstract class AbstractResource {
     public void setHttpServletRequest(final HttpServletRequest servletRequest) {
         this.servletRequest = servletRequest;
     }
-    
+
     public static final String toPath(final List<PathSegment> paths) {
-        StringBuffer result = new StringBuffer();
+        final StringBuffer result = new StringBuffer();
 
-        for (PathSegment path: paths) {
-			final String p = path.getPath();
+        for (final PathSegment path : paths) {
+            final String p = path.getPath();
 
-			if(!p.equals("")) {
-            	result.append('/');
-            	result.append(p);
-			}
+            if (!p.equals("")) {
+                result.append('/');
+                result.append(p);
+            }
         }
 
         final String path = result.toString();
@@ -223,11 +231,11 @@ public abstract class AbstractResource {
         }
     }
 
-	public void setNodeService(NodeService nodeService) {
-		this.nodeService = nodeService;
-	}
+    public void setNodeService(final NodeService nodeService) {
+        this.nodeService = nodeService;
+    }
 
-    public void setObjectService(ObjectService objectService) {
+    public void setObjectService(final ObjectService objectService) {
         this.objectService = objectService;
     }
 }

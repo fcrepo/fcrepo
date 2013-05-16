@@ -1,21 +1,19 @@
 package org.fcrepo.api.repository;
 
-import org.fcrepo.api.FedoraImport;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.InputStream;
+import java.util.Map;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.jcr.LoginException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import java.io.InputStream;
-import java.util.Map;
-
-import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class FedoraRepositoryImportTest {
 

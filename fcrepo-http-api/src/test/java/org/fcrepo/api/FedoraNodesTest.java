@@ -9,27 +9,19 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
-
 import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.Variant;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
@@ -45,6 +37,7 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.modeshape.jcr.api.Repository;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -103,7 +96,9 @@ public class FedoraNodesTest {
     @Test
     public void testModify() throws RepositoryException, IOException {
         final String pid = "testObject";
-        final Response actual = testObj.modifyObject(createPathList(pid), TestHelpers.getUriInfoImpl(), null);
+        final Response actual =
+                testObj.modifyObject(createPathList(pid), TestHelpers
+                        .getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -119,7 +114,8 @@ public class FedoraNodesTest {
         final String path = "/" + pid;
         final Response actual =
                 testObj.createObject(createPathList(pid),
-                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null, TestHelpers.getUriInfoImpl(), null);
+                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null,
+                        TestHelpers.getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -164,67 +160,28 @@ public class FedoraNodesTest {
         verify(mockSession).save();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testDescribeRdfObject() throws RepositoryException, IOException {
+    public void testDescribeObject() throws RepositoryException, IOException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 
         final FedoraObject mockObject = mock(FedoraObject.class);
-
         final GraphStore mockStore = mock(GraphStore.class);
         final Dataset mockDataset = mock(Dataset.class);
         final Model mockModel = mock(Model.class);
         when(mockStore.toDataset()).thenReturn(mockDataset);
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
-        when(mockObject.getLastModifiedDate()).thenReturn(new Date());
-        when(mockObject.getGraphStore(any(GraphSubjects.class))).thenReturn(mockStore);
-        when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
-        final Request mockRequest = mock(Request.class);
-
-        when(mockRequest.selectVariant(any(List.class))).thenReturn(
-                new Variant(MediaType.valueOf("application/n-triples"), null,
-                        null));
-
-        final OutputStream mockStream = mock(OutputStream.class);
-        ((StreamingOutput) testObj
-                .describeRdf(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl()).getEntity())
-                .write(mockStream);
-
-        verify(mockModel).write(mockStream, "N-TRIPLES");
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testDescribeRdfCached() throws RepositoryException, IOException {
-        final String pid = "FedoraObjectsRdfTest2";
-        final String path = "/" + pid;
-        final FedoraObject mockObject = mock(FedoraObject.class);
-
-        final GraphStore mockStore = mock(GraphStore.class);
-        final Dataset mockDataset = mock(Dataset.class);
-        final Model mockModel = mock(Model.class);
-        when(mockStore.toDataset()).thenReturn(mockDataset);
-        when(mockDataset.getDefaultModel()).thenReturn(mockModel);
-
-        when(mockObject.getLastModifiedDate()).thenReturn(new Date());
+        when(mockObject.getLastModifiedDate()).thenReturn(null);
         when(mockObject.getGraphStore()).thenReturn(mockStore);
-        when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
+        when(
+                mockNodes.getObject(Mockito.isA(Session.class), Mockito
+                        .isA(String.class))).thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
+        final Dataset dataset =
+                testObj.describe(createPathList(path), mockRequest);
+        assertNotNull(dataset.getDefaultModel());
 
-        when(mockRequest.selectVariant(any(List.class))).thenReturn(
-                new Variant(MediaType.valueOf("application/n-triples"), null,
-                        null));
-
-        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
-                Response.notModified());
-        final Response actual =
-                testObj.describeRdf(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl());
-        assertNotNull(actual);
-        assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
-        verify(mockSession, never()).save();
     }
 
     @Test
@@ -239,9 +196,11 @@ public class FedoraNodesTest {
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
-        testObj.updateSparql(createPathList(pid), TestHelpers.getUriInfoImpl(), mockStream);
+        testObj.updateSparql(createPathList(pid), TestHelpers.getUriInfoImpl(),
+                mockStream);
 
-        verify(mockObject).updateGraph(any(GraphSubjects.class), eq("my-sparql-statement"));
+        verify(mockObject).updateGraph(any(GraphSubjects.class),
+                eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
     }
