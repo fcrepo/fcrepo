@@ -193,9 +193,12 @@ public abstract class JcrRdfTools {
     private static void addJcrTreePropertiesToModel(final Node node, final Model model) throws RepositoryException {
         final Resource subject = getGraphSubject(node);
 
-        final Node parentNode = node.getParent();
-        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasParent"), getGraphSubject(parentNode));
-        addJcrPropertiesToModel(parentNode, model);
+        // don't do this if the node is the root node.
+        if (node.getDepth() != 0) {
+            final Node parentNode = node.getParent();
+            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasParent"), getGraphSubject(parentNode));
+            addJcrPropertiesToModel(parentNode, model);
+        }
 
         final javax.jcr.NodeIterator nodeIterator = node.getNodes();
 

@@ -205,6 +205,7 @@ public class JcrRdfToolsTest {
         when(mockParent.getPath()).thenReturn("/test");
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockNode.getDepth()).thenReturn(2);
         javax.jcr.NodeIterator mockNodes = mock(javax.jcr.NodeIterator.class);
         when(mockNode.getNodes()).thenReturn(mockNodes);
         PowerMockito.mockStatic(NamespaceTools.class);

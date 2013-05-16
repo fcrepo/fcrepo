@@ -8,16 +8,21 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.util.regex.Matcher;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.update.GraphStore;
+
+import javax.ws.rs.core.Response;
 
 public class FedoraRepositoryIT extends AbstractResourceIT {
 
@@ -134,4 +139,17 @@ public class FedoraRepositoryIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testUpdateObjectGraph() throws Exception {
+        client.execute(postObjMethod("FedoraRepositoryDescribeTestGraphUpdate"));
+        final HttpPost updateObjectGraphMethod =
+                new HttpPost(serverAddress + "fcr:properties");
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream("INSERT { <info:fedora/objects/FedoraRepositoryDescribeTestGraphUpdate> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}".getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+
+    }
 }
