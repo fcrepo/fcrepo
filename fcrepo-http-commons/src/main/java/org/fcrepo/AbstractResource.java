@@ -202,8 +202,9 @@ public abstract class AbstractResource {
         this.servletRequest = servletRequest;
     }
     
-    public static final String toPath(List<PathSegment> paths) {
+    public static final String toPath(final List<PathSegment> paths) {
         StringBuffer result = new StringBuffer();
+
         for (PathSegment path: paths) {
 			final String p = path.getPath();
 
@@ -212,7 +213,14 @@ public abstract class AbstractResource {
             	result.append(p);
 			}
         }
-        return result.toString();
+
+        final String path = result.toString();
+
+        if (path.isEmpty()) {
+            return "/";
+        } else {
+            return path;
+        }
     }
 
 	public void setNodeService(NodeService nodeService) {
