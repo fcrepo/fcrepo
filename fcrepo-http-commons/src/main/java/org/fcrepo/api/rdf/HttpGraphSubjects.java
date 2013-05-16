@@ -48,6 +48,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 	public Resource getGraphSubject(Node node) throws RepositoryException {
 		URI result = nodesBuilder
 				.buildFromMap(getPathMap(node));
+        LOGGER.debug("Translated node {} into RDF subject {}", node, result);
 		return ResourceFactory.createResource(result.toString());
 	}
 
@@ -55,18 +56,25 @@ public class HttpGraphSubjects implements GraphSubjects {
 	public Node getNodeFromGraphSubject(Session session, Resource subject)
 			throws RepositoryException {
 		if (!isFedoraGraphSubject(subject)) {
+            LOGGER.debug("RDF resource {} was not a URI resource with our expected basePath {}, aborting.", subject, basePath);
 			return null;
 		}
 		
         final String absPath = subject.getURI().substring(pathIx);
 
+        final Node node;
         if (absPath.endsWith(FCR_CONTENT)) {
-            return session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT, JcrConstants.JCR_CONTENT));
+            node = session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT, JcrConstants.JCR_CONTENT));
+            LOGGER.trace("RDF resource {} is a fcr:content node, retrieving the corresponding JCR content node {}", subject, node);
         } else if (session.nodeExists(absPath)) {
-            return session.getNode(absPath);
+            node = session.getNode(absPath);
+            LOGGER.trace("RDF resource {} maps to JCR node {}", subject, node);
         } else {
-            return null;
+            node = null;
+            LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository", subject);
         }
+
+        return node;
 
 	}
 
