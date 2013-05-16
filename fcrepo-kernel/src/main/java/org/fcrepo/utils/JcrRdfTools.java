@@ -196,6 +196,7 @@ public abstract class JcrRdfTools {
             final Node childNode = nodeIterator.nextNode();
 
             if (FedoraTypesUtils.isInternalNode.apply(childNode)) {
+                excludedNodes += 1;
                 continue;
             }
 
