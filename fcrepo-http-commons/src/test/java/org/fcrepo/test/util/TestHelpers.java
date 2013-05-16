@@ -69,7 +69,7 @@ public abstract class TestHelpers {
 		final UriInfo ui = mock(UriInfo.class);
 		final UriBuilder ub = new UriBuilderImpl();
 		ub.scheme("http");
-		ub.host("locahost");
+		ub.host("localhost");
 		ub.path("/fcrepo");
 
 		when(ui.getRequestUri()).thenReturn(

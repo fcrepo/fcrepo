@@ -35,6 +35,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.NodeService;
@@ -102,7 +103,7 @@ public class FedoraNodesTest {
     @Test
     public void testModify() throws RepositoryException, IOException {
         final String pid = "testObject";
-        final Response actual = testObj.modifyObject(createPathList(pid), null);
+        final Response actual = testObj.modifyObject(createPathList(pid), TestHelpers.getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -118,7 +119,7 @@ public class FedoraNodesTest {
         final String path = "/" + pid;
         final Response actual =
                 testObj.createObject(createPathList(pid),
-                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null);
+                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null, TestHelpers.getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -144,7 +145,7 @@ public class FedoraNodesTest {
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
                         FedoraJcrTypes.FEDORA_DATASTREAM, null, null, null,
-                        dsContentStream);
+                        TestHelpers.getUriInfoImpl(), dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class), anyString(),
@@ -178,7 +179,7 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(new Date());
-        when(mockObject.getGraphStore()).thenReturn(mockStore);
+        when(mockObject.getGraphStore(any(GraphSubjects.class))).thenReturn(mockStore);
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
 
@@ -188,7 +189,7 @@ public class FedoraNodesTest {
 
         final OutputStream mockStream = mock(OutputStream.class);
         ((StreamingOutput) testObj
-                .describeRdf(createPathList(pid), mockRequest).getEntity())
+                .describeRdf(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl()).getEntity())
                 .write(mockStream);
 
         verify(mockModel).write(mockStream, "N-TRIPLES");
@@ -220,7 +221,7 @@ public class FedoraNodesTest {
         when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
                 Response.notModified());
         final Response actual =
-                testObj.describeRdf(createPathList(pid), mockRequest);
+                testObj.describeRdf(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl());
         assertNotNull(actual);
         assertEquals(Status.NOT_MODIFIED.getStatusCode(), actual.getStatus());
         verify(mockSession, never()).save();
@@ -238,9 +239,9 @@ public class FedoraNodesTest {
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
-        testObj.updateSparql(createPathList(pid), mockStream);
+        testObj.updateSparql(createPathList(pid), TestHelpers.getUriInfoImpl(), mockStream);
 
-        verify(mockObject).updateGraph("my-sparql-statement");
+        verify(mockObject).updateGraph(any(GraphSubjects.class), eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
     }

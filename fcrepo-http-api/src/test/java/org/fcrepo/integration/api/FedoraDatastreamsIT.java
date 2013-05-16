@@ -49,8 +49,9 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
         logger.warn(result.toString());
-        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7/ds1")));
-        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest7/ds2")));
+        String subjectURI = serverAddress + "objects/FedoraDatastreamsTest7";
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds2")));
     }
 
     @Test
@@ -84,10 +85,11 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
+        String subjectURI = serverAddress + "objects/FedoraDatastreamsTest8";
         GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
-        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8/ds1")));
-        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8/ds2")));
-        assertFalse("Found the deleted datastream! ", result.contains(Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8"), Node.ANY, Node.createURI("info:fedora/objects/FedoraDatastreamsTest8/ds_void")));
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds2")));
+        assertFalse("Found the deleted datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds_void")));
 
 
     }

@@ -17,6 +17,8 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionHistory;
 
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.fcrepo.utils.JcrRdfTools;
@@ -32,9 +34,12 @@ import com.hp.hpl.jena.update.UpdateAction;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
-	static final Logger logger = getLogger(FedoraObject.class);
+	private static final Logger LOGGER = getLogger(FedoraObject.class);
 
-	protected Node node;
+    private static final GraphSubjects DEFAULT_SUBJECT_FACTORY =
+    		new DefaultGraphSubjects();
+
+    protected Node node;
 
 	private JcrPropertyStatementListener listener;
 
@@ -61,9 +66,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		super(false);
 		this.node = findOrCreateNode(session, path, nodeType);
 
-		if (node.isNew() || !hasMixin(node)) {
+		if (!hasMixin(node)) {
 			node.addMixin(FEDORA_RESOURCE);
-
+		}
+		if (node.isNew()) {
 			if (node.getSession() != null) {
 				node.setProperty(JCR_CREATEDBY, node.getSession().getUserID());
 			}
@@ -119,13 +125,13 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 			return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
 									.getTimeInMillis());
 		} catch (RepositoryException e) {
-			logger.error("Could not get last modified date");
+			LOGGER.error("Could not get last modified date");
 		}
-		logger.debug("Setting modified date");
+		LOGGER.debug("Setting modified date");
 		try {
 			return getCreatedDate();
 		} catch(RepositoryException e) {
-			logger.error("Could not fall back to created date - {}", e.getMessage());
+			LOGGER.error("Could not fall back to created date - {}", e.getMessage());
 		}
 		return null;
 	}
@@ -156,18 +162,25 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		}
 	}
 
-	public GraphStore updateGraph(String sparqlUpdateStatement) throws RepositoryException {
-		final GraphStore store = getGraphStore();
+	public GraphStore updateGraph(GraphSubjects subjects,
+			String sparqlUpdateStatement) throws RepositoryException {
+		final GraphStore store = getGraphStore(subjects);
 		UpdateAction.parseExecute(sparqlUpdateStatement, store);
 
 		return store;
 	}
 
-	public GraphStore getGraphStore() throws RepositoryException {
+	public GraphStore updateGraph(String sparqlUpdateStatement)
+			throws RepositoryException {
+	    return updateGraph(DEFAULT_SUBJECT_FACTORY, sparqlUpdateStatement);
+	}
+	
+	public GraphStore getGraphStore(GraphSubjects subjects)
+			throws RepositoryException {
 
-        final Model model = JcrRdfTools.getJcrPropertiesModel(node);
+        final Model model = JcrRdfTools.getJcrPropertiesModel(subjects, node);
 
-        listener = new JcrPropertyStatementListener(node.getSession());
+        listener = new JcrPropertyStatementListener(subjects, node.getSession());
 
         model.register(listener);
 
@@ -176,13 +189,22 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 		return graphStore;
 	}
 
-    public GraphStore getVersionGraphStore() throws RepositoryException {
-        final Model model = JcrRdfTools.getJcrVersionsModel(node);
+	public GraphStore getGraphStore() throws RepositoryException {
+		return getGraphStore(DEFAULT_SUBJECT_FACTORY);
+	}
+	
+    public GraphStore getVersionGraphStore(GraphSubjects subjects)
+    		throws RepositoryException {
+        final Model model = JcrRdfTools.getJcrVersionsModel(subjects, node);
 
         GraphStore graphStore = GraphStoreFactory.create(model);
 
         return graphStore;
     }
+    
+    public GraphStore getVersionGraphStore() throws RepositoryException {
+    	return getVersionGraphStore(DEFAULT_SUBJECT_FACTORY);
+    }    
 
     public void addVersionLabel(final String label) throws RepositoryException {
         final VersionHistory versionHistory = getVersionHistory(node);

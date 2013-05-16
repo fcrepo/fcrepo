@@ -15,9 +15,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
@@ -45,7 +47,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
     @QueryParam("checksumType") final String checksumType,
     @QueryParam("checksum") final String checksum,
     @HeaderParam("Content-Type") final MediaType requestContentType,
-    final InputStream requestBodyStream) throws RepositoryException, IOException, InvalidChecksumException {
+    final InputStream requestBodyStream, @Context UriInfo uriInfo) throws RepositoryException, IOException, InvalidChecksumException {
         final String pid = pidMinter.mintPid();
 
         String path = toPath(pathList) + "/" + pid;
@@ -59,7 +61,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
                 return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
             }
 
-            createObjectOrDatastreamFromRequestContent(session, path, mixin, requestBodyStream, requestContentType, checksumType, checksum);
+            createObjectOrDatastreamFromRequestContent(FedoraNodes.class, session, path, mixin, uriInfo, requestBodyStream, requestContentType, checksumType, checksum);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
