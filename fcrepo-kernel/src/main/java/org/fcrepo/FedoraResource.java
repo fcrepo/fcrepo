@@ -108,8 +108,13 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 	 * @throws RepositoryException
 	 */
 	public Date getCreatedDate() throws RepositoryException {
-		return new Date(node.getProperty(JCR_CREATED).getDate()
+        if (node.hasProperty(JCR_CREATED)) {
+		    return new Date(node.getProperty(JCR_CREATED).getDate()
 								.getTimeInMillis());
+        } else {
+            LOGGER.info("Node {} does not have a createdDate", node);
+            return null;
+        }
 	}
 
 
@@ -118,22 +123,22 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 	 * @return
 	 * @throws RepositoryException
 	 */
-	public Date getLastModifiedDate() {
-		//TODO no modified date stored
-		//attempt to set as created date?
-		try {
-			return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
+	public Date getLastModifiedDate() throws RepositoryException {
+        if(node.hasProperty(JCR_LASTMODIFIED)) {
+            return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
 									.getTimeInMillis());
-		} catch (RepositoryException e) {
-			LOGGER.error("Could not get last modified date");
+		} else {
+			LOGGER.info("Could not get last modified date property for node {}", node);
 		}
-		LOGGER.debug("Setting modified date");
-		try {
-			return getCreatedDate();
-		} catch(RepositoryException e) {
-			LOGGER.error("Could not fall back to created date - {}", e.getMessage());
-		}
-		return null;
+
+        final Date createdDate = getCreatedDate();
+
+        if (createdDate != null) {
+            LOGGER.info("Using created date for last modified date for node {}", node);
+            return createdDate;
+        }
+
+        return null;
 	}
 
 	/**

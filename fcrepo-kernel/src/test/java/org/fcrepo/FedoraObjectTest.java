@@ -107,6 +107,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
     public void testGetCreated() throws RepositoryException {
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
+        when(mockObjNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         testFedoraObject.getCreatedDate();
         verify(mockObjNode).getProperty(JCR_CREATED);

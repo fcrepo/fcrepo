@@ -212,6 +212,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
+        when(mockDsNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockDsNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         final Date actual = testObj.getCreatedDate();
         assertEquals(expected.getTime(), actual.getTime());
@@ -224,6 +225,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
+        when(mockDsNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockDsNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(expected.getTime(), actual.getTime());
