@@ -16,11 +16,13 @@ import java.util.Collection;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -230,6 +232,9 @@ public abstract class FedoraTypesUtils {
 	}
 
 
+    public static NodeTypeManager getNodeTypeManager(final Node node) throws RepositoryException {
+        return node.getSession().getWorkspace().getNodeTypeManager();
+    }
     /**
      * Get the property definition information (containing type and multi-value information)
      * @param node the node to use for inferring the property definition
@@ -238,7 +243,7 @@ public abstract class FedoraTypesUtils {
      * @throws javax.jcr.RepositoryException
      */
     public static PropertyDefinition getDefinitionForPropertyName(final Node node, final String propertyName) throws RepositoryException {
-        final PropertyDefinition[] propertyDefinitions = node.getSession().getWorkspace().getNodeTypeManager().getNodeType(FEDORA_RESOURCE).getPropertyDefinitions();
+        final PropertyDefinition[] propertyDefinitions = getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE).getPropertyDefinitions();
 
         for (PropertyDefinition p : propertyDefinitions) {
             if (p.getName().equals(propertyName)) {

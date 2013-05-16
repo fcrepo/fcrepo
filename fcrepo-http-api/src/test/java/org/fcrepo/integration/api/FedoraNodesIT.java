@@ -8,11 +8,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.util.Iterator;
 
 import javax.ws.rs.core.Response;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.sparql.core.Quad;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -21,6 +21,9 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraNodesIT extends AbstractResourceIT {
 
@@ -119,7 +122,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     }
 
-	@Test
+    @Test
 	public void testGetObjectGraph() throws Exception {
 		client.execute(postObjMethod("FedoraDescribeTestGraph"));
 		final HttpGet getObjMethod =
@@ -216,6 +219,92 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
 	}
 
+    @Test
+    public void testDescribeSize() throws Exception {
+        final HttpGet describeMethod = new HttpGet(serverAddress + "");
+        describeMethod.addHeader("Accept", "application/n-triples");
+        HttpResponse response = client.execute(describeMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
+        logger.debug("Retrieved repository graph:\n" + graphStore.toString());
+
+        Iterator<Quad> iterator = graphStore.find(Node.ANY, Node.createURI(serverAddress), Node.createURI("info:fedora/fedora-system:def/internal#objectSize"), Node.ANY);
+
+        Integer oldSize = (Integer)iterator.next().getObject().getLiteralValue();
+
+        assertEquals(201, getStatus(postObjMethod("sizeNode")));
+        assertEquals(201, getStatus(postDSMethod("sizeNode", "asdf", "1234")));
+
+        response = client.execute(describeMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
+        logger.debug("Retrieved repository graph:\n" + graphStore.toString());
+
+        iterator = graphStore.find(Node.ANY, Node.createURI(serverAddress), Node.createURI("info:fedora/fedora-system:def/internal#objectSize"), Node.ANY);
+
+        Integer newSize = (Integer)iterator.next().getObject().getLiteralValue();
+
+        logger.debug("Old size was: " + oldSize + " and new size was: " +
+                             newSize);
+        assertTrue("No increment in size occurred when we expected one!",
+                          oldSize < newSize);
+    }
+
+    @Test
+    public void testDescribeCount() throws Exception {
+        final HttpGet describeMethod = new HttpGet(serverAddress + "");
+        describeMethod.addHeader("Accept", "application/n-triples");
+        HttpResponse response = client.execute(describeMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
+        logger.debug("Retrieved repository graph:\n" + graphStore.toString());
+
+        Iterator<Quad> iterator = graphStore.find(Node.ANY, Node.createURI(serverAddress), Node.createURI("info:fedora/fedora-system:def/internal#objectCount"), Node.ANY);
+
+        Integer oldSize = (Integer)iterator.next().getObject().getLiteralValue();
+
+        assertEquals(201, getStatus(postObjMethod("countNode")));
+        assertEquals(201, getStatus(postDSMethod("countNode", "asdf", "1234")));
+
+        response = client.execute(describeMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
+        logger.debug("Retrieved repository graph:\n" + graphStore.toString());
+
+        iterator = graphStore.find(Node.ANY, Node.createURI(serverAddress), Node.createURI("info:fedora/fedora-system:def/internal#objectCount"), Node.ANY);
+
+        Integer newSize = (Integer)iterator.next().getObject().getLiteralValue();
+
+        logger.debug("Old size was: " + oldSize + " and new size was: " +
+                             newSize);
+        assertTrue("No increment in count occurred when we expected one!",
+                          oldSize < newSize);
+    }
+
+    /**
+     * Given a directory at:
+     *  test-objects/FileSystem1/
+     *                          /ds1
+     *                          /ds2
+     *                          /TestSubdir/
+     * and a projection of test-objects as fedora:/files,
+     * then I should be able to retrieve an object from fedora:/files/FileSystem1
+     * that lists a child object at fedora:/files/FileSystem1/TestSubdir
+     * and lists datastreams ds1 and ds2
+     */
+    @Test
+    public void testGetProjectedNode() throws Exception {
+        HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
+        HttpResponse response = execute(method);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        String subjectURI = serverAddress + "files/FileSystem1";
+        GraphStore result = TestHelpers.parseTriples(response.getEntity().getContent());
+        assertTrue("Didn't find the first datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/ds2")));
+        assertTrue("Didn't find the first object! ", result.contains(Node.ANY, Node.createURI(subjectURI), Node.ANY, Node.createURI(subjectURI + "/TestSubdir")));
+
+    }
 
 
 }

@@ -20,6 +20,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
@@ -40,7 +41,7 @@ public class JcrRdfToolsTest {
     private Node mockNode;
 
     private NamespaceRegistry mockNsRegistry;
-    
+
     private GraphSubjects testSubjects;
 
     private Session mockSession;
@@ -183,6 +184,10 @@ public class JcrRdfToolsTest {
         when(mockParent.getPath()).thenReturn("/test");
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getParent()).thenReturn(mockParent);
+        final NodeType nodeType = mock(NodeType.class);
+        when(mockNode.getPrimaryNodeType()).thenReturn(nodeType);
+        when(mockNode.getPrimaryNodeType().getName()).thenReturn("");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
         final javax.jcr.NodeIterator mockNodes =
                 mock(javax.jcr.NodeIterator.class);
         when(mockNode.getNodes()).thenReturn(mockNodes);
@@ -215,6 +220,10 @@ public class JcrRdfToolsTest {
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getParent()).thenReturn(mockParent);
         when(mockNode.getDepth()).thenReturn(2);
+        final NodeType nodeType = mock(NodeType.class);
+        when(mockNode.getPrimaryNodeType()).thenReturn(nodeType);
+        when(mockNode.getPrimaryNodeType().getName()).thenReturn("fedora:object");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
         javax.jcr.NodeIterator mockNodes = mock(javax.jcr.NodeIterator.class);
         when(mockNode.getNodes()).thenReturn(mockNodes);
         PowerMockito.mockStatic(NamespaceTools.class);
