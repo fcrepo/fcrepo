@@ -3,6 +3,7 @@ package org.fcrepo;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -28,7 +29,7 @@ public class Transaction {
 	private final Date created;
 
 	@XmlAttribute(name = "expires")
-	private final Date expires;
+	private Date expires;
 
 	private State state = State.NEW;
 
@@ -43,14 +44,8 @@ public class Transaction {
 		super();
 		this.session = session;
 		this.created = new Date();
-		long duration;
-		if (System.getProperty("fcrepo4.tx.timeout") != null){
-		    duration = Long.parseLong(System.getProperty("fcrepo4.tx.timeout"));
-		}else{
-		    duration = 1000l * 60l * 3l;
-		}
-		this.expires = new Date(System.currentTimeMillis() + duration);
 		this.id = UUID.randomUUID().toString();
+		this.updateExpiryDate();
 	}
 
 	public Session getSession() {
@@ -75,6 +70,25 @@ public class Transaction {
 
     public Date getExpires() {
         return expires;
+    }
+
+    public void commit() throws RepositoryException{
+        this.state = State.COMMITED;
+        this.session.save();
+    }
+
+    public void rollback() throws RepositoryException {
+        this.state = State.ROLLED_BACK;
+    }
+
+    public void updateExpiryDate() {
+        long duration;
+        if (System.getProperty("fcrepo4.tx.timeout") != null){
+            duration = Long.parseLong(System.getProperty("fcrepo4.tx.timeout"));
+        }else{
+            duration = 1000l * 60l * 3l;
+        }
+        this.expires = new Date(System.currentTimeMillis() + duration);
     }
 
 }
