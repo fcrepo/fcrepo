@@ -91,8 +91,7 @@ public class FedoraTransactions extends AbstractResource {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
         }
-        tx.getSession().save();
-        tx.setState(COMMITED);
+        tx.commit();
         return tx;
     }
 
@@ -117,6 +116,7 @@ public class FedoraTransactions extends AbstractResource {
     final String txid, @PathParam("path")
     final List<PathSegment> pathlist) throws RepositoryException {
         final Transaction tx = transactions.get(txid);
+        tx.updateExpiryDate();
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
