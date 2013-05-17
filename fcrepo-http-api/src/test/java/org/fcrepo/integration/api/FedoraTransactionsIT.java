@@ -34,7 +34,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* fetch the created tx from the endpoint */
         HttpGet getTx = new HttpGet(serverAddress + "fcr:tx/" + tx.getId());
+        getTx.setHeader("Accept", "application/json");
         resp = execute(getTx);
+        assertEquals(200, resp.getStatusLine().getStatusCode());
         Transaction fetched =
                 mapper.readValue(resp.getEntity().getContent(),
                         Transaction.class);
@@ -46,7 +48,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     @Test
     public void testCreateAndTimeoutTransaction() throws Exception {
-        System.setProperty("fcrepo4.tx.timeout", "10");
         /* create a tx */
         HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
         HttpResponse resp = execute(createTx);
@@ -64,7 +65,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         boolean expired = false;
         long start = System.currentTimeMillis();
-        while (!expired && System.currentTimeMillis() - start < 300) {
+        while (!expired && System.currentTimeMillis() - start < 3000) {
             /* check that the tx is removed */
             HttpGet getTx = new HttpGet(serverAddress + "fcr:tx/" + tx.getId());
             resp = execute(getTx);

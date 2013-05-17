@@ -4,7 +4,6 @@ package org.fcrepo.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.fcrepo.Transaction.State.COMMITED;
 import static org.fcrepo.Transaction.State.DIRTY;
 import static org.fcrepo.Transaction.State.ROLLED_BACK;
 
@@ -29,8 +28,6 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
 import org.fcrepo.services.ObjectService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -75,8 +72,7 @@ public class FedoraTransactions extends AbstractResource {
     final String txid) throws RepositoryException {
         final Transaction tx = transactions.get(txid);
         if (tx == null) {
-            throw new RepositoryException("Transaction with id " + txid +
-                    " is not available");
+            throw new PathNotFoundException("Transaction is not available");
         }
         return tx;
     }
@@ -116,13 +112,13 @@ public class FedoraTransactions extends AbstractResource {
     final String txid, @PathParam("path")
     final List<PathSegment> pathlist) throws RepositoryException {
         final Transaction tx = transactions.get(txid);
-        tx.updateExpiryDate();
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
         }
         final String path = toPath(pathlist);
         objectService.createObject(tx.getSession(), path);
+        tx.updateExpiryDate();
         tx.setState(DIRTY);
         return Response.ok(path).build();
     }
