@@ -5,6 +5,13 @@ import static com.google.common.collect.ImmutableList.builder;
 import static java.lang.Integer.parseInt;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static org.fcrepo.http.RDFMediaType.N3;
+import static org.fcrepo.http.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.RDFMediaType.TURTLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -21,17 +28,28 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Variant;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraResource;
+import org.fcrepo.http.RDFMediaType;
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.fcrepo.jaxb.search.ObjectFields;
+import org.fcrepo.provider.ModelStreamingOutput;
 import org.fcrepo.provider.VelocityViewer;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.JcrRdfTools;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author Vincent Nguyen
@@ -51,6 +69,50 @@ public class FedoraFieldSearch extends AbstractResource implements
     @Produces(TEXT_HTML)
     public String searchForm() throws RepositoryException {
         return new VelocityViewer().getFieldSearch(null);
+    }
+
+    @POST
+    @Timed
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    public Response searchSubmitRdf(@FormParam("terms") final String terms,
+            @FormParam("offSet") @DefaultValue("0") final String offSet,
+            @FormParam("maxResults") final String maxResults, @Context final Request request)
+                    throws RepositoryException{
+
+        final Session session = getAuthenticatedSession();
+        try{
+            /* select the best response type */
+            final Variant bestPossibleResponse = request.selectVariant(RDFMediaType.POSSIBLE_RDF_VARIANTS);
+
+            /* construct the query from the user's search terms */
+            final Query query = getQuery(session.getWorkspace().getQueryManager(), session.getValueFactory(), terms);
+
+            /* perform the actual search in the repository */
+            final FieldSearchResult result = search(query, parseInt(offSet), parseInt(maxResults));
+            result.setSearchTerms(terms);
+
+            final Model model = ModelFactory.createDefaultModel();
+            final Resource searchResult = model.createResource(uriInfo.getAbsolutePath().toASCIIString());
+
+            /* add the result description to the RDF model */
+            searchResult.addProperty(model.createProperty("info:fedora/fedora-system:def/search#numSearchResults"),
+                    model.createTypedLiteral(result.getSize()));
+            searchResult.addProperty(model.createProperty("info:fedora/fedora-system:def/search#searchTerms"),
+                    result.getSearchTerms());
+            searchResult.addProperty(model.createProperty("info:fedora/fedora-system:def/search#maxNumResults"),
+                    model.createTypedLiteral(result.getMaxResults()));
+
+            /* and add the RDF model of each found fedora:resource node to the response model */
+            for (ObjectFields field : result.getObjectFieldsList()){
+                final FedoraResource fo = this.nodeService.getObject(session, field.getPath());
+                Resource objResource = model.createResource(uriInfo.getBaseUri().toASCIIString() + "rest" + field.getPath());
+                model.add(JcrRdfTools.getJcrPropertiesModel(FedoraResource.DEFAULT_SUBJECT_FACTORY, fo.getNode()));
+            }
+
+            return Response.ok(new ModelStreamingOutput(model, bestPossibleResponse.getMediaType())).build();
+        }finally{
+            session.logout();
+        }
     }
 
     @POST
