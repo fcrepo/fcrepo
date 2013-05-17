@@ -10,6 +10,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.integration.AbstractIT;
 import org.fcrepo.observer.FedoraEvent;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,8 +34,8 @@ public class SimpleObserverIT extends AbstractIT {
     public void TestEventBusPublishing() throws RepositoryException {
 
         final Session se = repository.login();
-        se.getRootNode().addNode("/object1").addMixin("fedora:object");
-        se.getRootNode().addNode("/object2").addMixin("fedora:object");
+        se.getRootNode().addNode("/object1").addMixin(FedoraJcrTypes.FEDORA_OBJECT);
+        se.getRootNode().addNode("/object2").addMixin(FedoraJcrTypes.FEDORA_OBJECT);
         se.save();
         se.logout();
 

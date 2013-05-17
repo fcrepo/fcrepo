@@ -3,6 +3,7 @@ package org.fcrepo.services;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 
 import java.net.URI;
 import java.security.MessageDigest;
@@ -58,7 +59,7 @@ public abstract class ServiceHelpers {
         for (final NodeIterator i = obj.getNodes(); i.hasNext();) {
             final Node node = i.nextNode();
 
-            if (node.isNodeType("nt:file")) {
+            if (node.isNodeType(NT_FILE)) {
                 size += getDatastreamSize(node);
 		    }
         }
