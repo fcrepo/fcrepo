@@ -10,8 +10,10 @@ import java.util.Map;
 
 import javax.jcr.Repository;
 
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
+import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
@@ -33,6 +35,8 @@ public class GetClusterConfiguration implements
 	public static final String CLUSTER_SIZE = "clusterSize";
 	public static final String CLUSTER_MEMBERS = "clusterMembers";
 
+    private GetBinaryStore getBinaryStore = new GetBinaryStore();
+
 	/**
 	 * Extract the BinaryStore out of Modeshape (infinspan, jdbc, file, transient, etc)
 	 * @return
@@ -44,9 +48,7 @@ public class GetClusterConfiguration implements
 		LinkedHashMap<String, String> result =
 				new LinkedHashMap<String, String>();
 		try {
-			BinaryStore store =
-					((JcrRepository) input).getConfiguration()
-							.getBinaryStorage().getBinaryStore();
+            BinaryStore store = getBinaryStore.apply(input);
 
             if (!(store instanceof InfinispanBinaryStore)) {
                 return result;
