@@ -47,10 +47,12 @@ public class GetClusterConfiguration implements
 			BinaryStore store =
 					((JcrRepository) input).getConfiguration()
 							.getBinaryStorage().getBinaryStore();
-			InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
 
-			//seems like we have to start it, not sure why.
-			ispnStore.start();
+            if (!(store instanceof InfinispanBinaryStore)) {
+                return result;
+
+            }
+			InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
 
 			List<Cache<?, ?>> caches = ispnStore.getCaches();
 			DefaultCacheManager cm =
@@ -58,7 +60,7 @@ public class GetClusterConfiguration implements
 
 			if (cm == null) {
 				logger.debug("Could not get cluster configuration information");
-				return null;
+                return result;
 			}
 
 			int nodeView = -1;
@@ -74,11 +76,10 @@ public class GetClusterConfiguration implements
 			result.put(NODE_VIEW, nodeView == -1 ? "Unknown" : String.valueOf(nodeView));
 			result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));
 			result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
-			ispnStore.shutdown();
 			return result;
 		} catch (Exception e) {
-			logger.debug("Could not get cluster configuration information");
-			return null;
+			logger.debug("Could not get cluster configuration information: {}", e);
+			return result;
 		}
 	}
 

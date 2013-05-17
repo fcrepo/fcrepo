@@ -3,6 +3,7 @@ package org.fcrepo.services.functions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +65,6 @@ public class GetClusterConfigurationTest {
     public void testBad() {
         final JcrRepository mockRepo = mock(JcrRepository.class);
         final Map<String, String> actual = testObj.apply(mockRepo);
-        assertEquals(null, actual);
+        assertTrue("", actual.isEmpty());
     }
 }
