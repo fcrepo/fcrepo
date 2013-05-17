@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,19 +18,27 @@ import java.util.TimeZone;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.Row;
+import javax.jcr.query.RowIterator;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import org.junit.Test;
 import org.modeshape.jcr.JcrValueFactory;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Predicate;
@@ -217,5 +226,71 @@ public class FedoraTypesUtilsTest {
 
         assertFalse("nodes that are not mode:system types should not be treated as internal nodes",
                            FedoraTypesUtils.isInternalNode.apply(mockNode));
+    }
+
+    @Test
+    public void testGetObjectSize() throws RepositoryException {
+
+        Repository mockRepository = mock(Repository.class);
+        Session mockSession = mock(Session.class);
+        Workspace mockWorkspace = mock(Workspace.class);
+        QueryManager mockQueryManager = mock(QueryManager.class);
+        Query mockQuery = mock(Query.class);
+        QueryResult mockResults = mock(QueryResult.class);
+        RowIterator mockIterator = mock(RowIterator.class);
+
+        Row mockRow = mock(Row.class);
+
+        Value mockValue = mock(Value.class);
+
+        when(mockRepository.login()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
+
+        when(mockQueryManager.createQuery("SELECT [" + FedoraJcrTypes.CONTENT_SIZE + "] FROM [" + FedoraJcrTypes.FEDORA_BINARY + "]", Query.JCR_SQL2)).thenReturn(mockQuery);
+        when(mockQuery.execute()).thenReturn(mockResults);
+        when(mockResults.getRows()).thenReturn(mockIterator);
+
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockIterator.nextRow()).thenReturn(mockRow, mockRow, mockRow);
+
+        when(mockRow.getValue(FedoraJcrTypes.CONTENT_SIZE)).thenReturn(mockValue);
+        when(mockValue.getLong()).thenReturn(5L, 10L, 1L);
+
+        final long count = FedoraTypesUtils.getRepositorySize(mockRepository);
+
+        assertTrue(count == 16L);
+
+        verify(mockSession).logout();
+        verify(mockSession, never()).save();
+    }
+
+    @Test
+    public void testGetObjectCount() throws RepositoryException {
+        Repository mockRepository = mock(Repository.class);
+        Session mockSession = mock(Session.class);
+        Workspace mockWorkspace = mock(Workspace.class);
+        QueryManager mockQueryManager = mock(QueryManager.class);
+        Query mockQuery = mock(Query.class);
+        QueryResult mockResults = mock(QueryResult.class);
+        RowIterator mockIterator = mock(RowIterator.class);
+
+
+        when(mockRepository.login()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
+
+        when(mockQueryManager.createQuery("SELECT [" + JcrConstants.JCR_PATH + "] FROM [" + FedoraJcrTypes.FEDORA_OBJECT + "]", Query.JCR_SQL2)).thenReturn(mockQuery);
+        when(mockQuery.execute()).thenReturn(mockResults);
+        when(mockResults.getRows()).thenReturn(mockIterator);
+
+        when(mockIterator.getSize()).thenReturn(3L);
+
+        final long count = FedoraTypesUtils.getRepositoryCount(mockRepository);
+
+        assertTrue(count == 3L);
+
+        verify(mockSession).logout();
+        verify(mockSession, never()).save();
     }
 }

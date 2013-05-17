@@ -20,13 +20,13 @@ import org.slf4j.LoggerFactory;
 public class SanityCheckIT {
 
     /**
-     * The server port of the application, set as system property by 
+     * The server port of the application, set as system property by
      * maven-failsafe-plugin.
      */
     private static final String SERVER_PORT = System.getProperty("test.port");
 
     /**
-    * The context path of the application (including the leading "/"), set as 
+    * The context path of the application (including the leading "/"), set as
     * system property by maven-failsafe-plugin.
     */
     private static final String CONTEXT_PATH = System
@@ -59,7 +59,7 @@ public class SanityCheckIT {
     @Test
     public void doASanityCheck() throws IOException {
         assertEquals(200, getStatus(new HttpGet(serverAddress +
-                "rest/fcr:describe")));
+                "rest/")));
     }
 
     protected int getStatus(final HttpUriRequest method)

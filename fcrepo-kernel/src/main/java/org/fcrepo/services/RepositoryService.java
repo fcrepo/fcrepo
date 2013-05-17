@@ -22,6 +22,7 @@ import javax.jcr.query.RowIterator;
 
 import org.fcrepo.metrics.RegistryService;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -67,45 +68,18 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return session.getNode(path).isNodeType("nt:file");
     }
 
-    /**
-    *
-    * @return a double of the size of the fedora:datastream binary content
-    * @throws RepositoryException
-    */
-    private long getAllObjectsDatastreamSize() throws RepositoryException {
-
-        final Timer.Context context = objectSizeCalculationTimer.time();
-        logger.info("Calculating repository size from index");
-
-        try {
-            final Session session = repo.login();
-            long sum = 0;
-            final QueryManager queryManager =
-                    session.getWorkspace().getQueryManager();
-
-            final String querystring =
-                    "\n" + "SELECT [" + CONTENT_SIZE + "] FROM [" + FEDORA_BINARY +
-                            "]";
-
-            final QueryResult queryResults =
-                    queryManager.createQuery(querystring, JCR_SQL2).execute();
-
-            for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
-                final Value value = rows.nextRow().getValue(CONTENT_SIZE);
-                sum += value.getLong();
-            }
-
-            session.logout();
-
-            return sum;
-        } finally {
-            context.stop();
-        }
-    }
-
     public Long getRepositorySize() {
         try {
-            return getAllObjectsDatastreamSize();
+
+            final Timer.Context context = objectSizeCalculationTimer.time();
+            logger.info("Calculating repository size from index");
+
+            try {
+                return FedoraTypesUtils.getRepositorySize(repo);
+
+            } finally {
+                context.stop();
+            }
         } catch (final RepositoryException e) {
             throw propagate(e);
         }

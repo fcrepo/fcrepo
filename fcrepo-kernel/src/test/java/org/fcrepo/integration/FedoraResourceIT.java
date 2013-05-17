@@ -81,6 +81,30 @@ public class FedoraResourceIT extends AbstractIT {
 		session.logout();
 	}
 
+    @Test
+    public void testRepositoryRootGraph() throws IOException, RepositoryException {
+        Session session = repo.login();
+
+        final FedoraResource object = nodeService.getObject(session, "/");
+
+        logger.warn(object.getGraphStore().toString());
+        Node s = Node.createURI("info:fedora/");
+        Node p = Node.createURI("info:fedora/fedora-system:def/internal#primaryType");
+        Node o = Node.createLiteral("mode:root");
+        assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
+
+
+        p = Node.createURI("info:fedora/fedora-system:def/internal#repository/jcr.repository.vendor.url");
+        o = Node.createLiteral("http://www.modeshape.org");
+        assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
+
+        p = Node.createURI("info:fedora/fedora-system:def/internal#hasNodeType");
+        o = Node.createLiteral("fedora:resource");
+        assertTrue(object.getGraphStore().getDefaultGraph().contains(s, p, o));
+
+        session.logout();
+    }
+
 	@Test
 	public void testObjectGraph() throws IOException, RepositoryException {
 		Session session = repo.login();

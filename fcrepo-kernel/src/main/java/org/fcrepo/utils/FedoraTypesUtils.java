@@ -4,6 +4,7 @@ package org.fcrepo.utils;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_RESOURCE;
@@ -15,20 +16,27 @@ import java.util.Collection;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.RowIterator;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.codahale.metrics.Timer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.modeshape.jcr.JcrValueFactory;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Function;
@@ -224,6 +232,9 @@ public abstract class FedoraTypesUtils {
 	}
 
 
+    public static NodeTypeManager getNodeTypeManager(final Node node) throws RepositoryException {
+        return node.getSession().getWorkspace().getNodeTypeManager();
+    }
     /**
      * Get the property definition information (containing type and multi-value information)
      * @param node the node to use for inferring the property definition
@@ -232,7 +243,7 @@ public abstract class FedoraTypesUtils {
      * @throws javax.jcr.RepositoryException
      */
     public static PropertyDefinition getDefinitionForPropertyName(final Node node, final String propertyName) throws RepositoryException {
-        final PropertyDefinition[] propertyDefinitions = node.getSession().getWorkspace().getNodeTypeManager().getNodeType(FEDORA_RESOURCE).getPropertyDefinitions();
+        final PropertyDefinition[] propertyDefinitions = getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE).getPropertyDefinitions();
 
         for (PropertyDefinition p : propertyDefinitions) {
             if (p.getName().equals(propertyName)) {
@@ -275,5 +286,56 @@ public abstract class FedoraTypesUtils {
 
     public static VersionHistory getVersionHistory(final Session session, final String path) throws RepositoryException {
         return session.getWorkspace().getVersionManager().getVersionHistory(path);
+    }
+
+    /**
+     *
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public static long getRepositoryCount(final Repository repository) throws RepositoryException {
+        final Session session = repository.login();
+        try {
+            final QueryManager queryManager =
+                    session.getWorkspace().getQueryManager();
+
+            final String querystring = "SELECT [" + JcrConstants.JCR_PATH + "] FROM [" + FedoraJcrTypes.FEDORA_OBJECT +
+                            "]";
+
+            final QueryResult queryResults =
+                    queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+            return queryResults.getRows().getSize();
+        } finally {
+
+            session.logout();
+        }
+    }
+
+    /**
+     *
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public static long getRepositorySize(final Repository repository) throws RepositoryException {
+        final Session session = repository.login();
+        long sum = 0;
+        final QueryManager queryManager =
+                session.getWorkspace().getQueryManager();
+
+        final String querystring = "SELECT [" + FedoraJcrTypes.CONTENT_SIZE + "] FROM [" + FedoraJcrTypes.FEDORA_BINARY +
+                        "]";
+
+        final QueryResult queryResults =
+                queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
+            final Value value = rows.nextRow().getValue(FedoraJcrTypes.CONTENT_SIZE);
+            sum += value.getLong();
+        }
+
+        session.logout();
+
+        return sum;
     }
 }

@@ -10,8 +10,10 @@ import java.util.Map;
 
 import javax.jcr.Repository;
 
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
+import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
@@ -33,6 +35,8 @@ public class GetClusterConfiguration implements
 	public static final String CLUSTER_SIZE = "clusterSize";
 	public static final String CLUSTER_MEMBERS = "clusterMembers";
 
+    private GetBinaryStore getBinaryStore = new GetBinaryStore();
+
 	/**
 	 * Extract the BinaryStore out of Modeshape (infinspan, jdbc, file, transient, etc)
 	 * @return
@@ -44,13 +48,13 @@ public class GetClusterConfiguration implements
 		LinkedHashMap<String, String> result =
 				new LinkedHashMap<String, String>();
 		try {
-			BinaryStore store =
-					((JcrRepository) input).getConfiguration()
-							.getBinaryStorage().getBinaryStore();
-			InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
+            BinaryStore store = getBinaryStore.apply(input);
 
-			//seems like we have to start it, not sure why.
-			ispnStore.start();
+            if (!(store instanceof InfinispanBinaryStore)) {
+                return result;
+
+            }
+			InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
 
 			List<Cache<?, ?>> caches = ispnStore.getCaches();
 			DefaultCacheManager cm =
@@ -58,7 +62,7 @@ public class GetClusterConfiguration implements
 
 			if (cm == null) {
 				logger.debug("Could not get cluster configuration information");
-				return null;
+                return result;
 			}
 
 			int nodeView = -1;
@@ -74,11 +78,10 @@ public class GetClusterConfiguration implements
 			result.put(NODE_VIEW, nodeView == -1 ? "Unknown" : String.valueOf(nodeView));
 			result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));
 			result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
-			ispnStore.shutdown();
 			return result;
 		} catch (Exception e) {
-			logger.debug("Could not get cluster configuration information");
-			return null;
+			logger.debug("Could not get cluster configuration information: {}", e);
+			return result;
 		}
 	}
 

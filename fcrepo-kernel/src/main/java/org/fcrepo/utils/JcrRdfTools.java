@@ -1,28 +1,40 @@
 package org.fcrepo.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.fcrepo.utils.FedoraJcrTypes.FCR_CONTENT;
+import static org.fcrepo.utils.FedoraTypesUtils.getNodeTypeManager;
+import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
+import static org.fcrepo.utils.FedoraTypesUtils.getRepositorySize;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeIterator;
+import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
+import org.fcrepo.services.RepositoryService;
+import org.fcrepo.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
@@ -79,7 +91,7 @@ public abstract class JcrRdfTools {
     		final Node node) throws RepositoryException {
         return factory.getGraphSubject(node);
     }
-    
+
     /**
      * Translate an RDF resource into a JCR node
      * @param session
@@ -92,7 +104,7 @@ public abstract class JcrRdfTools {
     		throws RepositoryException {
         return factory.getNodeFromGraphSubject(session, subject);
     }
-    
+
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
@@ -137,6 +149,12 @@ public abstract class JcrRdfTools {
 
         final Model model = createDefaultJcrModel(node.getSession());
 
+        if (node.getPrimaryNodeType().getName().equals("mode:root")){
+            /* a rdf description of the root node */
+            logger.debug("Creating RDF response for repository description");
+            addRepositoryMetricsToModel(factory, node, model);
+        }
+
         addJcrPropertiesToModel(factory, node, model);
 
         addJcrTreePropertiesToModel(factory, node, model);
@@ -146,6 +164,60 @@ public abstract class JcrRdfTools {
         }
 
         return model;
+    }
+
+    private static void addRepositoryMetricsToModel(GraphSubjects factory,
+            Node node, Model model) throws RepositoryException{
+
+        final Repository repository = node.getSession().getRepository();
+        /* retreive the metrics from the service */
+        SortedMap<String, Counter> counters = RepositoryService.getMetrics().getCounters();
+
+        final Resource subject = factory.getGraphSubject(node);
+        for (String key : repository.getDescriptorKeys()) {
+            final String descriptor = repository.getDescriptor(key);
+            if (descriptor != null) {
+                model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#repository/" + key), descriptor);
+            }
+        }
+
+        final NodeTypeManager nodeTypeManager = getNodeTypeManager(node);
+
+        final NodeTypeIterator nodeTypes = nodeTypeManager.getAllNodeTypes();
+
+        while (nodeTypes.hasNext()) {
+            final NodeType nodeType = nodeTypes.nextNodeType();
+            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasNodeType"), nodeType.getName());
+        }
+
+        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#objectCount"), ResourceFactory.createTypedLiteral(getRepositoryCount(repository)));
+        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#objectSize"), ResourceFactory.createTypedLiteral(getRepositorySize(repository)));
+
+        /* TODO: Get and add the Storage policy to the RDF response */
+
+        /* add the configuration information */
+
+        /* Get the cluster configuration for the RDF response*/
+        Map<String,String> config  = new GetClusterConfiguration().apply(repository);
+
+        assert(config != null);
+
+        for (Map.Entry<String, String> entry : config.entrySet()) {
+            model.add(subject,
+                             model.createProperty("info:fedora/fedora-system:def/internal#" + entry.getKey()),
+                             entry.getValue());
+        }
+
+        /* and add the repository metrics to the RDF model */
+        model.add(subject,
+                model.createProperty("info:fedora/fedora-system:def/internal#numFixityChecks"),
+                ResourceFactory.createTypedLiteral(counters.get("org.fcrepo.services.LowLevelStorageService.fixity-check-counter").getCount()));
+        model.add(subject,
+                model.createProperty("info:fedora/fedora-system:def/internal#numFixityErrors"),
+                ResourceFactory.createTypedLiteral(counters.get("org.fcrepo.services.LowLevelStorageService.fixity-error-counter").getCount()));
+        model.add(subject,
+                model.createProperty("info:fedora/fedora-system:def/internal#numFixityRepaired"),
+                ResourceFactory.createTypedLiteral(counters.get("org.fcrepo.services.LowLevelStorageService.fixity-repaired-counter").getCount()));
     }
 
     private static void addJcrContentLocationInformationToModel(
@@ -422,7 +494,7 @@ public abstract class JcrRdfTools {
     private static Node getNodeFromObjectPath(final Node node, final String path) throws RepositoryException {
         return node.getSession().getNode(path.substring("info:fedora".length()));
     }
-    
+
     public static Model getJcrVersionsModel(
     		final GraphSubjects factory, final Node node)
     		throws RepositoryException {
@@ -457,7 +529,5 @@ public abstract class JcrRdfTools {
         }
 
         return model;
-
-
     }
 }
