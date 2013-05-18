@@ -10,14 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.PropertyType;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
+import javax.jcr.*;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
@@ -25,6 +18,8 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.RepositoryService;
@@ -34,7 +29,6 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Timer;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
@@ -129,6 +123,26 @@ public abstract class JcrRdfTools {
                 } else {
                     model.setNsPrefix(prefix, getRDFNamespaceForJcrNamespace(nsURI));
                 }
+            }
+        }
+
+        return model;
+    }
+
+    public static Model getJcrNodeIteratorModel(final GraphSubjects factory, final Iterator nodeIterator, final Resource iteratorSubject) throws RepositoryException {
+
+        if (!nodeIterator.hasNext()) {
+            return ModelFactory.createDefaultModel();
+        }
+
+        final PeekingIterator iterator = Iterators.peekingIterator(nodeIterator);
+        final Model model = createDefaultJcrModel(((Item)iterator.peek()).getSession());
+
+        while (iterator.hasNext()) {
+            final Node node = (Node)iterator.next();
+            addJcrPropertiesToModel(factory, node, model);
+            if (iteratorSubject != null) {
+                model.add(iteratorSubject, model.createProperty("info:fedora/iterator#hasNode"), getGraphSubject(factory, node));
             }
         }
 
