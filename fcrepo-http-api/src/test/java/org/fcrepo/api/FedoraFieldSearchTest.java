@@ -7,11 +7,14 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.jcr.LoginException;
@@ -23,10 +26,19 @@ import javax.jcr.ValueFactory;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Variant;
 
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.jaxb.search.FieldSearchResult;
 import org.fcrepo.jaxb.search.ObjectFields;
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.services.NodeService;
+import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
@@ -38,17 +50,17 @@ public class FedoraFieldSearchTest {
     FedoraFieldSearch testObj;
 
     Session mockSession;
+    private NodeService mockNodeService;
+    private UriInfo uriInfo;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockSession = TestHelpers.getQuerySessionMock();
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        when(
-                mockSessions.getSession(any(SecurityContext.class),
-                        any(HttpServletRequest.class))).thenReturn(mockSession);
         testObj = new FedoraFieldSearch();
-        testObj.setSessionFactory(mockSessions);
+        mockSession = TestHelpers.mockSession(testObj);
+        uriInfo = TestHelpers.getUriInfoImpl();
+        testObj.setUriInfo(uriInfo);
+        mockNodeService = mock(NodeService.class);
+        testObj.setNodeService(mockNodeService);
     }
 
     @After
@@ -57,42 +69,18 @@ public class FedoraFieldSearchTest {
     }
 
     @Test
-    public void testSearchSubmit() throws RepositoryException {
-        final String actual = testObj.searchSubmit("foo", "1", "1");
-        assertTrue("actual.length = " + actual.length() + "; expected > 0",
-                actual.length() > 0);
+    public void testFieldSearch() throws RepositoryException, URISyntaxException {
+
+        final Request mockRequest = mock(Request.class);
+
+        when(uriInfo.getRequestUri()).thenReturn(new URI("http://localhost/fcrepo/path/to/query/endpoint"));
+        when(mockRequest.selectVariant(any(List.class))).thenReturn(
+                                                                           new Variant(MediaType.valueOf("application/n-triples"), null,
+                                                                                              null));
+
+        testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest);
+
+        verify(mockNodeService).searchRepository(any(GraphSubjects.class), eq(ResourceFactory.createResource("http://localhost/fcrepo/path/to/query/endpoint")), eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
     }
 
-    @Test
-    public void testGetQuery() throws RepositoryException {
-        final QueryManager queryManager = mock(QueryManager.class);
-        final ValueFactory valueFactory = mock(ValueFactory.class);
-        final Value mockValue = mock(Value.class);
-        final String terms = "foo";
-        final Query mockQuery = mock(Query.class);
-        when(queryManager.createQuery(anyString(), eq(Query.JCR_SQL2)))
-                .thenReturn(mockQuery);
-        when(valueFactory.createValue("%" + terms + "%")).thenReturn(mockValue);
-        final Query actual =
-                testObj.getQuery(queryManager, valueFactory, terms);
-        assertNotNull(actual);
-        verify(queryManager).createQuery(anyString(), eq(Query.JCR_SQL2));
-        verify(valueFactory).createValue("%" + terms + "%");
-        verify(mockQuery).bindValue("sterm", mockValue);
-    }
-
-    @Test
-    public void testSearch() throws RepositoryException {
-        final Query mockQ = TestHelpers.getQueryMock();
-        final NodeIterator mockNodes = mockQ.execute().getNodes();
-        final FieldSearchResult actual = testObj.search(mockQ, 1, 1);
-        final List<ObjectFields> oFieldsList = actual.getObjectFieldsList();
-        assertEquals(1, oFieldsList.size());
-        final ObjectFields oFields = oFieldsList.get(0);
-        // because the mock nodeIterator doesn't respond to skip
-        assertEquals("node1", oFields.getPid());
-        // the first time, unfortunately, is at the beginning of this test to get the NodeIterator mock
-        verify(mockQ, times(2)).execute();
-        verify(mockNodes).skip(1);
-    }
 }
