@@ -3,6 +3,7 @@ package org.fcrepo.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -11,9 +12,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Iterator;
 
 import javax.jcr.Node;
-import javax.jcr.PropertyIterator;
+import javax.jcr.NodeIterator;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -21,6 +23,7 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.PropertyIterator;
 
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
@@ -66,11 +69,15 @@ public class JcrRdfToolsTest {
                 .thenReturn("jcr");
         when(mockNsRegistry.getPrefix("registered-uri#")).thenReturn(
                 "some-prefix");
+        when(mockNsRegistry.getPrefixes()).thenReturn(new String[] { "jcr", "some-prefix"});
 
         final Workspace mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNsRegistry);
 
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+
+        when(NamespaceTools.getNamespaceRegistry(mockSession)).thenReturn(mockNsRegistry);
+
     }
 
     @Test
@@ -198,7 +205,7 @@ public class JcrRdfToolsTest {
         when(mockNames.getURI("jcr")).thenReturn(fakeInternalUri);
         when(NamespaceTools.getNamespaceRegistry(mockNode)).thenReturn(
                 mockNames);
-        final javax.jcr.PropertyIterator mockProperties =
+        final PropertyIterator mockProperties =
                 mock(PropertyIterator.class);
         when(mockNode.getProperties()).thenReturn(mockProperties);
         when(mockParent.getProperties()).thenReturn(mockProperties);
@@ -232,7 +239,7 @@ public class JcrRdfToolsTest {
         when(mockNames.getPrefixes()).thenReturn(testPrefixes);
         when(mockNames.getURI("jcr")).thenReturn(fakeInternalUri);
         when(NamespaceTools.getNamespaceRegistry(mockNode)).thenReturn(mockNames);
-        javax.jcr.PropertyIterator mockProperties = mock(PropertyIterator.class);
+        PropertyIterator mockProperties = mock(PropertyIterator.class);
         when(mockNode.getProperties()).thenReturn(mockProperties);
         when(mockParent.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(true, false);
@@ -472,5 +479,38 @@ public class JcrRdfToolsTest {
             FedoraTypesUtils.getPredicateForProperty = holdPredicate;
         }
 
+    }
+
+    @Test
+    public void testJcrNodeIteratorhModel() throws RepositoryException {
+
+        Resource mockResource = mock(Resource.class);
+        NodeIterator mockIterator = mock(NodeIterator.class);
+        when(mockIterator.hasNext()).thenReturn(false);
+        final Model model = JcrRdfTools.getJcrNodeIteratorModel(testSubjects, mockIterator, mockResource);
+        assertTrue(model != null);
+    }
+
+    @Test
+    public void testJcrNodeIteratorAddsPredicatesForEachNode() throws RepositoryException {
+        Resource mockResource = ResourceFactory.createResource("info:fedora/search/resource");
+        Node mockNode1 = mock(Node.class);
+        Node mockNode2 = mock(Node.class);
+        Node mockNode3 = mock(Node.class);
+        PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockProperties.hasNext()).thenReturn(false);
+        when(mockNode1.getProperties()).thenReturn(mockProperties);
+        when(mockNode1.getSession()).thenReturn(mockSession);
+
+        when(mockNode1.getPath()).thenReturn("/path/to/first/node");
+        when(mockNode2.getPath()).thenReturn("/second/path/to/node");
+        when(mockNode3.getPath()).thenReturn("/third/path/to/node");
+        when(mockNode1.getProperties()).thenReturn(mockProperties);
+        when(mockNode2.getProperties()).thenReturn(mockProperties);
+        when(mockNode3.getProperties()).thenReturn(mockProperties);
+
+        Iterator<Node> mockIterator = Arrays.asList(mockNode1, mockNode2, mockNode3).iterator();
+        final Model model = JcrRdfTools.getJcrNodeIteratorModel(testSubjects, mockIterator, mockResource);
+        assertEquals(3, model.listObjectsOfProperty(ResourceFactory.createProperty("info:fedora/iterator#hasNode")).toSet().size());
     }
 }

@@ -36,7 +36,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
 	private static final Logger LOGGER = getLogger(FedoraResource.class);
 
-    private static final GraphSubjects DEFAULT_SUBJECT_FACTORY =
+    public static final GraphSubjects DEFAULT_SUBJECT_FACTORY =
     		new DefaultGraphSubjects();
 
     protected Node node;
@@ -179,7 +179,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 			throws RepositoryException {
 	    return updateGraph(DEFAULT_SUBJECT_FACTORY, sparqlUpdateStatement);
 	}
-	
+
 	public GraphStore getGraphStore(GraphSubjects subjects)
 			throws RepositoryException {
 
@@ -197,7 +197,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 	public GraphStore getGraphStore() throws RepositoryException {
 		return getGraphStore(DEFAULT_SUBJECT_FACTORY);
 	}
-	
+
     public GraphStore getVersionGraphStore(GraphSubjects subjects)
     		throws RepositoryException {
         final Model model = JcrRdfTools.getJcrVersionsModel(subjects, node);
@@ -206,10 +206,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         return graphStore;
     }
-    
+
     public GraphStore getVersionGraphStore() throws RepositoryException {
     	return getVersionGraphStore(DEFAULT_SUBJECT_FACTORY);
-    }    
+    }
 
     public void addVersionLabel(final String label) throws RepositoryException {
         final VersionHistory versionHistory = getVersionHistory(node);

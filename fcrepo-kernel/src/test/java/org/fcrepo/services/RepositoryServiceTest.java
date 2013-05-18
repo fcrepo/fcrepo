@@ -4,13 +4,17 @@ package org.fcrepo.services;
 import static org.fcrepo.services.RepositoryService.getRepositoryNamespaces;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.Node;
@@ -20,6 +24,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
@@ -27,16 +32,37 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
+import javax.jcr.query.qom.QueryObjectModel;
+import javax.jcr.query.qom.QueryObjectModelFactory;
 
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
+import org.fcrepo.utils.JcrRdfTools;
+import org.fcrepo.utils.NamespaceTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
 import com.codahale.metrics.MetricRegistry;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+
+@RunWith(PowerMockRunner.class)
+// PowerMock needs to ignore some packages to prevent class-cast errors
+@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
+                         "org.xml.sax.*", "javax.management.*"})
+@PrepareForTest({NamespaceTools.class, JcrRdfTools.class,
+                        FedoraTypesUtils.class})
 public class RepositoryServiceTest implements FedoraJcrTypes {
 
     String testPid = "testObj";
@@ -186,5 +212,43 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockSession.getNode(folderPath)).thenReturn(mockFolder);
         assertEquals(true, testObj.isFile(mockSession, filePath));
         assertEquals(false, testObj.isFile(mockSession, folderPath));
+    }
+
+    @Test
+    public void testSearchRepository() throws RepositoryException {
+
+        PowerMockito.mockStatic(JcrRdfTools.class);
+
+        Resource subject = ResourceFactory.createResource("info:fedora/search/request");
+        Workspace mockWorkspace = mock(Workspace.class);
+        QueryManager mockQueryManager = mock(QueryManager.class);
+        QueryObjectModelFactory mockQOMFactory = mock(QueryObjectModelFactory.class);
+        QueryObjectModel mockQuery = mock(QueryObjectModel.class);
+        QueryResult mockQueryResults = mock(QueryResult.class);
+        NodeIterator mockIterator = mock(NodeIterator.class);
+        GraphSubjects mockSubjectFactory = mock(GraphSubjects.class);
+
+
+        ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
+        when(mockQueryManager.getQOMFactory()).thenReturn(mockQOMFactory);
+        when(mockQOMFactory.createQuery(null, null, null, null)).thenReturn(mockQuery);
+
+        when(mockQuery.execute()).thenReturn(mockQueryResults);
+        when(mockQueryResults.getNodes()).thenReturn(mockIterator);
+        when(mockIterator.getSize()).thenReturn(500L);
+        when(mockIterator.next()).thenReturn("");
+        when(JcrRdfTools.getJcrNodeIteratorModel(eq(mockSubjectFactory), any(Iterator.class), eq(subject))).thenReturn(ModelFactory.createDefaultModel());
+
+        testObj.searchRepository(mockSubjectFactory, subject, mockSession, "search terms", 10, 0L);
+
+        // n+1
+        verify(mockQuery).setLimit(11);
+        verify(mockQuery).setOffset(0);
+        verify(mockQuery).execute();
+
+
     }
 }
