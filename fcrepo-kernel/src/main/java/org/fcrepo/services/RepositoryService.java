@@ -3,26 +3,33 @@ package org.fcrepo.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
-import static javax.jcr.query.Query.JCR_SQL2;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
-import javax.jcr.query.RowIterator;
 
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.metrics.RegistryService;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
+import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -117,4 +124,48 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         repo = repository;
     }
 
+    public GraphStore searchRepository(final GraphSubjects subjectFactory, final Resource searchSubject, final Session session, final String terms, final int limit, final long offset) throws RepositoryException {
+
+
+        final QueryManager queryManager = session.getWorkspace().getQueryManager();
+
+        javax.jcr.query.qom.QueryObjectModelFactory factory = queryManager.getQOMFactory();
+
+        javax.jcr.query.qom.Source selector = factory.selector(FEDORA_RESOURCE, "resourcesSelector");
+        javax.jcr.query.qom.Constraint constraints = factory.fullTextSearch("resourcesSelector", null, factory.literal(session.getValueFactory().createValue(terms)));
+
+        javax.jcr.query.Query query = factory.createQuery(selector,constraints, null, null);
+
+        query.setLimit(limit + 1); // n+1 for pagination
+        query.setOffset(offset);
+
+        final QueryResult queryResult = query.execute();
+
+        final NodeIterator nodeIterator = queryResult.getNodes();
+        final long size = nodeIterator.getSize();
+        final Iterator limitedIterator = Iterators.limit(nodeIterator, limit);
+
+        final Model model = JcrRdfTools.getJcrNodeIteratorModel(subjectFactory, limitedIterator, searchSubject);
+
+            /* add the result description to the RDF model */
+
+        model.add(searchSubject, model.createProperty("http://a9.com/-/spec/opensearch/1.1/totalResults"), model.createTypedLiteral(size));
+
+        model.add(searchSubject, model.createProperty("http://a9.com/-/spec/opensearch/1.1/itemsPerPage"),
+                         model.createTypedLiteral(limit));
+        model.add(searchSubject, model.createProperty("http://a9.com/-/spec/opensearch/1.1/startIndex"),
+                         model.createTypedLiteral(offset));
+        model.add(searchSubject, model.createProperty("http://a9.com/-/spec/opensearch/1.1/Query#searchTerms"),
+                         terms);
+
+        if(nodeIterator.hasNext()) {
+            model.add(searchSubject, model.createProperty("info:fedora/search/hasMoreResults"),
+                             model.createTypedLiteral(true));
+        }
+
+        GraphStore graphStore = GraphStoreFactory.create(model);
+
+        return graphStore;
+
+    }
 }
