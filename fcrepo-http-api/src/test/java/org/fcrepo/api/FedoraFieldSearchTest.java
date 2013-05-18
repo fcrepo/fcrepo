@@ -1,15 +1,9 @@
 
 package org.fcrepo.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,28 +12,16 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.jcr.LoginException;
-import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryManager;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.jaxb.search.FieldSearchResult;
-import org.fcrepo.jaxb.search.ObjectFields;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.services.ObjectService;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
