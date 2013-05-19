@@ -96,10 +96,10 @@ public class FedoraResourceTest {
         when(mockNode.hasProperty(FedoraResource.JCR_CREATED)).thenReturn(true);
         when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(
                 mockProp);
-        assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate().getTime());
+        assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate()
+                .getTime());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testGetLastModifiedDateDefault() throws RepositoryException {
         // test missing JCR_LASTMODIFIED
@@ -110,7 +110,8 @@ public class FedoraResourceTest {
                     .thenReturn(false);
             final Property mockProp = mock(Property.class);
             when(mockProp.getDate()).thenReturn(someDate);
-            when(mockNode.hasProperty(FedoraResource.JCR_CREATED)).thenReturn(true);
+            when(mockNode.hasProperty(FedoraResource.JCR_CREATED)).thenReturn(
+                    true);
             when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(
                     mockProp);
             when(mockNode.getSession()).thenReturn(mockSession);
@@ -131,7 +132,8 @@ public class FedoraResourceTest {
         try {
             final Property mockProp = mock(Property.class);
             when(mockProp.getDate()).thenReturn(someDate);
-            when(mockNode.hasProperty(FedoraResource.JCR_CREATED)).thenReturn(true);
+            when(mockNode.hasProperty(FedoraResource.JCR_CREATED)).thenReturn(
+                    true);
             when(mockNode.getProperty(FedoraResource.JCR_CREATED)).thenReturn(
                     mockProp);
             when(mockNode.getSession()).thenReturn(mockSession);
@@ -141,7 +143,8 @@ public class FedoraResourceTest {
         final Property mockMod = mock(Property.class);
         final Calendar modDate = Calendar.getInstance();
         try {
-            when(mockNode.hasProperty(FedoraResource.JCR_LASTMODIFIED)).thenReturn(true);
+            when(mockNode.hasProperty(FedoraResource.JCR_LASTMODIFIED))
+                    .thenReturn(true);
             when(mockNode.getProperty(FedoraResource.JCR_LASTMODIFIED))
                     .thenReturn(mockMod);
             when(mockMod.getDate()).thenReturn(modDate);

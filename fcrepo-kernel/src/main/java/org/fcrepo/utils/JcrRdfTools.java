@@ -1,6 +1,18 @@
+
 package org.fcrepo.utils;
 
+import static javax.jcr.PropertyType.BINARY;
+import static javax.jcr.PropertyType.BOOLEAN;
+import static javax.jcr.PropertyType.DATE;
+import static javax.jcr.PropertyType.DECIMAL;
+import static javax.jcr.PropertyType.DOUBLE;
+import static javax.jcr.PropertyType.LONG;
+import static javax.jcr.PropertyType.PATH;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.URI;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.utils.FedoraTypesUtils.getNodeTypeManager;
+import static org.fcrepo.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositorySize;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -10,7 +22,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import javax.jcr.*;
+import javax.jcr.Item;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyType;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
@@ -18,8 +38,6 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.RepositoryService;
@@ -31,6 +49,8 @@ import org.slf4j.Logger;
 import com.codahale.metrics.Counter;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -43,18 +63,20 @@ public abstract class JcrRdfTools {
 
     private static final Logger logger = getLogger(JcrRdfTools.class);
 
-    public static BiMap<String, String> jcrNamespacesToRDFNamespaces = ImmutableBiMap.of(
-                                                                                                "http://www.jcp.org/jcr/1.0", "info:fedora/fedora-system:def/internal#"
-    );
+    public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
+            ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
+                    "info:fedora/fedora-system:def/internal#");
 
-    public static BiMap<String, String> rdfNamespacesToJcrNamespaces = jcrNamespacesToRDFNamespaces.inverse();
+    public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
+            jcrNamespacesToRDFNamespaces.inverse();
 
     /**
      * Convert a Fedora RDF Namespace into its JCR equivalent
      * @param rdfNamespaceUri a namespace from an RDF document
      * @return the JCR namespace, or the RDF namespace if no matching JCR namespace is found
      */
-    public static String getJcrNamespaceForRDFNamespace(final String rdfNamespaceUri) {
+    public static String getJcrNamespaceForRDFNamespace(
+            final String rdfNamespaceUri) {
         if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {
             return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);
         } else {
@@ -67,7 +89,8 @@ public abstract class JcrRdfTools {
      * @param jcrNamespaceUri a namespace from the JCR NamespaceRegistry
      * @return an RDF namespace for downstream consumption.
      */
-    public static String getRDFNamespaceForJcrNamespace(final String jcrNamespaceUri) {
+    public static String getRDFNamespaceForJcrNamespace(
+            final String jcrNamespaceUri) {
         if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {
             return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);
         } else {
@@ -82,7 +105,7 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     public static Resource getGraphSubject(final GraphSubjects factory,
-    		final Node node) throws RepositoryException {
+            final Node node) throws RepositoryException {
         return factory.getGraphSubject(node);
     }
 
@@ -94,8 +117,8 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     public static Node getNodeFromGraphSubject(final GraphSubjects factory,
-    		final Session session, final Resource subject)
-    		throws RepositoryException {
+            final Session session, final Resource subject)
+            throws RepositoryException {
         return factory.getNodeFromGraphSubject(session, subject);
     }
 
@@ -103,25 +126,28 @@ public abstract class JcrRdfTools {
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
     public static boolean isFedoraGraphSubject(final GraphSubjects factory,
-    		final Resource subject) {
+            final Resource subject) {
         return factory.isFedoraGraphSubject(subject);
     }
 
-    private static Model createDefaultJcrModel(final Session session) throws RepositoryException {
+    private static Model createDefaultJcrModel(final Session session)
+            throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
 
-        final javax.jcr.NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry(session);
-        assert(namespaceRegistry != null);
+        final javax.jcr.NamespaceRegistry namespaceRegistry =
+                NamespaceTools.getNamespaceRegistry(session);
+        assert (namespaceRegistry != null);
 
         for (final String prefix : namespaceRegistry.getPrefixes()) {
             final String nsURI = namespaceRegistry.getURI(prefix);
-            if (nsURI != null && !nsURI.equals("") &&
-                        !prefix.equals("xmlns")) {
+            if (nsURI != null && !nsURI.equals("") && !prefix.equals("xmlns")) {
 
                 if (prefix.equals("jcr")) {
-                    model.setNsPrefix("fedora-internal", getRDFNamespaceForJcrNamespace(nsURI));
+                    model.setNsPrefix("fedora-internal",
+                            getRDFNamespaceForJcrNamespace(nsURI));
                 } else {
-                    model.setNsPrefix(prefix, getRDFNamespaceForJcrNamespace(nsURI));
+                    model.setNsPrefix(prefix,
+                            getRDFNamespaceForJcrNamespace(nsURI));
                 }
             }
         }
@@ -129,20 +155,26 @@ public abstract class JcrRdfTools {
         return model;
     }
 
-    public static Model getJcrNodeIteratorModel(final GraphSubjects factory, final Iterator nodeIterator, final Resource iteratorSubject) throws RepositoryException {
+    public static Model getJcrNodeIteratorModel(final GraphSubjects factory,
+            final Iterator nodeIterator, final Resource iteratorSubject)
+            throws RepositoryException {
 
         if (!nodeIterator.hasNext()) {
             return ModelFactory.createDefaultModel();
         }
 
-        final PeekingIterator iterator = Iterators.peekingIterator(nodeIterator);
-        final Model model = createDefaultJcrModel(((Item)iterator.peek()).getSession());
+        final PeekingIterator<Node> iterator =
+                Iterators.peekingIterator(nodeIterator);
+        final Model model =
+                createDefaultJcrModel(((Item) iterator.peek()).getSession());
 
         while (iterator.hasNext()) {
-            final Node node = (Node)iterator.next();
+            final Node node = iterator.next();
             addJcrPropertiesToModel(factory, node, model);
             if (iteratorSubject != null) {
-                model.add(iteratorSubject, model.createProperty("info:fedora/iterator#hasNode"), getGraphSubject(factory, node));
+                model.add(iteratorSubject, model
+                        .createProperty("info:fedora/iterator#hasNode"),
+                        getGraphSubject(factory, node));
             }
         }
 
@@ -157,13 +189,12 @@ public abstract class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public static Model getJcrPropertiesModel(
-    		final GraphSubjects factory, final Node node)
-    		throws RepositoryException {
+    public static Model getJcrPropertiesModel(final GraphSubjects factory,
+            final Node node) throws RepositoryException {
 
         final Model model = createDefaultJcrModel(node.getSession());
 
-        if (node.getPrimaryNodeType().getName().equals("mode:root")){
+        if (node.getPrimaryNodeType().getName().equals("mode:root")) {
             /* a rdf description of the root node */
             logger.debug("Creating RDF response for repository description");
             addRepositoryMetricsToModel(factory, node, model);
@@ -176,18 +207,23 @@ public abstract class JcrRdfTools {
         return model;
     }
 
-    private static void addRepositoryMetricsToModel(GraphSubjects factory,
-            Node node, Model model) throws RepositoryException{
+    private static void addRepositoryMetricsToModel(
+            final GraphSubjects factory, final Node node, final Model model)
+            throws RepositoryException {
 
         final Repository repository = node.getSession().getRepository();
         /* retreive the metrics from the service */
-        SortedMap<String, Counter> counters = RepositoryService.getMetrics().getCounters();
+        final SortedMap<String, Counter> counters =
+                RepositoryService.getMetrics().getCounters();
 
         final Resource subject = factory.getGraphSubject(node);
-        for (String key : repository.getDescriptorKeys()) {
+        for (final String key : repository.getDescriptorKeys()) {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
-                model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#repository/" + key), descriptor);
+                model.add(
+                        subject,
+                        model.createProperty("info:fedora/fedora-system:def/internal#repository/" +
+                                key), descriptor);
             }
         }
 
@@ -197,55 +233,83 @@ public abstract class JcrRdfTools {
 
         while (nodeTypes.hasNext()) {
             final NodeType nodeType = nodeTypes.nextNodeType();
-            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasNodeType"), nodeType.getName());
+            model.add(
+                    subject,
+                    model.createProperty("info:fedora/fedora-system:def/internal#hasNodeType"),
+                    nodeType.getName());
         }
 
-        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#objectCount"), ResourceFactory.createTypedLiteral(getRepositoryCount(repository)));
-        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#objectSize"), ResourceFactory.createTypedLiteral(getRepositorySize(repository)));
+        model.add(
+                subject,
+                model.createProperty("info:fedora/fedora-system:def/internal#objectCount"),
+                ResourceFactory
+                        .createTypedLiteral(getRepositoryCount(repository)));
+        model.add(
+                subject,
+                model.createProperty("info:fedora/fedora-system:def/internal#objectSize"),
+                ResourceFactory
+                        .createTypedLiteral(getRepositorySize(repository)));
 
         /* TODO: Get and add the Storage policy to the RDF response */
 
         /* add the configuration information */
 
-        /* Get the cluster configuration for the RDF response*/
-        Map<String,String> config  = new GetClusterConfiguration().apply(repository);
+        /* Get the cluster configuration for the RDF response */
+        final Map<String, String> config =
+                new GetClusterConfiguration().apply(repository);
 
-        assert(config != null);
+        assert (config != null);
 
-        for (Map.Entry<String, String> entry : config.entrySet()) {
-            model.add(subject,
-                             model.createProperty("info:fedora/fedora-system:def/internal#" + entry.getKey()),
-                             entry.getValue());
+        for (final Map.Entry<String, String> entry : config.entrySet()) {
+            model.add(subject, model
+                    .createProperty("info:fedora/fedora-system:def/internal#" +
+                            entry.getKey()), entry.getValue());
         }
 
         /* and add the repository metrics to the RDF model */
-        model.add(subject,
+        model.add(
+                subject,
                 model.createProperty("info:fedora/fedora-system:def/internal#numFixityChecks"),
-                ResourceFactory.createTypedLiteral(counters.get("org.fcrepo.services.LowLevelStorageService.fixity-check-counter").getCount()));
-        model.add(subject,
+                ResourceFactory
+                        .createTypedLiteral(counters
+                                .get("org.fcrepo.services.LowLevelStorageService.fixity-check-counter")
+                                .getCount()));
+        model.add(
+                subject,
                 model.createProperty("info:fedora/fedora-system:def/internal#numFixityErrors"),
-                ResourceFactory.createTypedLiteral(counters.get("org.fcrepo.services.LowLevelStorageService.fixity-error-counter").getCount()));
-        model.add(subject,
+                ResourceFactory
+                        .createTypedLiteral(counters
+                                .get("org.fcrepo.services.LowLevelStorageService.fixity-error-counter")
+                                .getCount()));
+        model.add(
+                subject,
                 model.createProperty("info:fedora/fedora-system:def/internal#numFixityRepaired"),
-                ResourceFactory.createTypedLiteral(counters.get("org.fcrepo.services.LowLevelStorageService.fixity-repaired-counter").getCount()));
+                ResourceFactory
+                        .createTypedLiteral(counters
+                                .get("org.fcrepo.services.LowLevelStorageService.fixity-repaired-counter")
+                                .getCount()));
     }
 
     private static void addJcrContentLocationInformationToModel(
-    		final GraphSubjects factory, final Node node,
-    		final Model model) throws RepositoryException {
+            final GraphSubjects factory, final Node node, final Model model)
+            throws RepositoryException {
         final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
-        final Resource contentNodeSubject = factory.getGraphSubject(contentNode);
+        final Resource contentNodeSubject =
+                factory.getGraphSubject(contentNode);
 
         // TODO: get this from somewhere else.
-        LowLevelStorageService llstore = new LowLevelStorageService();
+        final LowLevelStorageService llstore = new LowLevelStorageService();
         llstore.setRepository(node.getSession().getRepository());
 
-        final Set<LowLevelCacheEntry> cacheEntries = llstore.getLowLevelCacheEntries(node);
+        final Set<LowLevelCacheEntry> cacheEntries =
+                llstore.getLowLevelCacheEntries(node);
 
-        for (LowLevelCacheEntry e : cacheEntries) {
-            model.add(contentNodeSubject, model.createProperty("info:fedora/fedora-system:def/internal#hasLocation"), e.getExternalIdentifier());
+        for (final LowLevelCacheEntry e : cacheEntries) {
+            model.add(
+                    contentNodeSubject,
+                    model.createProperty("info:fedora/fedora-system:def/internal#hasLocation"),
+                    e.getExternalIdentifier());
         }
-
 
     }
 
@@ -258,16 +322,17 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     private static void addJcrTreePropertiesToModel(
-    		final GraphSubjects factory, final Node node, final Model model)
-    		throws RepositoryException {
+            final GraphSubjects factory, final Node node, final Model model)
+            throws RepositoryException {
         final Resource subject = getGraphSubject(factory, node);
 
         // don't do this if the node is the root node.
         if (node.getDepth() != 0) {
             final Node parentNode = node.getParent();
-            model.add(subject,
-        		model.createProperty("info:fedora/fedora-system:def/internal#hasParent"),
-         		getGraphSubject(factory, parentNode));
+            model.add(
+                    subject,
+                    model.createProperty("info:fedora/fedora-system:def/internal#hasParent"),
+                    getGraphSubject(factory, parentNode));
             addJcrPropertiesToModel(factory, parentNode, model);
         }
 
@@ -278,19 +343,30 @@ public abstract class JcrRdfTools {
             final Node childNode = nodeIterator.nextNode();
 
             // exclude jcr system nodes or jcr:content nodes
-            if (FedoraTypesUtils.isInternalNode.apply(childNode) || childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
+            if (FedoraTypesUtils.isInternalNode.apply(childNode) ||
+                    childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
                 excludedNodes += 1;
             } else {
-                final Resource childNodeSubject = getGraphSubject(factory, childNode);
+                final Resource childNodeSubject =
+                        getGraphSubject(factory, childNode);
                 addJcrPropertiesToModel(factory, childNode, model);
-                model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasChild"), childNodeSubject);
-                model.add(childNodeSubject, model.createProperty("info:fedora/fedora-system:def/internal#hasParent"), subject);
+                model.add(
+                        subject,
+                        model.createProperty("info:fedora/fedora-system:def/internal#hasChild"),
+                        childNodeSubject);
+                model.add(
+                        childNodeSubject,
+                        model.createProperty("info:fedora/fedora-system:def/internal#hasParent"),
+                        subject);
             }
-
 
         }
 
-        model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#numberOfChildren"), ResourceFactory.createTypedLiteral(nodeIterator.getSize() - excludedNodes));
+        model.add(
+                subject,
+                model.createProperty("info:fedora/fedora-system:def/internal#numberOfChildren"),
+                ResourceFactory.createTypedLiteral(nodeIterator.getSize() -
+                        excludedNodes));
     }
 
     /**
@@ -300,9 +376,8 @@ public abstract class JcrRdfTools {
      * @param model
      * @throws RepositoryException
      */
-    private static void addJcrPropertiesToModel(
-    		final GraphSubjects factory, final Node node,  Model model)
-    		throws RepositoryException {
+    private static void addJcrPropertiesToModel(final GraphSubjects factory,
+            final Node node, final Model model) throws RepositoryException {
 
         final Resource subject = getGraphSubject(factory, node);
         final javax.jcr.PropertyIterator properties = node.getProperties();
@@ -316,10 +391,17 @@ public abstract class JcrRdfTools {
         // always include the jcr:content node information
         if (node.hasNode(JcrConstants.JCR_CONTENT)) {
             final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
-            final Resource contentSubject = getGraphSubject(factory, contentNode);
+            final Resource contentSubject =
+                    getGraphSubject(factory, contentNode);
 
-            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasContent"), contentSubject);
-            model.add(contentSubject, model.createProperty("info:fedora/fedora-system:def/internal#isContentOf"), subject);
+            model.add(
+                    subject,
+                    model.createProperty("info:fedora/fedora-system:def/internal#hasContent"),
+                    contentSubject);
+            model.add(
+                    contentSubject,
+                    model.createProperty("info:fedora/fedora-system:def/internal#isContentOf"),
+                    subject);
 
             addJcrPropertiesToModel(factory, contentNode, model);
             addJcrContentLocationInformationToModel(factory, node, model);
@@ -337,19 +419,24 @@ public abstract class JcrRdfTools {
      *
      * @throws javax.jcr.RepositoryException
      */
-    public static Value createValue(final Node node, final RDFNode data, final int type) throws RepositoryException {
-        final ValueFactory valueFactory = FedoraTypesUtils.getValueFactory.apply(node);
-        assert(valueFactory !=  null);
+    public static Value createValue(final Node node, final RDFNode data,
+            final int type) throws RepositoryException {
+        final ValueFactory valueFactory =
+                FedoraTypesUtils.getValueFactory.apply(node);
+        assert (valueFactory != null);
 
-        if(data.isURIResource() && (type == PropertyType.REFERENCE || type == PropertyType.WEAKREFERENCE)) {
+        if (data.isURIResource() &&
+                (type == PropertyType.REFERENCE || type == PropertyType.WEAKREFERENCE)) {
             // reference to another node (by path)
-            return valueFactory.createValue(getNodeFromObjectPath(node, data.toString()));
+            return valueFactory.createValue(getNodeFromObjectPath(node, data
+                    .toString()));
         } else if (data.isURIResource() || type == PropertyType.URI) {
             // some random opaque URI
             return valueFactory.createValue(data.toString(), PropertyType.URI);
         } else if (data.isResource()) {
             // a non-URI resource (e.g. a blank node)
-            return valueFactory.createValue(data.toString(), PropertyType.UNDEFINED);
+            return valueFactory.createValue(data.toString(),
+                    PropertyType.UNDEFINED);
         } else if (data.isLiteral() && type == PropertyType.UNDEFINED) {
             // the JCR schema doesn't know what this should be; so introspect the RDF and try to figure it out
             final Object rdfValue = data.asLiteral().getValue();
@@ -369,9 +456,11 @@ public abstract class JcrRdfTools {
             } else if (rdfValue instanceof Short) {
                 return valueFactory.createValue((Short) rdfValue);
             } else if (rdfValue instanceof XSDDateTime) {
-                return valueFactory.createValue(((XSDDateTime)rdfValue).asCalendar());
+                return valueFactory.createValue(((XSDDateTime) rdfValue)
+                        .asCalendar());
             } else {
-                return valueFactory.createValue(data.asLiteral().getString(), PropertyType.STRING);
+                return valueFactory.createValue(data.asLiteral().getString(),
+                        PropertyType.STRING);
             }
 
         } else {
@@ -387,11 +476,13 @@ public abstract class JcrRdfTools {
      *
      * @throws RepositoryException
      */
-    public static void addPropertyToModel(final Resource subject, final Model model, final Property property) throws RepositoryException {
+    public static void addPropertyToModel(final Resource subject,
+            final Model model, final Property property)
+            throws RepositoryException {
         if (property.isMultiple()) {
             final Value[] values = property.getValues();
 
-            for(Value v : values) {
+            for (final Value v : values) {
                 addPropertyToModel(subject, model, property, v);
             }
 
@@ -399,7 +490,6 @@ public abstract class JcrRdfTools {
             addPropertyToModel(subject, model, property, property.getValue());
         }
     }
-
 
     /**
      * Add a JCR property to the given RDF Model (with the given subject)
@@ -410,14 +500,17 @@ public abstract class JcrRdfTools {
      * @param v the actual JCR Value to insert into the graph
      * @throws RepositoryException
      */
-    public static void addPropertyToModel(final Resource subject, final Model model, final Property property, Value v) throws RepositoryException {
+    public static void addPropertyToModel(final Resource subject,
+            final Model model, final Property property, final Value v)
+            throws RepositoryException {
 
-        if (v.getType() == PropertyType.BINARY) {
+        if (v.getType() == BINARY) {
             // exclude binary types from property serialization
             return;
         }
 
-        final com.hp.hpl.jena.rdf.model.Property predicate = FedoraTypesUtils.getPredicateForProperty.apply(property);
+        final com.hp.hpl.jena.rdf.model.Property predicate =
+                getPredicateForProperty.apply(property);
 
         final String stringValue = v.getString();
 
@@ -425,35 +518,42 @@ public abstract class JcrRdfTools {
 
         switch (v.getType()) {
 
-            case PropertyType.BOOLEAN:
-                datatype = model.createTypedLiteral(v.getBoolean()).getDatatype();
+            case BOOLEAN:
+                datatype =
+                        model.createTypedLiteral(v.getBoolean()).getDatatype();
                 break;
-            case PropertyType.DATE:
+            case DATE:
                 datatype = model.createTypedLiteral(v.getDate()).getDatatype();
                 break;
-            case PropertyType.DECIMAL:
-                datatype = model.createTypedLiteral(v.getDecimal()).getDatatype();
+            case DECIMAL:
+                datatype =
+                        model.createTypedLiteral(v.getDecimal()).getDatatype();
                 break;
-            case PropertyType.DOUBLE:
-                datatype = model.createTypedLiteral(v.getDouble()).getDatatype();
+            case DOUBLE:
+                datatype =
+                        model.createTypedLiteral(v.getDouble()).getDatatype();
                 break;
-            case PropertyType.LONG:
+            case LONG:
                 datatype = model.createTypedLiteral(v.getLong()).getDatatype();
                 break;
-            case PropertyType.URI:
+            case URI:
                 model.add(subject, predicate, model.createResource(stringValue));
                 return;
-            case PropertyType.REFERENCE:
-            case PropertyType.WEAKREFERENCE:
-                model.add(subject, predicate, model.createResource("info:fedora" + property.getSession().getNodeByIdentifier(stringValue).getPath()));
+            case REFERENCE:
+            case WEAKREFERENCE:
+                model.add(subject, predicate, model
+                        .createResource("info:fedora" +
+                                property.getSession().getNodeByIdentifier(
+                                        stringValue).getPath()));
                 return;
-            case PropertyType.PATH:
-                model.add(subject, predicate, model.createResource("info:fedora" + stringValue));
+            case PATH:
+                model.add(subject, predicate, model
+                        .createResource("info:fedora" + stringValue));
                 return;
 
         }
 
-        if ( datatype == null) {
+        if (datatype == null) {
             model.add(subject, predicate, stringValue);
         } else {
             model.add(subject, predicate, stringValue, datatype);
@@ -468,15 +568,19 @@ public abstract class JcrRdfTools {
      * @return the JCR property name
      * @throws RepositoryException
      */
-    public static String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+    public static String getPropertyNameFromPredicate(final Node node,
+            final com.hp.hpl.jena.rdf.model.Property predicate)
+            throws RepositoryException {
 
         final String prefix;
 
-        final String namespace = getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
+        final String namespace =
+                getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
 
-        final NamespaceRegistry namespaceRegistry = NamespaceTools.getNamespaceRegistry(node);
+        final NamespaceRegistry namespaceRegistry =
+                NamespaceTools.getNamespaceRegistry(node);
 
-        assert(namespaceRegistry != null);
+        assert (namespaceRegistry != null);
 
         if (namespaceRegistry.isRegisteredUri(namespace)) {
             prefix = namespaceRegistry.getPrefix(namespace);
@@ -488,7 +592,9 @@ public abstract class JcrRdfTools {
 
         final String propertyName = prefix + ":" + localName;
 
-        logger.trace("Took RDF predicate {} and translated it to JCR property {}", predicate, propertyName);
+        logger.trace(
+                "Took RDF predicate {} and translated it to JCR property {}",
+                predicate, propertyName);
 
         return propertyName;
 
@@ -501,34 +607,46 @@ public abstract class JcrRdfTools {
      * @return the JCR node at the given RDF path
      * @throws RepositoryException
      */
-    private static Node getNodeFromObjectPath(final Node node, final String path) throws RepositoryException {
-        return node.getSession().getNode(path.substring("info:fedora".length()));
+    private static Node
+            getNodeFromObjectPath(final Node node, final String path)
+                    throws RepositoryException {
+        return node.getSession()
+                .getNode(path.substring("info:fedora".length()));
     }
 
-    public static Model getJcrVersionsModel(
-    		final GraphSubjects factory, final Node node)
-    		throws RepositoryException {
+    public static Model getJcrVersionsModel(final GraphSubjects factory,
+            final Node node) throws RepositoryException {
 
         final Resource subject = getGraphSubject(factory, node);
 
         final Model model = createDefaultJcrModel(node.getSession());
 
-        final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(node);
+        final VersionHistory versionHistory =
+                FedoraTypesUtils.getVersionHistory(node);
 
         final VersionIterator versionIterator = versionHistory.getAllVersions();
 
         while (versionIterator.hasNext()) {
             final Version version = versionIterator.nextVersion();
             final Node frozenNode = version.getFrozenNode();
-            final Resource versionSubject = getGraphSubject(factory,frozenNode);
+            final Resource versionSubject =
+                    getGraphSubject(factory, frozenNode);
 
-            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasVersion"), versionSubject);
+            model.add(
+                    subject,
+                    model.createProperty("info:fedora/fedora-system:def/internal#hasVersion"),
+                    versionSubject);
 
-            final String[] versionLabels = versionHistory.getVersionLabels(version);
-            for (String label : versionLabels ) {
-                model.add(versionSubject, model.createProperty("info:fedora/fedora-system:def/internal#hasVersionLabel"), label);
+            final String[] versionLabels =
+                    versionHistory.getVersionLabels(version);
+            for (final String label : versionLabels) {
+                model.add(
+                        versionSubject,
+                        model.createProperty("info:fedora/fedora-system:def/internal#hasVersionLabel"),
+                        label);
             }
-            final javax.jcr.PropertyIterator properties = frozenNode.getProperties();
+            final javax.jcr.PropertyIterator properties =
+                    frozenNode.getProperties();
 
             while (properties.hasNext()) {
                 final Property property = properties.nextProperty();

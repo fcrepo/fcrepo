@@ -1,6 +1,18 @@
 package org.fcrepo.api.repository;
 
-import org.fcrepo.api.FedoraUnnamedObjects;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.core.Response;
+
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.NodeService;
@@ -10,19 +22,6 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-
-import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class FedoraRepositoryUnnamedObjectsTest {
 

@@ -10,11 +10,9 @@ import java.util.Map;
 
 import javax.jcr.Repository;
 
-import org.fcrepo.utils.FedoraTypesUtils;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.modeshape.jcr.GetBinaryStore;
-import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;

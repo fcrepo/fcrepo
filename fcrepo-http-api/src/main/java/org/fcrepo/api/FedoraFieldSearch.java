@@ -23,18 +23,18 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Variant;
 
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.update.GraphStore;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.RDFMediaType;
-import org.fcrepo.provider.GraphStreamingOutput;
+import org.fcrepo.responses.GraphStoreStreamingOutput;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
 
 /**
  * @author Frank Asseg
@@ -47,35 +47,41 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     private static final Logger logger = getLogger(FedoraFieldSearch.class);
 
-
     @GET
     @Timed
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
-    public GraphStreamingOutput searchSubmitRdf(@QueryParam("q") final String terms,
-            @QueryParam("offset") @DefaultValue("0") final long offset,
-            @QueryParam("limit") @DefaultValue("25") final int limit, @Context final Request request)
-                    throws RepositoryException{
+    public GraphStoreStreamingOutput searchSubmitRdf(@QueryParam("q")
+    final String terms, @QueryParam("offset")
+    @DefaultValue("0")
+    final long offset, @QueryParam("limit")
+    @DefaultValue("25")
+    final int limit, @Context
+    final Request request) throws RepositoryException {
 
         if (terms.isEmpty()) {
-            throw new WebApplicationException(
-                                                     Response.status(Response.Status.BAD_REQUEST)
-                                                             .entity("q parameter is mandatory")
-                                                             .build()
-            );
+            throw new WebApplicationException(Response.status(
+                    Response.Status.BAD_REQUEST).entity(
+                    "q parameter is mandatory").build());
         }
 
         final Session session = getAuthenticatedSession();
-        try{
+        try {
             /* select the best response type */
-            final Variant bestPossibleResponse = request.selectVariant(RDFMediaType.POSSIBLE_RDF_VARIANTS);
+            final Variant bestPossibleResponse =
+                    request.selectVariant(RDFMediaType.POSSIBLE_RDF_VARIANTS);
 
+            final Resource searchResult =
+                    ResourceFactory.createResource(uriInfo.getRequestUri()
+                            .toASCIIString());
+            final GraphStore graphStore =
+                    nodeService.searchRepository(new HttpGraphSubjects(
+                            FedoraNodes.class, uriInfo), searchResult, session,
+                            terms, limit, offset);
 
-            final Resource searchResult = ResourceFactory.createResource(uriInfo.getRequestUri().toASCIIString());
-            final GraphStore graphStore = nodeService.searchRepository(new HttpGraphSubjects(FedoraNodes.class, uriInfo), searchResult, session, terms, limit, offset);
+            return new GraphStoreStreamingOutput(graphStore,
+                    bestPossibleResponse.getMediaType());
 
-            return new GraphStreamingOutput(graphStore, bestPossibleResponse.getMediaType());
-
-        } finally{
+        } finally {
             session.logout();
         }
     }

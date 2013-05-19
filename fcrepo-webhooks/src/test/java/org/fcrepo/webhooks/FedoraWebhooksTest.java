@@ -1,6 +1,9 @@
 package org.fcrepo.webhooks;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 
@@ -10,14 +13,12 @@ import javax.jcr.Property;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.observation.Event;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.observer.FedoraEvent;
 import org.fcrepo.session.SessionFactory;
-import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
@@ -81,6 +82,7 @@ public class FedoraWebhooksTest {
         testObj.registerWebhook("foo");
     }
     
+    @SuppressWarnings("unchecked")
     @Test
     public void testOnEvent() throws Exception {
         FedoraEvent mockEvent = mock(FedoraEvent.class);

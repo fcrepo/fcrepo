@@ -1,16 +1,15 @@
 
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
@@ -34,14 +33,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Variant;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
@@ -49,7 +49,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.provider.GraphStreamingOutput;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
@@ -60,6 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.update.UpdateAction;
 
 @Component
@@ -67,22 +67,18 @@ import com.hp.hpl.jena.update.UpdateAction;
 public class FedoraNodes extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraNodes.class);
-    
-	@Autowired
-	private LowLevelStorageService llStoreService;
-	
-    @GET
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
-    public Response describeRdf(
-    		@PathParam("path") final List<PathSegment> pathList,
-    		@Context final Request request,
-    		@Context UriInfo uriInfo) throws RepositoryException, IOException {
 
+    @Autowired
+    private LowLevelStorageService llStoreService;
+
+    @GET
+    @Produces({TEXT_HTML, N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
+            NTRIPLES})
+    public Dataset describe(@PathParam("path")
+    final List<PathSegment> pathList, @Context
+    final Request request) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
-
-        final Variant bestPossibleResponse =
-                request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
         final Session session = getAuthenticatedSession();
         try {
@@ -91,26 +87,22 @@ public class FedoraNodes extends AbstractResource {
 
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
-
             if (date != null) {
                 roundedDate.setTime(date.getTime() - date.getTime() % 1000);
             }
-
-            Response.ResponseBuilder builder =
+            final ResponseBuilder builder =
                     request.evaluatePreconditions(roundedDate);
-
-            if (builder == null) {
-                builder =
-                        ok(new GraphStreamingOutput(resource.getGraphStore(
-                                                                                  new HttpGraphSubjects(FedoraNodes.class, uriInfo)),
-                                                           bestPossibleResponse.getMediaType()));
+            if (builder != null) {
+                final CacheControl cc = new CacheControl();
+                cc.setMaxAge(0);
+                cc.setMustRevalidate(true);
+                // here we are implicitly emitting a 304
+                // the exception is not an error, it's genuinely
+                // an exceptional condition
+                throw new WebApplicationException(builder.cacheControl(cc)
+                        .lastModified(date).build());
             }
-
-            final CacheControl cc = new CacheControl();
-            cc.setMaxAge(0);
-            cc.setMustRevalidate(true);
-
-            return builder.cacheControl(cc).lastModified(date).build();
+            return resource.getGraphStore().toDataset();
 
         } finally {
             session.logout();
@@ -128,10 +120,9 @@ public class FedoraNodes extends AbstractResource {
     @PUT
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response modifyObject(
-    		@PathParam("path") final List<PathSegment> pathList,
-    		@Context UriInfo uriInfo,
-    		final InputStream requestBodyStream)
+    public Response modifyObject(@PathParam("path")
+    final List<PathSegment> pathList, @Context
+    final UriInfo uriInfo, final InputStream requestBodyStream)
             throws RepositoryException, IOException {
         final Session session = getAuthenticatedSession();
         final String path = toPath(pathList);
@@ -143,7 +134,8 @@ public class FedoraNodes extends AbstractResource {
 
             if (requestBodyStream != null) {
                 UpdateAction.parseExecute(IOUtils.toString(requestBodyStream),
-                        result.getGraphStore(new HttpGraphSubjects(FedoraNodes.class, uriInfo)));
+                        result.getGraphStore(new HttpGraphSubjects(
+                                FedoraNodes.class, uriInfo)));
             }
             session.save();
 
@@ -165,9 +157,9 @@ public class FedoraNodes extends AbstractResource {
     @POST
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(
-    		@PathParam("path") final List<PathSegment> pathList,
-    		@Context UriInfo uriInfo, final InputStream requestBodyStream)
+    public Response updateSparql(@PathParam("path")
+    final List<PathSegment> pathList, @Context
+    final UriInfo uriInfo, final InputStream requestBodyStream)
             throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
@@ -182,8 +174,8 @@ public class FedoraNodes extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, path);
 
-                result.updateGraph(new HttpGraphSubjects(FedoraNodes.class, uriInfo),
-                		IOUtils.toString(requestBodyStream));
+                result.updateGraph(new HttpGraphSubjects(FedoraNodes.class,
+                        uriInfo), IOUtils.toString(requestBodyStream));
                 final Problems problems = result.getGraphProblems();
                 if (problems != null && problems.hasProblems()) {
                     logger.info(
@@ -218,14 +210,14 @@ public class FedoraNodes extends AbstractResource {
      */
     @POST
     @Timed
-    public Response createObject(
-    		@PathParam("path") final List<PathSegment> pathList,
-    		@QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) final String mixin,
-    		@QueryParam("checksumType") final String checksumType,
-    		@QueryParam("checksum") final String checksum,
-    		@HeaderParam("Content-Type") final MediaType requestContentType,
-            @Context UriInfo uriInfo,
-    		final InputStream requestBodyStream)
+    public Response createObject(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("mixin")
+    @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
+    final String mixin, @QueryParam("checksumType")
+    final String checksumType, @QueryParam("checksum")
+    final String checksum, @HeaderParam("Content-Type")
+    final MediaType requestContentType, @Context
+    final UriInfo uriInfo, final InputStream requestBodyStream)
             throws RepositoryException, IOException, InvalidChecksumException {
 
         final String path = toPath(pathList);
@@ -239,7 +231,9 @@ public class FedoraNodes extends AbstractResource {
                         path + " is an existing resource").build();
             }
 
-            createObjectOrDatastreamFromRequestContent(FedoraNodes.class, session, path, mixin, uriInfo, requestBodyStream, requestContentType, checksumType, checksum);
+            createObjectOrDatastreamFromRequestContent(FedoraNodes.class,
+                    session, path, mixin, uriInfo, requestBodyStream,
+                    requestContentType, checksumType, checksum);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
@@ -259,9 +253,8 @@ public class FedoraNodes extends AbstractResource {
      */
     @DELETE
     @Timed
-    public Response deleteObject(
-    		@PathParam("path") final List<PathSegment> path)
-    		throws RepositoryException {
+    public Response deleteObject(@PathParam("path")
+    final List<PathSegment> path) throws RepositoryException {
         final Session session = getAuthenticatedSession();
 
         try {
@@ -277,6 +270,7 @@ public class FedoraNodes extends AbstractResource {
         return objectService;
     }
 
+    @Override
     public void setObjectService(final ObjectService objectService) {
         this.objectService = objectService;
     }

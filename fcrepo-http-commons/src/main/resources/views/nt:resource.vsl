@@ -1,0 +1,15 @@
+<html>
+	#set($quads = $rdf.find())
+	<head>
+		<title>nt:resource profile</title>
+	</head>
+	
+	<body>
+		#foreach($quad in $quads)
+		<div>
+			<span>$quad.asTriple()</span>
+		</div>
+		#end
+	</body>
+
+</html>
