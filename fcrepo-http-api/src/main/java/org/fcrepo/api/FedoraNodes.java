@@ -72,8 +72,8 @@ public class FedoraNodes extends AbstractResource {
     private LowLevelStorageService llStoreService;
 
     @GET
-    @Produces({TEXT_HTML, N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
-            NTRIPLES})
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
+            NTRIPLES, TEXT_HTML})
     public Dataset describe(@PathParam("path")
     final List<PathSegment> pathList, @Context
     final Request request) throws RepositoryException, IOException {
