@@ -17,8 +17,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Variant;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -51,8 +53,16 @@ public class FedoraFieldSearch extends AbstractResource implements
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public GraphStreamingOutput searchSubmitRdf(@QueryParam("q") final String terms,
             @QueryParam("offset") @DefaultValue("0") final long offset,
-            @QueryParam("limit") final int limit, @Context final Request request)
+            @QueryParam("limit") @DefaultValue("25") final int limit, @Context final Request request)
                     throws RepositoryException{
+
+        if (terms.isEmpty()) {
+            throw new WebApplicationException(
+                                                     Response.status(Response.Status.BAD_REQUEST)
+                                                             .entity("q parameter is mandatory")
+                                                             .build()
+            );
+        }
 
         final Session session = getAuthenticatedSession();
         try{
@@ -65,7 +75,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
             return new GraphStreamingOutput(graphStore, bestPossibleResponse.getMediaType());
 
-        }finally{
+        } finally{
             session.logout();
         }
     }
