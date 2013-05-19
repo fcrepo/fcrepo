@@ -17,6 +17,7 @@ import java.util.Iterator;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PropertyType;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -28,7 +29,9 @@ import javax.jcr.PropertyIterator;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.powermock.api.mockito.PowerMockito;
 
@@ -48,6 +51,7 @@ public class JcrRdfToolsTest {
     private GraphSubjects testSubjects;
 
     private Session mockSession;
+    private Repository mockRepository;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -74,6 +78,8 @@ public class JcrRdfToolsTest {
         final Workspace mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNsRegistry);
 
+        mockRepository = mock(Repository.class);
+        when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
 
         when(NamespaceTools.getNamespaceRegistry(mockSession)).thenReturn(mockNsRegistry);
@@ -482,7 +488,36 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public void testJcrNodeIteratorhModel() throws RepositoryException {
+    @Ignore
+    public void testJcrNodeContent() throws RepositoryException {
+
+        final NodeType nodeType = mock(NodeType.class);
+        when(mockNode.getPrimaryNodeType()).thenReturn(nodeType);
+        when(mockNode.getPrimaryNodeType().getName()).thenReturn("");
+
+        PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockProperties.hasNext()).thenReturn(false);
+        when(mockNode.getProperties()).thenReturn(mockProperties);
+
+        when(mockNode.getPath()).thenReturn("/path/to/node");
+        NodeIterator mockIterator = mock(NodeIterator.class);
+        when(mockIterator.hasNext()).thenReturn(false);
+        when(mockNode.getNodes()).thenReturn(mockIterator);
+
+        Node mockContent = mock(Node.class);
+        when(mockContent.getPath()).thenReturn("/path/to/node/content");
+        when(mockContent.getProperties()).thenReturn(mockProperties);
+        when(mockContent.getSession()).thenReturn(mockSession);
+
+        when(mockNode.hasNode(JcrConstants.JCR_CONTENT)).thenReturn(true);
+        when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContent);
+        Model model = JcrRdfTools.getJcrPropertiesModel(testSubjects, mockNode);
+
+        assertTrue(model != null);
+    }
+
+    @Test
+    public void testJcrNodeIteratorModel() throws RepositoryException {
 
         Resource mockResource = mock(Resource.class);
         NodeIterator mockIterator = mock(NodeIterator.class);

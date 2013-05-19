@@ -173,10 +173,6 @@ public abstract class JcrRdfTools {
 
         addJcrTreePropertiesToModel(factory, node, model);
 
-        if (node.hasNode(JcrConstants.JCR_CONTENT)) {
-            addJcrContentLocationInformationToModel(factory, node, model);
-        }
-
         return model;
     }
 
@@ -281,28 +277,16 @@ public abstract class JcrRdfTools {
         while (nodeIterator.hasNext()) {
             final Node childNode = nodeIterator.nextNode();
 
-            if (FedoraTypesUtils.isInternalNode.apply(childNode)) {
-                excludedNodes += 1;
-                continue;
-            }
-
-            final Resource childNodeSubject = getGraphSubject(factory, childNode);
-
-            addJcrPropertiesToModel(factory, childNode, model);
-
-            if (childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
-                model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasContent"), childNodeSubject);
-                model.add(childNodeSubject, model.createProperty("info:fedora/fedora-system:def/internal#isContentOf"), subject);
+            // exclude jcr system nodes or jcr:content nodes
+            if (FedoraTypesUtils.isInternalNode.apply(childNode) || childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
                 excludedNodes += 1;
             } else {
+                final Resource childNodeSubject = getGraphSubject(factory, childNode);
+                addJcrPropertiesToModel(factory, childNode, model);
                 model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasChild"), childNodeSubject);
                 model.add(childNodeSubject, model.createProperty("info:fedora/fedora-system:def/internal#hasParent"), subject);
             }
 
-            // always include the jcr:content node information
-            if (childNode.hasNode(JcrConstants.JCR_CONTENT)) {
-                addJcrPropertiesToModel(factory, childNode.getNode(JcrConstants.JCR_CONTENT), model);
-            }
 
         }
 
@@ -327,6 +311,18 @@ public abstract class JcrRdfTools {
             final Property property = properties.nextProperty();
 
             addPropertyToModel(subject, model, property);
+        }
+
+        // always include the jcr:content node information
+        if (node.hasNode(JcrConstants.JCR_CONTENT)) {
+            final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
+            final Resource contentSubject = getGraphSubject(factory, contentNode);
+
+            model.add(subject, model.createProperty("info:fedora/fedora-system:def/internal#hasContent"), contentSubject);
+            model.add(contentSubject, model.createProperty("info:fedora/fedora-system:def/internal#isContentOf"), subject);
+
+            addJcrPropertiesToModel(factory, contentNode, model);
+            addJcrContentLocationInformationToModel(factory, node, model);
         }
     }
 
