@@ -25,6 +25,7 @@ import java.util.Set;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -43,6 +44,7 @@ import org.infinispan.loaders.CacheStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.GetBinaryStore;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.CompositeBinaryStore;
@@ -64,11 +66,15 @@ public class LowLevelStorageServiceTest {
         final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
         final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
         final Node mockNode = mock(Node.class);
+
+        final Property mockProperty = mock(Property.class);
+        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
+
         final Repository mockRepo = mock(Repository.class);
         final BinaryKey mockKey = mock(BinaryKey.class);
         final BinaryStore mockStore = mock(BinaryStore.class);
         when(mockStore.toString()).thenReturn("foo");
-        when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+        when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
         testObj.setGetBinaryStore(mockStoreFunc);
@@ -102,8 +108,11 @@ public class LowLevelStorageServiceTest {
         final Repository mockRepo = mock(Repository.class);
         final BinaryKey mockKey = mock(BinaryKey.class);
         final BinaryStore mockStore = mock(BinaryStore.class);
+
+        final Property mockProperty = mock(Property.class);
+        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
         when(mockStore.toString()).thenReturn("foo");
-        when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+        when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
         testObj.setGetBinaryStore(mockStoreFunc);
@@ -124,11 +133,13 @@ public class LowLevelStorageServiceTest {
         final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
         final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
         final Node mockNode = mock(Node.class);
+        final Property mockProperty = mock(Property.class);
+        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
         final Repository mockRepo = mock(Repository.class);
         final BinaryKey mockKey = mock(BinaryKey.class);
         final BinaryStore mockStore = mock(BinaryStore.class);
         when(mockStore.toString()).thenReturn("foo");
-        when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+        when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
         testObj.setGetBinaryStore(mockStoreFunc);
@@ -295,7 +306,11 @@ public class LowLevelStorageServiceTest {
         final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
         final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
         final Node mockNode = mock(Node.class);
+
+        final Property mockProperty = mock(Property.class);
         final Repository mockRepo = mock(Repository.class);
+        final Node mockContentNode = mock(Node.class);
+        when(mockContentNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
         final BinaryKey mockKey = new BinaryKey("key-123");
         final InfinispanBinaryStore mockStore =
                 mock(InfinispanBinaryStore.class);
@@ -314,7 +329,7 @@ public class LowLevelStorageServiceTest {
         when(mockCacheStoreFunc.apply(mockBadCache)).thenReturn(
                 mockBadCacheStore);
         when(mockStore.getCaches()).thenReturn(Arrays.asList(mockCaches));
-        when(mockKeyFunc.apply(mockNode)).thenReturn(mockKey);
+        when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
         final LowLevelStorageService testObj = new LowLevelStorageService();
         testObj.setGetBinaryStore(mockStoreFunc);
@@ -339,6 +354,7 @@ public class LowLevelStorageServiceTest {
         when(mockDs.getObject()).thenReturn(mockObj);
         when(mockDs.getDsId()).thenReturn("mockDs");
         when(mockDs.getNode()).thenReturn(mockNode);
+        when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockDs.getContentSize()).thenReturn(testSize);
         when(mockDs.getContentDigestType()).thenReturn("MD5"); // whatever, just be quiet
         when(mockDs.getContentDigest()).thenReturn(mockUri);

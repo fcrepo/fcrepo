@@ -29,6 +29,7 @@ import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,7 @@ public class SelfHealingIT {
 
         logger.info("Tampering with node " + node.toString());
         final Set<LowLevelCacheEntry> binaryBlobs =
-                lowLevelService.getLowLevelCacheEntries(node);
+                lowLevelService.getLowLevelCacheEntries(node.getNode(JcrConstants.JCR_CONTENT));
 
         final Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
 
@@ -85,7 +86,7 @@ public class SelfHealingIT {
     private Collection<FixityResult> getNodeFixity(final Datastream ds)
             throws NoSuchAlgorithmException, RepositoryException {
 
-        return lowLevelService.getFixity(ds.getNode(), MessageDigest
+        return lowLevelService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
                 .getInstance("SHA-1"), ds.getContentDigest(), ds
                 .getContentSize());
 

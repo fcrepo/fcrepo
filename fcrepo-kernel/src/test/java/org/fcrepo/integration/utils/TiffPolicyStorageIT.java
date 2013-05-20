@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.BinaryKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,14 +94,14 @@ public class TiffPolicyStorageIT {
 
 		final Node node = session.getNode("/testCompositeObject/content");
 
-		BinaryKey key = getBinaryKey.apply(node);
+		BinaryKey key = getBinaryKey.apply(node.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA));
 
 		logger.info("content key: {}", key);
 
 
 		final Node tiffNode = session.getNode("/testCompositeObject/tiffContent");
 
-		BinaryKey tiffKey = getBinaryKey.apply(tiffNode);
+		BinaryKey tiffKey = getBinaryKey.apply(tiffNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA));
 
 		logger.info("tiff key: {}", tiffKey);
 

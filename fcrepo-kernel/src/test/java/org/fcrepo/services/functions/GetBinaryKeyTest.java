@@ -1,6 +1,7 @@
 
 package org.fcrepo.services.functions;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -12,6 +13,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import org.junit.Test;
+import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 
 public class GetBinaryKeyTest {
@@ -22,11 +24,13 @@ public class GetBinaryKeyTest {
         final Node mockContent = mock(Node.class);
         final Property mockProp = mock(Property.class);
         final BinaryValue mockBin = mock(BinaryValue.class);
+        final BinaryKey binaryKey = new BinaryKey("abc");
+        when(mockBin.getKey()).thenReturn(binaryKey);
         when(mockProp.getBinary()).thenReturn(mockBin);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProp);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final GetBinaryKey testObj = new GetBinaryKey();
-        testObj.apply(mockNode);
+        assertEquals(binaryKey, testObj.apply(mockProp));
     }
 
 }

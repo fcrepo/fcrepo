@@ -23,6 +23,7 @@ import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -57,7 +58,7 @@ public class LowLevelStorageServiceIT {
         final Datastream ds = datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
 
         final Collection<FixityResult> fixityResults =
-                lowLevelService.getFixity(ds.getNode(), MessageDigest
+                lowLevelService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
                         .getInstance("SHA-1"), ds.getContentDigest(), ds
                         .getContentSize());
 
@@ -84,7 +85,7 @@ public class LowLevelStorageServiceIT {
                 datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
 
         final Iterator<LowLevelCacheEntry> inputStreamList =
-                lowLevelService.getLowLevelCacheEntries(ds.getNode()).iterator();
+                lowLevelService.getLowLevelCacheEntries(ds.getNode().getNode(JcrConstants.JCR_CONTENT)).iterator();
 
         int i = 0;
         while (inputStreamList.hasNext()) {

@@ -27,6 +27,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -42,6 +43,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.modeshape.jcr.GetBinaryStore;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.CompositeBinaryStore;
@@ -112,7 +114,20 @@ public class LowLevelStorageService {
     public Set<LowLevelCacheEntry> getLowLevelCacheEntries(final Node resource)
             throws RepositoryException {
 
-        return getLowLevelCacheEntries(getBinaryKey.apply(resource));
+        return getLowLevelCacheEntries(resource.getProperty(JcrConstants.JCR_DATA));
+
+    }
+
+    /**
+     *
+     * @param resource a JCR node that has a jcr:content/jcr:data child.
+     * @return a map of binary stores and input streams
+     * @throws RepositoryException
+     */
+    public Set<LowLevelCacheEntry> getLowLevelCacheEntries(final Property jcrBinaryProperty)
+            throws RepositoryException {
+
+        return getLowLevelCacheEntries(getBinaryKey.apply(jcrBinaryProperty));
 
     }
 
@@ -273,7 +288,7 @@ public class LowLevelStorageService {
 
         try {
             fixityResults =
-                    copyOf(getFixity(datastream.getNode(), digest, digestUri,
+                    copyOf(getFixity(datastream.getNode().getNode(JcrConstants.JCR_CONTENT), digest, digestUri,
                             size));
 
             goodEntries = getGoodFixityResults.apply(fixityResults);

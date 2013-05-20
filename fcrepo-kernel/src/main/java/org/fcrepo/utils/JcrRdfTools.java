@@ -302,7 +302,7 @@ public abstract class JcrRdfTools {
         llstore.setRepository(node.getSession().getRepository());
 
         final Set<LowLevelCacheEntry> cacheEntries =
-                llstore.getLowLevelCacheEntries(node);
+                llstore.getLowLevelCacheEntries(contentNode);
 
         for (final LowLevelCacheEntry e : cacheEntries) {
             model.add(
