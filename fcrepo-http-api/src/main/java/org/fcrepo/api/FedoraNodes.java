@@ -76,7 +76,7 @@ public class FedoraNodes extends AbstractResource {
             NTRIPLES, TEXT_HTML})
     public Dataset describe(@PathParam("path")
     final List<PathSegment> pathList, @Context
-    final Request request) throws RepositoryException, IOException {
+    final Request request, @Context UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
 
@@ -102,7 +102,7 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.cacheControl(cc)
                         .lastModified(date).build());
             }
-            return resource.getGraphStore().toDataset();
+            return resource.getGraphStore(new HttpGraphSubjects(FedoraNodes.class, uriInfo)).toDataset();
 
         } finally {
             session.logout();
