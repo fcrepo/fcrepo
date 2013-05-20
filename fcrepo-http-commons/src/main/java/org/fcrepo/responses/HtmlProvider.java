@@ -32,6 +32,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import com.hp.hpl.jena.graph.Node;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -160,13 +161,8 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
         final Context context = new VelocityContext();
         context.put("rdf", rdf.asDatasetGraph());
-
-        if (logger.isTraceEnabled()) {
-            try (final Writer loggingWriter = new StringWriter()) {
-                nodeTypeTemplate.merge(context, loggingWriter);
-                logger.trace("Created HTML response: \n{}", loggingWriter);
-            }
-        }
+        context.put("subjects", rdf.getDefaultModel().listSubjects());
+        context.put("nodeany", Node.ANY);
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it

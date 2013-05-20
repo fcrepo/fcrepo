@@ -136,6 +136,18 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetObjectGraphHtml() throws Exception {
+        client.execute(postObjMethod("FedoraDescribeTestGraph"));
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "objects/FedoraDescribeTestGraph");
+        getObjMethod.addHeader("Accept", "text/html");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.info(content);
+    }
+
+    @Test
     public void testGetObjectGraph() throws Exception {
         client.execute(postObjMethod("FedoraDescribeTestGraph"));
         final HttpGet getObjMethod =

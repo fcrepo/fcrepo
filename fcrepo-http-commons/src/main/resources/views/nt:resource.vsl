@@ -1,15 +1,35 @@
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
+#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
 <html>
-	#set($quads = $rdf.find())
-	<head>
-		<title>nt:resource profile</title>
-	</head>
-	
-	<body>
-		#foreach($quad in $quads)
-		<div>
-			<span>$quad.asTriple()</span>
-		</div>
-		#end
-	</body>
+<head>
+    <title>nt:resource profile</title>
+</head>
+
+<body>
+    #foreach($subject in $subjects)
+    <div>
+        #if($subject.isURIResource())
+            <h2><a href="$subject.getURI()">$subject</a></h2>
+        #else
+           <h2>$subject</h2>
+        #end
+
+        <dl>
+            #foreach($quad in $rdf.find($nodeany, $subject.asNode(), $nodeany, $nodeany))
+                <dt>$quad.getPredicate()</dt>
+
+                <dd>
+                #if($quad.getObject().isURIResource())
+                    <a href="$quad.getObject().getURI()">$quad.getObject()</a>
+                #else
+                    $quad.getObject()
+                #end
+                </dd>
+            #end
+        </dl>
+    </div>
+    #end
+</body>
 
 </html>
