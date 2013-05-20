@@ -13,6 +13,7 @@ import java.io.IOException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.WebApplicationException;
 
+import com.hp.hpl.jena.query.DatasetFactory;
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -32,7 +33,7 @@ public class GraphStreamingOutputTest {
     public void testStuff() throws WebApplicationException, IOException,
             RepositoryException {
         final GraphStore graphStore =
-                new GraphStoreBasic(new DatasetImpl(createDefaultModel()));
+                new GraphStoreBasic(DatasetFactory.create(createDefaultModel()));
         final Graph g = new GraphMem();
         g.add(new Triple(createURI("test:subject"),
                 createURI("test:predicate"), createURI("test:object")));

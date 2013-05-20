@@ -11,31 +11,45 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.slf4j.Logger;
-
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStore;
+import org.slf4j.Logger;
 
 public class GraphStoreStreamingOutput implements StreamingOutput {
 
     private final static Logger LOGGER =
             getLogger(GraphStoreStreamingOutput.class);
 
-    private final GraphStore m_graphStore;
+    private final Model model;
 
-    private final String m_format;
+    private final String format;
+
 
     public GraphStoreStreamingOutput(final GraphStore graphStore,
+                                     final MediaType mediaType) {
+        this(graphStore.toDataset(), mediaType);
+    }
+
+    public GraphStoreStreamingOutput(final Dataset dataset,
             final MediaType mediaType) {
-        m_graphStore = graphStore;
-        m_format =
+        this.model = dataset.getDefaultModel();
+        format =
+                contentTypeToLang(mediaType.toString()).getName().toUpperCase();
+    }
+
+    public GraphStoreStreamingOutput(final Model model,
+                                     final MediaType mediaType) {
+        this.model = model;
+        format =
                 contentTypeToLang(mediaType.toString()).getName().toUpperCase();
     }
 
     @Override
     public void write(final OutputStream out) throws IOException,
             WebApplicationException {
-        LOGGER.debug("Writing to: {}", out.hashCode());
-        m_graphStore.toDataset().getDefaultModel().write(out, m_format);
+        LOGGER.debug("Serializing graph model as {}", format);
+        model.write(out, format);
 
     }
 

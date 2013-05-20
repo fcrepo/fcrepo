@@ -44,7 +44,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
         httpHeaders.put("Content-type", of((Object) mediaType.toString()));
         setCachingHeaders(httpHeaders, rdf);
 
-        new GraphStoreStreamingOutput(new GraphStoreBasic(rdf), mediaType)
+        new GraphStoreStreamingOutput(rdf, mediaType)
                 .write(entityStream);
     }
 

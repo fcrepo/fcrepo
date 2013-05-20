@@ -19,6 +19,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
@@ -60,6 +62,8 @@ public class FedoraFieldSearchTest {
         when(mockRequest.selectVariant(any(List.class))).thenReturn(
                                                                            new Variant(MediaType.valueOf("application/n-triples"), null,
                                                                                               null));
+
+        when(mockNodeService.searchRepository(any(GraphSubjects.class), eq(ResourceFactory.createResource("http://localhost/fcrepo/path/to/query/endpoint")), eq(mockSession), eq("ZZZ"), eq(0), eq(0L))).thenReturn(GraphStoreFactory.create());
 
         testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, uriInfo);
 

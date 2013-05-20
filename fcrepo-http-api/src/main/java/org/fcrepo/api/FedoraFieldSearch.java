@@ -46,7 +46,7 @@ import com.hp.hpl.jena.update.GraphStore;
 public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 
-    private static final Logger logger = getLogger(FedoraFieldSearch.class);
+    private static final Logger LOGGER = getLogger(FedoraFieldSearch.class);
 
     @GET
     @Timed
@@ -60,7 +60,9 @@ public class FedoraFieldSearch extends AbstractResource implements
     final Request request, @Context
     final UriInfo uriInfo) throws RepositoryException {
 
+
         if (terms.isEmpty()) {
+            LOGGER.trace("Received search request, but terms was empty. Aborting.");
             throw new WebApplicationException(Response.status(
                     Response.Status.BAD_REQUEST).entity(
                     "q parameter is mandatory").build());
@@ -68,6 +70,8 @@ public class FedoraFieldSearch extends AbstractResource implements
 
         final Session session = getAuthenticatedSession();
         try {
+            LOGGER.debug("Received search request with search terms {}, offset {}, and limit {}", terms, offset, limit);
+
             /* select the best response type */
             final Variant bestPossibleResponse =
                     request.selectVariant(RDFMediaType.POSSIBLE_RDF_VARIANTS);
@@ -75,6 +79,7 @@ public class FedoraFieldSearch extends AbstractResource implements
             final Resource searchResult =
                     ResourceFactory.createResource(uriInfo.getRequestUri()
                             .toASCIIString());
+
             final GraphStore graphStore =
                     nodeService.searchRepository(new HttpGraphSubjects(
                             FedoraNodes.class, uriInfo), searchResult, session,
