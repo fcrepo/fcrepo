@@ -5,10 +5,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -20,10 +16,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.jaxb.responses.access.ObjectDatastreams;
-import org.fcrepo.jaxb.responses.access.ObjectProfile;
-import org.fcrepo.jaxb.responses.management.DatastreamFixity;
-import org.fcrepo.jaxb.responses.management.DatastreamProfile;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -37,21 +29,11 @@ public abstract class AbstractResourceIT {
 
     protected Logger logger;
 
-    protected JAXBContext context;
-
 	protected String OBJECT_PATH = "objects";
 
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
-    }
-
-    @Before
-    public void setContext() throws JAXBException {
-        context =
-                JAXBContext.newInstance(ObjectProfile.class,
-                        ObjectDatastreams.class, DatastreamProfile.class,
-                        DatastreamFixity.class);
     }
 
     protected static final int SERVER_PORT = Integer.parseInt(System
@@ -121,12 +103,4 @@ public abstract class AbstractResourceIT {
         return result;
     }
 
-    protected ObjectProfile getObject(final String pid)
-            throws ClientProtocolException, IOException, JAXBException {
-        final HttpGet get = new HttpGet(serverAddress + "objects/" + pid);
-		get.setHeader("Accept", "text/xml");
-        final HttpResponse resp = execute(get);
-        final Unmarshaller um = context.createUnmarshaller();
-        return (ObjectProfile) um.unmarshal(resp.getEntity().getContent());
-    }
 }
