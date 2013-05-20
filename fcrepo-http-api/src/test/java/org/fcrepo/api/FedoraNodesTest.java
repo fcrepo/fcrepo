@@ -22,6 +22,7 @@ import javax.jcr.Session;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
@@ -61,6 +62,7 @@ public class FedoraNodesTest {
     LowLevelStorageService mockLow;
 
     Request mockRequest;
+    private UriInfo uriInfo;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
@@ -76,7 +78,8 @@ public class FedoraNodesTest {
         testObj.setDatastreamService(mockDatastreams);
         testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        uriInfo = TestHelpers.getUriInfoImpl();
+        testObj.setUriInfo(uriInfo);
         testObj.setPidMinter(new UUIDPidMinter());
     }
 
@@ -173,13 +176,13 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
-        when(mockObject.getGraphStore()).thenReturn(mockStore);
+        when(mockObject.getGraphStore(any(GraphSubjects.class))).thenReturn(mockStore);
         when(
                 mockNodes.getObject(Mockito.isA(Session.class), Mockito
                         .isA(String.class))).thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Dataset dataset =
-                testObj.describe(createPathList(path), mockRequest);
+                testObj.describe(createPathList(path), mockRequest, uriInfo);
         assertNotNull(dataset.getDefaultModel());
 
     }

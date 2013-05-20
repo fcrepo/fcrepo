@@ -61,7 +61,7 @@ public class FedoraFieldSearchTest {
                                                                            new Variant(MediaType.valueOf("application/n-triples"), null,
                                                                                               null));
 
-        testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest);
+        testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, uriInfo);
 
         verify(mockNodeService).searchRepository(any(GraphSubjects.class), eq(ResourceFactory.createResource("http://localhost/fcrepo/path/to/query/endpoint")), eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
     }

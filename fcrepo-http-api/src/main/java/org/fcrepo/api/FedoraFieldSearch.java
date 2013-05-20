@@ -21,6 +21,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.AbstractResource;
@@ -56,7 +57,8 @@ public class FedoraFieldSearch extends AbstractResource implements
     final long offset, @QueryParam("limit")
     @DefaultValue("25")
     final int limit, @Context
-    final Request request) throws RepositoryException {
+    final Request request, @Context
+    final UriInfo uriInfo) throws RepositoryException {
 
         if (terms.isEmpty()) {
             throw new WebApplicationException(Response.status(

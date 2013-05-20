@@ -45,7 +45,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final GraphStore result =
                 TestHelpers.parseTriples(response.getEntity().getContent());
         logger.debug("Received triples: \n{}", result.toString());
-        final String subjectURI = "info:fedora/objects/FedoraDatastreamsTest7";
+        final String subjectURI = serverAddress + "objects/FedoraDatastreamsTest7";
 
         assertTrue("Didn't find the first datastream! ", result.contains(
                 Node.ANY, Node.createURI(subjectURI), Node.ANY, Node
@@ -87,7 +87,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String subjectURI =
-                "info:fedora/" + "objects/FedoraDatastreamsTest8";
+                serverAddress + "objects/FedoraDatastreamsTest8";
         final GraphStore result =
                 TestHelpers.parseTriples(response.getEntity().getContent());
         assertTrue("Didn't find the first datastream! ", result.contains(

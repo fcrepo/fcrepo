@@ -28,10 +28,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.GraphStoreStreamingOutput;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -48,7 +50,7 @@ public class FedoraVersions extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Response getVersionList(@PathParam("path")
     final List<PathSegment> pathList, @Context
-    final Request request) throws RepositoryException {
+    final Request request, @Context UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
 
         LOGGER.trace("getting versions list for {}", path);
@@ -63,7 +65,7 @@ public class FedoraVersions extends AbstractResource {
 
             return Response.ok(
                     new GraphStoreStreamingOutput(resource
-                            .getVersionGraphStore(), bestPossibleResponse
+                            .getVersionGraphStore(new HttpGraphSubjects(FedoraNodes.class, uriInfo)), bestPossibleResponse
                             .getMediaType())).build();
 
         } finally {
@@ -96,7 +98,7 @@ public class FedoraVersions extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset getVersion(@PathParam("path")
     final List<PathSegment> pathList, @PathParam("versionLabel")
-    final String versionLabel) throws RepositoryException, IOException {
+    final String versionLabel, @Context UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         LOGGER.trace("getting version profile for {} at version {}", path,
                 versionLabel);
@@ -110,7 +112,7 @@ public class FedoraVersions extends AbstractResource {
                 throw new WebApplicationException(status(NOT_FOUND).build());
             } else {
 
-                return resource.getGraphStore().toDataset();
+                return resource.getGraphStore(new HttpGraphSubjects(FedoraNodes.class, uriInfo)).toDataset();
             }
 
         } finally {

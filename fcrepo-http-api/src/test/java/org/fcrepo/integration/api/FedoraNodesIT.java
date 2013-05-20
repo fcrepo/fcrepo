@@ -157,21 +157,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
+        logger.debug("Retrieved object graph:\n" + content);
+
         assertTrue(
                 "Didn't find an expected ntriple",
                 compile(
-                        "<"
-                                + "info:fedora/"
+                        "<" + serverAddress
                                 + "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
         assertTrue(
                 "Didn't find an expected ntriple",
                 compile(
-                        "<info:fedora/objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
+                        "<" + serverAddress + "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
-        logger.debug("Retrieved object graph:\n" + content);
 
     }
 
@@ -380,7 +380,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        final String subjectURI = "info:fedora/" + "files/FileSystem1";
+        final String subjectURI = serverAddress + "files/FileSystem1";
         final Graph result =
                 TestHelpers.parseTriples(response.getEntity().getContent())
                         .getDefaultGraph();
