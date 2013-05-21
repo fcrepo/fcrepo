@@ -26,6 +26,7 @@ import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.JcrRdfTools;
+import org.fcrepo.utils.NamespaceChangedStatementListener;
 import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -123,6 +124,17 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         repo = repository;
     }
 
+    public GraphStore getNamespaceRegistryGraph(final Session session) throws RepositoryException {
+
+        final Model model = JcrRdfTools.getJcrNamespaceModel(session);
+
+        model.register(new NamespaceChangedStatementListener(session));
+
+        final GraphStore graphStore = GraphStoreFactory.create(model);
+
+        return graphStore;
+
+    }
     public GraphStore searchRepository(final GraphSubjects subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset)

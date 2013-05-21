@@ -83,6 +83,8 @@ public class JcrRdfToolsTest {
                 .thenReturn("jcr");
         when(mockNsRegistry.getPrefix("registered-uri#")).thenReturn(
                 "some-prefix");
+        when(mockNsRegistry.getURI("jcr")).thenReturn("http://www.jcp.org/jcr/1.0");
+        when(mockNsRegistry.getURI("some-prefix")).thenReturn("registered-uri#");
         when(mockNsRegistry.getPrefixes()).thenReturn(new String[] { "jcr", "some-prefix"});
 
         final Workspace mockWorkspace = mock(Workspace.class);
@@ -594,5 +596,12 @@ public class JcrRdfToolsTest {
                                       ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize").asNode(),
                                       ResourceFactory.createTypedLiteral(123).asNode()));
 
+    }
+
+    @Test
+    public void testGetJcrNamespaceModel() throws Exception {
+        final Model jcrNamespaceModel = JcrRdfTools.getJcrNamespaceModel(mockSession);
+        assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("info:fedora/fedora-system:def/internal#"), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE), "fedora-internal"));
+        assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("registered-uri#"), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE), "some-prefix"));
     }
 }

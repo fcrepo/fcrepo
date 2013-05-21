@@ -39,6 +39,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import com.hp.hpl.jena.rdf.model.NsIterator;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.RepositoryService;
@@ -63,6 +64,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 public abstract class JcrRdfTools {
 
     private static final Logger logger = getLogger(JcrRdfTools.class);
+    public static final String HAS_NAMESPACE_PREDICATE = "info:fedora/fedora-system:def/internal#hasNamespace";
 
     public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
             ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
@@ -151,6 +153,27 @@ public abstract class JcrRdfTools {
                             getRDFNamespaceForJcrNamespace(nsURI));
                 }
             }
+        }
+
+        return model;
+    }
+
+    /**
+     * Get an RDF model of the registered JCR namespaces
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
+    public static Model getJcrNamespaceModel(final Session session) throws RepositoryException {
+        final Model model = createDefaultJcrModel(session);
+
+        final Map<String, String> prefixMap = model.getNsPrefixMap();
+
+        for (Map.Entry<String, String> entry : prefixMap.entrySet()) {
+            if (entry.getKey().isEmpty()) {
+                continue;
+            }
+            model.add(ResourceFactory.createResource(entry.getValue()), ResourceFactory.createProperty(HAS_NAMESPACE_PREDICATE), ResourceFactory.createPlainLiteral(entry.getKey()));
         }
 
         return model;
