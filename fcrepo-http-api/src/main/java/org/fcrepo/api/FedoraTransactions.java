@@ -4,14 +4,16 @@ package org.fcrepo.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.fcrepo.Transaction.State.COMMITED;
 import static org.fcrepo.Transaction.State.DIRTY;
 import static org.fcrepo.Transaction.State.ROLLED_BACK;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -27,6 +29,7 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
 import org.fcrepo.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -44,24 +47,35 @@ public class FedoraTransactions extends AbstractResource {
     private static Map<String, Transaction> transactions =
             new ConcurrentHashMap<String, Transaction>();
 
+    @Scheduled(fixedRate=1000)
+    public void removeAndRollbackExpired(){
+        synchronized(transactions){
+            Iterator<Entry<String, Transaction>> txs = transactions.entrySet().iterator();
+            while (txs.hasNext()){
+                Transaction tx = txs.next().getValue();
+                if (tx.getExpires().getTime() > System.currentTimeMillis()){
+                    txs.remove();
+                }
+            }
+        }
+    }
+
     @POST
-    @Produces({APPLICATION_JSON, MediaType.TEXT_XML})
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
     public Transaction createTransaction() throws RepositoryException {
-        final Session sess = getAuthenticatedSession();
-        final Transaction tx = new Transaction(sess);
-        transactions.put(tx.getId(), tx);
-        return tx;
+    	Session sess = getAuthenticatedSession();
+    	Transaction tx = new Transaction(sess);
+    	transactions.put(tx.getId(), tx);
+    	return tx;
     }
 
     @GET
     @Path("/{txid}")
-    @Produces({APPLICATION_JSON, TEXT_XML})
     public Transaction getTransaction(@PathParam("txid")
     final String txid) throws RepositoryException {
         final Transaction tx = transactions.get(txid);
         if (tx == null) {
-            throw new RepositoryException("Transaction with id " + txid +
-                    " is not available");
+            throw new PathNotFoundException("Transaction is not available");
         }
         return tx;
     }
@@ -76,8 +90,7 @@ public class FedoraTransactions extends AbstractResource {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
         }
-        tx.getSession().save();
-        tx.setState(COMMITED);
+        tx.commit();
         return tx;
     }
 
@@ -108,6 +121,7 @@ public class FedoraTransactions extends AbstractResource {
         }
         final String path = toPath(pathlist);
         objectService.createObject(tx.getSession(), path);
+        tx.updateExpiryDate();
         tx.setState(DIRTY);
         return Response.ok(path).build();
     }
