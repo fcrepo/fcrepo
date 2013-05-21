@@ -6,36 +6,24 @@ import static java.util.Objects.hash;
 import java.net.URI;
 import java.util.EnumSet;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
-@XmlRootElement(name = "DatastreamFixityStatus")
 public class FixityResult {
 
     public static enum FixityState {
         SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE
     }
 
-    @XmlElement
     public String storeIdentifier;
 
-    @XmlAttribute
     public EnumSet<FixityState> status = EnumSet.noneOf(FixityState.class);
 
-    @XmlElement
     public long computedSize;
 
-    @XmlElement
     public URI computedChecksum;
 
-    @XmlElement
     public long dsSize;
 
-    @XmlElement
     public String dsChecksumType;
 
-    @XmlElement
     public URI dsChecksum;
 
     private final LowLevelCacheEntry entry;
@@ -90,5 +78,20 @@ public class FixityResult {
 
     public LowLevelCacheEntry getEntry() {
         return entry;
+    }
+
+    public boolean matches() {
+        return matches(dsSize, dsChecksum);
+    }
+    public boolean matches(final long size, final URI checksum) {
+        return computedSize == size && computedChecksum.equals(checksum);
+    }
+
+    public boolean isSuccess() {
+        return status.contains(FixityState.SUCCESS);
+    }
+
+    public void setRepaired() {
+        status.add(FixityState.REPAIRED);
     }
 }

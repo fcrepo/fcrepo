@@ -1,20 +1,40 @@
 
 package org.fcrepo.services;
 
+import static com.codahale.metrics.MetricRegistry.name;
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Sets.difference;
+import static java.security.MessageDigest.getInstance;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.DatastreamIterator;
+import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.JcrRdfTools;
+import org.fcrepo.utils.LowLevelCacheEntry;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,7 +49,27 @@ public class DatastreamService extends RepositoryService {
 	@Autowired(required=false)
 	PolicyDecisionPoint storagePolicyDecisionPoint;
 
+    @Autowired
+    private LowLevelStorageService llStoreService;
+
+    static final Counter fixityCheckCounter = metrics.counter(name(
+                                                                          LowLevelStorageService.class, "fixity-check-counter"));
+
+    static final Timer timer = metrics.timer(name(Datastream.class,
+                                                         "fixity-check-time"));
+
+    static final Counter fixityRepairedCounter = metrics.counter(name(
+                                                                             LowLevelStorageService.class, "fixity-repaired-counter"));
+
+    static final Counter fixityErrorCounter = metrics.counter(name(
+                                                                          LowLevelStorageService.class, "fixity-error-counter"));
+
+
     private static final Logger logger = getLogger(DatastreamService.class);
+
+
+    private GetGoodFixityResults getGoodFixityResults =
+            new GetGoodFixityResults();
 
 
 	/**
@@ -153,4 +193,94 @@ public class DatastreamService extends RepositoryService {
 
 		return storagePolicyDecisionPoint;
 	}
+
+    public Dataset getFixityResultsModel(final GraphSubjects factory, final Datastream datastream) throws RepositoryException {
+
+
+        final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
+
+
+        final Model model = JcrRdfTools.getFixityResultsModel(factory, datastream.getNode(), blobs);
+
+        return GraphStoreFactory.create(model).toDataset();
+    }
+
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
+        this.llStoreService = llStoreService;
+    }
+
+
+    public Collection<FixityResult> runFixityAndFixProblems(
+                                                                   final Datastream datastream) throws RepositoryException {
+        Set<FixityResult> fixityResults;
+        Set<FixityResult> goodEntries;
+        final URI digestUri = datastream.getContentDigest();
+        final long size = datastream.getContentSize();
+        MessageDigest digest;
+
+        fixityCheckCounter.inc();
+
+        try {
+            digest = getInstance(datastream.getContentDigestType());
+        } catch (final NoSuchAlgorithmException e) {
+            throw new RepositoryException(e.getMessage(), e);
+        }
+
+        final Timer.Context context = timer.time();
+
+        try {
+            fixityResults =
+                    copyOf(getFixity(datastream.getNode().getNode(JcrConstants.JCR_CONTENT), digest, digestUri,
+                                            size));
+
+            goodEntries = getGoodFixityResults.apply(fixityResults);
+        } finally {
+            context.stop();
+        }
+
+        if (goodEntries.size() == 0) {
+            logger.error("ALL COPIES OF " + datastream.getNode().getPath() + " HAVE FAILED FIXITY CHECKS.");
+            return fixityResults;
+        }
+
+        final LowLevelCacheEntry anyGoodCacheEntry =
+                goodEntries.iterator().next().getEntry();
+
+        final Set<FixityResult> badEntries =
+                difference(fixityResults, goodEntries);
+
+        for (final FixityResult result : badEntries) {
+            try {
+                result.getEntry()
+                        .storeValue(anyGoodCacheEntry.getInputStream());
+                final FixityResult newResult =
+                        result.getEntry().checkFixity(digestUri, size, digest);
+                if (newResult.isSuccess()) {
+                    result.setRepaired();
+                    fixityRepairedCounter.inc();
+                } else {
+                    fixityErrorCounter.inc();
+                }
+            } catch (final IOException e) {
+                logger.warn("Exception repairing low-level cache entry: {}", e);
+            }
+        }
+
+        return fixityResults;
+    }
+
+
+    public Collection<FixityResult> getFixity(final Node resource, final MessageDigest digest,
+              final URI dsChecksum, final long dsSize)
+            throws RepositoryException {
+        logger.debug("Checking resource: " + resource.getPath());
+
+        return llStoreService.transformLowLevelCacheEntries(resource, ServiceHelpers
+                                                                              .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
+    }
+
+
+    public void setGetGoodFixityResults(final GetGoodFixityResults res) {
+        this.getGoodFixityResults = res;
+    }
 }

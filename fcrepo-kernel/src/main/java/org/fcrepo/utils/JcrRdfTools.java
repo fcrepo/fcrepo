@@ -17,6 +17,7 @@ import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositorySize;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -654,6 +655,33 @@ public abstract class JcrRdfTools {
                 addPropertyToModel(versionSubject, model, property);
             }
 
+        }
+
+        return model;
+    }
+
+    public static Model getFixityResultsModel(final GraphSubjects factory, final Node node, Iterable<FixityResult> blobs) throws RepositoryException {
+
+        final Model model = createDefaultJcrModel(node.getSession());
+
+        addJcrPropertiesToModel(factory, node, model);
+
+        for ( FixityResult result : blobs) {
+            final Resource resultSubject = ResourceFactory.createResource();
+
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#isFixityResultOf"), factory.getGraphSubject(node));
+            model.add(factory.getGraphSubject(node), ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasFixityResult"), resultSubject);
+
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedIn"), ResourceFactory.createResource(result.storeIdentifier));
+            for(FixityResult.FixityState state : result.status) {
+                model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#status"), ResourceFactory.createTypedLiteral(state.toString()));
+            }
+
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum"), ResourceFactory.createResource(result.computedChecksum.toString()));
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedChecksum"), ResourceFactory.createResource(result.dsChecksum.toString()));
+
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize"), ResourceFactory.createTypedLiteral(result.computedSize));
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedSize"), ResourceFactory.createTypedLiteral(result.dsSize));
         }
 
         return model;

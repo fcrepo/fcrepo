@@ -29,8 +29,7 @@ public class GetGoodFixityResults implements
 
                 @Override
                 public boolean apply(final FixityResult input) {
-                    return input.computedChecksum.equals(input.dsChecksum) &&
-                            input.computedSize == input.dsSize;
+                    return input.matches();
                 }
             };
 }

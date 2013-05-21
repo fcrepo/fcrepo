@@ -11,12 +11,16 @@ import static org.junit.Assert.assertTrue;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
+import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.FixityResult;
 import org.junit.Test;
 
@@ -34,24 +38,16 @@ public class FedoraFixityIT extends AbstractResourceIT {
 		final HttpResponse response = execute(method2);
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		final HttpEntity entity = response.getEntity();
-		final String content = EntityUtils.toString(entity);
-		final JAXBContext context =
-				JAXBContext.newInstance(DatastreamFixity.class);
-		final Unmarshaller um = context.createUnmarshaller();
-		final DatastreamFixity fixity =
-				(DatastreamFixity) um.unmarshal(new java.io.StringReader(
-																				content));
-		int cache = 0;
-		for (final FixityResult status : fixity.statuses) {
-			logger.debug("Verifying cache {} :", cache++);
-			assertFalse(status.status.contains(BAD_CHECKSUM));
-			logger.debug("Checksum matched");
-			assertFalse(status.status.contains(BAD_SIZE));
-			logger.debug("DS size matched");
-			assertTrue("Didn't find the store identifier!", compile(
-																		   "infinispan", DOTALL).matcher(status.storeIdentifier)
-																	.find());
-			logger.debug("cache store matched");
-		}
+        final GraphStore graphStore = TestHelpers.parseTriples(entity.getContent());
+
+        logger.info("Got triples {}", graphStore);
+
+        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#isFixityResultOf").asNode(), ResourceFactory.createResource(serverAddress + "objects/FedoraDatastreamsTest11/zxc").asNode()));
+        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#status").asNode(), ResourceFactory.createPlainLiteral("SUCCESS").asNode()));
+
+        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum").asNode(),ResourceFactory.createResource("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
+        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedChecksum").asNode(), ResourceFactory.createResource("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
+        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize").asNode(),ResourceFactory.createTypedLiteral(3).asNode()));
+        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedSize").asNode(), ResourceFactory.createTypedLiteral(3).asNode()));
 	}
 }

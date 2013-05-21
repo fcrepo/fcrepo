@@ -61,44 +61,6 @@ import com.google.common.base.Function;
 @PrepareForTest({ServiceHelpers.class})
 public class LowLevelStorageServiceTest {
 
-    @Test
-    public void testGetFixity() throws RepositoryException {
-        final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
-        final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
-        final Node mockNode = mock(Node.class);
-
-        final Property mockProperty = mock(Property.class);
-        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
-
-        final Repository mockRepo = mock(Repository.class);
-        final BinaryKey mockKey = mock(BinaryKey.class);
-        final BinaryStore mockStore = mock(BinaryStore.class);
-        when(mockStore.toString()).thenReturn("foo");
-        when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
-        when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
-        final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.setGetBinaryStore(mockStoreFunc);
-        testObj.setGetBinaryKey(mockKeyFunc);
-        testObj.setRepository(mockRepo);
-        final MessageDigest mockDigest = mock(MessageDigest.class);
-        final URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
-        final long testSize = 4L;
-        final FixityResult mockFixity = mock(FixityResult.class);
-        @SuppressWarnings("unchecked")
-        final Function<LowLevelCacheEntry, FixityResult> mockFixityFunc =
-                mock(Function.class);
-        when(mockFixityFunc.apply(any(LowLevelCacheEntry.class))).thenReturn(
-                mockFixity);
-        PowerMockito.mockStatic(ServiceHelpers.class);
-        when(
-                ServiceHelpers.getCheckCacheFixityFunction(
-                        any(MessageDigest.class), any(URI.class),
-                        any(Long.class))).thenReturn(mockFixityFunc);
-        final Collection<FixityResult> actual =
-                testObj.getFixity(mockNode, mockDigest, mockUri, testSize);
-        actual.iterator().next();
-        verify(mockFixityFunc).apply(any(LowLevelCacheEntry.class));
-    }
 
     @Test
     public void testTransformBinaryBlobs() throws RepositoryException {
@@ -297,91 +259,6 @@ public class LowLevelStorageServiceTest {
                 testObj.getLowLevelCacheEntries(new BinaryKey("key-123"));
 
         assertEquals(0, entries.size());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testRunFixityAndFixProblems() throws RepositoryException,
-            IOException, CacheLoaderException {
-        final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
-        final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
-        final Node mockNode = mock(Node.class);
-
-        final Property mockProperty = mock(Property.class);
-        final Repository mockRepo = mock(Repository.class);
-        final Node mockContentNode = mock(Node.class);
-        when(mockContentNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
-        final BinaryKey mockKey = new BinaryKey("key-123");
-        final InfinispanBinaryStore mockStore =
-                mock(InfinispanBinaryStore.class);
-        when(mockStore.toString()).thenReturn("foo");
-        final Cache<?, ?> mockGoodCache = mock(Cache.class);
-        final Cache<?, ?> mockBadCache = mock(Cache.class);
-        final Cache<?, ?>[] mockCaches =
-                new Cache[] {mockGoodCache, mockBadCache};
-        final GetCacheStore mockCacheStoreFunc = mock(GetCacheStore.class);
-        final CacheStore mockGoodCacheStore = mock(CacheStore.class);
-        when(mockGoodCacheStore.containsKey("key-123-data-0")).thenReturn(true);
-        final CacheStore mockBadCacheStore = mock(CacheStore.class);
-        when(mockBadCacheStore.containsKey("key-123-data-0")).thenReturn(true);
-        when(mockCacheStoreFunc.apply(mockGoodCache)).thenReturn(
-                mockGoodCacheStore);
-        when(mockCacheStoreFunc.apply(mockBadCache)).thenReturn(
-                mockBadCacheStore);
-        when(mockStore.getCaches()).thenReturn(Arrays.asList(mockCaches));
-        when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
-        when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
-        final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.setGetBinaryStore(mockStoreFunc);
-        testObj.setGetBinaryKey(mockKeyFunc);
-        testObj.setRepository(mockRepo);
-        mock(MessageDigest.class);
-        final URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
-        final long testSize = 4L;
-        final Function<LowLevelCacheEntry, FixityResult> mockFixityFunc =
-                mock(Function.class);
-        PowerMockito.mockStatic(ServiceHelpers.class);
-        when(
-                ServiceHelpers.getCheckCacheFixityFunction(
-                        any(MessageDigest.class), any(URI.class),
-                        any(Long.class))).thenReturn(mockFixityFunc);
-        final GetGoodFixityResults goodMock = mock(GetGoodFixityResults.class);
-        testObj.setGetGoodFixityResults(goodMock);
-        testObj.setGetCacheStore(mockCacheStoreFunc);
-        final Datastream mockDs = mock(Datastream.class);
-        final FedoraObject mockObj = mock(FedoraObject.class);
-        when(mockObj.getName()).thenReturn("mockObject");
-        when(mockDs.getObject()).thenReturn(mockObj);
-        when(mockDs.getDsId()).thenReturn("mockDs");
-        when(mockDs.getNode()).thenReturn(mockNode);
-        when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockDs.getContentSize()).thenReturn(testSize);
-        when(mockDs.getContentDigestType()).thenReturn("MD5"); // whatever, just be quiet
-        when(mockDs.getContentDigest()).thenReturn(mockUri);
-
-        final FixityResult mockGoodFixity = mock(FixityResult.class);
-        final FixityResult mockBadFixity = mock(FixityResult.class);
-        when(mockFixityFunc.apply(any(LowLevelCacheEntry.class))).thenReturn(
-                mockGoodFixity, mockBadFixity);
-        final FixityResult[] results = new FixityResult[] {mockGoodFixity};
-        when(goodMock.apply(any(Collection.class))).thenReturn(
-                new HashSet<FixityResult>(Arrays.asList(results)));
-        final LowLevelCacheEntry goodEntry = mock(LowLevelCacheEntry.class);
-        final LowLevelCacheEntry badEntry = mock(LowLevelCacheEntry.class);
-        when(mockGoodFixity.getEntry()).thenReturn(goodEntry);
-        when(mockBadFixity.getEntry()).thenReturn(badEntry);
-        mockBadFixity.status = EnumSet.noneOf(FixityState.class);
-        final InputStream mockIS = mock(InputStream.class);
-        when(goodEntry.getInputStream()).thenReturn(mockIS);
-        when(
-                badEntry.checkFixity(any(URI.class), any(Long.class),
-                        any(MessageDigest.class))).thenReturn(mockBadFixity);
-        final Collection<FixityResult> actual =
-                testObj.runFixityAndFixProblems(mockDs);
-        actual.iterator().next();
-        verify(mockFixityFunc, times(2)).apply(any(LowLevelCacheEntry.class));
-        verify(goodMock).apply(any(Collection.class));
-        verify(badEntry).storeValue(mockIS);
     }
 
 }

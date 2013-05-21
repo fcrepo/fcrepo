@@ -2,22 +2,29 @@ package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.Collection;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.Datastream;
 import org.fcrepo.jaxb.responses.management.DatastreamFixity;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.test.util.TestHelpers;
@@ -33,28 +40,23 @@ public class FedoraFixityTest {
 
 	LowLevelStorageService mockLow;
 
-	Repository mockRepo;
-
 	Session mockSession;
 
-	SecurityContext mockSecurityContext;
+    private UriInfo uriInfo;
+    private Request mockRequest;
 
-	HttpServletRequest mockServletRequest;
-
-	Principal mockPrincipal;
-
-	String mockUser = "testuser";
-
-	@Before
+    @Before
 	public void setUp() throws LoginException, RepositoryException {
+
+        mockRequest = mock(Request.class);
 		mockDatastreams = mock(DatastreamService.class);
 		mockLow = mock(LowLevelStorageService.class);
 
 		testObj = new FedoraFixity();
 		testObj.setDatastreamService(mockDatastreams);
-		testObj.setLlStoreService(mockLow);
 
-		testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        uriInfo = TestHelpers.getUriInfoImpl();
+        testObj.setUriInfo(uriInfo);
 
 
 		mockSession = TestHelpers.mockSession(testObj);
@@ -75,8 +77,7 @@ public class FedoraFixityTest {
 		when(mockNode.getSession()).thenReturn(mockSession);
 		when(mockDs.getNode()).thenReturn(mockNode);
 		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
-		final DatastreamFixity actual = testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"));
-		assertNotNull(actual);
-		verify(mockLow).runFixityAndFixProblems(mockDs);
+		testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"), mockRequest, uriInfo);
+        verify(mockDatastreams).getFixityResultsModel(any(GraphSubjects.class), eq(mockDs));
 	}
 }

@@ -67,6 +67,7 @@ public class SelfHealingIT {
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();
         lowLevelService.setRepository(repo);
+        datastreamService.setLlStoreService(lowLevelService);
     }
 
     private void tamperWithNode(final Node node) throws Exception {
@@ -86,7 +87,7 @@ public class SelfHealingIT {
     private Collection<FixityResult> getNodeFixity(final Datastream ds)
             throws NoSuchAlgorithmException, RepositoryException {
 
-        return lowLevelService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
+        return datastreamService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
                 .getInstance("SHA-1"), ds.getContentDigest(), ds
                 .getContentSize());
 
@@ -172,7 +173,7 @@ public class SelfHealingIT {
 
         assertFalse("Expected the fixity check to fail.", fixityOk);
 
-        lowLevelService.runFixityAndFixProblems(ds);
+        datastreamService.runFixityAndFixProblems(ds);
 
         nodeFixity = getNodeFixity(ds);
 

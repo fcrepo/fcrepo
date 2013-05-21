@@ -1,22 +1,11 @@
 
 package org.fcrepo.services;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
-import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Sets.difference;
-import static java.security.MessageDigest.getInstance;
-import static org.fcrepo.services.RepositoryService.metrics;
-import static org.fcrepo.utils.FixityResult.FixityState.REPAIRED;
-import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,11 +21,8 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.Datastream;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetCacheStore;
-import org.fcrepo.services.functions.GetGoodFixityResults;
-import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderException;
@@ -50,8 +36,6 @@ import org.modeshape.jcr.value.binary.CompositeBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Timer;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 
@@ -59,18 +43,6 @@ public class LowLevelStorageService {
 
     private static final Logger logger =
             getLogger(LowLevelStorageService.class);
-
-    static final Counter fixityCheckCounter = metrics.counter(name(
-            LowLevelStorageService.class, "fixity-check-counter"));
-
-    static final Timer timer = metrics.timer(name(Datastream.class,
-            "fixity-check-time"));
-
-    static final Counter fixityRepairedCounter = metrics.counter(name(
-            LowLevelStorageService.class, "fixity-repaired-counter"));
-
-    static final Counter fixityErrorCounter = metrics.counter(name(
-            LowLevelStorageService.class, "fixity-error-counter"));
 
     @Inject
     private Repository repo;
@@ -81,23 +53,11 @@ public class LowLevelStorageService {
 
     private GetCacheStore getCacheStore = new GetCacheStore();
 
-    private GetGoodFixityResults getGoodFixityResults =
-            new GetGoodFixityResults();
 
     /**
      * For use with non-mutating methods.
      */
     private Session readOnlySession;
-
-    public Collection<FixityResult>
-            getFixity(final Node resource, final MessageDigest digest,
-                    final URI dsChecksum, final long dsSize)
-                    throws RepositoryException {
-        logger.debug("Checking resource: " + resource.getPath());
-
-        return transformLowLevelCacheEntries(resource, ServiceHelpers
-															   .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
-    }
 
     public <T> Collection<T> transformLowLevelCacheEntries(final Node resource,
 														   final Function<LowLevelCacheEntry, T> transform)
@@ -268,66 +228,6 @@ public class LowLevelStorageService {
         getSession();
     }
 
-    public Collection<FixityResult> runFixityAndFixProblems(
-            final Datastream datastream) throws RepositoryException {
-        Set<FixityResult> fixityResults;
-        Set<FixityResult> goodEntries;
-        final URI digestUri = datastream.getContentDigest();
-        final long size = datastream.getContentSize();
-        MessageDigest digest;
-
-        fixityCheckCounter.inc();
-
-        try {
-            digest = getInstance(datastream.getContentDigestType());
-        } catch (final NoSuchAlgorithmException e) {
-            throw new RepositoryException(e.getMessage(), e);
-        }
-
-        final Timer.Context context = timer.time();
-
-        try {
-            fixityResults =
-                    copyOf(getFixity(datastream.getNode().getNode(JcrConstants.JCR_CONTENT), digest, digestUri,
-                            size));
-
-            goodEntries = getGoodFixityResults.apply(fixityResults);
-        } finally {
-            context.stop();
-        }
-
-        if (goodEntries.size() == 0) {
-            logger.error("ALL COPIES OF " + datastream.getObject().getName() +
-                    "/" + datastream.getDsId() + " HAVE FAILED FIXITY CHECKS.");
-            return fixityResults;
-        }
-
-        final LowLevelCacheEntry anyGoodCacheEntry =
-                goodEntries.iterator().next().getEntry();
-
-        final Set<FixityResult> badEntries =
-                difference(fixityResults, goodEntries);
-
-        for (final FixityResult result : badEntries) {
-            try {
-                result.getEntry()
-                        .storeValue(anyGoodCacheEntry.getInputStream());
-                final FixityResult newResult =
-                        result.getEntry().checkFixity(digestUri, size, digest);
-                if (newResult.status.contains(SUCCESS)) {
-                    result.status.add(REPAIRED);
-                    fixityRepairedCounter.inc();
-                } else {
-                    fixityErrorCounter.inc();
-                }
-            } catch (final IOException e) {
-                logger.warn("Exception repairing low-level cache entry: {}", e);
-            }
-        }
-
-        return fixityResults;
-    }
-
     public void setGetBinaryStore(final GetBinaryStore getBinaryStore) {
         this.getBinaryStore = getBinaryStore;
     }
@@ -338,10 +238,6 @@ public class LowLevelStorageService {
 
     public void setGetCacheStore(final GetCacheStore getCacheStore) {
         this.getCacheStore = getCacheStore;
-    }
-
-    public void setGetGoodFixityResults(final GetGoodFixityResults res) {
-        this.getGoodFixityResults = res;
     }
 
 }

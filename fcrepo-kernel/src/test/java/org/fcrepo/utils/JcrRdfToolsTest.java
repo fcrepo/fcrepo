@@ -9,10 +9,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -26,6 +30,9 @@ import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
@@ -41,8 +48,11 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.slf4j.Logger;
 
 public class JcrRdfToolsTest {
+
+    private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
 
     private Node mockNode;
 
@@ -547,5 +557,42 @@ public class JcrRdfToolsTest {
         Iterator<Node> mockIterator = Arrays.asList(mockNode1, mockNode2, mockNode3).iterator();
         final Model model = JcrRdfTools.getJcrNodeIteratorModel(testSubjects, mockIterator, mockResource);
         assertEquals(3, model.listObjectsOfProperty(ResourceFactory.createProperty("info:fedora/iterator#hasNode")).toSet().size());
+    }
+
+    @Test
+    public void testGetFixityResultsModel() throws RepositoryException, URISyntaxException {
+        final FixityResult mockResult = new FixityResult();
+        mockResult.computedChecksum = new URI("abc");
+        mockResult.dsChecksum = new URI("abc");
+        mockResult.computedSize = 123;
+        mockResult.dsSize = 321;
+        mockResult.storeIdentifier = "storeid123";
+        mockResult.status.add(FixityResult.FixityState.BAD_CHECKSUM);
+        mockResult.status.add(FixityResult.FixityState.BAD_SIZE);
+        final List<FixityResult> mockBlobs = Arrays.asList(mockResult);
+        when(mockNode.getPath()).thenReturn("/path/to/node");
+
+        PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockProperties.hasNext()).thenReturn(false);
+        when(mockNode.getProperties()).thenReturn(mockProperties);
+
+        final Model fixityResultsModel = JcrRdfTools.getFixityResultsModel(testSubjects, mockNode, mockBlobs);
+
+        LOGGER.info("Got graph {}", fixityResultsModel);
+
+        GraphStore gs =  GraphStoreFactory.create(fixityResultsModel);
+        assertTrue(gs.contains(com.hp.hpl.jena.graph.Node.ANY,
+                                      com.hp.hpl.jena.graph.Node.ANY,
+                                      ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#isFixityResultOf").asNode(),
+                                      ResourceFactory.createResource("info:fedora/path/to/node").asNode()));
+        assertTrue(gs.contains(com.hp.hpl.jena.graph.Node.ANY,
+                                      com.hp.hpl.jena.graph.Node.ANY,
+                                      ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum").asNode(),
+                                      ResourceFactory.createResource("abc").asNode()));
+        assertTrue(gs.contains(com.hp.hpl.jena.graph.Node.ANY,
+                                      com.hp.hpl.jena.graph.Node.ANY,
+                                      ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize").asNode(),
+                                      ResourceFactory.createTypedLiteral(123).asNode()));
+
     }
 }

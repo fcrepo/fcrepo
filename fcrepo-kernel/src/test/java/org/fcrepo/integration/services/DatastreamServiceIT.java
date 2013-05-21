@@ -3,11 +3,14 @@ package org.fcrepo.integration.services;
 
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -18,7 +21,10 @@ import org.fcrepo.Datastream;
 import org.fcrepo.integration.AbstractIT;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.FixityResult;
+import org.junit.Assert;
 import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
@@ -65,5 +71,32 @@ public class DatastreamServiceIT extends AbstractIT {
                 datastreamService.getDatastream(session, "/testDatastreamServiceObject/testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(ds.getContent(), "UTF-8"));
         session.logout();
+    }
+
+    @Test
+    public void testChecksumBlobs() throws Exception {
+
+        final Session session = repository.login();
+        objectService.createObject(session, "/testLLObject");
+        datastreamService.createDatastreamNode(session,
+                                                      "/testLLObject/testRepositoryContent",
+                                                      "application/octet-stream", new ByteArrayInputStream(
+                                                                                                                  "0123456789".getBytes()));
+
+        session.save();
+
+        final Datastream ds = datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
+
+        final Collection<FixityResult> fixityResults =
+                datastreamService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
+                                                                                                  .getInstance("SHA-1"), ds.getContentDigest(), ds
+                                                                                                                                                        .getContentSize());
+
+        assertNotEquals(0, fixityResults.size());
+
+        for (final FixityResult fixityResult : fixityResults) {
+            Assert.assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
+                                       fixityResult.computedChecksum.toString());
+        }
     }
 }

@@ -43,32 +43,6 @@ public class LowLevelStorageServiceIT {
     @Inject
     LowLevelStorageService lowLevelService;
 
-    @Test
-    public void testChecksumBlobs() throws Exception {
-
-        final Session session = repo.login();
-        objectService.createObject(session, "/testLLObject");
-        datastreamService.createDatastreamNode(session,
-                "/testLLObject/testRepositoryContent",
-                "application/octet-stream", new ByteArrayInputStream(
-                        "0123456789".getBytes()));
-
-        session.save();
-
-        final Datastream ds = datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
-
-        final Collection<FixityResult> fixityResults =
-                lowLevelService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
-                        .getInstance("SHA-1"), ds.getContentDigest(), ds
-                        .getContentSize());
-
-        assertNotEquals(0, fixityResults.size());
-
-        for (final FixityResult fixityResult : fixityResults) {
-            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
-                    fixityResult.computedChecksum.toString());
-        }
-    }
 
     @Test
     public void testGetBinaryBlobs() throws Exception {

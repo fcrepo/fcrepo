@@ -48,4 +48,16 @@ public class CheckCacheEntryFixity implements
         return result;
     }
 
+    public MessageDigest getDigest() {
+        return digest;
+    }
+
+    public URI getChecksum() {
+        return dsChecksum;
+    }
+
+    public long getSize() {
+        return dsSize;
+    }
+
 }
