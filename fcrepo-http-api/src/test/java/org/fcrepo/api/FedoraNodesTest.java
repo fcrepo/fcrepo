@@ -43,7 +43,6 @@ import org.modeshape.jcr.api.Repository;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraNodesTest {
 
@@ -169,14 +168,12 @@ public class FedoraNodesTest {
         final String path = "/" + pid;
 
         final FedoraObject mockObject = mock(FedoraObject.class);
-        final GraphStore mockStore = mock(GraphStore.class);
         final Dataset mockDataset = mock(Dataset.class);
         final Model mockModel = mock(Model.class);
-        when(mockStore.toDataset()).thenReturn(mockDataset);
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
-        when(mockObject.getGraphStore(any(GraphSubjects.class))).thenReturn(mockStore);
+        when(mockObject.getPropertiesDataset(any(GraphSubjects.class))).thenReturn(mockDataset);
         when(
                 mockNodes.getObject(Mockito.isA(Session.class), Mockito
                         .isA(String.class))).thenReturn(mockObject);
@@ -194,7 +191,7 @@ public class FedoraNodesTest {
 
         final FedoraObject mockObject = mock(FedoraObject.class);
 
-        when(mockObject.getGraphProblems()).thenReturn(null);
+        when(mockObject.getDatasetProblems()).thenReturn(null);
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
@@ -202,8 +199,8 @@ public class FedoraNodesTest {
         testObj.updateSparql(createPathList(pid), TestHelpers.getUriInfoImpl(),
                 mockStream);
 
-        verify(mockObject).updateGraph(any(GraphSubjects.class),
-                eq("my-sparql-statement"));
+        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
+                                                          eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
     }

@@ -53,17 +53,13 @@ import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.JcrRdfTools;
 import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.update.UpdateAction;
 
 @Component
@@ -106,24 +102,8 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.cacheControl(cc)
                         .lastModified(date).build());
             }
-            //return resource.getGraphStore(new HttpGraphSubjects(FedoraNodes.class, uriInfo)).toDataset();
+            return resource.getPropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo));
 
-            // store the topic uri in the dataset context
-            HttpGraphSubjects subjects =
-                new HttpGraphSubjects(FedoraNodes.class, uriInfo);
-            Dataset dataset = resource.getGraphStore(subjects).toDataset();
-            String uri = null;
-            try {
-                uri = JcrRdfTools.getGraphSubject(
-                    subjects,session.getNode(path)).getURI();
-            } catch ( Exception ex ) { uri = null; }
-
-            com.hp.hpl.jena.sparql.util.Context context =
-                dataset.getContext();
-            if ( context == null ) { context = new com.hp.hpl.jena.sparql.util.Context(); }
-            context.set(Symbol.create("uri"),uri);
-
-            return dataset;
         } finally {
             session.logout();
         }
@@ -154,8 +134,8 @@ public class FedoraNodes extends AbstractResource {
 
             if (requestBodyStream != null) {
                 UpdateAction.parseExecute(IOUtils.toString(requestBodyStream),
-                        result.getGraphStore(new HttpGraphSubjects(
-                                FedoraNodes.class, uriInfo)));
+                        result.getPropertiesDataset(new HttpGraphSubjects(
+                                                                                 FedoraNodes.class, uriInfo)));
             }
             session.save();
 
@@ -194,9 +174,9 @@ public class FedoraNodes extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, path);
 
-                result.updateGraph(new HttpGraphSubjects(FedoraNodes.class,
-                        uriInfo), IOUtils.toString(requestBodyStream));
-                final Problems problems = result.getGraphProblems();
+                result.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class,
+                                                                            uriInfo), IOUtils.toString(requestBodyStream));
+                final Problems problems = result.getDatasetProblems();
                 if (problems != null && problems.hasProblems()) {
                     logger.info(
                             "Found these problems updating the properties for {}: {}",

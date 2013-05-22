@@ -50,8 +50,8 @@ public class FedoraRepositoriesProperties extends AbstractResource {
 
                 final FedoraResource result = nodeService.getObject(session, "/");
 
-                result.updateGraph(IOUtils.toString(requestBodyStream));
-                Problems problems = result.getGraphProblems();
+                result.updatePropertiesDataset(IOUtils.toString(requestBodyStream));
+                Problems problems = result.getDatasetProblems();
                 if (problems != null && problems.hasProblems()) {
                     logger.info("Found these problems updating the properties for {}: {}", "/", problems.toString());
                     return Response.status(Response.Status.FORBIDDEN).entity(problems.toString()).build();

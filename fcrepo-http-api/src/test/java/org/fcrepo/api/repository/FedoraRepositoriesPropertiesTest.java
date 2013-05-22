@@ -38,14 +38,14 @@ public class FedoraRepositoriesPropertiesTest {
     public void testSparqlUpdate() throws RepositoryException, IOException {
         final FedoraObject mockObject = mock(FedoraObject.class);
 
-        when(mockObject.getGraphProblems()).thenReturn(null);
+        when(mockObject.getDatasetProblems()).thenReturn(null);
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, "/")).thenReturn(mockObject);
 
         testObj.updateSparql(mockStream);
 
-        verify(mockObject).updateGraph("my-sparql-statement");
+        verify(mockObject).updatePropertiesDataset("my-sparql-statement");
         verify(mockSession).save();
         verify(mockSession).logout();
     }

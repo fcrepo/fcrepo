@@ -158,12 +158,12 @@ public class FedoraResourceTest {
 
     @Test
     public void testGetGraphProblems() throws RepositoryException {
-        final Problems actual = testObj.getGraphProblems();
+        final Problems actual = testObj.getDatasetProblems();
         assertEquals(null, actual);
         final JcrPropertyStatementListener mockListener =
                 mock(JcrPropertyStatementListener.class);
         setField("listener", FedoraResource.class, mockListener, testObj);
-        testObj.getGraphProblems();
+        testObj.getDatasetProblems();
         verify(mockListener).getProblems();
     }
 

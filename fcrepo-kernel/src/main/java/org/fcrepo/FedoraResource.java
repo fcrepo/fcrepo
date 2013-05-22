@@ -18,6 +18,9 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionHistory;
 
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -29,8 +32,6 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.UpdateAction;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
@@ -166,7 +167,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return map(node.getMixinNodeTypes(), nodetype2name);
     }
 
-    public Problems getGraphProblems() throws RepositoryException {
+    public Problems getDatasetProblems() throws RepositoryException {
         if (listener != null) {
             return listener.getProblems();
         } else {
@@ -174,20 +175,18 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    public GraphStore updateGraph(final GraphSubjects subjects,
-            final String sparqlUpdateStatement) throws RepositoryException {
-        final GraphStore store = getGraphStore(subjects);
-        UpdateAction.parseExecute(sparqlUpdateStatement, store);
-
-        return store;
+    public void updatePropertiesDataset(final GraphSubjects subjects,
+                                        final String sparqlUpdateStatement) throws RepositoryException {
+        final Dataset dataset = getPropertiesDataset(subjects);
+        UpdateAction.parseExecute(sparqlUpdateStatement, dataset);
     }
 
-    public GraphStore updateGraph(final String sparqlUpdateStatement)
+    public void updatePropertiesDataset(final String sparqlUpdateStatement)
             throws RepositoryException {
-        return updateGraph(DEFAULT_SUBJECT_FACTORY, sparqlUpdateStatement);
+        updatePropertiesDataset(DEFAULT_SUBJECT_FACTORY, sparqlUpdateStatement);
     }
 
-    public GraphStore getGraphStore(final GraphSubjects subjects)
+    public Dataset getPropertiesDataset(final GraphSubjects subjects)
             throws RepositoryException {
 
         final Model model = JcrRdfTools.getJcrPropertiesModel(subjects, node);
@@ -197,26 +196,36 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         model.register(listener);
 
-        final GraphStore graphStore = GraphStoreFactory.create(model);
+        final Dataset dataset = DatasetFactory.create(model);
 
-        return graphStore;
+        String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
+        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        if ( context == null ) { context = new com.hp.hpl.jena.sparql.util.Context(); }
+        context.set(Symbol.create("uri"),uri);
+
+        return dataset;
     }
 
-    public GraphStore getGraphStore() throws RepositoryException {
-        return getGraphStore(DEFAULT_SUBJECT_FACTORY);
+    public Dataset getPropertiesDataset() throws RepositoryException {
+        return getPropertiesDataset(DEFAULT_SUBJECT_FACTORY);
     }
 
-    public GraphStore getVersionGraphStore(final GraphSubjects subjects)
+    public Dataset getVersionDataset(final GraphSubjects subjects)
             throws RepositoryException {
         final Model model = JcrRdfTools.getJcrVersionsModel(subjects, node);
 
-        final GraphStore graphStore = GraphStoreFactory.create(model);
+        final Dataset dataset = DatasetFactory.create(model);
 
-        return graphStore;
+        String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
+        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        if ( context == null ) { context = new com.hp.hpl.jena.sparql.util.Context(); }
+        context.set(Symbol.create("uri"),uri);
+
+        return dataset;
     }
 
-    public GraphStore getVersionGraphStore() throws RepositoryException {
-        return getVersionGraphStore(DEFAULT_SUBJECT_FACTORY);
+    public Dataset getVersionDataset() throws RepositoryException {
+        return getVersionDataset(DEFAULT_SUBJECT_FACTORY);
     }
 
     public void addVersionLabel(final String label) throws RepositoryException {

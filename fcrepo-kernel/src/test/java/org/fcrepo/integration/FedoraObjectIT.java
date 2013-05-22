@@ -15,12 +15,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
-import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
@@ -61,7 +61,7 @@ public class FedoraObjectIT extends AbstractIT {
 	public void testObjectGraph() throws Exception {
 		final Session session = repo.login();
 		final FedoraObject object = objectService.createObject(session, "/graphObject");
-		final GraphStore graphStore = object.getGraphStore();
+		final Dataset graphStore = object.getPropertiesDataset();
         
         final String graphSubject = "info:fedora/graphObject";
 

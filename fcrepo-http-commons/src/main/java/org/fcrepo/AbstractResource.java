@@ -132,8 +132,8 @@ public abstract class AbstractResource {
                     requestContentType != null &&
                     requestContentType.toString().equals(
                             WebContent.contentTypeSPARQLUpdate)) {
-                result.updateGraph(new HttpGraphSubjects(pathsRelativeTo,
-                        uriInfo), IOUtils.toString(requestBodyStream));
+                result.updatePropertiesDataset(new HttpGraphSubjects(pathsRelativeTo,
+                                                                            uriInfo), IOUtils.toString(requestBodyStream));
             }
 
         } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
