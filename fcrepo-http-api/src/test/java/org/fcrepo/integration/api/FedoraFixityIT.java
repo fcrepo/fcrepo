@@ -35,8 +35,6 @@ public class FedoraFixityIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#status").asNode(), ResourceFactory.createPlainLiteral("SUCCESS").asNode()));
 
         assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum").asNode(),ResourceFactory.createResource("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
-        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedChecksum").asNode(), ResourceFactory.createResource("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
         assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize").asNode(),ResourceFactory.createTypedLiteral(3).asNode()));
-        assertTrue(graphStore.contains(Node.ANY, Node.ANY, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedSize").asNode(), ResourceFactory.createTypedLiteral(3).asNode()));
-	}
+    }
 }

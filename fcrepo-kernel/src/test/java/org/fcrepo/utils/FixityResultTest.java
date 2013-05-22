@@ -56,23 +56,6 @@ public class FixityResultTest {
     }
 
     @Test
-    public void testMatches() throws Exception {
-        FixityResult result = new FixityResult(100L, new URI("urn:123"));
-        result.dsChecksum = new URI("urn:123");
-        result.dsSize = 100L;
-        assertTrue("expected fixity to match", result.matches());
-
-        result.dsSize = 99L;
-
-        assertFalse("unexpected match when size differs", result.matches());
-        result.dsSize = 100L;
-        result.dsChecksum = new URI("urn:321");
-        assertFalse("unexpected match when checksum differs", result.matches());
-        result.dsSize = 99L;
-        assertFalse("unexpected match when size and checksum differs", result.matches());
-    }
-
-    @Test
     public void testMatchesArguments() throws Exception {
         FixityResult result = new FixityResult(100L, new URI("urn:123"));
         assertTrue("expected fixity to match", result.matches(100L, new URI("urn:123")));

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -18,47 +17,31 @@ import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashSet;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.fcrepo.Datastream;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.functions.CheckCacheEntryFixity;
-import org.fcrepo.services.functions.GetBinaryKey;
-import org.fcrepo.services.functions.GetCacheStore;
-import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.LowLevelCacheEntry;
-import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.internal.util.collections.Sets;
-import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.value.BinaryKey;
-import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -167,10 +150,10 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     public void testGetFixityResultsModel() throws RepositoryException, URISyntaxException {
         mockStatic(JcrRdfTools.class);
 
-        Collection<FixityResult> mockCollection = Arrays.asList(new FixityResult());
-        GetGoodFixityResults mockFixityResultsFunction = mock(GetGoodFixityResults.class);
-        when(mockFixityResultsFunction.apply(mockCollection)).thenReturn(Sets.newSet(new FixityResult()));
-        testObj.setGetGoodFixityResults(mockFixityResultsFunction);
+        final FixityResult fixityResult = mock(FixityResult.class);
+        when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(true);
+
+        Collection<FixityResult> mockCollection = Arrays.asList(fixityResult);
         final Datastream mockDatastream = mock(Datastream.class);
         final Node mockNode = mock(Node.class);
         final Node mockContent = mock(Node.class);
@@ -231,10 +214,10 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         when(mockGoodEntry.getInputStream()).thenReturn(mockIS);
         LowLevelCacheEntry mockBadEntry = mock(LowLevelCacheEntry.class);
         final FixityResult mockGoodResult = mock(FixityResult.class);
-        when(mockGoodResult.matches()).thenReturn(true);
+        when(mockGoodResult.matches(any(Long.class), any(URI.class))).thenReturn(true);
         when(mockGoodResult.getEntry()).thenReturn(mockGoodEntry);
         final FixityResult mockBadResult = mock(FixityResult.class);
-        when(mockBadResult.matches()).thenReturn(false);
+        when(mockBadResult.matches(any(Long.class), any(URI.class))).thenReturn(false);
         when(mockBadResult.getEntry()).thenReturn(mockBadEntry);
 
         final FixityResult mockRepairedResult = mock(FixityResult.class);

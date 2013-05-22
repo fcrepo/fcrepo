@@ -12,19 +12,11 @@ public class FixityResult {
         SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE
     }
 
-    public String storeIdentifier;
-
     public EnumSet<FixityState> status = EnumSet.noneOf(FixityState.class);
 
     public long computedSize;
 
     public URI computedChecksum;
-
-    public long dsSize;
-
-    public String dsChecksumType;
-
-    public URI dsChecksum;
 
     private final LowLevelCacheEntry entry;
 
@@ -34,7 +26,6 @@ public class FixityResult {
 
     public FixityResult(final LowLevelCacheEntry entry) {
         this.entry = entry;
-        storeIdentifier = entry.getExternalIdentifier();
     }
 
     public FixityResult(final long size, final URI checksum) {
@@ -48,6 +39,10 @@ public class FixityResult {
         this.entry = entry;
         computedSize = size;
         computedChecksum = checksum;
+    }
+
+    public String getStoreIdentifier() {
+        return entry.getExternalIdentifier();
     }
 
     @Override
@@ -80,11 +75,16 @@ public class FixityResult {
         return entry;
     }
 
-    public boolean matches() {
-        return matches(dsSize, dsChecksum);
+    public boolean matches(final URI checksum) {
+        return computedChecksum.equals(checksum);
     }
+
+    public boolean matches(final long size) {
+        return computedSize == size;
+    }
+
     public boolean matches(final long size, final URI checksum) {
-        return computedSize == size && computedChecksum.equals(checksum);
+        return matches(size) && matches(checksum);
     }
 
     public boolean isSuccess() {

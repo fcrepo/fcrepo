@@ -695,16 +695,13 @@ public abstract class JcrRdfTools {
             model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#isFixityResultOf"), factory.getGraphSubject(node));
             model.add(factory.getGraphSubject(node), ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasFixityResult"), resultSubject);
 
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedIn"), ResourceFactory.createResource(result.storeIdentifier));
+            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedIn"), ResourceFactory.createResource(result.getStoreIdentifier()));
             for(FixityResult.FixityState state : result.status) {
                 model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#status"), ResourceFactory.createTypedLiteral(state.toString()));
             }
 
             model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum"), ResourceFactory.createResource(result.computedChecksum.toString()));
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedChecksum"), ResourceFactory.createResource(result.dsChecksum.toString()));
-
             model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize"), ResourceFactory.createTypedLiteral(result.computedSize));
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedSize"), ResourceFactory.createTypedLiteral(result.dsSize));
         }
 
         return model;

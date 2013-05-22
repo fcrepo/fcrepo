@@ -563,14 +563,12 @@ public class JcrRdfToolsTest {
 
     @Test
     public void testGetFixityResultsModel() throws RepositoryException, URISyntaxException {
-        final FixityResult mockResult = new FixityResult();
-        mockResult.computedChecksum = new URI("abc");
-        mockResult.dsChecksum = new URI("abc");
-        mockResult.computedSize = 123;
-        mockResult.dsSize = 321;
-        mockResult.storeIdentifier = "storeid123";
+        LowLevelCacheEntry mockEntry = mock(LowLevelCacheEntry.class);
+        when(mockEntry.getExternalIdentifier()).thenReturn("xyz");
+        final FixityResult mockResult = new FixityResult(mockEntry, 123, new URI("abc"));
         mockResult.status.add(FixityResult.FixityState.BAD_CHECKSUM);
         mockResult.status.add(FixityResult.FixityState.BAD_SIZE);
+
         final List<FixityResult> mockBlobs = Arrays.asList(mockResult);
         when(mockNode.getPath()).thenReturn("/path/to/node");
 

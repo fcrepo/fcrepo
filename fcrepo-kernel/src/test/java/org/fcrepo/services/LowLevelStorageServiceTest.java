@@ -10,16 +10,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,13 +23,8 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.Datastream;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetCacheStore;
-import org.fcrepo.services.functions.GetGoodFixityResults;
-import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.FixityResult.FixityState;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoaderException;
@@ -49,7 +37,6 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.CompositeBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;

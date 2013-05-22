@@ -204,27 +204,23 @@ public class LowLevelCacheEntry {
 		}
 
 		try {
-			final FixityResult result = new FixityResult(this);
 
 			while (ds.read() != -1) {
 				// noop; we're just reading the stream for the checksum and size
 			}
 
-			result.computedChecksum = ContentDigest.asURI(digest.getAlgorithm(), ds
-																	   .getMessageDigest().digest());
-			result.computedSize = ds.getByteCount();
-			result.dsChecksum = checksum;
-			result.dsSize = size;
+            final FixityResult result = new FixityResult(this, ds.getByteCount(),
+                                                                ContentDigest.asURI(digest.getAlgorithm(), ds.getMessageDigest().digest()));
 
-			if (!result.computedChecksum.equals(result.dsChecksum)) {
+			if (!result.matches(checksum)) {
 				result.status.add(BAD_CHECKSUM);
 			}
 
-			if (result.dsSize != result.computedSize) {
+			if (!result.matches(size)) {
 				result.status.add(BAD_SIZE);
 			}
 
-			if (result.status.isEmpty()) {
+			if (result.matches(size, checksum)) {
 				result.status.add(SUCCESS);
 			}
 

@@ -21,6 +21,9 @@ import javax.jcr.Session;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStoreFactory;
@@ -29,7 +32,6 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.services.functions.GetGoodFixityResults;
 import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.JcrRdfTools;
@@ -66,10 +68,6 @@ public class DatastreamService extends RepositoryService {
 
 
     private static final Logger logger = getLogger(DatastreamService.class);
-
-
-    private GetGoodFixityResults getGoodFixityResults =
-            new GetGoodFixityResults();
 
 
 	/**
@@ -233,7 +231,12 @@ public class DatastreamService extends RepositoryService {
                     copyOf(getFixity(datastream.getNode().getNode(JcrConstants.JCR_CONTENT), digest, digestUri,
                                             size));
 
-            goodEntries = getGoodFixityResults.apply(fixityResults);
+            goodEntries = ImmutableSet.copyOf(Collections2.filter(fixityResults, new Predicate<FixityResult>() {
+                @Override
+                public boolean apply(org.fcrepo.utils.FixityResult input) {
+                    return input.matches(size, digestUri);
+                }
+            }));
         } finally {
             context.stop();
         }
@@ -279,8 +282,4 @@ public class DatastreamService extends RepositoryService {
                                                                               .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
     }
 
-
-    public void setGetGoodFixityResults(final GetGoodFixityResults res) {
-        this.getGoodFixityResults = res;
-    }
 }
