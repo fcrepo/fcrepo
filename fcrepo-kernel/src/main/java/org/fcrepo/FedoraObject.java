@@ -1,6 +1,7 @@
 
 package org.fcrepo;
 
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -28,7 +29,7 @@ public class FedoraObject extends FedoraResource {
 
 	/**
 	 * Construct a FedoraObject from an existing JCR Node
-	 * @param n an existing JCR node to treat as an fcrepo object
+	 * @param node an existing JCR node to treat as an fcrepo object
 	 */
 	public FedoraObject(final Node node) {
 		super(node);
@@ -85,14 +86,7 @@ public class FedoraObject extends FedoraResource {
     }
     
     public static boolean hasMixin(Node node) throws RepositoryException {
-        NodeType[] nodeTypes = node.getMixinNodeTypes();
-        if (nodeTypes == null) return false;
-        for (NodeType nodeType: nodeTypes) {
-            if (FEDORA_OBJECT.equals(nodeType.getName())) {
-                return true;
-            }
-        }
-        return false;
+        return isFedoraObject.apply(node);
     }
 
 

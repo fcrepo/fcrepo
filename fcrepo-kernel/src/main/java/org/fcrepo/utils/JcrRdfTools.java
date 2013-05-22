@@ -61,7 +61,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public abstract class JcrRdfTools {
 
-    private static final Logger logger = getLogger(JcrRdfTools.class);
+    private static final Logger LOGGER = getLogger(JcrRdfTools.class);
     public static final String HAS_NAMESPACE_PREDICATE = "info:fedora/fedora-system:def/internal#hasNamespace";
 
     public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
@@ -218,7 +218,7 @@ public abstract class JcrRdfTools {
 
         if (node.getPrimaryNodeType().getName().equals("mode:root")) {
             /* a rdf description of the root node */
-            logger.debug("Creating RDF response for repository description");
+            LOGGER.debug("Creating RDF response for repository description");
             addRepositoryMetricsToModel(factory, node, model);
         }
 
@@ -614,9 +614,9 @@ public abstract class JcrRdfTools {
 
         final String propertyName = prefix + ":" + localName;
 
-        logger.trace(
-                "Took RDF predicate {} and translated it to JCR property {}",
-                predicate, propertyName);
+        LOGGER.trace(
+                            "Took RDF predicate {} and translated it to JCR property {}",
+                            predicate, propertyName);
 
         return propertyName;
 

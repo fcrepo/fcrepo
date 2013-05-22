@@ -22,6 +22,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -112,6 +113,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     public void testGetDatastreamNode() throws Exception {
         final String testPath = "/foo/bar";
         final Node mockNode = mock(Node.class);
+
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockNodeType });
+
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         final DatastreamService testObj = new DatastreamService();
@@ -123,6 +129,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     public void testGetDatastream() throws Exception {
         final String testPath = "/foo/bar";
         final Node mockNode = mock(Node.class);
+
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockNodeType });
+
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         testObj.getDatastream(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));

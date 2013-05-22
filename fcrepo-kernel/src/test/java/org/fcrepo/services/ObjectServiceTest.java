@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.After;
@@ -44,6 +45,11 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final Node mockNode = mock(Node.class);
         final String testPath = "/foo";
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
+
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockNodeType });
+
         final ObjectService testObj = new ObjectService();
         final Node actual =
                 testObj.createObject(mockSession, testPath).getNode();
@@ -54,6 +60,11 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     public void testGetObject() throws RepositoryException {
         final Session mockSession = mock(Session.class);
         final Node mockNode = mock(Node.class);
+
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockNodeType });
+
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         final ObjectService testObj = new ObjectService();

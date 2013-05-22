@@ -60,13 +60,17 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 		final Node objects = session.getNode(path);
 		final ImmutableSet.Builder<String> b = builder();
 		final NodeIterator i = objects.getNodes();
-		while (i.hasNext()) {
+
+        while (i.hasNext()) {
 			Node n = i.nextNode();
 			logger.info("child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
-			if (mixin == null || n.isNodeType(mixin)) b.add(n.getName());
-		}
-		return b.build();
 
+			if (mixin == null || n.isNodeType(mixin)) {
+                b.add(n.getName());
+            }
+		}
+
+        return b.build();
 	}
 
 	public void deleteObject(final Session session, final String path)

@@ -156,6 +156,9 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void testGetObject() throws RepositoryException {
         final Node mockObjectNode = mock(Node.class);
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        when(mockObjectNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockNodeType });
         when(mockDsNode.getParent()).thenReturn(mockObjectNode);
         final FedoraObject actual = testObj.getObject();
         assertNotNull(actual);

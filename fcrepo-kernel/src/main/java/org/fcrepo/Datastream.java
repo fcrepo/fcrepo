@@ -5,6 +5,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.services.MetricsService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
@@ -271,14 +272,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     }
     
     public static boolean hasMixin(Node node) throws RepositoryException {
-        NodeType[] nodeTypes = node.getMixinNodeTypes();
-        if (nodeTypes == null) return false;
-        for (NodeType nodeType: nodeTypes) {
-            if (FEDORA_DATASTREAM.equals(nodeType.getName())) {
-                return true;
-            }
-        }
-        return false;
+        return isFedoraDatastream.apply(node);
     }
 
 }
