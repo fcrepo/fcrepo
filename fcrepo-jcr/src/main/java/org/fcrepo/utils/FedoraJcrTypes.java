@@ -26,9 +26,7 @@ public interface FedoraJcrTypes {
 
     String CONTENT_SIZE = "fedora:size";
 
-    String DIGEST_VALUE = "fedora:digest";
-
-    String DIGEST_ALGORITHM = "fedora:digestAlgorithm";
+    String CONTENT_DIGEST = "fedora:digest";
 
     String FCR_CONTENT = "fcr:content";
 }

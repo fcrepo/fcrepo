@@ -20,4 +20,9 @@ public class ContentDigestTest {
         assertEquals("Failed to produce a proper content digest URI!", URI
                 .create("urn:sha1:fake"), ContentDigest.asURI("SHA1", "fake"));
     }
+
+    @Test
+    public void testGetAlgorithm() {
+        assertEquals("Failed to produce a proper digest algorithm!", "SHA-1", ContentDigest.getAlgorithm(ContentDigest.asURI("SHA-1", "fake")));
+    }
 }

@@ -162,7 +162,6 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastream.getContentDigest()).thenReturn(new URI("urn:sha1:abc"));
-        when(mockDatastream.getContentDigestType()).thenReturn("SHA-1");
 
         when(llStore.transformLowLevelCacheEntries(eq(mockContent), any(Function.class))).thenReturn(mockCollection);
 
@@ -231,7 +230,6 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastream.getContentDigest()).thenReturn(new URI("urn:sha1:abc"));
-        when(mockDatastream.getContentDigestType()).thenReturn("SHA-1");
 
         when(llStore.transformLowLevelCacheEntries(eq(mockContent), any(CheckCacheEntryFixity.class))).thenReturn(mockFixityResults);
 

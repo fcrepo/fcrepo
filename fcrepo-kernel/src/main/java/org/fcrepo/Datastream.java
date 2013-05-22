@@ -13,6 +13,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -199,11 +200,11 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     public URI getContentDigest() throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
         try {
-	        return ContentDigest
-	                .asURI(contentNode.getProperty(DIGEST_ALGORITHM).getString(),
-	                        contentNode.getProperty(DIGEST_VALUE).getString());
+	        return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
         } catch (RepositoryException e) {
-        	LOGGER.error("Could not get content digest - " + e.getMessage());
+        	LOGGER.error("Could not get content digest: ", e);
+        } catch (URISyntaxException e) {
+            LOGGER.error("Could not get content digest: {}", e);
         }
         //TODO checksum not stored. recalculating checksum, 
         //however, this would defeat the purpose validating against the checksum
@@ -212,23 +213,6 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         String dsChecksum = binary.getHexHash();
 
         return ContentDigest.asURI("SHA-1",dsChecksum);
-    }
-
-    /**
-     * Get the digest algorithm used to calculate the primary digest of the binary payload
-     * @return
-     * @throws RepositoryException
-     */
-    public String getContentDigestType() {
-    	try {
-    		return node.getNode(JCR_CONTENT).getProperty(DIGEST_ALGORITHM)
-    				.getString();
-    	} catch (RepositoryException e) {
-    		LOGGER.error("Could not get content digest type - " + e.getMessage());
-    	}
-    	//only supporting sha-1
-    	LOGGER.debug("Using default digest type of SHA-1");
-        return "SHA-1";
     }
 
     /**
@@ -281,8 +265,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         contentSizeHistogram.update(dataProperty.getLength());
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-        contentNode.setProperty(DIGEST_VALUE, dsChecksum);
-        contentNode.setProperty(DIGEST_ALGORITHM, "SHA-1");
+        contentNode.setProperty(CONTENT_DIGEST, ContentDigest.asURI("SHA-1",dsChecksum).toString());
 
         LOGGER.debug("Decorated data property at path: " + dataProperty.getPath());
     }

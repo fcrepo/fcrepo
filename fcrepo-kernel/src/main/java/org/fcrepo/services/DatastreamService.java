@@ -32,6 +32,7 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.JcrRdfTools;
@@ -219,7 +220,7 @@ public class DatastreamService extends RepositoryService {
         fixityCheckCounter.inc();
 
         try {
-            digest = getInstance(datastream.getContentDigestType());
+            digest = getInstance(ContentDigest.getAlgorithm(digestUri));
         } catch (final NoSuchAlgorithmException e) {
             throw new RepositoryException(e.getMessage(), e);
         }

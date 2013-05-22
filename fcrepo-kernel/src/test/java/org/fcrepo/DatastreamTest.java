@@ -139,26 +139,12 @@ public class DatastreamTest implements FedoraJcrTypes {
     public void getContentDigest() throws RepositoryException {
         final String content = "asdf";
         final URI expected =
-                URI.create("urn:sha1:" + TestHelpers.checksumString(content));
+                URI.create(TestHelpers.checksumString(content));
         final Node mockContent = TestHelpers.getContentNodeMock(content);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final URI actual = testObj.getContentDigest();
         assertEquals(expected, actual);
-        verify(mockContent).getProperty(DIGEST_ALGORITHM);
-        verify(mockContent).getProperty(DIGEST_VALUE);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void getContentDigestType() throws RepositoryException {
-        final String expected = "SHA-1";
-        final Node mockContent = TestHelpers.getContentNodeMock(8);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        assertEquals(expected, testObj.getContentDigestType());
-        verify(mockContent).getProperty(DIGEST_ALGORITHM);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenThrow(
-                RepositoryException.class);
-        assertEquals(expected, testObj.getContentDigestType());
+        verify(mockContent).getProperty(CONTENT_DIGEST);
     }
 
     @Test

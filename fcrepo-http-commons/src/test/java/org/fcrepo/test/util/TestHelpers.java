@@ -250,7 +250,6 @@ public abstract class TestHelpers {
 				when(mockDs.getContent()).thenReturn(
 						IOUtils.toInputStream(content));
 				when(mockDs.getContentDigest()).thenReturn(cd);
-				when(mockDs.getContentDigestType()).thenReturn("SHA-1");
 			}
 		} catch (final Throwable t) {
 		}

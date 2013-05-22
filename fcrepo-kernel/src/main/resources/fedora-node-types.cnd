@@ -75,5 +75,4 @@
  */
 [fedora:binary] > nt:resource mixin
   - fedora:size (LONG) COPY
-  - fedora:digest (STRING) COPY
-  - fedora:digestAlgorithm (STRING) COPY
+  - fedora:digest (URI) COPY

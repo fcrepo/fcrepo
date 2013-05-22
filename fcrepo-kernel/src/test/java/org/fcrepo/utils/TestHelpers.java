@@ -2,8 +2,7 @@
 package org.fcrepo.utils;
 
 import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_ALGORITHM;
-import static org.fcrepo.utils.FedoraJcrTypes.DIGEST_VALUE;
+import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATEDBY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,8 +63,7 @@ public abstract class TestHelpers {
             when(mockDigestType.getString()).thenReturn(digestType);
             when(mock.getProperty(JCR_DATA)).thenReturn(mockProp);
             when(mock.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
-            when(mock.getProperty(DIGEST_ALGORITHM)).thenReturn(mockDigestType);
-            when(mock.getProperty(DIGEST_VALUE)).thenReturn(mockDigest);
+            when(mock.getProperty(CONTENT_DIGEST)).thenReturn(mockDigest);
             when(mock.getProperty(JCR_CREATEDBY)).thenReturn(mockCreated);
         } catch (final RepositoryException e) {
         } // shhh
@@ -80,7 +78,7 @@ public abstract class TestHelpers {
         try {
             final MessageDigest d = MessageDigest.getInstance("SHA-1");
             final byte[] digest = d.digest(content);
-            return ContentDigest.asString(digest);
+            return ContentDigest.asURI("SHA-1", digest).toString();
         } catch (final NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
