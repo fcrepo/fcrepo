@@ -17,7 +17,7 @@ public class NamespaceChangedStatementListener extends StatementListener {
     private final NamespaceRegistry namespaceRegistry;
 
     public NamespaceChangedStatementListener(final Session session) throws RepositoryException {
-        this.namespaceRegistry = session.getWorkspace().getNamespaceRegistry();;
+        this.namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
     }
 
     @Override
@@ -32,6 +32,7 @@ public class NamespaceChangedStatementListener extends StatementListener {
         try {
             final String prefix = s.getObject().toString();
             final String uri = s.getSubject().toString();
+            LOGGER.debug("Registering namespace prefix {} for uri {}", prefix, uri);
             namespaceRegistry.registerNamespace(prefix, uri);
         } catch (RepositoryException e) {
             throw new RuntimeException(e);
@@ -52,6 +53,7 @@ public class NamespaceChangedStatementListener extends StatementListener {
             final String prefix = s.getObject().toString();
             final String uri = s.getSubject().toString();
             if (namespaceRegistry.getPrefix(uri).equals(prefix)) {
+                LOGGER.debug("De-registering namespace prefix {} for uri {}", prefix, uri);
                 namespaceRegistry.unregisterNamespace(prefix);
             }
         } catch (RepositoryException e) {

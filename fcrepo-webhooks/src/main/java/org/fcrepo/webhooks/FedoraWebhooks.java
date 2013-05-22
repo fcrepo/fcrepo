@@ -51,7 +51,7 @@ public class FedoraWebhooks extends AbstractResource {
     
     public static final String WEBHOOK_JCR_TYPE = "webhook:callback";
 
-    static final private Logger logger = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraWebhooks.class);
 
     protected static final PoolingClientConnectionManager connectionManager =
@@ -90,7 +90,7 @@ public class FedoraWebhooks extends AbstractResource {
     public static void runHooks(final Node resource, final FedoraEvent event)
             throws RepositoryException {
         if (resource == null) {
-            logger.warn("resource node is null; event path is {}", event.getPath());
+            LOGGER.warn("resource node is null; event path is {}", event.getPath());
             return;
         }
 
@@ -110,14 +110,14 @@ public class FedoraWebhooks extends AbstractResource {
                 eventSerialization.writeTo(writer);
                 method.setEntity(new StringEntity(writer.toString()));
             } catch (final IOException e) {
-                logger.warn("Got exception generating webhook body: {}", e);
+                LOGGER.warn("Got exception generating webhook body: {}", e);
             }
 
             try {
-                logger.debug("Firing callback for" + hook.getName());
+                LOGGER.debug("Firing callback for" + hook.getName());
                 client.execute(method);
             } catch (final IOException e) {
-                logger.warn("Got exception running webhook callback for {}: {}", hook.getName(), e);
+                LOGGER.warn("Got exception running webhook callback for {}: {}", hook.getName(), e);
             }
 
         }
@@ -181,13 +181,13 @@ public class FedoraWebhooks extends AbstractResource {
     @Subscribe
     public void onEvent(final FedoraEvent event) {
         try {
-            logger.debug("Webhooks received event: {}", event);
+            LOGGER.debug("Webhooks received event: {}", event);
             final Node resource =
                     jcrTools.findOrCreateNode(readOnlySession.getRepository().login(), event.getPath());
 
             runHooks(resource, event);
         } catch (final RepositoryException e) {
-            logger.error("Got a repository exception handling message: {}", e);
+            LOGGER.error("Got a repository exception handling message: {}", e);
         }
     }
 

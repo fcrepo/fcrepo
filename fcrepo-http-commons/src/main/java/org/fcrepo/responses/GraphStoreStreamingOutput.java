@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 
 public class GraphStoreStreamingOutput implements StreamingOutput {
 
-    private final static Logger LOGGER =
+    private static final Logger LOGGER =
             getLogger(GraphStoreStreamingOutput.class);
 
     private final Model model;

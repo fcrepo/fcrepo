@@ -43,26 +43,26 @@ public class JMSTopicPublisher {
 
     private MessageProducer producer;
 
-    final private Logger logger = getLogger(JMSTopicPublisher.class);
+    private final Logger LOGGER = getLogger(JMSTopicPublisher.class);
 
     private javax.jcr.Session session;
 
     @Subscribe
     public void publishJCREvent(final Event fedoraEvent) throws JMSException,
             RepositoryException, IOException {
-        logger.debug("Received an event from the internal bus.");
+        LOGGER.debug("Received an event from the internal bus.");
         final Message tm =
                 eventFactory.getMessage(fedoraEvent, session, jmsSession);
-        logger.debug("Transformed the event to a JMS message.");
+        LOGGER.debug("Transformed the event to a JMS message.");
         producer.send(tm);
 
-        logger.debug("Put event: \n{}\n onto JMS.", tm.getJMSMessageID());
+        LOGGER.debug("Put event: \n{}\n onto JMS.", tm.getJMSMessageID());
     }
 
     @PostConstruct
     public void acquireConnections() throws JMSException, LoginException,
             RepositoryException {
-        logger.debug("Initializing: " + this.getClass().getCanonicalName());
+        LOGGER.debug("Initializing: " + this.getClass().getCanonicalName());
 
         connection = connectionFactory.createConnection();
         connection.start();
@@ -75,7 +75,7 @@ public class JMSTopicPublisher {
 
     @PreDestroy
     public void releaseConnections() throws JMSException {
-        logger.debug("Tearing down: " + this.getClass().getCanonicalName());
+        LOGGER.debug("Tearing down: " + this.getClass().getCanonicalName());
 
         producer.close();
         jmsSession.close();

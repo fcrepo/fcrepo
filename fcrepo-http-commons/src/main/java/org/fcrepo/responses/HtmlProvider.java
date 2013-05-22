@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -78,7 +77,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
     public static final String templateFilenameExtension = ".vsl";
 
-    private static final Logger logger = getLogger(HtmlProvider.class);
+    private static final Logger LOGGER = getLogger(HtmlProvider.class);
 
     public static final String velocityPropertiesLocation =
             "/velocity.properties";
@@ -86,18 +85,18 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
     @PostConstruct
     void init() throws IOException, RepositoryException {
 
-        logger.trace("Velocity engine initializing...");
+        LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
         final URL propertiesUrl =
                 getClass().getResource(velocityPropertiesLocation);
-        logger.debug("Using Velocity configuration from {}", propertiesUrl);
+        LOGGER.debug("Using Velocity configuration from {}", propertiesUrl);
         try (final InputStream propertiesStream = propertiesUrl.openStream()) {
             properties.load(propertiesStream);
         }
         velocity.init(properties);
-        logger.trace("Velocity engine initialized.");
+        LOGGER.trace("Velocity engine initialized.");
 
-        logger.trace("Assembling a map of node primary types -> templates...");
+        LOGGER.trace("Assembling a map of node primary types -> templates...");
         final Builder<String, Template> templatesMapBuilder = builder();
         final Session session = sessionFactory.getSession();
         try {
@@ -115,15 +114,15 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
                     final Template template =
                             velocity.getTemplate(templateLocation);
                     template.setName(templateLocation);
-                    logger.debug("Found template: {}", templateLocation);
+                    LOGGER.debug("Found template: {}", templateLocation);
                     templatesMapBuilder.put(primaryNodeTypeName, template);
-                    logger.debug(
-                            "which we will use for nodes with primary type: {}",
-                            primaryNodeTypeName);
+                    LOGGER.debug(
+                                        "which we will use for nodes with primary type: {}",
+                                        primaryNodeTypeName);
                 } catch (final ResourceNotFoundException e) {
-                    logger.debug(
-                            "Didn't find template for nodes with primary type: {} in location: {}",
-                            primaryNodeTypeName, templateLocation);
+                    LOGGER.debug(
+                                        "Didn't find template for nodes with primary type: {} in location: {}",
+                                        primaryNodeTypeName, templateLocation);
                     /*
                      * we don't care-- just means we don't have an HTML
                      * representation
@@ -135,8 +134,8 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         } finally {
             session.logout();
         }
-        logger.trace("Assembled template map.");
-        logger.trace("HtmlProvider initialization complete.");
+        LOGGER.trace("Assembled template map.");
+        LOGGER.trace("HtmlProvider initialization complete.");
     }
 
     @Override
@@ -147,20 +146,20 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
             final OutputStream entityStream) throws IOException,
             WebApplicationException {
 
-        logger.debug("Writing an HTML response for: {}", rdf);
-        logger.trace("Attempting to discover our subject");
+        LOGGER.debug("Writing an HTML response for: {}", rdf);
+        LOGGER.trace("Attempting to discover our subject");
 		Node subject = getDatasetSubject(rdf);
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) TEXT_HTML));
         setCachingHeaders(httpHeaders, rdf);
 
-        logger.trace("Attempting to discover the primary type of the node for the resource in question...");
+        LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
         final String nodeType =
                 getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
-        logger.debug("Found primary node type: {}", nodeType);
+        LOGGER.debug("Found primary node type: {}", nodeType);
         final Template nodeTypeTemplate = templatesMap.get(nodeType);
-        logger.debug("Choosing template: {}", nodeTypeTemplate.getName());
+        LOGGER.debug("Choosing template: {}", nodeTypeTemplate.getName());
 
         final Context context = new VelocityContext();
         context.put("rdf", rdf.asDatasetGraph());

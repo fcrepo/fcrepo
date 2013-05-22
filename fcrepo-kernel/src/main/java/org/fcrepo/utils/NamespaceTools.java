@@ -2,16 +2,12 @@ package org.fcrepo.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.jcr.NamespaceRegistry;
+import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import com.google.common.base.Function;
-
 
 public abstract class NamespaceTools {
     
@@ -20,22 +16,9 @@ public abstract class NamespaceTools {
         return (org.modeshape.jcr.api.NamespaceRegistry)session.getWorkspace().getNamespaceRegistry();
     }
     
-    public static org.modeshape.jcr.api.NamespaceRegistry getNamespaceRegistry(final Node node)
+    public static org.modeshape.jcr.api.NamespaceRegistry getNamespaceRegistry(final Item item)
             throws RepositoryException {
-        return getNamespaceRegistry(node.getSession());
-    }
-
-    public static Map<String, String> getRepositoryNamespaces(final Session session)
-            throws RepositoryException {
-        final NamespaceRegistry reg = getNamespaceRegistry(session);
-                ;
-        final String[] prefixes = reg.getPrefixes();
-        final HashMap<String, String> result =
-                new HashMap<String, String>(prefixes.length);
-        for (final String prefix : reg.getPrefixes()) {
-            result.put(prefix, reg.getURI(prefix));
-        }
-        return result;
+        return getNamespaceRegistry(item.getSession());
     }
 
     /**

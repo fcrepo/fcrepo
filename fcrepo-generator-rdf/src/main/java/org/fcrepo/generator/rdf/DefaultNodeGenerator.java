@@ -25,13 +25,13 @@ public abstract class DefaultNodeGenerator {
     private static final NodeTypesGenerator nodeTypesGenerator =
             new NodeTypesGenerator();
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
             getLogger(DefaultNodeGenerator.class);
 
     public static List<TripleSource.Triple> getTriples(final Node node,
             final UriInfo... uriInfos) throws RepositoryException {
         final UriInfo uriInfo = uriInfos[0];
-        logger.debug("Generating triples for object: {}" + node.getPath());
+        LOGGER.debug("Generating triples for object: {}" + node.getPath());
         // now we alter the subjects of these triples to be true 
         // (and dereferenceable) URIs, based on our knowledge that these are
         // Fedora datastreams

@@ -17,10 +17,10 @@ import com.google.common.collect.ImmutableList.Builder;
 
 public class NodeTypesGenerator implements TripleSource<Node> {
 
-    final public static String TYPE_PREDICATE =
+    public static final String TYPE_PREDICATE =
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
-    final private Logger logger = LoggerFactory
+    private final Logger logger = LoggerFactory
             .getLogger(NodeTypesGenerator.class);
 
     @Override

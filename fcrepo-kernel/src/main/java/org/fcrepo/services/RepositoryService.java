@@ -155,13 +155,16 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         final javax.jcr.query.Query query =
                 factory.createQuery(selector, constraints, null, null);
 
-        query.setLimit(limit + 1); // n+1 for pagination
+        // include an extra document to determine if additional pagination is necessary
+        query.setLimit(limit + 1);
         query.setOffset(offset);
 
         final QueryResult queryResult = query.execute();
 
         final NodeIterator nodeIterator = queryResult.getNodes();
         final long size = nodeIterator.getSize();
+
+        // remove that extra document from the nodes we'll iterate over
         final Iterator<Node> limitedIterator =
                 Iterators.limit(
                         new org.fcrepo.utils.NodeIterator(nodeIterator), limit);

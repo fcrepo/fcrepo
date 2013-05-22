@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 
 public class LegacyMethodEventFactory implements JMSEventMessageFactory {
 
-    final private Logger logger = getLogger(LegacyMethodEventFactory.class);
+    private final Logger LOGGER = getLogger(LegacyMethodEventFactory.class);
 
     public LegacyMethodEventFactory() {
     }
@@ -28,16 +28,16 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
             final javax.jcr.Session jcrSession,
             final javax.jms.Session jmsSession) throws RepositoryException,
             IOException, JMSException {
-        logger.trace("Received an event to transform.");
+        LOGGER.trace("Received an event to transform.");
         final String path = jcrEvent.getPath();
-        logger.trace("Retrieved path from event.");
+        LOGGER.trace("Retrieved path from event.");
         final Node resource = jcrSession.getNode(path);
-        logger.trace("Retrieved node from event.");
+        LOGGER.trace("Retrieved node from event.");
         final LegacyMethod legacy = new LegacyMethod(jcrEvent, resource);
         final StringWriter writer = new StringWriter();
         legacy.writeTo(writer);
         final String atomMessage = writer.toString();
-        logger.debug("Constructed serialized Atom message from event.");
+        LOGGER.debug("Constructed serialized Atom message from event.");
         final TextMessage tm = jmsSession.createTextMessage(atomMessage);
         final String pid = legacy.getPid();
         if (pid != null) {
@@ -47,7 +47,7 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
         tm.setJMSType(EntryFactory.FORMAT);
         tm.setStringProperty("fcrepo.server.version",
         		EntryFactory.SERVER_VERSION);
-        logger.trace("Successfully created JMS message from event.");
+        LOGGER.trace("Successfully created JMS message from event.");
         return tm;
     }
 

@@ -15,7 +15,7 @@ import com.google.common.collect.ImmutableMap;
 
 public abstract class ContentDigest {
 
-    private static final Logger logger = getLogger(ContentDigest.class);
+    private static final Logger LOGGER = getLogger(ContentDigest.class);
 
     public static final Map<String, String> algorithmToScheme = ImmutableMap
             .of("SHA-1", "urn:sha1", "SHA1", "urn:sha1");
@@ -29,8 +29,8 @@ public abstract class ContentDigest {
 
             return new URI(scheme, value, null);
         } catch (final URISyntaxException unlikelyException) {
-            logger.warn("Exception creating checksum URI: {}",
-                    unlikelyException);
+            LOGGER.warn("Exception creating checksum URI: {}",
+                               unlikelyException);
             throw propagate(unlikelyException);
         }
     }
