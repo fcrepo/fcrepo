@@ -52,10 +52,6 @@ public class FedoraFixity extends AbstractResource {
 		try {
 			final String path = toPath(pathList);
 
-            /* select the best response type */
-            final Variant bestPossibleResponse =
-                    request.selectVariant(RDFMediaType.POSSIBLE_RDF_VARIANTS);
-
 			final Datastream ds = datastreamService.getDatastream(session, path);
 
             return datastreamService.getFixityResultsModel(new HttpGraphSubjects(FedoraNodes.class, uriInfo), ds);
