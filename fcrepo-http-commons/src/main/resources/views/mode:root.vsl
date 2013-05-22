@@ -1,0 +1,72 @@
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
+#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+<html>
+<head>
+    <title>mode:root profile</title>
+</head>
+
+<body>
+    <h1>mode:root: $topic</h1>
+
+    ## output triples for the topic node
+    #triples($topic)
+
+    ## output other nodes
+    #foreach($subject in $subjects)
+      #if( $subject != $topic )
+        #triples($subject)
+      #end
+    #end
+
+#*
+    <div>
+        #if($subject.isURIResource())
+            <h2><a href="$subject.getURI()">$subject</a></h2>
+        #else
+            <h2>$subject</h2>
+        #end
+
+        <dl>
+            #foreach($quad in $rdf.find($nodeany, $subject.asNode(), $nodeany, $nodeany))
+                <dt>$quad.getPredicate()</dt>
+
+                <dd>
+                    #if($quad.getObject().isURIResource())
+                        <a href="$quad.getObject().getURI()">$quad.getObject()</a>
+                    #else
+                        $quad.getObject()
+                    #end
+                </dd>
+            #end
+        </dl>
+    </div>
+    #end
+*#
+</body>
+
+</html>
+#macro( triples $sub )
+    <div>
+        #if($sub.isURIResource())
+            <h2><a href="$sub.getURI()">$sub</a></h2>
+        #else
+            <h2>$sub</h2>
+        #end
+
+        <dl>
+            #foreach($quad in $rdf.find($nodeany, $sub.asNode(), $nodeany, $nodeany))
+                <dt>$quad.getPredicate()</dt>
+
+                <dd>
+                    #if($quad.getObject().isURIResource())
+                        <a href="$quad.getObject().getURI()">$quad.getObject()</a>
+                    #else
+                        $quad.getObject()
+                    #end
+                </dd>
+            #end
+        </dl>
+    </div>
+#end
