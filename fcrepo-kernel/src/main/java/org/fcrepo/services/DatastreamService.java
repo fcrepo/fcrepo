@@ -28,12 +28,10 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.Datastream;
-import org.fcrepo.FedoraObject;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.ContentDigest;
-import org.fcrepo.utils.DatastreamIterator;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.LowLevelCacheEntry;
@@ -151,18 +149,6 @@ public class DatastreamService extends RepositoryService {
 			throws RepositoryException {
 		return new Datastream(node);
 	}
-
-    /**
-     *
-	 * @param session jcr session
-	 * @param path path to the DS node
-	 * @return an iterator of the Datastream objects for a FedoraObject
-     * @throws RepositoryException
-     */
-    public DatastreamIterator getDatastreamsForPath(final Session session, final String path) throws RepositoryException {
-        return new DatastreamIterator(new FedoraObject(session,
-                path).getNode().getNodes());
-    }
 
     /**
      * Check if a datastream exists in the repository

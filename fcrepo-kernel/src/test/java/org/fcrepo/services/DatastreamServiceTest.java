@@ -128,17 +128,6 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         verify(mockRoot).getNode(testPath.substring(1));
     }
 
-
-	@Test
-	public void testGetDatastreamsForPath() throws Exception {
-        final String testPath = "/foo/bar";
-        final Node mockNode = mock(Node.class);
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
-		final DatastreamService testObj = new DatastreamService();
-		testObj.getDatastreamsForPath(mockSession, "/foo/bar");
-		verify(mockNode).getNodes();
-	}
-
     @Test
     public void testExists() throws RepositoryException {
         final Session mockSession = mock(Session.class);

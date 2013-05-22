@@ -44,7 +44,6 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.ContentDigest;
-import org.fcrepo.utils.DatastreamIterator;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
@@ -212,16 +211,6 @@ public abstract class TestHelpers {
 
 		return mockSession;
 
-	}
-
-	public static DatastreamIterator mockDatastreamIterator(final String pid,
-			final String dsId, final String content)
-			throws RepositoryException, IOException {
-		final DatastreamIterator mockIter = mock(DatastreamIterator.class);
-		final Datastream mockDs = mockDatastream(pid, dsId, content);
-		when(mockIter.hasNext()).thenReturn(true, false);
-		when(mockIter.next()).thenReturn(mockDs);
-		return mockIter;
 	}
 
 	public static Repository mockRepository() throws LoginException,
