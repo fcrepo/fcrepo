@@ -4,7 +4,9 @@ package org.fcrepo.utils.infinispan;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
+import org.infinispan.EmbeddedMetadata;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -91,8 +93,7 @@ public class StoreChunkOutputStream extends OutputStream {
             final InternalCacheEntry cacheEntry;
             if (c == null) {
                 cacheEntry =
-                        entryFactory.create(chunkKey, chunk,
-                                (EntryVersion) null);
+                        entryFactory.create(chunkKey, chunk,  new EmbeddedMetadata.Builder().build());
             } else {
                 cacheEntry = entryFactory.create(chunkKey, chunk, c);
             }
