@@ -6,6 +6,7 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
 import static java.security.MessageDigest.getInstance;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.services.MetricsService.metrics;
 
 import java.io.IOException;
 import java.io.InputStream;

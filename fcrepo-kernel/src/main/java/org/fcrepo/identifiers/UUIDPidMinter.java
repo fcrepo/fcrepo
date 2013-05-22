@@ -3,7 +3,7 @@ package org.fcrepo.identifiers;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.services.RepositoryService.metrics;
+import static org.fcrepo.services.MetricsService.metrics;
 
 import com.codahale.metrics.Timer;
 

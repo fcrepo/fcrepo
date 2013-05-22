@@ -2,7 +2,7 @@
 package org.fcrepo;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.services.RepositoryService.metrics;
+import static org.fcrepo.services.MetricsService.metrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;

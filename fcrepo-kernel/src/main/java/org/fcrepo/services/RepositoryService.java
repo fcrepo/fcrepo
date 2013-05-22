@@ -43,21 +43,12 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger logger = getLogger(RepositoryService.class);
 
-    public static final MetricRegistry metrics = RegistryService.getMetrics();
 
-    private final Timer objectSizeCalculationTimer = metrics.timer(name(
+    private final Timer objectSizeCalculationTimer = MetricsService.getMetrics().timer(name(
             RepositoryService.class, "objectSizeCalculation"));
 
     @Inject
     protected Repository repo;
-
-    public static MetricRegistry getMetrics() {
-        return metrics;
-    }
-
-    public static void dumpMetrics(final PrintStream os) {
-        RegistryService.dumpMetrics(os);
-    }
 
     /**
      * 

@@ -72,11 +72,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     RepositoryService testObj;
 
-    MetricRegistry mockMetricRegistry;
-
     Repository mockRepo;
-
-    PrintStream mockPrintStream;
 
     Session mockSession;
 
@@ -162,10 +158,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     }
 
-    @Test
-    public void testDumpMetrics() {
-        RepositoryService.dumpMetrics(mockPrintStream);
-    }
 
     @Test
     public void testGetRepositorySize() throws RepositoryException {

@@ -9,7 +9,7 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.services.RepositoryService.metrics;
+import static org.fcrepo.services.MetricsService.metrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;

@@ -40,7 +40,7 @@ import javax.jcr.version.VersionIterator;
 
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.services.RepositoryService;
+import org.fcrepo.services.MetricsService;
 import org.fcrepo.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -236,7 +236,7 @@ public abstract class JcrRdfTools {
         final Repository repository = node.getSession().getRepository();
         /* retreive the metrics from the service */
         final SortedMap<String, Counter> counters =
-                RepositoryService.getMetrics().getCounters();
+                MetricsService.getMetrics().getCounters();
 
         final Resource subject = factory.getGraphSubject(node);
         for (final String key : repository.getDescriptorKeys()) {
