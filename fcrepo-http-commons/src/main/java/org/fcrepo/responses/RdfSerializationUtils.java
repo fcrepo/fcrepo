@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class RdfSerializationUtils {
@@ -42,9 +44,9 @@ public class RdfSerializationUtils {
             forPattern("EEE, dd MMM yyyy HH:mm:ss Z");
 
     static String getFirstValueForPredicate(final Dataset rdf,
-            final Node predicate) {
+            final Node subject, final Node predicate) {
         final Iterator<Quad> statements =
-                rdf.asDatasetGraph().find(ANY, ANY, predicate, ANY);
+                rdf.asDatasetGraph().find(ANY, subject, predicate, ANY);
         // we'll take the first one we get
         if (statements.hasNext()) {
             final Quad statement = statements.next();
@@ -55,7 +57,13 @@ public class RdfSerializationUtils {
             logger.trace("No value found for predicate: {}", predicate);
             return null;
         }
-
+    }
+    static Node getDatasetSubject(final Dataset rdf) {
+		Context context = rdf.getContext();
+		String uri = context.getAsString(Symbol.create("uri"));
+        logger.debug("uri from context: {}", uri);
+        if ( uri != null ) { return createURI(uri); }
+        else { return null; }
     }
 
     static void
@@ -66,7 +74,8 @@ public class RdfSerializationUtils {
 
         logger.trace("Attempting to discover the last-modified date of the node for the resource in question...");
         final String lastModifiedinXSDStyle =
-                getFirstValueForPredicate(rdf, lastModifiedPredicate);
+                getFirstValueForPredicate(rdf, getDatasetSubject(rdf),
+                    lastModifiedPredicate);
         if (lastModifiedinXSDStyle != null) {
             logger.debug("Found last-modified date: {}", lastModifiedinXSDStyle);
             final String lastModified =

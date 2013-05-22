@@ -1,6 +1,7 @@
 
 package org.fcrepo.responses;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.Node.createLiteral;
 import static com.hp.hpl.jena.graph.Node.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -33,9 +34,9 @@ public class RdfSerializationUtilsTest {
     @Test
     public void testGetFirstValueForPredicate() {
         final String foundValue =
-                getFirstValueForPredicate(testData, createURI("test:predicate"));
+            getFirstValueForPredicate(testData,ANY,createURI("test:predicate"));
         assertEquals("Didn't find correct value for predicate!", foundValue,
-                "test:object");
+            "test:object");
     }
 
     @SuppressWarnings("unchecked")
