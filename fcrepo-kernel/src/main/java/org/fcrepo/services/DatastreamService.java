@@ -151,34 +151,12 @@ public class DatastreamService extends RepositoryService {
 	}
 
     /**
-     * Check if a datastream exists in the repository
-     *
-	 * @param session jcr session
-	 * @param path
-	 * @return
+     * Get the fixity results for the datastream as a RDF Dataset
+     * @param factory
+     * @param datastream
+     * @return
      * @throws RepositoryException
      */
-    public boolean exists(final Session session, final String path) throws RepositoryException {
-        return session.nodeExists(path);
-    }
-
-	public void setStoragePolicyDecisionPoint(PolicyDecisionPoint pdp) {
-		this.storagePolicyDecisionPoint = pdp;
-	}
-
-
-	/**
-	 * Get the Policy Decision Point for this service. Initialize it if Spring didn't wire it in for us.
-	 * @return a PolicyDecisionPoint
-	 */
-	private PolicyDecisionPoint getStoragePolicyDecisionPoint() {
-		if(storagePolicyDecisionPoint == null) {
-			storagePolicyDecisionPoint = new PolicyDecisionPoint();
-		}
-
-		return storagePolicyDecisionPoint;
-	}
-
     public Dataset getFixityResultsModel(final GraphSubjects factory, final Datastream datastream) throws RepositoryException {
 
 
@@ -190,11 +168,14 @@ public class DatastreamService extends RepositoryService {
         return GraphStoreFactory.create(model).toDataset();
     }
 
-    public void setLlStoreService(final LowLevelStorageService llStoreService) {
-        this.llStoreService = llStoreService;
-    }
-
-
+    /**
+     * Run the fixity check on the datastream and attempt to automatically correct failures if additional copies
+     * of the bitstream are available
+     *
+     * @param datastream
+     * @return
+     * @throws RepositoryException
+     */
     public Collection<FixityResult> runFixityAndFixProblems(
                                                                    final Datastream datastream) throws RepositoryException {
         Set<FixityResult> fixityResults;
@@ -259,7 +240,16 @@ public class DatastreamService extends RepositoryService {
         return fixityResults;
     }
 
-
+    /**
+     * Get the fixity results for this datastream's bitstream, and compare it against the given checksum and size
+     *
+     * @param resource
+     * @param digest
+     * @param dsChecksum
+     * @param dsSize
+     * @return
+     * @throws RepositoryException
+     */
     public Collection<FixityResult> getFixity(final Node resource, final MessageDigest digest,
               final URI dsChecksum, final long dsSize)
             throws RepositoryException {
@@ -267,6 +257,35 @@ public class DatastreamService extends RepositoryService {
 
         return llStoreService.transformLowLevelCacheEntries(resource, ServiceHelpers
                                                                               .getCheckCacheFixityFunction(digest, dsChecksum, dsSize));
+    }
+
+    /**
+     * Set the low-level storage service (if Spring didn't wire it in)
+     * @param llStoreService
+     */
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
+        this.llStoreService = llStoreService;
+    }
+
+
+    /**
+     * Set the storage policy decision point (if Spring didn't wire it in for us)
+     * @param pdp
+     */
+    public void setStoragePolicyDecisionPoint(PolicyDecisionPoint pdp) {
+        this.storagePolicyDecisionPoint = pdp;
+    }
+
+    /**
+     * Get the Policy Decision Point for this service. Initialize it if Spring didn't wire it in for us.
+     * @return a PolicyDecisionPoint
+     */
+    private PolicyDecisionPoint getStoragePolicyDecisionPoint() {
+        if(storagePolicyDecisionPoint == null) {
+            storagePolicyDecisionPoint = new PolicyDecisionPoint();
+        }
+
+        return storagePolicyDecisionPoint;
     }
 
 }
