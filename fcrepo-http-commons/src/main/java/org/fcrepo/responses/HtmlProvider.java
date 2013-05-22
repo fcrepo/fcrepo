@@ -6,6 +6,7 @@ import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
+import static org.fcrepo.responses.RdfSerializationUtils.getDatasetSubject;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.setCachingHeaders;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -147,6 +148,8 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
             WebApplicationException {
 
         logger.debug("Writing an HTML response for: {}", rdf);
+        logger.trace("Attempting to discover our subject");
+		Node subject = getDatasetSubject(rdf);
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) TEXT_HTML));
@@ -154,7 +157,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
         logger.trace("Attempting to discover the primary type of the node for the resource in question...");
         final String nodeType =
-                getFirstValueForPredicate(rdf, primaryTypePredicate);
+                getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
         logger.debug("Found primary node type: {}", nodeType);
         final Template nodeTypeTemplate = templatesMap.get(nodeType);
         logger.debug("Choosing template: {}", nodeTypeTemplate.getName());
@@ -163,6 +166,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         context.put("rdf", rdf.asDatasetGraph());
         context.put("subjects", rdf.getDefaultModel().listSubjects());
         context.put("nodeany", Node.ANY);
+        context.put("topic", subject);
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it
