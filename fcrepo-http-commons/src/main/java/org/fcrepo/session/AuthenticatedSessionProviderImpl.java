@@ -9,16 +9,16 @@ import org.modeshape.jcr.api.ServletCredentials;
 
 public class AuthenticatedSessionProviderImpl implements
 		AuthenticatedSessionProvider {
-	private final Repository m_repo;
-	private final ServletCredentials m_creds;
+	private final Repository repository;
+	private final ServletCredentials credentials;
 	public AuthenticatedSessionProviderImpl(Repository repo, ServletCredentials creds) {
-		m_repo = repo;
-		m_creds = creds;
+		repository = repo;
+		credentials = creds;
 	}
 	@Override
 	public Session getAuthenticatedSession(){
 		try {
-			return (m_creds != null) ? m_repo.login(m_creds) : m_repo.login();
+			return (credentials != null) ? repository.login(credentials) : repository.login();
 		} catch (RepositoryException e) {
             throw new IllegalStateException(e);
 		}
