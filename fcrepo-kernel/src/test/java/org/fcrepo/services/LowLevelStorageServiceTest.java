@@ -16,12 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetCacheStore;
@@ -97,45 +95,6 @@ public class LowLevelStorageServiceTest {
         final Set<LowLevelCacheEntry> actual =
                 testObj.getLowLevelCacheEntries(mockNode);
         assertEquals("/foo", actual.iterator().next().getExternalIdentifier());
-    }
-
-    @Test
-    public void testGetSession() throws LoginException, RepositoryException {
-        final Repository mockRepo = mock(Repository.class);
-        final Session mockSession = mock(Session.class);
-        final Session mockAnotherSession = mock(Session.class);
-        when(mockRepo.login()).thenReturn(mockSession, mockAnotherSession);
-        final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.setRepository(mockRepo);
-        testObj.getSession();
-        verify(mockRepo, times(2)).login();
-    }
-
-    @Test
-    public void testLogoutSession() throws LoginException, RepositoryException {
-        final Repository mockRepo = mock(Repository.class);
-        final Session mockSession = mock(Session.class);
-        when(mockRepo.login()).thenReturn(mockSession);
-        final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.setRepository(mockRepo);
-        testObj.logoutSession();
-        verify(mockSession).logout();
-        verify(mockRepo).login();
-    }
-
-    @Test
-    public void testSetRepository() throws LoginException, RepositoryException {
-        final Repository mockRepo = mock(Repository.class);
-        final Repository mockAnotherRepo = mock(Repository.class);
-        final Session mockSession = mock(Session.class);
-        final Session mockAnotherSession = mock(Session.class);
-        when(mockRepo.login()).thenReturn(mockSession);
-        when(mockAnotherRepo.login()).thenReturn(mockAnotherSession);
-        final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.setRepository(mockRepo);
-        testObj.setRepository(mockAnotherRepo);
-        verify(mockSession).logout();
-        verify(mockAnotherRepo).login();
     }
 
     @Test
