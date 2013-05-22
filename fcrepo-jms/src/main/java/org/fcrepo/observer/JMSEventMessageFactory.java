@@ -10,7 +10,7 @@ import javax.jms.Message;
 
 public interface JMSEventMessageFactory {
 
-    public Message getMessage(final Event jcrEvent,
+    Message getMessage(final Event jcrEvent,
             final javax.jcr.Session jcrSession,
             final javax.jms.Session jmsSession) throws RepositoryException,
             IOException, JMSException;

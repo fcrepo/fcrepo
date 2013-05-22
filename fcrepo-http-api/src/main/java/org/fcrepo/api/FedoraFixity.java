@@ -20,13 +20,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Variant;
 
 import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
-import org.fcrepo.http.RDFMediaType;
 import org.fcrepo.services.DatastreamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

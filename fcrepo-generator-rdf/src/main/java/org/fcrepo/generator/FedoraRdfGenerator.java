@@ -31,7 +31,6 @@ import org.fcrepo.generator.rdf.TripleSource;
 import org.fcrepo.generator.rdf.TripleSource.Triple;
 import org.fcrepo.generator.rdf.Utils;
 import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.NamespaceTools;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;

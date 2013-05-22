@@ -4,13 +4,11 @@ package org.fcrepo.utils.infinispan;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.EmbeddedMetadata;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.modeshape.common.logging.Logger;

@@ -1,7 +1,6 @@
 
 package org.fcrepo.services;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -14,14 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetCacheStore;

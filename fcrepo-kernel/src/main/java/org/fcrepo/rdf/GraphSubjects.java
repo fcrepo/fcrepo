@@ -13,7 +13,7 @@ public interface GraphSubjects {
      * @return an RDF URI resource
      * @throws RepositoryException
      */
-    public Resource getGraphSubject(final Node node) throws RepositoryException;
+    Resource getGraphSubject(final Node node) throws RepositoryException;
     
     /**
      * Translate an RDF resource into a JCR node
@@ -22,12 +22,12 @@ public interface GraphSubjects {
      * @return a JCR node, or null if one couldn't be found
      * @throws RepositoryException
      */
-    public Node getNodeFromGraphSubject(final Session session, final Resource subject)
+    Node getNodeFromGraphSubject(final Session session, final Resource subject)
     		throws RepositoryException;
     
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
-    public boolean isFedoraGraphSubject(final Resource subject);
+    boolean isFedoraGraphSubject(final Resource subject);
 
 }

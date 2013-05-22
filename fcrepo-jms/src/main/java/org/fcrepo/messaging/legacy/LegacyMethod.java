@@ -28,9 +28,6 @@ import javax.jms.Message;
 import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
 import org.fcrepo.utils.FedoraTypesUtils;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 public class LegacyMethod {

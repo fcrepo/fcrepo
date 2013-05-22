@@ -17,7 +17,6 @@ import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositorySize;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,6 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
-import com.hp.hpl.jena.rdf.model.NsIterator;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.RepositoryService;
