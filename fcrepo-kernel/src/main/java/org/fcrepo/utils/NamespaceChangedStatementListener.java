@@ -25,13 +25,13 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
         LOGGER.debug(">> added statement {}", s);
 
-        if (!s.getPredicate().toString().equals(JcrRdfTools.HAS_NAMESPACE_PREDICATE)) {
+        if (!s.getPredicate().asResource().getURI().equals(JcrRdfTools.HAS_NAMESPACE_PREDICATE)) {
              return;
         }
 
         try {
-            final String prefix = s.getObject().toString();
-            final String uri = s.getSubject().toString();
+            final String prefix = s.getObject().asLiteral().getString();
+            final String uri = s.getSubject().asResource().getURI();
             LOGGER.debug("Registering namespace prefix {} for uri {}", prefix, uri);
             namespaceRegistry.registerNamespace(prefix, uri);
         } catch (RepositoryException e) {
@@ -45,13 +45,13 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
         LOGGER.debug(">> removed statement {}", s);
 
-        if (!s.getPredicate().toString().equals(JcrRdfTools.HAS_NAMESPACE_PREDICATE)) {
+        if (!s.getPredicate().asResource().getURI().equals(JcrRdfTools.HAS_NAMESPACE_PREDICATE)) {
             return;
         }
 
         try {
-            final String prefix = s.getObject().toString();
-            final String uri = s.getSubject().toString();
+            final String prefix = s.getObject().asLiteral().getString();
+            final String uri = s.getSubject().asResource().getURI();
             if (namespaceRegistry.getPrefix(uri).equals(prefix)) {
                 LOGGER.debug("De-registering namespace prefix {} for uri {}", prefix, uri);
                 namespaceRegistry.unregisterNamespace(prefix);
