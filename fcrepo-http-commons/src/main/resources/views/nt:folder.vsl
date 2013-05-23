@@ -1,35 +1,47 @@
 #* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
 #* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
 #* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+#parse("views/common.vsl")
 <html>
-<head>
+  <head>
     <title>nt:folder profile</title>
-</head>
+    <script type="text/javascript">
+      #include("views/common.js")
+    </script>
+    <style type="text/css">
+      #include("views/common.css")
+    </style>
+  </head>
+  <body>
+    <h1>nt:folder: $topic</h1>
 
-<body>
-    #foreach($subject in $subjects)
-    <div>
-        #if($subject.isURIResource())
-            <h2><a href="$subject.getURI()">$subject</a></h2>
-        #else
-            <h2>$subject</h2>
-        #end
+    ## output actions
+    <div class="actions">
+      <form action="javascript:addChild()">
+        <select id="new_mixin">
+          <option value="">folder</option>
+          <option value="fedora:object">object</option>
+          <option value="fedora:datastream">datastream</option>
+        </select>
+        <input type="text" id="new_id" value="new_id"/>
+        <input type="submit" value="add">
+      </form>
+      <form action="javascript:deleteItem()">
+        <input type="submit" value="delete this folder"/>
 
-        <dl>
-            #foreach($quad in $rdf.find($nodeany, $subject.asNode(), $nodeany, $nodeany))
-                <dt>$quad.getPredicate()</dt>
-
-                <dd>
-                    #if($quad.getObject().isURIResource())
-                        <a href="$quad.getObject().getURI()">$quad.getObject()</a>
-                    #else
-                        $quad.getObject()
-                    #end
-                </dd>
-            #end
-        </dl>
+      </form>
     </div>
-    #end
-</body>
 
+    ## output triples for the topic node
+    #triples($topic)
+
+    ## output other nodes
+    #foreach($subject in $subjects)
+      #if( $subject != $topic )
+        #triples($subject.asNode())
+      #end
+    #end
+
+  </body>
 </html>
