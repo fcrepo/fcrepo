@@ -5,7 +5,6 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,7 +20,6 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 
-import org.fcrepo.metrics.RegistryService;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -31,7 +29,6 @@ import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;

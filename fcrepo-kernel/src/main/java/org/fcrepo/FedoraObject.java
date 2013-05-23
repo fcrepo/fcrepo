@@ -11,7 +11,6 @@ import java.util.Collection;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
 
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
