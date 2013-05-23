@@ -12,6 +12,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -34,6 +35,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -53,6 +55,19 @@ public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
 
+    /**
+     * Update the content of multiple datastreams from a multipart POST.
+     *
+     * The datastream to update is given by the name of the content disposition.
+     *
+     * @param pathList
+     * @param dsidList
+     * @param multipart
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     * @throws InvalidChecksumException
+     */
     @POST
     @Timed
     public Response modifyDatastreams(@PathParam("path")
@@ -94,6 +109,14 @@ public class FedoraDatastreams extends AbstractResource {
         }
     }
 
+    /**
+     * Delete multiple datastreams given by the dsid query parameter
+     *
+     * @param pathList
+     * @param dsidList
+     * @return
+     * @throws RepositoryException
+     */
     @DELETE
     @Timed
     public Response deleteDatastreams(@PathParam("path")
@@ -113,6 +136,18 @@ public class FedoraDatastreams extends AbstractResource {
         }
     }
 
+    /**
+     * Retrieve multiple datastream bitstreams in a single request as a
+     * multipart/mixed response.
+     *
+     * @param pathList
+     * @param requestedDsids
+     * @param request
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     */
     @GET
     @Path("/__content__")
     @Produces("multipart/mixed")
@@ -184,8 +219,12 @@ public class FedoraDatastreams extends AbstractResource {
                 final MultiPart multipart = new MultiPart();
 
                 for (final Datastream ds : datastreams) {
-                    multipart.bodyPart(ds.getContent(), MediaType.valueOf(ds
-                            .getMimeType()));
+                    final BodyPart bodyPart = new BodyPart(ds.getContent(), MediaType.valueOf(ds.getMimeType()));
+                    bodyPart.setContentDisposition(ContentDisposition.type("attachment").fileName(ds.getPath())
+                                                          .creationDate(ds.getCreatedDate())
+                                                          .modificationDate(ds.getLastModifiedDate())
+                                                          .size(ds.getContentSize()).build());
+                    multipart.bodyPart(bodyPart);
                 }
 
                 builder = Response.ok(multipart, MULTIPART_FORM_DATA);

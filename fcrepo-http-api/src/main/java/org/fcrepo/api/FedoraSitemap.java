@@ -55,7 +55,7 @@ public class FedoraSitemap extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
             final long count =
-                    objectService.getRepositoryObjectCount(session) /
+                    objectService.getRepositoryObjectCount() /
                             entriesPerPage;
 
             final SitemapIndex sitemapIndex = new SitemapIndex();

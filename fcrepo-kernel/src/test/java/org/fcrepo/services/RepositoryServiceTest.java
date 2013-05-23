@@ -82,6 +82,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     Long expectedSize = 5L;
 
+    Long expectedCount = 0L;
+
     NodeTypeIterator mockNTI;
 
     Map<String, String> expectedNS;
@@ -167,8 +169,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testGetRepositoryObjectCount() {
-        final Long actual = testObj.getRepositoryObjectCount(mockSession);
-        assertEquals(expectedSize, actual);
+        final Long actual = testObj.getRepositoryObjectCount();
+        assertEquals(expectedCount, actual);
     }
 
     @Test
@@ -189,20 +191,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockSession.nodeExists(existsPath)).thenReturn(true);
         assertEquals(true, testObj.exists(mockSession, existsPath));
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
-    }
-
-    @Test
-    public void testIsFile() throws RepositoryException {
-        final String filePath = "/foo/bar/file";
-        final String folderPath = "/foo/bar/folder";
-        final Node mockFile = mock(Node.class);
-        when(mockFile.isNodeType("nt:file")).thenReturn(true);
-        final Node mockFolder = mock(Node.class);
-        when(mockFolder.isNodeType("nt:file")).thenReturn(false);
-        when(mockSession.getNode(filePath)).thenReturn(mockFile);
-        when(mockSession.getNode(folderPath)).thenReturn(mockFolder);
-        assertEquals(true, testObj.isFile(mockSession, filePath));
-        assertEquals(false, testObj.isFile(mockSession, folderPath));
     }
 
     @Test

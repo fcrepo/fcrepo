@@ -49,6 +49,22 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  *
  */
 public abstract class FedoraTypesUtils {
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora object.
+     */
+    public static Predicate<Node> isFedoraResource = new Predicate<Node>() {
+
+        @Override
+        public boolean apply(final Node node) {
+            checkArgument(node != null, "null cannot be a Fedora object!");
+            try {
+                return map(node.getMixinNodeTypes(), nodetype2name).contains(
+                                                                                    FEDORA_RESOURCE);
+            } catch (final RepositoryException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    };
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.

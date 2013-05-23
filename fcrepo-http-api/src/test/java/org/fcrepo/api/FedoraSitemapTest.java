@@ -50,7 +50,7 @@ public class FedoraSitemapTest {
 
     @Test
     public void testGetSitemapIndex() throws Exception {
-        when(mockObjects.getRepositoryObjectCount(mockSession)).thenReturn(
+        when(mockObjects.getRepositoryObjectCount()).thenReturn(
                 49999L);
 
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
@@ -60,7 +60,7 @@ public class FedoraSitemapTest {
 
     @Test
     public void testGetSitemapIndexMultiplePages() throws Exception {
-        when(mockObjects.getRepositoryObjectCount(mockSession)).thenReturn(
+        when(mockObjects.getRepositoryObjectCount()).thenReturn(
                 50001L);
 
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();

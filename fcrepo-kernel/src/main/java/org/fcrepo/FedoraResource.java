@@ -4,6 +4,8 @@ package org.fcrepo;
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -83,19 +85,21 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     }
 
+    /**
+     * Is the given node a Fedora resource (because it has a fedora:resource mixin)?
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
     public static boolean hasMixin(final Node node) throws RepositoryException {
-        final NodeType[] nodeTypes = node.getMixinNodeTypes();
-        if (nodeTypes == null) {
-            return false;
-        }
-        for (final NodeType nodeType : nodeTypes) {
-            if (FEDORA_RESOURCE.equals(nodeType.getName())) {
-                return true;
-            }
-        }
-        return false;
+        return isFedoraResource.apply(node);
     }
 
+    /**
+     * Does the resource have a jcr:content child node?
+     * @return
+     * @throws RepositoryException
+     */
     public boolean hasContent() throws RepositoryException {
         return node.hasNode(JcrConstants.JCR_CONTENT);
     }
@@ -105,6 +109,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      */
     public Node getNode() {
         return node;
+    }
+
+    public String getPath() throws RepositoryException {
+        return node.getPath();
     }
 
     /**
@@ -167,6 +175,13 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return map(node.getMixinNodeTypes(), nodetype2name);
     }
 
+    /**
+     * After applying a SPARQL Update to the properties dataset, this may
+     * contain Problems with applying the update.
+     *
+     * @return
+     * @throws RepositoryException
+     */
     public Problems getDatasetProblems() throws RepositoryException {
         if (listener != null) {
             return listener.getProblems();
@@ -175,17 +190,47 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         }
     }
 
+    /**
+     * Update the properties Dataset with a SPARQL Update query. The updated
+     * properties may be serialized to the JCR store.
+     *
+     * After applying the statement, clients SHOULD check the result
+     * of #getDatasetProblems, which may include problems when attempting to
+     * serialize the data to JCR.
+     *
+     * @param subjects
+     * @param sparqlUpdateStatement
+     * @throws RepositoryException
+     */
     public void updatePropertiesDataset(final GraphSubjects subjects,
                                         final String sparqlUpdateStatement) throws RepositoryException {
         final Dataset dataset = getPropertiesDataset(subjects);
         UpdateAction.parseExecute(sparqlUpdateStatement, dataset);
     }
 
+    /**
+     * Update the properties Dataset with a SPARQL Update query. The updated
+     * properties may be serialized to the JCR store.
+     *
+     * After applying the statement, clients SHOULD check the result
+     * of #getDatasetProblems, which may include problems when attempting to
+     * serialize the data to JCR.
+     *
+     * @param sparqlUpdateStatement
+     * @throws RepositoryException
+     */
     public void updatePropertiesDataset(final String sparqlUpdateStatement)
             throws RepositoryException {
         updatePropertiesDataset(DEFAULT_SUBJECT_FACTORY, sparqlUpdateStatement);
     }
 
+    /**
+     * Serialize the JCR properties as an RDF Dataset
+     *
+     * @param subjects
+     * @return
+     * @throws RepositoryException
+     */
     public Dataset getPropertiesDataset(final GraphSubjects subjects)
             throws RepositoryException {
 
@@ -206,10 +251,21 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return dataset;
     }
 
+    /**
+     * Serialize the JCR properties of this object as an RDF Dataset
+     * @return
+     * @throws RepositoryException
+     */
     public Dataset getPropertiesDataset() throws RepositoryException {
         return getPropertiesDataset(DEFAULT_SUBJECT_FACTORY);
     }
 
+    /**
+     * Serialize the JCR versions information as an RDF dataset
+     * @param subjects
+     * @return
+     * @throws RepositoryException
+     */
     public Dataset getVersionDataset(final GraphSubjects subjects)
             throws RepositoryException {
         final Model model = JcrRdfTools.getJcrVersionsModel(subjects, node);
@@ -224,10 +280,22 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return dataset;
     }
 
+    /**
+     * Serialize the JCR versions information as an RDF dataset
+     * @return
+     * @throws RepositoryException
+     */
     public Dataset getVersionDataset() throws RepositoryException {
         return getVersionDataset(DEFAULT_SUBJECT_FACTORY);
     }
 
+    /**
+     * Tag the current version of the Node with a version label that
+     * can be retrieved by name later.
+     *
+     * @param label
+     * @throws RepositoryException
+     */
     public void addVersionLabel(final String label) throws RepositoryException {
         final VersionHistory versionHistory = getVersionHistory(node);
         versionHistory.addVersionLabel(getBaseVersion(node).getName(), label,

@@ -50,7 +50,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     protected Repository repo;
 
     /**
-     * 
+     * Test whether a node exists in the JCR store
+     *
      * @param path
      * @return whether a node exists at the given path
      * @throws RepositoryException
@@ -60,11 +61,11 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return session.nodeExists(path);
     }
 
-    public boolean isFile(final Session session, final String path)
-            throws RepositoryException {
-        return session.getNode(path).isNodeType("nt:file");
-    }
-
+    /**
+     * Calculate the total size of all the binary properties in the repository
+     *
+     * @return size in bytes
+     */
     public Long getRepositorySize() {
         try {
 
@@ -82,14 +83,26 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    public Long getRepositoryObjectCount(final Session session) {
+    /**
+     * Calculate the number of objects in the repository
+     *
+     * @return
+     */
+    public Long getRepositoryObjectCount() {
         try {
-            return session.getNode("/objects").getNodes().getSize();
+            return FedoraTypesUtils.getRepositoryCount(repo);
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
     }
 
+    /**
+     * Get the full list of node types in the repository
+     *
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
     public NodeTypeIterator getAllNodeTypes(final Session session)
             throws RepositoryException {
         final NodeTypeManager ntmanager =
@@ -97,12 +110,19 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return ntmanager.getAllNodeTypes();
     }
 
+    /**
+     * Get a map of JCR prefixes to their URI namespaces
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
+
     public static Map<String, String> getRepositoryNamespaces(
             final Session session) throws RepositoryException {
         final NamespaceRegistry reg =
                 NamespaceTools.getNamespaceRegistry(session);
         final String[] prefixes = reg.getPrefixes();
-        final HashMap<String, String> result =
+        final Map<String, String> result =
                 new HashMap<String, String>(prefixes.length);
         for (final String prefix : reg.getPrefixes()) {
             result.put(prefix, reg.getURI(prefix));
@@ -110,10 +130,12 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return result;
     }
 
-    public void setRepository(final Repository repository) {
-        repo = repository;
-    }
-
+    /**
+     * Serialize the JCR namespace information as an RDF Dataset
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
     public Dataset getNamespaceRegistryGraph(final Session session) throws RepositoryException {
 
         final Model model = JcrRdfTools.getJcrNamespaceModel(session);
@@ -125,6 +147,20 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return dataset;
 
     }
+
+    /**
+     * Perform a full-text search on the whole repository and return the information
+     * as an RDF Dataset
+     *
+     * @param subjectFactory
+     * @param searchSubject RDF resource to use as the subject of the search
+     * @param session
+     * @param terms
+     * @param limit
+     * @param offset
+     * @return
+     * @throws RepositoryException
+     */
     public Dataset searchRepository(final GraphSubjects subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset)
@@ -193,5 +229,9 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
         return dataset;
 
+    }
+
+    public void setRepository(final Repository repository) {
+        repo = repository;
     }
 }

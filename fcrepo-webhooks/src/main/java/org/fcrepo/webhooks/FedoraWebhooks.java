@@ -87,6 +87,14 @@ public class FedoraWebhooks extends AbstractResource {
         session.logout();
     }
 
+    /**
+     * Trigger all the registered webhook callbacks for a resource when
+     * the event is received
+     *
+     * @param resource
+     * @param event
+     * @throws RepositoryException
+     */
     public static void runHooks(final Node resource, final FedoraEvent event)
             throws RepositoryException {
         if (resource == null) {
@@ -178,6 +186,10 @@ public class FedoraWebhooks extends AbstractResource {
         return noContent().build();
     }
 
+    /**
+     * Listen to the EventBus and trigger webhooks callbacks (see .runHooks)
+     * @param event
+     */
     @Subscribe
     public void onEvent(final FedoraEvent event) {
         try {

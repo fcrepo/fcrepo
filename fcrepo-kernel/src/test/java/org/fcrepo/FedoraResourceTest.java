@@ -65,13 +65,13 @@ public class FedoraResourceTest {
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { });
         new FedoraResource(mockSession, "/foo/bar", null);
     }
 
     @Test
     public void testHasMixin() throws RepositoryException {
-        boolean actual = FedoraResource.hasMixin(mockNode);
-        assertEquals(false, actual);
+        boolean actual;
         final NodeType mockType = mock(NodeType.class);
         final NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
@@ -80,6 +80,12 @@ public class FedoraResourceTest {
         when(mockType.getName()).thenReturn(FedoraResource.FEDORA_RESOURCE);
         actual = FedoraResource.hasMixin(mockNode);
         assertEquals(true, actual);
+    }
+
+    @Test
+    public void testGetPath() throws RepositoryException {
+        testObj.getPath();
+        verify(mockNode).getPath();
     }
 
     @Test

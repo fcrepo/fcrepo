@@ -227,6 +227,7 @@ public abstract class TestHelpers {
 		final FedoraObject mockObj = mock(FedoraObject.class);
 		try {
 			when(mockObj.getName()).thenReturn(pid);
+            when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
 			when(mockDs.getObject()).thenReturn(mockObj);
 			when(mockDs.getDsId()).thenReturn(dsId);
 			when(mockDs.getMimeType()).thenReturn("application/octet-stream");
