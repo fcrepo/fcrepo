@@ -60,8 +60,7 @@ public class JMSTopicPublisher {
     }
 
     @PostConstruct
-    public void acquireConnections() throws JMSException, LoginException,
-            RepositoryException {
+    public void acquireConnections() throws JMSException, RepositoryException {
         LOGGER.debug("Initializing: " + this.getClass().getCanonicalName());
 
         connection = connectionFactory.createConnection();

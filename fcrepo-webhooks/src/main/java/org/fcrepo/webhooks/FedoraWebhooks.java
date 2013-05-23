@@ -76,7 +76,7 @@ public class FedoraWebhooks extends AbstractResource {
 
     @Override
     @PostConstruct
-    public void initialize() throws LoginException, NoSuchWorkspaceException,
+    public void initialize() throws
             RepositoryException {
 
         eventBus.register(this);
