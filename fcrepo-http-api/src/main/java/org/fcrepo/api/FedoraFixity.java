@@ -26,8 +26,6 @@ import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
-import org.fcrepo.services.DatastreamService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -35,9 +33,6 @@ import com.codahale.metrics.annotation.Timed;
 @Component
 @Path("/rest/{path: .*}/fcr:fixity")
 public class FedoraFixity extends AbstractResource {
-
-	@Autowired
-	private DatastreamService datastreamService;
 
 	@GET
 	@Timed
@@ -57,14 +52,6 @@ public class FedoraFixity extends AbstractResource {
 		} finally {
 			session.logout();
 		}
-	}
-
-	public DatastreamService getDatastreamService() {
-		return datastreamService;
-	}
-
-	public void setDatastreamService(final DatastreamService datastreamService) {
-		this.datastreamService = datastreamService;
 	}
 
 }

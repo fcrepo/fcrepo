@@ -33,10 +33,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -44,12 +41,6 @@ import org.springframework.stereotype.Component;
 public class FedoraContent extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraContent.class);
-
-    @Autowired
-    private DatastreamService datastreamService;
-
-    @Autowired
-    private LowLevelStorageService llStoreService;
 
     /**
      * Create an anonymous DS with a newly minted name
@@ -170,24 +161,5 @@ public class FedoraContent extends AbstractResource {
 			session.logout();
 		}
 	}
-    
-    public DatastreamService getDatastreamService() {
-        return datastreamService;
-    }
-
-    
-    public void setDatastreamService(DatastreamService datastreamService) {
-        this.datastreamService = datastreamService;
-    }
-
-    
-    public LowLevelStorageService getLlStoreService() {
-        return llStoreService;
-    }
-
-    
-    public void setLlStoreService(LowLevelStorageService llStoreService) {
-        this.llStoreService = llStoreService;
-    }
 
 }

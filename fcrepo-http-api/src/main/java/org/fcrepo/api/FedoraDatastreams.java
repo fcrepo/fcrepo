@@ -12,7 +12,6 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -149,7 +148,6 @@ public class FedoraDatastreams extends AbstractResource {
      * @throws NoSuchAlgorithmException
      */
     @GET
-    @Path("/__content__")
     @Produces("multipart/mixed")
     @Timed
     public Response getDatastreamsContents(@PathParam("path")

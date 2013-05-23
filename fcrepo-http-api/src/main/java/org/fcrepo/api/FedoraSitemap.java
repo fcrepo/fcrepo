@@ -28,10 +28,8 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.jaxb.responses.sitemap.SitemapUrlSet;
-import org.fcrepo.services.ObjectService;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -43,9 +41,6 @@ public class FedoraSitemap extends AbstractResource {
     private static final Logger logger = getLogger(FedoraSitemap.class);
 
     public static final long entriesPerPage = 50000;
-
-    @Autowired
-    private ObjectService objectService;
 
     @GET
 	@Timed
@@ -134,9 +129,5 @@ public class FedoraSitemap extends AbstractResource {
                 .build(r.getNode().getName()), lastKnownDate);
     }
 
-    
-    public void setObjectService(ObjectService objectService) {
-        this.objectService = objectService;
-    }
 
 }

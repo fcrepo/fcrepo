@@ -238,4 +238,8 @@ public abstract class AbstractResource {
     public void setObjectService(final ObjectService objectService) {
         this.objectService = objectService;
     }
+
+    public void setDatastreamService(final DatastreamService datastreamService) {
+        this.datastreamService = datastreamService;
+    }
 }

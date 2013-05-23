@@ -58,8 +58,6 @@ public class FedoraNodesTest {
 
     Session mockSession;
 
-    LowLevelStorageService mockLow;
-
     Request mockRequest;
     private UriInfo uriInfo;
 
@@ -69,13 +67,11 @@ public class FedoraNodesTest {
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
         mockNodes = mock(NodeService.class);
-        mockLow = mock(LowLevelStorageService.class);
         testObj = new FedoraNodes();
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setObjectService(mockObjects);
         testObj.setNodeService(mockNodes);
         testObj.setDatastreamService(mockDatastreams);
-        testObj.setLlStoreService(mockLow);
         mockRepo = mock(Repository.class);
         uriInfo = TestHelpers.getUriInfoImpl();
         testObj.setUriInfo(uriInfo);

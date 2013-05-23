@@ -49,13 +49,9 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -67,9 +63,6 @@ import com.hp.hpl.jena.update.UpdateAction;
 public class FedoraNodes extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraNodes.class);
-
-    @Autowired
-    private LowLevelStorageService llStoreService;
 
     @GET
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
@@ -264,31 +257,6 @@ public class FedoraNodes extends AbstractResource {
         } finally {
             session.logout();
         }
-    }
-
-    public ObjectService getObjectService() {
-        return objectService;
-    }
-
-    @Override
-    public void setObjectService(final ObjectService objectService) {
-        this.objectService = objectService;
-    }
-
-    public DatastreamService getDatastreamService() {
-        return datastreamService;
-    }
-
-    public void setDatastreamService(final DatastreamService datastreamService) {
-        this.datastreamService = datastreamService;
-    }
-
-    public LowLevelStorageService getLlStoreService() {
-        return llStoreService;
-    }
-
-    public void setLlStoreService(final LowLevelStorageService llStoreService) {
-        this.llStoreService = llStoreService;
     }
 
 }

@@ -43,10 +43,6 @@ public class FedoraContentTest {
 
     DatastreamService mockDatastreams;
 
-    LowLevelStorageService mockLow;
-
-    Repository mockRepo;
-
     Session mockSession;
 
     SecurityContext mockSecurityContext;
@@ -64,13 +60,11 @@ public class FedoraContentTest {
         mockPrincipal = mock(Principal.class);
         //Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
         mockDatastreams = mock(DatastreamService.class);
-        mockLow = mock(LowLevelStorageService.class);
 
         testObj = new FedoraContent();
         testObj.setDatastreamService(mockDatastreams);
         testObj.setSecurityContext(mockSecurityContext);
         testObj.setHttpServletRequest(mockServletRequest);
-        testObj.setLlStoreService(mockLow);
         //mockRepo = mock(Repository.class);
         final SessionFactory mockSessions = mock(SessionFactory.class);
         testObj.setSessionFactory(mockSessions);

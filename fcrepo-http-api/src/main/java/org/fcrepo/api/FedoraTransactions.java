@@ -25,16 +25,11 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
-import org.fcrepo.services.ObjectService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @Path("/rest/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
-
-    @Autowired
-    private ObjectService objectService;
 
     /*
      * TODO: since transactions have to be available on all nodes, they have to
