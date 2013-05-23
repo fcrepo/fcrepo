@@ -1,6 +1,7 @@
 
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
@@ -24,10 +25,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
+import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.RDFMediaType;
-import org.fcrepo.responses.GraphStoreStreamingOutput;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,6 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.update.GraphStore;
 
 /**
  * @author Frank Asseg
@@ -50,8 +50,8 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     @GET
     @Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
-    public GraphStoreStreamingOutput searchSubmitRdf(@QueryParam("q")
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES, TEXT_HTML})
+    public Dataset searchSubmitRdf(@QueryParam("q")
     final String terms, @QueryParam("offset")
     @DefaultValue("0")
     final long offset, @QueryParam("limit")
@@ -80,13 +80,12 @@ public class FedoraFieldSearch extends AbstractResource implements
                     ResourceFactory.createResource(uriInfo.getRequestUri()
                             .toASCIIString());
 
-            final GraphStore graphStore =
+            final Dataset dataset =
                     nodeService.searchRepository(new HttpGraphSubjects(
                             FedoraNodes.class, uriInfo), searchResult, session,
                             terms, limit, offset);
 
-            return new GraphStoreStreamingOutput(graphStore,
-                    bestPossibleResponse.getMediaType());
+            return dataset;
 
         } finally {
             session.logout();

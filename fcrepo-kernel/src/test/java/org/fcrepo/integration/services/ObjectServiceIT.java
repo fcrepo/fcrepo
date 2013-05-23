@@ -12,6 +12,7 @@ import javax.jcr.Repository;
 import javax.jcr.Session;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.UpdateAction;
@@ -59,7 +60,7 @@ public class ObjectServiceIT extends AbstractIT {
     public void testGetNamespaceRegistryGraph() throws Exception {
         Session session = repository.login();
 
-        final GraphStore registryGraph = objectService.getNamespaceRegistryGraph(session);
+        final Dataset registryGraph = objectService.getNamespaceRegistryGraph(session);
 
         final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 
@@ -70,7 +71,7 @@ public class ObjectServiceIT extends AbstractIT {
                 continue;
             }
             final String uri = namespaceRegistry.getURI(s);
-            assertTrue("expected to find JCR namespaces " + s + " in graph", registryGraph.contains(Node.ANY, ResourceFactory.createResource(uri).asNode(), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE).asNode(), ResourceFactory.createPlainLiteral(s).asNode()));
+            assertTrue("expected to find JCR namespaces " + s + " in graph", registryGraph.asDatasetGraph().contains(Node.ANY, ResourceFactory.createResource(uri).asNode(), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE).asNode(), ResourceFactory.createPlainLiteral(s).asNode()));
         }
         session.logout();
     }
@@ -79,7 +80,7 @@ public class ObjectServiceIT extends AbstractIT {
     public void testUpdateNamespaceRegistryGraph() throws Exception {
         Session session = repository.login();
 
-        final GraphStore registryGraph = objectService.getNamespaceRegistryGraph(session);
+        final Dataset registryGraph = objectService.getNamespaceRegistryGraph(session);
         final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 
         UpdateAction.parseExecute("INSERT { <info:abc> <" + JcrRdfTools.HAS_NAMESPACE_PREDICATE + "> \"abc\" } WHERE { }", registryGraph);

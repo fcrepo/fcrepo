@@ -24,7 +24,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
@@ -61,9 +60,9 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
 
-            final GraphStore graph = nodeService.getNamespaceRegistryGraph(session);
+            final Dataset dataset = nodeService.getNamespaceRegistryGraph(session);
 
-            UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), graph);
+            UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), dataset);
 
             session.save();
 
@@ -88,9 +87,9 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
         final Session session = getAuthenticatedSession();
         try {
 
-            final GraphStore graph = nodeService.getNamespaceRegistryGraph(session);
+            final Dataset dataset = nodeService.getNamespaceRegistryGraph(session);
 
-            return graph.toDataset();
+            return dataset;
         } finally {
             session.logout();
         }

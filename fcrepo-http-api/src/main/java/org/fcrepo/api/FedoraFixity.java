@@ -1,5 +1,6 @@
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
@@ -40,7 +41,7 @@ public class FedoraFixity extends AbstractResource {
 
 	@GET
 	@Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES, TEXT_HTML})
 	public Dataset getDatastreamFixity(@PathParam("path") List<PathSegment> pathList,
                                        @Context final Request request,
                                        @Context final UriInfo uriInfo) throws RepositoryException {
