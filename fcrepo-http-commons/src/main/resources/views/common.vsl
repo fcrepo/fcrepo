@@ -1,0 +1,38 @@
+#macro( triples $sub )
+    <div>
+        #if($sub.isURI())
+            <h2><a href="$sub.getURI()">$sub</a></h2>
+        #else
+            <h2>$sub.getURI()</h2>
+        #end
+
+        <dl>
+            #foreach($quad in $rdf.find($nodeany, $nodeany, $nodeany, $nodeany))
+                #if($sub.equals($quad.getSubject()))
+                    <dt>
+                        #if($quad.getPredicate().toString().startsWith("info:fedora/fedora-system:def/internal#") )
+                          fedora:$quad.getPredicate().toString().substring(39)
+                        #else
+                          $quad.getPredicate()
+                        #end
+</dt>
+                    <dd>
+                        #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
+                            <a href="$quad.getObject().getURI()">$quad.getObject()</a>
+                        #else
+                            $quad.getObject()
+                        #end
+                        #if( $quad.getPredicate().toString().equals("info:fedora/digest") )
+                            <a href="$topic/fcr:fixity">check fixity</a>
+                        #end
+                    </dd>
+                #end
+            #end
+        </dl>
+    </div>
+#end
+#macro( isObject $sub )
+#set($type = $anynode.createURI("info:fedora/fedora-system:def/internal#mixinTypes"))
+#set($object = $anynode.createLiteral("fedora:object"))
+$rdf.find($nodeany, $sub, $type, $object).hasNext()
+#end
