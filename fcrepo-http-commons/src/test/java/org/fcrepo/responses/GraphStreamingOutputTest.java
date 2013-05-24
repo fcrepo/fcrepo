@@ -13,14 +13,13 @@ import java.io.IOException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.WebApplicationException;
 
-import com.hp.hpl.jena.query.DatasetFactory;
 import org.junit.Test;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.mem.GraphMem;
-import com.hp.hpl.jena.sparql.core.DatasetImpl;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.sparql.modify.GraphStoreBasic;
 import com.hp.hpl.jena.update.GraphStore;
 
