@@ -131,6 +131,9 @@ public abstract class FedoraTypesUtils {
                 }
             };
 
+    /**
+     * Check if a JCR property is a multivalued property or not
+     */
     public static Predicate<Property> isMultipleValuedProperty =
             new Predicate<Property>() {
 
@@ -147,6 +150,9 @@ public abstract class FedoraTypesUtils {
             };
 
 
+    /**
+     * Check if a node is "internal" and should not be exposed e.g. via the REST API
+     */
     public static Predicate<Node> isInternalNode =
             new Predicate<Node>() {
 
@@ -247,9 +253,16 @@ public abstract class FedoraTypesUtils {
 	}
 
 
+    /**
+     * Get the JCR Node Type manager
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
     public static NodeTypeManager getNodeTypeManager(final Node node) throws RepositoryException {
         return node.getSession().getWorkspace().getNodeTypeManager();
     }
+
     /**
      * Get the property definition information (containing type and multi-value information)
      * @param node the node to use for inferring the property definition
@@ -291,14 +304,34 @@ public abstract class FedoraTypesUtils {
         return FMT.print(dt);
     }
 
+    /**
+     * Get the JCR Base version for a node
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
     public static Version getBaseVersion(final Node node) throws RepositoryException {
         return node.getSession().getWorkspace().getVersionManager().getBaseVersion(node.getPath());
     }
+
+    /**
+     * Get the JCR VersionHistory for an existing node
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
 
     public static VersionHistory getVersionHistory(final Node node) throws RepositoryException {
         return getVersionHistory(node.getSession(), node.getPath());
     }
 
+    /**
+     * Get the JCR VersionHistory for a node at a given JCR path
+     * @param session
+     * @param path
+     * @return
+     * @throws RepositoryException
+     */
     public static VersionHistory getVersionHistory(final Session session, final String path) throws RepositoryException {
         return session.getWorkspace().getVersionManager().getVersionHistory(path);
     }

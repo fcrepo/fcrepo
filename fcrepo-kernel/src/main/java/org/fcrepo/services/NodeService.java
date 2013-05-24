@@ -23,15 +23,36 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
 	private static final Logger logger = getLogger(NodeService.class);
 
+    /**
+     * Find or create a new Fedora resource at the given path
+     * @param session a JCR session
+     * @param path a JCR path
+     * @return
+     * @throws RepositoryException
+     */
 	public FedoraResource findOrCreateObject(final Session session, final String path) throws RepositoryException {
 		return new FedoraResource(findOrCreateNode(session, path));
 	}
 
+    /**
+     * Retrieve an existing Fedora resource at the given path
+     * @param session a JCR session
+     * @param path a JCR path
+     * @return
+     * @throws RepositoryException
+     */
 	public FedoraResource getObject(final Session session, final String path) throws RepositoryException {
 		return new FedoraResource(session.getNode(path));
 	}
 
-
+    /**
+     * Get an existing Fedora resource at the given path with the given version label
+     * @param session a JCR session
+     * @param path a JCR path
+     * @param versionId a JCR version label
+     * @return
+     * @throws RepositoryException
+     */
     public FedoraResource getObject(Session session, String path, String versionId) throws RepositoryException {
         final VersionHistory versionHistory = FedoraTypesUtils.getVersionHistory(session, path);
 
@@ -55,6 +76,14 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 		return getObjectNames(session, path, null);
 	}
 
+    /**
+     * Get the list of child nodes at the given path filtered by the given mixin
+     * @param session
+     * @param path
+     * @param mixin
+     * @return
+     * @throws RepositoryException
+     */
 	public Set<String> getObjectNames(final Session session, String path, String mixin) throws RepositoryException {
 
 		final Node objects = session.getNode(path);
@@ -73,11 +102,16 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
         return b.build();
 	}
 
+    /**
+     * Delete an existing object from the repository at the given path
+     * @param session
+     * @param path
+     * @throws RepositoryException
+     */
 	public void deleteObject(final Session session, final String path)
 			throws RepositoryException {
 		final Node obj = session.getNode(path);
 		obj.remove();
-		session.save();
 	}
 
 }

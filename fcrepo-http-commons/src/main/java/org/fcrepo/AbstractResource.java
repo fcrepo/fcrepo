@@ -107,6 +107,32 @@ public abstract class AbstractResource {
         session.logout();
     }
 
+    /**
+     * Convert a JAX-RS list of PathSegments to a JCR path
+     * @param paths
+     * @return
+     */
+    public static final String toPath(final List<PathSegment> paths) {
+        final StringBuffer result = new StringBuffer();
+
+        for (final PathSegment path : paths) {
+            final String p = path.getPath();
+
+            if (!p.equals("")) {
+                result.append('/');
+                result.append(p);
+            }
+        }
+
+        final String path = result.toString();
+
+        if (path.isEmpty()) {
+            return "/";
+        } else {
+            return path;
+        }
+    }
+
     protected Session getAuthenticatedSession() {
         return sessions.getSession(securityContext, servletRequest);
     }
@@ -157,23 +183,6 @@ public abstract class AbstractResource {
         return result;
     }
 
-    protected synchronized Response deleteResource(final Node resource)
-            throws RepositoryException {
-
-        LOGGER.debug("Attempting to delete resource at path: " +
-                resource.getPath());
-        final Session session = resource.getSession();
-
-        try {
-            resource.remove();
-            session.save();
-        } finally {
-            session.logout();
-        }
-        return noContent().build();
-
-    }
-
     /**
      * A testing convenience setter for otherwise injected resources
      * @param repo
@@ -214,35 +223,26 @@ public abstract class AbstractResource {
         this.servletRequest = servletRequest;
     }
 
-    public static final String toPath(final List<PathSegment> paths) {
-        final StringBuffer result = new StringBuffer();
-
-        for (final PathSegment path : paths) {
-            final String p = path.getPath();
-
-            if (!p.equals("")) {
-                result.append('/');
-                result.append(p);
-            }
-        }
-
-        final String path = result.toString();
-
-        if (path.isEmpty()) {
-            return "/";
-        } else {
-            return path;
-        }
-    }
-
+    /**
+     * Set the NodeService, used primary for testing without spring
+     * @param nodeService
+     */
     public void setNodeService(final NodeService nodeService) {
         this.nodeService = nodeService;
     }
 
+    /**
+     * Set the ObjectService, used primary for testing without spring
+     * @param objectService
+     */
     public void setObjectService(final ObjectService objectService) {
         this.objectService = objectService;
     }
 
+    /**
+     * Set the DatastreamService, used primary for testing without spring
+     * @param datastreamService
+     */
     public void setDatastreamService(final DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }

@@ -64,10 +64,16 @@ public abstract class JcrRdfTools {
     private static final Logger LOGGER = getLogger(JcrRdfTools.class);
     public static final String HAS_NAMESPACE_PREDICATE = "info:fedora/fedora-system:def/internal#hasNamespace";
 
+    /**
+     * A map of JCR namespaces to Fedora's RDF namespaces
+     */
     public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
             ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
                     "info:fedora/fedora-system:def/internal#");
 
+    /**
+     * A map of Fedora's RDF namespaces to the JCR equivalent
+     */
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
             jcrNamespacesToRDFNamespaces.inverse();
 
@@ -131,6 +137,12 @@ public abstract class JcrRdfTools {
         return factory.isFedoraGraphSubject(subject);
     }
 
+    /**
+     * Create a default Jena Model populated with the registered JCR namespaces
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
     private static Model createDefaultJcrModel(final Session session)
             throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
@@ -177,6 +189,14 @@ public abstract class JcrRdfTools {
         return model;
     }
 
+    /**
+     * Get an RDF model for the given JCR NodeIterator
+     * @param factory
+     * @param nodeIterator
+     * @param iteratorSubject
+     * @return
+     * @throws RepositoryException
+     */
     public static Model getJcrNodeIteratorModel(final GraphSubjects factory,
             final Iterator nodeIterator, final Resource iteratorSubject)
             throws RepositoryException {
@@ -229,6 +249,13 @@ public abstract class JcrRdfTools {
         return model;
     }
 
+    /**
+     * Add repository metrics data to the given JCR model
+     * @param factory
+     * @param node
+     * @param model
+     * @throws RepositoryException
+     */
     private static void addRepositoryMetricsToModel(
             final GraphSubjects factory, final Node node, final Model model)
             throws RepositoryException {
@@ -312,6 +339,13 @@ public abstract class JcrRdfTools {
                                 .getCount()));
     }
 
+    /**
+     * Add information about a jcr:content node to the model
+     * @param factory
+     * @param node
+     * @param model
+     * @throws RepositoryException
+     */
     private static void addJcrContentLocationInformationToModel(
             final GraphSubjects factory, final Node node, final Model model)
             throws RepositoryException {
@@ -636,6 +670,13 @@ public abstract class JcrRdfTools {
                 .getNode(path.substring("info:fedora".length()));
     }
 
+    /**
+     * Get a Jena RDF model for the JCR version history information for a node
+     * @param factory
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
     public static Model getJcrVersionsModel(final GraphSubjects factory,
             final Node node) throws RepositoryException {
 
@@ -681,6 +722,14 @@ public abstract class JcrRdfTools {
         return model;
     }
 
+    /**
+     * Serialize the JCR fixity information in a Jena Model
+     * @param factory
+     * @param node
+     * @param blobs
+     * @return
+     * @throws RepositoryException
+     */
     public static Model getFixityResultsModel(final GraphSubjects factory, final Node node, Iterable<FixityResult> blobs) throws RepositoryException {
 
         final Model model = createDefaultJcrModel(node.getSession());

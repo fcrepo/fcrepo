@@ -23,6 +23,12 @@ public abstract class ContentDigest {
     public static final Map<String, String> schemeToAlgorithm = ImmutableMap
                                                                        .of("urn:sha1", "SHA-1");
 
+    /**
+     * Convert a MessageDigest algorithm and checksum value to a URN
+     * @param algorithm
+     * @param value
+     * @return
+     */
     public static URI asURI(final String algorithm, final String value) {
         try {
             final String scheme = algorithmToScheme.get(algorithm);
@@ -35,15 +41,27 @@ public abstract class ContentDigest {
         }
     }
 
+    /**
+     * Convert a MessageDigest algorithm and checksum byte-array data to a URN
+     * @param algorithm
+     * @param data
+     * @return
+     */
     public static URI asURI(final String algorithm, final byte[] data) {
         return asURI(algorithm, asString(data));
     }
 
-    public static String asString(final byte[] data) {
-        return encodeHexString(data);
-    }
-
+    /**
+     * Given a digest URI, get the corresponding MessageDigest algorithm
+     * @param digestUri
+     * @return
+     */
     public static String getAlgorithm(URI digestUri) {
         return schemeToAlgorithm.get(digestUri.getScheme() + ":" + digestUri.getSchemeSpecificPart().split(":", 2)[0]);
     }
+
+    private static String asString(final byte[] data) {
+        return encodeHexString(data);
+    }
+
 }

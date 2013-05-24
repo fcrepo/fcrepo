@@ -18,11 +18,20 @@ public class PolicyDecisionPoint {
         policies = new ArrayList<Policy>();
     }
 
-    public void addPolicy(Policy p) {
+    /**
+     * Add a new storage policy
+     * @param p
+     */
+    public void addPolicy(final Policy p) {
         policies.add(p);
     }
 
-    public String evaluatePolicies(Node n) {
+    /**
+     * Given a JCR node (likely a jcr:content node), determine which storage policy should apply
+     * @param n
+     * @return
+     */
+    public String evaluatePolicies(final Node n) {
         for(Policy p : policies) {
             String h = p.evaluatePolicy(n);
             if(h != null) {
@@ -33,8 +42,7 @@ public class PolicyDecisionPoint {
         return null;
     }
 
-
-    public void setPolicies(List<Policy> policies) {
+    public void setPolicies(final List<Policy> policies) {
         logger.debug("Adding policies to binary PolicyDecisionPoint: {}", policies.toString());
         this.policies = policies;
     }

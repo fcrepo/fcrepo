@@ -107,15 +107,4 @@ public class AbstractResourceTest {
         String actual = AbstractResource.toPath(pathList);
         assertEquals(expected, actual);
     }
-    
-    @Test
-    public void testDeleteResource() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        when(mockNode.getSession()).thenReturn(mockSession);
-        testObj.deleteResource(mockNode);
-        verify(mockNode).remove();
-        verify(mockSession).save();
-        verify(mockSession).logout();
-    }
 }
