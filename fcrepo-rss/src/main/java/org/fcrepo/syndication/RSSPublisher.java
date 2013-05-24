@@ -7,6 +7,7 @@ import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.utils.EventType.getEventType;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -62,7 +63,7 @@ public class RSSPublisher extends AbstractResource {
         feed.setEntries(transform(copyOf(feedQueue).reverse(), event2entry));
         // TODO ought to make this stream, not go through a string
         return new StreamSource(new ByteArrayInputStream(new SyndFeedOutput()
-                .outputString(feed).getBytes()));
+                .outputString(feed).getBytes(StandardCharsets.UTF_8)));
     }
 
     private final Function<Event, SyndEntry> event2entry =

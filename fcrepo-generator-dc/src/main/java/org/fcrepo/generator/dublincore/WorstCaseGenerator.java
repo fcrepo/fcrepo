@@ -5,7 +5,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import javax.jcr.Node;
 
@@ -20,11 +20,6 @@ public class WorstCaseGenerator implements DCGenerator {
         final String str =
                 "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" ></oai_dc:dc>";
 
-        try {
-            return new ByteArrayInputStream(str.getBytes("UTF-8"));
-        } catch (final UnsupportedEncodingException e) {
-            logger.warn("logged exception", e);
-            return null;
-        }
+        return new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
     }
 }

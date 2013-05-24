@@ -5,7 +5,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -52,10 +52,8 @@ public class JcrPropertiesGenerator implements DCGenerator {
 
             str.append("</oai_dc:dc>");
 
-            return new ByteArrayInputStream(str.toString().getBytes("UTF-8"));
-        } catch (final UnsupportedEncodingException e) {
-            logger.warn("Exception rendering properties: {}", e);
-            return null;
+            return new ByteArrayInputStream(str.toString().getBytes(
+                    StandardCharsets.UTF_8));
         } catch (final RepositoryException e) {
             logger.error("Repository exception: {}", e);
             return null;

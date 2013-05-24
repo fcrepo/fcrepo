@@ -17,7 +17,6 @@ import javax.jcr.Session;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;

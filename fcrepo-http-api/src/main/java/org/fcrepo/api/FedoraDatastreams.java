@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
-import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.BodyPart;
 import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
@@ -189,7 +190,8 @@ public class FedoraDatastreams extends AbstractResource {
                     continue;
                 }
 
-                digest.update(ds.getContentDigest().toString().getBytes());
+                digest.update(ds.getContentDigest().toString().getBytes(
+                        StandardCharsets.UTF_8));
 
                 if (ds.getLastModifiedDate().after(date)) {
                     date = ds.getLastModifiedDate();
