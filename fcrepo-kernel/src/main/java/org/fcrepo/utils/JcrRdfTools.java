@@ -188,7 +188,7 @@ public abstract class JcrRdfTools {
         final PeekingIterator<Node> iterator =
                 Iterators.peekingIterator(nodeIterator);
         final Model model =
-                createDefaultJcrModel(((Item) iterator.peek()).getSession());
+                createDefaultJcrModel((iterator.peek()).getSession());
 
         while (iterator.hasNext()) {
             final Node node = iterator.next();

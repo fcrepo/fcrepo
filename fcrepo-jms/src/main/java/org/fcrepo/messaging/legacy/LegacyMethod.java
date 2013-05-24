@@ -213,17 +213,23 @@ public class LegacyMethod {
         String term;
         //TODO Most of these types are not yet relevant to FCR4, but we can borrow their serializations as necessary
         // several circumstances yield null canonical names
-        if (xsdType.equals("fedora-types:ArrayOfString")) {
-            term = "[UNSUPPORTED" + xsdType + "]";
-        } else if (xsdType.equals("xsd:boolean")) {
-            term = obj;
-        } else if (xsdType.equals("xsd:nonNegativeInteger")) {
-            term = obj;
-        } else if (xsdType.equals("fedora-types:RelationshipTuple")) {
-            term = "[UNSUPPORTED" + xsdType + "]";
-        } else {
-            term = obj;
-            term = term.replaceAll("\"", "'");
+        switch (xsdType) {
+            case "fedora-types:ArrayOfString":
+                term = "[UNSUPPORTED" + xsdType + "]";
+                break;
+            case "xsd:boolean":
+                term = obj;
+                break;
+            case "xsd:nonNegativeInteger":
+                term = obj;
+                break;
+            case "fedora-types:RelationshipTuple":
+                term = "[UNSUPPORTED" + xsdType + "]";
+                break;
+            default:
+                term = obj;
+                term = term.replaceAll("\"", "'");
+                break;
         }
 
         return term;

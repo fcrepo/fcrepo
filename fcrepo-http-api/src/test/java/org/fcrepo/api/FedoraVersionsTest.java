@@ -18,19 +18,13 @@ public class FedoraVersionsTest {
 	NodeService mockNodes;
 
 	Session mockSession;
-	
-	FedoraObject mockObject;
-	FedoraNodes mockObjects;
-
 
 	
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
 
-		mockObjects = mock(FedoraNodes.class);
-
-        testObj = new FedoraVersions();
+	    testObj = new FedoraVersions();
 
 		mockNodes = mock(NodeService.class);
 		testObj.setNodeService(mockNodes);
@@ -38,7 +32,6 @@ public class FedoraVersionsTest {
 		mockSession = TestHelpers.mockSession(testObj);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
         
-        mockObject = mock(FedoraObject.class);
     }
 
 

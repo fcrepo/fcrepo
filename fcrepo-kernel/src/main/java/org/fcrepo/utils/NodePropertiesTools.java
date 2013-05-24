@@ -44,7 +44,7 @@ public abstract class NodePropertiesTools {
 
                 if (!newValues.contains(newValue)) {
                     newValues.add(newValue);
-                    property.setValue((Value[]) newValues.toArray(new Value[newValues.size()]));
+                    property.setValue(newValues.toArray(new Value[newValues.size()]));
                 }
             } else {
                 // or we'll just overwrite it
@@ -99,7 +99,7 @@ public abstract class NodePropertiesTools {
                         property.setValue((Value[])null);
                     } else {
                         logger.debug("Removing value {} from property {}", valueToRemove, propertyName);
-                        property.setValue((Value[]) newValues.toArray(new Value[newValues.size()]));
+                        property.setValue(newValues.toArray(new Value[newValues.size()]));
                     }
                 }
 

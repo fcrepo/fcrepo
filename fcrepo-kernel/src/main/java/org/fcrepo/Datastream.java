@@ -91,13 +91,6 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     }
 
     /**
-     * @return The backing JCR node.
-     */
-    public Node getNode() {
-        return node;
-    }
-
-    /**
      * @return The InputStream of content associated with this datastream.
      * @throws RepositoryException
      */
@@ -244,6 +237,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public long getSize() throws RepositoryException {
         return getNodePropertySize(node) + getContentSize();
 

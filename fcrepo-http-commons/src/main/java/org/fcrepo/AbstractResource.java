@@ -125,29 +125,33 @@ public abstract class AbstractResource {
 
         final FedoraResource result;
 
-        if (FedoraJcrTypes.FEDORA_OBJECT.equals(mixin)) {
-            result = objectService.createObject(session, path);
+        switch (mixin) {
+            case FedoraJcrTypes.FEDORA_OBJECT:
+                result = objectService.createObject(session, path);
 
-            if (requestBodyStream != null &&
-                    requestContentType != null &&
-                    requestContentType.toString().equals(
-                            WebContent.contentTypeSPARQLUpdate)) {
-                result.updatePropertiesDataset(new HttpGraphSubjects(pathsRelativeTo,
-                                                                            uriInfo), IOUtils.toString(requestBodyStream));
-            }
+                if (requestBodyStream != null &&
+                            requestContentType != null &&
+                            requestContentType.toString().equals(
+                                                                        WebContent.contentTypeSPARQLUpdate)) {
+                    result.updatePropertiesDataset(new HttpGraphSubjects(pathsRelativeTo,
+                                                                                uriInfo), IOUtils.toString(requestBodyStream));
+                }
 
-        } else if (FedoraJcrTypes.FEDORA_DATASTREAM.equals(mixin)) {
-            final MediaType contentType =
-                    requestContentType != null ? requestContentType
-                            : APPLICATION_OCTET_STREAM_TYPE;
+                break;
+            case FedoraJcrTypes.FEDORA_DATASTREAM:
+                final MediaType contentType =
+                        requestContentType != null ? requestContentType
+                                : APPLICATION_OCTET_STREAM_TYPE;
 
-            final Node node =
-                    datastreamService.createDatastreamNode(session, path,
-                            contentType.toString(), requestBodyStream,
-                            checksumType, checksum);
-            result = new Datastream(node);
-        } else {
-            result = null;
+                final Node node =
+                        datastreamService.createDatastreamNode(session, path,
+                                                                      contentType.toString(), requestBodyStream,
+                                                                      checksumType, checksum);
+                result = new Datastream(node);
+                break;
+            default:
+                result = null;
+                break;
         }
 
         return result;

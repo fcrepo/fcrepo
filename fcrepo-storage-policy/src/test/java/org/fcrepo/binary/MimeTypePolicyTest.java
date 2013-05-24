@@ -16,59 +16,59 @@ import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 public class MimeTypePolicyTest {
-	@Test
-	public void shouldEvaluatePolicyAndReturnHint() throws Exception {
-		String hint = "store-id";
-		Policy policy = new MimeTypePolicy("image/x-dummy", hint);
-
-		Session mockSession = mock(Session.class);
-		Node mockRootNode = mock(Node.class);
-		Node mockDsNode = mock(Node.class);
-
-		when(mockDsNode.getSession()).thenReturn(mockSession);
-		Property mockProperty = mock(Property.class);
-		when(mockProperty.getString()).thenReturn("image/x-dummy");
-		Node mockContentNode = mock(Node.class);
-		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
-
-		String receivedHint = policy.evaluatePolicy(mockDsNode);
-
-		assertThat(receivedHint, is(hint));
-	}
-
-	@Test
-	public void shouldEvaluatePolicyAndReturnNoHint() throws Exception {
+    @Test
+    public void shouldEvaluatePolicyAndReturnHint() throws Exception {
         String hint = "store-id";
-		Policy policy = new MimeTypePolicy("image/x-dummy", hint);
+        Policy policy = new MimeTypePolicy("image/x-dummy", hint);
 
-		Session mockSession = mock(Session.class);
-		Node mockDsNode = mock(Node.class);
+        Session mockSession = mock(Session.class);
+        Node mockRootNode = mock(Node.class);
+        Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getSession()).thenReturn(mockSession);
-		Property mockProperty = mock(Property.class);
-		when(mockProperty.getString()).thenReturn("application/x-other");
-		Node mockContentNode = mock(Node.class);
-		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn("image/x-dummy");
+        Node mockContentNode = mock(Node.class);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		String receivedHint = policy.evaluatePolicy(mockDsNode);
+        String receivedHint = policy.evaluatePolicy(mockDsNode);
 
-		assertNull(receivedHint);
-	}
+        assertThat(receivedHint, is(hint));
+    }
 
-	@Test
-	public void shouldEvaluatePolicyAndReturnNoHintOnException() throws Exception {
+    @Test
+    public void shouldEvaluatePolicyAndReturnNoHint() throws Exception {
         String hint = "store-id";
-		Policy policy = new MimeTypePolicy("image/x-dummy", hint);
+        Policy policy = new MimeTypePolicy("image/x-dummy", hint);
 
-		Session mockSession = mock(Session.class);
-		Node mockDsNode = mock(Node.class);
+        Session mockSession = mock(Session.class);
+        Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenThrow(new RepositoryException());
+        when(mockDsNode.getSession()).thenReturn(mockSession);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn("application/x-other");
+        Node mockContentNode = mock(Node.class);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		String receivedHint = policy.evaluatePolicy(mockDsNode);
+        String receivedHint = policy.evaluatePolicy(mockDsNode);
 
-		assertNull(receivedHint);
-	}
+        assertNull(receivedHint);
+    }
+
+    @Test
+    public void shouldEvaluatePolicyAndReturnNoHintOnException() throws Exception {
+        String hint = "store-id";
+        Policy policy = new MimeTypePolicy("image/x-dummy", hint);
+
+        Session mockSession = mock(Session.class);
+        Node mockDsNode = mock(Node.class);
+
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenThrow(new RepositoryException());
+
+        String receivedHint = policy.evaluatePolicy(mockDsNode);
+
+        assertNull(receivedHint);
+    }
 }

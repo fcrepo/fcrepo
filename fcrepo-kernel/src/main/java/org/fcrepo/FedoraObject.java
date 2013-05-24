@@ -74,15 +74,6 @@ public class FedoraObject extends FedoraResource {
     public String getName() throws RepositoryException {
         return node.getName();
     }
-
-    /**
-     * Get the mixins this object uses
-     * @return a collection of mixin names
-     * @throws RepositoryException
-     */
-    public Collection<String> getModels() throws RepositoryException {
-        return map(node.getMixinNodeTypes(), nodetype2name);
-    }
     
     public static boolean hasMixin(Node node) throws RepositoryException {
         return isFedoraObject.apply(node);

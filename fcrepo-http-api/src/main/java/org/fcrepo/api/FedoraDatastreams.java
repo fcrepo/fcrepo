@@ -38,7 +38,6 @@ import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.services.DatastreamService;
 import org.fcrepo.utils.ContentDigest;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -234,13 +233,5 @@ public class FedoraDatastreams extends AbstractResource {
         } finally {
             session.logout();
         }
-    }
-
-    public DatastreamService getDatastreamService() {
-        return datastreamService;
-    }
-
-    public void setDatastreamService(final DatastreamService datastreamService) {
-        this.datastreamService = datastreamService;
     }
 }

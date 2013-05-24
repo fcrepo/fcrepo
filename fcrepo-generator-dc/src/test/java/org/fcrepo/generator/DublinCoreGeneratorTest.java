@@ -37,12 +37,12 @@ public class DublinCoreGeneratorTest {
 
 		mockSession = TestHelpers.mockSession(testObj);
         mockGenerator = mock(DCGenerator.class);
-        testObj.dcgenerators = Arrays.asList(new DCGenerator[]{mockGenerator});
+        testObj.dcgenerators = Arrays.asList(mockGenerator);
     }
     
     @Test
     public void testGetObjectAsDublinCore() throws RepositoryException {
-        testObj.dcgenerators = Arrays.asList(new DCGenerator[]{mockGenerator});
+        testObj.dcgenerators = Arrays.asList(mockGenerator);
         InputStream mockIS = mock(InputStream.class);
 		FedoraResource mockResource = mock(FedoraResource.class);
 		when(mockResource.getNode()).thenReturn(mock(Node.class));

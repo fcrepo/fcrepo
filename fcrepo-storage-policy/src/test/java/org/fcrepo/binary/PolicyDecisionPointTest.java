@@ -16,79 +16,79 @@ import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 public class PolicyDecisionPointTest {
-	static PolicyDecisionPoint pt;
-	static private String dummyHint;
-	static private String tiffHint;
+    static PolicyDecisionPoint pt;
+    static private String dummyHint;
+    static private String tiffHint;
 
-	@BeforeClass
-	public static void setupPdp() {
-		pt = new PolicyDecisionPoint();
+    @BeforeClass
+    public static void setupPdp() {
+        pt = new PolicyDecisionPoint();
 
-		dummyHint = "dummy-store-id";
-		Policy policy = new MimeTypePolicy("image/x-dummy-type", dummyHint);
+        dummyHint = "dummy-store-id";
+        Policy policy = new MimeTypePolicy("image/x-dummy-type", dummyHint);
 
-		pt.addPolicy(policy);
+        pt.addPolicy(policy);
 
-		tiffHint = "tiff-store-id";
-		Policy tiffPolicy = new MimeTypePolicy("image/tiff", tiffHint);
+        tiffHint = "tiff-store-id";
+        Policy tiffPolicy = new MimeTypePolicy("image/tiff", tiffHint);
 
-		pt.addPolicy(tiffPolicy);
-	}
+        pt.addPolicy(tiffPolicy);
+    }
 
-	@Test
-	public void testDummyNode() throws Exception {
+    @Test
+    public void testDummyNode() throws Exception {
 
-		Session mockSession = mock(Session.class);
-		Node mockRootNode = mock(Node.class);
-		Node mockDsNode = mock(Node.class);
+        Session mockSession = mock(Session.class);
+        Node mockRootNode = mock(Node.class);
+        Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getSession()).thenReturn(mockSession);
-		Property mockProperty = mock(Property.class);
-		when(mockProperty.getString()).thenReturn("image/x-dummy-type");
-		Node mockContentNode = mock(Node.class);
-		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn("image/x-dummy-type");
+        Node mockContentNode = mock(Node.class);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		String receivedHint = pt.evaluatePolicies(mockDsNode);
-		assertThat(receivedHint, is(dummyHint));
-	}
+        String receivedHint = pt.evaluatePolicies(mockDsNode);
+        assertThat(receivedHint, is(dummyHint));
+    }
 
-	@Test
-	public void testTiffNode() throws Exception {
+    @Test
+    public void testTiffNode() throws Exception {
 
-		Session mockSession = mock(Session.class);
-		Node mockRootNode = mock(Node.class);
-		Node mockDsNode = mock(Node.class);
+        Session mockSession = mock(Session.class);
+        Node mockRootNode = mock(Node.class);
+        Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getSession()).thenReturn(mockSession);
-		Property mockProperty = mock(Property.class);
-		when(mockProperty.getString()).thenReturn("image/tiff");
-		Node mockContentNode = mock(Node.class);
-		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn("image/tiff");
+        Node mockContentNode = mock(Node.class);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		String receivedHint = pt.evaluatePolicies(mockDsNode);
-		assertThat(receivedHint, is(tiffHint));
-	}
+        String receivedHint = pt.evaluatePolicies(mockDsNode);
+        assertThat(receivedHint, is(tiffHint));
+    }
 
 
-	@Test
-	public void testOtherNode() throws Exception {
+    @Test
+    public void testOtherNode() throws Exception {
 
-		Session mockSession = mock(Session.class);
-		Node mockRootNode = mock(Node.class);
-		Node mockDsNode = mock(Node.class);
+        Session mockSession = mock(Session.class);
+        Node mockRootNode = mock(Node.class);
+        Node mockDsNode = mock(Node.class);
 
-		when(mockDsNode.getSession()).thenReturn(mockSession);
-		Property mockProperty = mock(Property.class);
-		when(mockProperty.getString()).thenReturn("image/x-other");
-		Node mockContentNode = mock(Node.class);
-		when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-		when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn("image/x-other");
+        Node mockContentNode = mock(Node.class);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
 
-		String receivedHint = pt.evaluatePolicies(mockDsNode);
-		assertNull(receivedHint);
-	}
+        String receivedHint = pt.evaluatePolicies(mockDsNode);
+        assertNull(receivedHint);
+    }
 
 
 }

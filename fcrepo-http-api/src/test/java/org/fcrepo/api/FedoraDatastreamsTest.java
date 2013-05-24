@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,26 +24,21 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.Repository;
 
 import com.sun.jersey.multipart.MultiPart;
 
@@ -56,45 +50,19 @@ public class FedoraDatastreamsTest {
 
     NodeService mockNodes;
 
-    LowLevelStorageService mockLow;
-
-    Repository mockRepo;
-
     Session mockSession;
 
-    SecurityContext mockSecurityContext;
-
-    HttpServletRequest mockServletRequest;
-
-    Principal mockPrincipal;
-
-    String mockUser = "testuser";
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockSecurityContext = mock(SecurityContext.class);
-        mockServletRequest = mock(HttpServletRequest.class);
-        mockPrincipal = mock(Principal.class);
-        //Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
         mockDatastreams = mock(DatastreamService.class);
-        mockLow = mock(LowLevelStorageService.class);
         mockNodes = mock(NodeService.class);
 
         testObj = new FedoraDatastreams();
         testObj.setNodeService(mockNodes);
         testObj.setDatastreamService(mockDatastreams);
-        testObj.setSecurityContext(mockSecurityContext);
-        testObj.setHttpServletRequest(mockServletRequest);
-        //mockRepo = mock(Repository.class);
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        testObj.setSessionFactory(mockSessions);
-        mockSession = mock(Session.class);
-        when(
-                mockSessions.getSession(any(SecurityContext.class),
-                        any(HttpServletRequest.class))).thenReturn(mockSession);
-        when(mockSession.getUserID()).thenReturn(mockUser);
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(mockUser);
+
+        mockSession = TestHelpers.mockSession(testObj);
 
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
@@ -116,7 +84,7 @@ public class FedoraDatastreamsTest {
         final MultiPart multipart = TestHelpers.getStringsAsMultipart(atts);
         final Response actual =
                 testObj.modifyDatastreams(createPathList(pid), Arrays
-                        .asList(new String[] {dsId1, dsId2}), multipart);
+                        .asList(dsId1, dsId2), multipart);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq("/" + pid + "/" + dsId1), anyString(),
@@ -132,7 +100,7 @@ public class FedoraDatastreamsTest {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/" + pid;
         final List<String> dsidList =
-                Arrays.asList(new String[] {"ds1", "ds2"});
+                Arrays.asList("ds1", "ds2");
         final Response actual =
                 testObj.deleteDatastreams(createPathList(pid), dsidList);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
@@ -160,7 +128,7 @@ public class FedoraDatastreamsTest {
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
 
         when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
+        when(mockNode.getNodes(new String[]{dsId})).thenReturn(mockIterator);
 
         when(mockNodes.getObject(mockSession, "/FedoraDatastreamsTest1"))
                 .thenReturn(mockObject);

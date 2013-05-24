@@ -54,16 +54,12 @@ public class FedoraNodesTest {
 
     DatastreamService mockDatastreams;
 
-    Repository mockRepo;
-
     Session mockSession;
 
-    Request mockRequest;
     private UriInfo uriInfo;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockRequest = mock(Request.class);
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
         mockNodes = mock(NodeService.class);
@@ -72,7 +68,6 @@ public class FedoraNodesTest {
         testObj.setObjectService(mockObjects);
         testObj.setNodeService(mockNodes);
         testObj.setDatastreamService(mockDatastreams);
-        mockRepo = mock(Repository.class);
         uriInfo = TestHelpers.getUriInfoImpl();
         testObj.setUriInfo(uriInfo);
         testObj.setPidMinter(new UUIDPidMinter());

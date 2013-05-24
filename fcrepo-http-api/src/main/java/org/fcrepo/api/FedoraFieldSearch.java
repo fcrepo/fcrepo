@@ -72,10 +72,6 @@ public class FedoraFieldSearch extends AbstractResource implements
         try {
             LOGGER.debug("Received search request with search terms {}, offset {}, and limit {}", terms, offset, limit);
 
-            /* select the best response type */
-            final Variant bestPossibleResponse =
-                    request.selectVariant(RDFMediaType.POSSIBLE_RDF_VARIANTS);
-
             final Resource searchResult =
                     ResourceFactory.createResource(uriInfo.getRequestUri()
                             .toASCIIString());

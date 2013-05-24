@@ -30,8 +30,6 @@ public class FedoraFixityTest {
 
 	DatastreamService mockDatastreams;
 
-	LowLevelStorageService mockLow;
-
 	Session mockSession;
 
     private UriInfo uriInfo;
@@ -42,7 +40,6 @@ public class FedoraFixityTest {
 
         mockRequest = mock(Request.class);
 		mockDatastreams = mock(DatastreamService.class);
-		mockLow = mock(LowLevelStorageService.class);
 
 		testObj = new FedoraFixity();
 		testObj.setDatastreamService(mockDatastreams);

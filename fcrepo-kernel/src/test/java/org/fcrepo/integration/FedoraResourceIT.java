@@ -39,8 +39,6 @@ import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraResourceIT extends AbstractIT {
 
-	protected Logger logger;
-
 	@Inject
 	Repository repo;
 
@@ -50,14 +48,8 @@ public class FedoraResourceIT extends AbstractIT {
 	@Inject
 	ObjectService objectService;
 
-
 	@Inject
 	DatastreamService datastreamService;
-
-	@Before
-	public void setLogger() {
-		logger = LoggerFactory.getLogger(this.getClass());
-	}
 
 
     @Test
