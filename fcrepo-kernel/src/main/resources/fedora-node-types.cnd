@@ -70,7 +70,7 @@
  * A Fedora datastream.
  */
 [fedora:datastream] > fedora:resource, nt:file mixin
- + * (image:metadata)
+   + image:metadata (nt:unstructured) multiple
 
 /*
  * Some content that can have a checksum
