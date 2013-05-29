@@ -1,4 +1,3 @@
-
 package org.fcrepo.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -21,14 +20,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
-import org.fcrepo.services.ObjectService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -38,16 +34,16 @@ public class FedoraTransactions extends AbstractResource {
 
     /*
      * TODO: since transactions have to be available on all nodes, they have to
-     * be either persisted or written to a
+     * be either persisted or written to a distributed map or sth, not just
+     * this plain hashmap that follows
      */
-    /* distributed map or sth, not just this plain hashmap that follows */
-    private static Map<String, Transaction> transactions =
+    private static Map<String, Transaction> TRANSACTIONS =
             new ConcurrentHashMap<String, Transaction>();
 
     @Scheduled(fixedRate=1000)
     public void removeAndRollbackExpired(){
-        synchronized(transactions){
-            Iterator<Entry<String, Transaction>> txs = transactions.entrySet().iterator();
+        synchronized(TRANSACTIONS){
+            Iterator<Entry<String, Transaction>> txs = TRANSACTIONS.entrySet().iterator();
             while (txs.hasNext()){
                 Transaction tx = txs.next().getValue();
                 if (tx.getExpires().getTime() > System.currentTimeMillis()){
@@ -58,11 +54,11 @@ public class FedoraTransactions extends AbstractResource {
     }
 
     @POST
-    @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML })
+    @Produces({ APPLICATION_JSON, TEXT_XML })
     public Transaction createTransaction() throws RepositoryException {
     	Session sess = getAuthenticatedSession();
     	Transaction tx = new Transaction(sess);
-    	transactions.put(tx.getId(), tx);
+    	TRANSACTIONS.put(tx.getId(), tx);
     	return tx;
     }
 
@@ -70,7 +66,7 @@ public class FedoraTransactions extends AbstractResource {
     @Path("/{txid}")
     public Transaction getTransaction(@PathParam("txid")
     final String txid) throws RepositoryException {
-        final Transaction tx = transactions.get(txid);
+        final Transaction tx = TRANSACTIONS.get(txid);
         if (tx == null) {
             throw new PathNotFoundException("Transaction is not available");
         }
@@ -82,7 +78,7 @@ public class FedoraTransactions extends AbstractResource {
     @Produces({APPLICATION_JSON, TEXT_XML})
     public Transaction commit(@PathParam("txid")
     final String txid) throws RepositoryException {
-        final Transaction tx = transactions.remove(txid);
+        final Transaction tx = TRANSACTIONS.remove(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
@@ -96,7 +92,7 @@ public class FedoraTransactions extends AbstractResource {
     @Produces({APPLICATION_JSON, TEXT_XML})
     public Transaction rollback(@PathParam("txid")
     final String txid) throws RepositoryException {
-        final Transaction tx = transactions.remove(txid);
+        final Transaction tx = TRANSACTIONS.remove(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
@@ -111,7 +107,7 @@ public class FedoraTransactions extends AbstractResource {
     public Response createObjectInTransaction(@PathParam("txid")
     final String txid, @PathParam("path")
     final List<PathSegment> pathlist) throws RepositoryException {
-        final Transaction tx = transactions.get(txid);
+        final Transaction tx = TRANSACTIONS.get(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
