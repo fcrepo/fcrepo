@@ -5,6 +5,7 @@
 <jcr = 'http://www.jcp.org/jcr/1.0'>
 <nt = 'http://www.jcp.org/jcr/nt/1.0'>
 <mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<image='http://www.modeshape.org/images/1.0'>
 
 /*
  * Friend-of-a-Friend
@@ -69,6 +70,7 @@
  * A Fedora datastream.
  */
 [fedora:datastream] > fedora:resource, nt:file mixin
+ + * (image:metadata)
 
 /*
  * Some content that can have a checksum
