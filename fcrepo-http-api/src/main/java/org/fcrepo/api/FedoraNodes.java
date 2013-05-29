@@ -95,7 +95,11 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.cacheControl(cc)
                         .lastModified(date).build());
             }
-            return resource.getPropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo));
+            final HttpGraphSubjects subjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+            final Dataset propertiesDataset = resource.getPropertiesDataset(subjects);
+            addResponseInformationToDataset(resource, propertiesDataset, uriInfo, subjects);
+
+            return propertiesDataset;
 
         } finally {
             session.logout();

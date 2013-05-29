@@ -26,6 +26,12 @@
       <version>${project.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
    	<!-- Apache Velocity -->
     <dependency>
       <groupId>org.apache.velocity</groupId>
