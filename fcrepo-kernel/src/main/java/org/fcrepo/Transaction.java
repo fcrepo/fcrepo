@@ -1,5 +1,6 @@
 package org.fcrepo;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
@@ -11,11 +12,20 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.modeshape.jcr.JcrSession;
+
 @XmlRootElement(name = "transaction")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Transaction {
+	
+	// the default timeout is 3 minutes
+	public static final long DEFAULT_TIMEOUT =
+			3l * 60l * 1000l;
+	
+	public static final String TIMEOUT_SYSTEM_PROPERTY =
+			"fcrepo4.tx.timeout";
 
-	public enum State {
+	public static enum State {
 		DIRTY, NEW, COMMITED, ROLLED_BACK;
 	}
 
@@ -29,7 +39,7 @@ public class Transaction {
 	private final Date created;
 
 	@XmlAttribute(name = "expires")
-	private Date expires;
+	private Calendar expires;
 
 	private State state = State.NEW;
 
@@ -45,6 +55,7 @@ public class Transaction {
 		this.session = session;
 		this.created = new Date();
 		this.id = UUID.randomUUID().toString();
+		this.expires = Calendar.getInstance();
 		this.updateExpiryDate();
 	}
 
@@ -60,35 +71,53 @@ public class Transaction {
 		return id;
 	}
 
-	public void setState(State state) {
-		this.state = state;
-	}
-
-	public State getState() {
+	public State getState() throws RepositoryException {
+		if (this.session != null && this.session.hasPendingChanges()) {
+			return State.DIRTY;
+		}
 		return state;
 	}
 
     public Date getExpires() {
-        return expires;
+        return expires.getTime();
     }
 
-    public void commit() throws RepositoryException{
-        this.state = State.COMMITED;
+    public void commit() throws RepositoryException {
         this.session.save();
+        this.state = State.COMMITED;
+        this.expire();
+    }
+    
+    /**
+     * End the session, and mark for reaping
+     * @throws RepositoryException
+     */
+    public void expire() throws RepositoryException {
+    	this.session.logout();
+        this.expires.setTimeInMillis(System.currentTimeMillis());
     }
 
+    /**
+     * Discard all unpersisted changes and expire
+     * @throws RepositoryException
+     */
     public void rollback() throws RepositoryException {
         this.state = State.ROLLED_BACK;
+        this.session.refresh(false);
+        this.expire();
     }
-
+    
+    /**
+     * Roll forward the expiration date for recent activity
+     */
     public void updateExpiryDate() {
         long duration;
-        if (System.getProperty("fcrepo4.tx.timeout") != null){
-            duration = Long.parseLong(System.getProperty("fcrepo4.tx.timeout"));
+        if (System.getProperty(TIMEOUT_SYSTEM_PROPERTY) != null){
+            duration = Long.parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY));
         }else{
-            duration = 1000l * 60l * 3l;
+        	duration = DEFAULT_TIMEOUT;
         }
-        this.expires = new Date(System.currentTimeMillis() + duration);
+        this.expires.setTimeInMillis(System.currentTimeMillis() + duration);
     }
 
 }

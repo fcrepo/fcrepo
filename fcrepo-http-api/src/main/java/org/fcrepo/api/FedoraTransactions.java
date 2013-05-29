@@ -39,14 +39,22 @@ public class FedoraTransactions extends AbstractResource {
      */
     private static Map<String, Transaction> TRANSACTIONS =
             new ConcurrentHashMap<String, Transaction>();
+    
+    public static final long REAP_INTERVAL = 1000;
 
-    @Scheduled(fixedRate=1000)
+    @Scheduled(fixedRate=REAP_INTERVAL)
     public void removeAndRollbackExpired(){
         synchronized(TRANSACTIONS){
             Iterator<Entry<String, Transaction>> txs = TRANSACTIONS.entrySet().iterator();
             while (txs.hasNext()){
                 Transaction tx = txs.next().getValue();
-                if (tx.getExpires().getTime() > System.currentTimeMillis()){
+                if (tx.getExpires().getTime() <= System.currentTimeMillis()){
+                	try {
+						tx.rollback();
+					} catch (RepositoryException e) {
+						// TODO Not clear how to respond here
+						e.printStackTrace();
+					}
                     txs.remove();
                 }
             }
@@ -97,7 +105,7 @@ public class FedoraTransactions extends AbstractResource {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
         }
-        tx.setState(ROLLED_BACK);
+        tx.rollback();
         return tx;
     }
 
@@ -115,7 +123,6 @@ public class FedoraTransactions extends AbstractResource {
         final String path = toPath(pathlist);
         objectService.createObject(tx.getSession(), path);
         tx.updateExpiryDate();
-        tx.setState(DIRTY);
         return Response.ok(path).build();
     }
 

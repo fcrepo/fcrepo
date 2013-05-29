@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
+import org.fcrepo.api.FedoraTransactions;
 import org.junit.Test;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
@@ -48,7 +49,11 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     @Test
     public void testCreateAndTimeoutTransaction() throws Exception {
-        /* create a tx */
+
+        long start = System.currentTimeMillis();
+        /* create a tx that will timeout in 10 ms */
+        long testTimeout = 10;
+    	System.setProperty(Transaction.TIMEOUT_SYSTEM_PROPERTY, Long.toString(testTimeout));
         HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
         HttpResponse resp = execute(createTx);
         assertTrue(resp.getStatusLine().getStatusCode() == 200);
@@ -64,8 +69,10 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         createTx.releaseConnection();
 
         boolean expired = false;
-        long start = System.currentTimeMillis();
-        while (!expired && System.currentTimeMillis() - start < 3000) {
+        long diff = 0;
+        // the loop should be able to run for at least the tx reaping interval
+        while (!expired &&
+        		(diff = (System.currentTimeMillis() - start)) < (2* FedoraTransactions.REAP_INTERVAL)) {
             /* check that the tx is removed */
             HttpGet getTx = new HttpGet(serverAddress + "fcr:tx/" + tx.getId());
             resp = execute(getTx);
@@ -73,7 +80,13 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             expired = (404 == resp.getStatusLine().getStatusCode());
         }
 
-        assertTrue("Transaction did not expire", expired);
+        try {
+        	assertTrue("Transaction did not expire", expired);
+        	assertTrue(diff >= testTimeout);
+        } finally {
+        	System.setProperty(Transaction.TIMEOUT_SYSTEM_PROPERTY,
+        			Long.toString(Transaction.DEFAULT_TIMEOUT));
+        }
         System.clearProperty("fcrepo4.tx.timeout");
     }
 
