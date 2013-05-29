@@ -37,7 +37,7 @@ import com.sun.syndication.io.FeedException;
 import com.sun.syndication.io.SyndFeedOutput;
 
 @Component
-@Path("/rss")
+@Path("/fcr:rss")
 public class RSSPublisher extends AbstractResource {
 
     private static final Integer FEED_LENGTH = 10;

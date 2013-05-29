@@ -43,7 +43,7 @@ public class RSSIT extends AbstractResourceIT {
         session.save();
         session.logout();
 
-        HttpGet getRSSMethod = new HttpGet(serverAddress + "/rss");
+        HttpGet getRSSMethod = new HttpGet(serverAddress + "/fcr:rss");
         HttpResponse response = client.execute(getRSSMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         String content = EntityUtils.toString(response.getEntity());
