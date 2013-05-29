@@ -6,6 +6,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -21,7 +22,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     private static final Logger LOGGER =
             getLogger(GraphStoreStreamingOutput.class);
 
-    private final Model model;
+    private final Dataset dataset;
 
     private final String format;
 
@@ -33,14 +34,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
 
     public GraphStoreStreamingOutput(final Dataset dataset,
             final MediaType mediaType) {
-        this.model = dataset.getDefaultModel();
-        format =
-                contentTypeToLang(mediaType.toString()).getName().toUpperCase();
-    }
-
-    public GraphStoreStreamingOutput(final Model model,
-                                     final MediaType mediaType) {
-        this.model = model;
+        this.dataset = dataset;
         format =
                 contentTypeToLang(mediaType.toString()).getName().toUpperCase();
     }
@@ -49,7 +43,14 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     public void write(final OutputStream out) throws IOException,
             WebApplicationException {
         LOGGER.debug("Serializing graph model as {}", format);
-        model.write(out, format);
+        final Iterator<String> iterator = dataset.listNames();
+
+        while (iterator.hasNext()) {
+            final Model model = dataset.getNamedModel(iterator.next());
+            model.write(out, format);
+        }
+
+        dataset.getDefaultModel().write(out, format);
 
     }
 

@@ -2,7 +2,6 @@
 package org.fcrepo;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -17,15 +16,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.query.Dataset;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.WebContent;
+import org.fcrepo.api.rdf.HttpTripleUtil;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.PidMinter;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
@@ -78,6 +79,9 @@ public abstract class AbstractResource {
      */
     @Autowired
     protected DatastreamService datastreamService;
+
+    @Autowired(required=false)
+    private HttpTripleUtil httpTripleUtil;
 
     /**
      * A resource that can mint new Fedora PIDs.
@@ -181,6 +185,12 @@ public abstract class AbstractResource {
         }
 
         return result;
+    }
+
+    protected void addResponseInformationToDataset(final FedoraResource resource, final Dataset dataset, final UriInfo uriInfo, GraphSubjects subjects) throws RepositoryException {
+        if (httpTripleUtil != null) {
+            httpTripleUtil.addHttpComponentModelsForResource(dataset, resource, uriInfo, subjects);
+        }
     }
 
     /**
