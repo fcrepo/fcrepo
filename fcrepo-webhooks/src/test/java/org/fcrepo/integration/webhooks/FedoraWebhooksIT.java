@@ -32,7 +32,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
     @Test
     public void registerWebhookCallbackTest() throws IOException {
         final HttpPost method =
-                new HttpPost(serverAddress + "/webhooks/callback_id");
+                new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
         final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
 
@@ -45,7 +45,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(method));
 
         final HttpGet displayWebhooks =
-                new HttpGet(serverAddress + "/webhooks");
+                new HttpGet(serverAddress + "/fcr:webhooks");
 
         final String content =
                 EntityUtils.toString(client.execute(displayWebhooks)
@@ -60,7 +60,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
 
     public void deleteWebhookTest() throws Exception {
         final HttpPost method =
-                new HttpPost(serverAddress + "/webhooks/callback_id");
+                new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
         final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
 
@@ -73,7 +73,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(method));
 
         final HttpDelete delete_method =
-                new HttpDelete(serverAddress + "/webhooks/callback_id");
+                new HttpDelete(serverAddress + "/fcr:webhooks/callback_id");
 
         assertEquals(204, getStatus(delete_method));
     }
@@ -82,7 +82,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
     public void FireWebhooksTest() throws IOException {
 
         final HttpPost method =
-                new HttpPost(serverAddress + "/webhooks/callback_id");
+                new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
         final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
 
@@ -95,7 +95,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(method));
 
         final HttpPost create_method =
-                new HttpPost(serverAddress + "/rest/objects/new");
+                new HttpPost(serverAddress + "/rest/fcr:new");
         assertEquals(201, getStatus(create_method));
 
         try {

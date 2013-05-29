@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-@Path("/webhooks")
+@Path("/fcr:webhooks")
 @Component
 public class FedoraWebhooks extends AbstractResource {
     
