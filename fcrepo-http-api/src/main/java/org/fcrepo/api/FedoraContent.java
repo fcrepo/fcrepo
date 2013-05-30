@@ -21,6 +21,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -101,7 +102,7 @@ public class FedoraContent extends AbstractResource {
     public Response modifyContent(
             @PathParam("path") List<PathSegment> pathList,
             @HeaderParam("Content-Type") final MediaType requestContentType,
-            final InputStream requestBodyStream)
+            final InputStream requestBodyStream, @Context final Request request)
             throws RepositoryException, IOException, InvalidChecksumException {
         final Session session = getAuthenticatedSession();
         try {
@@ -109,6 +110,21 @@ public class FedoraContent extends AbstractResource {
             final MediaType contentType =
                     requestContentType != null ? requestContentType
                             : APPLICATION_OCTET_STREAM_TYPE;
+
+            if (nodeService.exists(session, path))  {
+
+                final Datastream ds = datastreamService.getDatastream(session, path);
+
+                final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
+                final Date date = ds.getLastModifiedDate();
+                final Date roundedDate = new Date();
+                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+                ResponseBuilder builder = request.evaluatePreconditions(roundedDate, etag);
+
+                if (builder != null) {
+                    throw new WebApplicationException(builder.build());
+                }
+            }
 
             logger.debug("create Datastream {}", path);
             final Node datastreamNode = datastreamService.createDatastreamNode(session, path, contentType

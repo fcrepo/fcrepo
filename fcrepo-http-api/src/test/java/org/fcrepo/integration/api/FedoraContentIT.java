@@ -132,5 +132,30 @@ public class FedoraContentIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testConditionalPutOfDatastreamContent() throws Exception {
+
+        final HttpPost createObjMethod =
+                postObjMethod("FedoraDatastreamsTest7");
+        assertEquals(201, getStatus(createObjMethod));
+
+        final HttpPost createDSMethod =
+                postDSMethod("FedoraDatastreamsTest7", "ds1",
+                                    "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpPut method_test_put =
+                new HttpPut(serverAddress +
+                                    "objects/FedoraDatastreamsTest7/ds1/fcr:content");
+        method_test_put.setHeader("If-Match",
+                                         "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+        method_test_put.setHeader("If-Unmodified-Since", "Sat, 29 Oct 1994 19:43:31 GMT");
+
+        method_test_put.setEntity(new StringEntity("asdf"));
+
+        assertEquals(412, getStatus(method_test_put));
+
+    }
+
 
 }

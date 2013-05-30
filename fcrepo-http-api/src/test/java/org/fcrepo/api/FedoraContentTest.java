@@ -45,36 +45,13 @@ public class FedoraContentTest {
 
     Session mockSession;
 
-    SecurityContext mockSecurityContext;
-
-    HttpServletRequest mockServletRequest;
-
-    Principal mockPrincipal;
-
-    String mockUser = "testuser";
-
     @Before
     public void setUp() throws LoginException, RepositoryException {
-        mockSecurityContext = mock(SecurityContext.class);
-        mockServletRequest = mock(HttpServletRequest.class);
-        mockPrincipal = mock(Principal.class);
-        //Function<HttpServletRequest, Session> mockFunction = mock(Function.class);
         mockDatastreams = mock(DatastreamService.class);
 
         testObj = new FedoraContent();
         testObj.setDatastreamService(mockDatastreams);
-        testObj.setSecurityContext(mockSecurityContext);
-        testObj.setHttpServletRequest(mockServletRequest);
-        //mockRepo = mock(Repository.class);
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        testObj.setSessionFactory(mockSessions);
-        mockSession = mock(Session.class);
-        when(
-                mockSessions.getSession(any(SecurityContext.class),
-                        any(HttpServletRequest.class))).thenReturn(mockSession);
-        when(mockSession.getUserID()).thenReturn(mockUser);
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(mockUser);
+        mockSession = TestHelpers.mockSession(testObj);
 
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
@@ -98,7 +75,7 @@ public class FedoraContentTest {
                                                           eq(dsPath), anyString(), any(InputStream.class))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-                testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream);
+                testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream, null);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class));
@@ -120,7 +97,7 @@ public class FedoraContentTest {
                                                          eq(dsPath), anyString(), any(InputStream.class))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-                testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream);
+                testObj.modifyContent(createPathList(pid, dsId), null, dsContentStream, null);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                                                             eq(dsPath), anyString(), any(InputStream.class));
