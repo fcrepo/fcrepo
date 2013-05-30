@@ -3,9 +3,6 @@ package org.fcrepo.integration;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.fcrepo.services.MetricsService;
-import org.fcrepo.services.RepositoryService;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -20,10 +17,4 @@ public abstract class AbstractIT {
     public void setLogger() {
         logger = getLogger(this.getClass());
     }
-
-    @AfterClass
-    public static void dumpMetrics() {
-        MetricsService.dumpMetrics(System.out);
-    }
-
 }

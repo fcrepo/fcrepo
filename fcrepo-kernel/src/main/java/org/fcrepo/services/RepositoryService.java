@@ -3,6 +3,7 @@ package org.fcrepo.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashMap;
@@ -42,8 +43,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     private static final Logger logger = getLogger(RepositoryService.class);
 
 
-    private final Timer objectSizeCalculationTimer = MetricsService.getMetrics().timer(name(
-            RepositoryService.class, "objectSizeCalculation"));
+    private final Timer objectSizeCalculationTimer = getMetrics().timer(
+            name(RepositoryService.class, "objectSizeCalculation"));
 
     @Inject
     protected Repository repo;
