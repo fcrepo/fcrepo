@@ -36,6 +36,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
@@ -46,6 +47,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -119,23 +121,41 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response modifyObject(@PathParam("path")
     final List<PathSegment> pathList, @Context
-    final UriInfo uriInfo, final InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+    final UriInfo uriInfo, final InputStream requestBodyStream, @HeaderParam("Content-Type")
+    final MediaType requestContentType, @Context final Request request)
+            throws RepositoryException, IOException, InvalidChecksumException {
         final Session session = getAuthenticatedSession();
         final String path = toPath(pathList);
         logger.debug("Modifying object with path: {}", path);
 
         try {
 
-            final FedoraResource result = nodeService.getObject(session, path);
+            final FedoraResource resource = nodeService.findOrCreateObject(session, path);
 
-            if (requestBodyStream != null) {
-                result.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class,
-                                                                            uriInfo), IOUtils.toString(requestBodyStream));
+            final boolean isNew = resource.isNew();
+
+            if (!isNew)  {
+
+
+                final Date date = resource.getLastModifiedDate();
+                final Date roundedDate = new Date();
+                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+                ResponseBuilder builder = request.evaluatePreconditions(roundedDate);
+
+                if (builder != null) {
+                    throw new WebApplicationException(builder.build());
+                }
             }
+
+            resource.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo), IOUtils.toString(requestBodyStream));
             session.save();
 
-            return Response.status(HttpStatus.SC_NO_CONTENT).build();
+            if (isNew) {
+                return created(uriInfo.getBaseUriBuilder().path("/rest" + path).build()).build();
+            } else {
+                return noContent().build();
+            }
+
         } finally {
             session.logout();
         }

@@ -301,4 +301,12 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         versionHistory.addVersionLabel(getBaseVersion(node).getName(), label,
                 true);
     }
+
+    /**
+     * Check if a resource was created in this session
+     * @return
+     */
+    public boolean isNew() {
+        return node.isNew();
+    }
 }

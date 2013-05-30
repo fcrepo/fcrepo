@@ -2,6 +2,8 @@
 package org.fcrepo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -186,6 +188,18 @@ public class FedoraResourceTest {
 
         testObj.addVersionLabel("v1.0.0");
         verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", true);
+    }
+
+    @Test
+    public void testIsNew() throws RepositoryException {
+        when(mockNode.isNew()).thenReturn(true);
+        assertTrue("resource state should be the same as the node state", testObj.isNew());
+    }
+
+    @Test
+    public void testIsNotNew() throws RepositoryException {
+        when(mockNode.isNew()).thenReturn(false);
+        assertFalse("resource state should be the same as the node state", testObj.isNew());
     }
 
     private static void setField(final String name, final Class<?> clazz,

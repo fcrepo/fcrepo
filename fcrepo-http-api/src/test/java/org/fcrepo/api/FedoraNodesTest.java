@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -26,6 +27,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.rdf.GraphSubjects;
@@ -87,11 +89,18 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testModify() throws RepositoryException, IOException {
+    public void testModify() throws RepositoryException, IOException, InvalidChecksumException {
         final String pid = "testObject";
+
+        final FedoraResource mockResource = mock(FedoraResource.class);
+        when(mockResource.isNew()).thenReturn(false);
+        when(mockResource.getLastModifiedDate()).thenReturn(new Date());
+        when(mockNodes.findOrCreateObject(mockSession, "/testObject")).thenReturn(mockResource);
+        final Request mockRequest = mock(Request.class);
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(null);
         final Response actual =
                 testObj.modifyObject(createPathList(pid), TestHelpers
-                        .getUriInfoImpl(), null);
+                        .getUriInfoImpl(), new ByteArrayInputStream("".getBytes()), null, mockRequest);
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
