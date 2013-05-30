@@ -16,6 +16,7 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.UpdateAction;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.integration.AbstractIT;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
@@ -71,7 +72,7 @@ public class ObjectServiceIT extends AbstractIT {
                 continue;
             }
             final String uri = namespaceRegistry.getURI(s);
-            assertTrue("expected to find JCR namespaces " + s + " in graph", registryGraph.asDatasetGraph().contains(Node.ANY, ResourceFactory.createResource(uri).asNode(), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE).asNode(), ResourceFactory.createPlainLiteral(s).asNode()));
+            assertTrue("expected to find JCR namespaces " + s + " in graph", registryGraph.asDatasetGraph().contains(Node.ANY, ResourceFactory.createResource(uri).asNode(), RdfLexicon.HAS_NAMESPACE_PREFIX.asNode(), ResourceFactory.createPlainLiteral(s).asNode()));
         }
         session.logout();
     }
@@ -83,7 +84,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Dataset registryGraph = objectService.getNamespaceRegistryGraph(session);
         final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 
-        UpdateAction.parseExecute("INSERT { <info:abc> <" + JcrRdfTools.HAS_NAMESPACE_PREDICATE + "> \"abc\" } WHERE { }", registryGraph);
+        UpdateAction.parseExecute("INSERT { <info:abc> <" + RdfLexicon.HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }", registryGraph);
 
         assertEquals("abc", namespaceRegistry.getPrefix("info:abc"));
         session.logout();

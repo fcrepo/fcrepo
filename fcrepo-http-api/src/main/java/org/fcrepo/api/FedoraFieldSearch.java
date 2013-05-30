@@ -25,8 +25,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.RDFMediaType;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -36,6 +40,8 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+
+import java.util.Map;
 
 /**
  * @author Frank Asseg
@@ -80,6 +86,11 @@ public class FedoraFieldSearch extends AbstractResource implements
                     nodeService.searchRepository(new HttpGraphSubjects(
                             FedoraNodes.class, uriInfo), searchResult, session,
                             terms, limit, offset);
+
+            final Model searchModel = ModelFactory.createDefaultModel();
+            Map<String, ?> pathMap = ImmutableBiMap.of("q", terms, "offset", offset + limit, "limit", limit);
+            searchModel.add(searchResult, RdfLexicon.SEARCH_NEXT_PAGE, searchModel.createResource(uriInfo.getRequestUriBuilder().path(FedoraFieldSearch.class).buildFromMap(pathMap).toString()));
+            dataset.addNamedModel("search-pagination", searchModel);
 
             return dataset;
 

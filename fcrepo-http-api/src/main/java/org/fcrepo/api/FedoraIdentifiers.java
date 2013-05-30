@@ -35,6 +35,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.RdfLexicon;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -93,7 +94,7 @@ public class FedoraIdentifiers extends AbstractResource {
 
                 final String s = builder.buildFromMap(ImmutableBiMap.of("path", absPath)).toASCIIString();
 
-                model.add(pidsResult, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasMember"), ResourceFactory.createResource(s));
+                model.add(pidsResult, RdfLexicon.HAS_MEMBER_OF_RESULT, ResourceFactory.createResource(s));
             }
 
             return GraphStoreFactory.create(model).toDataset();

@@ -38,6 +38,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.functions.GetClusterConfiguration;
@@ -61,7 +62,6 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 public abstract class JcrRdfTools {
 
     private static final Logger LOGGER = getLogger(JcrRdfTools.class);
-    public static final String HAS_NAMESPACE_PREDICATE = "info:fedora/fedora-system:def/internal#hasNamespace";
 
     /**
      * A map of JCR namespaces to Fedora's RDF namespaces
@@ -182,7 +182,7 @@ public abstract class JcrRdfTools {
             if (entry.getKey().isEmpty()) {
                 continue;
             }
-            model.add(ResourceFactory.createResource(entry.getValue()), ResourceFactory.createProperty(HAS_NAMESPACE_PREDICATE), ResourceFactory.createPlainLiteral(entry.getKey()));
+            model.add(ResourceFactory.createResource(entry.getValue()), RdfLexicon.HAS_NAMESPACE_PREFIX, ResourceFactory.createPlainLiteral(entry.getKey()));
         }
 
         return model;
@@ -213,8 +213,7 @@ public abstract class JcrRdfTools {
             final Node node = iterator.next();
             addJcrPropertiesToModel(factory, node, model);
             if (iteratorSubject != null) {
-                model.add(iteratorSubject, model
-                        .createProperty("info:fedora/iterator#hasNode"),
+                model.add(iteratorSubject, RdfLexicon.HAS_MEMBER_OF_RESULT,
                         getGraphSubject(factory, node));
             }
         }
@@ -282,18 +281,18 @@ public abstract class JcrRdfTools {
             final NodeType nodeType = nodeTypes.nextNodeType();
             model.add(
                     subject,
-                    model.createProperty("info:fedora/fedora-system:def/internal#hasNodeType"),
+                    RdfLexicon.HAS_NODE_TYPE,
                     nodeType.getName());
         }
 
         model.add(
                 subject,
-                model.createProperty("info:fedora/fedora-system:def/internal#objectCount"),
+                RdfLexicon.HAS_OBJECT_COUNT,
                 ResourceFactory
                         .createTypedLiteral(getRepositoryCount(repository)));
         model.add(
                 subject,
-                model.createProperty("info:fedora/fedora-system:def/internal#objectSize"),
+                RdfLexicon.HAS_OBJECT_SIZE,
                 ResourceFactory
                         .createTypedLiteral(getRepositorySize(repository)));
 
@@ -361,7 +360,7 @@ public abstract class JcrRdfTools {
         for (final LowLevelCacheEntry e : cacheEntries) {
             model.add(
                     contentNodeSubject,
-                    model.createProperty("info:fedora/fedora-system:def/internal#hasLocation"),
+                             RdfLexicon.HAS_LOCATION,
                     e.getExternalIdentifier());
         }
 
@@ -385,7 +384,7 @@ public abstract class JcrRdfTools {
             final Node parentNode = node.getParent();
             model.add(
                     subject,
-                    model.createProperty("info:fedora/fedora-system:def/internal#hasParent"),
+                    RdfLexicon.HAS_PARENT,
                     getGraphSubject(factory, parentNode));
             addJcrPropertiesToModel(factory, parentNode, model);
         }
@@ -406,11 +405,11 @@ public abstract class JcrRdfTools {
                 addJcrPropertiesToModel(factory, childNode, model);
                 model.add(
                         subject,
-                        model.createProperty("info:fedora/fedora-system:def/internal#hasChild"),
+                        RdfLexicon.HAS_CHILD,
                         childNodeSubject);
                 model.add(
                         childNodeSubject,
-                        model.createProperty("info:fedora/fedora-system:def/internal#hasParent"),
+                        RdfLexicon.HAS_PARENT,
                         subject);
             }
 
@@ -418,7 +417,7 @@ public abstract class JcrRdfTools {
 
         model.add(
                 subject,
-                model.createProperty("info:fedora/fedora-system:def/internal#numberOfChildren"),
+                RdfLexicon.HAS_CHILD_COUNT,
                 ResourceFactory.createTypedLiteral(nodeIterator.getSize() -
                         excludedNodes));
     }
@@ -450,11 +449,11 @@ public abstract class JcrRdfTools {
 
             model.add(
                     subject,
-                    model.createProperty("info:fedora/fedora-system:def/internal#hasContent"),
+                    RdfLexicon.HAS_CONTENT,
                     contentSubject);
             model.add(
                     contentSubject,
-                    model.createProperty("info:fedora/fedora-system:def/internal#isContentOf"),
+                    RdfLexicon.IS_CONTENT_OF,
                     subject);
 
             addJcrPropertiesToModel(factory, contentNode, model);
@@ -695,7 +694,7 @@ public abstract class JcrRdfTools {
 
             model.add(
                     subject,
-                    model.createProperty("info:fedora/fedora-system:def/internal#hasVersion"),
+                    RdfLexicon.HAS_VERSION,
                     versionSubject);
 
             final String[] versionLabels =
@@ -703,7 +702,7 @@ public abstract class JcrRdfTools {
             for (final String label : versionLabels) {
                 model.add(
                         versionSubject,
-                        model.createProperty("info:fedora/fedora-system:def/internal#hasVersionLabel"),
+                        RdfLexicon.HAS_VERSION_LABEL,
                         label);
             }
             final javax.jcr.PropertyIterator properties =
@@ -737,16 +736,16 @@ public abstract class JcrRdfTools {
         for ( FixityResult result : blobs) {
             final Resource resultSubject = ResourceFactory.createResource();
 
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#isFixityResultOf"), factory.getGraphSubject(node));
-            model.add(factory.getGraphSubject(node), ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasFixityResult"), resultSubject);
+            model.add(resultSubject, RdfLexicon.IS_FIXITY_RESULT_OF, factory.getGraphSubject(node));
+            model.add(factory.getGraphSubject(node), RdfLexicon.HAS_FIXITY_RESULT, resultSubject);
 
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#storedIn"), ResourceFactory.createResource(result.getStoreIdentifier()));
+            model.add(resultSubject, RdfLexicon.HAS_LOCATION, ResourceFactory.createResource(result.getStoreIdentifier()));
             for(FixityResult.FixityState state : result.status) {
-                model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#status"), ResourceFactory.createTypedLiteral(state.toString()));
+                model.add(resultSubject, RdfLexicon.HAS_FIXITY_STATE, ResourceFactory.createTypedLiteral(state.toString()));
             }
 
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum"), ResourceFactory.createResource(result.computedChecksum.toString()));
-            model.add(resultSubject, ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize"), ResourceFactory.createTypedLiteral(result.computedSize));
+            model.add(resultSubject, RdfLexicon.HAS_COMPUTED_CHECKSUM, ResourceFactory.createResource(result.computedChecksum.toString()));
+            model.add(resultSubject, RdfLexicon.HAS_COMPUTED_SIZE, ResourceFactory.createTypedLiteral(result.computedSize));
         }
 
         return model;

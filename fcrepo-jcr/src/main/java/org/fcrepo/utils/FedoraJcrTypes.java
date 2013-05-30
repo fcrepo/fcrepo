@@ -29,4 +29,6 @@ public interface FedoraJcrTypes {
     String CONTENT_DIGEST = "fedora:digest";
 
     String FCR_CONTENT = "fcr:content";
+
+    String ROOT = "mode:root";
 }

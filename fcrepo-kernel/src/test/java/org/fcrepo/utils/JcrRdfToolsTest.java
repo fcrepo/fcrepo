@@ -30,9 +30,9 @@ import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
@@ -558,7 +558,7 @@ public class JcrRdfToolsTest {
 
         Iterator<Node> mockIterator = Arrays.asList(mockNode1, mockNode2, mockNode3).iterator();
         final Model model = JcrRdfTools.getJcrNodeIteratorModel(testSubjects, mockIterator, mockResource);
-        assertEquals(3, model.listObjectsOfProperty(ResourceFactory.createProperty("info:fedora/iterator#hasNode")).toSet().size());
+        assertEquals(3, model.listObjectsOfProperty(RdfLexicon.HAS_MEMBER_OF_RESULT).toSet().size());
     }
 
     @Test
@@ -583,15 +583,15 @@ public class JcrRdfToolsTest {
         GraphStore gs =  GraphStoreFactory.create(fixityResultsModel);
         assertTrue(gs.contains(com.hp.hpl.jena.graph.Node.ANY,
                                       com.hp.hpl.jena.graph.Node.ANY,
-                                      ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#isFixityResultOf").asNode(),
+                                      RdfLexicon.IS_FIXITY_RESULT_OF.asNode(),
                                       ResourceFactory.createResource("info:fedora/path/to/node").asNode()));
         assertTrue(gs.contains(com.hp.hpl.jena.graph.Node.ANY,
                                       com.hp.hpl.jena.graph.Node.ANY,
-                                      ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum").asNode(),
+                                      RdfLexicon.HAS_COMPUTED_CHECKSUM.asNode(),
                                       ResourceFactory.createResource("abc").asNode()));
         assertTrue(gs.contains(com.hp.hpl.jena.graph.Node.ANY,
                                       com.hp.hpl.jena.graph.Node.ANY,
-                                      ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize").asNode(),
+                                      RdfLexicon.HAS_COMPUTED_SIZE.asNode(),
                                       ResourceFactory.createTypedLiteral(123).asNode()));
 
     }
@@ -599,7 +599,7 @@ public class JcrRdfToolsTest {
     @Test
     public void testGetJcrNamespaceModel() throws Exception {
         final Model jcrNamespaceModel = JcrRdfTools.getJcrNamespaceModel(mockSession);
-        assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("info:fedora/fedora-system:def/internal#"), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE), "fedora-internal"));
-        assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("registered-uri#"), ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE), "some-prefix"));
+        assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("info:fedora/fedora-system:def/internal#"), RdfLexicon.HAS_NAMESPACE_PREFIX, "fedora-internal"));
+        assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("registered-uri#"), RdfLexicon.HAS_NAMESPACE_PREFIX, "some-prefix"));
     }
 }

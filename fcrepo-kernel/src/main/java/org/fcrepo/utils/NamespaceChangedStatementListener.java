@@ -2,6 +2,7 @@ package org.fcrepo.utils;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.fcrepo.RdfLexicon;
 import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
@@ -25,7 +26,7 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
         LOGGER.debug(">> added statement {}", s);
 
-        if (!s.getPredicate().asResource().getURI().equals(JcrRdfTools.HAS_NAMESPACE_PREDICATE)) {
+        if (!s.getPredicate().equals(RdfLexicon.HAS_NAMESPACE_PREFIX)) {
              return;
         }
 
@@ -45,7 +46,7 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
         LOGGER.debug(">> removed statement {}", s);
 
-        if (!s.getPredicate().asResource().getURI().equals(JcrRdfTools.HAS_NAMESPACE_PREDICATE)) {
+        if (!s.getPredicate().equals(RdfLexicon.HAS_NAMESPACE_PREFIX)) {
             return;
         }
 

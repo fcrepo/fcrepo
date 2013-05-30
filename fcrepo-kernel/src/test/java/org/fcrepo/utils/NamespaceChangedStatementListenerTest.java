@@ -2,6 +2,7 @@ package org.fcrepo.utils;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.fcrepo.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +36,7 @@ public class NamespaceChangedStatementListenerTest {
     public void shouldAddNamespaceStatement() throws RepositoryException {
         Statement mockStatement = mock(Statement.class);
         when(mockStatement.getSubject()).thenReturn(ResourceFactory.createResource("uri"));
-        when(mockStatement.getPredicate()).thenReturn(ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE));
+        when(mockStatement.getPredicate()).thenReturn(RdfLexicon.HAS_NAMESPACE_PREFIX);
         when(mockStatement.getObject()).thenReturn(ResourceFactory.createPlainLiteral("123"));
 
         testObj.addedStatement(mockStatement);
@@ -59,7 +60,7 @@ public class NamespaceChangedStatementListenerTest {
     public void shouldRemoveNamespaceStatement() throws RepositoryException {
         Statement mockStatement = mock(Statement.class);
         when(mockStatement.getSubject()).thenReturn(ResourceFactory.createResource("uri"));
-        when(mockStatement.getPredicate()).thenReturn(ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE));
+        when(mockStatement.getPredicate()).thenReturn(RdfLexicon.HAS_NAMESPACE_PREFIX);
         when(mockStatement.getObject()).thenReturn(ResourceFactory.createPlainLiteral("123"));
 
         when(mockNamespaceRegistry.getPrefix("uri")).thenReturn("123");
@@ -72,7 +73,7 @@ public class NamespaceChangedStatementListenerTest {
     public void shouldIgnoreNonMatchingNamespacesOnRemoveNamespaceStatement() throws RepositoryException {
         Statement mockStatement = mock(Statement.class);
         when(mockStatement.getSubject()).thenReturn(ResourceFactory.createResource("uri"));
-        when(mockStatement.getPredicate()).thenReturn(ResourceFactory.createProperty(JcrRdfTools.HAS_NAMESPACE_PREDICATE));
+        when(mockStatement.getPredicate()).thenReturn(RdfLexicon.HAS_NAMESPACE_PREFIX);
         when(mockStatement.getObject()).thenReturn(ResourceFactory.createPlainLiteral("456"));
 
         when(mockNamespaceRegistry.getPrefix("uri")).thenReturn("123");

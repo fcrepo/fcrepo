@@ -12,6 +12,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 
@@ -69,7 +70,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         logger.debug("Got search results graph: {}", graphStore);
         assertEquals(200, resp.getStatusLine().getStatusCode());
-        assertFalse(graphStore.contains(Node.ANY, ResourceFactory.createResource(serverAddress + "fcr:search?q=testobj&offset=1&limit=1").asNode(), ResourceFactory.createResource("info:fedora/iterator#hasNode").asNode(), Node.ANY));
+        assertFalse(graphStore.contains(Node.ANY, ResourceFactory.createResource(serverAddress + "fcr:search?q=testobj&offset=1&limit=1").asNode(), RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY));
 
 
     }

@@ -5,6 +5,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.FedoraExport;
 import org.fcrepo.api.FedoraFieldSearch;
 import org.fcrepo.api.FedoraFixity;
@@ -35,26 +36,26 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType("mode:root")) {
-            model.add(s, model.createProperty("http://www.whatwg.org/specs/web-apps/current-work/multipage/links.html#link-type-search"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraFieldSearch.class).build().toASCIIString()));
-            model.add(s, model.createProperty("http://microformats.org/wiki/rel-sitemap"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraSitemap.class).build().toASCIIString()));
-            model.add(s, model.createProperty("info:fedora/hasTransactionProvider"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraTransactions.class).build().toASCIIString()));
-            model.add(s, model.createProperty("info:fedora/hasNamespaces"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraRepositoryNamespaces.class).build().toASCIIString()));
+            model.add(s, RdfLexicon.HAS_SEARCH_SERVICE, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraFieldSearch.class).build().toASCIIString()));
+            model.add(s, RdfLexicon.HAS_SITEMAP, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraSitemap.class).build().toASCIIString()));
+            model.add(s, RdfLexicon.HAS_TRANSACTION_SERVICE, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraTransactions.class).build().toASCIIString()));
+            model.add(s, RdfLexicon.HAS_NAMESPACE_SERVICE, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraRepositoryNamespaces.class).build().toASCIIString()));
 
         } else {
 
             for (String key : serializers.keySet()) {
                 final Map<String, String> pathMap = ImmutableBiMap.of("path", resource.getPath().substring(1), "format", key);
-                model.add(s, model.createProperty("info:fedora/exportsAs"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraExport.class).buildFromMap(pathMap).toASCIIString()));
+                model.add(s, RdfLexicon.HAS_SERIALIZATION, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraExport.class).buildFromMap(pathMap).toASCIIString()));
             }
 
             final Map<String, String> pathMap = ImmutableBiMap.of("path", resource.getPath().substring(1));
-            model.add(s, model.createProperty("info:fedora/hasVersions"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(pathMap).toASCIIString()));
+            model.add(s, RdfLexicon.HAS_VERSION_HISTORY, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(pathMap).toASCIIString()));
 
         }
 
         if (resource.hasContent()) {
             final Map<String, String> pathMap = ImmutableBiMap.of("path", resource.getPath().substring(1));
-            model.add(s, model.createProperty("info:fedora/runFixityCheck"), model.createResource(uriInfo.getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(pathMap).toASCIIString()));
+            model.add(s, RdfLexicon.HAS_FIXITY_SERVICE, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(pathMap).toASCIIString()));
         }
 
         return model;

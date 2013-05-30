@@ -4,8 +4,10 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.utils.FedoraJcrTypes;
 
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
@@ -17,8 +19,8 @@ public class RssResources implements UriAwareResourceModelFactory {
         final Model model = ModelFactory.createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType("mode:root")) {
-            model.add(s, model.createProperty("http://www.whatwg.org/specs/web-apps/current-work/multipage/history.html#link-type-feed"), model.createResource(uriInfo.getBaseUriBuilder().path(RSSPublisher.class).build().toASCIIString()));
+        if (resource.getNode().getPrimaryNodeType().isNodeType(FedoraJcrTypes.ROOT)) {
+            model.add(s, RdfLexicon.HAS_FEED, model.createResource(uriInfo.getBaseUriBuilder().path(RSSPublisher.class).build().toASCIIString()));
         }
 
         return model;

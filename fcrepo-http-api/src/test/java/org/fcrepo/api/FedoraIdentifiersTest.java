@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
@@ -65,7 +66,7 @@ public class FedoraIdentifiersTest {
         final Dataset np = testObj.getNextPid(createPathList(""), 2, uriInfo);
 
         LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
-        assertTrue(np.getDefaultModel().contains(ResourceFactory.createResource("http://localhost/fcrepo/rest/fcr:pid"), ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasMember"), ResourceFactory.createResource("http://localhost/fcrepo/rest/asdf:123")));
+        assertTrue(np.getDefaultModel().contains(ResourceFactory.createResource("http://localhost/fcrepo/rest/fcr:pid"), RdfLexicon.HAS_MEMBER_OF_RESULT, ResourceFactory.createResource("http://localhost/fcrepo/rest/asdf:123")));
 
     }
 }

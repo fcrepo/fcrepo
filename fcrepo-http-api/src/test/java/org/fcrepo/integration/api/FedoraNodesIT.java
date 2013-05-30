@@ -23,7 +23,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Graph;
@@ -130,8 +132,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         .contains(
                                 Node.ANY,
                                 Node.ANY,
-                                Node.createURI("info:fedora/fedora-system:def/internal#primaryType"),
-                                Node.createLiteral("mode:root")));
+                                RdfLexicon.HAS_PRIMARY_TYPE.asNode(),
+                                Node.createLiteral(FedoraJcrTypes.ROOT)));
 
     }
 
@@ -281,8 +283,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         Iterator<Triple> iterator =
                 graphStore
                         .getDefaultGraph()
-                        .find(Node.ANY,
-                                Node.createURI("info:fedora/fedora-system:def/internal#objectSize"),
+                        .find(Node.ANY, RdfLexicon.HAS_OBJECT_SIZE.asNode(),
                                 Node.ANY);
 
         final Integer oldSize =
@@ -301,8 +302,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         iterator =
                 graphStore
                         .getDefaultGraph()
-                        .find(Node.ANY,
-                                Node.createURI("info:fedora/fedora-system:def/internal#objectSize"),
+                        .find(Node.ANY, RdfLexicon.HAS_OBJECT_SIZE.asNode(),
                                 Node.ANY);
 
         final Integer newSize =
@@ -328,8 +328,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         Iterator<Triple> iterator =
                 graphStore
                         .getDefaultGraph()
-                        .find(Node.ANY,
-                                Node.createURI("info:fedora/fedora-system:def/internal#objectCount"),
+                        .find(Node.ANY, RdfLexicon.HAS_OBJECT_COUNT.asNode(),
                                 Node.ANY);
 
         final Integer oldSize =
@@ -349,7 +348,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore
                         .getDefaultGraph()
                         .find(Node.ANY,
-                                Node.createURI("info:fedora/fedora-system:def/internal#objectCount"),
+                                     RdfLexicon.HAS_OBJECT_COUNT.asNode(),
                                 Node.ANY);
 
         final Integer newSize =

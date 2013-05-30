@@ -19,10 +19,12 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -69,7 +71,7 @@ public class FedoraResourceIT extends AbstractIT {
 
 		logger.warn(object.getPropertiesDataset().toString());
 		Node s = Node.createURI("info:fedora/testNodeGraph");
-		Node p = Node.createURI("info:fedora/fedora-system:def/internal#primaryType");
+		Node p = RdfLexicon.HAS_PRIMARY_TYPE.asNode();
 		Node o = Node.createLiteral("nt:unstructured");
 		assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 		session.logout();
@@ -83,8 +85,8 @@ public class FedoraResourceIT extends AbstractIT {
 
         logger.warn(object.getPropertiesDataset().toString());
         Node s = Node.createURI("info:fedora/");
-        Node p = Node.createURI("info:fedora/fedora-system:def/internal#primaryType");
-        Node o = Node.createLiteral("mode:root");
+        Node p = RdfLexicon.HAS_PRIMARY_TYPE.asNode();
+        Node o = Node.createLiteral(FedoraJcrTypes.ROOT);
         assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 
 
@@ -92,8 +94,8 @@ public class FedoraResourceIT extends AbstractIT {
         o = Node.createLiteral("http://www.modeshape.org");
         assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 
-        p = Node.createURI("info:fedora/fedora-system:def/internal#hasNodeType");
-        o = Node.createLiteral("fedora:resource");
+        p = RdfLexicon.HAS_NODE_TYPE.asNode();
+        o = Node.createLiteral(FedoraJcrTypes.FEDORA_RESOURCE);
         assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 
         session.logout();
@@ -109,17 +111,17 @@ public class FedoraResourceIT extends AbstractIT {
 
 		// jcr property
 		Node s = Node.createURI("info:fedora/testObjectGraph");
-		Node p = Node.createURI("info:fedora/fedora-system:def/internal#uuid");
+		Node p = RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode();
 		Node o = Node.createLiteral(object.getNode().getIdentifier());
 		assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 
 
 		// multivalued property
-		p = Node.createURI("info:fedora/fedora-system:def/internal#mixinTypes");
-		o = Node.createLiteral("fedora:resource");
+		p = RdfLexicon.HAS_MIXIN_TYPE.asNode();
+		o = Node.createLiteral(FedoraJcrTypes.FEDORA_RESOURCE);
 		assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 
-		o = Node.createLiteral("fedora:object");
+		o = Node.createLiteral(FedoraJcrTypes.FEDORA_OBJECT);
 		assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s, p, o));
 
 		session.logout();
@@ -147,7 +149,7 @@ public class FedoraResourceIT extends AbstractIT {
 
 		// jcr property
 		Node s = Node.createURI("info:fedora/testDatastreamGraph");
-		Node p = Node.createURI("info:fedora/fedora-system:def/internal#uuid");
+		Node p = RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode();
 		Node o = Node.createLiteral(object.getNode().getIdentifier());
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
 
@@ -155,7 +157,7 @@ public class FedoraResourceIT extends AbstractIT {
 
 
 		// multivalued property
-		p = Node.createURI("info:fedora/fedora-system:def/internal#mixinTypes");
+		p = RdfLexicon.HAS_MIXIN_TYPE.asNode();
 		o = Node.createLiteral("fedora:resource");
 		assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
@@ -163,7 +165,7 @@ public class FedoraResourceIT extends AbstractIT {
 		assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
         // structure
-        p = Node.createURI("info:fedora/fedora-system:def/internal#numberOfChildren");
+        p = RdfLexicon.HAS_CHILD_COUNT.asNode();
         RDFDatatype long_datatype = ResourceFactory.createTypedLiteral(0L).getDatatype();
         o = Node.createLiteral("0", long_datatype);
 
@@ -173,13 +175,13 @@ public class FedoraResourceIT extends AbstractIT {
 		o = Node.createURI("info:fedora/testDatastreamGraphParent");
 		assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-		p = Node.createURI("info:fedora/fedora-system:def/internal#hasContent");
+		p = RdfLexicon.HAS_CONTENT.asNode();
 		o = Node.createURI("info:fedora/testDatastreamGraph/fcr:content");
 		assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
 		// content properties
 		s = Node.createURI("info:fedora/testDatastreamGraph/fcr:content");
-		p = Node.createURI("info:fedora/fedora-system:def/internal#mimeType");
+		p = RdfLexicon.HAS_MIME_TYPE.asNode();
 		o = Node.createLiteral("text/plain");
 		assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
@@ -189,7 +191,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         // location
 
-        p = Node.createURI("info:fedora/fedora-system:def/internal#hasLocation");
+        p = RdfLexicon.HAS_LOCATION.asNode();
         o = Node.ANY;
 
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
@@ -261,7 +263,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         // go querying for the version URI
         Node s = Node.createURI("info:fedora/testObjectVersionGraph");
-        Node p = Node.createURI("info:fedora/fedora-system:def/internal#hasVersion");
+        Node p = RdfLexicon.HAS_VERSION.asNode();
         final ExtendedIterator<Triple> triples = graphStore.asDatasetGraph().getDefaultGraph().find(Triple.createMatch(s, p, Node.ANY));
 
         List<Triple> list = triples.toList();
@@ -269,7 +271,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         // make sure it matches the label
         s = list.get(0).getMatchObject();
-        p = Node.createURI("info:fedora/fedora-system:def/internal#hasVersionLabel");
+        p = RdfLexicon.HAS_VERSION_LABEL.asNode();
         Node o = Node.createLiteral("v0.0.1");
 
         assertTrue(graphStore.asDatasetGraph().contains(Node.ANY, s, p, o));

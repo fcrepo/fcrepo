@@ -21,6 +21,7 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -203,25 +204,24 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
         model.add(
                 searchSubject,
-                model.createProperty("http://a9.com/-/spec/opensearch/1.1/totalResults"),
+                RdfLexicon.SEARCH_HAS_TOTAL_RESULTS,
                 model.createTypedLiteral(size));
 
         model.add(
                 searchSubject,
-                model.createProperty("http://a9.com/-/spec/opensearch/1.1/itemsPerPage"),
+                RdfLexicon.SEARCH_ITEMS_PER_PAGE,
                 model.createTypedLiteral(limit));
         model.add(
                 searchSubject,
-                model.createProperty("http://a9.com/-/spec/opensearch/1.1/startIndex"),
+                RdfLexicon.SEARCH_OFFSET,
                 model.createTypedLiteral(offset));
         model.add(
                 searchSubject,
-                model.createProperty("http://a9.com/-/spec/opensearch/1.1/Query#searchTerms"),
+                RdfLexicon.SEARCH_TERMS,
                 terms);
 
         if (nodeIterator.hasNext()) {
-            model.add(searchSubject, model
-                    .createProperty("info:fedora/search/hasMoreResults"), model
+            model.add(searchSubject, RdfLexicon.SEARCH_HAS_MORE, model
                     .createTypedLiteral(true));
         }
 

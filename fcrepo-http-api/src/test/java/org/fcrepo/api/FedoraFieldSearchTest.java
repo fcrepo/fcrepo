@@ -10,12 +10,14 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
@@ -63,6 +65,12 @@ public class FedoraFieldSearchTest {
                                                                                               null));
 
         when(mockNodeService.searchRepository(any(GraphSubjects.class), eq(ResourceFactory.createResource("http://localhost/fcrepo/path/to/query/endpoint")), eq(mockSession), eq("ZZZ"), eq(0), eq(0L))).thenReturn(DatasetFactory.create());
+        final UriBuilder mockUriBuilder = mock(UriBuilder.class);
+
+        when(mockUriBuilder.path(FedoraFieldSearch.class)).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.buildFromMap(any(Map.class))).thenReturn(new URI("path/to/object"));
+
+                    when(uriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder);
 
         testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, uriInfo);
 
