@@ -2,7 +2,7 @@
 package org.fcrepo;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.services.MetricsService.metrics;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
@@ -41,8 +41,8 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(Datastream.class);
 
-    static final Histogram contentSizeHistogram = metrics.histogram(name(
-            Datastream.class, "content-size"));
+    static final Histogram contentSizeHistogram = getMetrics().histogram(
+            name(Datastream.class, "content-size"));
 
     /**
      * The JCR node for this datastream

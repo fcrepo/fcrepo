@@ -6,13 +6,15 @@ import java.io.PrintStream;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 
 public abstract class RegistryService {
 
-    private static final MetricRegistry metrics = new MetricRegistry();
+    private static final MetricRegistry METRICS = SharedMetricRegistries
+            .getOrCreate("fcrepo-metrics");
 
     public static MetricRegistry getMetrics() {
-        return metrics;
+        return METRICS;
     }
 
     public static void dumpMetrics(final PrintStream os) {
@@ -28,5 +30,4 @@ public abstract class RegistryService {
                 .getMeters(filter), registry.getTimers(filter));
 
     }
-
 }

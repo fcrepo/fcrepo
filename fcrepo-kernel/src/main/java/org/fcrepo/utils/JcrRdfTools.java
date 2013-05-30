@@ -11,6 +11,7 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.utils.FedoraTypesUtils.getNodeTypeManager;
 import static org.fcrepo.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
@@ -22,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
@@ -40,7 +40,6 @@ import javax.jcr.version.VersionIterator;
 
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
-import org.fcrepo.services.MetricsService;
 import org.fcrepo.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -262,8 +261,7 @@ public abstract class JcrRdfTools {
 
         final Repository repository = node.getSession().getRepository();
         /* retreive the metrics from the service */
-        final SortedMap<String, Counter> counters =
-                MetricsService.getMetrics().getCounters();
+        final SortedMap<String, Counter> counters = getMetrics().getCounters();
 
         final Resource subject = factory.getGraphSubject(node);
         for (final String key : repository.getDescriptorKeys()) {
