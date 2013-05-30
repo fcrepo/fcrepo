@@ -126,9 +126,8 @@ public class FedoraNodes extends AbstractResource {
             final FedoraResource result = nodeService.getObject(session, path);
 
             if (requestBodyStream != null) {
-                UpdateAction.parseExecute(IOUtils.toString(requestBodyStream),
-                        result.getPropertiesDataset(new HttpGraphSubjects(
-                                                                                 FedoraNodes.class, uriInfo)));
+                result.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class,
+                                                                            uriInfo), IOUtils.toString(requestBodyStream));
             }
             session.save();
 
