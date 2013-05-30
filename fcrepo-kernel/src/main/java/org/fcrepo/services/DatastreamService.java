@@ -5,8 +5,8 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
 import static java.security.MessageDigest.getInstance;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.fcrepo.services.MetricsService.metrics;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,14 +20,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Timer;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableSet;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -39,6 +31,15 @@ import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.update.GraphStoreFactory;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -54,16 +55,20 @@ public class DatastreamService extends RepositoryService {
     @Autowired
     private LowLevelStorageService llStoreService;
 
-    static final Counter fixityCheckCounter = metrics.counter(name(
+    static final Counter fixityCheckCounter = getMetrics().counter(
+            name(
                                                                           LowLevelStorageService.class, "fixity-check-counter"));
 
-    static final Timer timer = metrics.timer(name(Datastream.class,
+    static final Timer timer = getMetrics().timer(
+            name(Datastream.class,
                                                          "fixity-check-time"));
 
-    static final Counter fixityRepairedCounter = metrics.counter(name(
+    static final Counter fixityRepairedCounter = getMetrics().counter(
+            name(
                                                                              LowLevelStorageService.class, "fixity-repaired-counter"));
 
-    static final Counter fixityErrorCounter = metrics.counter(name(
+    static final Counter fixityErrorCounter = getMetrics().counter(
+            name(
                                                                           LowLevelStorageService.class, "fixity-error-counter"));
 
 

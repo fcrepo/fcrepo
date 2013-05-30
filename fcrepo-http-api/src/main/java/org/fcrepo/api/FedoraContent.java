@@ -36,6 +36,8 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import com.codahale.metrics.annotation.Timed;
+
 @Component
 @Path("/rest/{path: .*}/fcr:content")
 public class FedoraContent extends AbstractResource {
@@ -49,6 +51,7 @@ public class FedoraContent extends AbstractResource {
      * @throws RepositoryException 
      */
     @POST
+    @Timed
     public Response create(
             @PathParam("path") final List<PathSegment> pathList,
             @QueryParam("checksumType") final String checksumType,
@@ -94,6 +97,7 @@ public class FedoraContent extends AbstractResource {
      * @throws InvalidChecksumException 
      */
     @PUT
+    @Timed
     public Response modifyContent(
             @PathParam("path") List<PathSegment> pathList,
             @HeaderParam("Content-Type") final MediaType requestContentType,
@@ -131,6 +135,7 @@ public class FedoraContent extends AbstractResource {
      * @throws RepositoryException
      */
     @GET
+    @Timed
     public Response getContent(
             @PathParam("path") List<PathSegment> pathList,
             @Context final Request request
