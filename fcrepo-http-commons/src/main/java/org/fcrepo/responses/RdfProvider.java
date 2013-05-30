@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.sparql.modify.GraphStoreBasic;
 
 @Provider
 @Component
