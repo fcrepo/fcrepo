@@ -68,11 +68,12 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
             final String nodeType)
             throws RepositoryException {
         super(false);
-        this.node = findOrCreateNode(session, path, nodeType);
+        this.node = findOrCreateNode(session, path, JcrConstants.NT_FOLDER, nodeType);
 
         if (!hasMixin(node)) {
             node.addMixin(FEDORA_RESOURCE);
         }
+
         if (node.isNew()) {
             if (node.getSession() != null) {
                 node.setProperty(JCR_CREATEDBY, node.getSession().getUserID());
