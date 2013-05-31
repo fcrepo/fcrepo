@@ -1,13 +1,16 @@
-
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 package org.fcrepo.utils;
 
 /**
  * Convenience class with constants for commonly used JCR types.
- * 
- * @author ajs6f
  *
+ * @author ajs6f
+ * @date Apr 25, 2013
  */
-
 public interface FedoraJcrTypes {
 
     String FEDORA_RESOURCE = "fedora:resource";

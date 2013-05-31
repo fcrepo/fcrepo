@@ -18,18 +18,18 @@ import org.junit.Test;
 public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test
-	public void testCheckDatastreamFixity() throws Exception {
-		final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest11");
-		assertEquals(201, getStatus(objMethod));
-		final HttpPost method1 =
-				postDSMethod("FedoraDatastreamsTest11", "zxc", "foo");
-		assertEquals(201, getStatus(method1));
-		final HttpGet method2 =
-				new HttpGet(serverAddress +
-									"objects/FedoraDatastreamsTest11/zxc/fcr:fixity");
-		final HttpResponse response = execute(method2);
-		assertEquals(200, response.getStatusLine().getStatusCode());
-		final HttpEntity entity = response.getEntity();
+    public void testCheckDatastreamFixity() throws Exception {
+        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest11");
+        assertEquals(201, getStatus(objMethod));
+        final HttpPost method1 =
+                postDSMethod("FedoraDatastreamsTest11", "zxc", "foo");
+        assertEquals(201, getStatus(method1));
+        final HttpGet method2 =
+                new HttpGet(serverAddress +
+                                    "objects/FedoraDatastreamsTest11/zxc/fcr:fixity");
+        final HttpResponse response = execute(method2);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final HttpEntity entity = response.getEntity();
         final GraphStore graphStore = TestHelpers.parseTriples(entity.getContent());
 
         logger.info("Got triples {}", graphStore);

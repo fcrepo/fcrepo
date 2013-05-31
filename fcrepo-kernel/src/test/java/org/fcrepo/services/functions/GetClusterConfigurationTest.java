@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.services.functions;
 
@@ -22,15 +27,26 @@ import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
+/**
+ * @todo Add Documentation.
+ * @author Benjamin Armintor
+ * @date May 13, 2013
+ */
 public class GetClusterConfigurationTest {
 
     private GetClusterConfiguration testObj;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setUp() {
         testObj = new GetClusterConfiguration();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGood() throws Exception {
         final JcrRepository mockRepo = mock(JcrRepository.class);
@@ -60,6 +76,9 @@ public class GetClusterConfigurationTest {
         assertNotNull(actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testBad() {
         final JcrRepository mockRepo = mock(JcrRepository.class);

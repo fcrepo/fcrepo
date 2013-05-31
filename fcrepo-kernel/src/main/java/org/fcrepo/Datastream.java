@@ -1,11 +1,16 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
@@ -33,60 +38,62 @@ import com.codahale.metrics.Histogram;
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
- * 
- * @author ajs6f
  *
+ * @author ajs6f
+ * @date Feb 21, 2013
  */
 public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(Datastream.class);
 
-    static final Histogram contentSizeHistogram = getMetrics().histogram(
-            name(Datastream.class, "content-size"));
+    static final Histogram contentSizeHistogram = getMetrics().histogram(name(Datastream.class, "content-size"));
 
     /**
      * The JCR node for this datastream
      * @param n an existing {@link Node}
      */
     public Datastream(final Node n) {
-		super(n);
-	}
+        super(n);
+    }
 
-	/**
-	 * Create or find a FedoraDatastream at the given path
-	 * @param session the JCR session to use to retrieve the object
-	 * @param path the absolute path to the object
-	 * @throws RepositoryException
-	 */
-	public Datastream(final Session session, final String path, final String nodeType) throws RepositoryException {
-		super(session, path, nodeType);
-		mixinTypeSpecificCrap();
-	}
+    /**
+     * Create or find a FedoraDatastream at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public Datastream(final Session session, final String path,
+                      final String nodeType) throws RepositoryException {
+        super(session, path, nodeType);
+        mixinTypeSpecificCrap();
+    }
 
-	/**
-	 * Create or find a FedoraDatastream at the given path
-	 * @param session the JCR session to use to retrieve the object
-	 * @param path the absolute path to the object
-	 * @throws RepositoryException
-	 */
-	public Datastream(final Session session, final String path) throws RepositoryException {
-		this(session, path, JcrConstants.NT_FILE);
-	}
+    /**
+     * Create or find a FedoraDatastream at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public Datastream(final Session session, final String path)
+        throws RepositoryException {
+        this(session, path, JcrConstants.NT_FILE);
+    }
 
+    private void mixinTypeSpecificCrap() {
+        try {
+            if (node.isNew() || !hasMixin(node)) {
+                LOGGER.debug("Setting {} properties on a {} node...",
+                             FEDORA_DATASTREAM, JcrConstants.NT_FILE);
+                node.addMixin(FEDORA_DATASTREAM);
 
-	private void mixinTypeSpecificCrap() {
-		try {
-			if (node.isNew() || !hasMixin(node)) {
-				LOGGER.debug("Setting {} properties on a {} node...", FEDORA_DATASTREAM, JcrConstants.NT_FILE);
-				node.addMixin(FEDORA_DATASTREAM);
-
-				if (node.hasNode(JCR_CONTENT)) {
-					Node contentNode = node.getNode(JCR_CONTENT);
-					decorateContentNode(contentNode);
-				}
-			}
+                if (node.hasNode(JCR_CONTENT)) {
+                    Node contentNode = node.getNode(JCR_CONTENT);
+                    decorateContentNode(contentNode);
+                }
+            }
         } catch (RepositoryException ex) {
-            LOGGER.warn("Could not decorate {} with {} properties: {}" , JCR_CONTENT, FEDORA_DATASTREAM, ex);
+            LOGGER.warn("Could not decorate {} with {} properties: {}" ,
+                        JCR_CONTENT, FEDORA_DATASTREAM, ex);
         }
     }
 
@@ -102,36 +109,37 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     /**
      * Sets the content of this Datastream.
-     * 
+     *
      * @param content
      * @throws RepositoryException
      */
     public void setContent(final InputStream content, final String contentType,
-            final String checksumType, final String checksum, PolicyDecisionPoint storagePolicyDecisionPoint)
-            throws RepositoryException, InvalidChecksumException {
+                           final String checksumType, final String checksum,
+                           PolicyDecisionPoint storagePolicyDecisionPoint)
+        throws RepositoryException, InvalidChecksumException {
 
         final Node contentNode =
-                findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+            findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
         if (contentNode.canAddMixin(FEDORA_BINARY)) {
             contentNode.addMixin(FEDORA_BINARY);
         }
 
-		if (contentType != null) {
-			contentNode.setProperty(JCR_MIME_TYPE, contentType);
-		}
+        if (contentType != null) {
+            contentNode.setProperty(JCR_MIME_TYPE, contentType);
+        }
 
 
-		LOGGER.debug("Created content node at path: {}", contentNode.getPath());
+        LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
-		String hint = null;
+        String hint = null;
 
 
-		if(storagePolicyDecisionPoint != null) {
-			hint = storagePolicyDecisionPoint.evaluatePolicies(node);
-		}
+        if (storagePolicyDecisionPoint != null) {
+            hint = storagePolicyDecisionPoint.evaluatePolicies(node);
+        }
 
-		Binary binary = (Binary) getBinary(node, content, hint);
+        Binary binary = (Binary) getBinary(node, content, hint);
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -150,40 +158,43 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
          */
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
-		final String dsChecksum = binary.getHexHash();
-		if (checksum != null && !checksum.equals("") &&
-					!checksum.equals(binary.getHexHash())) {
-			LOGGER.debug("Failed checksum test");
-			throw new InvalidChecksumException("Checksum Mismatch of " +
-													   dsChecksum + " and " + checksum);
-		}
+        final String dsChecksum = binary.getHexHash();
+        if (checksum != null && !checksum.equals("") &&
+            !checksum.equals(binary.getHexHash())) {
+            LOGGER.debug("Failed checksum test");
+            throw new InvalidChecksumException("Checksum Mismatch of " +
+                                               dsChecksum + " and " + checksum);
+        }
 
-		decorateContentNode(contentNode);
+        decorateContentNode(contentNode);
 
-
-        LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
+        LOGGER.debug("Created data property at path: {}",
+                     dataProperty.getPath());
 
     }
 
-
-	public void setContent(InputStream content) throws InvalidChecksumException, RepositoryException {
-		setContent(content, null, null, null, null);
-	}
+    /**
+     * @todo Add Documentation.
+     */
+    public void setContent(InputStream content) throws InvalidChecksumException,
+                                                       RepositoryException {
+        setContent(content, null, null, null, null);
+    }
 
     /**
      * @return The size in bytes of content associated with this datastream.
      * @throws RepositoryException
      */
-	public long getContentSize() {
-		try {
-			return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
-					.getLong();
-		} catch (RepositoryException e) {
-			LOGGER.error("Could not get contentSize() - " + e.getMessage());
-		}
-		// TODO Size is not stored, recalculate size?
-		return 0L;
-	}
+    public long getContentSize() {
+        try {
+            return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
+                .getLong();
+        } catch (RepositoryException e) {
+            LOGGER.error("Could not get contentSize() - " + e.getMessage());
+        }
+        // TODO Size is not stored, recalculate size?
+        return 0L;
+    }
 
     /**
      * Get the pre-calculated content digest for the binary payload
@@ -193,23 +204,24 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     public URI getContentDigest() throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
         try {
-	        return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
+            return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
         } catch (RepositoryException e) {
-        	LOGGER.error("Could not get content digest: ", e);
+            LOGGER.error("Could not get content digest: ", e);
         } catch (URISyntaxException e) {
             LOGGER.error("Could not get content digest: {}", e);
         }
-        //TODO checksum not stored. recalculating checksum, 
+        //TODO checksum not stored. recalculating checksum,
         //however, this would defeat the purpose validating against the checksum
         Binary binary = (Binary) contentNode.getProperty(JCR_DATA)
-        					.getBinary();
+            .getBinary();
         String dsChecksum = binary.getHexHash();
 
         return ContentDigest.asURI("SHA-1",dsChecksum);
     }
 
     /**
-     * @return The ID of this datastream, unique within an object. Normally just the name of the backing JCR node.
+     * @return The ID of this datastream, unique within an object. Normally just
+     *         the name of the backing JCR node.
      * @throws RepositoryException
      */
     public String getDsId() throws RepositoryException {
@@ -229,7 +241,10 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public String getMimeType() throws RepositoryException {
-        return node.hasNode(JCR_CONTENT) && node.getNode(JCR_CONTENT).hasProperty(JCR_MIME_TYPE) ? node.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString() : "application/octet-stream";
+        return node.hasNode(JCR_CONTENT) &&
+            node.getNode(JCR_CONTENT).hasProperty(JCR_MIME_TYPE) ?
+            node.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString() :
+            "application/octet-stream";
     }
 
     /**
@@ -242,8 +257,12 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         return getNodePropertySize(node) + getContentSize();
 
     }
-    
-    private void decorateContentNode(Node contentNode) throws RepositoryException {
+
+    /**
+     * @todo Add Documentation.
+     */
+    private void decorateContentNode(Node contentNode)
+        throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{}/{} appears to be null!", JCR_CONTENT);
             return;
@@ -259,11 +278,16 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         contentSizeHistogram.update(dataProperty.getLength());
 
         contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-        contentNode.setProperty(CONTENT_DIGEST, ContentDigest.asURI("SHA-1",dsChecksum).toString());
+        contentNode.setProperty(CONTENT_DIGEST, ContentDigest.
+                                asURI("SHA-1", dsChecksum).toString());
 
-        LOGGER.debug("Decorated data property at path: " + dataProperty.getPath());
+        LOGGER.debug("Decorated data property at path: " +
+                     dataProperty.getPath());
     }
-    
+
+    /**
+     * @todo Add Documentation.
+     */
     public static boolean hasMixin(Node node) throws RepositoryException {
         return isFedoraDatastream.apply(node);
     }

@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo;
 
@@ -31,6 +36,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Predicate;
 
+/**
+ * @todo Add Documentation.
+ * @author ajs6f
+ * @date Feb 28, 2013
+ */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
@@ -50,6 +60,9 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     NodeType[] mockNodetypes;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setUp() throws LoginException, RepositoryException {
         final String relPath = "/" + testPid;
@@ -86,6 +99,9 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @After
     public void tearDown() {
         mockSession = null;
@@ -93,17 +109,26 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         mockObjNode = null;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetName() throws RepositoryException {
         assertEquals(testFedoraObject.getName(), testPid);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetNode() {
         assertEquals(testFedoraObject.getNode(), mockObjNode);
     }
 
-	@Test
+    /**
+     * @todo Add Documentation.
+     */
+    @Test
     public void testGetCreated() throws RepositoryException {
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
@@ -113,6 +138,9 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         verify(mockObjNode).getProperty(JCR_CREATED);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetLastModified() throws RepositoryException {
         final Property mockProp = mock(Property.class);
@@ -123,14 +151,21 @@ public class FedoraObjectTest implements FedoraJcrTypes {
         verify(mockObjNode).getProperty(JCR_LASTMODIFIED);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetSize() throws RepositoryException {
         PowerMockito.mockStatic(ServiceHelpers.class);
-        when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(-8L); // obviously not a real value
+        // obviously not a real value
+        when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(-8L);
         final long actual = testFedoraObject.getSize();
         assertEquals(-8, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetModels() throws RepositoryException {
         final Collection<String> actual = testFedoraObject.getModels();

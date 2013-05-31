@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo;
 
@@ -35,6 +40,11 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * @todo Add Documentation.
+ * @author Benjamin Armintor
+ * @date May 13, 2013
+ */
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -51,6 +61,9 @@ public class FedoraResourceTest {
 
     Session mockSession;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setUp() {
         mockSession = mock(Session.class);
@@ -59,6 +72,9 @@ public class FedoraResourceTest {
         assertEquals(mockNode, testObj.getNode());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testPathConstructor() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -71,6 +87,9 @@ public class FedoraResourceTest {
         new FedoraResource(mockSession, "/foo/bar", null);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testHasMixin() throws RepositoryException {
         boolean actual;
@@ -84,18 +103,27 @@ public class FedoraResourceTest {
         assertEquals(true, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetPath() throws RepositoryException {
         testObj.getPath();
         verify(mockNode).getPath();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testHasContent() throws RepositoryException {
         testObj.hasContent();
         verify(mockNode).hasNode(JcrConstants.JCR_CONTENT);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetCreatedDate() throws RepositoryException {
         final Property mockProp = mock(Property.class);
@@ -108,6 +136,9 @@ public class FedoraResourceTest {
                 .getTime());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetLastModifiedDateDefault() throws RepositoryException {
         // test missing JCR_LASTMODIFIED
@@ -132,6 +163,9 @@ public class FedoraResourceTest {
         verify(mockSession, never()).save();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetLastModifiedDate() throws RepositoryException {
         // test existing JCR_LASTMODIFIED
@@ -164,6 +198,9 @@ public class FedoraResourceTest {
         assertEquals(modDate.getTimeInMillis(), actual.getTime());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetGraphProblems() throws RepositoryException {
         final Problems actual = testObj.getDatasetProblems();
@@ -175,6 +212,9 @@ public class FedoraResourceTest {
         verify(mockListener).getProblems();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testAddVersionLabel() throws RepositoryException {
 

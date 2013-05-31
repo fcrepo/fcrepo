@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.observer;
 
@@ -22,12 +27,20 @@ import org.modeshape.jcr.api.Repository;
 
 import com.google.common.base.Predicate;
 
+/**
+ * @todo Add Documentation.
+ * @author Benjamin Armintor
+ * @date Apr 30, 2013
+ */
 public class DefaultFilterTest {
 
     private DefaultFilter testObj;
 
     private Session mockSession;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setUp() throws Exception {
         testObj = new DefaultFilter();
@@ -40,6 +53,9 @@ public class DefaultFilterTest {
         testObj.acquireSession();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void shouldApplyToObject() throws Exception {
         @SuppressWarnings("unchecked")
@@ -65,6 +81,9 @@ public class DefaultFilterTest {
         }
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void shouldApplyToDatastream() throws Exception {
         @SuppressWarnings("unchecked")
@@ -90,6 +109,9 @@ public class DefaultFilterTest {
         }
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @SuppressWarnings("unchecked")
     @Test
     public void shouldNotApplyToNonExistentNodes() throws Exception {
@@ -103,6 +125,9 @@ public class DefaultFilterTest {
         verify(mockSession).getNode(testPath);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void shouldNotApplyToSystemNodes() throws Exception {
         @SuppressWarnings("unchecked")

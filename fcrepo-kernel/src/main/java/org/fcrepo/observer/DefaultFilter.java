@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.observer;
 
@@ -19,9 +24,9 @@ import org.modeshape.jcr.api.Repository;
 /**
  * EventFilter that passes only events emitted from nodes with
  * a Fedora JCR type.
- * 
- * @author ajs6f
  *
+ * @author eddies
+ * @date Feb 7, 2013
  */
 public class DefaultFilter implements EventFilter {
 
@@ -33,7 +38,8 @@ public class DefaultFilter implements EventFilter {
     private Session session;
 
     /**
-     * Filter observer events to only include events on a FedoraObject or Datastream
+     * Filter observer events to only include events on a FedoraObject or
+     * Datastream
      *
      * @param event the original event
      * @return
@@ -44,7 +50,7 @@ public class DefaultFilter implements EventFilter {
         try {
             final Node resource = session.getNode(event.getPath());
             return isFedoraObject.apply(resource) ||
-                    isFedoraDatastream.apply(resource);
+                isFedoraDatastream.apply(resource);
 
         } catch (final PathNotFoundException e) {
             // not a node in the fedora workspace
@@ -54,11 +60,17 @@ public class DefaultFilter implements EventFilter {
         }
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @PostConstruct
     public void acquireSession() throws RepositoryException {
         session = repository.login();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @PreDestroy
     public void releaseSession() {
         session.logout();

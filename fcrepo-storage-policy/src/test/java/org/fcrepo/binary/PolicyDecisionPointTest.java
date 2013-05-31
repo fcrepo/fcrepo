@@ -1,3 +1,9 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
+
 package org.fcrepo.binary;
 
 import org.junit.BeforeClass;
@@ -15,11 +21,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
+/**
+ * @todo Add Documentation.
+ * @author cbeer
+ * @date Apr 25, 2013
+ */
 public class PolicyDecisionPointTest {
     static PolicyDecisionPoint pt;
     static private String dummyHint;
     static private String tiffHint;
 
+    /**
+     * @todo Add Documentation.
+     */
     @BeforeClass
     public static void setupPdp() {
         pt = new PolicyDecisionPoint();
@@ -35,6 +49,9 @@ public class PolicyDecisionPointTest {
         pt.addPolicy(tiffPolicy);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testDummyNode() throws Exception {
 
@@ -46,13 +63,18 @@ public class PolicyDecisionPointTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-dummy-type");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
+            thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
+            thenReturn(mockProperty);
 
         String receivedHint = pt.evaluatePolicies(mockDsNode);
         assertThat(receivedHint, is(dummyHint));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testTiffNode() throws Exception {
 
@@ -64,14 +86,18 @@ public class PolicyDecisionPointTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/tiff");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
+            thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
+            thenReturn(mockProperty);
 
         String receivedHint = pt.evaluatePolicies(mockDsNode);
         assertThat(receivedHint, is(tiffHint));
     }
 
-
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testOtherNode() throws Exception {
 
@@ -83,12 +109,13 @@ public class PolicyDecisionPointTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-other");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
+            thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
+            thenReturn(mockProperty);
 
         String receivedHint = pt.evaluatePolicies(mockDsNode);
         assertNull(receivedHint);
     }
-
 
 }

@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.observer;
 
@@ -30,9 +35,9 @@ import com.google.common.eventbus.EventBus;
  * Simple JCR EventListener that filters JCR Events through a Fedora
  * EventFilter and puts the resulting stream onto the internal
  * Fedora EventBus as a stream of FedoraEvents.
- * 
- * @author ajs6f
  *
+ * @author eddies
+ * @date Feb 7, 2013
  */
 public class SimpleObserver implements EventListener {
 
@@ -57,6 +62,9 @@ public class SimpleObserver implements EventListener {
     @Inject
     private EventFilter eventFilter;
 
+    /**
+     * @todo Add Documentation.
+     */
     @PostConstruct
     public void buildListener() throws RepositoryException {
         final Session session = repository.login();

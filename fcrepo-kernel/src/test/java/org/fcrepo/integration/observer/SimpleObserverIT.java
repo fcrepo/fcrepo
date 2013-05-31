@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.integration.observer;
 
@@ -19,6 +24,11 @@ import org.springframework.test.context.ContextConfiguration;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+/**
+ * @todo Add Documentation.
+ * @author fasseg
+ * @date Mar 20, 2013
+ */
 @ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
 
@@ -30,12 +40,17 @@ public class SimpleObserverIT extends AbstractIT {
     @Inject
     private EventBus eventBus;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void TestEventBusPublishing() throws RepositoryException {
 
         final Session se = repository.login();
-        se.getRootNode().addNode("/object1").addMixin(FedoraJcrTypes.FEDORA_OBJECT);
-        se.getRootNode().addNode("/object2").addMixin(FedoraJcrTypes.FEDORA_OBJECT);
+        se.getRootNode().addNode("/object1")
+            .addMixin(FedoraJcrTypes.FEDORA_OBJECT);
+        se.getRootNode().addNode("/object2")
+            .addMixin(FedoraJcrTypes.FEDORA_OBJECT);
         se.save();
         se.logout();
 
@@ -53,17 +68,26 @@ public class SimpleObserverIT extends AbstractIT {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Subscribe
     public void countMessages(final FedoraEvent e) {
         eventBusMessageCount++;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void acquireConnections() {
         eventBusMessageCount = 0;
         eventBus.register(this);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @After
     public void releaseConnections() {
         eventBus.unregister(this);

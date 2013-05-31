@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.utils.infinispan;
 
@@ -13,6 +18,11 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.modeshape.common.logging.Logger;
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Mar 14, 2013
+ */
 public class StoreChunkOutputStream extends OutputStream {
 
     protected final Logger logger;
@@ -31,10 +41,13 @@ public class StoreChunkOutputStream extends OutputStream {
     protected int chunkIndex;
 
     private final InternalEntryFactory entryFactory =
-            new InternalEntryFactoryImpl();
+        new InternalEntryFactoryImpl();
 
+    /**
+     * @todo Add Documentation.
+     */
     public StoreChunkOutputStream(final CacheStore blobCache,
-            final String keyPrefix) {
+                                  final String keyPrefix) {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.keyPrefix = keyPrefix;
@@ -48,6 +61,9 @@ public class StoreChunkOutputStream extends OutputStream {
         return chunkIndex;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public void write(final int b) throws IOException {
         if (chunkBuffer.size() == CHUNKSIZE) {
@@ -56,9 +72,12 @@ public class StoreChunkOutputStream extends OutputStream {
         chunkBuffer.write(b);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public void write(final byte[] b, final int off, final int len)
-            throws IOException {
+        throws IOException {
         if (len + chunkBuffer.size() <= CHUNKSIZE) {
             chunkBuffer.write(b, off, len);
         } else {
@@ -69,6 +88,9 @@ public class StoreChunkOutputStream extends OutputStream {
         }
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public void close() throws IOException {
         logger.debug("Close. Buffer size at close: {0}", chunkBuffer.size());
@@ -91,7 +113,10 @@ public class StoreChunkOutputStream extends OutputStream {
             final InternalCacheEntry cacheEntry;
             if (c == null) {
                 cacheEntry =
-                        entryFactory.create(chunkKey, chunk,  new EmbeddedMetadata.Builder().build());
+                    entryFactory.create(chunkKey,
+                                        chunk,
+                                        new EmbeddedMetadata
+                                        .Builder().build());
             } else {
                 cacheEntry = entryFactory.create(chunkKey, chunk, c);
             }
@@ -103,7 +128,6 @@ public class StoreChunkOutputStream extends OutputStream {
         } catch (final CacheLoaderException e) {
             throw new IOException(e);
         }
-
     }
 
 }

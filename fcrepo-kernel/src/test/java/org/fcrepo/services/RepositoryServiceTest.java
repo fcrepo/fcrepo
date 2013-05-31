@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.services;
 
@@ -54,6 +59,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Mar 11, 2013
+ */
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -86,6 +96,9 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     Map<String, String> expectedNS;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setUp() {
         final String relPath = "/" + testPid + "/" + testDsId;
@@ -153,36 +166,54 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         }
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @After
     public void tearDown() {
 
     }
 
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetRepositorySize() throws RepositoryException {
         final Long actual = testObj.getRepositorySize();
         assertEquals(expectedSize, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetRepositoryObjectCount() {
         final Long actual = testObj.getRepositoryObjectCount();
         assertEquals(expectedCount, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetAllNodeTypes() throws RepositoryException {
         final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
         assertEquals(mockNTI, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetRepositoryNamespaces() throws RepositoryException {
         final Map<String, String> actual = getRepositoryNamespaces(mockSession);
         assertEquals(expectedNS, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testExists() throws RepositoryException {
         final String existsPath = "/foo/bar/exists";
@@ -191,15 +222,20 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testSearchRepository() throws RepositoryException {
 
         PowerMockito.mockStatic(JcrRdfTools.class);
 
-        Resource subject = ResourceFactory.createResource("info:fedora/search/request");
+        Resource subject =
+            ResourceFactory.createResource("info:fedora/search/request");
         Workspace mockWorkspace = mock(Workspace.class);
         QueryManager mockQueryManager = mock(QueryManager.class);
-        QueryObjectModelFactory mockQOMFactory = mock(QueryObjectModelFactory.class);
+        QueryObjectModelFactory mockQOMFactory =
+            mock(QueryObjectModelFactory.class);
         QueryObjectModel mockQuery = mock(QueryObjectModel.class);
         QueryResult mockQueryResults = mock(QueryResult.class);
         NodeIterator mockIterator = mock(NodeIterator.class);
@@ -211,15 +247,20 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
         when(mockQueryManager.getQOMFactory()).thenReturn(mockQOMFactory);
-        when(mockQOMFactory.createQuery(null, null, null, null)).thenReturn(mockQuery);
+        when(mockQOMFactory.createQuery(null, null, null, null))
+            .thenReturn(mockQuery);
 
         when(mockQuery.execute()).thenReturn(mockQueryResults);
         when(mockQueryResults.getNodes()).thenReturn(mockIterator);
         when(mockIterator.getSize()).thenReturn(500L);
         when(mockIterator.next()).thenReturn("");
-        when(JcrRdfTools.getJcrNodeIteratorModel(eq(mockSubjectFactory), any(Iterator.class), eq(subject))).thenReturn(ModelFactory.createDefaultModel());
+        when(JcrRdfTools.getJcrNodeIteratorModel(eq(mockSubjectFactory),
+                                                 any(Iterator.class),
+                                                 eq(subject)))
+            .thenReturn(ModelFactory.createDefaultModel());
 
-        testObj.searchRepository(mockSubjectFactory, subject, mockSession, "search terms", 10, 0L);
+        testObj.searchRepository(mockSubjectFactory, subject, mockSession,
+                                 "search terms", 10, 0L);
 
         // n+1
         verify(mockQuery).setLimit(11);
