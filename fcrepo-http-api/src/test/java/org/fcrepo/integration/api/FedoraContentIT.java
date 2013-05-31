@@ -36,6 +36,20 @@ public class FedoraContentIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testAddDeepDatastream() throws Exception {
+        final HttpPost method =
+                postDSMethod("FedoraDatastreamsTest2/does/not/exist/yet", "zxc", "foo");
+        final HttpResponse response = client.execute(method);
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals(201, response.getStatusLine().getStatusCode());
+        assertEquals(
+                            "Got wrong URI in Location header for datastream creation!",
+                            serverAddress + OBJECT_PATH.replace("/", "") +
+                                    "/FedoraDatastreamsTest2/does/not/exist/yet/zxc", location);
+    }
+
+
+    @Test
     public void testPutDatastream() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTestPut");
         assertEquals(201, getStatus(objMethod));
