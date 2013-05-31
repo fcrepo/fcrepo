@@ -24,7 +24,7 @@
         "binaryStorage" : {
             "type" : "cache",
             "dataCacheName" : "FedoraRepositoryBinaryData",
-            "metadataCacheName" : "FedoraRepository"
+            "metadataCacheName" : "FedoraRepositoryMetaData"
         }
     },
     "security" : {

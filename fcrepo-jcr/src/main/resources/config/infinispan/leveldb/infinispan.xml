@@ -10,8 +10,32 @@
   <default>
   </default>
 
-
   <namedCache name="FedoraRepository">
+
+    <eviction maxEntries="500"  strategy="LIRS" threadPolicy="DEFAULT"/>
+
+    <transaction
+        transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+        transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
+    <!--
+        Define the cache loaders (i.e., cache stores). Passivation is false because we want *all*
+        data to be persisted, not just what doesn't fit into memory. Shared is false because there
+        are no other caches sharing this file store. We set preload to false for lazy loading;
+        may be improved by preloading and configuring eviction.
+
+        We can have multiple cache loaders, which get chained. But we'll define just one.
+     -->
+
+    <loaders passivation="false" shared="false" preload="false">
+      <leveldbStore xmlns="urn:infinispan:config:leveldb:5.2"
+                    location="${fcrepo.ispn.repo.CacheDirPath:target/repo}/data"
+                    expiredLocation="${fcrepo.ispn.repo.CacheDirPath:target/repo}/expired"
+          />
+
+    </loaders>
+  </namedCache>
+
+  <namedCache name="FedoraRepositoryMetaData">
 
     <eviction maxEntries="500"  strategy="LIRS" threadPolicy="DEFAULT"/>
 

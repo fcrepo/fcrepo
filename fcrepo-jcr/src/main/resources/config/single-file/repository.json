@@ -13,19 +13,15 @@
             "location" : "${fcrepo.modeshape.index.location:target/indexes}",
             "lockingStrategy" : "native",
             "fileSystemAccessType" : "auto"
-        },
-        "indexing" : {
-            "mode" : "async"
-
         }
     },
     "storage" : {
         "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "${fcrepo.infinispan.cache_configuration:config/infinispan/basic/infinispan.xml}",
+        "cacheConfiguration": "${fcrepo.infinispan.cache_configuration:config/infinispan/file/infinispan.xml}",
         "binaryStorage" : {
-            "type" : "cache",
-            "dataCacheName" : "FedoraRepositoryBinaryData",
-            "metadataCacheName" : "FedoraRepositoryMetaData"
+            "type" : "file",
+            "directory" : "${fcrepo.binary-store-path:target/binaries}",
+            "minimumBinarySizeInBytes" : 4096
         }
     },
     "security" : {

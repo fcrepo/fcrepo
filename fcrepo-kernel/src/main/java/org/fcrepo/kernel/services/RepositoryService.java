@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -54,6 +55,8 @@ import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
 import org.modeshape.jcr.api.JcrTools;
+import org.modeshape.jcr.api.Problems;
+import org.modeshape.jcr.api.RepositoryManager;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -266,6 +269,44 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
         return dataset;
 
+    }
+
+    /**
+     * This method backups up a running repository
+     *
+     * @param session
+     * @param backupDirectory
+     * @return
+     * @throws RepositoryException
+     */
+    public Problems backupRepository(final Session session,
+                                     final File backupDirectory) throws RepositoryException {
+        RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+                .getWorkspace()
+                .getRepositoryManager();
+
+        Problems problems = repoMgr.backupRepository(backupDirectory);
+
+        return problems;
+    }
+
+    /**
+     * This methods restores the repository from a backup
+     *
+     * @param session
+     * @param backupDirectory
+     * @return
+     * @throws RepositoryException
+     */
+    public Problems restoreRepository(final Session session,
+                                      final File backupDirectory) throws RepositoryException {
+        RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+                .getWorkspace()
+                .getRepositoryManager();
+
+        Problems problems = repoMgr.restoreRepository(backupDirectory);
+
+        return problems;
     }
 
     /**
