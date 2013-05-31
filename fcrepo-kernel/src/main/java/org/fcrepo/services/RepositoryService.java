@@ -6,11 +6,13 @@ import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.jcr.AccessDeniedException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -29,6 +31,7 @@ import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.NamespaceChangedStatementListener;
 import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
+import org.modeshape.jcr.api.Problems;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 
@@ -233,5 +236,21 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     public void setRepository(final Repository repository) {
         repo = repository;
+    }
+
+    public Problems backupRepository(final Session session, final File backupDirectory) throws RepositoryException {
+        org.modeshape.jcr.api.RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session)session).getWorkspace().getRepositoryManager();
+
+        Problems problems = repoMgr.backupRepository(backupDirectory);
+
+        return problems;
+    }
+
+    public Problems restoreRepository(final Session session, final File backupDirectory) throws RepositoryException {
+        org.modeshape.jcr.api.RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session)session).getWorkspace().getRepositoryManager();
+
+        Problems problems = repoMgr.restoreRepository(backupDirectory);
+
+        return problems;
     }
 }

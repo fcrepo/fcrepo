@@ -2,20 +2,24 @@
 package org.fcrepo.integration.services;
 
 import static org.jgroups.util.Util.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 
 import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 
+import com.google.common.io.Files;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.integration.AbstractIT;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
+import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.graph.Node;
@@ -86,6 +90,42 @@ public class ObjectServiceIT extends AbstractIT {
         UpdateAction.parseExecute("INSERT { <info:abc> <" + RdfLexicon.HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }", registryGraph);
 
         assertEquals("abc", namespaceRegistry.getPrefix("info:abc"));
+        session.logout();
+    }
+
+    @Test
+    public void testBackupRepository() throws Exception {
+        Session session = repository.login();
+
+        datastreamService.createDatastreamNode(session,
+                                                      "testObjectServiceNode", "application/octet-stream",
+                                                      new ByteArrayInputStream("asdf".getBytes()));
+        session.save();
+
+        File backupDirectory = Files.createTempDir();
+
+        final Problems problems = objectService.backupRepository(session, backupDirectory);
+
+        assertFalse(problems.hasProblems());
+        session.logout();
+    }
+
+    @Test
+    public void testRestoreRepository() throws Exception {
+        Session session = repository.login();
+
+        datastreamService.createDatastreamNode(session,
+                                                      "testObjectServiceNode", "application/octet-stream",
+                                                      new ByteArrayInputStream("asdf".getBytes()));
+        session.save();
+
+        File backupDirectory = Files.createTempDir();
+
+        objectService.backupRepository(session, backupDirectory);
+
+        final Problems problems = objectService.restoreRepository(session, backupDirectory);
+
+        assertFalse(problems.hasProblems());
         session.logout();
     }
 }
