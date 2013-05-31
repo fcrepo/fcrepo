@@ -2,11 +2,7 @@
 package org.fcrepo;
 
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
-import static org.fcrepo.utils.FedoraTypesUtils.map;
-import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;

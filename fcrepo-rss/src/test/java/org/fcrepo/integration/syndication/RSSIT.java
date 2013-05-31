@@ -6,7 +6,6 @@ import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 

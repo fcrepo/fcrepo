@@ -7,21 +7,23 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.core.UriInfo;
+
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
-import com.google.common.base.Function;
 import org.slf4j.Logger;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.google.common.base.Function;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class FedoraIdentifiersTest {
 
@@ -32,6 +34,7 @@ public class FedoraIdentifiersTest {
     private FedoraIdentifiers testObj;
 
     private UriInfo uriInfo;
+
     private Session mockSession;
 
     @Before

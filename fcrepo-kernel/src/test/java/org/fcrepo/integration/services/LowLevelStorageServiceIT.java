@@ -6,8 +6,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.Collection;
 import java.util.Iterator;
 
 import javax.inject.Inject;
@@ -19,7 +17,6 @@ import org.fcrepo.Datastream;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
 import org.junit.runner.RunWith;

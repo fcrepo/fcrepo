@@ -6,7 +6,6 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.FedoraObject;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;

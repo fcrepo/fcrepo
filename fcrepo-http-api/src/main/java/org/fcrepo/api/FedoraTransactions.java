@@ -3,8 +3,6 @@ package org.fcrepo.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.fcrepo.Transaction.State.DIRTY;
-import static org.fcrepo.Transaction.State.ROLLED_BACK;
 
 import java.util.Iterator;
 import java.util.List;

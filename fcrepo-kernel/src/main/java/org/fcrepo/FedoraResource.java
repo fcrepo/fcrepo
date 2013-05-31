@@ -4,7 +4,6 @@ package org.fcrepo;
 import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
-import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.utils.FedoraTypesUtils.map;
 import static org.fcrepo.utils.FedoraTypesUtils.nodetype2name;
@@ -17,12 +16,8 @@ import java.util.Date;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionHistory;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -33,7 +28,10 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.update.UpdateAction;
 
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {

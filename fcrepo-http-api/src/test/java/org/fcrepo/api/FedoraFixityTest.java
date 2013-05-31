@@ -19,7 +19,6 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.Datastream;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;

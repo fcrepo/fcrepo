@@ -11,18 +11,17 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.UpdateAction;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.integration.AbstractIT;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.utils.JcrRdfTools;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class ObjectServiceIT extends AbstractIT {

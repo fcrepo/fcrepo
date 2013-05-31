@@ -12,8 +12,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.modeshape.jcr.JcrSession;
-
 @XmlRootElement(name = "transaction")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Transaction {

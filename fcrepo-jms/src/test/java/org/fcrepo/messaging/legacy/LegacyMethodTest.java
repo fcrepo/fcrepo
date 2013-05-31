@@ -1,7 +1,13 @@
 package org.fcrepo.messaging.legacy;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -13,9 +19,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
-
-import javax.jms.JMSException;
-import javax.jms.Message;
 
 import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
