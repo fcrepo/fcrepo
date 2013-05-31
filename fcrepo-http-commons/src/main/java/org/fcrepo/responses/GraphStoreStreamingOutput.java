@@ -42,14 +42,17 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     @Override
     public void write(final OutputStream out) throws IOException,
             WebApplicationException {
-        LOGGER.debug("Serializing graph model as {}", format);
+        LOGGER.debug("Serializing graph  as {}", format);
         final Iterator<String> iterator = dataset.listNames();
 
         while (iterator.hasNext()) {
-            final Model model = dataset.getNamedModel(iterator.next());
+            final String modelName = iterator.next();
+            LOGGER.debug("Serializing model {}", modelName);
+            final Model model = dataset.getNamedModel(modelName);
             model.write(out, format);
         }
 
+        LOGGER.debug("Serializing default model");
         dataset.getDefaultModel().write(out, format);
 
     }
