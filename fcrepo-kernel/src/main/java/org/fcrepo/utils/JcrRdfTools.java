@@ -197,7 +197,7 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     public static Model getJcrNodeIteratorModel(final GraphSubjects factory,
-            final Iterator nodeIterator, final Resource iteratorSubject)
+            final Iterator<Node> nodeIterator, final Resource iteratorSubject)
             throws RepositoryException {
 
         if (!nodeIterator.hasNext()) {
