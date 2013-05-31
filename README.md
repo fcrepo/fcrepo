@@ -5,6 +5,7 @@
 System Requirements
 * Java 7
 * Maven 3
+* A Servlet 3.0 container (e.g. Tomcat 7 or Jetty 8)
 
 
 [JavaDocs](http://docs.fcrepo.org/) | 
@@ -27,6 +28,6 @@ Other goals:
 $ mvn install
 $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
-$ curl "http://localhost:8080/rest/describe"
+$ curl "http://localhost:8080/rest/"
 ```
 
