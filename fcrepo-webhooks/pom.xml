@@ -14,7 +14,6 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -30,10 +29,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-jms</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
     </dependency>
 
     <dependency>
