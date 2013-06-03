@@ -1,10 +1,15 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,7 +26,8 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 
-import org.fcrepo.RdfLexicon;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -31,21 +37,23 @@ import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
-
 import com.codahale.metrics.Timer;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Mar 11, 2013
+ */
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger logger = getLogger(RepositoryService.class);
 
 
-    private final Timer objectSizeCalculationTimer = getMetrics().timer(
-            name(RepositoryService.class, "objectSizeCalculation"));
+    private final Timer objectSizeCalculationTimer =
+        getMetrics().timer(name(RepositoryService.class, "objectSizeCalculation"));
 
     @Inject
     protected Repository repo;
@@ -58,7 +66,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public boolean exists(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         return session.nodeExists(path);
     }
 
@@ -105,9 +113,9 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public NodeTypeIterator getAllNodeTypes(final Session session)
-            throws RepositoryException {
+        throws RepositoryException {
         final NodeTypeManager ntmanager =
-                (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
+            (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
         return ntmanager.getAllNodeTypes();
     }
 
@@ -117,14 +125,14 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
+    public static Map<String, String> getRepositoryNamespaces(final Session session)
+        throws RepositoryException {
 
-    public static Map<String, String> getRepositoryNamespaces(
-            final Session session) throws RepositoryException {
         final NamespaceRegistry reg =
-                NamespaceTools.getNamespaceRegistry(session);
+            NamespaceTools.getNamespaceRegistry(session);
         final String[] prefixes = reg.getPrefixes();
         final Map<String, String> result =
-                new HashMap<String, String>(prefixes.length);
+            new HashMap<String, String>(prefixes.length);
         for (final String prefix : reg.getPrefixes()) {
             result.put(prefix, reg.getURI(prefix));
         }
@@ -137,7 +145,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getNamespaceRegistryGraph(final Session session) throws RepositoryException {
+    public Dataset getNamespaceRegistryGraph(final Session session)
+        throws RepositoryException {
 
         final Model model = JcrRdfTools.getJcrNamespaceModel(session);
 
@@ -150,8 +159,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * Perform a full-text search on the whole repository and return the information
-     * as an RDF Dataset
+     * Perform a full-text search on the whole repository and return the
+     * information as an RDF Dataset
      *
      * @param subjectFactory
      * @param searchSubject RDF resource to use as the subject of the search
@@ -163,26 +172,31 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Dataset searchRepository(final GraphSubjects subjectFactory,
-            final Resource searchSubject, final Session session,
-            final String terms, final int limit, final long offset)
-            throws RepositoryException {
+                                    final Resource searchSubject,
+                                    final Session session,
+                                    final String terms,
+                                    final int limit,
+                                    final long offset)
+        throws RepositoryException {
 
         final QueryManager queryManager =
-                session.getWorkspace().getQueryManager();
+            session.getWorkspace().getQueryManager();
 
         final javax.jcr.query.qom.QueryObjectModelFactory factory =
-                queryManager.getQOMFactory();
+            queryManager.getQOMFactory();
 
         final javax.jcr.query.qom.Source selector =
-                factory.selector(FEDORA_RESOURCE, "resourcesSelector");
+            factory.selector(FEDORA_RESOURCE, "resourcesSelector");
         final javax.jcr.query.qom.Constraint constraints =
-                factory.fullTextSearch("resourcesSelector", null, factory
-                        .literal(session.getValueFactory().createValue(terms)));
+            factory.fullTextSearch("resourcesSelector", null, factory
+                                   .literal(session.getValueFactory()
+                                            .createValue(terms)));
 
         final javax.jcr.query.Query query =
-                factory.createQuery(selector, constraints, null, null);
+            factory.createQuery(selector, constraints, null, null);
 
-        // include an extra document to determine if additional pagination is necessary
+        // include an extra document to determine if additional pagination is
+        // necessary
         query.setLimit(limit + 1);
         query.setOffset(offset);
 
@@ -193,36 +207,41 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
         // remove that extra document from the nodes we'll iterate over
         final Iterator<Node> limitedIterator =
-                Iterators.limit(
-                        new org.fcrepo.utils.NodeIterator(nodeIterator), limit);
+            Iterators.limit(new org.fcrepo.utils.NodeIterator(nodeIterator),
+                            limit);
 
         final Model model =
-                JcrRdfTools.getJcrNodeIteratorModel(subjectFactory,
-                        limitedIterator, searchSubject);
+            JcrRdfTools.getJcrNodeIteratorModel(subjectFactory,
+                                                limitedIterator, searchSubject);
 
         /* add the result description to the RDF model */
 
         model.add(
-                searchSubject,
-                RdfLexicon.SEARCH_HAS_TOTAL_RESULTS,
-                model.createTypedLiteral(size));
+                  searchSubject,
+                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
+                                       "totalResults"),
+                  model.createTypedLiteral(size));
 
         model.add(
-                searchSubject,
-                RdfLexicon.SEARCH_ITEMS_PER_PAGE,
-                model.createTypedLiteral(limit));
+                  searchSubject,
+                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
+                                       "itemsPerPage"),
+                  model.createTypedLiteral(limit));
         model.add(
-                searchSubject,
-                RdfLexicon.SEARCH_OFFSET,
-                model.createTypedLiteral(offset));
+                  searchSubject,
+                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
+                                       "startIndex"),
+                  model.createTypedLiteral(offset));
         model.add(
-                searchSubject,
-                RdfLexicon.SEARCH_TERMS,
-                terms);
+                  searchSubject,
+                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
+                                       "Query#searchTerms"),
+                  terms);
 
         if (nodeIterator.hasNext()) {
-            model.add(searchSubject, RdfLexicon.SEARCH_HAS_MORE, model
-                    .createTypedLiteral(true));
+            model.add(searchSubject,
+                      model.createProperty("info:fedora/search/hasMoreResults"),
+                      model.createTypedLiteral(true));
         }
 
         final Dataset dataset = DatasetFactory.create(model);
@@ -231,6 +250,9 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     public void setRepository(final Repository repository) {
         repo = repository;
     }

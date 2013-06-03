@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.modeshape.jcr;
 
@@ -15,21 +20,29 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Apr 30, 2013
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({ "/spring-test/repo.xml" })
 public class GetBinaryStoreIT {
 
-	@Inject
-	javax.jcr.Repository repo;
+    @Inject
+    javax.jcr.Repository repo;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testApply() throws RepositoryException {
-		final GetBinaryStore testObj = new GetBinaryStore();
+        final GetBinaryStore testObj = new GetBinaryStore();
 
-		final BinaryStore binaryStore = testObj.apply(repo);
+        final BinaryStore binaryStore = testObj.apply(repo);
 
-		assertThat(binaryStore, instanceOf(TransientBinaryStore.class));
+        assertThat(binaryStore, instanceOf(TransientBinaryStore.class));
 
-	}
+    }
 
 }

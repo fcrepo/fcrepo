@@ -1,16 +1,24 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.utils;
 
 /**
  * A convenient abstraction over JCR's integer-typed events.
- * 
- * @author ajs6f
  *
+ * @author ajs6f
+ * @date Feb 7, 2013
  */
 public enum EventType {
     NODE_ADDED, NODE_REMOVED, PROPERTY_ADDED, PROPERTY_REMOVED,
     PROPERTY_CHANGED, NODE_MOVED, PERSIST;
 
+    /**
+     * @todo Add Documentation.
+     */
     public static EventType getEventType(final Integer i) {
         switch (i) {
             case 0x1:

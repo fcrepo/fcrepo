@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+<!--
+	
+  Checkstyle configuration that checks the Fedora coding conventions from:
+  
+    - the Fedora Futures Code Style Guide
+      https://wiki.duraspace.org/display/FF/Code+Style+Guide
+      
+    - some best practices
+    
+  Checkstyle is very configurable. Be sure to read the documentation at
+  http://checkstyle.sf.net (or in your downloaded distribution).
+  
+  Most Checks are configurable, be sure to consult the documentation.
+  
+  To completely disable a check, just comment it out or delete it from the file.
+  
+  Finally, it is worth reading the documentation.
+  
+-->
+<module name="Checker">
+  <!-- Suppress -->
+  <module name="SuppressionFilter">
+    <property name="file" value="${checkstyle.suppressions.file}"/>
+  </module>
+  <!-- Checks that there are no tab characters ('\t') in the source code. -->
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="true"/>
+  </module>
+  <!-- Licence Header -->
+  <module name="RegexpHeader">
+    <property name="header"
+      value="^/\*\*\n \* The contents of this file are subject to the license and copyright terms$\n^ \* detailed in the license directory at the root of the source tree \(also$\n^ \* available online at http://fedora-commons.org/license/\).$\n^ \*/"
+    />
+  </module>
+  <module name="TreeWalker">
+    <!-- Checks for redundant import statements -->
+    <module name="RedundantImport"/>
+    <!-- Checks for unused import statements -->
+    <module name="UnusedImports"/>
+    <!-- Check that finds import statements that use the * notation. -->
+    <module name="AvoidStarImport"/>
+    <!-- Checks for long lines. -->
+    <module name="LineLength">
+      <property name="severity" value="warning"/>
+    </module>
+    <!-- Write Javadocs for public methods and classes. Keep it short and to the point
+				/**
+				 * @author Joe Developer
+				 * @date MMM DD, YYYY
+				 */
+				public class MyClass
+				-->
+    <module name="JavadocType">
+      <property name="scope" value="public"/>
+      <property name="excludeScope" value="anoninner"/>
+      <property name="authorFormat" value="\S"/>
+      <property name="allowUnknownTags" value="true"/>
+      <property name="allowMissingParamTags" value="true"/>
+    </module>
+    <module name="JavadocMethod">
+      <property name="scope" value="public"/>
+      <property name="allowUndeclaredRTE" value="true"/>
+      <property name="allowMissingParamTags" value="true"/>
+      <property name="allowMissingThrowsTags" value="true"/>
+      <property name="allowMissingReturnTag" value="true"/>
+    </module>
+    <module name="WriteTag">
+      <property name="id" value="dateTag"/>
+      <property name="tag" value="@date"/>
+      <property name="tagFormat" value="[A-Z][a-z]{2} \d{1,2}, \d{4}"/>
+      <property name="severity" value="error"/>
+      <property name="tagSeverity" value="ignore"/>
+    </module>
+    <!-- K&R style braces -->
+    <module name="NeedBraces"/>
+    <module name="LeftCurly"/>
+    <module name="RightCurly"/>
+    <module name="WhitespaceAround">
+      <property name="tokens"
+        value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, EQUAL, GE, GT, LAND, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION, SL, SLIST, SL_ASSIGN, SR, SR_ASSIGN, STAR, STAR_ASSIGN, TYPE_EXTENSION_AND"
+      />
+    </module>
+    <module name="Indentation"/>
+    <!-- Trailing Whitespace -->
+    <module name="Regexp">
+      <property name="format" value="[ \t]+$"/>
+      <property name="illegalPattern" value="true"/>
+      <property name="message" value="Trailing whitespace"/>
+    </module>
+  </module>
+</module>

@@ -29,7 +29,7 @@ public abstract class AbstractResourceIT {
 
     protected Logger logger;
 
-	protected String OBJECT_PATH = "objects";
+    protected String OBJECT_PATH = "objects";
 
     @Before
     public void setLogger() {
@@ -97,7 +97,7 @@ public abstract class AbstractResourceIT {
             throws ClientProtocolException, IOException {
         HttpResponse response = execute(method);
         int result = response.getStatusLine().getStatusCode();
-        if (!(result > 199) || !(result < 400)){
+        if (!(result > 199) || !(result < 400)) {
             logger.warn(EntityUtils.toString(response.getEntity()));
         }
         return result;

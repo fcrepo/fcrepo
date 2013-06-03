@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.services;
 
@@ -47,6 +52,11 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * @todo Add Documentation.
+ * @a Chris Beeruthor
+ * @date Feb 12, 2013
+ */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
                          "org.xml.sax.*", "javax.management.*"})
@@ -55,33 +65,42 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class DatastreamServiceTest implements FedoraJcrTypes {
 
     private static final String MOCK_CONTENT_TYPE = "application/test-data";
-    
+
     private static final String JCR_CONTENT = "jcr:content";
-    
+
     private static final String JCR_DATA = "jcr:data";
-    
+
     private Session mockSession;
-    
+
     private Node mockRoot;
-    
+
     private DatastreamService testObj;
     private LowLevelStorageService llStore;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setUp() throws RepositoryException {
-    	testObj = new DatastreamService();
-    	mockSession = mock(Session.class);
-    	mockRoot = mock(Node.class);
-    	when(mockSession.getRootNode()).thenReturn(mockRoot);
+        testObj = new DatastreamService();
+        mockSession = mock(Session.class);
+        mockRoot = mock(Node.class);
+        when(mockSession.getRootNode()).thenReturn(mockRoot);
         llStore = mock(LowLevelStorageService.class);
         testObj.setLlStoreService(llStore);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @After
     public void tearDown() {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testCreateDatastreamNode() throws Exception {
         final String testPath = "/foo/bar";
@@ -95,20 +114,23 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         final InputStream mockIS = mock(InputStream.class);
         when(mockContent.setProperty(JCR_DATA, mockBinary)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
-		final PolicyDecisionPoint pdp = mock(PolicyDecisionPoint.class);
-		when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
-		testObj.setStoragePolicyDecisionPoint(pdp);
-		mockStatic(FedoraTypesUtils.class);
-		when(FedoraTypesUtils.getBinary(eq(mockNode), eq(mockIS), any(String.class))).thenReturn(mockBinary);
+        final PolicyDecisionPoint pdp = mock(PolicyDecisionPoint.class);
+        when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
+        testObj.setStoragePolicyDecisionPoint(pdp);
+        mockStatic(FedoraTypesUtils.class);
+        when(FedoraTypesUtils.getBinary(eq(mockNode), eq(mockIS), any(String.class))).thenReturn(mockBinary);
 
         final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,
                         MOCK_CONTENT_TYPE, mockIS);
         assertEquals(mockNode, actual);
-        
+
         verify(mockContent).setProperty(JCR_DATA, mockBinary);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetDatastreamNode() throws Exception {
         final String testPath = "/foo/bar";
@@ -125,6 +147,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         verify(mockRoot).getNode(testPath.substring(1));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetDatastream() throws Exception {
         final String testPath = "/foo/bar";
@@ -139,6 +164,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         verify(mockRoot).getNode(testPath.substring(1));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testExists() throws RepositoryException {
         final Session mockSession = mock(Session.class);
@@ -146,6 +174,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         verify(mockSession).nodeExists("/foo/bar");
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetFixityResultsModel() throws RepositoryException, URISyntaxException {
         mockStatic(JcrRdfTools.class);
@@ -174,6 +205,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     }
 
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetFixity() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -198,6 +232,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         assertEquals(4L, actualFunction.getSize());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @SuppressWarnings("unchecked")
     @Test
     public void testRunFixityAndFixProblems() throws RepositoryException,

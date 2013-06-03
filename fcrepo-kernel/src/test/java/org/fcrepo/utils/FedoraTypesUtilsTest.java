@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.utils;
 
@@ -43,20 +48,28 @@ import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Predicate;
 
+/**
+ * @todo Add Documentation.
+ Benjamin Armintor * @author
+ * @date May 13, 2013
+ */
 public class FedoraTypesUtilsTest {
 
-    // unfortunately, we need to be able to cast to two interfaces to perform some tests
-    // this testing interface allows mocks to do that
+    // unfortunately, we need to be able to cast to two interfaces to perform
+    // some tests this testing interface allows mocks to do that
     static interface PropertyMock extends Property, Namespaced {
     };
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testIsMultipleValuedProperty() throws RepositoryException {
         final Property mockYes = mock(Property.class);
         when(mockYes.isMultiple()).thenReturn(true);
         final Property mockNo = mock(Property.class);
         final Predicate<Property> test =
-                FedoraTypesUtils.isMultipleValuedProperty;
+            FedoraTypesUtils.isMultipleValuedProperty;
         try {
             test.apply(null);
             fail("Null values should throw an IllegalArgumentException");
@@ -68,6 +81,9 @@ public class FedoraTypesUtilsTest {
         assertEquals(false, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetValueFactory() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -76,16 +92,22 @@ public class FedoraTypesUtilsTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         final ValueFactory actual =
-                FedoraTypesUtils.getValueFactory.apply(mockNode);
+            FedoraTypesUtils.getValueFactory.apply(mockNode);
         assertEquals(mockVF, actual);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetPredicateForProperty() {
         final PropertyMock mockProp = mock(PropertyMock.class);
         getPredicateForProperty.apply(mockProp);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetBinary() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -104,6 +126,9 @@ public class FedoraTypesUtilsTest {
         verify(mockJVF).createBinary(mockInput, mockHint);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetDefinitionForPropertyName() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -121,16 +146,19 @@ public class FedoraTypesUtilsTest {
         final PropertyDefinition[] PDs = new PropertyDefinition[] {mockPD};
         when(mockType.getPropertyDefinitions()).thenReturn(PDs);
         PropertyDefinition actual =
-                FedoraTypesUtils.getDefinitionForPropertyName(mockNode,
-                        mockPropertyName);
+            FedoraTypesUtils.getDefinitionForPropertyName(mockNode,
+                                                          mockPropertyName);
         assertEquals(mockPD, actual);
         actual =
-                FedoraTypesUtils.getDefinitionForPropertyName(mockNode,
-                        mockPropertyName + ":fail");
+            FedoraTypesUtils.getDefinitionForPropertyName(mockNode,
+                                                          mockPropertyName + ":fail");
         assertEquals(null, actual);
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testConvertDateToXSDString() {
         final String expected = "2006-11-13T09:40:55.001Z";
@@ -138,9 +166,12 @@ public class FedoraTypesUtilsTest {
         date.set(2006, 10, 13, 9, 40, 55);
         date.set(Calendar.MILLISECOND, 1);
         assertEquals(expected, FedoraTypesUtils.convertDateToXSDString(date
-                .getTimeInMillis()));
+                                                                       .getTimeInMillis()));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetBaseVersionForNode() throws RepositoryException {
         final Version mockVersion = mock(Version.class);
@@ -149,19 +180,22 @@ public class FedoraTypesUtilsTest {
 
         when(mockNode.getSession()).thenReturn(mock(Session.class));
         when(mockNode.getSession().getWorkspace()).thenReturn(
-                mock(Workspace.class));
+                                                              mock(Workspace.class));
         when(mockNode.getSession().getWorkspace().getVersionManager())
-                .thenReturn(mock(VersionManager.class));
+            .thenReturn(mock(VersionManager.class));
         when(
-                mockNode.getSession().getWorkspace().getVersionManager()
-                        .getBaseVersion("/my/path")).thenReturn(mockVersion);
+             mockNode.getSession().getWorkspace().getVersionManager()
+             .getBaseVersion("/my/path")).thenReturn(mockVersion);
 
         final Version versionHistory =
-                FedoraTypesUtils.getBaseVersion(mockNode);
+            FedoraTypesUtils.getBaseVersion(mockNode);
 
         assertEquals(mockVersion, versionHistory);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetVersionHistoryForNode() throws RepositoryException {
         final VersionHistory mockVersionHistory = mock(VersionHistory.class);
@@ -170,40 +204,46 @@ public class FedoraTypesUtilsTest {
 
         when(mockNode.getSession()).thenReturn(mock(Session.class));
         when(mockNode.getSession().getWorkspace()).thenReturn(
-                mock(Workspace.class));
+                                                              mock(Workspace.class));
         when(mockNode.getSession().getWorkspace().getVersionManager())
-                .thenReturn(mock(VersionManager.class));
+            .thenReturn(mock(VersionManager.class));
         when(
-                mockNode.getSession().getWorkspace().getVersionManager()
-                        .getVersionHistory("/my/path")).thenReturn(
-                mockVersionHistory);
+             mockNode.getSession().getWorkspace().getVersionManager()
+             .getVersionHistory("/my/path")).thenReturn(
+                                                        mockVersionHistory);
 
         final VersionHistory versionHistory =
-                FedoraTypesUtils.getVersionHistory(mockNode);
+            FedoraTypesUtils.getVersionHistory(mockNode);
 
         assertEquals(mockVersionHistory, versionHistory);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetVersionHistoryForSessionAndPath()
-            throws RepositoryException {
+        throws RepositoryException {
         final VersionHistory mockVersionHistory = mock(VersionHistory.class);
         final Session mockSession = mock(Session.class);
 
         when(mockSession.getWorkspace()).thenReturn(mock(Workspace.class));
         when(mockSession.getWorkspace().getVersionManager()).thenReturn(
-                mock(VersionManager.class));
+                                                                        mock(VersionManager.class));
         when(
-                mockSession.getWorkspace().getVersionManager()
-                        .getVersionHistory("/my/path")).thenReturn(
-                mockVersionHistory);
+             mockSession.getWorkspace().getVersionManager()
+             .getVersionHistory("/my/path")).thenReturn(
+                                                        mockVersionHistory);
 
         final VersionHistory versionHistory =
-                FedoraTypesUtils.getVersionHistory(mockSession, "/my/path");
+            FedoraTypesUtils.getVersionHistory(mockSession, "/my/path");
 
         assertEquals(mockVersionHistory, versionHistory);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testInternalNode() throws RepositoryException {
         Node mockNode = mock(Node.class);
@@ -213,9 +253,12 @@ public class FedoraTypesUtilsTest {
         when(mockNodeType.isNodeType("mode:system")).thenReturn(true);
 
         assertTrue("mode:system nodes should be treated as internal nodes",
-                          FedoraTypesUtils.isInternalNode.apply(mockNode));
+                   FedoraTypesUtils.isInternalNode.apply(mockNode));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testNonInternalNode() throws RepositoryException {
         Node mockNode = mock(Node.class);
@@ -224,10 +267,14 @@ public class FedoraTypesUtilsTest {
 
         when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
 
-        assertFalse("nodes that are not mode:system types should not be treated as internal nodes",
-                           FedoraTypesUtils.isInternalNode.apply(mockNode));
+        assertFalse("nodes that are not mode:system types should not be " +
+                    "treated as internal nodes",
+                    FedoraTypesUtils.isInternalNode.apply(mockNode));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetObjectSize() throws RepositoryException {
 
@@ -247,7 +294,12 @@ public class FedoraTypesUtilsTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
 
-        when(mockQueryManager.createQuery("SELECT [" + FedoraJcrTypes.CONTENT_SIZE + "] FROM [" + FedoraJcrTypes.FEDORA_BINARY + "]", Query.JCR_SQL2)).thenReturn(mockQuery);
+        when(mockQueryManager.createQuery("SELECT [" +
+                                          FedoraJcrTypes.CONTENT_SIZE +
+                                          "] FROM [" +
+                                          FedoraJcrTypes.FEDORA_BINARY + "]",
+                                          Query.JCR_SQL2))
+            .thenReturn(mockQuery);
         when(mockQuery.execute()).thenReturn(mockResults);
         when(mockResults.getRows()).thenReturn(mockIterator);
 
@@ -265,6 +317,9 @@ public class FedoraTypesUtilsTest {
         verify(mockSession, never()).save();
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetObjectCount() throws RepositoryException {
         Repository mockRepository = mock(Repository.class);
@@ -280,7 +335,12 @@ public class FedoraTypesUtilsTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
 
-        when(mockQueryManager.createQuery("SELECT [" + JcrConstants.JCR_PATH + "] FROM [" + FedoraJcrTypes.FEDORA_OBJECT + "]", Query.JCR_SQL2)).thenReturn(mockQuery);
+        when(mockQueryManager.createQuery("SELECT [" +
+                                          JcrConstants.JCR_PATH +
+                                          "] FROM [" +
+                                          FedoraJcrTypes.FEDORA_OBJECT +
+                                          "]", Query.JCR_SQL2))
+            .thenReturn(mockQuery);
         when(mockQuery.execute()).thenReturn(mockResults);
         when(mockResults.getRows()).thenReturn(mockIterator);
 

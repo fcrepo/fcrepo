@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.integration.utils;
 
@@ -31,6 +36,11 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date May 3, 2013
+ */
 public class TiffPolicyStorageIT {
 
     protected Logger logger;
@@ -43,15 +53,21 @@ public class TiffPolicyStorageIT {
 
     private LowLevelStorageService lowLevelService;
 
-	private PolicyDecisionPoint pdp;
+    private PolicyDecisionPoint pdp;
 
-	GetBinaryKey getBinaryKey = new GetBinaryKey();
+    GetBinaryKey getBinaryKey = new GetBinaryKey();
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setRepository() throws RepositoryException {
 
@@ -62,68 +78,83 @@ public class TiffPolicyStorageIT {
                 new JcrRepositoryFactory().getRepository(config.toString(),
                         null);
 
-		pdp = new PolicyDecisionPoint();
-		pdp.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
+        pdp = new PolicyDecisionPoint();
+        pdp.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
 
         datastreamService = new DatastreamService();
         datastreamService.setRepository(repo);
-		datastreamService.setStoragePolicyDecisionPoint(pdp);
+        datastreamService.setStoragePolicyDecisionPoint(pdp);
         objectService = new ObjectService();
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();
         lowLevelService.setRepository(repo);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
-	@Ignore
+    @Ignore
     public void testPolicyDrivenStorage() throws Exception {
+        ByteArrayInputStream data;
         final Session session = repo.login();
 
         objectService.createObject(session, "/testCompositeObject");
 
+        data = new ByteArrayInputStream("9876543219876543210987654321098765432109876543210987654321098765432109876543210987654321009876543210".getBytes());
         datastreamService.createDatastreamNode(session,
-                "/testCompositeObject/content",
-                "application/octet-stream", new ByteArrayInputStream(
-                        "9876543219876543210987654321098765432109876543210987654321098765432109876543210987654321009876543210".getBytes()));
-        datastreamService.createDatastreamNode(session,
-                "/testCompositeObject/tiffContent",
-                "image/tiff", new ByteArrayInputStream(
-                        "87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016".getBytes()));
+                                               "/testCompositeObject/content",
+                                               "application/octet-stream",
+                                               data);
+        data = new ByteArrayInputStream("87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016".getBytes());
+        datastreamService
+            .createDatastreamNode(session,
+                                  "/testCompositeObject/tiffContent",
+                                  "image/tiff",
+                                  data);
 
         session.save();
 
-		final Node node = session.getNode("/testCompositeObject/content");
+        final Node node = session.getNode("/testCompositeObject/content");
 
-		BinaryKey key = getBinaryKey.apply(node.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA));
+        BinaryKey key =
+            getBinaryKey.apply(node.getNode(JcrConstants.JCR_CONTENT)
+                               .getProperty(JcrConstants.JCR_DATA));
 
-		logger.info("content key: {}", key);
+        logger.info("content key: {}", key);
 
+        final Node tiffNode =
+            session.getNode("/testCompositeObject/tiffContent");
 
-		final Node tiffNode = session.getNode("/testCompositeObject/tiffContent");
+        BinaryKey tiffKey =
+            getBinaryKey.apply(tiffNode.getNode(JcrConstants.JCR_CONTENT)
+                               .getProperty(JcrConstants.JCR_DATA));
 
-		BinaryKey tiffKey = getBinaryKey.apply(tiffNode.getNode(JcrConstants.JCR_CONTENT).getProperty(JcrConstants.JCR_DATA));
+        logger.info("tiff key: {}", tiffKey);
 
-		logger.info("tiff key: {}", tiffKey);
+        final Set<LowLevelCacheEntry> lowLevelContentEntries =
+            lowLevelService.getLowLevelCacheEntries(key);
 
-		final Set<LowLevelCacheEntry> lowLevelContentEntries = lowLevelService.getLowLevelCacheEntries(key);
+        final Iterator<LowLevelCacheEntry> iterator =
+            lowLevelContentEntries.iterator();
 
-		final Iterator<LowLevelCacheEntry> iterator = lowLevelContentEntries.iterator();
+        assertEquals(1, lowLevelContentEntries.size());
 
-		assertEquals(1, lowLevelContentEntries.size());
+        final Set<LowLevelCacheEntry> lowLevelTiffEntries =
+            lowLevelService.getLowLevelCacheEntries(tiffKey);
 
-		final Set<LowLevelCacheEntry> lowLevelTiffEntries = lowLevelService.getLowLevelCacheEntries(tiffKey);
+        final Iterator<LowLevelCacheEntry> tiffIterator =
+            lowLevelTiffEntries.iterator();
 
-		final Iterator<LowLevelCacheEntry> tiffIterator = lowLevelTiffEntries.iterator();
+        assertEquals(1, lowLevelTiffEntries.size());
 
-		assertEquals(1, lowLevelTiffEntries.size());
+        LowLevelCacheEntry e = iterator.next();
 
-		LowLevelCacheEntry e = iterator.next();
+        assertThat(e.getExternalIdentifier(),
+                   containsString("TransientBinaryStore"));
 
-		assertThat(e.getExternalIdentifier(), containsString("TransientBinaryStore"));
-
-		LowLevelCacheEntry tiffEntry = tiffIterator.next();
-		assertThat(tiffEntry.getExternalIdentifier(), containsString("FileSystemBinaryStore"));
-
-
-	}
+        LowLevelCacheEntry tiffEntry = tiffIterator.next();
+        assertThat(tiffEntry.getExternalIdentifier(),
+                   containsString("FileSystemBinaryStore"));
+    }
 }

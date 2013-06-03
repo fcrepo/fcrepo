@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.spring;
 
@@ -15,6 +20,11 @@ import org.modeshape.jcr.api.RepositoryFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
 
+/**
+ * @todo Add Documentation.
+ * @author Edwin Shin
+ * @date Feb 7, 2013
+ */
 public class ModeShapeRepositoryFactoryBean implements
         FactoryBean<JcrRepository> {
 
@@ -25,6 +35,9 @@ public class ModeShapeRepositoryFactoryBean implements
 
     private JcrRepository repository;
 
+    /**
+     * @todo Add Documentation.
+     */
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
         repository =
@@ -34,21 +47,33 @@ public class ModeShapeRepositoryFactoryBean implements
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public JcrRepository getObject() throws RepositoryException, IOException {
         return repository;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public Class<?> getObjectType() {
         return Repository.class;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public boolean isSingleton() {
         return true;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     public void setRepositoryConfiguration(
             final Resource repositoryConfiguration) {
         this.repositoryConfiguration = repositoryConfiguration;

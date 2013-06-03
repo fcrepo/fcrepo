@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 /*
  * ModeShape (http://www.modeshape.org)
  * See the COPYRIGHT.txt file distributed with this work for information
@@ -7,8 +12,8 @@
  * individual contributors.
  *
  * ModeShape is free software. Unless otherwise indicated, all code in ModeShape
- * is licensed to you under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
+ * is licensed to you under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
  * the License, or (at your option) any later version.
  *
  * ModeShape is distributed in the hope that it will be useful,
@@ -35,8 +40,10 @@ import org.modeshape.common.logging.Logger;
 
 /**
  * Merges chunks from cache and provides InputStream-feeling.
+ *
+ * @author Chris Beer
+ * @date Mar 11, 2013
  */
-
 public class StoreChunkInputStream extends InputStream {
 
     private final Logger logger;
@@ -51,12 +58,18 @@ public class StoreChunkInputStream extends InputStream {
 
     private int chunkNumber;
 
+    /**
+     * @todo Add Documentation.
+     */
     public StoreChunkInputStream(final CacheStore blobCache, final String key) {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.key = key;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public int read() throws IOException {
         if (indexInBuffer == -1) {
@@ -69,6 +82,9 @@ public class StoreChunkInputStream extends InputStream {
         return buffer[indexInBuffer++] & 0xff;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public int read(final byte[] b, final int off, int len) throws IOException {
         if (indexInBuffer == -1) {
@@ -86,7 +102,8 @@ public class StoreChunkInputStream extends InputStream {
         }
         System.arraycopy(buffer, indexInBuffer, b, off, len);
         indexInBuffer += len;
-        // if we've just exhausted the buffer, make sure we try a new buffer on next skip/read
+        // if we've just exhausted the buffer, make sure we try a new buffer on
+        // next skip/read
         if (indexInBuffer == buffer.length) {
             buffer = null;
             indexInBuffer = 0;
@@ -94,18 +111,24 @@ public class StoreChunkInputStream extends InputStream {
         return len;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public int available() throws IOException {
         if (buffer == null) {
             return 0;
         }
         if (indexInBuffer >= 0) {
-        	return buffer.length - indexInBuffer;
+            return buffer.length - indexInBuffer;
         } else {
             return -1;
         }
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public final long skip(long n) throws IOException {
         if (n <= 0 || indexInBuffer == -1) {
@@ -123,8 +146,8 @@ public class StoreChunkInputStream extends InputStream {
             indexInBuffer = 0;
             return skipped;
         } else {
-        	indexInBuffer += n;
-        	return n;
+            indexInBuffer += n;
+            return n;
         }
     }
 

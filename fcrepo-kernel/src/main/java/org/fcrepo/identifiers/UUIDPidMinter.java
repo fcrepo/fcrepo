@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.identifiers;
 
@@ -9,9 +14,9 @@ import com.codahale.metrics.Timer;
 
 /**
  * Simple PidMinter that replies on Java's inbuilt UUID minting.
- * 
- * @author ajs6f
  *
+ * @author eddies
+ * @date Feb 7, 2013
  */
 public class UUIDPidMinter extends BasePidMinter {
 

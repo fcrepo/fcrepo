@@ -1,3 +1,9 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
+
 package org.fcrepo.binary;
 
 import org.junit.Test;
@@ -15,7 +21,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
+/**
+ * @todo Add Documentation.
+ * @author cbeer
+ * @date Apr 25, 2013
+ */
 public class MimeTypePolicyTest {
+
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void shouldEvaluatePolicyAndReturnHint() throws Exception {
         String hint = "store-id";
@@ -29,14 +44,19 @@ public class MimeTypePolicyTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-dummy");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
+            thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
+            thenReturn(mockProperty);
 
         String receivedHint = policy.evaluatePolicy(mockDsNode);
 
         assertThat(receivedHint, is(hint));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void shouldEvaluatePolicyAndReturnNoHint() throws Exception {
         String hint = "store-id";
@@ -49,23 +69,30 @@ public class MimeTypePolicyTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("application/x-other");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
+            thenReturn(mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
+            thenReturn(mockProperty);
 
         String receivedHint = policy.evaluatePolicy(mockDsNode);
 
         assertNull(receivedHint);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
-    public void shouldEvaluatePolicyAndReturnNoHintOnException() throws Exception {
+    public void shouldEvaluatePolicyAndReturnNoHintOnException()
+        throws Exception {
         String hint = "store-id";
         Policy policy = new MimeTypePolicy("image/x-dummy", hint);
 
         Session mockSession = mock(Session.class);
         Node mockDsNode = mock(Node.class);
 
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenThrow(new RepositoryException());
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
+            thenThrow(new RepositoryException());
 
         String receivedHint = policy.evaluatePolicy(mockDsNode);
 
