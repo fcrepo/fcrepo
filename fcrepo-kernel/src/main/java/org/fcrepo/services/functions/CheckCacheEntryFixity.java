@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.services.functions;
 
@@ -15,6 +20,11 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Function;
 
+/**
+ * @todo Add Documentation.
+ * @author barmintor
+ * @date Apr 2, 2013
+ */
 public class CheckCacheEntryFixity implements
         Function<LowLevelCacheEntry, FixityResult> {
 
@@ -27,6 +37,9 @@ public class CheckCacheEntryFixity implements
 
     private final long dsSize;
 
+    /**
+     * @todo Add Documentation.
+     */
     public CheckCacheEntryFixity(final MessageDigest digest,
             final URI dsChecksum, final long dsSize) {
         this.digest = digest;
@@ -34,6 +47,9 @@ public class CheckCacheEntryFixity implements
         this.dsSize = dsSize;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Override
     public FixityResult apply(final LowLevelCacheEntry input) {
         logger.debug("Checking fixity for resource in cache store " +
@@ -48,14 +64,23 @@ public class CheckCacheEntryFixity implements
         return result;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     public MessageDigest getDigest() {
         return digest;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     public URI getChecksum() {
         return dsChecksum;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     public long getSize() {
         return dsSize;
     }

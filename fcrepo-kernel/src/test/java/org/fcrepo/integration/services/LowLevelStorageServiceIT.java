@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.integration.services;
 
@@ -24,6 +29,11 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * @todo Add Documentation.
+ * @author fasseg
+ * @date Mar 20, 2013
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class LowLevelStorageServiceIT {
@@ -41,22 +51,31 @@ public class LowLevelStorageServiceIT {
     LowLevelStorageService lowLevelService;
 
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetBinaryBlobs() throws Exception {
         final Session session = repo.login();
         objectService.createObject(session, "/testLLObject");
-        datastreamService.createDatastreamNode(session,
-                "/testLLObject/testRepositoryContent",
-                "image/tiff", new ByteArrayInputStream(
-                        "0123456789987654321012345678900987654321".getBytes()));
+        datastreamService
+            .createDatastreamNode(session,
+                                  "/testLLObject/testRepositoryContent",
+                                  "image/tiff",
+                                  new ByteArrayInputStream("0123456789987654321012345678900987654321".getBytes())
+                                  );
 
         session.save();
 
         final Datastream ds =
-                datastreamService.getDatastream(session, "/testLLObject/testRepositoryContent");
+            datastreamService
+            .getDatastream(session, "/testLLObject/testRepositoryContent");
 
         final Iterator<LowLevelCacheEntry> inputStreamList =
-                lowLevelService.getLowLevelCacheEntries(ds.getNode().getNode(JcrConstants.JCR_CONTENT)).iterator();
+            lowLevelService
+            .getLowLevelCacheEntries(ds.getNode()
+                                     .getNode(JcrConstants.JCR_CONTENT))
+            .iterator();
 
         int i = 0;
         while (inputStreamList.hasNext()) {

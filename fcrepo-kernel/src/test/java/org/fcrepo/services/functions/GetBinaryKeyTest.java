@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.services.functions;
 
@@ -16,8 +21,16 @@ import org.junit.Test;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 
+/**
+ * @todo Add Documentation.
+ * @author Benjamin Armintor
+ * @date Apr 3, 2013
+ */
 public class GetBinaryKeyTest {
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testApply() throws LoginException, RepositoryException {
         final Node mockNode = mock(Node.class);

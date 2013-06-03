@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.metrics;
 
@@ -9,8 +14,16 @@ import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 
+/**
+ * @todo Add Documentation.
+ * @author cbeer
+ * @date Mar 22, 2013
+ */
 public class ReporterFactory {
 
+    /**
+     * @todo Add Documentation.
+     */
     public ScheduledReporter registerGraphiteReporter(final Graphite g,
             final String prefix) {
         final GraphiteReporter r = forRegistry(getMetrics()).build(g);
@@ -18,6 +31,9 @@ public class ReporterFactory {
         return r;
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     public static ReporterFactory buildDefaultReporterFactory() {
         return new ReporterFactory();
     }

@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.integration.utils;
 
@@ -26,6 +31,11 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * @todo Add Documentation.
+ * @author fasseg
+ * @date Mar 20, 2013
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class LowLevelCacheEntryIT {
@@ -33,6 +43,9 @@ public class LowLevelCacheEntryIT {
     @Inject
     Repository repo;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetExternalIdentifier() throws Exception {
         final BinaryStore store =
@@ -45,6 +58,9 @@ public class LowLevelCacheEntryIT {
                 .getExternalIdentifier().split(":")[0]);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testEquals() throws Exception {
 
@@ -60,6 +76,9 @@ public class LowLevelCacheEntryIT {
         assertEquals(cs1, cs2);
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testHashCode() throws Exception {
 
@@ -75,6 +94,9 @@ public class LowLevelCacheEntryIT {
         assertEquals(cs1.hashCode(), cs2.hashCode());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testEqualsIspn() throws Exception {
 
@@ -98,6 +120,9 @@ public class LowLevelCacheEntryIT {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testHashCodeIspn() throws Exception {
 
@@ -121,6 +146,9 @@ public class LowLevelCacheEntryIT {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetExternalIdentifierWithInfinispan() throws Exception {
 
@@ -137,10 +165,15 @@ public class LowLevelCacheEntryIT {
         final LowLevelCacheEntry cs =
                 new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
         assertEquals(
-                "/org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore:FedoraRepository:org.infinispan.loaders.file.FileCacheStore:target/FedoraRepository/storage",
+                "/org.modeshape.jcr.value.binary.infinispan." +
+                "InfinispanBinaryStore:FedoraRepository:org.infinispan." +
+                "loaders.file.FileCacheStore:target/FedoraRepository/storage",
                 cs.getExternalIdentifier());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testModifyingCacheStores() throws Exception {
 

@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.integration.utils;
 
@@ -33,6 +38,11 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @todo Add Documentation.
+ * @author fasseg
+ * @date Mar 20, 2013
+ */
 public class SelfHealingIT {
 
     protected Logger logger;
@@ -45,24 +55,31 @@ public class SelfHealingIT {
 
     private LowLevelStorageService lowLevelService;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Before
     public void setRepository() throws RepositoryException {
 
         final URL config =
-                this.getClass().getClassLoader().getResource(
-                        "test_selfhealing_repository.json");
+            this.getClass().getClassLoader().getResource(
+                                                         "test_selfhealing_repository.json");
         repo =
-                new JcrRepositoryFactory().getRepository(config.toString(),
-                        null);
+            new JcrRepositoryFactory().getRepository(config.toString(),
+                                                     null);
 
         datastreamService = new DatastreamService();
         datastreamService.setRepository(repo);
-		datastreamService.setStoragePolicyDecisionPoint(new PolicyDecisionPoint());
+        datastreamService
+            .setStoragePolicyDecisionPoint(new PolicyDecisionPoint());
         objectService = new ObjectService();
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();
@@ -74,7 +91,8 @@ public class SelfHealingIT {
 
         logger.info("Tampering with node " + node.toString());
         final Set<LowLevelCacheEntry> binaryBlobs =
-                lowLevelService.getLowLevelCacheEntries(node.getNode(JcrConstants.JCR_CONTENT));
+            lowLevelService
+            .getLowLevelCacheEntries(node.getNode(JcrConstants.JCR_CONTENT));
 
         final Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
 
@@ -85,34 +103,48 @@ public class SelfHealingIT {
     }
 
     private Collection<FixityResult> getNodeFixity(final Datastream ds)
-            throws NoSuchAlgorithmException, RepositoryException {
+        throws NoSuchAlgorithmException, RepositoryException {
 
-        return datastreamService.getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT), MessageDigest
-                .getInstance("SHA-1"), ds.getContentDigest(), ds
-                .getContentSize());
+        return datastreamService
+            .getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT),
+                       MessageDigest.getInstance("SHA-1"),
+                       ds.getContentDigest(),
+                       ds.getContentSize());
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         final Session session = repo.login();
 
-		final String contentA = "qn8y34jweuytgopfv3oevo29r7ajrp6r7q21jrxkkciggheh7rqqjbolsq09";
-		final String contentB = "2e6sxpys67dslongzydxosx6ndze5vbgb6fnj1rr53buk405i1380a868xsb";
+        final String contentA =
+            "qn8y34jweuytgopfv3oevo29r7ajrp6r7q21jrxkkciggheh7rqqjbolsq09";
+        final String contentB =
+            "2e6sxpys67dslongzydxosx6ndze5vbgb6fnj1rr53buk405i1380a868xsb";
 
-		final String shaA = Hex.encodeHexString(MessageDigest.getInstance("SHA-1").digest(contentA.getBytes()));
-		final String shaB = Hex.encodeHexString(MessageDigest.getInstance("SHA-1").digest(contentB.getBytes()));
+        final String shaA =
+            Hex.encodeHexString(MessageDigest.getInstance("SHA-1")
+                                .digest(contentA.getBytes()));
+        final String shaB =
+            Hex.encodeHexString(MessageDigest.getInstance("SHA-1")
+                                .digest(contentB.getBytes()));
         objectService.createObject(session, "/testSelfHealingObject");
 
-        datastreamService.createDatastreamNode(session,
-                "/testSelfHealingObject/testDatastreamNode4",
-                "application/octet-stream", new ByteArrayInputStream(
-                        contentA.getBytes()), "SHA-1", shaA
-													  );
-        datastreamService.createDatastreamNode(session,
-                "/testSelfHealingObject/testDatastreamNode5",
-                "application/octet-stream", new ByteArrayInputStream(
-                        contentB.getBytes()), "SHA-1", shaB);
+        datastreamService
+            .createDatastreamNode(session,
+                                  "/testSelfHealingObject/testDatastreamNode4",
+                                  "application/octet-stream",
+                                  new ByteArrayInputStream(contentA.getBytes()),
+                                  "SHA-1", shaA);
+        datastreamService
+            .createDatastreamNode(session,
+                                  "/testSelfHealingObject/testDatastreamNode5",
+                                  "application/octet-stream",
+                                  new ByteArrayInputStream(contentB.getBytes()),
+                                  "SHA-1", shaB);
 
         session.save();
 
@@ -122,10 +154,14 @@ public class SelfHealingIT {
         Thread.sleep(1000);
 
         final Datastream ds =
-                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode4");
+            datastreamService
+            .getDatastream(session,
+                           "/testSelfHealingObject/testDatastreamNode4");
 
         final Datastream ds2 =
-                datastreamService.getDatastream(session, "/testSelfHealingObject/testDatastreamNode5");
+            datastreamService
+            .getDatastream(session,
+                           "/testSelfHealingObject/testDatastreamNode5");
 
         logger.info("checking that our setup succeeded");
         nodeFixity = getNodeFixity(ds);
@@ -139,9 +175,9 @@ public class SelfHealingIT {
 
         for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
-                    fixityResult.computedChecksum
-                            .toString()
-                            .equals("urn:sha1:" + shaA);
+                fixityResult.computedChecksum
+                .toString()
+                .equals("urn:sha1:" + shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -152,9 +188,9 @@ public class SelfHealingIT {
 
         for (final FixityResult fixityResult : nodeFixity2) {
             fixityOk &=
-                    fixityResult.computedChecksum
-                            .toString()
-                            .equals("urn:sha1:" + shaB);
+                fixityResult.computedChecksum
+                .toString()
+                .equals("urn:sha1:" + shaB);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -166,9 +202,9 @@ public class SelfHealingIT {
         fixityOk = true;
         for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
-                    fixityResult.computedChecksum
-                            .toString()
-                            .equals("urn:sha1:" + shaA);
+                fixityResult.computedChecksum
+                .toString()
+                .equals("urn:sha1:" + shaA);
         }
 
         assertFalse("Expected the fixity check to fail.", fixityOk);
@@ -180,9 +216,9 @@ public class SelfHealingIT {
         fixityOk = true;
         for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
-                    fixityResult.computedChecksum
-                            .toString()
-                            .equals("urn:sha1:" + shaA);
+                fixityResult.computedChecksum
+                .toString()
+                .equals("urn:sha1:" + shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);

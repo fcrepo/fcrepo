@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.observer;
 
@@ -12,22 +17,36 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Mar 14, 2013
+ */
 public class FedoraEventTest {
 
     Event e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetType() throws Exception {
         assertEquals(1, e.getType());
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetPath() throws Exception {
         assertEquals("Path", e.getPath());
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetUserID() throws Exception {
 
@@ -35,6 +54,9 @@ public class FedoraEventTest {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetIdentifier() throws Exception {
 
@@ -42,6 +64,9 @@ public class FedoraEventTest {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetInfo() throws Exception {
         final Map<?, ?> m = e.getInfo();
@@ -49,6 +74,9 @@ public class FedoraEventTest {
         assertEquals("2", m.get("1"));
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetUserData() throws Exception {
 
@@ -56,12 +84,20 @@ public class FedoraEventTest {
 
     }
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testGetDate() throws Exception {
         assertEquals(0L, e.getDate());
 
     }
 
+    /**
+     * @todo Add Documentation.
+     * @author
+     * @date
+     */
     class TestEvent implements Event {
 
         private final int type;
@@ -91,36 +127,57 @@ public class FedoraEventTest {
             this.date = date;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public int getType() {
             return type;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public String getPath() throws RepositoryException {
             return path;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public String getUserID() {
             return user_id;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public String getIdentifier() throws RepositoryException {
             return identifier;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public Map<String, String> getInfo() throws RepositoryException {
             return info;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public String getUserData() throws RepositoryException {
             return userData;
         }
 
+        /**
+         * @todo Add Documentation.
+         */
         @Override
         public long getDate() throws RepositoryException {
             return date;

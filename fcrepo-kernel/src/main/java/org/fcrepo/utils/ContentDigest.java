@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.utils;
 
@@ -13,6 +18,11 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Mar 6, 2013
+ */
 public abstract class ContentDigest {
 
     private static final Logger LOGGER = getLogger(ContentDigest.class);
@@ -20,8 +30,8 @@ public abstract class ContentDigest {
     public static final Map<String, String> algorithmToScheme = ImmutableMap
             .of("SHA-1", "urn:sha1", "SHA1", "urn:sha1");
 
-    public static final Map<String, String> schemeToAlgorithm = ImmutableMap
-                                                                       .of("urn:sha1", "SHA-1");
+    public static final Map<String, String> schemeToAlgorithm =
+        ImmutableMap.of("urn:sha1", "SHA-1");
 
     /**
      * Convert a MessageDigest algorithm and checksum value to a URN
@@ -57,7 +67,9 @@ public abstract class ContentDigest {
      * @return
      */
     public static String getAlgorithm(URI digestUri) {
-        return schemeToAlgorithm.get(digestUri.getScheme() + ":" + digestUri.getSchemeSpecificPart().split(":", 2)[0]);
+        return schemeToAlgorithm
+            .get(digestUri.getScheme() + ":" +
+                 digestUri.getSchemeSpecificPart().split(":", 2)[0]);
     }
 
     private static String asString(final byte[] data) {

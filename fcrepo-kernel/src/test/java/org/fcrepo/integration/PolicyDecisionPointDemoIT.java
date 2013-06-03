@@ -1,3 +1,8 @@
+/**
+ * The contents of this file are subject to the license and copyright terms
+ * detailed in the license directory at the root of the source tree (also
+ * available online at http://fedora-commons.org/license/).
+ */
 
 package org.fcrepo.integration;
 
@@ -14,6 +19,11 @@ import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+/**
+ * @todo Add Documentation.
+ * @author Chris Beer
+ * @date Apr 25, 2013
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class PolicyDecisionPointDemoIT extends AbstractIT {
 
@@ -26,6 +36,9 @@ public class PolicyDecisionPointDemoIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void shouldDemonstratePolicyDecisionPoints() throws Exception {
 
