@@ -1,22 +1,33 @@
-#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
-#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
-#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
-#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
-#parse("views/common.vsl")
-<html>
-  <head>
-    <title>mode:root profile</title>
-    <style type="text/css">
-      #include("views/common.css")
-    </style>
-  </head>
+#set( $title = "Fedora root profile" )
+
+#parse("views/header.vsl")
+
   <body>
-    <h1>mode:root: $topic</h1>
+    <h1>Fedora root: $topic</h1>
+
+    ## output actions
+    <div class="actions">
+      <form action="javascript:addChild()">
+        <select id="new_mixin">
+          <option value="">folder</option>
+          <option value="fedora:object">object</option>
+          <option value="fedora:datastream">datastream</option>
+        </select>
+        <input type="text" id="new_id" value="new_id"/>
+        <input type="submit" value="add">
+      </form>
+      <form action="javascript:deleteItem()">
+        <input type="submit" value="delete this folder"/>
+
+      </form>
+    </div>
 
     ## output triples for the topic node
+    <h2>Triples for: </h2>
     #triples($topic)
 
     ## output other nodes
+    <h2>Triples for other nodes</h2>
     #foreach($subject in $subjects)
       #if( $subject != $topic )
         #triples($subject)
