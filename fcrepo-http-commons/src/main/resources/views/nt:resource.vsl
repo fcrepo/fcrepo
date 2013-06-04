@@ -4,6 +4,7 @@
 <html>
 <head>
     <title>nt:resource profile</title>
+    #parse("views/common-header.vsl")
 </head>
 
 <body>

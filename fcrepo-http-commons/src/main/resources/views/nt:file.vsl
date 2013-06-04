@@ -6,12 +6,7 @@
 <html>
   <head>
     <title>nt:file profile</title>
-    <script type="text/javascript">
-      #include("views/common.js")
-    </script>
-    <style type="text/css">
-      #include("views/common.css")
-    </style>
+    #parse("views/common-header.vsl")
   </head>
   <body>
     <h1>nt:file: $topic</h1>
