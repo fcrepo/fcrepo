@@ -18,7 +18,7 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_RESULT = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasFixityResult");
     public static final Property HAS_FIXITY_STATE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#status");
     public static final Property HAS_COMPUTED_CHECKSUM = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum");
-    public static final Property HAS_COMPUTED_SIZE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum");
+    public static final Property HAS_COMPUTED_SIZE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize");
 
     // SEARCH
     public static final Property SEARCH_HAS_TOTAL_RESULTS = ResourceFactory.createProperty("http://a9.com/-/spec/opensearch/1.1/totalResults");
