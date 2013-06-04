@@ -33,13 +33,7 @@ public class FedoraSitemapTest {
         mockObjects = mock(ObjectService.class);
         testObj = new FedoraSitemap();
         testObj.setObjectService(mockObjects);
-        mockSession = mock(Session.class);
-        final SessionFactory mockSessions = mock(SessionFactory.class);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        when(
-                mockSessions.getSession(any(SecurityContext.class),
-                        any(HttpServletRequest.class))).thenReturn(mockSession);
-        testObj.setSessionFactory(mockSessions);
+        mockSession = TestHelpers.mockSession(testObj);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
 

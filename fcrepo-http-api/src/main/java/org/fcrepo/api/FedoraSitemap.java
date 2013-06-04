@@ -119,14 +119,16 @@ public class FedoraSitemap extends AbstractResource {
     private SitemapEntry getSitemapEntry(final Row r)
             throws RepositoryException {
         Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
+        final String path = r.getNode().getPath();
+
         if (lkDateValue == null) {
-            logger.warn("no value for {} on {}", JCR_LASTMODIFIED, r.getNode().getPath());
+            logger.warn("no value for {} on {}", JCR_LASTMODIFIED, path);
             lkDateValue = r.getValue(JCR_CREATED);
         }
         Calendar lastKnownDate = (lkDateValue != null) ? lkDateValue.getDate() : null;
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
                 FedoraNodes.class)
-                .build(r.getNode().getName()), lastKnownDate);
+                .build(path.substring(1)), lastKnownDate);
     }
 
 
