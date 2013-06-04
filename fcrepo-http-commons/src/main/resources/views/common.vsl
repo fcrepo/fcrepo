@@ -1,5 +1,5 @@
 #macro( triples $sub )
-    <div>
+    <div resource="$sub.getURI()">
         #if($sub.isURI())
             <h2><a href="$sub.getURI()">$sub</a></h2>
         #else
@@ -18,9 +18,9 @@
 </dt>
                     <dd>
                         #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
-                            <a href="$quad.getObject().getURI()">$quad.getObject()</a>
+                            <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$quad.getObject()</a>
                         #else
-                            $quad.getObject()
+                            <span property="$quad.getPredicate().toString()">$quad.getObject()</span>
                         #end
                         #if( $quad.getPredicate().toString().equals("info:fedora/digest") )
                             <a href="$topic/fcr:fixity">check fixity</a>
