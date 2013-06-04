@@ -7,19 +7,27 @@
 package org.fcrepo.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -29,7 +37,10 @@ import javax.jcr.RepositoryException;
 import org.fcrepo.services.functions.GetBinaryKey;
 import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.utils.LowLevelCacheEntry;
+import org.fcrepo.utils.impl.CacheStoreEntry;
+import org.fcrepo.utils.impl.LocalBinaryStoreEntry;
 import org.infinispan.Cache;
+import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.junit.Test;
@@ -45,6 +56,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * @todo Add Documentation.
@@ -151,18 +163,22 @@ public class LowLevelStorageServiceTest {
         assertEquals(1, entries.size());
 
         assertTrue("does not contain our entry", entries
-                .contains(new LowLevelCacheEntry(mockStore, new BinaryKey(
+                .contains(new LocalBinaryStoreEntry(mockStore, new BinaryKey(
                         "key-123"))));
     }
 
     /**
+     * @throws Exception 
      * @todo Add Documentation.
      */
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void shouldRetrieveLowLevelCacheStoresForCompositeStore()
-            throws RepositoryException, CacheLoaderException {
+            throws Exception {
 
-        final Cache<?, ?> ispnCache1 = mock(Cache.class);
+        mockStatic(ServiceHelpers.class);
+        
+    	final Cache<?, ?> ispnCache1 = mock(Cache.class);
         final Cache<?, ?> ispnCache2 = mock(Cache.class);
         final CacheStore ispnCacheStore1 = mock(CacheStore.class);
         final CacheStore ispnCacheStore2 = mock(CacheStore.class);
@@ -190,28 +206,58 @@ public class LowLevelStorageServiceTest {
         when(mockStore.getNamedStoreIterator()).thenReturn(
                 map.entrySet().iterator());
 
-        final LowLevelStorageService testObj = new LowLevelStorageService();
-        testObj.setGetCacheStore(mockCacheStoreFunc);
+        final DistributedExecutorService mockCluster =
+        		mock(DistributedExecutorService.class);
+        when(ServiceHelpers.getClusterExecutor(infinispanBinaryStore))
+            .thenReturn(mockCluster);
 
         final BinaryKey key = new BinaryKey("key-123");
+        
+        LowLevelCacheEntry cacheEntry1 =
+        		new CacheStoreEntry(ispnCacheStore1,
+        				"cache1",
+        				key);
+        ImmutableSet.Builder<LowLevelCacheEntry> builder = ImmutableSet.builder();
+        Set<LowLevelCacheEntry> cacheResponse1 = builder.add(cacheEntry1).build();
+        builder = ImmutableSet.builder();
+        LowLevelCacheEntry cacheEntry2 =
+        		new CacheStoreEntry(ispnCacheStore2,
+        				"cache2",
+        				key);
+        Set<LowLevelCacheEntry> cacheResponse2 = builder.add(cacheEntry2).build();
+        Future<Collection<LowLevelCacheEntry>> future1 = mock(Future.class);
+        Future<Collection<LowLevelCacheEntry>> future2 = mock(Future.class);
+        when(future1.get(any(Long.class), eq(TimeUnit.MILLISECONDS)))
+            .thenReturn(cacheResponse1);
+        when(future2.get(any(Long.class), eq(TimeUnit.MILLISECONDS)))
+        .thenReturn(cacheResponse2);
+
+        List<Future<?>> mockClusterResults = new ArrayList<Future<?>>(2);
+        mockClusterResults.add(future1);
+        mockClusterResults.add(future2);
+
+        when(mockCluster.submitEverywhere(any(org.fcrepo.services.functions.CacheLocalTransform.class)))
+            .thenReturn(mockClusterResults);
+
+        
+        final LowLevelStorageService testObj = new LowLevelStorageService();
+
         when(plainBinaryStore.hasBinary(key)).thenReturn(true);
         when(plainBinaryStore2.hasBinary(key)).thenReturn(false);
         when(infinispanBinaryStore.hasBinary(key)).thenReturn(true);
-        when(ispnCacheStore1.containsKey("key-123-data-0")).thenReturn(true);
-        when(ispnCacheStore2.containsKey("key-123-data-0")).thenReturn(true);
         final Set<LowLevelCacheEntry> entries =
                 testObj.getLowLevelCacheEntriesFromStore(mockStore, key);
 
         assertEquals(3, entries.size());
 
-        assertTrue(entries.contains(new LowLevelCacheEntry(plainBinaryStore,
+        assertTrue(entries.contains(new LocalBinaryStoreEntry(plainBinaryStore,
                 key)));
-        assertTrue(!entries.contains(new LowLevelCacheEntry(plainBinaryStore2,
+        assertFalse(entries.contains(new LocalBinaryStoreEntry(plainBinaryStore2,
                 key)));
-        assertTrue(entries.contains(new LowLevelCacheEntry(
-                infinispanBinaryStore, ispnCacheStore1, key)));
-        assertTrue(entries.contains(new LowLevelCacheEntry(
-                infinispanBinaryStore, ispnCacheStore2, key)));
+        assertTrue(entries.contains(new CacheStoreEntry(
+                ispnCacheStore1, "cache1", key)));
+        assertTrue(entries.contains(new CacheStoreEntry(
+                ispnCacheStore2, "cache2", key)));
 
     }
 

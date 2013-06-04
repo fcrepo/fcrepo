@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -206,14 +207,15 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
 
     /**
+     * @throws NoSuchAlgorithmException, RepositoryException
      * @todo Add Documentation.
      */
     @Test
-    public void testGetFixity() throws RepositoryException {
+    public void testGetFixity() throws NoSuchAlgorithmException, RepositoryException {
         final Node mockNode = mock(Node.class);
         final Node mockContent = mock(Node.class);
 
-        final MessageDigest mockDigest = mock(MessageDigest.class);
+        final MessageDigest mockDigest = MessageDigest.getInstance("SHA-1");
         final URI mockUri = URI.create("urn:foo:bar"); // can't mock final classes
         final long testSize = 4L;
 
@@ -221,13 +223,13 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         testObj.getFixity(mockContent, mockDigest, mockUri, testSize );
 
-        ServiceHelpers.getCheckCacheFixityFunction(null, null, 0L);
+        ServiceHelpers.getCheckCacheFixityFunction(MessageDigest.getInstance("SHA-1"), null, 0L);
         ArgumentCaptor<CheckCacheEntryFixity> argument = ArgumentCaptor.forClass(CheckCacheEntryFixity.class);
         verify(llStore).transformLowLevelCacheEntries(eq(mockContent), argument.capture());
 
         final CheckCacheEntryFixity actualFunction = argument.getValue();
 
-        assertEquals(mockDigest, actualFunction.getDigest());
+        assertEquals(mockDigest.getAlgorithm(), actualFunction.getDigest().getAlgorithm());
         assertEquals(mockUri, actualFunction.getChecksum());
         assertEquals(4L, actualFunction.getSize());
     }
@@ -270,7 +272,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         when(llStore.transformLowLevelCacheEntries(eq(mockContent), any(CheckCacheEntryFixity.class))).thenReturn(mockFixityResults);
 
-        when(mockBadEntry.checkFixity(any(URI.class), any(Long.class), any(MessageDigest.class))).thenReturn(mockRepairedResult);
+        when(mockBadEntry.checkFixity(any(URI.class), any(Long.class), any(String.class))).thenReturn(mockRepairedResult);
         final Collection<FixityResult> fixityResults = testObj.runFixityAndFixProblems(mockDatastream);
 
         verify(mockBadResult).setRepaired();

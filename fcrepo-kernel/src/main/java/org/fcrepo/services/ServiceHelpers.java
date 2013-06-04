@@ -23,6 +23,10 @@ import javax.jcr.Value;
 import org.fcrepo.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
+import org.infinispan.Cache;
+import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.distexec.DistributedExecutorService;
+import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 import com.google.common.base.Function;
 
@@ -104,6 +108,16 @@ public abstract class ServiceHelpers {
         }
 
         return size;
+    }
+    
+    /**
+     * A static factory function to insulate services from the details of building
+     * a DistributedExecutorService
+     * @param cache
+     * @return
+     */
+    public static DistributedExecutorService getClusterExecutor(InfinispanBinaryStore cacheStore) {
+    	return new DefaultExecutorService(cacheStore.getCaches().get(0));
     }
 
     /**

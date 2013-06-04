@@ -246,7 +246,7 @@ public class DatastreamService extends RepositoryService {
                 result.getEntry()
                     .storeValue(anyGoodCacheEntry.getInputStream());
                 final FixityResult newResult =
-                    result.getEntry().checkFixity(digestUri, size, digest);
+                    result.getEntry().checkFixity(digestUri, size, digest.getAlgorithm());
                 if (newResult.isSuccess()) {
                     result.setRepaired();
                     fixityRepairedCounter.inc();
