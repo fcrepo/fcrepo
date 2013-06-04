@@ -199,15 +199,8 @@ public class DatastreamService extends RepositoryService {
         Set<FixityResult> goodEntries;
         final URI digestUri = datastream.getContentDigest();
         final long size = datastream.getContentSize();
-        MessageDigest digest;
 
         fixityCheckCounter.inc();
-
-        try {
-            digest = getInstance(ContentDigest.getAlgorithm(digestUri));
-        } catch (final NoSuchAlgorithmException e) {
-            throw new RepositoryException(e.getMessage(), e);
-        }
 
         final Timer.Context context = timer.time();
 
@@ -215,7 +208,7 @@ public class DatastreamService extends RepositoryService {
             fixityResults =
                 copyOf(getFixity(datastream.getNode().
                                  getNode(JcrConstants.JCR_CONTENT),
-                                 digest, digestUri, size));
+                                 digestUri, size));
 
             goodEntries = ImmutableSet.copyOf(Collections2.filter(fixityResults, new Predicate<FixityResult>() {
                 @Override
@@ -246,7 +239,7 @@ public class DatastreamService extends RepositoryService {
                 result.getEntry()
                     .storeValue(anyGoodCacheEntry.getInputStream());
                 final FixityResult newResult =
-                    result.getEntry().checkFixity(digestUri, size, digest);
+                    result.getEntry().checkFixity(digestUri, size);
                 if (newResult.isSuccess()) {
                     result.setRepaired();
                     fixityRepairedCounter.inc();
@@ -267,20 +260,18 @@ public class DatastreamService extends RepositoryService {
      *
      * @param resource
      * @param digest
-     * @param dsChecksum
+     * @param dsChecksum -the checksum and algorithm represented as a URI
      * @param dsSize
      * @return
      * @throws RepositoryException
      */
     public Collection<FixityResult> getFixity(final Node resource,
-                                              final MessageDigest digest,
                                               final URI dsChecksum,
                                               final long dsSize)
         throws RepositoryException {
         logger.debug("Checking resource: " + resource.getPath());
         Function<LowLevelCacheEntry, FixityResult> checkCacheFunc =
-            ServiceHelpers.getCheckCacheFixityFunction(digest,
-                                                       dsChecksum, dsSize);
+            ServiceHelpers.getCheckCacheFixityFunction(dsChecksum, dsSize);
         return llStoreService.
             transformLowLevelCacheEntries(resource, checkCacheFunc);
     }

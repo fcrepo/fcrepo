@@ -16,6 +16,8 @@ import javax.jcr.Repository;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.utils.LowLevelCacheEntry;
+import org.fcrepo.utils.impl.CacheStoreEntry;
+import org.fcrepo.utils.impl.LocalBinaryStoreEntry;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
@@ -53,7 +55,7 @@ public class LowLevelCacheEntryIT {
                         .getBinaryStore();
 
         final LowLevelCacheEntry cs =
-                new LowLevelCacheEntry(store, new BinaryKey("asd"));
+                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
         assertEquals("/org.modeshape.jcr.value.binary.TransientBinaryStore", cs
                 .getExternalIdentifier().split(":")[0]);
     }
@@ -69,9 +71,9 @@ public class LowLevelCacheEntryIT {
                         .getBinaryStore();
 
         final LowLevelCacheEntry cs1 =
-                new LowLevelCacheEntry(store, new BinaryKey("asd"));
+                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
         final LowLevelCacheEntry cs2 =
-                new LowLevelCacheEntry(store, new BinaryKey("asd"));
+                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
 
         assertEquals(cs1, cs2);
     }
@@ -87,9 +89,9 @@ public class LowLevelCacheEntryIT {
                         .getBinaryStore();
 
         final LowLevelCacheEntry cs1 =
-                new LowLevelCacheEntry(store, new BinaryKey("asd"));
+                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
         final LowLevelCacheEntry cs2 =
-                new LowLevelCacheEntry(store, new BinaryKey("asd"));
+                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
 
         assertEquals(cs1.hashCode(), cs2.hashCode());
     }
@@ -102,9 +104,6 @@ public class LowLevelCacheEntryIT {
 
         final EmbeddedCacheManager cm =
                 new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
-        final BinaryStore store =
-                new InfinispanBinaryStore(cm, false, "FedoraRepository",
-                        "FedoraRepository");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
@@ -112,9 +111,9 @@ public class LowLevelCacheEntryIT {
                                 CacheLoaderManager.class).getCacheStore();
 
         final LowLevelCacheEntry cs1 =
-                new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
         final LowLevelCacheEntry cs2 =
-                new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
 
         assertEquals(cs1, cs2);
 
@@ -128,9 +127,6 @@ public class LowLevelCacheEntryIT {
 
         final EmbeddedCacheManager cm =
                 new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
-        final BinaryStore store =
-                new InfinispanBinaryStore(cm, false, "FedoraRepository",
-                        "FedoraRepository");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
@@ -138,9 +134,9 @@ public class LowLevelCacheEntryIT {
                                 CacheLoaderManager.class).getCacheStore();
 
         final LowLevelCacheEntry cs1 =
-                new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
         final LowLevelCacheEntry cs2 =
-                new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
 
         assertEquals(cs1.hashCode(), cs2.hashCode());
 
@@ -154,19 +150,16 @@ public class LowLevelCacheEntryIT {
 
         final EmbeddedCacheManager cm =
                 new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
-        final BinaryStore store =
-                new InfinispanBinaryStore(cm, false, "FedoraRepository",
-                        "FedoraRepository");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
                         .getComponentRegistry().getComponent(
                                 CacheLoaderManager.class).getCacheStore();
         final LowLevelCacheEntry cs =
-                new LowLevelCacheEntry(store, ispn, new BinaryKey("asd"));
+                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
         assertEquals(
-                "/org.modeshape.jcr.value.binary.infinispan." +
-                "InfinispanBinaryStore:FedoraRepository:org.infinispan." +
+                "/org.infinispan.loaders.file." +
+                "FileCacheStore:FedoraRepository:org.infinispan." +
                 "loaders.file.FileCacheStore:target/FedoraRepository/storage",
                 cs.getExternalIdentifier());
     }
@@ -180,9 +173,6 @@ public class LowLevelCacheEntryIT {
         final EmbeddedCacheManager cm =
                 new DefaultCacheManager(
                         "config/infinispan/chained/infinispan.xml");
-        final BinaryStore store =
-                new InfinispanBinaryStore(cm, false, "FedoraRepository",
-                        "FedoraRepository");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
@@ -199,11 +189,11 @@ public class LowLevelCacheEntryIT {
                 chained_store.getStores();
 
         final LowLevelCacheEntry cs =
-                new LowLevelCacheEntry(store, (CacheStore) stores.keySet()
-                        .toArray()[0], key);
+                new CacheStoreEntry((CacheStore) stores.keySet()
+                        .toArray()[0], "FedoraRepository", key);
         final LowLevelCacheEntry cs2 =
-                new LowLevelCacheEntry(store, (CacheStore) stores.keySet()
-                        .toArray()[1], key);
+                new CacheStoreEntry((CacheStore) stores.keySet()
+                        .toArray()[1], "FedoraRepository", key);
 
         cs.storeValue(new ByteArrayInputStream("123456".getBytes()));
 

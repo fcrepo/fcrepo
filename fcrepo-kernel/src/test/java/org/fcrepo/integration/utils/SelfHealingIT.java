@@ -11,6 +11,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +25,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.poi.util.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.services.DatastreamService;
@@ -31,6 +33,10 @@ import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
+import org.fcrepo.utils.impl.CacheStoreEntry;
+import org.fcrepo.utils.infinispan.StoreChunkOutputStream;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
@@ -97,7 +103,17 @@ public class SelfHealingIT {
         final Iterator<LowLevelCacheEntry> it = binaryBlobs.iterator();
 
         final LowLevelCacheEntry entryToTamper = it.next();
-        entryToTamper.storeValue(new ByteArrayInputStream("qwerty".getBytes()));
+        CacheStore store = ((CacheStoreEntry)entryToTamper).getLowLevelStore();
+        if (store instanceof ChainingCacheStore) {
+        	store = ((ChainingCacheStore)store).getStores().keySet().iterator().next();
+        	OutputStream outputStream =
+                    new StoreChunkOutputStream(store, entryToTamper.getKey().toString() +
+                    		"-data");
+            IOUtils.copy(new ByteArrayInputStream("qwerty".getBytes()), outputStream);
+            outputStream.close();
+        } else {
+        	entryToTamper.storeValue(new ByteArrayInputStream("qwerty".getBytes()));
+        }
         Thread.sleep(1000);
 
     }
@@ -107,7 +123,6 @@ public class SelfHealingIT {
 
         return datastreamService
             .getFixity(ds.getNode().getNode(JcrConstants.JCR_CONTENT),
-                       MessageDigest.getInstance("SHA-1"),
                        ds.getContentDigest(),
                        ds.getContentSize());
 

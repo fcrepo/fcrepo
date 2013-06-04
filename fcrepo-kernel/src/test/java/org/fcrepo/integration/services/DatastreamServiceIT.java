@@ -119,7 +119,6 @@ public class DatastreamServiceIT extends AbstractIT {
         final Collection<FixityResult> fixityResults =
             datastreamService.getFixity(ds.getNode()
                                         .getNode(JcrConstants.JCR_CONTENT),
-                                        MessageDigest.getInstance("SHA-1"),
                                         ds.getContentDigest(),
                                         ds.getContentSize());
 
