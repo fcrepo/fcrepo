@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -21,6 +22,21 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraFieldSearchIT extends AbstractResourceIT {
+
+
+    @Test
+    public void testSearchHtml() throws Exception {
+        final HttpGet method = new HttpGet(serverAddress + "fcr:search");
+        method.setHeader("Accept", "text/html");
+
+        HttpResponse resp = execute(method);
+
+        String content = IOUtils.toString(resp.getEntity().getContent());
+        logger.debug("Got search form: {}", content);
+        assertEquals(200, resp.getStatusLine().getStatusCode());
+        assertTrue(content.contains("<form"));
+
+    }
 
     @Test
     public void testSearchRdf() throws Exception {

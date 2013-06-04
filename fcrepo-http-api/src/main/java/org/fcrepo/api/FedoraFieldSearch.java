@@ -29,6 +29,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.responses.VelocityViewer;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -54,7 +55,28 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     @GET
     @Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES, TEXT_HTML})
+    @Produces({TEXT_HTML})
+    public Dataset searchSubmitHtml(@QueryParam("q")
+                                        final String terms, @QueryParam("offset")
+                                        @DefaultValue("0")
+                                        final long offset, @QueryParam("limit")
+                                        @DefaultValue("25")
+                                        final int limit, @Context
+                                        final Request request, @Context
+                                        final UriInfo uriInfo) throws RepositoryException {
+
+
+        if (terms == null) {
+            LOGGER.trace("Received search request, but terms was empty. Aborting.");
+            throw new WebApplicationException(Response.status(Response.Status.OK).entity(new VelocityViewer().getSearchForm()).build());
+        }
+
+        return searchSubmitRdf(terms, offset, limit, request, uriInfo);
+    }
+
+    @GET
+    @Timed
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset searchSubmitRdf(@QueryParam("q")
     final String terms, @QueryParam("offset")
     @DefaultValue("0")
@@ -65,7 +87,7 @@ public class FedoraFieldSearch extends AbstractResource implements
     final UriInfo uriInfo) throws RepositoryException {
 
 
-        if (terms.isEmpty()) {
+        if (terms == null) {
             LOGGER.trace("Received search request, but terms was empty. Aborting.");
             throw new WebApplicationException(Response.status(
                     Response.Status.BAD_REQUEST).entity(

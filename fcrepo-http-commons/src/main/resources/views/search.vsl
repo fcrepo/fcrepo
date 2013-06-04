@@ -1,0 +1,24 @@
+#parse("views/common.vsl")
+<html>
+<head>
+    <title>Search</title>
+    <script type="text/javascript">
+      #include("views/common.js")
+    </script>
+    <style type="text/css">
+      #include("views/common.css")
+    </style>
+</head>
+<body>
+<h1>nt:file: $topic</h1>
+
+## output actions
+<div class="actions">
+    <form method="GET">
+        <input type="text" name="q" />
+        <input type="submit" value="search"/>
+    </form>
+</div>
+
+</body>
+</html>
