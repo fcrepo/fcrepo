@@ -148,7 +148,7 @@ public class FedoraNodes extends AbstractResource {
             session.save();
 
             if (isNew) {
-                return created(uriInfo.getBaseUriBuilder().path("/rest" + path).build()).build();
+                return created(uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
             } else {
                 return noContent().build();
             }
@@ -250,7 +250,7 @@ public class FedoraNodes extends AbstractResource {
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
-            return created(uriInfo.getRequestUri()).entity(path).build();
+            return created(uriInfo.getRequestUri()).entity(path.substring(1)).build();
 
         } finally {
             session.logout();

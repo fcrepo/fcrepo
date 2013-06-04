@@ -49,8 +49,7 @@ public class FedoraImport extends AbstractResource {
         try {
             serializers.get(format).deserialize(session, path, stream);
             session.save();
-            // TODO return proper URI for new resource
-            return created(uriInfo.getAbsolutePath()).build();
+            return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
         } finally {
             session.logout();
         }

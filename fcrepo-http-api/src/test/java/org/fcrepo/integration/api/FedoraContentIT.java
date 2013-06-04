@@ -32,7 +32,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(
                             "Got wrong URI in Location header for datastream creation!",
                             serverAddress + OBJECT_PATH.replace("/", "") +
-                                    "/FedoraDatastreamsTest2/zxc", location);
+                                    "/FedoraDatastreamsTest2/zxc/fcr:content", location);
     }
 
     @Test
@@ -45,7 +45,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(
                             "Got wrong URI in Location header for datastream creation!",
                             serverAddress + OBJECT_PATH.replace("/", "") +
-                                    "/FedoraDatastreamsTest2/does/not/exist/yet/zxc", location);
+                                    "/FedoraDatastreamsTest2/does/not/exist/yet/zxc/fcr:content", location);
     }
 
 
@@ -61,7 +61,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(
                             "Got wrong URI in Location header for datastream creation!",
                             serverAddress + OBJECT_PATH.replace("/", "") +
-                                    "/FedoraDatastreamsTestPut/zxc", location);
+                                    "/FedoraDatastreamsTestPut/zxc/fcr:content", location);
     }
 
     @Test

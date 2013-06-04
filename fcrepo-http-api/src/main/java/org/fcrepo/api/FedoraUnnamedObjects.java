@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
@@ -61,11 +62,11 @@ public class FedoraUnnamedObjects extends AbstractResource {
                 return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
             }
 
-            createObjectOrDatastreamFromRequestContent(FedoraNodes.class, session, path, mixin, uriInfo, requestBodyStream, requestContentType, checksumType, checksum);
+            final FedoraResource resource = createObjectOrDatastreamFromRequestContent(FedoraNodes.class, session, path, mixin, uriInfo, requestBodyStream, requestContentType, checksumType, checksum);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
-            return created(uriInfo.getRequestUri()).entity(path).build();
+            return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(resource.getPath().substring(1))).entity(path).build();
 
         } finally {
             session.logout();

@@ -102,7 +102,7 @@ public class FedoraDatastreams extends AbstractResource {
             }
 
             session.save();
-            return created(uriInfo.getRequestUri()).build();
+            return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
         } finally {
             session.logout();
         }
