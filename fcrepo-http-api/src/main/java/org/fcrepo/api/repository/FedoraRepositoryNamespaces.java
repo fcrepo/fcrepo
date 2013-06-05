@@ -23,14 +23,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.update.UpdateAction;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.update.UpdateAction;
 
 /**
  * The purpose of this class is to allow clients to manipulate the JCR
@@ -43,7 +43,7 @@ import com.codahale.metrics.annotation.Timed;
  * 
  */
 @Component
-@Path("/rest/fcr:namespaces")
+@Path("/fcr:namespaces")
 public class FedoraRepositoryNamespaces extends AbstractResource {
     /**
      * Register multiple object namespaces.

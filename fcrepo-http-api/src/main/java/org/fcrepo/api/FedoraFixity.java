@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 
 @Component
-@Path("/rest/{path: .*}/fcr:fixity")
+@Path("/{path: .*}/fcr:fixity")
 public class FedoraFixity extends AbstractResource {
 
 	@GET

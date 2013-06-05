@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 
 @Component
-@Path("/rest/sitemap")
+@Path("/sitemap")
 public class FedoraSitemap extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraSitemap.class);

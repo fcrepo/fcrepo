@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/rest/fcr:new")
+@Path("/fcr:new")
 public class FedoraRepositoryUnnamedObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraRepositoryUnnamedObjects.class);

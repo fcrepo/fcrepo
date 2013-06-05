@@ -14,6 +14,9 @@ import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
 
+import java.util.Collection;
+import java.util.List;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
@@ -27,6 +30,11 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.AbstractResource;
+import org.fcrepo.RdfLexicon;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -34,14 +42,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStoreFactory;
-import org.fcrepo.AbstractResource;
-import org.fcrepo.RdfLexicon;
-import org.springframework.stereotype.Component;
-
-import com.codahale.metrics.annotation.Timed;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * JAX-RS Resource offering PID creation.
@@ -50,7 +50,7 @@ import java.util.List;
  * 
  */
 @Component
-@Path("/rest/{path: .*}/fcr:pid")
+@Path("/{path: .*}/fcr:pid")
 public class FedoraIdentifiers extends AbstractResource {
 
     /**

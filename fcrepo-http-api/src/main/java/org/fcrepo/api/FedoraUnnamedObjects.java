@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-@Path("/rest/{path: .*}/fcr:new")
+@Path("/{path: .*}/fcr:new")
 public class FedoraUnnamedObjects extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraUnnamedObjects.class);

@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/rest/fcr:import")
+@Path("/fcr:import")
 public class FedoraRepositoryImport extends AbstractResource {
 
     @Resource

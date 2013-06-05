@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -42,7 +41,7 @@ public abstract class AbstractResourceIT {
     protected static final String HOSTNAME = "localhost";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + "/rest/";
+            SERVER_PORT + "/";
 
     protected final PoolingClientConnectionManager connectionManager =
             new PoolingClientConnectionManager();

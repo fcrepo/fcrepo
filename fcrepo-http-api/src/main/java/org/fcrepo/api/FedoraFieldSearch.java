@@ -47,7 +47,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  */
 
 @Component
-@Path("/rest/fcr:search")
+@Path("/fcr:search")
 public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 

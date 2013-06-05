@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 import com.hp.hpl.jena.query.Dataset;
 
 @Component
-@Path("/rest/{path: .*}/fcr:versions")
+@Path("/{path: .*}/fcr:versions")
 public class FedoraVersions extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);

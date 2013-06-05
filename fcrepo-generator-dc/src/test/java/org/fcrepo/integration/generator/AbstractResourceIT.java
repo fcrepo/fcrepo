@@ -36,7 +36,7 @@ public abstract class AbstractResourceIT {
     protected static final String HOSTNAME = "localhost";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + "/rest/";
+            SERVER_PORT + "/";
 
     protected static final String serverOAIAddress = "http://" + HOSTNAME +
             ":" + SERVER_PORT + "/oai/";

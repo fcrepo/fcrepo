@@ -64,12 +64,20 @@ public class FedoraIdentifiersTest {
 
         testObj.setPidMinter(mockPidMinter);
 
-        when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://localhost/fcrepo/rest/fcr:pid"));
+        when(uriInfo.getAbsolutePath()).thenReturn(
+                new URI("http://localhost/fcrepo/fcr:pid"));
 
         final Dataset np = testObj.getNextPid(createPathList(""), 2, uriInfo);
 
         LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
-        assertTrue(np.getDefaultModel().contains(ResourceFactory.createResource("http://localhost/fcrepo/rest/fcr:pid"), RdfLexicon.HAS_MEMBER_OF_RESULT, ResourceFactory.createResource("http://localhost/fcrepo/rest/asdf:123")));
+        assertTrue(np
+                .getDefaultModel()
+                .contains(
+                        ResourceFactory
+                                .createResource("http://localhost/fcrepo/fcr:pid"),
+                        RdfLexicon.HAS_MEMBER_OF_RESULT,
+                        ResourceFactory
+                        .createResource("http://localhost/fcrepo/asdf:123")));
 
     }
 }

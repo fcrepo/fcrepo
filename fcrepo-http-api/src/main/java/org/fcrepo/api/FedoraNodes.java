@@ -58,7 +58,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 
 @Component
-@Path("/rest/{path: .*}")
+@Path("/{path: .*}")
 public class FedoraNodes extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraNodes.class);

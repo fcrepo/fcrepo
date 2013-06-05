@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 
 @Component
-@Path("/rest/fcr:properties")
+@Path("/fcr:properties")
 public class FedoraRepositoriesProperties extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraRepositoriesProperties.class);

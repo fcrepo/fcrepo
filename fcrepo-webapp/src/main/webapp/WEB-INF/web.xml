@@ -5,7 +5,7 @@
 	 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
 	 version="3.0">
     
-    <display-name>Fedora-on-ModeShape</display-name>
+    <display-name>Fedora 4</display-name>
     
     <context-param>
         <param-name>contextConfigLocation</param-name>
@@ -28,7 +28,7 @@
  
 	<servlet-mapping>
 		<servlet-name>jersey-servlet</servlet-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping> 
 
   <!-- engaging the ModeShape REST API -->

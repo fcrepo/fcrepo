@@ -49,7 +49,7 @@ import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
 
 @Component
-@Path("/rest/{path: .*}/fcr:datastreams")
+@Path("/{path: .*}/fcr:datastreams")
 public class FedoraDatastreams extends AbstractResource {
 
     private final Logger logger = getLogger(FedoraDatastreams.class);

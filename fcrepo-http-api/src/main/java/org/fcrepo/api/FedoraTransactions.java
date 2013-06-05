@@ -27,7 +27,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/rest/fcr:tx")
+@Path("/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
 
     /*
