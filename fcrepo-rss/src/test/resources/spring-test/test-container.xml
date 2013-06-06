@@ -14,7 +14,7 @@
   
   <bean id="containerWrapper" class="org.fcrepo.test.util.ContainerWrapper" init-method="start" destroy-method="stop" >
     <property name="port" value="${test.port:8080}"/>
-    <property name="contextConfigLocations" value="classpath:spring-test/repo.xml, classpath:spring-test/rest.xml, classpath:spring-test/eventing.xml" />
+    <property name="contextConfigLocation" value="classpath:spring-test/repo.xml, classpath:spring-test/rest.xml, classpath:spring-test/eventing.xml" />
     <property name="packagesToScan" value="org.fcrepo.syndication, org.fcrepo.exceptionhandlers" />
   </bean>
   

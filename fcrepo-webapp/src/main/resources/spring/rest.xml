@@ -9,7 +9,7 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
     <!-- Context that houses JAX-RS Resources that compose the API
-        as well as som utility gear. -->
+        as well as some utility gear. -->
 
     <context:annotation-config/>
 
