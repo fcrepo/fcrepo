@@ -8,15 +8,20 @@ package org.fcrepo.services;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.builder;
+import static org.fcrepo.services.ServiceHelpers.getClusterExecutor;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -24,14 +29,12 @@ import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.services.functions.CacheLocalTransform;
 import org.fcrepo.services.functions.GetBinaryKey;
-import org.fcrepo.services.functions.GetCacheStore;
 import org.fcrepo.utils.LowLevelCacheEntry;
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheStoreConfiguration;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.decorators.ChainingCacheStore;
+import org.fcrepo.utils.impl.ChainingCacheStoreEntry;
+import org.fcrepo.utils.impl.LocalBinaryStoreEntry;
+import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.BinaryKey;
@@ -60,9 +63,6 @@ public class LowLevelStorageService {
 
     private GetBinaryKey getBinaryKey = new GetBinaryKey();
 
-    private GetCacheStore getCacheStore = new GetCacheStore();
-
-
     /**
      * Apply some Function to the low-level cache entries for the Node
      * @param resource a JCR Node containing a jcr:data binary property
@@ -75,8 +75,122 @@ public class LowLevelStorageService {
                                                            final Function <LowLevelCacheEntry, T>
                                                            transform)
         throws RepositoryException {
-        return transform(getLowLevelCacheEntries(resource), transform);
+        return transformLowLevelCacheEntries(resource.
+                getProperty(JcrConstants.JCR_DATA), transform);
     }
+    
+    public <T> Collection<T> transformLowLevelCacheEntries(final Property jcrBinaryProperty,
+            final Function <LowLevelCacheEntry, T>
+            transform)
+         throws RepositoryException {
+    	
+        return transformLowLevelCacheEntries(getBinaryKey.apply(jcrBinaryProperty), transform);
+    }
+    
+    public <T> Collection<T> transformLowLevelCacheEntries(final BinaryKey key,
+            final Function <LowLevelCacheEntry, T>
+            transform)
+         throws RepositoryException {
+    	
+        final BinaryStore store = getBinaryStore.apply(repo);
+
+        if (store == null) {
+			return ImmutableSet.of();
+        }
+        if (store instanceof CompositeBinaryStore) {
+            return
+            		transformLowLevelCacheEntries((CompositeBinaryStore) store,
+                                                 key, transform);
+
+        } else if (store instanceof InfinispanBinaryStore) {
+            try {
+				return getClusterResults(
+						(InfinispanBinaryStore) store, key, transform);
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage(), e);
+				return ImmutableSet.of();
+			} catch (ExecutionException e) {
+				logger.error(e.getMessage(), e);
+				return ImmutableSet.of();
+			}
+        } else {
+            final ImmutableSet.Builder<T> blobs = builder();
+            blobs.add(transform.apply(new LocalBinaryStoreEntry(store, key)));
+            return blobs.build();
+        }
+    }
+    
+    /**
+     * Transform low-level cache entries from a particular CompositeBinaryStore
+     * @param key a Modeshape BinaryValue's key.
+     * @return a set of transformed objects
+     */
+    protected <T> Set<T> transformLowLevelCacheEntries(
+    		final CompositeBinaryStore compositeStore,
+            final BinaryKey key,
+            final Function <LowLevelCacheEntry, T> transform) {
+
+        final ImmutableSet.Builder<T> results = builder();
+
+        Iterator<Map.Entry<String,BinaryStore>> it =
+            compositeStore.getNamedStoreIterator();
+
+        while (it.hasNext()) {
+            Map.Entry<String,BinaryStore> entry = it.next();
+
+            BinaryStore bs = entry.getValue();
+
+            if (bs.hasBinary(key)) {
+
+                final Function <LowLevelCacheEntry, T> decorator =
+                		new ExternalIdDecorator<>(entry.getKey(), transform);
+                final Set<T> transformeds =
+                		transformLowLevelCacheEntries(bs, key, decorator);
+                results.addAll(transformeds);
+                
+            }
+        }
+
+        return results.build();
+    }
+    
+    /**
+     * Steer low-level cache entries to transform functions according
+     * to the subtype of BinaryStore in question
+     * @param key a Modeshape BinaryValue's key.
+     * @return a set of transformed objects
+     */
+    protected <T> Set<T> transformLowLevelCacheEntries(
+    		final BinaryStore store,
+            final BinaryKey key,
+            final Function <LowLevelCacheEntry, T> transform) {
+
+        if (store == null) {
+			return ImmutableSet.of();
+        }
+        if (store instanceof CompositeBinaryStore) {
+            return
+            		transformLowLevelCacheEntries((CompositeBinaryStore) store,
+                                                 key, transform);
+
+        } else if (store instanceof InfinispanBinaryStore) {
+            try {
+			    return getClusterResults(
+                    (InfinispanBinaryStore) store, key, transform);
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage(), e);
+                return ImmutableSet.of();
+            } catch (ExecutionException e) {
+                logger.error(e.getMessage(), e);
+                return ImmutableSet.of();
+            }
+        } else {
+            final ImmutableSet.Builder<T> blobs = builder();
+            blobs.add(transform.apply(new LocalBinaryStoreEntry(store, key)));
+            return blobs.build();
+        }
+    }
+
 
     /**
      * Get the low-level cache entries for a Node containing a jcr:data binary
@@ -109,7 +223,7 @@ public class LowLevelStorageService {
     }
 
     /**
-     * Get the low-level Cache etnries for a Modeshpae BinaryKey
+     * Get the low-level Cache entries for a Modeshape BinaryKey
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
@@ -118,7 +232,7 @@ public class LowLevelStorageService {
         final BinaryStore store = getBinaryStore.apply(repo);
 
         if (store == null) {
-            return new HashSet<>();
+			return ImmutableSet.of();
         }
 
         return getLowLevelCacheEntriesFromStore(store, key);
@@ -133,22 +247,24 @@ public class LowLevelStorageService {
     public Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final BinaryStore store,
                                                                     final BinaryKey key) {
 
+        final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
+
         if (store instanceof CompositeBinaryStore) {
-            return
-                getLowLevelCacheEntriesFromStore((CompositeBinaryStore) store,
-                                                 key);
+            for (LowLevelCacheEntry entries:
+            transformLowLevelCacheEntries((CompositeBinaryStore) store, key, new Echo())) {
+                blobs.add(entries);
+            }
 
         } else if (store instanceof InfinispanBinaryStore) {
-            return
-                getLowLevelCacheEntriesFromStore((InfinispanBinaryStore) store,
-                                                 key);
+            for (LowLevelCacheEntry entries:
+            transformLowLevelCacheEntries((InfinispanBinaryStore) store, key, new Echo())) {
+                blobs.add(entries);
+            }
 
         } else {
-            final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
-            blobs.add(new LowLevelCacheEntry(store, key));
-            return blobs.build();
+            blobs.add(new LocalBinaryStoreEntry(store, key));
         }
-
+        return blobs.build();
     }
 
     /**
@@ -158,30 +274,14 @@ public class LowLevelStorageService {
      */
     protected Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final CompositeBinaryStore compositeStore,
                                                                        final BinaryKey key) {
-
         final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
-        Iterator<Map.Entry<String,BinaryStore>> it =
-            compositeStore.getNamedStoreIterator();
-
-        while (it.hasNext()) {
-            Map.Entry<String,BinaryStore> entry = it.next();
-
-            BinaryStore bs = entry.getValue();
-
-            if (bs.hasBinary(key)) {
-
-                final Set<LowLevelCacheEntry> binaryBlobs =
-                    getLowLevelCacheEntriesFromStore(bs, key);
-
-                for (LowLevelCacheEntry e : binaryBlobs) {
-                    e.setExternalId(entry.getKey());
-                    blobs.add(e);
-                }
-            }
+        for (LowLevelCacheEntry entries:
+        transformLowLevelCacheEntries(compositeStore, key, new Echo())) {
+            blobs.add(entries);
         }
-
         return blobs.build();
+
     }
 
     /**
@@ -195,80 +295,41 @@ public class LowLevelStorageService {
         logger.trace("Retrieving low-level cache entries for key {} from an " +
                      "InfinispanBinaryStore {}", key, ispnStore);
 
-        final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
-
-        final List<Cache<?,?>> caches = ispnStore.getCaches();
-        logger.trace("Found {} caches", caches.size());
-        for (final Cache<?, ?> c : ImmutableSet.copyOf(caches)) {
-            logger.trace("Looking in Infinispan cache {}", c);
-
-            final CacheStore cacheStore = getCacheStore.apply(c);
-
-            if (cacheStore == null) {
-                logger.trace("Could not retrieve cache store from component " +
-                             "registry");
-                continue;
-            }
-
-            // A ChainingCacheStore indicates we (may) have multiple CacheStores
-            // at play
-            if (cacheStore instanceof ChainingCacheStore) {
-                logger.trace("Found a ChainingCacheStore; looking in each " +
-                             "cache store for key");
-                final ChainingCacheStore chainingCacheStore =
-                    (ChainingCacheStore) cacheStore;
-                final LinkedHashMap<CacheStore,CacheStoreConfiguration> stores =
-                    chainingCacheStore.getStores();
-                logger.trace("Found {} chained cache stores", stores.size());
-
-                for (final CacheStore s : stores.keySet()) {
-                    final Set<LowLevelCacheEntry>
-                        lowLevelCacheEntriesFromStore =
-                        getLowLevelCacheEntriesFromStore(ispnStore, s, key);
-
-                    blobs.addAll(lowLevelCacheEntriesFromStore);
-                }
-            } else {
-                // just a nice, simple infinispan cache.
-                blobs.addAll(getLowLevelCacheEntriesFromStore(ispnStore,
-                                                              cacheStore, key));
-            }
-        }
-
-        return blobs.build();
+        try {
+			return getClusterResults(ispnStore, key, new Echo());
+		} catch (InterruptedException e) {
+			logger.error(e.getMessage(), e);
+			return ImmutableSet.of();
+		} catch (ExecutionException e) {
+			logger.error(e.getMessage(), e);
+			return ImmutableSet.of();
+		}
     }
 
-    /**
-     * Get the low-level cache entries for a particular Cache Store inside an
-     * InfinispanBinaryStore
-     *
-     * @param ispnStore an InfinispanBinaryStore to look in
-     * @param cacheStore an Infinispan CacheStore reference
-     * @param key a Modeshape BinaryValue key
-     * @return
-     */
-    private Set<LowLevelCacheEntry> getLowLevelCacheEntriesFromStore(final InfinispanBinaryStore ispnStore,
-                                                                     final CacheStore cacheStore,
-                                                                     final BinaryKey key) {
-
-        final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
-        logger.trace("Looking in Infinispan CacheStore {}", cacheStore);
-
-        try {
-            if (cacheStore.containsKey(key + "-data-0")) {
-                logger.trace("Found first part of binary in CacheStore {}",
-                             cacheStore);
-                blobs.add(new LowLevelCacheEntry(ispnStore, cacheStore, key));
-            } else {
-                logger.trace("CacheStore {} did not contain the first part " +
-                             "of our binary", cacheStore);
-            }
-        } catch (CacheLoaderException e) {
-            logger.warn("Cache loader raised exception: {}", e);
-        }
-
-        return blobs.build();
-
+    public <T> Set<T> getClusterResults(InfinispanBinaryStore cacheStore,
+    		BinaryKey key, Function<LowLevelCacheEntry, T> transform)
+    	throws InterruptedException, ExecutionException {
+    	DistributedExecutorService exec =
+    			getClusterExecutor(cacheStore);
+    	@SuppressWarnings( {"synthetic-access", "unchecked", "rawtypes"} )
+        List<Future<Collection<T>>> futures = exec.submitEverywhere(
+        		new CacheLocalTransform(key, new Unroll<T>(transform)));
+    	Set<T> results = new HashSet<T>(futures.size());
+    	while(futures.size() > 0) {
+    		Iterator<Future<Collection<T>>> futureIter =
+    				futures.iterator();
+    		while(futureIter.hasNext()) {
+    			Future<Collection<T>> future = futureIter.next();
+    			try {
+    				Collection<T> result = future.get(100, TimeUnit.MILLISECONDS);
+    				futureIter.remove();
+    				results.addAll(result);
+    			} catch (TimeoutException e) {
+    				// we're just going to ignore this and try again!
+    			}
+    		}
+    	}
+    	return results;
     }
 
     /**
@@ -292,11 +353,62 @@ public class LowLevelStorageService {
         this.getBinaryKey = getBinaryKey;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
-    public void setGetCacheStore(final GetCacheStore getCacheStore) {
-        this.getCacheStore = getCacheStore;
-    }
+    static class ExternalIdDecorator<T> 
+        implements Function<LowLevelCacheEntry, T>, Serializable {
 
+    	/**
+		 * Must be serializable
+		 */
+		private static final long serialVersionUID = 7375231595038804409L;
+		final String externalId;
+    	final Function<LowLevelCacheEntry, T> transform;
+    	ExternalIdDecorator(String externalId, Function<LowLevelCacheEntry, T> transform) {
+    		this.externalId = externalId;
+    		this.transform = transform;
+    	}
+    	
+		@Override
+		public T apply(LowLevelCacheEntry input) {
+			input.setExternalId(externalId);
+			return transform.apply(input);
+		}
+    	
+    }
+    
+    static class Echo implements Function<LowLevelCacheEntry, LowLevelCacheEntry>, Serializable {
+
+		private static final long serialVersionUID = -1L;
+		
+		@Override
+		public LowLevelCacheEntry apply(LowLevelCacheEntry input) {
+			return input;
+		}
+    	
+    }
+    
+    static class Unroll<T> implements Function<LowLevelCacheEntry, Collection<T>>, Serializable {
+
+    	private final Function<LowLevelCacheEntry, T> transform;
+    	
+    	Unroll(Function<LowLevelCacheEntry, T> transform) {
+    	    this.transform = transform;	
+    	}
+    	
+		private static final long serialVersionUID = -1L;
+		
+		@Override
+		public Collection<T> apply(LowLevelCacheEntry input) {
+			final ImmutableSet.Builder<T> entries = builder();
+			if (input instanceof ChainingCacheStoreEntry) {
+				entries.addAll(
+						transform(((ChainingCacheStoreEntry)input).chainedEntries(), transform)
+						);
+			} else {
+				entries.add(transform.apply(input)).build();
+			}
+			return entries.build();
+		}
+    	
+    }
+    
 }
