@@ -5,8 +5,8 @@ import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.getDatasetSubject;
+import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.setCachingHeaders;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -32,7 +32,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.hp.hpl.jena.graph.Node;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -44,14 +43,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap.Builder;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 
 /**
  * A simple JAX-RS Entity Provider that can accept RDF datasets
- * that represent Fedora resources and merge them into templates 
+ * that represent Fedora resources and merge them into templates
  * chosen based on the primary node type of the backing JCR node
  * for that Fedora resource.
- * 
+ *
  * @author ajs6f
  * @date May 19, 2013
  */
@@ -70,7 +70,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
     public static final String templatesLocation = "/views";
 
     /**
-     * A map from String names for primary node types to the 
+     * A map from String names for primary node types to the
      * Velocity templates that should be used for those node types.
      */
     protected Map<String, Template> templatesMap;
@@ -108,7 +108,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
                         primaryNodeTypes.nextNodeType().getName();
                 // for each node primary type, we try to find a template
                 final String templateLocation =
-                        templatesLocation + "/" + primaryNodeTypeName +
+                        templatesLocation + "/" + primaryNodeTypeName.replace(':', '-') +
                                 templateFilenameExtension;
                 try {
                     final Template template =
