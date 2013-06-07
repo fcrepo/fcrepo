@@ -210,7 +210,7 @@ public class LowLevelCacheEntryTest {
         assertTrue(identifier.startsWith("zyx/org.modeshape.jcr.value.binary" +
                                          ".FileSystemBinaryStore"));
         // some test junk in the middle
-        assertTrue(identifier.endsWith("/tmp/xyz"));
+        assertTrue(identifier.endsWith("/tmp/xyz") || identifier.endsWith("\\tmp\\xyz"));
     }
 
     /**
