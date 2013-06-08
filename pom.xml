@@ -27,9 +27,9 @@
     <activemq.version>5.7.0</activemq.version>
     <jersey.version>1.17.1</jersey.version>
     <enunciate.version>1.26.2</enunciate.version>
-    <infinispan.version>5.3.0.Beta2</infinispan.version>
-    <jgroups.version>3.3.0.Final</jgroups.version>
-    <modeshape.version>3.3-SNAPSHOT</modeshape.version>
+    <infinispan.version>5.3.0.CR1</infinispan.version>
+    <jgroups.version>3.3.1.Final</jgroups.version>
+    <modeshape.version>3.3.0.Final</modeshape.version>
     <sesame.version>2.7.0</sesame.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
