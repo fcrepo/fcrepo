@@ -39,6 +39,22 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testSearchResultsHtml() throws Exception {
+        final HttpGet method = new HttpGet(serverAddress + "fcr:search");
+        method.setHeader("Accept", "text/html");
+        URI uri = new URIBuilder(method.getURI()).addParameter("q", "testobj").addParameter("offset", "0").addParameter("limit", "1").build();
+
+        method.setURI(uri);
+
+        HttpResponse resp = execute(method);
+
+        String content = IOUtils.toString(resp.getEntity().getContent());
+        logger.debug("Got search results: {}", content);
+        assertEquals(200, resp.getStatusLine().getStatusCode());
+
+    }
+
+    @Test
     public void testSearchRdf() throws Exception {
         /* first post an object which can be used for the search */
         HttpPost postObj = postObjMethod("testobj");

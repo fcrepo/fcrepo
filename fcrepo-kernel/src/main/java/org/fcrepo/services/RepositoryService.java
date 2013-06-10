@@ -28,6 +28,9 @@ import javax.jcr.query.QueryResult;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.sparql.util.Symbol;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -179,72 +182,78 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
                                     final long offset)
         throws RepositoryException {
 
-        final QueryManager queryManager =
-            session.getWorkspace().getQueryManager();
+        final Model model;
 
-        final javax.jcr.query.qom.QueryObjectModelFactory factory =
-            queryManager.getQOMFactory();
+        if (terms != null) {
+            final QueryManager queryManager =
+                session.getWorkspace().getQueryManager();
 
-        final javax.jcr.query.qom.Source selector =
-            factory.selector(FEDORA_RESOURCE, "resourcesSelector");
-        final javax.jcr.query.qom.Constraint constraints =
-            factory.fullTextSearch("resourcesSelector", null, factory
-                                   .literal(session.getValueFactory()
-                                            .createValue(terms)));
+            final javax.jcr.query.qom.QueryObjectModelFactory factory =
+                queryManager.getQOMFactory();
 
-        final javax.jcr.query.Query query =
-            factory.createQuery(selector, constraints, null, null);
+            final javax.jcr.query.qom.Source selector =
+                factory.selector(FEDORA_RESOURCE, "resourcesSelector");
+            final javax.jcr.query.qom.Constraint constraints =
+                factory.fullTextSearch("resourcesSelector", null, factory
+                                       .literal(session.getValueFactory()
+                                                .createValue(terms)));
 
-        // include an extra document to determine if additional pagination is
-        // necessary
-        query.setLimit(limit + 1);
-        query.setOffset(offset);
+            final javax.jcr.query.Query query =
+                factory.createQuery(selector, constraints, null, null);
 
-        final QueryResult queryResult = query.execute();
+            // include an extra document to determine if additional pagination is
+            // necessary
+            query.setLimit(limit + 1);
+            query.setOffset(offset);
 
-        final NodeIterator nodeIterator = queryResult.getNodes();
-        final long size = nodeIterator.getSize();
+            final QueryResult queryResult = query.execute();
 
-        // remove that extra document from the nodes we'll iterate over
-        final Iterator<Node> limitedIterator =
-            Iterators.limit(new org.fcrepo.utils.NodeIterator(nodeIterator),
-                            limit);
+            final NodeIterator nodeIterator = queryResult.getNodes();
+            final long size = nodeIterator.getSize();
 
-        final Model model =
-            JcrRdfTools.getJcrNodeIteratorModel(subjectFactory,
-                                                limitedIterator, searchSubject);
+            // remove that extra document from the nodes we'll iterate over
+            final Iterator<Node> limitedIterator =
+                Iterators.limit(new org.fcrepo.utils.NodeIterator(nodeIterator),
+                                limit);
 
-        /* add the result description to the RDF model */
+            model =
+                JcrRdfTools.getJcrNodeIteratorModel(subjectFactory,
+                                                    limitedIterator, searchSubject);
 
-        model.add(
-                  searchSubject,
-                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
-                                       "totalResults"),
-                  model.createTypedLiteral(size));
+            /* add the result description to the RDF model */
 
-        model.add(
-                  searchSubject,
-                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
-                                       "itemsPerPage"),
-                  model.createTypedLiteral(limit));
-        model.add(
-                  searchSubject,
-                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
-                                       "startIndex"),
-                  model.createTypedLiteral(offset));
-        model.add(
-                  searchSubject,
-                  model.createProperty("http://a9.com/-/spec/opensearch/1.1/" +
-                                       "Query#searchTerms"),
-                  terms);
+            model.add(
+                      searchSubject,
+                      RdfLexicon.SEARCH_HAS_TOTAL_RESULTS,
+                      model.createTypedLiteral(size));
 
-        if (nodeIterator.hasNext()) {
-            model.add(searchSubject,
-                      model.createProperty("info:fedora/search/hasMoreResults"),
-                      model.createTypedLiteral(true));
+            model.add(
+                      searchSubject,
+                      RdfLexicon.SEARCH_ITEMS_PER_PAGE,
+                      model.createTypedLiteral(limit));
+            model.add(
+                      searchSubject,
+                      RdfLexicon.SEARCH_OFFSET,
+                      model.createTypedLiteral(offset));
+            model.add(
+                      searchSubject, RdfLexicon.SEARCH_TERMS,
+                      terms);
+
+            model.add(searchSubject, RdfLexicon.SEARCH_HAS_MORE,
+                          model.createTypedLiteral(nodeIterator.hasNext()));
+        } else {
+            model = ModelFactory.createDefaultModel();
         }
 
+
         final Dataset dataset = DatasetFactory.create(model);
+
+        final String uri = searchSubject.getURI();
+        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        if ( context == null ) {
+            context = new com.hp.hpl.jena.sparql.util.Context();
+        }
+        context.set(Symbol.create("uri"),uri);
 
         return dataset;
 

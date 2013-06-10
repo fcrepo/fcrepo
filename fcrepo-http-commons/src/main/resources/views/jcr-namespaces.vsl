@@ -1,0 +1,19 @@
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
+#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+#parse("views/common.vsl")
+<html>
+<head>
+    <title>registered namespaces</title>
+    #parse("views/common-header.vsl")
+</head>
+<body>
+<h1>namespaces</h1>
+
+## output other nodes
+    #foreach($subject in $subjects)
+            #triples($subject.asNode())
+    #end
+</body>
+</html>

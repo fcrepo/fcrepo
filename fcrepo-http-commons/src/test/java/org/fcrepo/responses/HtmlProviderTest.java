@@ -12,10 +12,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
@@ -91,9 +93,37 @@ public class HtmlProviderTest {
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
                 Mockito.isA(Writer.class));
         htmlProvider.setTemplatesMap(of("nt:file", mockTemplate));
-        htmlProvider.writeTo(testData, Dataset.class, mock(Type.class), null,
+        htmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] {},
                 MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
+        final byte[] results = outStream.toByteArray();
+        assertTrue("Got no output from serialization!", results.length > 0);
+
+    }
+
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    public void testWriteToWithAnnotation() throws WebApplicationException,
+                                             IllegalArgumentException, IOException {
+        final Template mockTemplate = mock(Template.class);
+        final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+
+        Mockito.doAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(final InvocationOnMock invocation) {
+                outStream.write("abcdefighijk".getBytes(), 0, 10);
+                return "I am pretending to merge a template for you.";
+            }
+        }).when(mockTemplate).merge(Mockito.isA(Context.class),
+                                           Mockito.isA(Writer.class));
+        htmlProvider.setTemplatesMap(of("some:file", mockTemplate));
+        HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
+        when(mockAnnotation.value()).thenReturn("some:file");
+        htmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] { mockAnnotation },
+                                    MediaType.valueOf("text/html"),
+                                    (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 
