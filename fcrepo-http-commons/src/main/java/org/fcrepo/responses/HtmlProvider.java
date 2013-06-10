@@ -19,6 +19,7 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -32,6 +33,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -129,8 +131,18 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
                      * available for that kind of node
                      */
                 }
-                templatesMap = templatesMapBuilder.build();
+
             }
+
+            List<String> otherTemplates = ImmutableList.of("search:results", "jcr:namespaces");
+
+            for ( String key : otherTemplates) {
+                final Template template = velocity.getTemplate(templatesLocation + "/" + key.replace(':', '-') + templateFilenameExtension);
+                templatesMapBuilder.put(key, template);
+            }
+
+            templatesMap = templatesMapBuilder.build();
+
         } finally {
             session.logout();
         }
@@ -154,12 +166,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         httpHeaders.put("Content-type", of((Object) TEXT_HTML));
         setCachingHeaders(httpHeaders, rdf);
 
-        LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
-        final String nodeType =
-                getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
-        LOGGER.debug("Found primary node type: {}", nodeType);
-        final Template nodeTypeTemplate = templatesMap.get(nodeType);
-        LOGGER.debug("Choosing template: {}", nodeTypeTemplate.getName());
+        final Template nodeTypeTemplate = getTemplate(rdf, subject, annotations);
 
         final Context context = new VelocityContext();
         context.put("rdf", rdf.asDatasetGraph());
@@ -173,6 +180,31 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         nodeTypeTemplate.merge(context, outWriter);
         outWriter.flush();
 
+    }
+
+    private Template getTemplate(final Dataset rdf, final Node subject, final Annotation[] annotations) {
+        Template template = null;
+
+        for (Annotation a : annotations) {
+            if (a instanceof HtmlTemplate) {
+                final String value = ((HtmlTemplate) a).value();
+                LOGGER.debug("Found an HtmlTemplate annotation {}", value);
+                template = templatesMap.get(value);
+                break;
+            }
+        }
+
+        if (template == null) {
+            LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
+            final String nodeType =
+                    getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
+
+            LOGGER.debug("Found primary node type: {}", nodeType);
+            template = templatesMap.get(nodeType);
+        }
+
+        LOGGER.debug("Choosing template: {}", template.getName());
+        return template;
     }
 
     public void setTemplatesMap(final Map<String, Template> templatesMap) {

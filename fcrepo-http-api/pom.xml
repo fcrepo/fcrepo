@@ -27,13 +27,6 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!-- Apache Velocity -->
-    <dependency>
-      <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
-      <version>1.7</version>
-    </dependency>
-
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-core</artifactId>

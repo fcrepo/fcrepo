@@ -29,7 +29,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
-import org.fcrepo.responses.VelocityViewer;
+import org.fcrepo.responses.HtmlTemplate;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -55,6 +55,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     @GET
     @Timed
+    @HtmlTemplate("search:results")
     @Produces({TEXT_HTML})
     public Dataset searchSubmitHtml(@QueryParam("q")
                                         final String terms, @QueryParam("offset")
@@ -65,13 +66,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                         final Request request, @Context
                                         final UriInfo uriInfo) throws RepositoryException {
 
-
-        if (terms == null) {
-            LOGGER.trace("Received search request, but terms was empty. Aborting.");
-            throw new WebApplicationException(Response.status(Response.Status.OK).entity(new VelocityViewer().getSearchForm()).build());
-        }
-
-        return searchSubmitRdf(terms, offset, limit, request, uriInfo);
+        return getSearchDataset(terms, offset, limit, uriInfo);
     }
 
     @GET
@@ -94,13 +89,17 @@ public class FedoraFieldSearch extends AbstractResource implements
                     "q parameter is mandatory").build());
         }
 
+        return getSearchDataset(terms, offset, limit, uriInfo);
+    }
+
+    private Dataset getSearchDataset(final String terms, final long offset, final int limit, final UriInfo uriInfo) throws RepositoryException {
         final Session session = getAuthenticatedSession();
         try {
             LOGGER.debug("Received search request with search terms {}, offset {}, and limit {}", terms, offset, limit);
 
             final Resource searchResult =
                     ResourceFactory.createResource(uriInfo.getRequestUri()
-                            .toASCIIString());
+                                                           .toASCIIString());
 
             final Dataset dataset =
                     nodeService.searchRepository(new HttpGraphSubjects(
@@ -108,9 +107,11 @@ public class FedoraFieldSearch extends AbstractResource implements
                             terms, limit, offset);
 
             final Model searchModel = ModelFactory.createDefaultModel();
-            Map<String, ?> pathMap = ImmutableBiMap.of("q", terms, "offset", offset + limit, "limit", limit);
-            searchModel.add(searchResult, RdfLexicon.SEARCH_NEXT_PAGE, searchModel.createResource(uriInfo.getRequestUriBuilder().path(FedoraFieldSearch.class).buildFromMap(pathMap).toString()));
-            dataset.addNamedModel("search-pagination", searchModel);
+            if (terms != null && dataset.getDefaultModel().contains(searchResult, RdfLexicon.SEARCH_HAS_MORE, searchModel.createTypedLiteral(true))) {
+                Map<String, ?> pathMap = ImmutableBiMap.of("q", terms, "offset", offset + limit, "limit", limit);
+                searchModel.add(searchResult, RdfLexicon.SEARCH_NEXT_PAGE, searchModel.createResource(uriInfo.getBaseUriBuilder().path(FedoraFieldSearch.class).buildFromMap(pathMap).toString()));
+                dataset.addNamedModel("search-pagination", searchModel);
+            }
 
             return dataset;
 

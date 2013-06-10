@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.responses.HtmlTemplate;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -81,6 +82,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 	@Timed
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
                       NTRIPLES, TEXT_HTML})
+    @HtmlTemplate("jcr:namespaces")
     public Dataset getNamespaces() throws RepositoryException,
             IOException {
 
