@@ -12,7 +12,7 @@
 
     <bean name="modeshapeRepofactory"
           class="org.fcrepo.spring.ModeShapeRepositoryFactoryBean">
-      <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:test_repository.json}"/>
+      <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:config/testing/repository.json}"/>
     </bean>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>

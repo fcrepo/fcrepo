@@ -11,7 +11,6 @@
     },
     "query" : {
         "enabled" : true,
-        "rebuildUponStartup" : "if_missing",
         "indexStorage" : {
             "type" : "filesystem",
             "location" : "${fcrepo.modeshape.index.location:target/indexes}",
@@ -21,7 +20,7 @@
     },
     "storage" : {
         "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "${fcrepo.infinispan.cache_configuration:config/infinispan_configuration.xml}",
+        "cacheConfiguration" : "${fcrepo.infinispan.cache_configuration:config/infinispan/clustered/infinispan_configuration.xml}",
         "binaryStorage" : {
             "type" : "cache",
             "dataCacheName" : "FedoraRepositoryBinaryData",
@@ -37,5 +36,5 @@
             { "classname" : "servlet" }
         ]
     },
-"node-types" : ["fedora-node-types.cnd"]
+    "node-types" : ["fedora-node-types.cnd"]
 }

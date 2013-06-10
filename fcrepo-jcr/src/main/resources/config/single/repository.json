@@ -2,28 +2,27 @@
     "name" : "repo",
     "jndiName" : "",
     "workspaces" : {
-        "predefined" : [],
+        "predefined" : ["default"],
         "default" : "default",
         "allowCreation" : true
     },
-    "storage" : {
-        "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "config/infinispan/basic/infinispan.xml",
-        "binaryStorage" : {
-            "type" : "cache",
-            "dataCacheName" : "FedoraRepository",
-            "metadataCacheName" : "FedoraRepository"
+    "query" : {
+        "enabled" : true,
+        "indexStorage" : {
+            "type" : "filesystem",
+            "location" : "${fcrepo.modeshape.index.location:target/indexes}",
+            "lockingStrategy" : "native",
+            "fileSystemAccessType" : "auto"
         }
     },
-    "externalSources" : {
-      "fileSystem" : {
-        "classname" : "org.modeshape.connector.filesystem.FileSystemConnector",
-        "directoryPath" : "target/test-classes/test-objects",
-        "readonly" : false,
-        "extraPropertiesStorage": "json",
-        "cacheTtlSeconds" : 5,
-        "projections" : [ "default:/files => /" ]
-      }
+    "storage" : {
+        "cacheName" : "FedoraRepository",
+        "cacheConfiguration" : "${fcrepo.infinispan.cache_configuration:config/infinispan/basic/infinispan.xml}",
+        "binaryStorage" : {
+            "type" : "cache",
+            "dataCacheName" : "FedoraRepositoryBinaryData",
+            "metadataCacheName" : "FedoraRepository"
+        }
     },
     "security" : {
         "anonymous" : {
@@ -34,5 +33,5 @@
             { "classname" : "servlet" }
         ]
     },
-	"node-types" : ["fedora-node-types.cnd"]
+    "node-types" : ["fedora-node-types.cnd"]
 }
