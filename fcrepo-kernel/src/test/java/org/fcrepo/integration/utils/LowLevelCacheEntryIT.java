@@ -101,7 +101,7 @@ public class LowLevelCacheEntryIT {
     public void testEqualsIspn() throws Exception {
 
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("test_infinispan_configuration.xml");
+                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
         final BinaryStore store =
                 new InfinispanBinaryStore(cm, false, "FedoraRepository",
                         "FedoraRepository");
@@ -127,7 +127,7 @@ public class LowLevelCacheEntryIT {
     public void testHashCodeIspn() throws Exception {
 
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("test_infinispan_configuration.xml");
+                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
         final BinaryStore store =
                 new InfinispanBinaryStore(cm, false, "FedoraRepository",
                         "FedoraRepository");
@@ -153,7 +153,7 @@ public class LowLevelCacheEntryIT {
     public void testGetExternalIdentifierWithInfinispan() throws Exception {
 
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("test_infinispan_configuration.xml");
+                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
         final BinaryStore store =
                 new InfinispanBinaryStore(cm, false, "FedoraRepository",
                         "FedoraRepository");
@@ -179,7 +179,7 @@ public class LowLevelCacheEntryIT {
 
         final EmbeddedCacheManager cm =
                 new DefaultCacheManager(
-                        "config/infinispan_configuration_chained.xml");
+                        "config/infinispan/chained/infinispan.xml");
         final BinaryStore store =
                 new InfinispanBinaryStore(cm, false, "FedoraRepository",
                         "FedoraRepository");

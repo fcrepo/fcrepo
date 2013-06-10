@@ -6,6 +6,13 @@
         "default" : "default",
         "allowCreation" : true
     },
+    "storage" : {
+        "binaryStorage" : {
+            "type" : "file",
+            "minimumBinarySizeInBytes" : 1024,
+            "directory":"${fcrepo.binary-store-path:target/binaries}"
+        }
+    },
     "security" : {
         "anonymous" : {
             "roles" : ["readonly","readwrite","admin"],
@@ -15,5 +22,5 @@
             { "classname" : "servlet" }
         ]
     },
-	"node-types" : ["fedora-node-types.cnd"]
+    "node-types" : ["fedora-node-types.cnd"]
 }
