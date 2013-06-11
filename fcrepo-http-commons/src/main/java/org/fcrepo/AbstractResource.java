@@ -260,4 +260,14 @@ public abstract class AbstractResource {
     public void setDatastreamService(final DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
+
+
+    /**
+     * Set the Event Bus, used primary for testing without spring
+     * @param eventBus
+     */
+    public void setEventBus(final EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
 }

@@ -51,13 +51,13 @@ public class FedoraWebhooksTest {
         when(mockSessions.getSession()).thenReturn(mockSession);
         when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class)))
         .thenReturn(mockSession);
-        setField("sessions", AbstractResource.class, testObj, mockSessions);
+        testObj.setSessionFactory(mockSessions);
     }
     
     @Test
     public void testInitialize() throws Exception {
         EventBus mockBus = mock(EventBus.class);
-        setField("eventBus", testObj, mockBus);
+        testObj.setEventBus(mockBus);
         testObj.initialize();
         verify(mockBus).register(testObj);
     }
@@ -116,15 +116,4 @@ public class FedoraWebhooksTest {
         verify(mockSession).logout();
     }
 
-    private static void setField(String name, Class<?> type, FedoraWebhooks obj, Object val)
-    throws Exception {
-        Field field = type.getDeclaredField(name);
-        field.setAccessible(true);
-        field.set(obj, val);
-    }
-
-    private static void setField(String name, FedoraWebhooks obj, Object val)
-    throws Exception {
-        setField(name, FedoraWebhooks.class, obj, val);
-    }
 }

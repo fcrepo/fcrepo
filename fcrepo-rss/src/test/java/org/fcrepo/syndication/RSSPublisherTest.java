@@ -26,11 +26,11 @@ public class RSSPublisherTest {
     @Test
     public void testGetFeed() throws Exception {
         EventBus mockBus = mock(EventBus.class);
-        setField("eventBus", testObj, mockBus);
+        testObj.setEventBus(mockBus);
         UriInfo mockUris = mock(UriInfo.class);
         URI mockUri = new URI("http://localhost.info");
         when(mockUris.getBaseUri()).thenReturn(mockUri);
-        setField("uriInfo", AbstractResource.class,testObj, mockUris);
+        testObj.setUriInfo(mockUris);
         testObj.initialize();
         testObj.getFeed();
     }
@@ -38,7 +38,7 @@ public class RSSPublisherTest {
     @Test
     public void testInitialize() throws Exception {
         EventBus mockBus = mock(EventBus.class);
-        setField("eventBus", testObj, mockBus);
+        testObj.setEventBus(mockBus);
         testObj.initialize();
         verify(mockBus).register(testObj);
     }
@@ -48,16 +48,5 @@ public class RSSPublisherTest {
         Event mockEvent = mock(Event.class);
         testObj.newEvent(mockEvent);
     }
-    
-    private static void setField(String name, Class<?> type, RSSPublisher obj, Object val)
-    throws Exception {
-        Field field = type.getDeclaredField(name);
-        field.setAccessible(true);
-        field.set(obj, val);
-    }
 
-    private static void setField(String name, RSSPublisher obj, Object val)
-    throws Exception {
-        setField(name, RSSPublisher.class, obj, val);
-    }
 }
