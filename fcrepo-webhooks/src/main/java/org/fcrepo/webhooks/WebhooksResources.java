@@ -8,10 +8,12 @@ import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.springframework.stereotype.Component;
 
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
+@Component
 public class WebhooksResources implements UriAwareResourceModelFactory {
     @Override
     public Model createModelForResource(FedoraResource resource, UriInfo uriInfo, GraphSubjects graphSubjects) throws RepositoryException {
