@@ -14,6 +14,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import org.slf4j.Logger;
 
@@ -45,12 +46,18 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
         LOGGER.debug("Serializing graph  as {}", format);
         final Iterator<String> iterator = dataset.listNames();
         LOGGER.debug("Serializing default model");
-        Model model = dataset.getDefaultModel();
+        Model model = ModelFactory.createDefaultModel();
+
+        model = model.union(dataset.getDefaultModel());
+
         while (iterator.hasNext()) {
             final String modelName = iterator.next();
             LOGGER.debug("Serializing model {}", modelName);
             model = model.union(dataset.getNamedModel(modelName));
         }
+
+        model.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
+
         model.write(out, format);
     }
 
