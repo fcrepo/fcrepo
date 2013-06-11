@@ -1,78 +1,147 @@
-
 package org.fcrepo.test.util;
 
-import static java.util.Collections.emptyList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
-import java.util.List;
+import java.net.URL;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.servlet.Filter;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
+import org.fcrepo.webxml.bind.ContextParam;
+import org.fcrepo.webxml.bind.Filter;
+import org.fcrepo.webxml.bind.FilterMapping;
+import org.fcrepo.webxml.bind.InitParam;
+import org.fcrepo.webxml.bind.Listener;
+import org.fcrepo.webxml.bind.Servlet;
+import org.fcrepo.webxml.bind.ServletMapping;
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.servlet.FilterRegistration;
+import org.glassfish.grizzly.servlet.ServletRegistration;
+import org.glassfish.grizzly.servlet.WebappContext;
 import org.slf4j.Logger;
-import com.sun.grizzly.http.SelectorThread;
-import com.sun.grizzly.http.servlet.ServletAdapter;
-import com.sun.jersey.api.container.grizzly.GrizzlyServerFactory;
-import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-public class ContainerWrapper {
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
+
+import webxml.WebAppConfig;
+
+
+public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);
 
-    private String contextConfigLocation = null;
-
     private int port;
 
-    private SelectorThread server;
+    private HttpServer server;
+    
+    private WebappContext appContext;
+    
+    private String configLocation;
 
-    private String packagesToScan = null;
-
-    private List<Filter> filters = emptyList();
-
-    public void setPackagesToScan(final String packagesToScan) {
-        this.packagesToScan = packagesToScan;
-    }
-
-    public void setContextConfigLocation(final String contextConfigLocation) {
-        this.contextConfigLocation = contextConfigLocation;
+    public void setConfigLocation(final String configLocation) {
+        this.configLocation = configLocation.replaceFirst("^classpath:", "/");
     }
 
     public void setPort(final int port) {
         this.port = port;
     }
 
+    @PostConstruct
     public void start() throws Exception {
-        final URI uri = URI.create("http://localhost:" + port + "/");
-        final ServletAdapter adapter = new ServletAdapter();
-        if (packagesToScan != null) {
-            adapter.addInitParameter("com.sun.jersey.config.property.packages",
-                    packagesToScan);
+    	
+		JAXBContext context = JAXBContext.newInstance(WebAppConfig.class);
+		Unmarshaller u = context.createUnmarshaller();
+		WebAppConfig o = (WebAppConfig) u.unmarshal(getClass().getResource(this.configLocation));
+    	
+        final URI uri = URI.create("http://localhost:" + port);
+
+        final Map<String, String> initParams = new HashMap<String, String>();
+
+        server = GrizzlyServerFactory.createHttpServer(uri, new HttpHandler() {
+
+			@Override
+			public void service(Request req, Response res) throws Exception {
+                res.setStatus(404, "Not found");
+                res.getWriter().write("404: not found");
+			}
+        });
+
+        
+        // create a "root" web application
+        appContext = new WebappContext(o.displayName(), "/");
+        
+        for (ContextParam p: o.contextParams()) {
+        	appContext.addContextInitParameter(p.name(), p.value());
         }
-        adapter.addInitParameter("com.sun.jersey.api.json.POJOMappingFeature",
-                "true");
-        if (contextConfigLocation != null) {
-            adapter.addContextParameter("contextConfigLocation",
-                    contextConfigLocation);
+        
+        for (Listener l: o.listeners()) {
+        	appContext.addListener(l.className());
         }
-        for (final Filter filter : filters) {
-            adapter.addFilter(filter, filter.getClass().getName() + "-" +
-                    filter.hashCode(), null);
+        
+        for (Servlet s: o.servlets()) {
+            ServletRegistration servlet = appContext.addServlet(s.servletName(), s.servletClass());
+            
+            Collection<ServletMapping> mappings = o.servletMappings(s.servletName());
+            for (ServletMapping sm: mappings) {
+            	servlet.addMapping(sm.urlPattern());
+            }
+            for (InitParam p: s.initParams()) {
+            	servlet.setInitParameter(p.name(), p.value());
+            }
         }
-        adapter.addServletListener("org.springframework.web.context.ContextLoaderListener");
-        adapter.setServletInstance(new SpringServlet());
-        adapter.setContextPath(uri.getPath());
-        adapter.setProperty("load-on-startup", 1);
-        server = GrizzlyServerFactory.create(uri, adapter);
+        
+        for (Filter f: o.filters()) {
+        	FilterRegistration filter = appContext.addFilter(f.filterName(), f.filterClass());
+            
+            Collection<FilterMapping> mappings = o.filterMappings(f.filterName());
+            for (FilterMapping sm: mappings) {
+            	String urlPattern = sm.urlPattern();
+            	String servletName = sm.servletName();
+            	if (urlPattern != null) {
+            		filter.addMappingForUrlPatterns(null, urlPattern);
+            	} else {
+            		filter.addMappingForServletNames(null, servletName);
+            	}
+
+            }
+            for (InitParam p: f.initParams()) {
+            	filter.setInitParameter(p.name(), p.value());
+            }
+        }
+            	
+        appContext.deploy(server);
+
         logger.debug("started grizzly webserver endpoint at " +
-                server.getPort());
+                server.getHttpHandler().getName());
     }
 
-    public void stop() throws Exception {
-        server.stopEndpoint();
+    @PreDestroy
+    public void stop() {
+    	try {
+    		appContext.undeploy();
+    	} catch (Exception e) {
+    		logger.warn(e.getMessage(), e);
+    	} finally {
+        server.stop();
+    	}
     }
 
-    public void setFilters(final List<Filter> filters) {
-        this.filters = filters;
-    }
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext)
+			throws BeansException {
+		//this.applicationContext = applicationContext;
+		
+	}
 
 }

@@ -54,13 +54,18 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.sun.grizzly</groupId>
-      <artifactId>grizzly-servlet-webserver</artifactId>
-      <scope>test</scope>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http-server</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http-servlet</artifactId>
+        <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-grizzly</artifactId>
+      <artifactId>jersey-grizzly2</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

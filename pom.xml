@@ -34,6 +34,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.0.RELEASE</spring.version>
     <metrics.version>3.0.0</metrics.version>
+    <grizzly.version>2.2.21</grizzly.version>
 
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
@@ -183,14 +184,34 @@
         <version>1.4.4</version>
       </dependency>
       <dependency>
-        <groupId>com.sun.grizzly</groupId>
-        <artifactId>grizzly-servlet-webserver</artifactId>
-        <version>1.9.57</version>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http-server</artifactId>
+        <scope>test</scope>
+        <version>${grizzly.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http-servlet</artifactId>
+        <scope>test</scope>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-grizzly</artifactId>
+        <artifactId>jersey-grizzly2</artifactId>
         <version>${jersey.version}</version>
+    	<scope>test</scope>
+      </dependency>
+      <dependency>
+    	<groupId>com.sun.jersey.jersey-test-framework</groupId>
+    	<artifactId>jersey-test-framework-grizzly2</artifactId>
+        <version>${jersey.version}</version>
+    	<scope>test</scope>
+      </dependency>
+      <dependency>
+    	<groupId>com.sun.jersey</groupId>
+    	<artifactId>jersey-grizzly2-servlet</artifactId>
+        <version>${jersey.version}</version>
+    	<scope>test</scope>
       </dependency>
       <dependency>
         <groupId>com.sun.jersey</groupId>
