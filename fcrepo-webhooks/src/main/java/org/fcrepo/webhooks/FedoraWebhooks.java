@@ -57,9 +57,6 @@ public class FedoraWebhooks extends AbstractResource {
 
     protected static HttpClient client;
 
-    @Autowired
-    EventBus eventBus;
-
     /**
      * For use with non-mutating methods.
      */

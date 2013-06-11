@@ -19,6 +19,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.eventbus.EventBus;
 import com.hp.hpl.jena.query.Dataset;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.WebContent;
@@ -82,6 +83,9 @@ public abstract class AbstractResource {
 
     @Autowired(required=false)
     private HttpTripleUtil httpTripleUtil;
+
+    @Autowired
+    protected EventBus eventBus;
 
     /**
      * A resource that can mint new Fedora PIDs.

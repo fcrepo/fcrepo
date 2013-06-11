@@ -48,9 +48,6 @@ public class RSSPublisher extends AbstractResource {
 
     private static final String FEED_DESCRIPTION = FEED_TITLE;
 
-    @Autowired
-    private EventBus eventBus;
-
     private final BlockingQueue<Event> feedQueue =
             new ArrayBlockingQueue<Event>(FEED_LENGTH);
 
