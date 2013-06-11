@@ -84,7 +84,7 @@ public abstract class AbstractResource {
     @Autowired(required=false)
     private HttpTripleUtil httpTripleUtil;
 
-    @Autowired
+    @Autowired(required=false)
     protected EventBus eventBus;
 
     /**
