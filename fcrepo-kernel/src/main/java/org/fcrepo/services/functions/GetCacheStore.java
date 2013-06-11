@@ -15,14 +15,16 @@ import org.infinispan.loaders.CacheStore;
 import com.google.common.base.Function;
 
 /**
- * @todo Add Documentation.
+ * Function encapsulating the various Infinispan API calls to retrieve
+ * a CacheStore from a Cache.
  * @author barmintor
  * @date Apr 2, 2013
  */
 public class GetCacheStore implements Function<Cache<?, ?>, CacheStore> {
 
     /**
-     * @todo Add Documentation.
+     * Check the Infinispan ComponentRegistry for the CacheStore for a given
+     * associated with a given Cache.
      */
     @Override
     public CacheStore apply(final Cache<?, ?> input) {
