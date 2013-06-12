@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 public interface FedoraObjectSerializer {
 
+    String getKey();
+
     void serialize(final FedoraObject obj, final OutputStream out)
             throws RepositoryException, IOException;
 

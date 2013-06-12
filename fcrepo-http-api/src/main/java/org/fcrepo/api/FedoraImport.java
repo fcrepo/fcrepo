@@ -23,15 +23,17 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @Path("/{path: .*}/fcr:import")
 public class FedoraImport extends AbstractResource {
 
-    @Resource
-    private Map<String, FedoraObjectSerializer> serializers;
+    @Autowired
+    protected SerializerUtil serializers;
 
     private final Logger logger = getLogger(this.getClass());
 
@@ -47,7 +49,7 @@ public class FedoraImport extends AbstractResource {
         final Session session = getAuthenticatedSession();
 
         try {
-            serializers.get(format).deserialize(session, path, stream);
+            serializers.getSerializer(format).deserialize(session, path, stream);
             session.save();
             return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
         } finally {
@@ -55,8 +57,7 @@ public class FedoraImport extends AbstractResource {
         }
     }
 
-    public void setSerializers(
-            final Map<String, FedoraObjectSerializer> serializers) {
+    public void setSerializers(final SerializerUtil  serializers) {
         this.serializers = serializers;
     }
 }

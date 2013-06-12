@@ -10,7 +10,7 @@
 
     <context:annotation-config />
     
-    <context:component-scan base-package="org.fcrepo.services, org.fcrepo.generator, org.fcrepo.api, org.fcrepo.exceptionhandlers"/>
+    <context:component-scan base-package="org.fcrepo.services, org.fcrepo.generator, org.fcrepo.serialization, org.fcrepo.api, org.fcrepo.exceptionhandlers"/>
     
     <bean class="org.fcrepo.session.SessionFactory" />
     
@@ -23,14 +23,5 @@
         </bean>
         <bean class="org.fcrepo.generator.dublincore.JcrPropertiesGenerator"/>
     </util:list>
-
-    <util:map id="serializers" key-type="java.lang.String" map-class="java.util.HashMap"
-              value-type="org.fcrepo.serialization.FedoraObjectSerializer">
-      <description>Map from formats to serializers for Fedora objects</description>
-      <entry key="jcr/xml">
-        <bean class="org.fcrepo.serialization.jcrxml.JcrXmlSerializer"/>
-      </entry>
-    </util:map>
-
 
 </beans>

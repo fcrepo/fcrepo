@@ -1,5 +1,5 @@
 
-package org.fcrepo.serialization.jcrxml;
+package org.fcrepo.serialization;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,8 +12,15 @@ import javax.jcr.Session;
 
 import org.fcrepo.FedoraObject;
 import org.fcrepo.serialization.BaseFedoraObjectSerializer;
+import org.springframework.stereotype.Component;
 
+@Component
 public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
+
+    @Override
+    public String getKey() {
+        return "jcr/xml";
+    }
 
     @Override
     public void serialize(final FedoraObject obj, final OutputStream out)

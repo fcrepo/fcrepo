@@ -12,6 +12,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.SerializerUtil;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +22,7 @@ public class FedoraImportTest {
     FedoraImport testObj;
 
     Session mockSession;
-    Map<String, FedoraObjectSerializer> mockSerializers;
+    SerializerUtil mockSerializers;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -29,7 +30,7 @@ public class FedoraImportTest {
         testObj = new FedoraImport();
 
         mockSession = TestHelpers.mockSession(testObj);
-        mockSerializers = mock(Map.class);
+        mockSerializers = mock(SerializerUtil.class);
         testObj.setSerializers(mockSerializers);
 
 
@@ -40,7 +41,7 @@ public class FedoraImportTest {
     public void testImportObject() throws Exception {
         InputStream mockInputStream = mock(InputStream.class);
         FedoraObjectSerializer mockSerializer = mock(FedoraObjectSerializer.class);
-        when(mockSerializers.get("fake-format")).thenReturn(mockSerializer);
+        when(mockSerializers.getSerializer("fake-format")).thenReturn(mockSerializer);
 
         testObj.importObject(createPathList("test", "object"), "fake-format", mockInputStream);
         verify(mockSerializer).deserialize(mockSession, "/test/object", mockInputStream);
