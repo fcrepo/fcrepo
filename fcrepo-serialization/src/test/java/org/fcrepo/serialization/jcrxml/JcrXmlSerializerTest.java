@@ -13,6 +13,7 @@ import javax.jcr.Node;
 import javax.jcr.Session;
 
 import org.fcrepo.FedoraObject;
+import org.fcrepo.serialization.JcrXmlSerializer;
 import org.junit.Test;
 
 public class JcrXmlSerializerTest {

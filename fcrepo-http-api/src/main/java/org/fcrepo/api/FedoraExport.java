@@ -22,15 +22,18 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowire;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @Path("/{path: .*}/fcr:export")
 public class FedoraExport extends AbstractResource {
 
-    @Resource
-    private Map<String, FedoraObjectSerializer> serializers;
+    @Autowired
+    protected SerializerUtil serializers;
 
     private final Logger logger = getLogger(this.getClass());
 
@@ -51,7 +54,7 @@ public class FedoraExport extends AbstractResource {
 					logger.debug("Selecting from serializer map: " +
 							serializers);
 					final FedoraObjectSerializer serializer =
-							serializers.get(format);
+							serializers.getSerializer(format);
 					logger.debug("Retrieved serializer for format: " + format);
 					serializer.serialize(objectService.getObject(session, path), out);
 					logger.debug("Successfully serialized object: " + path);
@@ -64,8 +67,8 @@ public class FedoraExport extends AbstractResource {
 		};
     }
 
-    public void setSerializers(
-            final Map<String, FedoraObjectSerializer> serializers) {
+    public void setSerializers(final SerializerUtil  serializers) {
         this.serializers = serializers;
     }
+
 }

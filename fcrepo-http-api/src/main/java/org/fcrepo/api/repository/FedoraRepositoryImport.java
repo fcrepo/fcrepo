@@ -18,6 +18,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.api.FedoraImport;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.slf4j.Logger;
@@ -25,35 +26,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Path("/fcr:import")
-public class FedoraRepositoryImport extends AbstractResource {
-
-    @Resource
-    private Map<String, FedoraObjectSerializer> serializers;
-
-    private final Logger logger = getLogger(this.getClass());
-
-    @POST
-    public Response importObject(@QueryParam("format")
-                                 @DefaultValue("jcr/xml")
-                                 final String format, final InputStream stream) throws IOException,
-                                                                                               RepositoryException, InvalidChecksumException {
-
-        final String path = "/";
-        logger.debug("Deserializing at {}", path);
-        final Session session = getAuthenticatedSession();
-
-        try {
-            serializers.get(format).deserialize(session, path, stream);
-            session.save();
-            // TODO return proper URI for new resource
-            return created(uriInfo.getAbsolutePath()).build();
-        } finally {
-            session.logout();
-        }
-    }
-
-    public void setSerializers(final Map<String, FedoraObjectSerializer> serializers) {
-        this.serializers = serializers;
-    }
-
+public class FedoraRepositoryImport extends FedoraImport {
 }
