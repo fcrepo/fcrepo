@@ -1,7 +1,7 @@
 /*
  * Generic Fedora namespace
  */
-<webhook = 'org.webhooks'>
+<webhook = 'http://webhooks.org/'>
 
 /*
  * Any Fedora resource.
