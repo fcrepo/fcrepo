@@ -99,6 +99,14 @@ public class AbstractResourceTest {
     }
 
     @Test
+    public void testToPathUuid() {
+        List<PathSegment> pathList = PathSegmentImpl.createPathList("[foo]");
+        String expected = "[foo]";
+        String actual = AbstractResource.toPath(pathList);
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void testToPathEmpty() {
         List<PathSegment> pathList = PathSegmentImpl.createPathList();
         // empty path segments ('//') should be suppressed

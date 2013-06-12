@@ -16,6 +16,7 @@ import java.util.Iterator;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.Response;
 
+import com.hp.hpl.jena.sparql.core.Quad;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -173,6 +174,32 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 compile(
                         "<" + serverAddress + "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
+
+
+    }
+
+
+    @Test
+    public void testGetObjectGraphByUUID() throws Exception {
+        client.execute(postObjMethod("FedoraDescribeTestGraphByUuid"));
+
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "objects/FedoraDescribeTestGraphByUuid");
+        getObjMethod.addHeader("Accept", "application/n3");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
+        final Iterator<Quad> iterator = graphStore.find(Node.ANY, Node.createURI(serverAddress + "objects/FedoraDescribeTestGraphByUuid"), RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode(), Node.ANY);
+
+        assertTrue("Expected graph to contain a UUID", iterator.hasNext());
+
+        final String uuid = iterator.next().getObject().getLiteralLexicalForm();
+
+        final HttpGet getObjMethodByUuid =
+                new HttpGet(serverAddress + "%5B" + uuid + "%5D");
+        getObjMethodByUuid.addHeader("Accept", "application/n3");
+        final HttpResponse uuidResponse = client.execute(getObjMethod);
+        assertEquals(200, uuidResponse.getStatusLine().getStatusCode());
 
 
     }

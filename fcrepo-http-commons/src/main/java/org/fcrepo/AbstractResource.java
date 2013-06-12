@@ -127,7 +127,9 @@ public abstract class AbstractResource {
             final String p = path.getPath();
 
             if (!p.equals("")) {
-                result.append('/');
+                if (!p.startsWith("[")) {
+                    result.append('/');
+                }
                 result.append(p);
             }
         }
