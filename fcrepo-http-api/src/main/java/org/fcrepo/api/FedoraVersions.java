@@ -35,14 +35,20 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.GraphStoreStreamingOutput;
+import org.fcrepo.session.InjectedSession;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.query.Dataset;
 
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:versions")
 public class FedoraVersions extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
 
@@ -50,7 +56,8 @@ public class FedoraVersions extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Response getVersionList(@PathParam("path")
     final List<PathSegment> pathList, @Context
-    final Request request, @Context UriInfo uriInfo) throws RepositoryException {
+    final Request request, @Context
+    final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
 
         LOGGER.trace("getting versions list for {}", path);
@@ -65,8 +72,9 @@ public class FedoraVersions extends AbstractResource {
 
             return Response.ok(
                     new GraphStoreStreamingOutput(resource
-                            .getVersionDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo)), bestPossibleResponse
-                            .getMediaType())).build();
+                            .getVersionDataset(new HttpGraphSubjects(
+                                    FedoraNodes.class, uriInfo)),
+                            bestPossibleResponse.getMediaType())).build();
 
         } finally {
             session.logout();
@@ -98,7 +106,8 @@ public class FedoraVersions extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset getVersion(@PathParam("path")
     final List<PathSegment> pathList, @PathParam("versionLabel")
-    final String versionLabel, @Context UriInfo uriInfo) throws RepositoryException, IOException {
+    final String versionLabel, @Context
+    final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         LOGGER.trace("getting version profile for {} at version {}", path,
                 versionLabel);
@@ -112,12 +121,17 @@ public class FedoraVersions extends AbstractResource {
                 throw new WebApplicationException(status(NOT_FOUND).build());
             } else {
 
-                return resource.getPropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo));
+                return resource.getPropertiesDataset(new HttpGraphSubjects(
+                        FedoraNodes.class, uriInfo));
             }
 
         } finally {
             session.logout();
         }
 
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 }

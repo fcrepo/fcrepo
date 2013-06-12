@@ -2,19 +2,15 @@
 package org.fcrepo.api;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
@@ -35,6 +31,7 @@ public class FedoraSitemapTest {
         testObj.setObjectService(mockObjects);
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        testObj.setSession(mockSession);
     }
 
     @After
@@ -44,8 +41,7 @@ public class FedoraSitemapTest {
 
     @Test
     public void testGetSitemapIndex() throws Exception {
-        when(mockObjects.getRepositoryObjectCount()).thenReturn(
-                49999L);
+        when(mockObjects.getRepositoryObjectCount()).thenReturn(49999L);
 
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
 
@@ -54,8 +50,7 @@ public class FedoraSitemapTest {
 
     @Test
     public void testGetSitemapIndexMultiplePages() throws Exception {
-        when(mockObjects.getRepositoryObjectCount()).thenReturn(
-                50001L);
+        when(mockObjects.getRepositoryObjectCount()).thenReturn(50001L);
 
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
 

@@ -1,3 +1,4 @@
+
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
@@ -25,47 +26,53 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FedoraFixityTest {
-	FedoraFixity testObj;
 
-	DatastreamService mockDatastreams;
+    FedoraFixity testObj;
 
-	Session mockSession;
+    DatastreamService mockDatastreams;
+
+    Session mockSession;
 
     private UriInfo uriInfo;
+
     private Request mockRequest;
 
     @Before
-	public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws LoginException, RepositoryException {
 
         mockRequest = mock(Request.class);
-		mockDatastreams = mock(DatastreamService.class);
+        mockDatastreams = mock(DatastreamService.class);
 
-		testObj = new FedoraFixity();
-		testObj.setDatastreamService(mockDatastreams);
+        testObj = new FedoraFixity();
+        testObj.setDatastreamService(mockDatastreams);
 
         uriInfo = TestHelpers.getUriInfoImpl();
         testObj.setUriInfo(uriInfo);
 
+        mockSession = TestHelpers.mockSession(testObj);
+        testObj.setSession(mockSession);
+    }
 
-		mockSession = TestHelpers.mockSession(testObj);
-	}
+    @After
+    public void tearDown() {
 
-	@After
-	public void tearDown() {
+    }
 
-	}
-	@Test
-	public void testGetDatastreamFixity() throws RepositoryException,
-														 IOException {
-		final String pid = "FedoraDatastreamsTest1";
-		final String path = "/objects/" + pid + "/testDS";
-		final String dsId = "testDS";
-		final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
-		Node mockNode = mock(Node.class);
-		when(mockNode.getSession()).thenReturn(mockSession);
-		when(mockDs.getNode()).thenReturn(mockNode);
-		when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
-		testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"), mockRequest, uriInfo);
-        verify(mockDatastreams).getFixityResultsModel(any(GraphSubjects.class), eq(mockDs));
-	}
+    @Test
+    public void testGetDatastreamFixity() throws RepositoryException,
+            IOException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String path = "/objects/" + pid + "/testDS";
+        final String dsId = "testDS";
+        final Datastream mockDs = TestHelpers.mockDatastream(pid, dsId, null);
+        final Node mockNode = mock(Node.class);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockDs.getNode()).thenReturn(mockNode);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
+                mockDs);
+        testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"),
+                mockRequest, uriInfo);
+        verify(mockDatastreams).getFixityResultsModel(any(GraphSubjects.class),
+                eq(mockDs));
+    }
 }

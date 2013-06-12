@@ -5,6 +5,10 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
@@ -44,35 +48,40 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 
 @Component
+@Scope("prototype")
 @Path("/{path: .*}")
 public class FedoraNodes extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     private static final Logger logger = getLogger(FedoraNodes.class);
 
     @GET
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
-            NTRIPLES, TEXT_HTML})
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
+            TEXT_HTML})
     public Dataset describe(@PathParam("path")
     final List<PathSegment> pathList, @Context
-    final Request request, @Context UriInfo uriInfo) throws RepositoryException, IOException {
+    final Request request, @Context
+    final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
 
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
@@ -94,9 +103,12 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.cacheControl(cc)
                         .lastModified(date).build());
             }
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
-            final Dataset propertiesDataset = resource.getPropertiesDataset(subjects);
-            addResponseInformationToDataset(resource, propertiesDataset, uriInfo, subjects);
+            final HttpGraphSubjects subjects =
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+            final Dataset propertiesDataset =
+                    resource.getPropertiesDataset(subjects);
+            addResponseInformationToDataset(resource, propertiesDataset,
+                    uriInfo, subjects);
 
             return propertiesDataset;
 
@@ -118,37 +130,43 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response modifyObject(@PathParam("path")
     final List<PathSegment> pathList, @Context
-    final UriInfo uriInfo, final InputStream requestBodyStream, @HeaderParam("Content-Type")
-    final MediaType requestContentType, @Context final Request request)
-            throws RepositoryException, IOException, InvalidChecksumException {
-        final Session session = getAuthenticatedSession();
+    final UriInfo uriInfo, final InputStream requestBodyStream,
+            @HeaderParam("Content-Type")
+            final MediaType requestContentType, @Context
+            final Request request) throws RepositoryException, IOException,
+            InvalidChecksumException {
         final String path = toPath(pathList);
         logger.debug("Modifying object with path: {}", path);
 
         try {
 
-            final FedoraResource resource = nodeService.findOrCreateObject(session, path);
+            final FedoraResource resource =
+                    nodeService.findOrCreateObject(session, path);
 
             final boolean isNew = resource.isNew();
 
-            if (!isNew)  {
-
+            if (!isNew) {
 
                 final Date date = resource.getLastModifiedDate();
                 final Date roundedDate = new Date();
                 roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-                ResponseBuilder builder = request.evaluatePreconditions(roundedDate);
+                final ResponseBuilder builder =
+                        request.evaluatePreconditions(roundedDate);
 
                 if (builder != null) {
                     throw new WebApplicationException(builder.build());
                 }
             }
 
-            resource.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo), IOUtils.toString(requestBodyStream));
+            resource.updatePropertiesDataset(new HttpGraphSubjects(
+                    FedoraNodes.class, uriInfo), IOUtils
+                    .toString(requestBodyStream));
             session.save();
 
             if (isNew) {
-                return created(uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
+                return created(
+                        uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
+                                .build(path.substring(1))).build();
             } else {
                 return noContent().build();
             }
@@ -178,8 +196,6 @@ public class FedoraNodes extends AbstractResource {
         final String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);
 
-        final Session session = getAuthenticatedSession();
-
         try {
 
             if (requestBodyStream != null) {
@@ -187,24 +203,25 @@ public class FedoraNodes extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, path);
 
-                result.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class,
-                                                                            uriInfo), IOUtils.toString(requestBodyStream));
+                result.updatePropertiesDataset(new HttpGraphSubjects(
+                        FedoraNodes.class, uriInfo), IOUtils
+                        .toString(requestBodyStream));
                 final Problems problems = result.getDatasetProblems();
                 if (problems != null && problems.hasProblems()) {
                     logger.info(
                             "Found these problems updating the properties for {}: {}",
                             path, problems.toString());
-                    return status(Response.Status.FORBIDDEN).entity(
-                            problems.toString()).build();
+                    return status(FORBIDDEN).entity(problems.toString())
+                            .build();
 
                 }
 
                 session.save();
 
-                return Response.status(HttpStatus.SC_NO_CONTENT).build();
+                return status(SC_NO_CONTENT).build();
             } else {
-                return Response.status(HttpStatus.SC_BAD_REQUEST).entity(
-                        "SPARQL-UPDATE requests must have content ").build();
+                return status(SC_BAD_REQUEST).entity(
+                        "SPARQL-UPDATE requests must have content!").build();
             }
 
         } finally {
@@ -236,12 +253,10 @@ public class FedoraNodes extends AbstractResource {
         final String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);
 
-        final Session session = getAuthenticatedSession();
-
         try {
             if (nodeService.exists(session, path)) {
-                return Response.status(HttpStatus.SC_CONFLICT).entity(
-                        path + " is an existing resource").build();
+                return status(SC_CONFLICT).entity(
+                        path + " is an existing resource!").build();
             }
 
             createObjectOrDatastreamFromRequestContent(FedoraNodes.class,
@@ -250,7 +265,8 @@ public class FedoraNodes extends AbstractResource {
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
-            return created(uriInfo.getRequestUri()).entity(path.substring(1)).build();
+            return created(uriInfo.getRequestUri()).entity(path.substring(1))
+                    .build();
 
         } finally {
             session.logout();
@@ -268,7 +284,6 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response deleteObject(@PathParam("path")
     final List<PathSegment> path) throws RepositoryException {
-        final Session session = getAuthenticatedSession();
 
         try {
             nodeService.deleteObject(session, toPath(path));
@@ -277,6 +292,10 @@ public class FedoraNodes extends AbstractResource {
         } finally {
             session.logout();
         }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 
 }

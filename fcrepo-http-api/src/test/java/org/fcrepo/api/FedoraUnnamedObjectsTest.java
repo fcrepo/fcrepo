@@ -33,6 +33,7 @@ public class FedoraUnnamedObjectsTest {
     Session mockSession;
 
     ObjectService mockObjects;
+
     NodeService mockNodeService;
 
     @Before
@@ -43,7 +44,7 @@ public class FedoraUnnamedObjectsTest {
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setNodeService(mockNodeService);
         testObj.setObjectService(mockObjects);
-
+        testObj.setSession(mockSession);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
 
@@ -61,13 +62,17 @@ public class FedoraUnnamedObjectsTest {
 
         final FedoraObject mockObject = mock(FedoraObject.class);
         when(mockObject.getPath()).thenReturn("/objects/uuid-123");
-        when(mockObjects.createObject(mockSession, "/objects/uuid-123")).thenReturn(mockObject);
+        when(mockObjects.createObject(mockSession, "/objects/uuid-123"))
+                .thenReturn(mockObject);
         final Response actual =
                 testObj.ingestAndMint(createPathList("objects"),
-                                             FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null, TestHelpers.getUriInfoImpl());
+                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null,
+                        TestHelpers.getUriInfoImpl());
         assertNotNull(actual);
-        assertEquals("http://localhost/fcrepo/objects/uuid-123", actual.getMetadata().getFirst("Location").toString());
-        assertEquals(Response.Status.CREATED.getStatusCode(), actual.getStatus());
+        assertEquals("http://localhost/fcrepo/objects/uuid-123", actual
+                .getMetadata().getFirst("Location").toString());
+        assertEquals(Response.Status.CREATED.getStatusCode(), actual
+                .getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));
         verify(mockObjects).createObject(mockSession, "/objects/uuid-123");
         verify(mockNodeService).exists(mockSession, "/objects/uuid-123");

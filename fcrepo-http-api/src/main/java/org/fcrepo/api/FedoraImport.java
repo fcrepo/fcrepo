@@ -7,9 +7,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
@@ -22,15 +19,24 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
+import org.fcrepo.session.InjectedSession;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+/**
+ * @author ajs6f
+ * @author cbeer
+ */
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:import")
 public class FedoraImport extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     @Autowired
     protected SerializerUtil serializers;
@@ -46,18 +52,24 @@ public class FedoraImport extends AbstractResource {
 
         final String path = toPath(pathList);
         logger.debug("Deserializing at {}", path);
-        final Session session = getAuthenticatedSession();
 
         try {
-            serializers.getSerializer(format).deserialize(session, path, stream);
+            serializers.getSerializer(format)
+                    .deserialize(session, path, stream);
             session.save();
-            return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
+            return created(
+                    uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
+                            .build(path.substring(1))).build();
         } finally {
             session.logout();
         }
     }
 
-    public void setSerializers(final SerializerUtil  serializers) {
+    public void setSerializers(final SerializerUtil serializers) {
         this.serializers = serializers;
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 }

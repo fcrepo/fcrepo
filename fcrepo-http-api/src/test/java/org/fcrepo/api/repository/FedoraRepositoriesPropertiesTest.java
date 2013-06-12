@@ -1,3 +1,4 @@
+
 package org.fcrepo.api.repository;
 
 import static org.mockito.Mockito.mock;
@@ -19,9 +20,10 @@ import org.junit.Test;
 
 public class FedoraRepositoriesPropertiesTest {
 
-
     private FedoraRepositoriesProperties testObj;
+
     private NodeService mockNodes;
+
     private Session mockSession;
 
     @Before
@@ -29,10 +31,10 @@ public class FedoraRepositoriesPropertiesTest {
         mockNodes = mock(NodeService.class);
         testObj = new FedoraRepositoriesProperties();
         mockSession = TestHelpers.mockSession(testObj);
+        testObj.setSession(mockSession);
         testObj.setNodeService(mockNodes);
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
-
 
     @Test
     public void testSparqlUpdate() throws RepositoryException, IOException {
