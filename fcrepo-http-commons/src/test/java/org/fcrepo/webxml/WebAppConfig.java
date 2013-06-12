@@ -1,4 +1,4 @@
-package webxml;
+package org.fcrepo.webxml;
 
 import java.util.ArrayList;
 import java.util.Collection;

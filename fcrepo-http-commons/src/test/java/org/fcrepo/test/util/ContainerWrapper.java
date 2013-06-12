@@ -13,6 +13,7 @@ import javax.annotation.PreDestroy;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import org.fcrepo.webxml.WebAppConfig;
 import org.fcrepo.webxml.bind.ContextParam;
 import org.fcrepo.webxml.bind.Filter;
 import org.fcrepo.webxml.bind.FilterMapping;
@@ -33,8 +34,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
-
-import webxml.WebAppConfig;
 
 
 public class ContainerWrapper implements ApplicationContextAware {
