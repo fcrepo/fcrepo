@@ -61,7 +61,7 @@ public class FedoraRepositoryUnnamedObjects extends AbstractResource {
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
-            return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(resource.getPath().substring(1))).entity(path).build();
+            return created(uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(resource.getPath().substring(1))).entity(path).build();
         } finally {
             session.logout();
         }
