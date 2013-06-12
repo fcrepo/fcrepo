@@ -11,7 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
-import org.fcrepo.api.FedoraTransactions;
+import org.fcrepo.services.TransactionService;
 import org.junit.Test;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
@@ -74,7 +74,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         long diff = 0;
         // the loop should be able to run for at least the tx reaping interval
         while (!expired &&
-                (diff = (System.currentTimeMillis() - start)) < (2 * FedoraTransactions.REAP_INTERVAL)) {
+                (diff = (System.currentTimeMillis() - start)) < (2 * TransactionService.REAP_INTERVAL)) {
             /* check that the tx is removed */
             final HttpGet getTx =
                     new HttpGet(serverAddress + "fcr:tx/" + tx.getId());

@@ -1,5 +1,7 @@
-
-package org.fcrepo.api;
+/**
+ *
+ */
+package org.fcrepo.services;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -17,17 +19,19 @@ import javax.jcr.Session;
 
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FedoraTransactionsTest {
 
+/**
+ * @author frank asseg
+ *
+ */
+public class TransactionServiceTest {
     private static final String IS_A_TX = "foo";
-
     private static final String NOT_A_TX = "bar";
 
-    FedoraTransactions resource;
+    TransactionService service;
 
     Session mockSession;
 
@@ -35,32 +39,27 @@ public class FedoraTransactionsTest {
 
     @Before
     public void setup() throws Exception {
-        resource = new FedoraTransactions();
-        mockSession = TestHelpers.mockSession(resource);
+        service = new TransactionService();
         mockTx = mock(Transaction.class);
         when(mockTx.getId()).thenReturn(IS_A_TX);
-        final Field txsField =
-                FedoraTransactions.class.getDeclaredField("TRANSACTIONS");
+        Field txsField = TransactionService.class.getDeclaredField("TRANSACTIONS");
         txsField.setAccessible(true);
         @SuppressWarnings("unchecked")
-        final Map<String, Transaction> txs =
-                (Map<String, Transaction>) txsField
-                        .get(FedoraTransactions.class);
+        Map<String, Transaction> txs = (Map<String, Transaction>) txsField.get(TransactionService.class);
         txs.put(IS_A_TX, mockTx);
     }
 
     @Test
     public void testExpiration() throws Exception {
-        final Date fiveSecondsAgo = new Date(System.currentTimeMillis() - 5000);
+        Date fiveSecondsAgo = new Date(System.currentTimeMillis() - 5000);
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
-        resource.removeAndRollbackExpired();
+        service.removeAndRollbackExpired();
         verify(mockTx).rollback();
     }
 
     @Test
     public void testCreateTx() throws Exception {
-        final Transaction tx = resource.createTransaction();
-
+        Transaction tx = service.beginTransaction(null);
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
@@ -69,44 +68,43 @@ public class FedoraTransactionsTest {
 
     @Test
     public void testGetTx() throws Exception {
-        Transaction tx = resource.getTransaction(IS_A_TX);
+        Transaction tx = service.getTransaction(IS_A_TX);
 
         assertNotNull(tx);
 
-        try {
-            tx = resource.getTransaction(NOT_A_TX);
+        try{
+            tx = service.getTransaction(NOT_A_TX);
             fail("Transaction retrieved for nonexistent id " + NOT_A_TX);
-        } catch (final RepositoryException e) {
+        }catch(RepositoryException e){
             // just checking that the exception occurs
         }
     }
 
     @Test
     public void testCommitTx() throws Exception {
-        Transaction tx = resource.commit(IS_A_TX);
+        Transaction tx = service.commit(IS_A_TX);
 
         assertNotNull(tx);
         verify(mockTx).commit();
-        try {
-            tx = resource.getTransaction(tx.getId());
+        try{
+            tx = service.getTransaction(tx.getId());
             fail("Transaction is available after commit");
-        } catch (final RepositoryException e) {
+        }catch(RepositoryException e){
             // just checking that the exception occurs
         }
     }
 
     @Test
     public void testRollbackTx() throws Exception {
-        Transaction tx = resource.rollback(IS_A_TX);
+        Transaction tx = service.rollback(IS_A_TX);
 
         assertNotNull(tx);
         verify(mockTx).rollback();
-        try {
-            tx = resource.getTransaction(tx.getId());
+        try{
+            tx = service.getTransaction(tx.getId());
             fail("Transaction is available after commit");
-        } catch (final RepositoryException e) {
+        }catch(RepositoryException e){
             // just checking that the exception occurs
         }
     }
-
 }
