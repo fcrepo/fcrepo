@@ -21,5 +21,8 @@
     <bean class="org.fcrepo.services.DatastreamService"/>
     <bean class="org.fcrepo.services.LowLevelStorageService"/>
     <bean class="org.fcrepo.services.NodeService"/>
+    
+    <!-- For the time being, load annotation config here too -->
+    <bean class="org.fcrepo.metrics.MetricsConfig"/>
 
 </beans>
