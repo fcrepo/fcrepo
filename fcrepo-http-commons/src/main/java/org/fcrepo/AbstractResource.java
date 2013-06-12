@@ -19,12 +19,10 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import com.google.common.eventbus.EventBus;
-import com.hp.hpl.jena.query.Dataset;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.WebContent;
-import org.fcrepo.api.rdf.HttpTripleUtil;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.api.rdf.HttpTripleUtil;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.rdf.GraphSubjects;
@@ -38,6 +36,9 @@ import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.eventbus.EventBus;
+import com.hp.hpl.jena.query.Dataset;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -81,10 +82,10 @@ public abstract class AbstractResource {
     @Autowired
     protected DatastreamService datastreamService;
 
-    @Autowired(required=false)
+    @Autowired(required = false)
     private HttpTripleUtil httpTripleUtil;
 
-    @Autowired(required=false)
+    @Autowired(required = false)
     protected EventBus eventBus;
 
     /**
@@ -108,11 +109,12 @@ public abstract class AbstractResource {
     @PostConstruct
     public void initialize() throws RepositoryException {
 
-        final Session session = sessions.getSession();
-        NamespaceTools.getNamespaceRegistry(session).registerNamespace(
+        final Session testSession = sessions.getSession();
+        NamespaceTools.getNamespaceRegistry(testSession).registerNamespace(
                 TEST_NS_PREFIX, TEST_NS_URI);
-        session.save();
-        session.logout();
+        testSession.save();
+        testSession.logout();
+
     }
 
     /**
@@ -166,11 +168,12 @@ public abstract class AbstractResource {
                 result = objectService.createObject(session, path);
 
                 if (requestBodyStream != null &&
-                            requestContentType != null &&
-                            requestContentType.toString().equals(
-                                                                        WebContent.contentTypeSPARQLUpdate)) {
-                    result.updatePropertiesDataset(new HttpGraphSubjects(pathsRelativeTo,
-                                                                                uriInfo), IOUtils.toString(requestBodyStream));
+                        requestContentType != null &&
+                        requestContentType.toString().equals(
+                                WebContent.contentTypeSPARQLUpdate)) {
+                    result.updatePropertiesDataset(new HttpGraphSubjects(
+                            pathsRelativeTo, uriInfo), IOUtils
+                            .toString(requestBodyStream));
                 }
 
                 break;
@@ -181,8 +184,8 @@ public abstract class AbstractResource {
 
                 final Node node =
                         datastreamService.createDatastreamNode(session, path,
-                                                                      contentType.toString(), requestBodyStream,
-                                                                      checksumType, checksum);
+                                contentType.toString(), requestBodyStream,
+                                checksumType, checksum);
                 result = new Datastream(node);
                 break;
             default:
@@ -193,9 +196,13 @@ public abstract class AbstractResource {
         return result;
     }
 
-    protected void addResponseInformationToDataset(final FedoraResource resource, final Dataset dataset, final UriInfo uriInfo, GraphSubjects subjects) throws RepositoryException {
+    protected void addResponseInformationToDataset(
+            final FedoraResource resource, final Dataset dataset,
+            final UriInfo uriInfo, final GraphSubjects subjects)
+            throws RepositoryException {
         if (httpTripleUtil != null) {
-            httpTripleUtil.addHttpComponentModelsForResource(dataset, resource, uriInfo, subjects);
+            httpTripleUtil.addHttpComponentModelsForResource(dataset, resource,
+                    uriInfo, subjects);
         }
     }
 
@@ -262,7 +269,6 @@ public abstract class AbstractResource {
     public void setDatastreamService(final DatastreamService datastreamService) {
         this.datastreamService = datastreamService;
     }
-
 
     /**
      * Set the Event Bus, used primary for testing without spring

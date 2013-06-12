@@ -1,11 +1,12 @@
 package org.fcrepo.api.rdf;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import javax.jcr.RepositoryException;
+import javax.ws.rs.core.UriInfo;
+
 import org.fcrepo.FedoraResource;
 import org.fcrepo.rdf.GraphSubjects;
 
-import javax.jcr.RepositoryException;
-import javax.ws.rs.core.UriInfo;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * Helper to generate an RDF model for a FedoraResource that (likely) creates relations

@@ -18,9 +18,9 @@ import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
-import com.hp.hpl.jena.sparql.core.Quad;
 
 public class RdfSerializationUtils {
 

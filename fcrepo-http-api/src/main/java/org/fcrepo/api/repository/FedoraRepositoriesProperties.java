@@ -1,5 +1,9 @@
+
 package org.fcrepo.api.repository;
 
+import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -13,22 +17,27 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
 import org.apache.jena.riot.WebContent;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.session.InjectedSession;
 import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
 @Component
+@Scope("prototype")
 @Path("/fcr:properties")
 public class FedoraRepositoriesProperties extends AbstractResource {
 
-    private static final Logger logger = getLogger(FedoraRepositoriesProperties.class);
+    @InjectedSession
+    protected Session session;
 
+    private static final Logger logger =
+            getLogger(FedoraRepositoriesProperties.class);
 
     /**
      * Update an object using SPARQL-UPDATE
@@ -40,31 +49,39 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     @POST
     @Consumes({WebContent.contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(final InputStream requestBodyStream) throws RepositoryException, IOException {
-
-        final Session session = getAuthenticatedSession();
+    public Response updateSparql(final InputStream requestBodyStream)
+            throws RepositoryException, IOException {
 
         try {
+            if (requestBodyStream != null) {
 
-            if(requestBodyStream != null) {
+                final FedoraResource result =
+                        nodeService.getObject(session, "/");
 
-                final FedoraResource result = nodeService.getObject(session, "/");
-
-                result.updatePropertiesDataset(IOUtils.toString(requestBodyStream));
-                Problems problems = result.getDatasetProblems();
+                result.updatePropertiesDataset(IOUtils
+                        .toString(requestBodyStream));
+                final Problems problems = result.getDatasetProblems();
                 if (problems != null && problems.hasProblems()) {
-                    logger.info("Found these problems updating the properties for {}: {}", "/", problems.toString());
-                    return Response.status(Response.Status.FORBIDDEN).entity(problems.toString()).build();
+                    logger.info(
+                            "Found these problems updating the properties for {}: {}",
+                            "/", problems.toString());
+                    return status(Response.Status.FORBIDDEN).entity(
+                            problems.toString()).build();
                 }
 
                 session.save();
 
-                return Response.status(HttpStatus.SC_NO_CONTENT).build();
+                return status(SC_NO_CONTENT).build();
             } else {
-                return Response.status(HttpStatus.SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content ").build();
+                return status(SC_BAD_REQUEST).entity(
+                        "SPARQL-UPDATE requests must have content ").build();
             }
         } finally {
             session.logout();
         }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 }

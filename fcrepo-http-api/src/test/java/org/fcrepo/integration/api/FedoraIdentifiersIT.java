@@ -8,15 +8,16 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
+
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraIdentifiersIT extends AbstractResourceIT {
 

@@ -3,7 +3,6 @@ package org.fcrepo.test.util;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

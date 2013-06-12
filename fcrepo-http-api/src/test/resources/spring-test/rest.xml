@@ -7,7 +7,7 @@
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <bean class="org.fcrepo.session.SessionFactory"/>
-
+  
   <!-- Mints PIDs-->
   <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
 
