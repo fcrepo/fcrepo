@@ -51,10 +51,6 @@ public abstract class AbstractResource {
 
     private static final Logger LOGGER = getLogger(AbstractResource.class);
 
-    public static final String TEST_NS_PREFIX = "test";
-
-    public static final String TEST_NS_URI = "info:fedora/test/";
-
     /**
      * Useful for constructing URLs
      */
@@ -108,12 +104,6 @@ public abstract class AbstractResource {
 
     @PostConstruct
     public void initialize() throws RepositoryException {
-
-        final Session testSession = sessions.getSession();
-        NamespaceTools.getNamespaceRegistry(testSession).registerNamespace(
-                TEST_NS_PREFIX, TEST_NS_URI);
-        testSession.save();
-        testSession.logout();
 
     }
 

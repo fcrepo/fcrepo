@@ -26,6 +26,7 @@
 
 <fedorarelsext = 'info:fedora/fedora-system:def/relations-external#'>
 
+<test = 'info:fedora/test/'>
 
 [fedora:relations] mixin
 

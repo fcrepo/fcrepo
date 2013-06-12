@@ -53,7 +53,6 @@ public class AbstractResourceTest {
         when(mockSessions.getSession()).thenReturn(mockSession);
         testObj.setSessionFactory(mockSessions);
         testObj.initialize();
-        verify(mockNames).registerNamespace(AbstractResource.TEST_NS_PREFIX, AbstractResource.TEST_NS_URI);
     }
     
     @Test
