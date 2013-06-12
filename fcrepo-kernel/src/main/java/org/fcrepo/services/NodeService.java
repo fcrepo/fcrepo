@@ -23,12 +23,14 @@ import org.fcrepo.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableSet;
+import org.springframework.stereotype.Component;
 
 /**
- * @todo Add Documentation.
+ * Service for managing access to Fedora 'nodes' (either datastreams or objects, we don't care.)
  * @author Chris Beer
  * @date May 9, 2013
  */
+@Component
 public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
     private static final Logger logger = getLogger(NodeService.class);

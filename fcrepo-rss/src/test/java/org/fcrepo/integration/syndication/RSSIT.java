@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration({"/spring-test/repo.xml", "/spring-test/test-container.xml"})
+@ContextConfiguration({"/spring-test/repo.xml", "/spring-test/eventing.xml",  "/spring-test/test-container.xml"})
 public class RSSIT extends AbstractResourceIT {
 
     final private Logger logger = LoggerFactory.getLogger(RSSIT.class);

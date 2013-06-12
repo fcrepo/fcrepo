@@ -10,7 +10,7 @@
 
     <context:annotation-config />
     
-    <context:component-scan base-package="org.fcrepo.generator, org.fcrepo.api, org.fcrepo.exceptionhandlers"/>
+    <context:component-scan base-package="org.fcrepo.services, org.fcrepo.generator, org.fcrepo.api, org.fcrepo.exceptionhandlers"/>
     
     <bean class="org.fcrepo.session.SessionFactory" />
     

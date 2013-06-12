@@ -45,6 +45,7 @@ import org.fcrepo.utils.LowLevelCacheEntry;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -52,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author cbeer
  * @date Feb 11, 2013
  */
+@Component
 public class DatastreamService extends RepositoryService {
 
     @Autowired(required = false)

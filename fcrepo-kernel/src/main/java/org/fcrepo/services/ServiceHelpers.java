@@ -29,12 +29,14 @@ import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 import com.google.common.base.Function;
+import org.springframework.stereotype.Component;
 
 /**
  * @todo Add Documentation.
  * @author barmintor
  * @date Mar 23, 2013
  */
+@Component
 public abstract class ServiceHelpers {
 
     /**

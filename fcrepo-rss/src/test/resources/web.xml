@@ -9,7 +9,7 @@
     
     <context-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>classpath:spring-test/repo.xml, classpath:spring-test/rest.xml, classpath:spring-test/eventing.xml</param-value>
+        <param-value>classpath:spring-test/repo.xml, classpath:spring-test/eventing.xml</param-value>
     </context-param>
     
 

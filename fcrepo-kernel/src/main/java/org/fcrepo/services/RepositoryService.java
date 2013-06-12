@@ -44,12 +44,14 @@ import com.codahale.metrics.Timer;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.springframework.stereotype.Component;
 
 /**
- * @todo Add Documentation.
+ * Repository-global helper methods
  * @author Chris Beer
  * @date Mar 11, 2013
  */
+@Component
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger logger = getLogger(RepositoryService.class);

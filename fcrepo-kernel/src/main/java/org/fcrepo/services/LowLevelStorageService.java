@@ -45,12 +45,14 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
+import org.springframework.stereotype.Component;
 
 /**
- * @todo Add Documentation.
+ * Service for managing access to low-level binary blobs (which may include redundant copies, etc)
  * @author Chris Beer
  * @date Mar 11, 2013
  */
+@Component
 public class LowLevelStorageService {
 
     private static final Logger logger =
