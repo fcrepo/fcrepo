@@ -1,25 +1,25 @@
 package org.fcrepo.api.rdf;
 
-import com.google.common.collect.ImmutableBiMap;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Map;
+
+import javax.jcr.RepositoryException;
+import javax.ws.rs.core.UriInfo;
+
 import org.fcrepo.FedoraResource;
 import org.fcrepo.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 
-import javax.jcr.RepositoryException;
-import javax.ws.rs.core.UriInfo;
-
-import java.util.Map;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.google.common.collect.ImmutableBiMap;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 public class HttpTripleUtilTest {
 

@@ -1,7 +1,10 @@
 
 package org.fcrepo.api.repository;
 
+import static com.hp.hpl.jena.update.UpdateAction.parseExecute;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
@@ -24,14 +27,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.responses.HtmlTemplate;
+import org.fcrepo.session.InjectedSession;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.update.UpdateAction;
 
 /**
  * The purpose of this class is to allow clients to manipulate the JCR
@@ -44,8 +47,13 @@ import com.hp.hpl.jena.update.UpdateAction;
  * 
  */
 @Component
+@Scope("prototype")
 @Path("/fcr:namespaces")
 public class FedoraRepositoryNamespaces extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
+
     /**
      * Register multiple object namespaces.
      *
@@ -53,21 +61,17 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
-	@Timed
+    @Timed
     @Consumes({contentTypeSPARQLUpdate})
     public Response updateNamespaces(final InputStream requestBodyStream)
             throws RepositoryException, IOException {
 
-        final Session session = getAuthenticatedSession();
         try {
-
-            final Dataset dataset = nodeService.getNamespaceRegistryGraph(session);
-
-            UpdateAction.parseExecute(IOUtils.toString(requestBodyStream), dataset);
-
+            final Dataset dataset =
+                    nodeService.getNamespaceRegistryGraph(session);
+            parseExecute(IOUtils.toString(requestBodyStream), dataset);
             session.save();
-
-            return Response.status(HttpStatus.SC_NO_CONTENT).build();
+            return status(SC_NO_CONTENT).build();
         } finally {
             session.logout();
         }
@@ -79,22 +83,22 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
      * @throws IOException
      */
     @GET
-	@Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON,
-                      NTRIPLES, TEXT_HTML})
+    @Timed
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
+            TEXT_HTML})
     @HtmlTemplate("jcr:namespaces")
-    public Dataset getNamespaces() throws RepositoryException,
-            IOException {
+    public Dataset getNamespaces() throws RepositoryException, IOException {
 
-        final Session session = getAuthenticatedSession();
         try {
-
-            final Dataset dataset = nodeService.getNamespaceRegistryGraph(session);
-
+            final Dataset dataset =
+                    nodeService.getNamespaceRegistryGraph(session);
             return dataset;
         } finally {
             session.logout();
         }
     }
 
+    public void setSession(final Session session) {
+        this.session = session;
+    }
 }

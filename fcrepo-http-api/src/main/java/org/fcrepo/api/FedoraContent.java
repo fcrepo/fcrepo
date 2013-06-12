@@ -34,14 +34,20 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.session.InjectedSession;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:content")
 public class FedoraContent extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     private final Logger logger = getLogger(FedoraContent.class);
 
@@ -53,12 +59,11 @@ public class FedoraContent extends AbstractResource {
      */
     @POST
     @Timed
-    public Response create(
-            @PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("checksumType") final String checksumType,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            final InputStream requestBodyStream)
+    public Response create(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("checksumType")
+    final String checksumType, @QueryParam("checksum")
+    final String checksum, @HeaderParam("Content-Type")
+    final MediaType requestContentType, final InputStream requestBodyStream)
             throws IOException, InvalidChecksumException, RepositoryException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
@@ -72,22 +77,22 @@ public class FedoraContent extends AbstractResource {
         }
 
         logger.debug("create Datastream {}", path);
-        final Session session = getAuthenticatedSession();
         try {
             datastreamService.createDatastreamNode(session, path, contentType
                     .toString(), requestBodyStream, checksumType, checksum);
         } finally {
             session.save();
-			session.logout();
+            session.logout();
         }
-        return created(uriInfo.getBaseUriBuilder().path(FedoraContent.class).build(path.substring(1))).build();
+        return created(
+                uriInfo.getBaseUriBuilder().path(FedoraContent.class).build(
+                        path.substring(1))).build();
     }
-
 
     /**
      * Modify an existing datastream's content
      *
-	 * @param pathList
+     * @param pathList
      * @param requestContentType
      *            Content-Type header
      * @param requestBodyStream
@@ -99,27 +104,30 @@ public class FedoraContent extends AbstractResource {
      */
     @PUT
     @Timed
-    public Response modifyContent(
-            @PathParam("path") List<PathSegment> pathList,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            final InputStream requestBodyStream, @Context final Request request)
-            throws RepositoryException, IOException, InvalidChecksumException {
-        final Session session = getAuthenticatedSession();
+    public Response modifyContent(@PathParam("path")
+    final List<PathSegment> pathList, @HeaderParam("Content-Type")
+    final MediaType requestContentType, final InputStream requestBodyStream,
+            @Context
+            final Request request) throws RepositoryException, IOException,
+            InvalidChecksumException {
         try {
-            String path = toPath(pathList);
+            final String path = toPath(pathList);
             final MediaType contentType =
                     requestContentType != null ? requestContentType
                             : APPLICATION_OCTET_STREAM_TYPE;
 
-            if (nodeService.exists(session, path))  {
+            if (nodeService.exists(session, path)) {
 
-                final Datastream ds = datastreamService.getDatastream(session, path);
+                final Datastream ds =
+                        datastreamService.getDatastream(session, path);
 
-                final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
+                final EntityTag etag =
+                        new EntityTag(ds.getContentDigest().toString());
                 final Date date = ds.getLastModifiedDate();
                 final Date roundedDate = new Date();
                 roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-                ResponseBuilder builder = request.evaluatePreconditions(roundedDate, etag);
+                final ResponseBuilder builder =
+                        request.evaluatePreconditions(roundedDate, etag);
 
                 if (builder != null) {
                     throw new WebApplicationException(builder.build());
@@ -127,13 +135,16 @@ public class FedoraContent extends AbstractResource {
             }
 
             logger.debug("create Datastream {}", path);
-            final Node datastreamNode = datastreamService.createDatastreamNode(session, path, contentType
-                                                                                                      .toString(), requestBodyStream);
+            final Node datastreamNode =
+                    datastreamService.createDatastreamNode(session, path,
+                            contentType.toString(), requestBodyStream);
             final boolean isNew = datastreamNode.isNew();
             session.save();
 
             if (isNew) {
-                return created(uriInfo.getBaseUriBuilder().path(FedoraContent.class).build(path.substring(1))).build();
+                return created(
+                        uriInfo.getBaseUriBuilder().path(FedoraContent.class)
+                                .build(path.substring(1))).build();
             } else {
                 return noContent().build();
             }
@@ -146,41 +157,46 @@ public class FedoraContent extends AbstractResource {
     /**
      * Get the binary content of a datastream
      *
-	 * @param pathList
+     * @param pathList
      * @return Binary blob
      * @throws RepositoryException
      */
     @GET
     @Timed
-    public Response getContent(
-            @PathParam("path") List<PathSegment> pathList,
-            @Context final Request request
-            ) throws RepositoryException {
+    public Response getContent(@PathParam("path")
+    final List<PathSegment> pathList, @Context
+    final Request request) throws RepositoryException {
 
-		final Session session = getAuthenticatedSession();
-		try {
-			String path = toPath(pathList);
-			final Datastream ds = datastreamService.getDatastream(session, path);
+        try {
+            final String path = toPath(pathList);
+            final Datastream ds =
+                    datastreamService.getDatastream(session, path);
 
-			final EntityTag etag = new EntityTag(ds.getContentDigest().toString());
-			final Date date = ds.getLastModifiedDate();
-			final Date roundedDate = new Date();
-			roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-			ResponseBuilder builder =
-					request.evaluatePreconditions(roundedDate, etag);
+            final EntityTag etag =
+                    new EntityTag(ds.getContentDigest().toString());
+            final Date date = ds.getLastModifiedDate();
+            final Date roundedDate = new Date();
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+            ResponseBuilder builder =
+                    request.evaluatePreconditions(roundedDate, etag);
 
-			final CacheControl cc = new CacheControl();
-			cc.setMaxAge(0);
-			cc.setMustRevalidate(true);
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
 
-			if (builder == null) {
-				builder = Response.ok(ds.getContent(), ds.getMimeType());
-			}
+            if (builder == null) {
+                builder = Response.ok(ds.getContent(), ds.getMimeType());
+            }
 
-			return builder.cacheControl(cc).lastModified(date).tag(etag).build();
-		} finally {
-			session.logout();
-		}
-	}
+            return builder.cacheControl(cc).lastModified(date).tag(etag)
+                    .build();
+        } finally {
+            session.logout();
+        }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
+    }
 
 }

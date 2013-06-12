@@ -3,10 +3,6 @@ package org.fcrepo.integration.api;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,6 +10,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraFixityIT extends AbstractResourceIT {
 

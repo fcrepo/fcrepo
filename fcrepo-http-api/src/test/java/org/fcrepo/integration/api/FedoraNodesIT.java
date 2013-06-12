@@ -16,7 +16,6 @@ import java.util.Iterator;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.Response;
 
-import com.hp.hpl.jena.sparql.core.Quad;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -32,6 +31,7 @@ import org.junit.Test;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraNodesIT extends AbstractResourceIT {

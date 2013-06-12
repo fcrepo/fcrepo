@@ -68,6 +68,7 @@ public class FedoraNodesTest {
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setObjectService(mockObjects);
         testObj.setNodeService(mockNodes);
+        testObj.setSession(mockSession);
         testObj.setDatastreamService(mockDatastreams);
         uriInfo = TestHelpers.getUriInfoImpl();
         testObj.setUriInfo(uriInfo);
@@ -88,18 +89,22 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testModify() throws RepositoryException, IOException, InvalidChecksumException {
+    public void testModify() throws RepositoryException, IOException,
+            InvalidChecksumException {
         final String pid = "testObject";
 
         final FedoraResource mockResource = mock(FedoraResource.class);
         when(mockResource.isNew()).thenReturn(false);
         when(mockResource.getLastModifiedDate()).thenReturn(new Date());
-        when(mockNodes.findOrCreateObject(mockSession, "/testObject")).thenReturn(mockResource);
+        when(mockNodes.findOrCreateObject(mockSession, "/testObject"))
+                .thenReturn(mockResource);
         final Request mockRequest = mock(Request.class);
-        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(null);
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
+                null);
         final Response actual =
                 testObj.modifyObject(createPathList(pid), TestHelpers
-                        .getUriInfoImpl(), new ByteArrayInputStream("".getBytes()), null, mockRequest);
+                        .getUriInfoImpl(), new ByteArrayInputStream(""
+                        .getBytes()), null, mockRequest);
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
         // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
@@ -172,7 +177,8 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
-        when(mockObject.getPropertiesDataset(any(GraphSubjects.class))).thenReturn(mockDataset);
+        when(mockObject.getPropertiesDataset(any(GraphSubjects.class)))
+                .thenReturn(mockDataset);
         when(
                 mockNodes.getObject(Mockito.isA(Session.class), Mockito
                         .isA(String.class))).thenReturn(mockObject);
@@ -199,7 +205,7 @@ public class FedoraNodesTest {
                 mockStream);
 
         verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
-                                                          eq("my-sparql-statement"));
+                eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
     }

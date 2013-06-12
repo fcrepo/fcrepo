@@ -8,8 +8,8 @@ public class ServletException extends Exception {
         super(mesg);
     }
 
-    public ServletException(final Exception mesg) {
-        super(mesg);
+    public ServletException(final Throwable e) {
+        super(e);
     }
 
 }

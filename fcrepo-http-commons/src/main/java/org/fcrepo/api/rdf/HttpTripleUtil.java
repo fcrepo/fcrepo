@@ -1,7 +1,12 @@
 package org.fcrepo.api.rdf;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Map;
+
+import javax.jcr.RepositoryException;
+import javax.ws.rs.core.UriInfo;
+
 import org.fcrepo.FedoraResource;
 import org.fcrepo.rdf.GraphSubjects;
 import org.slf4j.Logger;
@@ -10,11 +15,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import javax.jcr.RepositoryException;
-import javax.ws.rs.core.UriInfo;
-import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * Utility for injecting HTTP-contextual data into a Dataset

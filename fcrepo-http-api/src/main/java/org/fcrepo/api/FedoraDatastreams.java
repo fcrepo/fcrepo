@@ -38,8 +38,10 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.ContentDigest;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -49,8 +51,12 @@ import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
 
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:datastreams")
 public class FedoraDatastreams extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     private final Logger logger = getLogger(FedoraDatastreams.class);
 
@@ -74,7 +80,6 @@ public class FedoraDatastreams extends AbstractResource {
     final List<String> dsidList, final MultiPart multipart)
             throws RepositoryException, IOException, InvalidChecksumException {
 
-        final Session session = getAuthenticatedSession();
         final String path = toPath(pathList);
         try {
             for (final String dsid : dsidList) {
@@ -102,7 +107,9 @@ public class FedoraDatastreams extends AbstractResource {
             }
 
             session.save();
-            return created(uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class).build(path.substring(1))).build();
+            return created(
+                    uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
+                            .build(path.substring(1))).build();
         } finally {
             session.logout();
         }
@@ -121,7 +128,6 @@ public class FedoraDatastreams extends AbstractResource {
     public Response deleteDatastreams(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("dsid")
     final List<String> dsidList) throws RepositoryException {
-        final Session session = getAuthenticatedSession();
         try {
             final String path = toPath(pathList);
             for (final String dsid : dsidList) {
@@ -155,8 +161,6 @@ public class FedoraDatastreams extends AbstractResource {
     final List<String> requestedDsids, @Context
     final Request request) throws RepositoryException, IOException,
             NoSuchAlgorithmException {
-
-        final Session session = getAuthenticatedSession();
 
         final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();
 
@@ -218,11 +222,14 @@ public class FedoraDatastreams extends AbstractResource {
                 final MultiPart multipart = new MultiPart();
 
                 for (final Datastream ds : datastreams) {
-                    final BodyPart bodyPart = new BodyPart(ds.getContent(), MediaType.valueOf(ds.getMimeType()));
-                    bodyPart.setContentDisposition(ContentDisposition.type("attachment").fileName(ds.getPath())
-                                                          .creationDate(ds.getCreatedDate())
-                                                          .modificationDate(ds.getLastModifiedDate())
-                                                          .size(ds.getContentSize()).build());
+                    final BodyPart bodyPart =
+                            new BodyPart(ds.getContent(), MediaType.valueOf(ds
+                                    .getMimeType()));
+                    bodyPart.setContentDisposition(ContentDisposition.type(
+                            "attachment").fileName(ds.getPath()).creationDate(
+                            ds.getCreatedDate()).modificationDate(
+                            ds.getLastModifiedDate()).size(ds.getContentSize())
+                            .build());
                     multipart.bodyPart(bodyPart);
                 }
 
@@ -235,5 +242,9 @@ public class FedoraDatastreams extends AbstractResource {
         } finally {
             session.logout();
         }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 }

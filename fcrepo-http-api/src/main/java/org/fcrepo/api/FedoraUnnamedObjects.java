@@ -1,6 +1,8 @@
+
 package org.fcrepo.api;
 
 import static javax.ws.rs.core.Response.created;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -21,19 +23,26 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.http.HttpStatus;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-
-
+/**
+ * @author ajs6f
+ * @author cbeer
+ */
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:new")
 public class FedoraUnnamedObjects extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     private static final Logger logger = getLogger(FedoraUnnamedObjects.class);
 
@@ -43,15 +52,19 @@ public class FedoraUnnamedObjects extends AbstractResource {
      * @return 201
      */
     @POST
-    public Response ingestAndMint(@PathParam("path") final List<PathSegment> pathList,
-    @QueryParam("mixin") @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT) String mixin,
-    @QueryParam("checksumType") final String checksumType,
-    @QueryParam("checksum") final String checksum,
-    @HeaderParam("Content-Type") final MediaType requestContentType,
-    final InputStream requestBodyStream, @Context UriInfo uriInfo) throws RepositoryException, IOException, InvalidChecksumException {
+    public Response ingestAndMint(@PathParam("path")
+    final List<PathSegment> pathList, @QueryParam("mixin")
+    @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
+    final String mixin, @QueryParam("checksumType")
+    final String checksumType, @QueryParam("checksum")
+    final String checksum, @HeaderParam("Content-Type")
+    final MediaType requestContentType, final InputStream requestBodyStream,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException, IOException,
+            InvalidChecksumException {
         final String pid = pidMinter.mintPid();
 
-        String path = toPath(pathList) + "/" + pid;
+        final String path = toPath(pathList) + "/" + pid;
 
         logger.debug("Attempting to ingest with path: {}", path);
 
@@ -59,18 +72,30 @@ public class FedoraUnnamedObjects extends AbstractResource {
 
         try {
             if (nodeService.exists(session, path)) {
-                return Response.status(HttpStatus.SC_CONFLICT).entity(path + " is an existing resource").build();
+                return Response.status(SC_CONFLICT).entity(
+                        path + " is an existing resource").build();
             }
 
-            final FedoraResource resource = createObjectOrDatastreamFromRequestContent(FedoraNodes.class, session, path, mixin, uriInfo, requestBodyStream, requestContentType, checksumType, checksum);
+            final FedoraResource resource =
+                    createObjectOrDatastreamFromRequestContent(
+                            FedoraNodes.class, session, path, mixin, uriInfo,
+                            requestBodyStream, requestContentType,
+                            checksumType, checksum);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
-            return created(uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(resource.getPath().substring(1))).entity(path).build();
+            return created(
+                    uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(
+                            resource.getPath().substring(1))).entity(path)
+                    .build();
 
         } finally {
             session.logout();
         }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 
 }

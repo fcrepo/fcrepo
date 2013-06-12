@@ -21,7 +21,6 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
-import com.hp.hpl.jena.query.DatasetFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
@@ -29,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class FedoraFieldSearchTest {
@@ -36,7 +36,9 @@ public class FedoraFieldSearchTest {
     FedoraFieldSearch testObj;
 
     Session mockSession;
+
     private NodeService mockNodeService;
+
     private UriInfo uriInfo;
 
     @Before
@@ -47,6 +49,7 @@ public class FedoraFieldSearchTest {
         testObj.setUriInfo(uriInfo);
         mockNodeService = mock(NodeService.class);
         testObj.setNodeService(mockNodeService);
+        testObj.setSession(mockSession);
     }
 
     @After
@@ -55,26 +58,42 @@ public class FedoraFieldSearchTest {
     }
 
     @Test
-    public void testFieldSearch() throws RepositoryException, URISyntaxException {
+    public void testFieldSearch() throws RepositoryException,
+            URISyntaxException {
 
         final Request mockRequest = mock(Request.class);
 
-        when(uriInfo.getRequestUri()).thenReturn(new URI("http://localhost/fcrepo/path/to/query/endpoint"));
+        when(uriInfo.getRequestUri()).thenReturn(
+                new URI("http://localhost/fcrepo/path/to/query/endpoint"));
         when(mockRequest.selectVariant(any(List.class))).thenReturn(
-                                                                           new Variant(MediaType.valueOf("application/n-triples"), null,
-                                                                                              null));
+                new Variant(MediaType.valueOf("application/n-triples"), null,
+                        null));
 
-        when(mockNodeService.searchRepository(any(GraphSubjects.class), eq(ResourceFactory.createResource("http://localhost/fcrepo/path/to/query/endpoint")), eq(mockSession), eq("ZZZ"), eq(0), eq(0L))).thenReturn(DatasetFactory.create());
+        when(
+                mockNodeService
+                        .searchRepository(
+                                any(GraphSubjects.class),
+                                eq(ResourceFactory
+                                        .createResource("http://localhost/fcrepo/path/to/query/endpoint")),
+                                eq(mockSession), eq("ZZZ"), eq(0), eq(0L)))
+                .thenReturn(DatasetFactory.create());
         final UriBuilder mockUriBuilder = mock(UriBuilder.class);
 
-        when(mockUriBuilder.path(FedoraFieldSearch.class)).thenReturn(mockUriBuilder);
-        when(mockUriBuilder.buildFromMap(any(Map.class))).thenReturn(new URI("path/to/object"));
+        when(mockUriBuilder.path(FedoraFieldSearch.class)).thenReturn(
+                mockUriBuilder);
+        when(mockUriBuilder.buildFromMap(any(Map.class))).thenReturn(
+                new URI("path/to/object"));
 
-                    when(uriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder);
 
         testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, uriInfo);
 
-        verify(mockNodeService).searchRepository(any(GraphSubjects.class), eq(ResourceFactory.createResource("http://localhost/fcrepo/path/to/query/endpoint")), eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
+        verify(mockNodeService)
+                .searchRepository(
+                        any(GraphSubjects.class),
+                        eq(ResourceFactory
+                                .createResource("http://localhost/fcrepo/path/to/query/endpoint")),
+                        eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
     }
 
 }

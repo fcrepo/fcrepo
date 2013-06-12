@@ -1,7 +1,13 @@
 
 package org.fcrepo.api;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.RdfLexicon.SEARCH_HAS_MORE;
+import static org.fcrepo.RdfLexicon.SEARCH_NEXT_PAGE;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
@@ -23,33 +29,36 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.AbstractResource;
-import org.fcrepo.RdfLexicon;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.HtmlTemplate;
+import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
  * @author Frank Asseg
+ * @author ajs6f
  */
 
 @Component
+@Scope("prototype")
 @Path("/fcr:search")
 public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
+
+    @InjectedSession
+    protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraFieldSearch.class);
 
@@ -58,13 +67,13 @@ public class FedoraFieldSearch extends AbstractResource implements
     @HtmlTemplate("search:results")
     @Produces({TEXT_HTML})
     public Dataset searchSubmitHtml(@QueryParam("q")
-                                        final String terms, @QueryParam("offset")
-                                        @DefaultValue("0")
-                                        final long offset, @QueryParam("limit")
-                                        @DefaultValue("25")
-                                        final int limit, @Context
-                                        final Request request, @Context
-                                        final UriInfo uriInfo) throws RepositoryException {
+    final String terms, @QueryParam("offset")
+    @DefaultValue("0")
+    final long offset, @QueryParam("limit")
+    @DefaultValue("25")
+    final int limit, @Context
+    final Request request, @Context
+    final UriInfo uriInfo) throws RepositoryException {
 
         return getSearchDataset(terms, offset, limit, uriInfo);
     }
@@ -81,35 +90,43 @@ public class FedoraFieldSearch extends AbstractResource implements
     final Request request, @Context
     final UriInfo uriInfo) throws RepositoryException {
 
-
         if (terms == null) {
             LOGGER.trace("Received search request, but terms was empty. Aborting.");
-            throw new WebApplicationException(Response.status(
-                    Response.Status.BAD_REQUEST).entity(
+            throw new WebApplicationException(status(BAD_REQUEST).entity(
                     "q parameter is mandatory").build());
         }
 
         return getSearchDataset(terms, offset, limit, uriInfo);
     }
 
-    private Dataset getSearchDataset(final String terms, final long offset, final int limit, final UriInfo uriInfo) throws RepositoryException {
-        final Session session = getAuthenticatedSession();
+    private Dataset getSearchDataset(final String terms, final long offset,
+            final int limit, final UriInfo uriInfo) throws RepositoryException {
+
         try {
-            LOGGER.debug("Received search request with search terms {}, offset {}, and limit {}", terms, offset, limit);
+            LOGGER.debug(
+                    "Received search request with search terms {}, offset {}, and limit {}",
+                    terms, offset, limit);
 
             final Resource searchResult =
-                    ResourceFactory.createResource(uriInfo.getRequestUri()
-                                                           .toASCIIString());
+                    createResource(uriInfo.getRequestUri().toASCIIString());
 
             final Dataset dataset =
                     nodeService.searchRepository(new HttpGraphSubjects(
                             FedoraNodes.class, uriInfo), searchResult, session,
                             terms, limit, offset);
 
-            final Model searchModel = ModelFactory.createDefaultModel();
-            if (terms != null && dataset.getDefaultModel().contains(searchResult, RdfLexicon.SEARCH_HAS_MORE, searchModel.createTypedLiteral(true))) {
-                Map<String, ?> pathMap = ImmutableBiMap.of("q", terms, "offset", offset + limit, "limit", limit);
-                searchModel.add(searchResult, RdfLexicon.SEARCH_NEXT_PAGE, searchModel.createResource(uriInfo.getBaseUriBuilder().path(FedoraFieldSearch.class).buildFromMap(pathMap).toString()));
+            final Model searchModel = createDefaultModel();
+            if (terms != null &&
+                    dataset.getDefaultModel().contains(searchResult,
+                            SEARCH_HAS_MORE,
+                            searchModel.createTypedLiteral(true))) {
+                final Map<String, ?> pathMap =
+                        ImmutableBiMap.of("q", terms, "offset", offset + limit,
+                                "limit", limit);
+                searchModel.add(searchResult, SEARCH_NEXT_PAGE, searchModel
+                        .createResource(uriInfo.getBaseUriBuilder().path(
+                                FedoraFieldSearch.class).buildFromMap(pathMap)
+                                .toString()));
                 dataset.addNamedModel("search-pagination", searchModel);
             }
 
@@ -118,6 +135,10 @@ public class FedoraFieldSearch extends AbstractResource implements
         } finally {
             session.logout();
         }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 
 }

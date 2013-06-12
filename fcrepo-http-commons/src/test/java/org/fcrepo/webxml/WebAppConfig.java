@@ -19,7 +19,6 @@ import org.fcrepo.webxml.bind.ServletMapping;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 
 @XmlRootElement(namespace="http://java.sun.com/xml/ns/javaee", name="web-app")
 public class WebAppConfig extends Displayable {

@@ -1,3 +1,4 @@
+
 package org.fcrepo.api;
 
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -22,36 +23,52 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.session.InjectedSession;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * @author ajs6f
+ * @date Jun 12, 2013
+ */
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:fixity")
 public class FedoraFixity extends AbstractResource {
 
-	@GET
-	@Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES, TEXT_HTML})
-	public Dataset getDatastreamFixity(@PathParam("path") List<PathSegment> pathList,
-                                       @Context final Request request,
-                                       @Context final UriInfo uriInfo) throws RepositoryException {
+    @InjectedSession
+    protected Session session;
 
-		final Session session = getAuthenticatedSession();
+    @GET
+    @Timed
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
+            TEXT_HTML})
+    public Dataset getDatastreamFixity(@PathParam("path")
+    final List<PathSegment> pathList, @Context
+    final Request request, @Context
+    final UriInfo uriInfo) throws RepositoryException {
 
-		try {
-			final String path = toPath(pathList);
+        try {
+            final String path = toPath(pathList);
 
-			final Datastream ds = datastreamService.getDatastream(session, path);
+            final Datastream ds =
+                    datastreamService.getDatastream(session, path);
 
-            return datastreamService.getFixityResultsModel(new HttpGraphSubjects(FedoraNodes.class, uriInfo), ds);
-		} finally {
-			session.logout();
-		}
-	}
+            return datastreamService.getFixityResultsModel(
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo), ds);
+        } finally {
+            session.logout();
+        }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
+    }
 
 }

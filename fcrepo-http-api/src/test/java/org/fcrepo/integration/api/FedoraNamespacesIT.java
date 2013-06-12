@@ -5,19 +5,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.update.GraphStore;
+import java.io.ByteArrayInputStream;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.JcrRdfTools;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraNamespacesIT extends AbstractResourceIT {
 
