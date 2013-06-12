@@ -66,6 +66,7 @@ public class FedoraUnnamedObjectsTest {
                 testObj.ingestAndMint(createPathList("objects"),
                                              FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null, TestHelpers.getUriInfoImpl());
         assertNotNull(actual);
+        assertEquals("http://localhost/fcrepo/objects/uuid-123", actual.getMetadata().getFirst("Location").toString());
         assertEquals(Response.Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));
         verify(mockObjects).createObject(mockSession, "/objects/uuid-123");

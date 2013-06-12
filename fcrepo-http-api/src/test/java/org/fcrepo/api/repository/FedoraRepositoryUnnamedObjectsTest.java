@@ -13,6 +13,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.NodeService;
@@ -40,6 +41,8 @@ public class FedoraRepositoryUnnamedObjectsTest {
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setNodeService(mockNodeService);
         testObj.setObjectService(mockObjects);
+
+        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
     }
 
     @After
@@ -54,9 +57,14 @@ public class FedoraRepositoryUnnamedObjectsTest {
         testObj.setPidMinter(mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");
 
+        final FedoraObject mockObject = mock(FedoraObject.class);
+        when(mockObject.getPath()).thenReturn("/uuid-123");
+        when(mockObjects.createObject(mockSession, "/uuid-123")).thenReturn(mockObject);
+
         final Response actual =
                 testObj.ingestAndMint(FedoraJcrTypes.FEDORA_OBJECT, null, null, null, null, TestHelpers.getUriInfoImpl());
         assertNotNull(actual);
+        assertEquals("http://localhost/fcrepo/uuid-123", actual.getMetadata().getFirst("Location").toString());
         assertEquals(Response.Status.CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));
         verify(mockObjects).createObject(mockSession, "/uuid-123");
