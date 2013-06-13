@@ -119,7 +119,9 @@ public abstract class ServiceHelpers {
      * @return
      */
     public static DistributedExecutorService getClusterExecutor(InfinispanBinaryStore cacheStore) {
-    	return new DefaultExecutorService(cacheStore.getCaches().get(0));
+        // Watch out! This is trying to pluck out the blob cache store. This works as long as
+        // modeshape continues to be ordered..
+    	return new DefaultExecutorService(cacheStore.getCaches().get(1));
     }
 
     /**

@@ -11,7 +11,7 @@
         "cacheConfiguration" : "config/infinispan/basic/infinispan.xml",
         "binaryStorage" : {
             "type" : "cache",
-            "dataCacheName" : "FedoraRepository",
+            "dataCacheName" : "FedoraRepositoryBinaryData",
             "metadataCacheName" : "FedoraRepository"
         }
     },

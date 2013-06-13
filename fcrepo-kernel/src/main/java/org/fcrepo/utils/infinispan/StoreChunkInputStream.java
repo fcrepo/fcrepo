@@ -164,12 +164,13 @@ public class StoreChunkInputStream extends InputStream {
 
     protected byte[] nextChunk() throws IOException {
         final String chunkKey = key + "-" + chunkNumber++;
-        logger.debug("Read chunk {0}", chunkKey);
+        logger.debug("Read chunk {0} from cache {1}", chunkKey, blobCache);
 
         try {
             final CacheEntry cacheEntry = blobCache.load(chunkKey);
 
             if (cacheEntry == null) {
+                logger.trace("Unable to read chunk {0}", chunkKey);
                 return null;
             }
 
