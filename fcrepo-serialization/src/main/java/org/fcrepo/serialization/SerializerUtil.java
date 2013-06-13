@@ -41,7 +41,9 @@ public class SerializerUtil implements ApplicationContextAware {
         final Map<String, FedoraObjectSerializer> m = new HashMap<>();
 
         for(Map.Entry<String, FedoraObjectSerializer> e : beans.entrySet()) {
-            m.put(e.getValue().getKey(), e.getValue());
+            final FedoraObjectSerializer serializer = e.getValue();
+            LOGGER.info("Registering serializer {} for format {}", serializer, serializer.getKey());
+            m.put(serializer.getKey(), serializer);
         }
 
         serializerMap = m;
