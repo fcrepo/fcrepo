@@ -24,14 +24,14 @@ public class InjectableSessionTest {
 
     @Before
     public void setUp() throws RepositoryException {
+        final HttpServletRequest mockHttpServletRequest =
+                mock(HttpServletRequest.class);
         mockSession = mock(Session.class);
         mockRepo = mock(Repository.class);
         final SessionFactory mockSessionFactory = mock(SessionFactory.class);
         mockSessionFactory.setRepository(mockRepo);
-        when(mockSessionFactory.getSession()).thenReturn(mockSession);
+        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
         final SecurityContext mockSecurityContext = mock(SecurityContext.class);
-        final HttpServletRequest mockHttpServletRequest =
-                mock(HttpServletRequest.class);
         when(
                 mockSessionFactory.getSession(mockSecurityContext,
                         mockHttpServletRequest)).thenReturn(mockSession);
