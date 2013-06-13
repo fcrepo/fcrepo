@@ -114,15 +114,27 @@ public abstract class AbstractResource {
      */
     public static final String toPath(final List<PathSegment> paths) {
         final StringBuffer result = new StringBuffer();
+        LOGGER.trace("converting URI path to JCR path: {}", paths);
+
+        int i = 0;
 
         for (final PathSegment path : paths) {
             final String p = path.getPath();
 
-            if (!p.equals("")) {
+            if (p.equals("")) {
+                LOGGER.trace("Ignoring empty segment {}", p);
+            } else if (i == 0 && (p.startsWith("tx:") || p.startsWith("workspace:"))) {
+                LOGGER.trace("Ignoring internal segment {}", p);
+                i++;
+            } else {
+
+                LOGGER.trace("Adding segment {}", p);
+
                 if (!p.startsWith("[")) {
                     result.append('/');
                 }
                 result.append(p);
+                i++;
             }
         }
 

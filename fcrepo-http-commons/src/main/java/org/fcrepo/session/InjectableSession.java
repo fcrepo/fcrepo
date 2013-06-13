@@ -46,7 +46,7 @@ public class InjectableSession implements Injectable<Session> {
         } else {
             logger.debug("Returning unauthenticated Session.");
             try {
-                return sessionFactory.getSession();
+                return sessionFactory.getSession(request);
             } catch (final RepositoryException e) {
                 propagate(e);
             }

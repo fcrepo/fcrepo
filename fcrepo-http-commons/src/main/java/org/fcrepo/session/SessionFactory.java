@@ -4,12 +4,15 @@ package org.fcrepo.session;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
+import org.fcrepo.Transaction;
+import org.fcrepo.services.TransactionService;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,9 @@ public class SessionFactory {
 
     @Autowired
     private Repository repo;
+
+    @Autowired
+    private TransactionService transactionService;
 
     public SessionFactory() {
 
@@ -47,6 +53,28 @@ public class SessionFactory {
         return repo.login(workspace);
     }
 
+    public Session getSession(final HttpServletRequest servletRequest)
+            throws RepositoryException {
+
+        final String workspace = getEmbeddedWorkspace(servletRequest);
+        final Transaction transaction = getEmbeddedTransaction(servletRequest);
+
+        final Session session;
+
+        if (transaction != null) {
+            logger.debug("Returning a session in the transaction {}", transaction);
+            session = transaction.getSession();
+        } else if (workspace != null) {
+            logger.debug("Returning a session in the workspace {}", workspace);
+            session = repo.login(workspace);
+        } else {
+            logger.debug("Returning a session in the default workspace");
+            session = repo.login();
+        }
+
+        return session;
+    }
+
     private static ServletCredentials getCredentials(
             final SecurityContext securityContext,
             final HttpServletRequest servletRequest) {
@@ -66,7 +94,31 @@ public class SessionFactory {
         try {
             final ServletCredentials creds =
                     getCredentials(securityContext, servletRequest);
-            return (creds != null) ? repo.login(creds) : repo.login();
+
+            final Transaction transaction = getEmbeddedTransaction(servletRequest);
+
+            final Session session;
+
+            if (transaction != null && creds != null) {
+                logger.debug("Returning a session in the transaction {} impersonating {}", transaction, creds);
+                session = transaction.getSession().impersonate(creds);
+            } else if (creds != null) {
+
+                final String workspace = getEmbeddedWorkspace(servletRequest);
+
+                if (workspace != null) {
+                    logger.debug("Returning an authenticated session in the workspace {}", workspace);
+                    session = repo.login(creds, workspace);
+                } else {
+                    logger.debug("Returning an authenticated session in the default workspace");
+                    session = repo.login(creds);
+                }
+            } else {
+                logger.debug("Falling back on a unauthenticated session");
+                session = getSession(servletRequest);
+            }
+
+            return session;
         } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }
@@ -79,5 +131,32 @@ public class SessionFactory {
         final ServletCredentials creds =
                 getCredentials(securityContext, servletRequest);
         return new AuthenticatedSessionProviderImpl(repo, creds);
+    }
+
+    private String getEmbeddedWorkspace(final HttpServletRequest servletRequest) {
+        final String requestPath = servletRequest.getPathInfo();
+        final String[] part = requestPath.split("/");
+
+        if (part.length > 1 && part[1].startsWith("workspace:")) {
+            return part[1].substring("workspace:".length());
+        } else {
+            return null;
+        }
+    }
+
+    private Transaction getEmbeddedTransaction(final HttpServletRequest servletRequest) throws PathNotFoundException {
+        final String requestPath = servletRequest.getPathInfo();
+        final String[] part = requestPath.split("/");
+
+        if (part.length > 1 && part[1].startsWith("tx:")) {
+            String txid = part[1].substring("tx:".length());
+            return transactionService.getTransaction(txid);
+        } else {
+            return null;
+        }
+    }
+
+    public void setTransactionService(final TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 }
