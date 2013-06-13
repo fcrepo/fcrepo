@@ -28,6 +28,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 		final HttpGet getObjMethod =
 				new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1" + "/fcr:export");
 		HttpResponse response = client.execute(getObjMethod);
+        assertEquals("application/xml", response.getEntity().getContentType().getValue());
 		assertEquals(200, response.getStatusLine().getStatusCode());
 		logger.debug("Successfully exported: " + objName);
 		final String content = EntityUtils.toString(response.getEntity());

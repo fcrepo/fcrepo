@@ -17,6 +17,8 @@ public interface FedoraObjectSerializer {
 
     String getKey();
 
+    String getMediaType();
+
     void serialize(final FedoraObject obj, final OutputStream out)
             throws RepositoryException, IOException;
 

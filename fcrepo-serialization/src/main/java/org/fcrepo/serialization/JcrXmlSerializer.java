@@ -23,6 +23,11 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
     }
 
     @Override
+    public String getMediaType() {
+        return "application/xml";
+    }
+
+    @Override
     public void serialize(final FedoraObject obj, final OutputStream out)
             throws RepositoryException, IOException {
         final Node node = obj.getNode();

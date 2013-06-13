@@ -15,6 +15,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.AbstractResource;
@@ -40,7 +41,7 @@ public class FedoraExport extends AbstractResource {
     private final Logger logger = getLogger(this.getClass());
 
     @GET
-    public StreamingOutput exportObject(@PathParam("path")
+    public Response exportObject(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("format")
     @DefaultValue("jcr/xml")
     final String format) {
@@ -49,7 +50,11 @@ public class FedoraExport extends AbstractResource {
         logger.debug("Requested object serialization for: " + path +
                 " using serialization format " + format);
 
-        return new StreamingOutput() {
+
+        final FedoraObjectSerializer serializer =
+                serializers.getSerializer(format);
+
+        return Response.ok().type(serializer.getMediaType()).entity(new StreamingOutput() {
 
             @Override
             public void write(final OutputStream out) throws IOException {
@@ -57,8 +62,6 @@ public class FedoraExport extends AbstractResource {
                 try {
                     logger.debug("Selecting from serializer map: " +
                             serializers);
-                    final FedoraObjectSerializer serializer =
-                            serializers.getSerializer(format);
                     logger.debug("Retrieved serializer for format: " + format);
                     serializer.serialize(
                             objectService.getObject(session, path), out);
@@ -69,7 +72,7 @@ public class FedoraExport extends AbstractResource {
                     session.logout();
                 }
             }
-        };
+        }).build();
 
     }
 
