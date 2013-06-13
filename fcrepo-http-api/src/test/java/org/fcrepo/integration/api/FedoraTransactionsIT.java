@@ -194,4 +194,47 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertTrue(resp.getStatusLine().toString(), resp.getStatusLine()
                 .getStatusCode() == 404);
     }
+
+    @Test
+    public void testCreateDoStuffAndRollbackTransaction() throws Exception {
+        /* create a tx */
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        HttpResponse resp = execute(createTx);
+        assertTrue(resp.getStatusLine().getStatusCode() == 200);
+        final ObjectMapper mapper = new ObjectMapper();
+        final Transaction tx =
+                mapper.readValue(resp.getEntity().getContent(),
+                                        Transaction.class);
+        createTx.releaseConnection();
+        assertNotNull(tx);
+        assertNotNull(tx.getId());
+
+
+        /* create a new object inside the tx */
+        final HttpPost postNew =
+                new HttpPost(serverAddress + "tx:" + tx.getId() +
+                                     "/object-in-tx");
+        resp = execute(postNew);
+        assertEquals(201, resp.getStatusLine().getStatusCode());
+
+         /* fetch the created tx from the endpoint */
+        final HttpGet getTx =
+                new HttpGet(serverAddress + "tx:" + tx.getId() + "/object-in-tx");
+        resp = execute(getTx);
+        assertEquals("Expected to find our object within the scope of the transaction", 200, resp.getStatusLine().getStatusCode());
+
+         /* fetch the created tx from the endpoint */
+        final HttpGet getObj =
+                new HttpGet(serverAddress + "/object-in-tx");
+        resp = execute(getObj);
+        assertEquals("Expected to not find our object within the scope of the transaction", 404, resp.getStatusLine().getStatusCode());
+
+        /* and rollback */
+        final HttpPost rollbackTx =
+                new HttpPost(serverAddress + "fcr:tx/" + tx.getId() +
+                                     "/fcr:rollback");
+        resp = execute(rollbackTx);
+
+
+    }
 }
