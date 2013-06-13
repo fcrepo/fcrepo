@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -249,8 +250,6 @@ public class JcrRdfToolsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(nodeType);
         when(mockNode.getPrimaryNodeType().getName()).thenReturn("fedora:object");
         when(mockNode.getPath()).thenReturn("/test/jcr");
-        javax.jcr.NodeIterator mockNodes = mock(javax.jcr.NodeIterator.class);
-        when(mockNode.getNodes()).thenReturn(mockNodes);
         PowerMockito.mockStatic(NamespaceTools.class);
         NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
         String[] testPrefixes = new String[]{"jcr"};
@@ -268,9 +267,74 @@ public class JcrRdfToolsTest {
         when(mockProperties.nextProperty()).thenReturn(mockProperty);
 
         Model actual = JcrRdfTools.getJcrPropertiesModel(testSubjects, mockNode);
+        assertEquals(0, actual.size());
+    }
 
-        // we expect 2 statements, both auto-generated
-        assertEquals(2, actual.size());
+
+    @Test
+    public void shouldIncludeParentNodeInformation() throws RepositoryException {
+        Node mockParent = mock(Node.class);
+        when(mockParent.getPath()).thenReturn("/test");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+        when(mockNode.getParent()).thenReturn(mockParent);
+
+        NodeIterator mockIterator = mock(NodeIterator.class);
+        when(mockIterator.hasNext()).thenReturn(false);
+        when(mockNode.getNodes()).thenReturn(mockIterator);
+        Model actual = JcrRdfTools.getJcrTreeModel(testSubjects, mockNode, 0, -1);
+        assertEquals(1, actual.size());
+    }
+
+    @Test
+    public void shouldIncludeChildNodeInformation() throws RepositoryException {
+        Node mockParent = mock(Node.class);
+        when(mockParent.getPath()).thenReturn("/test");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+        when(mockNode.getParent()).thenReturn(mockParent);
+
+        Node mockChildNode = mock(Node.class);
+        when(mockChildNode.getName()).thenReturn("some-name");
+
+        when(mockChildNode.getPath()).thenReturn("/test/jcr/1","/test/jcr/2","/test/jcr/3","/test/jcr/4","/test/jcr/5");
+        NodeIterator mockIterator = mock(NodeIterator.class);
+        when(mockIterator.hasNext()).thenReturn(true, true, true, true, true, false);
+        when(mockIterator.nextNode()).thenReturn(mockChildNode);
+
+
+        when(mockNode.getNodes()).thenReturn(mockIterator);
+        Model actual = JcrRdfTools.getJcrTreeModel(testSubjects, mockNode, 0, 0);
+        assertEquals(5*2 + 1, actual.size());
+    }
+
+    @Test
+    public void shouldIncludeFullChildNodeInformationInsideWindow() throws RepositoryException {
+        Node mockParent = mock(Node.class);
+        when(mockParent.getPath()).thenReturn("/test");
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+        when(mockNode.getParent()).thenReturn(mockParent);
+
+        Node mockChildNode = mock(Node.class);
+        when(mockChildNode.getName()).thenReturn("some-name");
+        when(mockChildNode.getPath()).thenReturn("/test/jcr/1","/test/jcr/4","/test/jcr/5");
+
+        Node mockFullChildNode = mock(Node.class);
+        when(mockFullChildNode.getName()).thenReturn("some-other-name");
+        when(mockFullChildNode.getPath()).thenReturn("/test/jcr/2", "/test/jcr/3");
+
+        PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockFullChildNode.getProperties()).thenReturn(mockProperties);
+
+        when(mockProperties.hasNext()).thenReturn(false);
+
+        NodeIterator mockIterator = mock(NodeIterator.class);
+        when(mockIterator.hasNext()).thenReturn(true, true, true, true, true, false);
+        when(mockIterator.nextNode()).thenReturn(mockChildNode, mockFullChildNode, mockFullChildNode,mockChildNode, mockChildNode);
+
+
+        when(mockNode.getNodes()).thenReturn(mockIterator);
+        Model actual = JcrRdfTools.getJcrTreeModel(testSubjects, mockNode, 1, 2);
+        assertEquals(5*2 + 1, actual.size());
+        verify(mockChildNode, never()).getProperties();
     }
 
     @Test

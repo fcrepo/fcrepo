@@ -76,8 +76,10 @@ public class FedoraNodes extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     public Dataset describe(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final Request request, @Context
+    final List<PathSegment> pathList,
+    @QueryParam("offset") @DefaultValue("0") final long offset,
+    @QueryParam("limit") @DefaultValue("-1") final int limit,
+    @Context final Request request, @Context
     final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
@@ -106,7 +108,7 @@ public class FedoraNodes extends AbstractResource {
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(FedoraNodes.class, uriInfo);
             final Dataset propertiesDataset =
-                    resource.getPropertiesDataset(subjects);
+                    resource.getPropertiesDataset(subjects, offset, limit);
             addResponseInformationToDataset(resource, propertiesDataset,
                     uriInfo, subjects);
 

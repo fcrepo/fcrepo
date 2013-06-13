@@ -24,6 +24,7 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
@@ -242,6 +243,54 @@ public class FedoraResourceIT extends AbstractIT {
 
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
+
+        session.logout();
+    }
+
+
+    /**
+     * @todo Add Documentation.
+     */
+    @Test
+    public void testObjectGraphWindow() throws IOException, RepositoryException {
+        Session session = repo.login();
+
+        final FedoraResource object =
+                objectService.createObject(session, "/testObjectGraphWindow");
+
+        objectService.createObject(session, "/testObjectGraphWindow/a");
+        objectService.createObject(session, "/testObjectGraphWindow/b");
+        objectService.createObject(session, "/testObjectGraphWindow/c");
+
+        final Dataset propertiesDataset = object.getPropertiesDataset(FedoraResource.DEFAULT_SUBJECT_FACTORY, 1, 1);
+
+        logger.warn(propertiesDataset.toString());
+
+        final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
+
+        // jcr property
+        Node s = Node.createURI("info:fedora/testObjectGraphWindow");
+        Node p = RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode();
+        Node o = Node.createLiteral(object.getNode().getIdentifier());
+        assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
+
+        p = RdfLexicon.HAS_CHILD.asNode();
+        o = Node.createURI("info:fedora/testObjectGraphWindow/a");
+        assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
+
+        o = Node.createURI("info:fedora/testObjectGraphWindow/b");
+        assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
+
+        o = Node.createURI("info:fedora/testObjectGraphWindow/c");
+        assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
+
+        s = Node.createURI("info:fedora/testObjectGraphWindow/b");
+        p = RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode();
+        assertTrue(datasetGraph.contains(Node.ANY, s, p, Node.ANY));
+
+
+        s = Node.createURI("info:fedora/testObjectGraphWindow/c");
+        assertFalse(datasetGraph.contains(Node.ANY, s, p, Node.ANY));
 
         session.logout();
     }

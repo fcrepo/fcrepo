@@ -222,7 +222,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public void updatePropertiesDataset(final GraphSubjects subjects,
                                         final String sparqlUpdateStatement)
         throws RepositoryException {
-        final Dataset dataset = getPropertiesDataset(subjects);
+        final Dataset dataset = getPropertiesDataset(subjects, 0, 0);
         UpdateAction.parseExecute(sparqlUpdateStatement, dataset);
     }
 
@@ -245,21 +245,26 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     /**
      * Serialize the JCR properties as an RDF Dataset
      *
+     *
      * @param subjects
-     * @return
+     * @param offset
+     *@param limit @return
      * @throws RepositoryException
      */
-    public Dataset getPropertiesDataset(final GraphSubjects subjects)
+    public Dataset getPropertiesDataset(final GraphSubjects subjects, final long offset, final int limit)
         throws RepositoryException {
 
         final Model model = JcrRdfTools.getJcrPropertiesModel(subjects, node);
+        final Model treeModel = JcrRdfTools.getJcrTreeModel(subjects, node, offset, limit);
 
         listener =
             new JcrPropertyStatementListener(subjects, node.getSession());
 
         model.register(listener);
+        treeModel.register(listener);
 
         final Dataset dataset = DatasetFactory.create(model);
+        dataset.addNamedModel("tree", treeModel);
 
         String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
         com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
@@ -270,6 +275,16 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         return dataset;
     }
+
+    /**
+     * Serialize the JCR properties of this object as an RDF Dataset
+     * @return
+     * @throws RepositoryException
+     */
+    public Dataset getPropertiesDataset(final GraphSubjects subjects) throws RepositoryException {
+        return getPropertiesDataset(DEFAULT_SUBJECT_FACTORY, 0, -1);
+    }
+
 
     /**
      * Serialize the JCR properties of this object as an RDF Dataset

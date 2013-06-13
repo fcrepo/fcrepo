@@ -122,7 +122,7 @@ public class FedoraVersions extends AbstractResource {
             } else {
 
                 return resource.getPropertiesDataset(new HttpGraphSubjects(
-                        FedoraNodes.class, uriInfo));
+                        FedoraNodes.class, uriInfo), 0, -1);
             }
 
         } finally {

@@ -43,6 +43,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import com.google.common.collect.ImmutableList;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
@@ -258,8 +259,6 @@ public abstract class JcrRdfTools {
 
         addJcrPropertiesToModel(factory, node, model);
 
-        addJcrTreePropertiesToModel(factory, node, model);
-
         return model;
     }
 
@@ -392,14 +391,17 @@ public abstract class JcrRdfTools {
      * (as well as the jcr:content of children) to the given
      * RDF model
      *
+     *
      * @param node
-     * @param model
-     * @throws RepositoryException
+     * @param offset
+     *@param limit @throws RepositoryException
      */
-    private static void addJcrTreePropertiesToModel(final GraphSubjects factory,
-                                                    final Node node,
-                                                    final Model model)
+    public static Model getJcrTreeModel(final GraphSubjects factory,
+                                        final Node node, long offset, int limit)
         throws RepositoryException {
+
+        final Model model = createDefaultJcrModel(node.getSession());
+
         final Resource subject = getGraphSubject(factory, node);
 
         // don't do this if the node is the root node.
@@ -414,18 +416,26 @@ public abstract class JcrRdfTools {
 
         final javax.jcr.NodeIterator nodeIterator = node.getNodes();
 
-        long excludedNodes = 0L;
+        int i = 0;
+        long excludedNodeCount = 0;
+
         while (nodeIterator.hasNext()) {
             final Node childNode = nodeIterator.nextNode();
 
             // exclude jcr system nodes or jcr:content nodes
             if (FedoraTypesUtils.isInternalNode.apply(childNode) ||
                 childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
-                excludedNodes += 1;
+                excludedNodeCount++;
             } else {
                 final Resource childNodeSubject =
                     getGraphSubject(factory, childNode);
-                addJcrPropertiesToModel(factory, childNode, model);
+
+                if (i >= offset && (limit == -1 || i < (offset + limit))) {
+                    addJcrPropertiesToModel(factory, childNode, model);
+                }
+
+                i++;
+
                 model.add(
                           subject,
                           RdfLexicon.HAS_CHILD,
@@ -442,7 +452,9 @@ public abstract class JcrRdfTools {
                   subject,
                   RdfLexicon.HAS_CHILD_COUNT,
                   ResourceFactory.createTypedLiteral(nodeIterator.getSize() -
-                                                     excludedNodes));
+                                                             excludedNodeCount));
+
+        return model;
     }
 
     /**

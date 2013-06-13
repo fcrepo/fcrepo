@@ -6,6 +6,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -177,14 +179,14 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
-        when(mockObject.getPropertiesDataset(any(GraphSubjects.class)))
+        when(mockObject.getPropertiesDataset(any(GraphSubjects.class), anyLong(), anyInt()))
                 .thenReturn(mockDataset);
         when(
                 mockNodes.getObject(Mockito.isA(Session.class), Mockito
                         .isA(String.class))).thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Dataset dataset =
-                testObj.describe(createPathList(path), mockRequest, uriInfo);
+                testObj.describe(createPathList(path), 0, -1, mockRequest, uriInfo);
         assertNotNull(dataset.getDefaultModel());
 
     }
