@@ -112,14 +112,17 @@ public class AtomJMSIT implements MessageListener {
         if (entry == null) fail("Waited a second, got no messages");
 
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
-        entry = null;
+        //entry = null;
         String path = null;
+        logger.debug("Matched {} categories with scheme xsd:string", categories
+                .size());
         for (Category cat : categories) {
             if (cat.getLabel().equals("fedora-types:dsID")) {
                 logger.debug("Found Category with term: " + cat.getTerm());
                 path = cat.getTerm();
             }
         }
+        entry = null;
         assertEquals("Got wrong datastream ID!", "DATASTREAM", path);
         for (Category cat : categories) {
             if (cat.getLabel().equals("fedora-types:pid")) {
