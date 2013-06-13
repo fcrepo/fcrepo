@@ -69,6 +69,24 @@ public class AtomJMSIT implements MessageListener {
 
     final private Logger logger = LoggerFactory.getLogger(AtomJMSIT.class);
 
+    @Before
+    public void acquireConnection() throws JMSException {
+        logger.debug(this.getClass().getName() + " acquiring JMS connection.");
+        connection = connectionFactory.createConnection();
+        connection.start();
+        session = connection.createSession(false, AUTO_ACKNOWLEDGE);
+        consumer = session.createConsumer(session.createTopic("fedora"));
+        consumer.setMessageListener(this);
+    }
+
+    @After
+    public void releaseConnection() throws JMSException {
+        logger.debug(this.getClass().getName() + " releasing JMS connection.");
+        consumer.close();
+        session.close();
+        connection.close();
+    }
+
     @Test
     public void testAtomStream() throws LoginException, RepositoryException, InterruptedException {
         Session session = repository.login();
@@ -98,23 +116,44 @@ public class AtomJMSIT implements MessageListener {
     public void testDatastreamTerm() throws NoSuchNodeTypeException,
             VersionException, ConstraintViolationException, LockException,
             ItemExistsException, PathNotFoundException, RepositoryException, InterruptedException {
+        logger.trace("BEGIN: testDatastreamTerm()");
         Session session = repository.login();
-        final Node object = session.getRootNode().addNode("test2");
+        final Node object = session.getRootNode().addNode("testDatastreamTerm");
         object.addMixin(FEDORA_OBJECT);
+        session.save();
+        logger.trace("testDatastreamTerm called session.save()");
+
+		waitForEntry();
+        if (entry == null) fail("Waited a second, got no messages");
+        List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+        entry = null;
+
+        String path = null;
+
+        logger.trace("Matched {} categories with scheme xsd:string", categories
+                .size());
+        for (Category cat : categories) {
+            if (cat.getLabel().equals("fedora-types:pid")) {
+                logger.debug("Found Category with term: " + cat.getTerm());
+                path = cat.getTerm();
+            }
+        }
+        assertEquals("Got wrong object PID!", "testDatastreamTerm", path);
+
         final Node ds = object.addNode("DATASTREAM");
         ds.addMixin(FEDORA_DATASTREAM);
         ds.addNode(JCR_CONTENT).setProperty(JCR_DATA, "fake data");
         session.save();
-
-		waitForEntry();
-
+        logger.trace("testDatastreamTerm called session.save()");
         session.logout();
-        if (entry == null) fail("Waited a second, got no messages");
+        logger.trace("testDatastreamTerm called session.logout()");
 
-        List<Category> categories = copyOf(entry.getCategories("xsd:string"));
-        //entry = null;
-        String path = null;
-        logger.debug("Matched {} categories with scheme xsd:string", categories
+        waitForEntry();
+        if (entry == null) fail("Waited a second, got no messages");
+        categories = copyOf(entry.getCategories("xsd:string"));
+        entry = null;
+
+        logger.trace("Matched {} categories with scheme xsd:string", categories
                 .size());
         for (Category cat : categories) {
             if (cat.getLabel().equals("fedora-types:dsID")) {
@@ -122,20 +161,15 @@ public class AtomJMSIT implements MessageListener {
                 path = cat.getTerm();
             }
         }
-        entry = null;
+
         assertEquals("Got wrong datastream ID!", "DATASTREAM", path);
-        for (Category cat : categories) {
-            if (cat.getLabel().equals("fedora-types:pid")) {
-                logger.debug("Found Category with term: " + cat.getTerm());
-                path = cat.getTerm();
-            }
-        }
-        assertEquals("Got wrong object PID!", "test2", path);
+        logger.trace("END: testDatastreamTerm()");
     }
 
     @Override
     public void onMessage(Message message) {
         logger.debug("Received JMS message: " + message.toString());
+
         TextMessage tMessage = (TextMessage) message;
         try {
         	if (LegacyMethod.canParse(message)){
@@ -152,24 +186,6 @@ public class AtomJMSIT implements MessageListener {
         synchronized(this) {
             this.notify();
         }
-    }
-
-    @Before
-    public void acquireConnection() throws JMSException {
-        logger.debug(this.getClass().getName() + " acquiring JMS connection.");
-        connection = connectionFactory.createConnection();
-        connection.start();
-        session = connection.createSession(false, AUTO_ACKNOWLEDGE);
-        consumer = session.createConsumer(session.createTopic("fedora"));
-        consumer.setMessageListener(this);
-    }
-
-    @After
-    public void releaseConnection() throws JMSException {
-        logger.debug(this.getClass().getName() + " releasing JMS connection.");
-        consumer.close();
-        session.close();
-        connection.close();
     }
 
 	private void waitForEntry() throws InterruptedException {
