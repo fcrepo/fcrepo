@@ -148,8 +148,7 @@
             </goals>
             <configuration>
               <connectors>
-                <connector
-                  implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
                   <port>${test.port}</port>
                   <maxIdleTime>60000</maxIdleTime>
                 </connector>
@@ -172,4 +171,32 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>jmeter</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.lazerycode.jmeter</groupId>
+            <artifactId>jmeter-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>jmeter-tests</id>
+                <phase>integration-test</phase>
+                <goals>
+                  <goal>jmeter</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <propertiesUser>
+                <FEDORA_4_SERVER_PORT>${test.port}</FEDORA_4_SERVER_PORT>
+              </propertiesUser>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

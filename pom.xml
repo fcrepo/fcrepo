@@ -199,19 +199,19 @@
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-grizzly2</artifactId>
         <version>${jersey.version}</version>
-    	<scope>test</scope>
+        <scope>test</scope>
       </dependency>
       <dependency>
-    	<groupId>com.sun.jersey.jersey-test-framework</groupId>
-    	<artifactId>jersey-test-framework-grizzly2</artifactId>
+        <groupId>com.sun.jersey.jersey-test-framework</groupId>
+        <artifactId>jersey-test-framework-grizzly2</artifactId>
         <version>${jersey.version}</version>
-    	<scope>test</scope>
+        <scope>test</scope>
       </dependency>
       <dependency>
-    	<groupId>com.sun.jersey</groupId>
-    	<artifactId>jersey-grizzly2-servlet</artifactId>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-grizzly2-servlet</artifactId>
         <version>${jersey.version}</version>
-    	<scope>test</scope>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>com.sun.jersey</groupId>
@@ -293,8 +293,8 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>4.2.3</version>
-<!--         commented out since fcrepo-webhooks uses httpclient at compile time -->
-<!--         <scope>test</scope> -->
+        <!-- commented out since fcrepo-webhooks uses httpclient at compile time -->
+        <!-- <scope>test</scope> -->
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -355,6 +355,11 @@
               <phase>site-deploy</phase>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>com.lazerycode.jmeter</groupId>
+          <artifactId>jmeter-maven-plugin</artifactId>
+          <version>1.8.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
@@ -583,7 +588,7 @@
                     <ignore />
                   </action>
                 </pluginExecution>
-                  </pluginExecutions>
+              </pluginExecutions>
             </lifecycleMappingMetadata>
           </configuration>
         </plugin>
@@ -592,48 +597,48 @@
           <artifactId>jetty-maven-plugin</artifactId>
           <version>8.1.10.v20130312</version>
         </plugin>
-	    <plugin>
-	      <groupId>org.jacoco</groupId>
-	      <artifactId>jacoco-maven-plugin</artifactId>
-	      <version>0.6.2.201302030002</version>
-	      <executions>
-	        <execution>
-	          <id>pre-unit-test</id>
-	          <goals>
-	            <goal>prepare-agent</goal>
-	          </goals>
-	        </execution>
-	        <execution>
-	          <id>post-unit-test</id>
-	          <phase>test</phase>
-	          <goals>
-	            <goal>report</goal>
-	          </goals>
-	        </execution>
-	        <execution>
-	          <id>pre-it-test</id>
-	          <phase>pre-integration-test</phase>
-	          <goals>
-	            <goal>prepare-agent</goal>
-	          </goals>
-	          <configuration>
-	            <destFile>${project.basedir}/target/jacoco-it.exec</destFile>
-	            <propertyName>failsafe.argLine</propertyName>
-	          </configuration>
-	        </execution>
-	        <execution>
-	          <id>post-it-test</id>
-	          <phase>post-integration-test</phase>
-	          <goals>
-	            <goal>report</goal>
-	          </goals>
-	          <configuration>
-	            <dataFile>${project.basedir}/target/jacoco-it.exec</dataFile>
-	            <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
-	          </configuration>
-	        </execution>
-	      </executions>
-	    </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.6.2.201302030002</version>
+          <executions>
+            <execution>
+              <id>pre-unit-test</id>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>post-unit-test</id>
+              <phase>test</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>pre-it-test</id>
+              <phase>pre-integration-test</phase>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+              <configuration>
+                <destFile>${project.basedir}/target/jacoco-it.exec</destFile>
+                <propertyName>failsafe.argLine</propertyName>
+              </configuration>
+            </execution>
+            <execution>
+              <id>post-it-test</id>
+              <phase>post-integration-test</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+              <configuration>
+                <dataFile>${project.basedir}/target/jacoco-it.exec</dataFile>
+                <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -654,7 +659,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-	        <argLine>${failsafe.argLine}</argLine>
+          <argLine>${failsafe.argLine}</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -666,12 +671,12 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-	        <jacoco-agent.destFile>${project.basedir}/target/jacoco-it.exec</jacoco-agent.destFile>
+          <jacoco-agent.destFile>${project.basedir}/target/jacoco-it.exec</jacoco-agent.destFile>
         </configuration>
       </plugin>
       <plugin>
-	    <groupId>org.jacoco</groupId>
-	    <artifactId>jacoco-maven-plugin</artifactId>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -719,8 +724,8 @@
         </configuration>
       </plugin>
       <plugin>
-	    <groupId>org.jacoco</groupId>
-	    <artifactId>jacoco-maven-plugin</artifactId>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.6.2.201302030002</version>
       </plugin>
       <plugin>
