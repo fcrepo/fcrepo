@@ -19,21 +19,26 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
 import org.fcrepo.services.TransactionService;
+import org.fcrepo.session.InjectedSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
+@Scope("prototype")
 @Path("/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
 
     @Autowired
     private TransactionService txService;
 
+    @InjectedSession
+    protected Session session;
+
     @POST
     @Produces({ APPLICATION_JSON, TEXT_XML })
     public Transaction createTransaction() throws RepositoryException {
-    	Session sess = getAuthenticatedSession();
-    	return txService.beginTransaction(sess);
+    	return txService.beginTransaction(session);
     }
 
     @GET
