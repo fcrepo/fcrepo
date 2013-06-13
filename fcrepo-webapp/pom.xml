@@ -193,6 +193,7 @@
               <propertiesUser>
                 <FEDORA_4_SERVER_PORT>${test.port}</FEDORA_4_SERVER_PORT>
               </propertiesUser>
+              <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat >
             </configuration>
           </plugin>
         </plugins>
