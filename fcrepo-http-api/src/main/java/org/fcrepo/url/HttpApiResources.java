@@ -26,7 +26,6 @@ import org.fcrepo.api.FedoraVersions;
 import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.springframework.beans.factory.annotation.Autowired;

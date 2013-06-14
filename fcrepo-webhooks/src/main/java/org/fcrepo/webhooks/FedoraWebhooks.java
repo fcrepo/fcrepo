@@ -33,10 +33,8 @@ import org.fcrepo.messaging.legacy.LegacyMethod;
 import org.fcrepo.observer.FedoraEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 @Path("/fcr:webhooks")

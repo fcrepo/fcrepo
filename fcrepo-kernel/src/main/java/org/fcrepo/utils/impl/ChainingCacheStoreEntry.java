@@ -14,7 +14,6 @@ import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 
-
 public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
 
 	private final ChainingCacheStore store;

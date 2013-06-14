@@ -10,9 +10,9 @@ import javax.jcr.Node;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
 
 import static org.slf4j.LoggerFactory.getLogger;
+
 
 /**
  * Service that evaluates a set of storage policies for an object and provides storage hints

@@ -9,15 +9,12 @@ package org.fcrepo.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
-import static java.security.MessageDigest.getInstance;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Set;
 

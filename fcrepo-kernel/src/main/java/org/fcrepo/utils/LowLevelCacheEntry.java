@@ -7,7 +7,6 @@
 package org.fcrepo.utils;
 
 import static com.google.common.base.Throwables.propagate;
-import static java.util.Objects.hash;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
@@ -15,25 +14,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Properties;
 
-import org.apache.poi.util.IOUtils;
-import org.fcrepo.utils.infinispan.StoreChunkInputStream;
-import org.fcrepo.utils.infinispan.StoreChunkOutputStream;
-import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.modeshape.jcr.value.BinaryKey;
-import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
-import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
 /**

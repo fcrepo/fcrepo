@@ -6,23 +6,18 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.util.Properties;
 
 import org.apache.poi.util.IOUtils;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.fcrepo.utils.infinispan.StoreChunkInputStream;
 import org.fcrepo.utils.infinispan.StoreChunkOutputStream;
-import org.infinispan.configuration.cache.CacheStoreConfiguration;
-import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
 

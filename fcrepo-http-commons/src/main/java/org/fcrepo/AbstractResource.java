@@ -32,7 +32,6 @@ import org.fcrepo.services.ObjectService;
 import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

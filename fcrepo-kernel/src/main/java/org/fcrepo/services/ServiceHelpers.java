@@ -11,7 +11,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 
 import java.net.URI;
-import java.security.MessageDigest;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -23,7 +22,6 @@ import javax.jcr.Value;
 import org.fcrepo.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
-import org.infinispan.Cache;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
