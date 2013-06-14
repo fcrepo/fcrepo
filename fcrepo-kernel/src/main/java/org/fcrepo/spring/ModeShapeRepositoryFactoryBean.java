@@ -46,8 +46,10 @@ public class ModeShapeRepositoryFactoryBean implements
      */
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
-        LOGGER.debug("Using repo config: {}",
-                     ((ClassPathResource) repositoryConfiguration).getPath());
+        if (repositoryConfiguration instanceof ClassPathResource) {
+            LOGGER.debug("Using repo config: {}",
+                         ((ClassPathResource) repositoryConfiguration).getPath());
+        }
 
         repository =
                 (JcrRepository) jcrRepositoryFactory.getRepository(Collections
