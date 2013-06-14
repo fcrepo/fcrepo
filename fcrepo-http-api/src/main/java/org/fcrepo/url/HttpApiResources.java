@@ -27,6 +27,9 @@ import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.SerializerUtil;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -35,8 +38,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 @Component
 public class HttpApiResources implements UriAwareResourceModelFactory {
 
-    @javax.annotation.Resource
-    protected Map<String, FedoraObjectSerializer> serializers;
+
+    @Autowired
+    protected SerializerUtil serializers;
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
@@ -44,49 +48,74 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             throws RepositoryException {
 
         final Model model = createDefaultModel();
+
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType("mode:root")) {
-            model.add(s, HAS_SEARCH_SERVICE, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraFieldSearch.class).build()
-                    .toASCIIString()));
-            model.add(s, HAS_SITEMAP, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraSitemap.class).build()
-                    .toASCIIString()));
-            model.add(s, HAS_TRANSACTION_SERVICE, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraTransactions.class).build()
-                    .toASCIIString()));
-            model.add(s, HAS_NAMESPACE_SERVICE, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraRepositoryNamespaces.class)
-                    .build().toASCIIString()));
-
+        if (resource.getNode().getPrimaryNodeType().isNodeType(FedoraJcrTypes.ROOT)) {
+            addRepositoryStatements(uriInfo, model, s);
         } else {
-
-            for (final String key : serializers.keySet()) {
-                final Map<String, String> pathMap =
-                        of("path", resource.getPath().substring(1), "format",
-                                key);
-                model.add(s, HAS_SERIALIZATION, model.createResource(uriInfo
-                        .getBaseUriBuilder().path(FedoraExport.class)
-                        .buildFromMap(pathMap).toASCIIString()));
-            }
-
-            final Map<String, String> pathMap =
-                    of("path", resource.getPath().substring(1));
-            model.add(s, HAS_VERSION_HISTORY, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraVersions.class)
-                    .buildFromMap(pathMap).toASCIIString()));
-
+            addNodeStatements(resource, uriInfo, model, s);
         }
 
         if (resource.hasContent()) {
-            final Map<String, String> pathMap =
-                    of("path", resource.getPath().substring(1));
-            model.add(s, HAS_FIXITY_SERVICE, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(
-                            pathMap).toASCIIString()));
+            addContentStatements(resource, uriInfo, model, s);
         }
 
         return model;
     }
+
+    private void addContentStatements(FedoraResource resource, UriInfo uriInfo, Model model, Resource s) throws RepositoryException {
+        // fcr:fixity
+        final Map<String, String> pathMap =
+                of("path", resource.getPath().substring(1));
+        model.add(s, HAS_FIXITY_SERVICE, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(
+                        pathMap).toASCIIString()));
+    }
+
+    private void addNodeStatements(FedoraResource resource, UriInfo uriInfo, Model model, Resource s) throws RepositoryException {
+
+        // fcr:export?format=xyz
+        for (final String key : serializers.keySet()) {
+            final Map<String, String> pathMap =
+                    of("path", resource.getPath().substring(1));
+            model.add(s, HAS_SERIALIZATION, model.createResource(uriInfo
+                    .getBaseUriBuilder().path(FedoraExport.class).queryParam("format", key)
+                    .buildFromMap(pathMap).toASCIIString()));
+        }
+
+        // fcr:versions
+        final Map<String, String> pathMap =
+                of("path", resource.getPath().substring(1));
+        model.add(s, HAS_VERSION_HISTORY, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraVersions.class)
+                .buildFromMap(pathMap).toASCIIString()));
+    }
+
+    private void addRepositoryStatements(UriInfo uriInfo, Model model, Resource s) {
+        // fcr:search
+        model.add(s, HAS_SEARCH_SERVICE, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraFieldSearch.class).build()
+                .toASCIIString()));
+
+        // sitemap
+        model.add(s, HAS_SITEMAP, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraSitemap.class).build()
+                .toASCIIString()));
+
+        // fcr:tx
+        model.add(s, HAS_TRANSACTION_SERVICE, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraTransactions.class).build()
+                .toASCIIString()));
+
+        // fcr:namespaces
+        model.add(s, HAS_NAMESPACE_SERVICE, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraRepositoryNamespaces.class)
+                .build().toASCIIString()));
+    }
+
+    public void setSerializers(final SerializerUtil serializerUtil) {
+        this.serializers = serializerUtil;
+    }
+
 }

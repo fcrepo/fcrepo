@@ -44,6 +44,8 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.ContentDigest;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
@@ -66,16 +68,26 @@ public abstract class TestHelpers {
 	public static UriInfo getUriInfoImpl() {
 		// UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
 		final UriInfo ui = mock(UriInfo.class);
-		final UriBuilder ub = new UriBuilderImpl();
-		ub.scheme("http");
-		ub.host("localhost");
-		ub.path("/fcrepo");
 
-		when(ui.getRequestUri()).thenReturn(
+        final Answer<UriBuilder> answer = new Answer<UriBuilder>() {
+            @Override
+            public UriBuilder answer(InvocationOnMock invocation) throws Throwable {
+
+                final UriBuilder ub = new UriBuilderImpl();
+                ub.scheme("http");
+                ub.host("localhost");
+                ub.path("/fcrepo");
+
+
+                return ub;
+            }
+        };
+
+        when(ui.getRequestUri()).thenReturn(
 				URI.create("http://localhost/fcrepo"));
 		when(ui.getBaseUri()).thenReturn(URI.create("http://localhost/"));
-		when(ui.getBaseUriBuilder()).thenReturn(ub);
-		when(ui.getAbsolutePathBuilder()).thenReturn(ub);
+		when(ui.getBaseUriBuilder()).thenAnswer(answer);
+		when(ui.getAbsolutePathBuilder()).thenAnswer(answer);
 
 		return ui;
 	}
