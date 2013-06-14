@@ -282,7 +282,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Dataset getPropertiesDataset(final GraphSubjects subjects) throws RepositoryException {
-        return getPropertiesDataset(DEFAULT_SUBJECT_FACTORY, 0, -1);
+        return getPropertiesDataset(subjects, 0, -1);
     }
 
 

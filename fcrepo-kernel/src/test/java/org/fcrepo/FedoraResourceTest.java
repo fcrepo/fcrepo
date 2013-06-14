@@ -9,6 +9,8 @@ package org.fcrepo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,6 +29,12 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.sparql.util.Symbol;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.fcrepo.utils.JcrRdfTools;
@@ -196,6 +204,105 @@ public class FedoraResourceTest {
         }
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(modDate.getTimeInMillis(), actual.getTime());
+    }
+
+    @Test
+    public void testGetPropertiesDataset() throws RepositoryException {
+
+        mockStatic(JcrRdfTools.class);
+        GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final Resource mockResource = mock(Resource.class);
+        when(mockResource.getURI()).thenReturn("info:fedora/xyz");
+        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+
+        final Model propertiesModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrPropertiesModel(mockSubjects, mockNode)).thenReturn(propertiesModel);
+        final Model treeModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrTreeModel(mockSubjects, mockNode, 0, -1)).thenReturn(treeModel);
+        final Dataset dataset = testObj.getPropertiesDataset(mockSubjects, 0, -1);
+
+        assertTrue(dataset.containsNamedModel("tree"));
+        assertEquals(treeModel, dataset.getNamedModel("tree"));
+
+        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals("info:fedora/xyz", dataset.getContext().get(Symbol.create("uri")));
+    }
+
+    @Test
+    public void testGetPropertiesDatasetDefaultLimits() throws RepositoryException {
+
+        mockStatic(JcrRdfTools.class);
+        GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final Resource mockResource = mock(Resource.class);
+        when(mockResource.getURI()).thenReturn("info:fedora/xyz");
+        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+
+        final Model propertiesModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrPropertiesModel(mockSubjects, mockNode)).thenReturn(propertiesModel);
+        final Model treeModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrTreeModel(mockSubjects, mockNode, 0, -1)).thenReturn(treeModel);
+        final Dataset dataset = testObj.getPropertiesDataset(mockSubjects);
+
+        assertTrue(dataset.containsNamedModel("tree"));
+        assertEquals(treeModel, dataset.getNamedModel("tree"));
+
+        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals("info:fedora/xyz", dataset.getContext().get(Symbol.create("uri")));
+    }
+
+
+    @Test
+    public void testGetPropertiesDatasetDefaults() throws RepositoryException {
+
+        mockStatic(JcrRdfTools.class);
+        final Resource mockResource = mock(Resource.class);
+        when(mockResource.getURI()).thenReturn("info:fedora/xyz");
+        when(JcrRdfTools.getGraphSubject(FedoraResource.DEFAULT_SUBJECT_FACTORY, mockNode)).thenReturn(mockResource);
+
+        final Model propertiesModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrPropertiesModel(FedoraResource.DEFAULT_SUBJECT_FACTORY, mockNode)).thenReturn(propertiesModel);
+        final Model treeModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrTreeModel(FedoraResource.DEFAULT_SUBJECT_FACTORY, mockNode, 0, -1)).thenReturn(treeModel);
+        final Dataset dataset = testObj.getPropertiesDataset();
+
+        assertTrue(dataset.containsNamedModel("tree"));
+        assertEquals(treeModel, dataset.getNamedModel("tree"));
+
+        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals("info:fedora/xyz", dataset.getContext().get(Symbol.create("uri")));
+    }
+
+    @Test
+    public void testGetVersionDataset() throws RepositoryException {
+
+        mockStatic(JcrRdfTools.class);
+        GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final Resource mockResource = mock(Resource.class);
+        when(mockResource.getURI()).thenReturn("info:fedora/xyz");
+        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+
+        final Model versionsModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrVersionsModel(mockSubjects, mockNode)).thenReturn(versionsModel);
+        final Dataset dataset = testObj.getVersionDataset(mockSubjects);
+
+        assertEquals(versionsModel, dataset.getDefaultModel());
+        assertEquals("info:fedora/xyz", dataset.getContext().get(Symbol.create("uri")));
+    }
+
+    @Test
+    public void testGetVersionDatasetDefaultSubject() throws RepositoryException {
+
+        mockStatic(JcrRdfTools.class);
+        final Resource mockResource = mock(Resource.class);
+        when(mockResource.getURI()).thenReturn("info:fedora/xyz");
+        when(JcrRdfTools.getGraphSubject(FedoraResource.DEFAULT_SUBJECT_FACTORY, mockNode)).thenReturn(mockResource);
+
+        final Model versionsModel = ModelFactory.createDefaultModel();
+        when(JcrRdfTools.getJcrVersionsModel(FedoraResource.DEFAULT_SUBJECT_FACTORY, mockNode)).thenReturn(versionsModel);
+        final Dataset dataset = testObj.getVersionDataset();
+
+        assertEquals(versionsModel, dataset.getDefaultModel());
+        assertEquals("info:fedora/xyz", dataset.getContext().get(Symbol.create("uri")));
     }
 
     /**
