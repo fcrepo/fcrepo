@@ -51,7 +51,7 @@ public class FedoraIdentifiersTest {
     }
 
     @Test
-    public void testGetNextPid() throws RepositoryException, URISyntaxException {
+    public void testGetNextPidAtRoot() throws RepositoryException, URISyntaxException {
         when(mockPidMinter.makePid()).thenReturn(
                 new Function<Object, String>() {
 
@@ -73,6 +73,32 @@ public class FedoraIdentifiersTest {
                 createResource("http://localhost/fcrepo/fcr:pid"),
                 HAS_MEMBER_OF_RESULT,
                 createResource("http://localhost/fcrepo/asdf:123")));
+
+    }
+
+    @Test
+    public void testGetNextPid() throws RepositoryException, URISyntaxException {
+        when(mockPidMinter.makePid()).thenReturn(
+                                                        new Function<Object, String>() {
+
+                                                            @Override
+                                                            public String apply(final Object input) {
+                                                                return "asdf:123";
+                                                            }
+                                                        });
+
+        testObj.setPidMinter(mockPidMinter);
+
+        when(uriInfo.getAbsolutePath()).thenReturn(
+                                                          new URI("http://localhost/fcrepo/objects/fcr:pid"));
+
+        final Dataset np = testObj.getNextPid(createPathList("objects"), 2, uriInfo);
+
+        LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
+        assertTrue(np.getDefaultModel().contains(
+                                                        createResource("http://localhost/fcrepo/objects/fcr:pid"),
+                                                        HAS_MEMBER_OF_RESULT,
+                                                        createResource("http://localhost/fcrepo/objects/asdf:123")));
 
     }
 }
