@@ -41,4 +41,5 @@ public interface GraphSubjects {
      */
     boolean isFedoraGraphSubject(final Resource subject);
 
+    Resource getGraphSubject(String absPath) throws RepositoryException;
 }

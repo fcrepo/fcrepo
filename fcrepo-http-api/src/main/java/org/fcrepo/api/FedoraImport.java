@@ -6,6 +6,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -18,6 +20,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.serialization.SerializerUtil;
 import org.fcrepo.session.InjectedSession;
@@ -48,18 +51,20 @@ public class FedoraImport extends AbstractResource {
     final List<PathSegment> pathList, @QueryParam("format")
     @DefaultValue("jcr/xml")
     final String format, final InputStream stream) throws IOException,
-            RepositoryException, InvalidChecksumException {
+                                                                                                      RepositoryException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(pathList);
         logger.debug("Deserializing at {}", path);
+
+
+        final HttpGraphSubjects subjects =
+                new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
 
         try {
             serializers.getSerializer(format)
                     .deserialize(session, path, stream);
             session.save();
-            return created(
-                    uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
-                            .build(path.substring(1))).build();
+            return created(new URI(subjects.getGraphSubject(session.getNode(path)).getURI())).build();
         } finally {
             session.logout();
         }

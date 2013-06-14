@@ -10,7 +10,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.Response;
@@ -55,14 +57,18 @@ public class FedoraUnnamedObjectsTest {
 
     @Test
     public void testIngestAndMint() throws RepositoryException, IOException,
-            InvalidChecksumException {
+                                                       InvalidChecksumException, URISyntaxException {
         final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
         testObj.setPidMinter(mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");
 
         final FedoraObject mockObject = mock(FedoraObject.class);
-        when(mockObject.getPath()).thenReturn("/objects/uuid-123");
-        when(mockObjects.createObject(mockSession, "/objects/uuid-123"))
+        final String path = "/objects/uuid-123";
+        when(mockObject.getPath()).thenReturn(path);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockObjects.createObject(mockSession, path))
                 .thenReturn(mockObject);
         final Response actual =
                 testObj.ingestAndMint(createPathList("objects"),
@@ -74,8 +80,8 @@ public class FedoraUnnamedObjectsTest {
         assertEquals(Response.Status.CREATED.getStatusCode(), actual
                 .getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));
-        verify(mockObjects).createObject(mockSession, "/objects/uuid-123");
-        verify(mockNodeService).exists(mockSession, "/objects/uuid-123");
+        verify(mockObjects).createObject(mockSession, path);
+        verify(mockNodeService).exists(mockSession, path);
         verify(mockSession).save();
 
     }

@@ -14,6 +14,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.UriInfo;
@@ -45,6 +46,7 @@ public class FedoraIdentifiersTest {
         mockPidMinter = mock(PidMinter.class);
 
         mockSession = mockSession(testObj);
+        testObj.setSession(mockSession);
         uriInfo = getUriInfoImpl();
         testObj.setUriInfo(uriInfo);
 
@@ -65,6 +67,11 @@ public class FedoraIdentifiersTest {
 
         when(uriInfo.getAbsolutePath()).thenReturn(
                 new URI("http://localhost/fcrepo/fcr:pid"));
+
+
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/asdf:123");
+        when(mockSession.getNode("/asdf:123")).thenReturn(mockNode);
 
         final Dataset np = testObj.getNextPid(createPathList(""), 2, uriInfo);
 
@@ -91,6 +98,12 @@ public class FedoraIdentifiersTest {
 
         when(uriInfo.getAbsolutePath()).thenReturn(
                                                           new URI("http://localhost/fcrepo/objects/fcr:pid"));
+
+
+
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/objects/asdf:123");
+        when(mockSession.getNode("/objects/asdf:123")).thenReturn(mockNode);
 
         final Dataset np = testObj.getNextPid(createPathList("objects"), 2, uriInfo);
 

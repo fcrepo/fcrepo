@@ -20,6 +20,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.WebContent;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.api.FedoraNodes;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.session.InjectedSession;
 import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
@@ -58,7 +60,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, "/");
 
-                result.updatePropertiesDataset(IOUtils
+                result.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo, session), IOUtils
                         .toString(requestBodyStream));
                 final Problems problems = result.getDatasetProblems();
                 if (problems != null && problems.hasProblems()) {

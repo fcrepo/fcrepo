@@ -10,6 +10,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.update.GraphStoreFactory.create;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.created;
 import static org.fcrepo.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
@@ -19,10 +20,12 @@ import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -35,6 +38,9 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.AbstractResource;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.session.InjectedSession;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
@@ -51,8 +57,12 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  * 
  */
 @Component
+@Scope("prototype")
 @Path("/{path: .*}/fcr:pid")
 public class FedoraIdentifiers extends AbstractResource {
+
+    @InjectedSession
+    protected Session session;
 
     /**
      * @param numPids number of PIDs to return
@@ -79,27 +89,30 @@ public class FedoraIdentifiers extends AbstractResource {
                 transform(create(closed(1, numPids), integers()), pidMinter
                         .makePid());
 
-        final UriBuilder builder =
-                uriInfo.getBaseUriBuilder().path(FedoraNodes.class);
+        final HttpGraphSubjects subjects =
+                new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+
 
         for (final String identifier : identifiers) {
 
             final String absPath;
             if (path.equals("/")) {
-                absPath = identifier;
+                absPath = "/" + identifier;
             } else {
-                absPath = path.substring(1) + "/" + identifier;
+                absPath = path + "/" + identifier;
             }
 
-            final String s =
-                    builder.buildFromMap(of("path", absPath)).toASCIIString();
+            final Resource s = subjects.getGraphSubject(absPath);
 
-            model.add(pidsResult, HAS_MEMBER_OF_RESULT, ResourceFactory
-                    .createResource(s));
+            model.add(pidsResult, HAS_MEMBER_OF_RESULT, s);
         }
 
         return create(model).toDataset();
 
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 
 }

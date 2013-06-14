@@ -1,6 +1,8 @@
 
 package org.fcrepo.api.repository;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +15,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.FedoraObject;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
@@ -47,7 +50,7 @@ public class FedoraRepositoriesPropertiesTest {
 
         testObj.updateSparql(mockStream);
 
-        verify(mockObject).updatePropertiesDataset("my-sparql-statement");
+        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class), eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
     }

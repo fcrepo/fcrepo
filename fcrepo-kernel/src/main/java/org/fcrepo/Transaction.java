@@ -77,7 +77,7 @@ public class Transaction {
      * @todo Add Documentation.
      */
     public Session getSession() {
-        return TxAwareSession.newInstance(session);
+        return TxAwareSession.newInstance(session, id);
     }
 
     public Session getJcrSession() {

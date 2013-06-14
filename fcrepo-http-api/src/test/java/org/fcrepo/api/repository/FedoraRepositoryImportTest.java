@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -43,6 +44,10 @@ public class FedoraRepositoryImportTest {
                 mock(FedoraObjectSerializer.class);
         when(mockSerializers.getSerializer("fake-format")).thenReturn(
                 mockSerializer);
+
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/");
+        when(mockSession.getNode("/")).thenReturn(mockNode);
 
         testObj.importObject(createPathList(), "fake-format", mockInputStream);
         verify(mockSerializer).deserialize(mockSession, "/", mockInputStream);
