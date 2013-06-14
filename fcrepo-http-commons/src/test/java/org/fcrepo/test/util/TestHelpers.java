@@ -10,12 +10,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.Principal;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -55,9 +52,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.sun.jersey.api.uri.UriBuilderImpl;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.MultiPart;
-import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
 public abstract class TestHelpers {
 
@@ -161,27 +155,6 @@ public abstract class TestHelpers {
 		when(mockNTI.nextNodeType()).thenReturn(mockNodeType).thenThrow(
 				ArrayIndexOutOfBoundsException.class);
 		return mockSession;
-	}
-
-	public static MultiPart getStringsAsMultipart(
-			final Map<String, String> contents) {
-		final MultiPart multipart = new MultiPart();
-		for (final Entry<String, String> e : contents.entrySet()) {
-			final String id = e.getKey();
-			final String content = e.getValue();
-			final InputStream src = IOUtils.toInputStream(content);
-			final StreamDataBodyPart part = new StreamDataBodyPart(id, src);
-			try {
-				final FormDataContentDisposition cd =
-						new FormDataContentDisposition("form-data;name=" + id +
-								";filename=" + id + ".txt");
-				part.contentDisposition(cd);
-			} catch (final ParseException ex) {
-				ex.printStackTrace();
-			}
-			multipart.bodyPart(part);
-		}
-		return multipart;
 	}
 
 	public static Collection<String> parseChildren(HttpEntity entity) throws IOException {

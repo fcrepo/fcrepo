@@ -14,10 +14,12 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -29,6 +31,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.file.StreamDataBodyPart;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
@@ -80,7 +84,7 @@ public class FedoraDatastreamsTest {
         final HashMap<String, String> atts = new HashMap<String, String>(2);
         atts.put(dsId1, "asdf");
         atts.put(dsId2, "sdfg");
-        final MultiPart multipart = TestHelpers.getStringsAsMultipart(atts);
+        final MultiPart multipart = getStringsAsMultipart(atts);
         final Response actual =
                 testObj.modifyDatastreams(createPathList(pid), Arrays.asList(
                         dsId1, dsId2), multipart);
@@ -181,6 +185,27 @@ public class FedoraDatastreamsTest {
         verify(mockDs, never()).getContent();
         verify(mockSession, never()).save();
         assertEquals(Status.NOT_MODIFIED.getStatusCode(), resp.getStatus());
+    }
+
+    public static MultiPart getStringsAsMultipart(
+                                                         final Map<String, String> contents) {
+        final MultiPart multipart = new MultiPart();
+        for (final Map.Entry<String, String> e : contents.entrySet()) {
+            final String id = e.getKey();
+            final String content = e.getValue();
+            final InputStream src = IOUtils.toInputStream(content);
+            final StreamDataBodyPart part = new StreamDataBodyPart(id, src);
+            try {
+                final FormDataContentDisposition cd =
+                        new FormDataContentDisposition("form-data;name=" + id +
+                                                               ";filename=" + id + ".txt");
+                part.contentDisposition(cd);
+            } catch (final ParseException ex) {
+                ex.printStackTrace();
+            }
+            multipart.bodyPart(part);
+        }
+        return multipart;
     }
 
 }
