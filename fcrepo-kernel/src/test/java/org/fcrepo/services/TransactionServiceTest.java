@@ -3,6 +3,8 @@
  */
 package org.fcrepo.services;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -14,6 +16,7 @@ import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Map;
 
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -63,21 +66,26 @@ public class TransactionServiceTest {
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
-        assertTrue(tx.getState() == State.NEW);
+        assertEquals(State.NEW, tx.getState());
     }
 
     @Test
     public void testGetTx() throws Exception {
         Transaction tx = service.getTransaction(IS_A_TX);
-
         assertNotNull(tx);
+    }
 
-        try{
-            tx = service.getTransaction(NOT_A_TX);
-            fail("Transaction retrieved for nonexistent id " + NOT_A_TX);
-        }catch(RepositoryException e){
-            // just checking that the exception occurs
-        }
+    @Test(expected = RepositoryException.class)
+    public void testGetNonTx() throws PathNotFoundException {
+        service.getTransaction(NOT_A_TX);
+
+    }
+
+    @Test
+    public void testExists() throws Exception {
+        assertTrue(service.exists(IS_A_TX));
+        assertFalse(service.exists(NOT_A_TX));
+
     }
 
     @Test
@@ -86,12 +94,12 @@ public class TransactionServiceTest {
 
         assertNotNull(tx);
         verify(mockTx).commit();
-        try{
-            tx = service.getTransaction(tx.getId());
-            fail("Transaction is available after commit");
-        }catch(RepositoryException e){
-            // just checking that the exception occurs
-        }
+    }
+
+    @Test(expected =  RepositoryException.class)
+    public void testCommitRemovedTransaction() throws Exception {
+        Transaction tx = service.commit(IS_A_TX);
+        service.getTransaction(tx.getId());
     }
 
     @Test
@@ -100,11 +108,21 @@ public class TransactionServiceTest {
 
         assertNotNull(tx);
         verify(mockTx).rollback();
-        try{
-            tx = service.getTransaction(tx.getId());
-            fail("Transaction is available after commit");
-        }catch(RepositoryException e){
-            // just checking that the exception occurs
-        }
+    }
+
+    @Test(expected =  RepositoryException.class)
+    public void testRollbackRemovedTransaction() throws Exception {
+        Transaction tx = service.rollback(IS_A_TX);
+        service.getTransaction(tx.getId());
+    }
+
+    @Test(expected = RepositoryException.class)
+    public void testRollbackWithNonTx() throws RepositoryException {
+        Transaction tx = service.rollback(NOT_A_TX);
+    }
+
+    @Test(expected = RepositoryException.class)
+    public void testCommitWithNonTx() throws RepositoryException {
+        Transaction tx = service.commit(NOT_A_TX);
     }
 }

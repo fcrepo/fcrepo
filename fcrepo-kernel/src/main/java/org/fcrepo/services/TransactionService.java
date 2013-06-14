@@ -14,8 +14,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Transaction;
+import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * This is part of the Strawman implementation for Fedora transactions
@@ -28,6 +31,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class TransactionService {
+
+    private static final Logger LOGGER = getLogger(TransactionService.class);
 
     /*
      * TODO: since transactions have to be available on all nodes, they have to
@@ -50,8 +55,7 @@ public class TransactionService {
                     try {
                         tx.rollback();
                     } catch (RepositoryException e) {
-                        // TODO Not clear how to respond here
-                        e.printStackTrace();
+                        LOGGER.warn("Got exception rolling back expired transaction {}: {}", tx, e);
                     }
                     txs.remove();
                 }
@@ -92,8 +96,7 @@ public class TransactionService {
      * @throws PathNotFoundException if the {@link Transaction} with the given id has not be found
      */
     public boolean exists(final String txid) {
-        final Transaction tx = TRANSACTIONS.get(txid);
-        return tx != null;
+        return TRANSACTIONS.containsKey(txid);
     }
 
     /**
