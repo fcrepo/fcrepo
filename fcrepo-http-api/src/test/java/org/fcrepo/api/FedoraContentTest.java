@@ -20,6 +20,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -27,6 +28,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
@@ -84,6 +86,60 @@ public class FedoraContentTest {
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class));
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateContent() throws RepositoryException, IOException,
+                                                            InvalidChecksumException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "xyz";
+        final String dsContent = "asdf";
+        final String dsPath = "/" + pid + "/" + dsId;
+        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        final Node mockNode = mock(Node.class);
+
+        when(mockNode.isNew()).thenReturn(true);
+        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
+        when(
+                    mockDatastreams.createDatastreamNode(any(Session.class),
+                                                                eq(dsPath), anyString(), any(InputStream.class)))
+                .thenReturn(mockNode);
+        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final Response actual =
+                testObj.create(createPathList(pid, dsId), null,  null, MediaType.TEXT_PLAIN_TYPE,
+                                      dsContentStream);
+        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams).createDatastreamNode(mockSession,dsPath, "text/plain", dsContentStream, null, null);
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateContentAtMintedPath() throws RepositoryException, IOException,
+                                                InvalidChecksumException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "fcr:new";
+        final String dsContent = "asdf";
+        final String dsPath = "/" + pid + "/" + dsId;
+        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        final Node mockNode = mock(Node.class);
+
+        PidMinter mockMinter = mock(PidMinter.class);
+        when(mockMinter.mintPid()).thenReturn("xyz");
+        testObj.setPidMinter(mockMinter);
+        when(mockNode.isNew()).thenReturn(true);
+        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
+        when(
+                    mockDatastreams.createDatastreamNode(any(Session.class),
+                                                                eq(dsPath), anyString(), any(InputStream.class)))
+                .thenReturn(mockNode);
+        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final Response actual =
+                testObj.create(createPathList(pid, dsId), null,  null, MediaType.TEXT_PLAIN_TYPE,
+                                             dsContentStream);
+        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams).createDatastreamNode(mockSession,
+                                                            "/" + pid + "/xyz", "text/plain", dsContentStream, null, null);
         verify(mockSession).save();
     }
 
