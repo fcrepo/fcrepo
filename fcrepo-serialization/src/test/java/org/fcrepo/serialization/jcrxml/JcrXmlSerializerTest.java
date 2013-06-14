@@ -1,5 +1,6 @@
 package org.fcrepo.serialization.jcrxml;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,4 +43,14 @@ public class JcrXmlSerializerTest {
 		verify(mockSession).importXML("/objects", mockIS, ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
 
 	}
+
+    @Test
+    public void testGetKey() {
+        assertEquals("jcr/xml", new JcrXmlSerializer().getKey());
+    }
+
+    @Test
+    public void testGetMediaType() {
+        assertEquals("application/xml", new JcrXmlSerializer().getMediaType());
+    }
 }
