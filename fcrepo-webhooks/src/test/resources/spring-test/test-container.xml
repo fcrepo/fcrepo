@@ -7,14 +7,12 @@
 
   <context:property-placeholder/>
 
-  <!-- show stack traces for easier debugging -->
-  <bean id="wildcardExceptionmapper" class="org.fcrepo.exceptionhandlers.WildcardExceptionMapper" >
-  	<property name="showStackTrace" value="true" />
-  </bean>
-  
+
+  <context:property-placeholder/>
+
   <bean id="containerWrapper" class="org.fcrepo.test.util.ContainerWrapper" init-method="start" destroy-method="stop" >
     <property name="port" value="${test.port:8080}"/>
     <property name="configLocation" value="classpath:web.xml" />
   </bean>
-  
+
 </beans>

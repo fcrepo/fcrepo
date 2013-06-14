@@ -1,11 +1,8 @@
 package org.fcrepo.webhooks;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.lang.reflect.Field;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -13,12 +10,9 @@ import javax.jcr.Property;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
-import org.fcrepo.AbstractResource;
 import org.fcrepo.observer.FedoraEvent;
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;
@@ -37,8 +31,7 @@ public class FedoraWebhooksTest {
     @Before
     public void setUp() throws Exception {
         testObj = new FedoraWebhooks();
-        SessionFactory mockSessions = mock(SessionFactory.class);
-        mockSession = mock(Session.class);
+        mockSession = TestHelpers.mockSession(testObj);
         mockRoot = mock(Node.class);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         Repository mockRepo = mock(Repository.class);
@@ -48,10 +41,8 @@ public class FedoraWebhooksTest {
         NodeTypeManager mockNT = mock(NodeTypeManager.class);
         when(mockWS.getNodeTypeManager()).thenReturn(mockNT);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        when(mockSessions.getSession(any(SecurityContext.class), any(HttpServletRequest.class)))
-        .thenReturn(mockSession);
-        testObj.setSessionFactory(mockSessions);
+        testObj.setSession(mockSession);
+        testObj.setReadOnlySessionSession(mockSession);
     }
     
     @Test
@@ -64,6 +55,17 @@ public class FedoraWebhooksTest {
     
     @Test
     public void testShowWebhooks() throws Exception {
+
+        NodeIterator mockNodes = mock(NodeIterator.class);
+
+        Node mockHook = mock(Node.class);
+        Property mockProp = mock(Property.class);
+        when(mockHook.getProperty(FedoraWebhooks.WEBHOOK_CALLBACK_PROPERTY)).thenReturn(mockProp);
+
+        when(mockNodes.hasNext()).thenReturn(true, false);
+        when(mockNodes.nextNode()).thenReturn(mockHook).thenThrow(IndexOutOfBoundsException.class);
+        when(mockRoot.getNodes(FedoraWebhooks.WEBHOOK_SEARCH)).thenReturn(mockNodes);
+
         testObj.showWebhooks();
     }
     

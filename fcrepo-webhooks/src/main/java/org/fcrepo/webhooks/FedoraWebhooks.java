@@ -31,13 +31,16 @@ import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.messaging.legacy.LegacyMethod;
 import org.fcrepo.observer.FedoraEvent;
+import org.fcrepo.session.InjectedSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.Subscribe;
 
 @Path("/fcr:webhooks")
+@Scope("prototype")
 @Component
 public class FedoraWebhooks extends AbstractResource {
     
@@ -55,10 +58,14 @@ public class FedoraWebhooks extends AbstractResource {
 
     protected static HttpClient client;
 
+
+    @InjectedSession
+    protected Session session;
+
     /**
      * For use with non-mutating methods.
      */
-    private static Session readOnlySession;
+    private Session readOnlySession;
 
     static {
         connectionManager.setMaxTotal(Integer.MAX_VALUE);
@@ -88,7 +95,7 @@ public class FedoraWebhooks extends AbstractResource {
      * @param event
      * @throws RepositoryException
      */
-    public static void runHooks(final Node resource, final FedoraEvent event)
+    public void runHooks(final Node resource, final FedoraEvent event)
             throws RepositoryException {
         if (resource == null) {
             LOGGER.warn("resource node is null; event path is {}", event.getPath());
@@ -128,7 +135,7 @@ public class FedoraWebhooks extends AbstractResource {
     public Response showWebhooks() throws RepositoryException {
 
         final NodeIterator webhooksIterator =
-                readOnlySession.getRootNode().getNodes("webhook:*");
+                session.getRootNode().getNodes("webhook:*");
         final StringBuilder str = new StringBuilder();
 
         while (webhooksIterator.hasNext()) {
@@ -147,8 +154,6 @@ public class FedoraWebhooks extends AbstractResource {
     final String id, @FormParam("callbackUrl")
     final String callbackUrl) throws RepositoryException {
 
-        final Session session = getAuthenticatedSession();
-
         final Node n =
                 jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" +
                         id, "webhook:callback");
@@ -165,9 +170,6 @@ public class FedoraWebhooks extends AbstractResource {
     @Path("{id}")
     public Response registerWebhook(@PathParam("id")
     final String id) throws RepositoryException {
-
-        final Session session = getAuthenticatedSession();
-
         final Node n =
                 jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" +
                         id, WEBHOOK_JCR_TYPE);
@@ -194,6 +196,15 @@ public class FedoraWebhooks extends AbstractResource {
         } catch (final RepositoryException e) {
             LOGGER.error("Got a repository exception handling message: {}", e);
         }
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
+    }
+
+
+    public void setReadOnlySessionSession(final Session session) {
+        this.readOnlySession = session;
     }
 
     @PostConstruct
