@@ -90,13 +90,6 @@
       <artifactId>jersey-grizzly2-servlet</artifactId>
       <scope>test</scope>
     </dependency>
- <!--    <dependency>
-        <groupId>org.apache.tomcat</groupId>
-        <artifactId>tomcat-servlet-api</artifactId>
-        <version>7.0.21</version>
-        <scope>provided</scope>
-    </dependency> -->
-
     <dependency>
       <groupId>javax.mail</groupId>
       <artifactId>mail</artifactId>
