@@ -17,8 +17,12 @@ import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.RepositoryFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @todo Add Documentation.
@@ -27,6 +31,8 @@ import org.springframework.core.io.Resource;
  */
 public class ModeShapeRepositoryFactoryBean implements
         FactoryBean<JcrRepository> {
+
+    private static final Logger LOGGER = getLogger(ModeShapeRepositoryFactoryBean.class);
 
     @Inject
     private JcrRepositoryFactory jcrRepositoryFactory;
@@ -40,6 +46,9 @@ public class ModeShapeRepositoryFactoryBean implements
      */
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
+        LOGGER.debug("Using repo config: {}",
+                     ((ClassPathResource) repositoryConfiguration).getPath());
+
         repository =
                 (JcrRepository) jcrRepositoryFactory.getRepository(Collections
                         .singletonMap(RepositoryFactory.URL,
