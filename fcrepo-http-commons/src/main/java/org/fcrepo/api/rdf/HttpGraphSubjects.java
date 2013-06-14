@@ -9,9 +9,11 @@ import java.util.Map;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.TxSession;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrConstants;
@@ -33,7 +35,9 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final int pathIx;
 
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
+    private final Session session;
+
+    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris, final Session session) {
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String basePath = nodesBuilder.build("").toString();
         if (!basePath.endsWith("/")) {
@@ -43,11 +47,26 @@ public class HttpGraphSubjects implements GraphSubjects {
         this.pathIx = basePath.length() - 1;
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 basePath);
+        this.session = session;
+    }
+
+
+    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
+        this(relativeTo, uris, null);
+
+    }
+
+
+    @Override
+    public Resource getGraphSubject(final String absPath) throws RepositoryException {
+        final URI result = nodesBuilder.buildFromMap(getPathMap(session, absPath));
+        LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
+        return ResourceFactory.createResource(result.toString());
     }
 
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
-        final URI result = nodesBuilder.buildFromMap(getPathMap(node));
+        final URI result = nodesBuilder.buildFromMap(getPathMap(session, node));
         LOGGER.debug("Translated node {} into RDF subject {}", node, result);
         return ResourceFactory.createResource(result.toString());
     }
@@ -62,7 +81,35 @@ public class HttpGraphSubjects implements GraphSubjects {
             return null;
         }
 
-        final String absPath = subject.getURI().substring(pathIx);
+        final StringBuilder pathBuilder = new StringBuilder();
+        final String absPath;
+        final String[] pathSegments = subject.getURI().substring(pathIx).split("/");
+
+        for ( String segment : pathSegments) {
+            if (segment.startsWith("tx:")) {
+                String tx = segment.substring("tx:".length());
+
+                if (session instanceof TxSession && ((TxSession)session).getTxId().equals(tx)) {
+
+                } else {
+                    throw new RepositoryException("Subject is not in this transaction");
+                }
+
+            } else if (segment.startsWith("workspace:")) {
+                String workspace = segment.substring("workspace:".length());
+                if (!session.getWorkspace().getName().equals(workspace)) {
+                    throw new RepositoryException("Subject is not in this workspace");
+                }
+            } else {
+                if (!segment.isEmpty()) {
+                    pathBuilder.append("/");
+                    pathBuilder.append(segment);
+                }
+            }
+        }
+
+
+        absPath = pathBuilder.toString();
 
         final Node node;
         if (absPath.endsWith(FCR_CONTENT)) {
@@ -91,15 +138,32 @@ public class HttpGraphSubjects implements GraphSubjects {
         return subject.isURIResource() && subject.getURI().startsWith(basePath);
     }
 
-    private static Map<String, String> getPathMap(final Node node)
+    private static Map<String, String> getPathMap(final Session session, final Node node)
+            throws RepositoryException {
+        return getPathMap(session, node.getPath());
+    }
+
+    private static Map<String, String> getPathMap(final Session session, final String absPath)
             throws RepositoryException {
         // the path param value doesn't start with a slash
-        String path = node.getPath().substring(1);
+        String path = absPath.substring(1);
         if (path.endsWith(JcrConstants.JCR_CONTENT)) {
             path =
                     path.replace(JcrConstants.JCR_CONTENT,
-                            FedoraJcrTypes.FCR_CONTENT);
+                                        FedoraJcrTypes.FCR_CONTENT);
         }
+
+        if (session != null) {
+            final Workspace workspace = session.getWorkspace();
+
+            if (session instanceof TxSession) {
+                path = "tx:" + ((TxSession)session).getTxId() + "/" + path;
+
+            } else if (workspace != null && !workspace.getName().equals("default")) {
+                path = "workspace:" + workspace.getName() + "/" + path;
+            }
+        }
+
         return ImmutableBiMap.of("path", path);
     }
 }

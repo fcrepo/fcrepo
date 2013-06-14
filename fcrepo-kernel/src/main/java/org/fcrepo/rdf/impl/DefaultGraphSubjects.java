@@ -26,21 +26,25 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  */
 public class DefaultGraphSubjects implements GraphSubjects {
 
+
+    @Override
+    public Resource getGraphSubject(String absPath) throws RepositoryException {
+        if (absPath.endsWith(JcrConstants.JCR_CONTENT)) {
+            return ResourceFactory
+                           .createResource("info:fedora" +
+                                                   absPath.replace(JcrConstants.JCR_CONTENT,
+                                                                          FedoraJcrTypes.FCR_CONTENT));
+        } else {
+            return ResourceFactory.createResource("info:fedora" + absPath);
+        }
+    }
+
     /**
      * @todo Add Documentation.
      */
     @Override
     public Resource getGraphSubject(Node node) throws RepositoryException {
-        final String absPath = node.getPath();
-
-        if (absPath.endsWith(JcrConstants.JCR_CONTENT)) {
-            return ResourceFactory
-                .createResource("info:fedora" +
-                                absPath.replace(JcrConstants.JCR_CONTENT,
-                                                FedoraJcrTypes.FCR_CONTENT));
-        } else {
-            return ResourceFactory.createResource("info:fedora" + absPath);
-        }
+        return getGraphSubject(node.getPath());
     }
 
     /**

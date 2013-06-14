@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -77,7 +78,7 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testModifyDatastreams() throws RepositoryException,
-            IOException, InvalidChecksumException {
+                                                           IOException, InvalidChecksumException, URISyntaxException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId1 = "testDs1";
         final String dsId2 = "testDs2";
@@ -85,6 +86,9 @@ public class FedoraDatastreamsTest {
         atts.put(dsId1, "asdf");
         atts.put(dsId2, "sdfg");
         final MultiPart multipart = getStringsAsMultipart(atts);
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
+        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(mockNode);
         final Response actual =
                 testObj.modifyDatastreams(createPathList(pid), Arrays.asList(
                         dsId1, dsId2), multipart);

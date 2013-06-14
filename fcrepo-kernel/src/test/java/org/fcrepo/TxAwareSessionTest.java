@@ -19,7 +19,7 @@ public class TxAwareSessionTest {
     @Before
     public void setUp() {
         mockSession = mock(Session.class);
-        testObj = TxAwareSession.newInstance(mockSession);
+        testObj = TxAwareSession.newInstance(mockSession, "txid");
 
 
     }

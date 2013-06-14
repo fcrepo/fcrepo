@@ -8,6 +8,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
@@ -33,8 +35,10 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.session.InjectedSession;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -64,7 +68,7 @@ public class FedoraContent extends AbstractResource {
     final String checksumType, @QueryParam("checksum")
     final String checksum, @HeaderParam("Content-Type")
     final MediaType requestContentType, final InputStream requestBodyStream)
-            throws IOException, InvalidChecksumException, RepositoryException {
+            throws IOException, InvalidChecksumException, RepositoryException, URISyntaxException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -78,15 +82,18 @@ public class FedoraContent extends AbstractResource {
 
         logger.debug("create Datastream {}", path);
         try {
-            datastreamService.createDatastreamNode(session, path, contentType
-                    .toString(), requestBodyStream, checksumType, checksum);
+            final Node datastreamNode = datastreamService.createDatastreamNode(session, path, contentType.toString(), requestBodyStream, checksumType, checksum);
+
+
+        final HttpGraphSubjects subjects =
+                new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+
+        return created(new URI(subjects.getGraphSubject(datastreamNode.getNode(JcrConstants.JCR_CONTENT)).getURI())).build();
+
         } finally {
             session.save();
             session.logout();
         }
-        return created(
-                uriInfo.getBaseUriBuilder().path(FedoraContent.class).build(
-                        path.substring(1))).build();
     }
 
     /**
@@ -109,7 +116,7 @@ public class FedoraContent extends AbstractResource {
     final MediaType requestContentType, final InputStream requestBodyStream,
             @Context
             final Request request) throws RepositoryException, IOException,
-            InvalidChecksumException {
+                                                                                       InvalidChecksumException, URISyntaxException {
         try {
             final String path = toPath(pathList);
             final MediaType contentType =
@@ -142,9 +149,10 @@ public class FedoraContent extends AbstractResource {
             session.save();
 
             if (isNew) {
-                return created(
-                        uriInfo.getBaseUriBuilder().path(FedoraContent.class)
-                                .build(path.substring(1))).build();
+                final HttpGraphSubjects subjects =
+                        new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+
+                return created(new URI(subjects.getGraphSubject(datastreamNode.getNode(JcrConstants.JCR_CONTENT)).getURI())).build();
             } else {
                 return noContent().build();
             }

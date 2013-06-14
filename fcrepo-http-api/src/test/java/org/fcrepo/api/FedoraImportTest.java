@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -46,8 +47,13 @@ public class FedoraImportTest {
     public void testImportObject() throws Exception {
         final InputStream mockInputStream = mock(InputStream.class);
 
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/test/object");
+        when(mockSession.getNode("/test/object")).thenReturn(mockNode);
+
         testObj.importObject(createPathList("test", "object"), "fake-format",
                 mockInputStream);
+
         verify(mockSerializer).deserialize(mockSession, "/test/object",
                 mockInputStream);
 

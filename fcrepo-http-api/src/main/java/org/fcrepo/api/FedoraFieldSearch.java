@@ -112,7 +112,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
             final Dataset dataset =
                     nodeService.searchRepository(new HttpGraphSubjects(
-                            FedoraNodes.class, uriInfo), searchResult, session,
+                            FedoraNodes.class, uriInfo, session), searchResult, session,
                             terms, limit, offset);
 
             final Model searchModel = createDefaultModel();

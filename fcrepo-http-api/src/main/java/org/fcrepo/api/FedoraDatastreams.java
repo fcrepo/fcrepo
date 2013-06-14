@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.ContentDigest;
@@ -78,7 +80,7 @@ public class FedoraDatastreams extends AbstractResource {
     public Response modifyDatastreams(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("delete")
     final List<String> dsidList, final MultiPart multipart)
-            throws RepositoryException, IOException, InvalidChecksumException {
+            throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(pathList);
         try {
@@ -107,9 +109,12 @@ public class FedoraDatastreams extends AbstractResource {
             }
 
             session.save();
-            return created(
-                    uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
-                            .build(path.substring(1))).build();
+
+            final HttpGraphSubjects subjects =
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+
+            return created(new URI(subjects.getGraphSubject(session.getNode(path)).getURI())).build();
+
         } finally {
             session.logout();
         }

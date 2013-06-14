@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -12,6 +14,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
 import org.fcrepo.services.TransactionService;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
@@ -222,6 +225,12 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 new HttpGet(serverAddress + "tx:" + tx.getId() + "/object-in-tx");
         resp = execute(getTx);
         assertEquals("Expected to find our object within the scope of the transaction", 200, resp.getStatusLine().getStatusCode());
+
+        final GraphStore graphStore = TestHelpers.parseTriples(resp.getEntity().getContent());
+        logger.debug(graphStore.toString());
+
+        assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY, Node.createURI(serverAddress + "tx:" + tx.getId() + "/object-in-tx"), Node.ANY, Node.ANY));
+
 
          /* fetch the created tx from the endpoint */
         final HttpGet getObj =

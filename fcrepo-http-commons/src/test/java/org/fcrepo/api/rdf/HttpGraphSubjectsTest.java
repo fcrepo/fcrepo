@@ -1,6 +1,8 @@
 package org.fcrepo.api.rdf;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 
@@ -8,6 +10,7 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -24,67 +27,76 @@ public class HttpGraphSubjectsTest {
 	private HttpGraphSubjects testObj;
 	
 	private String testPath = "/foo/bar";
-	
-	@Before
+    private Session mockSession;
+
+    @Before
 	public void setUp(){
 		UriInfo uris = getUriInfoImpl(testPath);
-		testObj = new HttpGraphSubjects(MockNodeController.class, uris);
+        mockSession = mock(Session.class);
+		testObj = new HttpGraphSubjects(MockNodeController.class, uris, mockSession);
 	}
 	
 	@Test
 	public void testGetGraphSubject() throws RepositoryException {
 		String expected = "http://localhost:8080/fcrepo/rest" + testPath;
-		Node mockNode = Mockito.mock(Node.class);
-		Mockito.when(mockNode.getPath()).thenReturn(testPath);
+		Node mockNode = mock(Node.class);
+		when(mockNode.getPath()).thenReturn(testPath);
+        Workspace mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockNode.getSession()).thenReturn(mockSession);
 		Resource actual = testObj.getGraphSubject(mockNode);
 		assertEquals(expected, actual.getURI());
-		Mockito.when(mockNode.getPath()).thenReturn(testPath + "/jcr:content");
+		when(mockNode.getPath()).thenReturn(testPath + "/jcr:content");
 		actual = testObj.getGraphSubject(mockNode);
 		assertEquals(expected + "/fcr:content", actual.getURI());
 	}
 
 	@Test
 	public void testGetNodeFromGraphSubject() throws PathNotFoundException, RepositoryException {
-		Session mockSession = Mockito.mock(Session.class);
-		Node mockNode = Mockito.mock(Node.class);
-		Mockito.when(mockSession.nodeExists(testPath)).thenReturn(true);
-		Mockito.when(mockSession.getNode(testPath)).thenReturn(mockNode);
+		Session mockSession = mock(Session.class);
+		Node mockNode = mock(Node.class);
+		when(mockSession.nodeExists(testPath)).thenReturn(true);
+		when(mockSession.getNode(testPath)).thenReturn(mockNode);
+        Workspace mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
 		// test a good subject
-		Resource mockSubject = Mockito.mock(Resource.class);
-		Mockito.when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest" + testPath);
-		Mockito.when(mockSubject.isURIResource()).thenReturn(true);
+		Resource mockSubject = mock(Resource.class);
+		when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest" + testPath);
+		when(mockSubject.isURIResource()).thenReturn(true);
 		Node actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
 		Mockito.verify(mockSession).getNode(testPath);
 		assertEquals(mockNode, actual);
 		// test a bad subject
-		Mockito.when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest2" + testPath + "/bad");
+		when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest2" + testPath + "/bad");
 		actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
 		assertEquals(null, actual);
 		// test a non-existent path
-		Mockito.when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest" + testPath + "/bad");
+		when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest" + testPath + "/bad");
 		actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
 		assertEquals(null, actual);
 		// test a fcr:content path
-		Mockito.when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest" + testPath + "/fcr:content");
+		when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest" + testPath + "/fcr:content");
 		actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
 		Mockito.verify(mockSession).getNode(testPath + "/jcr:content");
 	}
 
 	@Test
 	public void testIsFedoraGraphSubject() {
-		Resource mockSubject = Mockito.mock(Resource.class);
-		Mockito.when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest/foo");
-		Mockito.when(mockSubject.isURIResource()).thenReturn(true);
+		Resource mockSubject = mock(Resource.class);
+		when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest/foo");
+		when(mockSubject.isURIResource()).thenReturn(true);
 		boolean actual = testObj.isFedoraGraphSubject(mockSubject);
 		assertEquals(true, actual);
-		Mockito.when(mockSubject.getURI()).thenReturn("http://fedora/foo");
+		when(mockSubject.getURI()).thenReturn("http://fedora/foo");
 		actual = testObj.isFedoraGraphSubject(mockSubject);
 		assertEquals(false, actual);
 	}
 
 	private static UriInfo getUriInfoImpl(String path) {
 		// UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
-		final UriInfo ui = Mockito.mock(UriInfo.class);
+		final UriInfo ui = mock(UriInfo.class);
 		final UriBuilder ub = new UriBuilderImpl();
 		ub.scheme("http");
 		ub.host("localhost");
@@ -97,11 +109,11 @@ public class HttpGraphSubjectsTest {
 		rb.port(8080);
 		rb.path("/fcrepo/rest" + path);
 
-		Mockito.when(ui.getRequestUri()).thenReturn(
+		when(ui.getRequestUri()).thenReturn(
 				URI.create("http://localhost:8080/fcrepo/rest" + path));
-		Mockito.when(ui.getBaseUri()).thenReturn(URI.create("http://localhost:8080/fcrepo"));
-		Mockito.when(ui.getBaseUriBuilder()).thenReturn(ub);
-		Mockito.when(ui.getAbsolutePathBuilder()).thenReturn(rb);
+		when(ui.getBaseUri()).thenReturn(URI.create("http://localhost:8080/fcrepo"));
+		when(ui.getBaseUriBuilder()).thenReturn(ub);
+		when(ui.getAbsolutePathBuilder()).thenReturn(rb);
 
 		return ui;
 	}

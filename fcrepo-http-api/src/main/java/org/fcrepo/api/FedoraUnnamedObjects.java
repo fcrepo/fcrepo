@@ -7,6 +7,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
@@ -25,6 +27,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -61,14 +64,12 @@ public class FedoraUnnamedObjects extends AbstractResource {
     final MediaType requestContentType, final InputStream requestBodyStream,
             @Context
             final UriInfo uriInfo) throws RepositoryException, IOException,
-            InvalidChecksumException {
+                                                                                       InvalidChecksumException, URISyntaxException {
         final String pid = pidMinter.mintPid();
 
         final String path = toPath(pathList) + "/" + pid;
 
         logger.debug("Attempting to ingest with path: {}", path);
-
-        final Session session = getAuthenticatedSession();
 
         try {
             if (nodeService.exists(session, path)) {
@@ -84,9 +85,11 @@ public class FedoraUnnamedObjects extends AbstractResource {
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
-            return created(
-                    uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(
-                            resource.getPath().substring(1))).entity(path)
+
+            final HttpGraphSubjects subjects =
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+
+            return created(new URI(subjects.getGraphSubject(resource.getNode()).getURI())).entity(path)
                     .build();
 
         } finally {
