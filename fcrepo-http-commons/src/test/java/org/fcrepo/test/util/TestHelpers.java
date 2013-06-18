@@ -167,7 +167,6 @@ public abstract class TestHelpers {
 	public static Session mockSession(AbstractResource testObj) throws RepositoryException {
 
 		SecurityContext mockSecurityContext = mock(SecurityContext.class);
-		HttpServletRequest mockServletRequest = mock(HttpServletRequest.class);
 		Principal mockPrincipal = mock(Principal.class);
 
 		String mockUser = "testuser";
@@ -176,23 +175,8 @@ public abstract class TestHelpers {
 		when(mockSession.getUserID()).thenReturn(mockUser);
 		when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
 		when(mockPrincipal.getName()).thenReturn(mockUser);
-		final SessionFactory mockSessions = mock(SessionFactory.class);
-		final AuthenticatedSessionProvider mockProvider =
-				mock(AuthenticatedSessionProvider.class);
-		when(mockSessions.getSession()).thenReturn(mockSession);
-		when(
-				mockSessions.getSession(any(SecurityContext.class),
-						any(HttpServletRequest.class))).thenReturn(mockSession);
-		when(
-				mockProvider.getAuthenticatedSession()).thenReturn(mockSession);
-		when(
-				mockSessions.getSessionProvider(any(SecurityContext.class),
-						any(HttpServletRequest.class))).thenReturn(mockProvider);
-		testObj.setSessionFactory(mockSessions);
 		testObj.setUriInfo(getUriInfoImpl());
 		testObj.setPidMinter(new UUIDPidMinter());
-		testObj.setHttpServletRequest(mockServletRequest);
-		testObj.setSecurityContext(mockSecurityContext);
 
 		return mockSession;
 

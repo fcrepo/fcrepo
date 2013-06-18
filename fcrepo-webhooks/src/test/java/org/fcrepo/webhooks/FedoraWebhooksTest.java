@@ -12,6 +12,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.observer.FedoraEvent;
+import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +44,9 @@ public class FedoraWebhooksTest {
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         testObj.setSession(mockSession);
         testObj.setReadOnlySessionSession(mockSession);
+        SessionFactory mockSessions = mock(SessionFactory.class);
+        when(mockSessions.getSession()).thenReturn(mockSession);
+        testObj.setSessionFactory(mockSessions);
     }
     
     @Test

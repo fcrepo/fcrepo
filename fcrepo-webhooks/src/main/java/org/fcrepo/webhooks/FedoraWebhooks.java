@@ -32,6 +32,7 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.messaging.legacy.LegacyMethod;
 import org.fcrepo.observer.FedoraEvent;
 import org.fcrepo.session.InjectedSession;
+import org.fcrepo.session.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -219,5 +220,9 @@ public class FedoraWebhooks extends AbstractResource {
     @PreDestroy
     public final void logoutSession() {
         readOnlySession.logout();
+    }
+
+    public void setSessionFactory(final SessionFactory sessions) {
+        this.sessions = sessions;
     }
 }

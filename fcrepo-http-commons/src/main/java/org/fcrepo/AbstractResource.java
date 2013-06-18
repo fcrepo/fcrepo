@@ -29,7 +29,6 @@ import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.session.AuthenticatedSessionProvider;
 import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
@@ -146,14 +145,6 @@ public abstract class AbstractResource {
         }
     }
 
-    protected Session getAuthenticatedSession() {
-        return sessions.getSession(securityContext, servletRequest);
-    }
-
-    protected AuthenticatedSessionProvider getAuthenticatedSessionProvider() {
-        return sessions.getSessionProvider(securityContext, servletRequest);
-    }
-
     protected FedoraResource createObjectOrDatastreamFromRequestContent(
             final Class<?> pathsRelativeTo, final Session session,
             final String path, final String mixin, final UriInfo uriInfo,
@@ -209,14 +200,6 @@ public abstract class AbstractResource {
 
     /**
      * A testing convenience setter for otherwise injected resources
-     * @param repo
-     */
-    public void setSessionFactory(final SessionFactory sessions) {
-        this.sessions = sessions;
-    }
-
-    /**
-     * A testing convenience setter for otherwise injected resources
      * @param uriInfo
      */
     public void setUriInfo(final UriInfo uriInfo) {
@@ -229,22 +212,6 @@ public abstract class AbstractResource {
      */
     public void setPidMinter(final PidMinter pidMinter) {
         this.pidMinter = pidMinter;
-    }
-
-    /**
-     * A testing convenience setter for otherwise injected resources
-     * @param SecurityContext
-     */
-    public void setSecurityContext(final SecurityContext securityContext) {
-        this.securityContext = securityContext;
-    }
-
-    /**
-     * A testing convenience setter for otherwise injected resources
-     * @param HttpServletRequest
-     */
-    public void setHttpServletRequest(final HttpServletRequest servletRequest) {
-        this.servletRequest = servletRequest;
     }
 
     /**

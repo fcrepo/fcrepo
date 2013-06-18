@@ -3,7 +3,6 @@ package org.fcrepo;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -11,14 +10,11 @@ import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.test.util.PathSegmentImpl;
 import org.fcrepo.utils.NamespaceTools;
 import org.junit.Before;
@@ -45,14 +41,10 @@ public class AbstractResourceTest {
     
     @Test
     public void testInitialize() throws RepositoryException {
-        SessionFactory mockSessions = mock(SessionFactory.class);
-        Session mockSession = mock(Session.class);
         NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
         mockStatic(NamespaceTools.class);
         when(NamespaceTools.getNamespaceRegistry(any(Session.class))).thenReturn(mockNames);
-        when(mockSessions.getSession()).thenReturn(mockSession);
-        testObj.setSessionFactory(mockSessions);
-        testObj.initialize();
+       testObj.initialize();
     }
     
     @Test
@@ -60,18 +52,6 @@ public class AbstractResourceTest {
         PidMinter mockPids = mock(PidMinter.class);
         testObj.setPidMinter(mockPids);
         assertEquals(mockPids, testObj.pidMinter);
-    }
-    
-    @Test
-    public void testSessionMachinerySetters() {
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        SessionFactory mockSession = mock(SessionFactory.class);
-        SecurityContext mockContext = mock(SecurityContext.class);
-        testObj.setHttpServletRequest(mockRequest);
-        testObj.setSessionFactory(mockSession);
-        testObj.setSecurityContext(mockContext);
-        testObj.getAuthenticatedSession();
-        verify(mockSession).getSession(mockContext, mockRequest);
     }
 
     @Test
