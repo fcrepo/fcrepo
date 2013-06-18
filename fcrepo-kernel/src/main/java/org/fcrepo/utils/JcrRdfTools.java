@@ -43,6 +43,8 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.rdf.model.Literal;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
@@ -531,27 +533,29 @@ public abstract class JcrRdfTools {
         } else if (data.isLiteral() && type == PropertyType.UNDEFINED) {
             // the JCR schema doesn't know what this should be; so introspect
             // the RDF and try to figure it out
-            final Object rdfValue = data.asLiteral().getValue();
+            final Literal literal = data.asLiteral();
+            final RDFDatatype dataType = literal.getDatatype();
+            final Object rdfValue = literal.getValue();
 
             if (rdfValue instanceof Boolean) {
                 return valueFactory.createValue((Boolean) rdfValue);
-            } else if (rdfValue instanceof Byte) {
-                return valueFactory.createValue((Byte) rdfValue);
+            } else if (rdfValue instanceof Byte || (dataType != null && dataType.getJavaClass() == Byte.class)) {
+                return valueFactory.createValue(literal.getByte());
             } else if (rdfValue instanceof Double) {
                 return valueFactory.createValue((Double) rdfValue);
             } else if (rdfValue instanceof Float) {
                 return valueFactory.createValue((Float) rdfValue);
+            } else if (rdfValue instanceof Long || (dataType != null && dataType.getJavaClass() == Long.class)) {
+                return valueFactory.createValue(literal.getLong());
+            } else if (rdfValue instanceof Short || (dataType != null && dataType.getJavaClass() == Short.class)) {
+                return valueFactory.createValue(literal.getShort());
             } else if (rdfValue instanceof Integer) {
                 return valueFactory.createValue((Integer) rdfValue);
-            } else if (rdfValue instanceof Long) {
-                return valueFactory.createValue((Long) rdfValue);
-            } else if (rdfValue instanceof Short) {
-                return valueFactory.createValue((Short) rdfValue);
             } else if (rdfValue instanceof XSDDateTime) {
                 return valueFactory.createValue(((XSDDateTime) rdfValue)
                                                 .asCalendar());
             } else {
-                return valueFactory.createValue(data.asLiteral().getString(),
+                return valueFactory.createValue(literal.getString(),
                                                 PropertyType.STRING);
             }
 
@@ -606,51 +610,44 @@ public abstract class JcrRdfTools {
         final com.hp.hpl.jena.rdf.model.Property predicate =
             getPredicateForProperty.apply(property);
 
-        final String stringValue = v.getString();
-
-        RDFDatatype datatype = null;
-
         switch (v.getType()) {
             case BOOLEAN:
-                datatype =
-                    model.createTypedLiteral(v.getBoolean()).getDatatype();
+                model.addLiteral(subject, predicate, v.getBoolean());
                 break;
             case DATE:
-                datatype = model.createTypedLiteral(v.getDate()).getDatatype();
+                model.add(subject, predicate, ResourceFactory.createTypedLiteral(v.getDate()));
                 break;
             case DECIMAL:
-                datatype =
-                    model.createTypedLiteral(v.getDecimal()).getDatatype();
+                model.add(subject, predicate, ResourceFactory.createTypedLiteral(v.getDecimal()));
                 break;
             case DOUBLE:
-                datatype =
-                    model.createTypedLiteral(v.getDouble()).getDatatype();
+                model.addLiteral(subject, predicate, v.getDouble());
                 break;
             case LONG:
-                datatype = model.createTypedLiteral(v.getLong()).getDatatype();
+                model.addLiteral(subject, predicate, v.getLong());
                 break;
             case URI:
-                model.add(subject, predicate, model.createResource(stringValue));
+                model.add(subject, predicate, model.createResource(v.getString()));
                 return;
             case REFERENCE:
             case WEAKREFERENCE:
                 model.add(subject, predicate, model
                           .createResource("info:fedora" +
                                           property.getSession()
-                                          .getNodeByIdentifier(stringValue).getPath()));
-                return;
+                                          .getNodeByIdentifier(v.getString()).getPath()));
+                break;
             case PATH:
                 model.add(subject, predicate, model
-                          .createResource("info:fedora" + stringValue));
-                return;
+                          .createResource("info:fedora" + v.getString()));
+                break;
+
+            default:
+                model.add(subject, predicate, v.getString());
+
 
         }
 
-        if (datatype == null) {
-            model.add(subject, predicate, stringValue);
-        } else {
-            model.add(subject, predicate, stringValue, datatype);
-        }
+
     }
 
     /**

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -31,6 +32,8 @@ import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import org.fcrepo.RdfLexicon;
@@ -201,6 +204,16 @@ public class JcrRdfToolsTest {
                 JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
                         ResourceFactory
                                 .createResource("info:fedora/does-not-exist")));
+    }
+
+    @Test
+    public void shouldDetermineIfAGraphResourceIsAJcrNode() throws RepositoryException {
+        GraphSubjects mockFactory = mock(GraphSubjects.class);
+        Resource mockSubject = mock(Resource.class);
+        when(mockFactory.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        assertTrue(JcrRdfTools.isFedoraGraphSubject(mockFactory, mockSubject));
+
+        verify(mockFactory).isFedoraGraphSubject(mockSubject);
     }
 
     @Test
@@ -377,7 +390,7 @@ public class JcrRdfToolsTest {
             JcrRdfTools.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(true);
 
-            n = ResourceFactory.createTypedLiteral((byte) 1);
+            n = ResourceFactory.createTypedLiteral("1", XSDDatatype.XSDbyte);
             JcrRdfTools.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue((byte) 1);
 
@@ -393,11 +406,11 @@ public class JcrRdfToolsTest {
             JcrRdfTools.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(4);
 
-            n = ResourceFactory.createTypedLiteral((long) 5);
+            n = ResourceFactory.createTypedLiteral("5", XSDDatatype.XSDlong);
             JcrRdfTools.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(5);
 
-            n = ResourceFactory.createTypedLiteral((short) 6);
+            n = ResourceFactory.createTypedLiteral("6", XSDDatatype.XSDshort);
             JcrRdfTools.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue((short) 6);
 
@@ -499,7 +512,9 @@ public class JcrRdfToolsTest {
     @Test
     public void shouldMapJcrTypesToRdfDataTypes() throws RepositoryException {
         final javax.jcr.Property mockProperty = mock(javax.jcr.Property.class);
-        final Property mockPredicate = mock(Property.class);
+        final Resource mockSubject = ResourceFactory.createResource("some-resource-uri");
+        final Model mockModel = ModelFactory.createDefaultModel();
+        final Property mockPredicate = mockModel.createProperty("some-predicate-uri");
 
         @SuppressWarnings("unchecked")
         final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> mockPredicateFactoryFunc =
@@ -512,50 +527,88 @@ public class JcrRdfToolsTest {
         FedoraTypesUtils.getPredicateForProperty = mockPredicateFactoryFunc;
 
         try {
-            final Resource mockSubject = mock(Resource.class);
-            final Model mockModel = mock(Model.class);
 
-            Value mockValue = mock(Value.class);
+            Value mockValue;
+
+
+            mockValue = mock(Value.class);
+            when(mockValue.getType()).thenReturn(PropertyType.BOOLEAN);
+            when(mockValue.getBoolean()).thenReturn(true);
+            JcrRdfTools.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createTypedLiteral(true)));
+
+            mockValue = mock(Value.class);
+            Calendar mockCalendar = Calendar.getInstance();
+            when(mockValue.getType()).thenReturn(PropertyType.DATE);
+            when(mockValue.getDate()).thenReturn(mockCalendar);
+            JcrRdfTools.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createTypedLiteral(mockCalendar)));
+
+            mockValue = mock(Value.class);
+            when(mockValue.getType()).thenReturn(PropertyType.DECIMAL);
+            when(mockValue.getDecimal()).thenReturn(BigDecimal.valueOf(0.0));
+            JcrRdfTools.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createTypedLiteral(BigDecimal.valueOf(0.0))));
+
+            mockValue = mock(Value.class);
+            when(mockValue.getType()).thenReturn(PropertyType.DOUBLE);
+            when(mockValue.getDouble()).thenReturn((double)0);
+            JcrRdfTools.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createTypedLiteral((double)0)));
+
+            mockValue = mock(Value.class);
+            when(mockValue.getType()).thenReturn(PropertyType.LONG);
+            when(mockValue.getLong()).thenReturn(0L);
+            JcrRdfTools.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createTypedLiteral(0L)));
+
+
+            mockValue = mock(Value.class);
+            when(mockValue.getType()).thenReturn(PropertyType.STRING);
+            when(mockValue.getString()).thenReturn("XYZ");
+            JcrRdfTools.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createTypedLiteral("XYZ")));
+
+            mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(PropertyType.URI);
             when(mockValue.getString()).thenReturn("info:fedora");
-            when(mockModel.createResource("info:fedora")).thenReturn(
-                    ResourceFactory.createResource("info:fedora"));
 
             JcrRdfTools.addPropertyToModel(mockSubject, mockModel,
-                    mockProperty, mockValue);
-            verify(mockModel).add(mockSubject, mockPredicate,
-                    ResourceFactory.createResource("info:fedora"));
+                                                  mockProperty, mockValue);
+
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createResource("info:fedora")));
 
             mockValue = mock(Value.class);
             when(mockProperty.getSession()).thenReturn(mockSession);
             when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
             when(mockNode.getPath()).thenReturn("/abc");
-            when(mockModel.createResource("info:fedora/abc")).thenReturn(
-                    ResourceFactory.createResource("info:fedora/abc"));
 
             when(mockValue.getType()).thenReturn(PropertyType.REFERENCE);
             when(mockValue.getString()).thenReturn("uuid");
             JcrRdfTools.addPropertyToModel(mockSubject, mockModel,
                     mockProperty, mockValue);
 
-            //    verify(mockModel).add(mockSubject, mockPredicate, ResourceFactory.createResource("info:fedora/abc"));
+
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createResource("info:fedora/abc")));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(PropertyType.WEAKREFERENCE);
             when(mockValue.getString()).thenReturn("uuid");
+            when(mockNode.getPath()).thenReturn("/def");
             JcrRdfTools.addPropertyToModel(mockSubject, mockModel,
                     mockProperty, mockValue);
 
-            //    verify(mockModel).add(mockSubject, mockPredicate, ResourceFactory.createResource("info:fedora/abc"));
+
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createResource("info:fedora/def")));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(PropertyType.PATH);
-            when(mockValue.getString()).thenReturn("/abc");
+            when(mockValue.getString()).thenReturn("/ghi");
             JcrRdfTools.addPropertyToModel(mockSubject, mockModel,
                     mockProperty, mockValue);
 
-            verify(mockModel, times(3)).add(mockSubject, mockPredicate,
-                    ResourceFactory.createResource("info:fedora/abc"));
+            assertTrue(mockModel.contains(mockSubject, mockPredicate, ResourceFactory.createResource("info:fedora/ghi")));
+
 
         } finally {
             FedoraTypesUtils.getPredicateForProperty = holdPredicate;
