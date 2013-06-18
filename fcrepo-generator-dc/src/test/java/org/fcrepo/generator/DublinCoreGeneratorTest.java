@@ -35,6 +35,7 @@ public class DublinCoreGeneratorTest {
 		testObj.setNodeService(mockNodeService);
 
 		mockSession = TestHelpers.mockSession(testObj);
+        testObj.setSession(mockSession);
         mockGenerator = mock(DCGenerator.class);
         testObj.dcgenerators = Arrays.asList(mockGenerator);
     }

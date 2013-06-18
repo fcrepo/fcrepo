@@ -21,20 +21,25 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
+import org.fcrepo.session.InjectedSession;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/oai/{path: .*}/oai_dc")
+@Scope("prototype")
+@Path("/{path: .*}/oai:dc")
 public class DublinCoreGenerator extends AbstractResource {
 
     @Resource
     List<DCGenerator> dcgenerators;
 
+    @InjectedSession
+    protected Session session;
+
     @GET
     @Produces(TEXT_XML)
     public Response getObjectAsDublinCore(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
-		final Session session = getAuthenticatedSession();
 
 		try {
 			final String path = toPath(pathList);
@@ -53,6 +58,10 @@ public class DublinCoreGenerator extends AbstractResource {
 			session.logout();
 		}
 
+    }
+
+    public void setSession(final Session session) {
+        this.session = session;
     }
 
 }
