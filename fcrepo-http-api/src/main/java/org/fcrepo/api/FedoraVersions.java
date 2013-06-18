@@ -65,10 +65,9 @@ public class FedoraVersions extends AbstractResource {
         final Variant bestPossibleResponse =
                 request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
-                    nodeService.getObject(session, path);
+                    nodeService.getObject(this.session, path);
 
             return Response.ok(
                     new GraphStoreStreamingOutput(resource
@@ -77,7 +76,7 @@ public class FedoraVersions extends AbstractResource {
                             bestPossibleResponse.getMediaType())).build();
 
         } finally {
-            session.logout();
+            this.session.logout();
         }
 
     }
@@ -89,15 +88,14 @@ public class FedoraVersions extends AbstractResource {
     final String versionLabel) throws RepositoryException {
 
         final String path = toPath(pathList);
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
-                    nodeService.getObject(session, path);
+                    nodeService.getObject(this.session, path);
             resource.addVersionLabel(versionLabel);
 
             return Response.noContent().build();
         } finally {
-            session.logout();
+        	this.session.logout();
         }
     }
 
@@ -112,10 +110,9 @@ public class FedoraVersions extends AbstractResource {
         LOGGER.trace("getting version profile for {} at version {}", path,
                 versionLabel);
 
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
-                    nodeService.getObject(session, path, versionLabel);
+                    nodeService.getObject(this.session, path, versionLabel);
 
             if (resource == null) {
                 throw new WebApplicationException(status(NOT_FOUND).build());
@@ -126,7 +123,7 @@ public class FedoraVersions extends AbstractResource {
             }
 
         } finally {
-            session.logout();
+        	this.session.logout();
         }
 
     }
