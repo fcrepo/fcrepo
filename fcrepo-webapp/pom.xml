@@ -180,7 +180,10 @@
             </executions>
             <configuration>
               <propertiesUser>
-                <FEDORA_4_SERVER_PORT>${test.port}</FEDORA_4_SERVER_PORT>
+                <fedora_4_port>${test.port}</fedora_4_port>
+                <fedora_4_context>rest</fedora_4_context>
+                <loop_count>1000</loop_count>
+                <num_threads>20</num_threads>
               </propertiesUser>
               <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat >
             </configuration>
