@@ -14,6 +14,10 @@
   <properties>
     <!-- integration test properties -->
     <test.context.path>/</test.context.path>
+    
+    <!-- jmeter -->
+    <jmeter.loop_count>100</jmeter.loop_count>
+    <jmeter.num_threads>10</jmeter.num_threads>
   </properties>
 
   <dependencies>
@@ -182,8 +186,8 @@
               <propertiesUser>
                 <fedora_4_port>${test.port}</fedora_4_port>
                 <fedora_4_context>rest</fedora_4_context>
-                <loop_count>1000</loop_count>
-                <num_threads>20</num_threads>
+                <loop_count>${jmeter.loop_count}</loop_count>
+                <num_threads>${jmeter.num_threads}</num_threads>
               </propertiesUser>
               <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat >
             </configuration>
