@@ -65,7 +65,6 @@ public class FedoraVersions extends AbstractResource {
         final Variant bestPossibleResponse =
                 request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
@@ -89,7 +88,6 @@ public class FedoraVersions extends AbstractResource {
     final String versionLabel) throws RepositoryException {
 
         final String path = toPath(pathList);
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
@@ -97,7 +95,7 @@ public class FedoraVersions extends AbstractResource {
 
             return Response.noContent().build();
         } finally {
-            session.logout();
+        	session.logout();
         }
     }
 
@@ -112,7 +110,6 @@ public class FedoraVersions extends AbstractResource {
         LOGGER.trace("getting version profile for {} at version {}", path,
                 versionLabel);
 
-        final Session session = getAuthenticatedSession();
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path, versionLabel);
@@ -126,7 +123,7 @@ public class FedoraVersions extends AbstractResource {
             }
 
         } finally {
-            session.logout();
+        	session.logout();
         }
 
     }

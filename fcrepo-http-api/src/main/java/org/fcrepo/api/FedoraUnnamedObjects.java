@@ -93,7 +93,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
                     .build();
 
         } finally {
-            session.logout();
+        	session.logout();
         }
     }
 
