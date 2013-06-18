@@ -68,21 +68,19 @@ public class FedoraUnnamedObjects extends AbstractResource {
 
         logger.debug("Attempting to ingest with path: {}", path);
 
-        final Session session = getAuthenticatedSession();
-
         try {
-            if (nodeService.exists(session, path)) {
+            if (nodeService.exists(this.session, path)) {
                 return Response.status(SC_CONFLICT).entity(
                         path + " is an existing resource").build();
             }
 
             final FedoraResource resource =
                     createObjectOrDatastreamFromRequestContent(
-                            FedoraNodes.class, session, path, mixin, uriInfo,
+                            FedoraNodes.class, this.session, path, mixin, uriInfo,
                             requestBodyStream, requestContentType,
                             checksumType, checksum);
 
-            session.save();
+            this.session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
             return created(
                     uriInfo.getBaseUriBuilder().path(FedoraNodes.class).build(
@@ -90,7 +88,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
                     .build();
 
         } finally {
-            session.logout();
+        	this.session.logout();
         }
     }
 
