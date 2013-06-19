@@ -48,16 +48,40 @@ public class DefaultFilter implements EventFilter {
     public boolean apply(final Event event) {
 
         try {
+            if (isJcrEvent(event)) {
+                /*
+                 * Don't request Nodes that are JCR system properties, since
+                 * these are neither Objects nor Datastreams
+                 */
+                return false;
+            }
             final Node resource = session.getNode(event.getPath());
             return isFedoraObject.apply(resource) ||
-                isFedoraDatastream.apply(resource);
-
+                    isFedoraDatastream.apply(resource);
         } catch (final PathNotFoundException e) {
             // not a node in the fedora workspace
             return false;
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
+    }
+
+    /**
+     * Check if an {@link Event} is pointing to a jcr property
+     * @param event the event to check
+     * @return true if the {@link Event} is about a jcr property
+     */
+    private boolean isJcrEvent(final Event event) throws RepositoryException {
+        /* check if start of the path points at a jcr system property */
+        if (event.getPath().startsWith("/jcr:system")) {
+            return true;
+        }
+        /* check if the last path element is a jcr property */
+        if (event.getPath().substring(event.getPath().lastIndexOf('/'))
+                .startsWith("/jcr:")) {
+            return true;
+        }
+        return false;
     }
 
     /**
