@@ -19,6 +19,8 @@
     <jmeter.loop_count>100</jmeter.loop_count>
     <jmeter.num_threads>10</jmeter.num_threads>
     <jmeter.exit.check.pause>2000</jmeter.exit.check.pause>
+    <jmeter.fixtures.dir>${project.build.directory}${file.separator}jmeter${file.separator}fixtures</jmeter.fixtures.dir>
+    <jmeter.log.dir>${project.build.directory}${file.separator}jmeter${file.separator}log</jmeter.log.dir>
   </properties>
 
   <dependencies>
@@ -194,6 +196,8 @@
                 <fedora_4_context>rest</fedora_4_context>
                 <loop_count>${jmeter.loop_count}</loop_count>
                 <num_threads>${jmeter.num_threads}</num_threads>
+                <fixtures>${jmeter.fixtures.dir}</fixtures>
+                <log>${jmeter.log.dir}</log>
               </propertiesUser>
               <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat >
             </configuration>
