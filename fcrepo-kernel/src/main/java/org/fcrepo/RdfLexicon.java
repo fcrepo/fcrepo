@@ -64,7 +64,15 @@ public final class RdfLexicon {
     public static final Property HAS_NODE_TYPE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#hasNodeType");
     public static final Property HAS_MIXIN_TYPE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#mixinTypes");
 
+    public static final Property CREATED_DATE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#created");
+    public static final Property CREATED_BY = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#createdBy");
 
+
+    public static final Property LAST_MODIFIED_DATE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#lastModified");
+    public static final Property LAST_MODIFIED_BY = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#lastModifiedBy");
+
+
+    public static final Property DC_TITLE = ResourceFactory.createProperty("http://purl.org/dc/terms/title");
 
     private RdfLexicon() {
 

@@ -6,11 +6,15 @@
 </head>
 <body>
 
+<h1>Search</h1>
+
 ## output actions
 <div class="actions">
-    <form method="GET">
-        <input type="text" name="q" />
-        <input type="submit" value="search"/>
+    <form class="form-search" method="GET">
+        <div class="input-append">
+            <input class="search-query" type="text" name="q" />
+            <button type="submit" class="btn">Search</button>
+        </div>
     </form>
 </div>
 

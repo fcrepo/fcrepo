@@ -30,6 +30,7 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
@@ -38,6 +39,8 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.session.SessionFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +66,10 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
     @Autowired
     SessionFactory sessionFactory;
+
+    @javax.ws.rs.core.Context
+    UriInfo uriInfo;
+
 
     protected VelocityEngine velocity = new VelocityEngine();
 
@@ -168,11 +175,16 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
         final Template nodeTypeTemplate = getTemplate(rdf, subject, annotations);
 
+        final FieldTool fieldTool = new FieldTool();
+
         final Context context = new VelocityContext();
+        context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
+        context.put("helpers", ViewHelpers.getInstance());
         context.put("rdf", rdf.asDatasetGraph());
         context.put("subjects", rdf.getDefaultModel().listSubjects());
         context.put("nodeany", Node.ANY);
         context.put("topic", subject);
+        context.put("uriInfo", uriInfo);
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it

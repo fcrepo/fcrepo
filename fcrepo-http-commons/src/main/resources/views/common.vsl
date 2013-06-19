@@ -1,3 +1,4 @@
+#* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
 #macro( triples $sub )
     <div resource="$sub.getURI()">
         #if($sub.isURI())
@@ -11,9 +12,10 @@
                 #if($sub.equals($quad.getSubject()))
                     <dt>
                         #if($quad.getPredicate().toString().startsWith("info:fedora/fedora-system:def/internal#") )
-                          fedora:$quad.getPredicate().toString().substring(39)
+                        <span class="namespace muted">fedora</span><span class="divider muted">:</span><span class="localName">$quad.getPredicate().getLocalName()</span>
                         #else
-                          $quad.getPredicate()
+                            <span class="namespace muted">$quad.getPredicate().getNameSpace()</span><span class="divider muted">:</span>
+                            <span class="localName">$quad.getPredicate().getLocalName()</span>
                         #end
 </dt>
                     <dd>

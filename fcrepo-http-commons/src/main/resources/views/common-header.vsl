@@ -4,3 +4,9 @@
 <style type="text/css">
    #include("views/common.css")
 </style>
+<script type="text/javascript">
+   #include("views/bootstrap.min.js")
+</script>
+<style type="text/css">
+   #include("views/bootstrap.min.css")
+</style>
