@@ -79,7 +79,7 @@ public abstract class TestHelpers {
 
         when(ui.getRequestUri()).thenReturn(
 				URI.create("http://localhost/fcrepo"));
-		when(ui.getBaseUri()).thenReturn(URI.create("http://localhost/"));
+		when(ui.getBaseUri()).thenReturn(URI.create("http://localhost/fcrepo"));
 		when(ui.getBaseUriBuilder()).thenAnswer(answer);
 		when(ui.getAbsolutePathBuilder()).thenAnswer(answer);
 
