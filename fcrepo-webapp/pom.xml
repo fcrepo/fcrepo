@@ -183,6 +183,11 @@
               </execution>
             </executions>
             <configuration>
+              <propertiesJMeter>
+                <!-- Extend the period (in ms) JMeter waits for threads to close -->
+                <!-- See: https://github.com/Ronnie76er/jmeter-maven-plugin/issues/56 -->
+                <jmeter.exit.check.pause>5000</jmeter.exit.check.pause>
+              </propertiesJMeter>
               <propertiesUser>
                 <fedora_4_port>${test.port}</fedora_4_port>
                 <fedora_4_context>rest</fedora_4_context>
