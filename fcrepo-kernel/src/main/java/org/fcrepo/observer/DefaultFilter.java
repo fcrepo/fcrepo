@@ -16,14 +16,10 @@
 package org.fcrepo.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
-import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
@@ -55,18 +51,31 @@ public class DefaultFilter implements EventFilter {
      */
     @Override
     public boolean apply(final Event event) {
-
         try {
-            final Node resource = session.getNode(event.getPath());
-            return isFedoraObject.apply(resource) ||
-                isFedoraDatastream.apply(resource);
-
-        } catch (final PathNotFoundException e) {
-            // not a node in the fedora workspace
-            return false;
+            /* check if start of the path points at a jcr system property */
+            return !(isJcrProperty(event) || isJcrSystemProperty(event));
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
+    }
+
+    /**
+     * Check if an {@link Event} is associated with a Jcr property
+     * @param event the {@link Event} to check
+     * @return true if the {@link Event} is a Jcr property
+     */
+    private boolean isJcrProperty(Event event) throws RepositoryException {
+        return event.getPath().substring(event.getPath().lastIndexOf('/'))
+                .startsWith("/jcr:");
+    }
+
+    /**
+     * Check if an {@link Event} is associated with a Jcr system property
+     * @param event the {@link Event} to check
+     * @return true if the {@link Event} is a Jcr system property
+     */
+    private boolean isJcrSystemProperty(Event event) throws RepositoryException {
+        return event.getPath().startsWith("/jcr:system");
     }
 
     /**
