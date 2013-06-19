@@ -18,6 +18,7 @@
     <!-- jmeter -->
     <jmeter.loop_count>100</jmeter.loop_count>
     <jmeter.num_threads>10</jmeter.num_threads>
+    <jmeter.exit.check.pause>2000</jmeter.exit.check.pause>
   </properties>
 
   <dependencies>
@@ -186,7 +187,7 @@
               <propertiesJMeter>
                 <!-- Extend the period (in ms) JMeter waits for threads to close -->
                 <!-- See: https://github.com/Ronnie76er/jmeter-maven-plugin/issues/56 -->
-                <jmeter.exit.check.pause>5000</jmeter.exit.check.pause>
+                <jmeter.exit.check.pause>${jmeter.exit.check.pause}</jmeter.exit.check.pause>
               </propertiesJMeter>
               <propertiesUser>
                 <fedora_4_port>${test.port}</fedora_4_port>
