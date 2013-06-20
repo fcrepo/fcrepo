@@ -62,13 +62,13 @@ public class FedoraWebhooksTest {
         testObj.setReadOnlySessionSession(mockSession);
         SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
-        testObj.setSessionFactory(mockSessions);
+        TestHelpers.setField(testObj, "sessions", mockSessions);
     }
 
     @Test
     public void testInitialize() throws Exception {
         EventBus mockBus = mock(EventBus.class);
-        testObj.setEventBus(mockBus);
+        TestHelpers.setField(testObj, "eventBus", mockBus);
         testObj.initialize();
         verify(mockBus).register(testObj);
     }

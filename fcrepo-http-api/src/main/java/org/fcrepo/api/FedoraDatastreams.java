@@ -266,8 +266,4 @@ public class FedoraDatastreams extends AbstractResource {
             session.logout();
         }
     }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
 }

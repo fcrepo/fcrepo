@@ -151,9 +151,4 @@ public class FedoraFieldSearch extends AbstractResource implements
             session.logout();
         }
     }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

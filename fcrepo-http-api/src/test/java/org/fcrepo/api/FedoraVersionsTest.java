@@ -22,6 +22,7 @@ import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 
 import java.io.IOException;
 
+import javax.jcr.RepositoryException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -29,8 +30,6 @@ import javax.ws.rs.core.Variant;
 
 import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 
-import javax.jcr.LoginException;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.FedoraResource;
@@ -60,14 +59,14 @@ public class FedoraVersionsTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
 
         testObj = new FedoraVersions();
         mockNodes = mock(NodeService.class);
-        testObj.setNodeService(mockNodes);
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());        
+        TestHelpers.setField(testObj, "nodeService", mockNodes);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @Test

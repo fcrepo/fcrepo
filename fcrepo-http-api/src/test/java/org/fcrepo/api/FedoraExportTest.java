@@ -52,7 +52,7 @@ public class FedoraExportTest {
     ObjectService mockObjects;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws Exception {
 
         testObj = new FedoraExport();
 
@@ -62,10 +62,11 @@ public class FedoraExportTest {
         when(mockSerializers.getSerializer("fake-format")).thenReturn(
                 mockSerializer);
         mockObjects = mock(ObjectService.class);
-        testObj.setSerializers(mockSerializers);
-        testObj.setObjectService(mockObjects);
-        testObj.setSession(mockSession);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "objectService", mockObjects);
+        TestHelpers.setField(testObj, "serializers", mockSerializers);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
+        mockSession = TestHelpers.mockSession(testObj);
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @Test

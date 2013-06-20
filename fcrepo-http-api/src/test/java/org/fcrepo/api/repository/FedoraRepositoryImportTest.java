@@ -22,8 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.serialization.FedoraObjectSerializer;
@@ -41,15 +41,15 @@ public class FedoraRepositoryImportTest {
     SerializerUtil mockSerializers;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws Exception {
 
         testObj = new FedoraRepositoryImport();
-
         mockSession = TestHelpers.mockSession(testObj);
         mockSerializers = mock(SerializerUtil.class);
-        testObj.setSerializers(mockSerializers);
-        testObj.setSession(mockSession);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+
+        TestHelpers.setField(testObj, "serializers", mockSerializers);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @Test

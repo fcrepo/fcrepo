@@ -61,7 +61,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * JAX-RS Resource offering PID creation.
- * 
+ *
  * @author ajs6f
  * @author cbeer
  */
@@ -118,9 +118,4 @@ public class FedoraIdentifiers extends AbstractResource {
         return create(model).toDataset();
 
     }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

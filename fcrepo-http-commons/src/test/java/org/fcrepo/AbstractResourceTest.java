@@ -32,6 +32,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.PathSegmentImpl;
+import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.NamespaceTools;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,23 +66,23 @@ public class AbstractResourceTest {
     }
 
     @Test
-    public void testSetPidMinter() {
+    public void testSetPidMinter()throws Exception {
         PidMinter mockPids = mock(PidMinter.class);
-        testObj.setPidMinter(mockPids);
+        TestHelpers.setField(testObj, "pidMinter", mockPids);
         assertEquals(mockPids, testObj.pidMinter);
     }
 
     @Test
-    public void testSetNodeService() {
+    public void testSetNodeService() throws Exception{
         NodeService mockNodes = mock(NodeService.class);
-        testObj.setNodeService(mockNodes);
+        TestHelpers.setField(testObj, "nodeService", mockNodes);
         assertEquals(mockNodes, testObj.nodeService);
     }
 
     @Test
-    public void testSetUriInfo() {
+    public void testSetUriInfo() throws Exception{
         UriInfo mockUris = mock(UriInfo.class);
-        testObj.setUriInfo(mockUris);
+        TestHelpers.setField(testObj, "uriInfo", mockUris);
         assertEquals(mockUris, testObj.uriInfo);
     }
 
