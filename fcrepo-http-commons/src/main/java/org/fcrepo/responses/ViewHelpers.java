@@ -106,7 +106,7 @@ public class ViewHelpers {
            LOGGER.trace("Adding breadcrumb for path segment {} => {}", path, uri);
 
 
-           builder.put(path, uri);
+           builder.put(uri, path);
 
            cumulativePath.append("/");
 

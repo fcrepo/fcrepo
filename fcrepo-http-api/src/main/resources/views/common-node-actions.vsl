@@ -1,0 +1,21 @@
+
+<form id="action_create">
+    <h3>Create New Node</h3>
+    <label>
+        Type
+    <select id="new_mixin">
+        <option value="">folder</option>
+        <option value="fedora:object">object</option>
+        <option value="fedora:datastream">datastream</option>
+    </select>
+    </label>
+    <label>
+        Identifier
+    <input type="text" id="new_id" placeholder="identifier"/>
+    </label>
+    <button type="submit" class="btn btn-primary">Add</button>
+</form>
+<hr />
+<form id="action_delete" action="javascript:deleteItem()">
+    <button type="submit" class="btn btn-danger">Delete</button>
+</form>

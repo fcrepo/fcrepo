@@ -4,10 +4,10 @@
 <ul class="breadcrumb">
     <li><a href="$uriInfo.getBaseUri()">Home</a> <span class="divider">/</span></li>
     #foreach($entry in $breadcrumbs.entrySet())
-        #if ($entry.getValue() == $uriInfo.getAbsolutePath().toString())
-            <li class="active">$entry.getKey()</li>
+        #if ($entry.getKey() == $uriInfo.getAbsolutePath().toString())
+            <li class="active">$entry.getValue()</li>
         #else
-            <li ><a href="$entry.getValue()">$entry.getKey()</a> <span class="divider">/</span></li>
+            <li ><a href="$entry.getKey()">$entry.getValue()</a> <span class="divider">/</span></li>
         #end
     #end
 </ul>

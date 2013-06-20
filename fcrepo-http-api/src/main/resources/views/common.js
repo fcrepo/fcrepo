@@ -1,24 +1,34 @@
 
 function addChild()
 {
-    var id = document.getElementById("new_id").value;
-    var mixin = document.getElementById("new_mixin").value;
-    var newURI = window.location + "/" + id;
+    var id = $("#new_id").val().trim();
+
+    if ( id == "") {
+        id = "fcr:new";
+    }
+
+    var mixin = $("#new_mixin").val();
+
+    var newURI = $('#main').attr('resource') + "/" + id;
+
     if ( mixin != '' ) {
         var postURI = newURI + "?mixin=" + mixin;
     } else {
         var postURI = newURI;
     }
 
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4) {
-            window.location = newURI;
-        }
-    }
-    xhr.open('POST',postURI,true);
-    xhr.send(null);
+    $.post(postURI, function(data, textStatus, request) {
+        window.location = request.getResponseHeader('Location');
+    });
+
+    return false;
 }
+
+$(function() {
+$('#action_create').submit(addChild);
+
+});
+
 function deleteItem()
 {
     var uri = window.location;

@@ -7,8 +7,8 @@
 </head>
 
 
-<body>
-<div class="container" resource="$topic.getURI()">
+<body class="nt_resource">
+<div  id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
 
 
@@ -40,6 +40,7 @@
 
         <div class="span3">
         ## output actions
+        #parse("views/common-node-actions.vsl")
         </div>
 
     </div>
