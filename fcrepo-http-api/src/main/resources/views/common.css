@@ -13,3 +13,7 @@ body { padding-top: 40px; }
     text-indent: -35px;
     padding-left: 54px;
 }
+
+#datastream_payload {
+    display: none;
+}

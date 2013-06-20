@@ -1,10 +1,13 @@
 
 function addChild()
 {
-    var id = $("#new_id").val().trim();
+    var id;
+    var userSuppliedId = $("#new_id").val().trim();
 
-    if ( id == "") {
+    if ( userSuppliedId == "") {
         id = "fcr:new";
+    } else {
+        id = userSuppliedId;
     }
 
     var mixin = $("#new_mixin").val();
@@ -17,14 +20,56 @@ function addChild()
         var postURI = newURI;
     }
 
-    $.post(postURI, function(data, textStatus, request) {
-        window.location = request.getResponseHeader('Location');
-    });
+    if (mixin == "fedora:datastream") {
+        var update_file = document.getElementById("update_file").files[0];
+        var reader = new FileReader();
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                var loc = xhr.getResponseHeader('Location').replace("/fcr:content", "");
+
+                if (loc != null) {
+                    window.location = loc;
+                } else {
+                    window.location.reload();
+                }
+            }
+        }
+
+        if (userSuppliedId == "") {
+            xhr.open( "POST", newURI + "/fcr:content" );
+        } else {
+            xhr.open( "PUT", newURI + "/fcr:content" );
+        }
+
+        xhr.setRequestHeader("Content-type", update_file.type || "application/octet-stream");
+        reader.onload = function(e) {
+            var result = e.target.result;
+            var data = new Uint8Array(result.length);
+            for (var i = 0; i < result.length; i++) {
+                data[i] = (result.charCodeAt(i) & 0xff);
+            }
+            xhr.send(data.buffer);
+        };
+        reader.readAsBinaryString(update_file);
+    } else {
+        $.post(postURI, function(data, textStatus, request) {
+            window.location = request.getResponseHeader('Location');
+        });
+    }
 
     return false;
 }
 
 $(function() {
+    $('#new_mixin').change(function() {
+        if($('#new_mixin').val() == "fedora:datastream") {
+            $('#datastream_payload').show();
+        } else {
+            $('#datastream_payload').hide();
+        }
+    });
+
     $('#action_create').submit(addChild);
     $('#action_sparql_update').submit(sendSparqlUpdate);
     $('#action_delete').submit(deleteItem);

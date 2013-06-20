@@ -13,6 +13,12 @@
         Identifier
     <input type="text" id="new_id" placeholder="identifier"/>
     </label>
+
+
+    <label id="datastream_payload">
+        File
+    <input type="file" id="update_file"/>
+    </label>
     <button type="submit" class="btn btn-primary">Add</button>
 </form>
 
