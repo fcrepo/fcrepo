@@ -1,6 +1,5 @@
 #* @vtlvariable name="uriInfo" type="javax.ws.rs.core.UriInfo" *#
 
-<div class="container">
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
         <div class="container">
@@ -18,4 +17,3 @@
         </div>
         </div>
     </div>
-</div>

@@ -9,17 +9,39 @@
     #parse("views/common-head.vsl")
 </head>
 <body>
-<div class="container"">
+<div id="main" class="container" resource="$uriInfo.baseUriBuilder.build()fcr:namespaces">
     #parse("views/common-header.vsl")
 
-<h1>Registered Namespaces</h1>
+    <div class="row">
+<div class="span9">
+<h1>Namespaces</h1>
 
 ## output other nodes
     #foreach($subject in $subjects)
         <div class="well" resource="$subject.getURI()">
+            <h3>$subject.getURI()</h3>
             #triples($subject.asNode())
         </div>
     #end
 </div>
+
+<div class="span3">
+    <form id="action_register_namespace">
+        <h3>Register Namespace</h3>
+        <label>
+            Prefix
+            <input type="text" name="prefix" id="namespace_prefix"/>
+        </label>
+
+
+        <label>
+            URI
+            <input type="text" name="uri" id="namespace_uri"/>
+        </label>
+
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+</div>
+    </div>
 </body>
 </html>

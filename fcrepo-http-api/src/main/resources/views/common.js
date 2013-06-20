@@ -72,9 +72,25 @@ $(function() {
 
     $('#action_create').submit(addChild);
     $('#action_sparql_update').submit(sendSparqlUpdate);
+    $('#action_register_namespace').submit(registerNamespace);
     $('#action_delete').submit(deleteItem);
 
 });
+
+
+function registerNamespace() {
+    var postURI = $('#main').attr('resource');
+
+
+    var query = "INSERT { <" + $('#namespace_uri').val() + "> <info:fedora/fedora-system:def/internal#hasNamespace> \"" + $('#namespace_prefix').val() + "\"} WHERE {}";
+
+
+    $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: query, success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }});
+
+    return false;
+}
 
 function sendSparqlUpdate() {
     var postURI = $('#main').attr('resource');
