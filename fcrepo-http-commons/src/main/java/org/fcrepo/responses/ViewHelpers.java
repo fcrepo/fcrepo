@@ -2,6 +2,7 @@ package org.fcrepo.responses;
 
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
@@ -109,4 +110,14 @@ public class ViewHelpers {
        return builder.build();
 
    }
+
+    public String getNamespacePrefix(final Model model, final String namespace) {
+        final String nsURIPrefix = model.getNsURIPrefix(namespace);
+
+        if (nsURIPrefix == null) {
+            return namespace;
+        } else {
+            return nsURIPrefix + ":";
+        }
+    }
 }

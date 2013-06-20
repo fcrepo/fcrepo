@@ -181,6 +181,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
         context.put("helpers", ViewHelpers.getInstance());
         context.put("rdf", rdf.asDatasetGraph());
+        context.put("model", rdf.getDefaultModel());
         context.put("subjects", rdf.getDefaultModel().listSubjects());
         context.put("nodeany", Node.ANY);
         context.put("topic", subject);

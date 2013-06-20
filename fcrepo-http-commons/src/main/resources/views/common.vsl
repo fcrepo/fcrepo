@@ -1,4 +1,6 @@
 #* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
 #macro( triples $sub )
     <div resource="$sub.getURI()">
         #if($sub.isURI())
@@ -11,12 +13,8 @@
             #foreach($quad in $rdf.find($nodeany, $nodeany, $nodeany, $nodeany))
                 #if($sub.equals($quad.getSubject()))
                     <dt>
-                        #if($quad.getPredicate().toString().startsWith("info:fedora/fedora-system:def/internal#") )
-                        <span class="namespace muted">fedora</span><span class="divider muted">:</span><span class="localName">$quad.getPredicate().getLocalName()</span>
-                        #else
-                            <span class="namespace muted">$quad.getPredicate().getNameSpace()</span><span class="divider muted">:</span>
-                            <span class="localName">$quad.getPredicate().getLocalName()</span>
-                        #end
+                            <span class="namespace muted">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace())</span><span class="localName">$quad.getPredicate().getLocalName()</span>
+
 </dt>
                     <dd>
                         #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
