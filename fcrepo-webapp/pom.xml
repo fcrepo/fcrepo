@@ -23,7 +23,7 @@
     <jmeter.log.dir>${project.build.directory}${file.separator}jmeter${file.separator}log</jmeter.log.dir>
   
     <!-- sonar -->
-    <sonar.artifact.path>${project.build.directory}${file.separator}${artifactId}.war</sonar.artifact.path>
+    <sonar.artifact.path>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.war</sonar.artifact.path>
   </properties>
 
   <dependencies>
