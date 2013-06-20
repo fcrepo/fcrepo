@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
@@ -35,20 +36,45 @@ public class ViewHelpers {
         return instance;
     }
 
+    /**
+     * Return an iterator of Quads that match the given subject and predicate
+     * @param dataset
+     * @param subject
+     * @param predicate
+     * @return
+     */
     public Iterator<Quad> getObjects(final DatasetGraph dataset, final Node subject, final Resource predicate) {
         return dataset.find(Node.ANY, subject, predicate.asNode(), Node.ANY);
     }
 
+    /**
+     * Get the canonical title of a subject from the graph
+     * @param dataset
+     * @param subject
+     * @return
+     */
     public String getObjectTitle(final DatasetGraph dataset, final Node subject) {
-        final Iterator<Quad> objects = getObjects(dataset, subject, RdfLexicon.DC_TITLE);
 
-        if (objects.hasNext()) {
-            return objects.next().getObject().getLiteralValue().toString();
-        } else {
-            return subject.getURI();
+        Property[] properties = new Property[] { RdfLexicon.RDFS_LABEL, RdfLexicon.DC_TITLE };
+
+        for (Property p : properties) {
+            final Iterator<Quad> objects = getObjects(dataset, subject, p);
+
+            if (objects.hasNext()) {
+                return objects.next().getObject().getLiteralValue().toString();
+            }
         }
+
+        return subject.getURI();
     }
 
+    /**
+     * Get the string version of the object that matches the given subject and predicate
+     * @param dataset
+     * @param subject
+     * @param predicate
+     * @return
+     */
     public String getObjectsAsString(final DatasetGraph dataset, final Node subject, final Resource predicate) {
         final Iterator<Quad> iterator = getObjects(dataset, subject, predicate);
 
@@ -72,6 +98,12 @@ public class ViewHelpers {
         }
     }
 
+    /**
+     * Generate url -> local name breadcrumbs for a given node's tree
+     * @param uriInfo
+     * @param subject
+     * @return
+     */
    public Map<String, String> getNodeBreadcrumbs(final UriInfo uriInfo, final Node subject) {
        final String topic = subject.getURI();
 
@@ -116,10 +148,22 @@ public class ViewHelpers {
 
    }
 
+    /**
+     * Sort a Iterator of Quads alphabetically by its subject, predicate, and object
+     * @param model
+     * @param it
+     * @return
+     */
     public List<Quad> getSortedTriples(final Model model, final Iterator<Quad> it) {
         return Ordering.from(new QuadOrdering(model)).sortedCopy(ImmutableList.copyOf(it));
     }
 
+    /**
+     * Get the namespace prefix (or the namespace URI itself, if no prefix is available) from a prefix mapping
+     * @param mapping
+     * @param namespace
+     * @return
+     */
     public String getNamespacePrefix(final PrefixMapping mapping, final String namespace) {
         final String nsURIPrefix = mapping.getNsURIPrefix(namespace);
 
@@ -128,6 +172,24 @@ public class ViewHelpers {
         } else {
             return nsURIPrefix + ":";
         }
+    }
+
+    /**
+     * Get a prefix preamble appropriate for a SPARQL-UPDATE query from a prefix mapping object
+     * @param mapping
+     * @return
+     */
+    public String getPrefixPreamble(final PrefixMapping mapping) {
+        StringBuilder sb = new StringBuilder();
+
+        final Map<String, String> nsPrefixMap = mapping.getNsPrefixMap();
+
+        for (Map.Entry<String, String> entry : nsPrefixMap.entrySet()) {
+            sb.append("PREFIX " + entry.getKey() + ": <" + entry.getValue() + ">\n");
+        }
+
+        sb.append("\n");
+        return sb.toString();
     }
 
 }

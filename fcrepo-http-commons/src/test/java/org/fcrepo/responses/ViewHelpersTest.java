@@ -118,4 +118,16 @@ public class ViewHelpersTest {
         sortedTriples.get(4).matches(Node.ANY, resourceB.asNode(), propertyC.asNode(), literalA.asNode());
 
     }
+
+    @Test
+    public void shouldConvertPrefixMappingToSparqlUpdatePrefixPreamble() {
+
+        final Model model = ModelFactory.createDefaultModel();
+
+        model.setNsPrefix("prefix", "namespace");
+
+        final String prefixPreamble = testObj.getPrefixPreamble(model);
+
+        assertEquals("PREFIX prefix: <namespace>\n\n", prefixPreamble);
+    }
 }

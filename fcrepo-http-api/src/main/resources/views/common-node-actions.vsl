@@ -20,7 +20,8 @@
 
 <form id="action_sparql_update">
     <h3>Update Properties</h3>
-    <textarea class="span3" rows="5" id="sparql_update_query" name="query">
+    <textarea class="span3" rows="10" id="sparql_update_query" name="query">
+$helpers.getPrefixPreamble($model)
 DELETE { }
 INSERT { }
 WHERE { }
