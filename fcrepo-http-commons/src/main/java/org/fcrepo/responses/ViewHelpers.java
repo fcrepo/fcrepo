@@ -1,16 +1,21 @@
 package org.fcrepo.responses;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Ordering;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 import org.fcrepo.RdfLexicon;
+import org.fcrepo.api.rdf.QuadOrdering;
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -111,8 +116,12 @@ public class ViewHelpers {
 
    }
 
-    public String getNamespacePrefix(final Model model, final String namespace) {
-        final String nsURIPrefix = model.getNsURIPrefix(namespace);
+    public List<Quad> getSortedTriples(final Model model, final Iterator<Quad> it) {
+        return Ordering.from(new QuadOrdering(model)).sortedCopy(ImmutableList.copyOf(it));
+    }
+
+    public String getNamespacePrefix(final PrefixMapping mapping, final String namespace) {
+        final String nsURIPrefix = mapping.getNsURIPrefix(namespace);
 
         if (nsURIPrefix == null) {
             return namespace;
