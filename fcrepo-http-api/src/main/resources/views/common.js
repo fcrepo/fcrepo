@@ -25,26 +25,36 @@ function addChild()
 }
 
 $(function() {
-$('#action_create').submit(addChild);
+    $('#action_create').submit(addChild);
+    $('#action_sparql_update').submit(sendSparqlUpdate);
+    $('#action_delete').submit(deleteItem);
 
 });
 
+function sendSparqlUpdate() {
+    var postURI = $('#main').attr('resource');
+
+
+    $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: $("#sparql_update_query").val(), success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }});
+
+    return false;
+}
+
 function deleteItem()
 {
-    var uri = window.location;
+    var uri = $('#main').attr('resource');
     var arr = uri.toString().split("/");
     arr.pop();
     var newURI = arr.join("/");
 
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4) {
-            window.location = newURI;
-        }
-    }
-    xhr.open('DELETE',uri,true);
-    xhr.send(null);
+    $.ajax({url: uri, type: "DELETE", success: function() {
+        window.location = request.getResponseHeader(newURI);
+    }});
+    return false;
 }
+
 function updateFile()
 {
     var update_file = document.getElementById("update_file").files[0];

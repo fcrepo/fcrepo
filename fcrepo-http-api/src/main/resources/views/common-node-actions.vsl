@@ -15,7 +15,22 @@
     </label>
     <button type="submit" class="btn btn-primary">Add</button>
 </form>
+
 <hr />
+
+<form id="action_sparql_update">
+    <h3>Update Properties</h3>
+    <textarea class="span3" rows="5" id="sparql_update_query" name="query">
+DELETE { }
+INSERT { }
+WHERE { }
+ </textarea>
+    <button type="submit" class="btn btn-primary">Update</button>
+</form>
+
+<hr />
+
 <form id="action_delete" action="javascript:deleteItem()">
+    <h3>Delete Object</h3>
     <button type="submit" class="btn btn-danger">Delete</button>
 </form>

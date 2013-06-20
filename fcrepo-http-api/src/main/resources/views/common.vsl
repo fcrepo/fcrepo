@@ -5,7 +5,7 @@
         <dl>
             #foreach($quad in $helpers.getSortedTriples($model, $rdf.find($nodeany, $sub, $nodeany, $nodeany)))
                     <dt>
-                            <span class="namespace muted">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace())</span><span class="localName">$quad.getPredicate().getLocalName()</span>
+                            <span class="namespace muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace())</span><span class="localName">$quad.getPredicate().getLocalName()</span>
 
 </dt>
                     <dd>
