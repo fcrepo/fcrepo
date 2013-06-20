@@ -41,7 +41,7 @@ public class ViewHelpersTest {
 
         final Map<String,String> nodeBreadcrumbs = testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory.createResource("http://localhost/fcrepo/a/b/c").asNode());
 
-        assertEquals(ImmutableMap.of("a", "http://localhost/fcrepo/a", "b", "http://localhost/fcrepo/a/b", "c", "http://localhost/fcrepo/a/b/c"), nodeBreadcrumbs);
+        assertEquals(ImmutableMap.of("http://localhost/fcrepo/a", "a", "http://localhost/fcrepo/a/b", "b", "http://localhost/fcrepo/a/b/c", "c"), nodeBreadcrumbs);
     }
 
     @Test
