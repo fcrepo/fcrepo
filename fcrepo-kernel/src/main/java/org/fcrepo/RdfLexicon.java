@@ -72,6 +72,7 @@ public final class RdfLexicon {
     public static final Property LAST_MODIFIED_BY = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#lastModifiedBy");
 
 
+    public static final Property RDFS_LABEL = ResourceFactory.createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE = ResourceFactory.createProperty("http://purl.org/dc/terms/title");
 
     private RdfLexicon() {
