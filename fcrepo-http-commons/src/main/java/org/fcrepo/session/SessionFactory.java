@@ -135,6 +135,11 @@ public class SessionFactory {
 
     private String getEmbeddedWorkspace(final HttpServletRequest servletRequest) {
         final String requestPath = servletRequest.getPathInfo();
+
+        if (requestPath == null) {
+            return null;
+        }
+
         final String[] part = requestPath.split("/");
 
         if (part.length > 1 && part[1].startsWith("workspace:")) {
@@ -142,10 +147,16 @@ public class SessionFactory {
         } else {
             return null;
         }
+
     }
 
     private Transaction getEmbeddedTransaction(final HttpServletRequest servletRequest) throws PathNotFoundException {
         final String requestPath = servletRequest.getPathInfo();
+
+        if (requestPath == null) {
+            return null;
+        }
+
         final String[] part = requestPath.split("/");
 
         if (part.length > 1 && part[1].startsWith("tx:")) {

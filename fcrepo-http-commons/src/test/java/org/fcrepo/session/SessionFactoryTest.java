@@ -44,6 +44,18 @@ public class SessionFactoryTest {
     }
 
     @Test
+    public void testGetSessionWithNullPath() throws LoginException,
+                                                             RepositoryException {
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        when(mockRequest.getPathInfo()).thenReturn(null);
+
+        testObj.getSession(mockRequest);
+        verify(mockRepo).login();
+    }
+
+
+
+    @Test
     public void testGetSessionAuthenticated() throws LoginException,
             RepositoryException {
         final SecurityContext mockContext = mock(SecurityContext.class);
