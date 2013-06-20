@@ -50,7 +50,7 @@ function deleteItem()
     var newURI = arr.join("/");
 
     $.ajax({url: uri, type: "DELETE", success: function() {
-        window.location = request.getResponseHeader(newURI);
+        window.location = newURI;
     }});
     return false;
 }
