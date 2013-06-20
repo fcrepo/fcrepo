@@ -2,16 +2,8 @@
 #* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
 #* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
 #macro( triples $sub )
-    <div resource="$sub.getURI()">
-        #if($sub.isURI())
-            <h2><a href="$sub.getURI()">$sub</a></h2>
-        #else
-            <h2>$sub.getURI()</h2>
-        #end
-
         <dl>
-            #foreach($quad in $rdf.find($nodeany, $nodeany, $nodeany, $nodeany))
-                #if($sub.equals($quad.getSubject()))
+            #foreach($quad in $rdf.find($nodeany, $sub, $nodeany, $nodeany))
                     <dt>
                             <span class="namespace muted">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace())</span><span class="localName">$quad.getPredicate().getLocalName()</span>
 
@@ -26,11 +18,10 @@
                             <a href="$topic/fcr:fixity">check fixity</a>
                         #end
                     </dd>
-                #end
             #end
         </dl>
-    </div>
 #end
+
 #macro( isObject $sub )
 #set($type = $anynode.createURI("info:fedora/fedora-system:def/internal#mixinTypes"))
 #set($object = $anynode.createLiteral("fedora:object"))

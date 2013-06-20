@@ -12,6 +12,8 @@ import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -84,5 +86,21 @@ public class RdfSerializationUtils {
                                     lastModifiedinXSDStyle));
             httpHeaders.put("Last-Modified", of((Object) lastModified));
         }
+    }
+
+    static Model unifyDatasetModel(final Dataset dataset) {
+        final Iterator<String> iterator = dataset.listNames();
+        Model model = ModelFactory.createDefaultModel();
+
+        model = model.union(dataset.getDefaultModel());
+
+        while (iterator.hasNext()) {
+            final String modelName = iterator.next();
+            logger.debug("Serializing model {}", modelName);
+            model = model.union(dataset.getNamedModel(modelName));
+        }
+
+        model.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
+        return model;
     }
 }

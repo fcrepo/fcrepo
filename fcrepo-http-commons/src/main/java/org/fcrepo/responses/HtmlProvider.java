@@ -9,6 +9,7 @@ import static org.fcrepo.responses.RdfSerializationUtils.getDatasetSubject;
 import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.setCachingHeaders;
+import static org.fcrepo.responses.RdfSerializationUtils.unifyDatasetModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -181,8 +183,11 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
         context.put("helpers", ViewHelpers.getInstance());
         context.put("rdf", rdf.asDatasetGraph());
-        context.put("model", rdf.getDefaultModel());
-        context.put("subjects", rdf.getDefaultModel().listSubjects());
+
+        Model model = unifyDatasetModel(rdf);
+
+        context.put("model", model);
+        context.put("subjects", model.listSubjects());
         context.put("nodeany", Node.ANY);
         context.put("topic", subject);
         context.put("uriInfo", uriInfo);

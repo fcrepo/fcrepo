@@ -2,6 +2,7 @@
 package org.fcrepo.responses;
 
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
+import static org.fcrepo.responses.RdfSerializationUtils.unifyDatasetModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -45,19 +46,8 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     public void write(final OutputStream out) throws IOException,
             WebApplicationException {
         LOGGER.debug("Serializing graph  as {}", format);
-        final Iterator<String> iterator = dataset.listNames();
         LOGGER.debug("Serializing default model");
-        Model model = ModelFactory.createDefaultModel();
-
-        model = model.union(dataset.getDefaultModel());
-
-        while (iterator.hasNext()) {
-            final String modelName = iterator.next();
-            LOGGER.debug("Serializing model {}", modelName);
-            model = model.union(dataset.getNamedModel(modelName));
-        }
-
-        model.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
+        Model model = unifyDatasetModel(dataset);
 
         model.write(out, format);
     }
