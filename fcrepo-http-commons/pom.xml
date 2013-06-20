@@ -66,22 +66,22 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
-        <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-http-server</artifactId>
-        <scope>test</scope>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http-server</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-http-servlet</artifactId>
-        <scope>test</scope>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http-servlet</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
@@ -93,11 +93,11 @@
       <artifactId>jersey-grizzly2-servlet</artifactId>
       <scope>test</scope>
     </dependency>
-      <dependency>
-    	<groupId>com.sun.jersey.jersey-test-framework</groupId>
-    	<artifactId>jersey-test-framework-grizzly2</artifactId>
-    	<scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>com.sun.jersey.jersey-test-framework</groupId>
+      <artifactId>jersey-test-framework-grizzly2</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
@@ -130,7 +130,6 @@
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity</artifactId>
-      <version>1.7</version>
     </dependency>
     <dependency>
       <groupId>javax.annotation</groupId>
@@ -138,20 +137,67 @@
       <version>1.2-b04</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity-tools</artifactId>
       <version>2.0</version>
       <exclusions>
-      <exclusion>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-      </exclusion>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>dom4j</groupId>
           <artifactId>dom4j</artifactId>
         </exclusion>
+        <!-- velocity is already bringing in commons-collections-3.2.1, whereas velocity-tools 
+          is bringing in 3.2 -->
+        <exclusion>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-digester</groupId>
+          <artifactId>commons-digester</artifactId>
+        </exclusion>
+        <!-- modeshape-web-cmis brings in antlr:2.7.7, whereas
+        velocity-tools is bringing in 2.7.2 -->
+        <exclusion>
+          <groupId>antlr</groupId>
+          <artifactId>antlr</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    
+    <!-- commons-digester-1.8 is explicitly added here because of a dependency 
+    convergence issue in velocity-tools. If/when velocity-tools gets its 
+    version of commons-digester in sync across its dependencies, the exclusion 
+    on commons-digester may be removed along with the explicit dependency 
+    declaration below -->
+    <dependency>
+      <groupId>commons-digester</groupId>
+      <artifactId>commons-digester</artifactId>
+      <version>1.8</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <!-- antlr-2.7.7 is explicitly added here because of a dependency convergence
+    issue between modeshape-web-cmis and velocity-tools. If/when the two get in 
+    line, the exclusion on velocity-tools and this explicit dependency may be removed -->
+    <dependency>
+      <groupId>antlr</groupId>
+      <artifactId>antlr</artifactId>
+      <version>2.7.7</version>
     </dependency>
   </dependencies>
 

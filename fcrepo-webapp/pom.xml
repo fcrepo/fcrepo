@@ -21,6 +21,9 @@
     <jmeter.exit.check.pause>2000</jmeter.exit.check.pause>
     <jmeter.fixtures.dir>${project.build.directory}${file.separator}jmeter${file.separator}fixtures</jmeter.fixtures.dir>
     <jmeter.log.dir>${project.build.directory}${file.separator}jmeter${file.separator}log</jmeter.log.dir>
+  
+    <!-- sonar -->
+    <sonar.artifact.path>${project.build.directory}${file.separator}${artifactId}.war</sonar.artifact.path>
   </properties>
 
   <dependencies>
@@ -28,31 +31,26 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-audit</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-jms</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-generator-dc</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey.contribs</groupId>
@@ -79,6 +77,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
+          <attachClasses>true</attachClasses>
           <systemPropertyVariables>
             <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
