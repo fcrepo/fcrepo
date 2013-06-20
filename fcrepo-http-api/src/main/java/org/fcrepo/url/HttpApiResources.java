@@ -10,6 +10,7 @@ import static org.fcrepo.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_VERSION_HISTORY;
+import static org.fcrepo.RdfLexicon.RDFS_LABEL;
 
 import java.util.Map;
 
@@ -78,9 +79,11 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         for (final String key : serializers.keySet()) {
             final Map<String, String> pathMap =
                     of("path", resource.getPath().substring(1));
-            model.add(s, HAS_SERIALIZATION, model.createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraExport.class).queryParam("format", key)
-                    .buildFromMap(pathMap).toASCIIString()));
+            final Resource format = model.createResource(uriInfo
+                                                                 .getBaseUriBuilder().path(FedoraExport.class).queryParam("format", key)
+                                                                 .buildFromMap(pathMap).toASCIIString());
+            model.add(s, HAS_SERIALIZATION, format);
+            model.add(format, RDFS_LABEL, key);
         }
 
         // fcr:versions

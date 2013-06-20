@@ -41,3 +41,22 @@ WHERE { }
     <h3>Delete Object</h3>
     <button type="submit" class="btn btn-danger">Delete</button>
 </form>
+
+<hr />
+
+#set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+
+#if($serializations.hasNext())
+<div class="btn-group">
+    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+        Export as...
+        <span class="caret"></span>
+    </a>
+
+    <ul class="dropdown-menu">
+    #foreach($quad in $helpers.getSortedTriples($model, $serializations))
+      <li><a href="$quad.getObject().getURI()">$helpers.getObjectTitle($rdf, $quad.getObject())</a></li>
+    #end
+    </ul>
+</div>
+#end

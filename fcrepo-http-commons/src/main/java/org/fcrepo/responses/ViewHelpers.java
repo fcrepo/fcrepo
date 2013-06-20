@@ -192,4 +192,8 @@ public class ViewHelpers {
         return sb.toString();
     }
 
+
+    public Node asNode(final Resource r) {
+        return r.asNode();
+    }
 }
