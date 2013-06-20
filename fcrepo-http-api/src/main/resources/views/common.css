@@ -8,3 +8,8 @@ body { padding-top: 40px; }
 .nt_file #action_create, .nt_resource #action_create {
     display: none;
 }
+
+.well {
+    text-indent: -35px;
+    padding-left: 54px;
+}
