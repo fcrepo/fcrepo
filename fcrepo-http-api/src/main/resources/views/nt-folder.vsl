@@ -1,0 +1,66 @@
+#set( $title = $topic )
+
+#parse("views/common.vsl")
+<html>
+<head>
+    #parse("views/common-head.vsl")
+</head>
+
+
+<body>
+<div class="container" resource="$topic.getURI()">
+    #parse("views/common-node-header.vsl")
+
+
+    <div class="row">
+        <div class="span9">
+
+
+            #parse("views/common-breadcrumb.vsl")
+
+
+            #parse("views/common-metadata.vsl")
+
+        ## output triples for the topic node
+            <div class="well">
+                #triples($topic)
+            </div>
+
+        ## output other nodes
+
+            <h2>Triples for other nodes</h2>
+            #foreach($subject in $model.listSubjects())
+                #if( $subject != $topic )
+                    <div class="well" resource="$subject.getURI()">
+                        <h3><a href="$subject.getURI()">$helpers.getObjectTitle($rdf, $subject.asNode())</a></h3>
+                        #triples($subject.asNode())
+                    </div>
+                #end
+            #end
+        </div>
+
+        <div class="span3">
+        ## output actions
+            <div class="actions">
+                <form action="javascript:addChild()">
+                    <select id="new_mixin">
+                        <option value="">folder</option>
+                        <option value="fedora:object">object</option>
+                        <option value="fedora:datastream">datastream</option>
+                    </select>
+                    <input type="text" id="new_id" value="new_id"/>
+                    <input type="submit" value="add">
+                </form>
+                <form action="javascript:deleteItem()">
+                    <input type="submit" value="delete this folder"/>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+</body>
+</html>

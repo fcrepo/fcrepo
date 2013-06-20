@@ -36,9 +36,9 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
-public class HtmlProviderTest {
+public class BaseHtmlProviderTest {
 
-    final HtmlProvider htmlProvider = new HtmlProvider();
+    final BaseHtmlProvider baseHtmlProvider = new BaseHtmlProvider();
 
     Dataset testData = new DatasetImpl(createDefaultModel());
 
@@ -57,21 +57,21 @@ public class HtmlProviderTest {
     public void testIsWriteable() {
         assertTrue(
                 "Gave false response to HtmlProvider.isWriteable() that contained a legitimate combination of parameters!",
-                htmlProvider.isWriteable(Dataset.class, Dataset.class, null,
+                baseHtmlProvider.isWriteable(Dataset.class, Dataset.class, null,
                         TEXT_HTML_TYPE));
         assertFalse(
                 "HtmlProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
-                htmlProvider.isWriteable(HtmlProvider.class,
-                        HtmlProvider.class, null, TEXT_HTML_TYPE));
+                baseHtmlProvider.isWriteable(BaseHtmlProvider.class,
+                        BaseHtmlProvider.class, null, TEXT_HTML_TYPE));
         assertFalse(
                 "HtmlProvider.isWriteable() should return false to text/plain!",
-                htmlProvider.isWriteable(Dataset.class, Dataset.class, null,
+                baseHtmlProvider.isWriteable(Dataset.class, Dataset.class, null,
                         TEXT_PLAIN_TYPE));
     }
 
     @Test
     public void testGetSize() {
-        assertEquals("Returned wrong size from HtmlProvider!", htmlProvider
+        assertEquals("Returned wrong size from HtmlProvider!", baseHtmlProvider
                 .getSize(null, null, null, null, null), -1);
 
     }
@@ -92,8 +92,8 @@ public class HtmlProviderTest {
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
                 Mockito.isA(Writer.class));
-        htmlProvider.setTemplatesMap(of("nt:file", mockTemplate));
-        htmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] {},
+        baseHtmlProvider.setTemplatesMap(of("nt:file", mockTemplate));
+        baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] {},
                 MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();
@@ -118,10 +118,10 @@ public class HtmlProviderTest {
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
                                            Mockito.isA(Writer.class));
-        htmlProvider.setTemplatesMap(of("some:file", mockTemplate));
+        baseHtmlProvider.setTemplatesMap(of("some:file", mockTemplate));
         HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
-        htmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] { mockAnnotation },
+        baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] { mockAnnotation },
                                     MediaType.valueOf("text/html"),
                                     (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();

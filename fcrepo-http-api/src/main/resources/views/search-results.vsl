@@ -6,10 +6,13 @@
 <html>
   <head>
     <title>Search results</title>
-    #parse("views/common-header.vsl")
+    #parse("views/common-head.vsl")
   </head>
   <body>
-    <h1>Search Results</h1>
+
+  <div class="container"">
+      #parse("views/common-header.vsl")
+    <h1>Search</h1>
 
 
     ## output actions
@@ -23,13 +26,19 @@
     </div>
 
     ## output triples for the topic node
+  <div class="well" resource="$topic.getURI()">
     #triples($topic)
+   </div>
 
-    ## output other nodes
-    #foreach($subject in $subjects)
-      #if( $subject != $topic )
-        #triples($subject.asNode())
+  <h2>Results</h2>
+      #foreach($subject in $model.listSubjects())
+          #if( $subject != $topic )
+          <div class="well" resource="$subject.getURI()">
+              <h3><a href="$subject.getURI()">$helpers.getObjectTitle($rdf, $subject.asNode())</a></h3>
+              #triples($subject.asNode())
+          </div>
+          #end
       #end
-    #end
   </body>
+</div>
 </html>

@@ -2,9 +2,12 @@
 <html>
 <head>
     <title>Search</title>
-    #parse("views/common-header.vsl")
+    #parse("views/common-head.vsl")
 </head>
 <body>
+
+<div class="container"">
+    #parse("views/common-header.vsl")
 
 <h1>Search</h1>
 
@@ -16,6 +19,7 @@
             <button type="submit" class="btn">Search</button>
         </div>
     </form>
+</div>
 </div>
 
 </body>

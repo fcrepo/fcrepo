@@ -62,9 +62,9 @@ import com.hp.hpl.jena.query.Dataset;
  * @author ajs6f
  * @date May 19, 2013
  */
+
 @Provider
-@Component
-public class HtmlProvider implements MessageBodyWriter<Dataset> {
+public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
     @Autowired
     SessionFactory sessionFactory;
@@ -88,7 +88,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
     public static final String templateFilenameExtension = ".vsl";
 
-    private static final Logger LOGGER = getLogger(HtmlProvider.class);
+    private static final Logger LOGGER = getLogger(BaseHtmlProvider.class);
 
     public static final String velocityPropertiesLocation =
             "/velocity.properties";
@@ -177,6 +177,17 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
 
         final Template nodeTypeTemplate = getTemplate(rdf, subject, annotations);
 
+        final Context context = getContext(rdf, subject);
+
+        // the contract of MessageBodyWriter<T> is _not_ to close the stream
+        // after writing to it
+        final Writer outWriter = new OutputStreamWriter(entityStream);
+        nodeTypeTemplate.merge(context, outWriter);
+        outWriter.flush();
+
+    }
+
+    protected Context getContext(Dataset rdf, Node subject) {
         final FieldTool fieldTool = new FieldTool();
 
         final Context context = new VelocityContext();
@@ -191,13 +202,7 @@ public class HtmlProvider implements MessageBodyWriter<Dataset> {
         context.put("nodeany", Node.ANY);
         context.put("topic", subject);
         context.put("uriInfo", uriInfo);
-
-        // the contract of MessageBodyWriter<T> is _not_ to close the stream
-        // after writing to it
-        final Writer outWriter = new OutputStreamWriter(entityStream);
-        nodeTypeTemplate.merge(context, outWriter);
-        outWriter.flush();
-
+        return context;
     }
 
     private Template getTemplate(final Dataset rdf, final Node subject, final Annotation[] annotations) {

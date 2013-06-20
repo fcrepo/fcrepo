@@ -1,0 +1,8 @@
+
+#parse("views/common-header.vsl")
+
+<div class="row">
+    <div class="span9">
+        <h1>$helpers.getObjectTitle($rdf, $topic)</h1>
+    </div>
+</div>

@@ -6,14 +6,20 @@
 <html>
 <head>
     <title>registered namespaces</title>
-    #parse("views/common-header.vsl")
+    #parse("views/common-head.vsl")
 </head>
 <body>
-<h1>namespaces</h1>
+<div class="container"">
+    #parse("views/common-header.vsl")
+
+<h1>Registered Namespaces</h1>
 
 ## output other nodes
     #foreach($subject in $subjects)
+        <div class="well" resource="$subject.getURI()">
             #triples($subject.asNode())
+        </div>
     #end
+</div>
 </body>
 </html>
