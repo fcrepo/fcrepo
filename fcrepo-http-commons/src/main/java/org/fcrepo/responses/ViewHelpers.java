@@ -80,19 +80,19 @@ public class ViewHelpers {
 
 
         if (iterator.hasNext()) {
-        final Node object = iterator.next().getObject();
+            final Node object = iterator.next().getObject();
 
-        if (object.isLiteral()) {
-            final String s = object.getLiteralValue().toString();
+            if (object.isLiteral()) {
+                final String s = object.getLiteralValue().toString();
 
-            if (s.isEmpty()) {
-                return "<empty>";
+                if (s.isEmpty()) {
+                    return "<empty>";
+                } else {
+                    return s;
+                }
             } else {
-                return s;
+                return "&lt;<a href=\"" + object.getURI() + "\">" + object.getURI() + "</a>&gt;";
             }
-        } else {
-            return "&lt;<a href=\"" + object.getURI() + "\">" + object.getURI() + "</a>&gt;";
-        }
         } else {
             return "";
         }
