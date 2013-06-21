@@ -25,6 +25,7 @@ import org.fcrepo.Transaction.State;
 import org.fcrepo.exception.TransactionMissingException;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 
 /**
@@ -59,6 +60,15 @@ public class TransactionServiceTest {
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
         service.removeAndRollbackExpired();
         verify(mockTx).rollback();
+    }
+
+
+    @Test
+    public void testExpirationThrowsRepositoryException() throws Exception {
+        Date fiveSecondsAgo = new Date(System.currentTimeMillis() - 5000);
+        Mockito.doThrow(new RepositoryException("")).when(mockTx).rollback();
+        when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
+        service.removeAndRollbackExpired();
     }
 
     @Test
