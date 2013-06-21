@@ -1,8 +1,8 @@
 
 package org.fcrepo.responses;
 
-import static com.hp.hpl.jena.graph.Node.createLiteral;
-import static com.hp.hpl.jena.graph.Node.createURI;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;

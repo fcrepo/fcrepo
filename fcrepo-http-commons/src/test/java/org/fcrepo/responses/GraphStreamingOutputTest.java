@@ -1,7 +1,7 @@
 
 package org.fcrepo.responses;
 
-import static com.hp.hpl.jena.graph.Node.createURI;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.http.RDFMediaType.NTRIPLES_TYPE;
 import static org.junit.Assert.assertTrue;

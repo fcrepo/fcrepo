@@ -2,8 +2,8 @@
 package org.fcrepo.responses;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static com.hp.hpl.jena.graph.Node.createLiteral;
-import static com.hp.hpl.jena.graph.Node.createURI;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
@@ -31,6 +31,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
@@ -44,7 +45,7 @@ public class BaseHtmlProviderTest {
 
     {
         testData.asDatasetGraph().getDefaultGraph().add(
-                new Triple(createURI("test:subject"),
+                new Triple(NodeFactory.createURI("test:subject"),
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
