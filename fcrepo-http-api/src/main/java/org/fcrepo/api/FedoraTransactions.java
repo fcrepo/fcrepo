@@ -1,18 +1,25 @@
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 
 import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
+import com.google.common.collect.ImmutableMap;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Transaction;
 import org.fcrepo.TxSession;
@@ -21,8 +28,6 @@ import org.fcrepo.session.InjectedSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import com.google.common.collect.ImmutableMap;
 
 @Component
 @Scope("prototype")
@@ -96,4 +101,11 @@ public class FedoraTransactions extends AbstractResource {
         }
     }
 
+    public void setSession(final Session session) {
+        this.session = session;
+    }
+
+    public void setTxService(final TransactionService txService) {
+        this.txService = txService;
+    }
 }
