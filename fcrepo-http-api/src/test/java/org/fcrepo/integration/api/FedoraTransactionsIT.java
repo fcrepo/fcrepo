@@ -15,6 +15,7 @@ import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
@@ -112,8 +113,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 TestHelpers.parseTriples(resp.getEntity().getContent());
         logger.debug(graphStore.toString());
 
-        assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY, Node.createURI(txLocation + "/object-in-tx-rollback"), Node.ANY, Node.ANY));
-
+        assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
+                NodeFactory.createURI(txLocation + "/object-in-tx-rollback"),
+                Node.ANY, Node.ANY));
 
         /* fetch the created tx from the endpoint */
         final HttpGet getObj =
@@ -160,8 +162,10 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 TestHelpers.parseTriples(resp.getEntity().getContent());
         logger.debug(graphStore.toString());
 
-        assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY, Node.createURI(txLocation + "/object-in-tx-commit"), Node.ANY, Node.ANY));
-
+        assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
+                NodeFactory.createURI(txLocation + "/object-in-tx-commit"),
+                Node.ANY,
+                Node.ANY));
 
         /* fetch the object-in-tx outside of the tx */
         final HttpGet getObj =
