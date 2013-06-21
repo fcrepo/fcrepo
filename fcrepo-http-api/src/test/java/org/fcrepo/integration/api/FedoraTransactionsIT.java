@@ -15,6 +15,7 @@ import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
@@ -113,7 +114,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
-                Node.createURI(txLocation + "/object-in-tx-rollback"),
+                NodeFactory.createURI(txLocation + "/object-in-tx-rollback"),
                 Node.ANY, Node.ANY));
 
         /* fetch the created tx from the endpoint */
@@ -162,7 +163,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
-                Node.createURI(txLocation + "/object-in-tx-commit"),
+                NodeFactory.createURI(txLocation + "/object-in-tx-commit"),
                 Node.ANY,
                 Node.ANY));
 
