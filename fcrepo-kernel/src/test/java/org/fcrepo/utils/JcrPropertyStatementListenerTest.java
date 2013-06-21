@@ -139,6 +139,26 @@ public class JcrPropertyStatementListenerTest {
     /**
      * @todo Add Documentation.
      */
+    @Test(expected = RuntimeException.class)
+    public void testAddedStatementRepositoryException() throws RepositoryException {
+        mockStatic(JcrRdfTools.class);
+        when(JcrRdfTools.isFedoraGraphSubject(mockSubjects, mockSubject))
+                .thenReturn(true);
+        Node mockSubjectNode = mock(Node.class);
+        when(JcrRdfTools.getNodeFromGraphSubject(
+                                                        mockSubjects, mockSession, mockSubject))
+                .thenReturn(mockSubjectNode);
+
+        when(JcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode,
+                                                             mockPredicate))
+                .thenThrow(new RepositoryException());
+
+        testObj.addedStatement(mockStatement);
+    }
+
+    /**
+     * @todo Add Documentation.
+     */
     @Test
     public void testRemovedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -163,6 +183,27 @@ public class JcrPropertyStatementListenerTest {
         .thenReturn(PropertyType.STRING);
         testObj.removedStatement(mockStatement);
         assertEquals(0, testObj.getProblems().size());
+    }
+
+
+    /**
+     * @todo Add Documentation.
+     */
+    @Test(expected = RuntimeException.class)
+    public void testRemovedStatementRepositoryException() throws RepositoryException {
+        mockStatic(JcrRdfTools.class);
+        when(JcrRdfTools.isFedoraGraphSubject(mockSubjects, mockSubject))
+                .thenReturn(true);
+        Node mockSubjectNode = mock(Node.class);
+        when(JcrRdfTools.getNodeFromGraphSubject(mockSubjects, mockSession,
+                                                        mockSubject))
+                .thenReturn(mockSubjectNode);
+
+        when(JcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode,
+                                                             mockPredicate))
+                .thenThrow(new RepositoryException());
+
+        testObj.removedStatement(mockStatement);
     }
 
     /**
