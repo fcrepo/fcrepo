@@ -11,19 +11,7 @@ import java.util.UUID;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date May 8, 2013
- */
-@XmlRootElement(name = "transaction")
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Transaction {
 
     // the default timeout is 3 minutes
@@ -40,16 +28,12 @@ public class Transaction {
         DIRTY, NEW, COMMITED, ROLLED_BACK;
     }
 
-    @XmlTransient
     private final Session session;
 
-    @XmlAttribute(name = "id")
     private final String id;
 
-    @XmlAttribute(name = "created")
     private final Date created;
 
-    @XmlAttribute(name = "expires")
     private Calendar expires;
 
     private State state = State.NEW;
@@ -77,6 +61,7 @@ public class Transaction {
      * @todo Add Documentation.
      */
     public Session getSession() {
+        updateExpiryDate();
         return TxAwareSession.newInstance(session, id);
     }
 

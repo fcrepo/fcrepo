@@ -14,6 +14,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Transaction;
+import org.fcrepo.exception.TransactionMissingException;
 import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -81,10 +82,10 @@ public class TransactionService {
      * @throws PathNotFoundException if the {@link Transaction} with the given id has not be found
      */
     public Transaction getTransaction(final String txid)
-            throws PathNotFoundException {
+            throws TransactionMissingException {
         final Transaction tx = TRANSACTIONS.get(txid);
         if (tx == null) {
-            throw new PathNotFoundException("Transaction is not available");
+            throw new TransactionMissingException("Transaction is not available");
         }
         return tx;
     }

@@ -10,6 +10,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.fcrepo.exception.TransactionMissingException;
 import org.slf4j.Logger;
 
 @Provider
@@ -29,6 +30,12 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
                     e);
             return ((WebApplicationException) e).getResponse();
         }
+
+
+        if (e.getCause() instanceof TransactionMissingException) {
+            return new TransactionMissingExceptionMapper().toResponse((TransactionMissingException)e.getCause());
+        }
+
         logger.error("Exception intercepted by WildcardExceptionMapper: \n", e);
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.Transaction;
+import org.fcrepo.exception.TransactionMissingException;
 import org.fcrepo.services.TransactionService;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
@@ -150,7 +151,7 @@ public class SessionFactory {
 
     }
 
-    private Transaction getEmbeddedTransaction(final HttpServletRequest servletRequest) throws PathNotFoundException {
+    private Transaction getEmbeddedTransaction(final HttpServletRequest servletRequest) throws TransactionMissingException {
         final String requestPath = servletRequest.getPathInfo();
 
         if (requestPath == null) {

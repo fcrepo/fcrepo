@@ -22,6 +22,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.Transaction;
 import org.fcrepo.Transaction.State;
+import org.fcrepo.exception.TransactionMissingException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -76,7 +77,7 @@ public class TransactionServiceTest {
     }
 
     @Test(expected = RepositoryException.class)
-    public void testGetNonTx() throws PathNotFoundException {
+    public void testGetNonTx() throws TransactionMissingException {
         service.getTransaction(NOT_A_TX);
 
     }
