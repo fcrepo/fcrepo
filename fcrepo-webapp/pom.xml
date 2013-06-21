@@ -73,11 +73,13 @@
     <plugins>
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <attachClasses>true</attachClasses>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <attachClasses>true</attachClasses>
           <systemPropertyVariables>
             <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
