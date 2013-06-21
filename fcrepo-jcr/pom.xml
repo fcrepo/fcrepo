@@ -10,6 +10,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>fcrepo-jcr</artifactId>
+  <name>${project.artifactId}</name>
+  <description></description>
+  <packaging>bundle</packaging>
 
   <dependencies>
     <dependency>
@@ -65,5 +68,14 @@
       <version>4.16.6.Final</version><!--$NO-MVN-MAN-VER$-->
     </dependency>
   </dependencies>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

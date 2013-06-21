@@ -8,8 +8,9 @@
   </parent>
 
   <artifactId>fcrepo-webapp</artifactId>
+  <name>${project.artifactId}</name>
+  <description>The Fedora web application</description>
   <packaging>war</packaging>
-  <name>fcrepo webapp</name>
 
   <properties>
     <!-- integration test properties -->

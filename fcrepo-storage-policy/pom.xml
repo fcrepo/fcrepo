@@ -7,11 +7,9 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-storage-policy</artifactId>
-  <name>fcrepo store strategy</name>
-
-  <packaging>bundle</packaging>
-
+  <name>${project.artifactId}</name>
   <description>Provides store strategy hints based on policy evaluation.</description>
+  <packaging>bundle</packaging>
 
   <dependencies>
     <dependency>

@@ -9,10 +9,9 @@
   </parent>
 
   <artifactId>fcrepo-http-api</artifactId>
-  <packaging>bundle</packaging>
-
-  <name>fcrepo HTTP API</name>
+  <name>${project.artifactId}</name>
   <description>Fedora HTTP API</description>
+  <packaging>bundle</packaging>
 
   <dependencies>
     <dependency>

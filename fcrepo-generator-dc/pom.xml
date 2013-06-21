@@ -7,11 +7,9 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-generator-dc</artifactId>
-  <name>fcrepo dc</name>
-
+  <name>${project.artifactId}</name>
+  <description>Fedora Dublin Core generator</description>
   <packaging>bundle</packaging>
-
-  <description>Dublin Core generator</description>
 
   <dependencies>
     <dependency>

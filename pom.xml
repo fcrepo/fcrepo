@@ -11,9 +11,9 @@
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
   <version>4.0-SNAPSHOT</version>
+  <name>fcrepo4</name>
+  <description>Parent project for fcrepo4</description>
   <packaging>pom</packaging>
-  <name>fcrepo parent pom</name>
-  <description>Parent project for fcrepo</description>
 
   <properties>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 

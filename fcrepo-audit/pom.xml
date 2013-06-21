@@ -11,11 +11,9 @@
   </parent>
 
   <artifactId>fcrepo-audit</artifactId>
+  <name>${project.artifactId}</name>
+  <description>Fedora audit module</description>
   <packaging>bundle</packaging>
-
-  <name>fcrepo audit</name>
-  
-  <description>Fedora audit</description>
 
   <dependencies>
     <dependency>

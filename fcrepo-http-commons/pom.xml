@@ -7,8 +7,9 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-http-commons</artifactId>
-  <name>Fedora HTTP Commons</name>
+  <name>${project.artifactId}</name>
   <description>HTTP (JAX-RS) resources and helpers.</description>
+  <packaging>bundle</packaging>
 
   <dependencies>
     <dependency>

@@ -7,10 +7,9 @@
     <version>4.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-jms</artifactId>
-  <name>fcrepo JMS</name>
-  <packaging>bundle</packaging>
-
+  <name>${project.artifactId}</name>
   <description>Fedora event publication via JMS</description>
+  <packaging>bundle</packaging>
 
   <dependencies>
     <dependency>

@@ -9,11 +9,9 @@
   </parent>
 
   <artifactId>fcrepo-kernel</artifactId>
+  <name>${project.artifactId}</name>
+  <description>The Fedora Repository kernel</description>
   <packaging>bundle</packaging>
-
-  <name>fcrepo kernel</name>
-
-  <description>The Fedora repository kernel</description>
 
   <dependencies>
     <dependency>
