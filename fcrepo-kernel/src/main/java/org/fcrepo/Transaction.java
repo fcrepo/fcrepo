@@ -1,8 +1,4 @@
-/**
- * The contents of this file are subject to the license and copyright terms
- * detailed in the license directory at the root of the source tree (also
- * available online at http://fedora-commons.org/license/).
- */
+
 package org.fcrepo;
 
 import java.util.Calendar;
@@ -15,11 +11,9 @@ import javax.jcr.Session;
 public class Transaction {
 
     // the default timeout is 3 minutes
-    public static final long DEFAULT_TIMEOUT =
-        3l * 60l * 1000l;
+    public static final long DEFAULT_TIMEOUT = 3l * 60l * 1000l;
 
-    public static final String TIMEOUT_SYSTEM_PROPERTY =
-        "fcrepo4.tx.timeout";
+    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo4.tx.timeout";
 
     /**
      * @todo Add Documentation.
@@ -134,8 +128,9 @@ public class Transaction {
     public void updateExpiryDate() {
         long duration;
         if (System.getProperty(TIMEOUT_SYSTEM_PROPERTY) != null) {
-            duration = Long.parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY));
-        }else{
+            duration =
+                    Long.parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY));
+        } else {
             duration = DEFAULT_TIMEOUT;
         }
         this.expires.setTimeInMillis(System.currentTimeMillis() + duration);
