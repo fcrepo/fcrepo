@@ -27,6 +27,12 @@ public class FedoraEventTest {
     Event e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
+
+    @Test(expected = java.lang.IllegalArgumentException.class)
+    public void testWrapNullEvent() throws Exception {
+        new FedoraEvent(null);
+    }
+
     /**
      * @todo Add Documentation.
      */
