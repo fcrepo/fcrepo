@@ -3,7 +3,7 @@ package org.fcrepo.responses;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.Node.createURI;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -12,14 +12,14 @@ import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;

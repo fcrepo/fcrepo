@@ -51,6 +51,6 @@ implements DistributedCallable<K, V, T>, Serializable {
 	@Override
 	public void setEnvironment(Cache<K, V> cache, Set<K> keys) {
 		this.store = TRANSFORM.apply(cache);
-        this.cacheName = ((CacheImpl)cache).getName();
+        this.cacheName = ((CacheImpl<K, V>) cache).getName();
 	}
 }

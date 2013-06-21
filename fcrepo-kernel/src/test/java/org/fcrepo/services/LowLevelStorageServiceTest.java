@@ -19,15 +19,12 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -41,7 +38,6 @@ import org.fcrepo.utils.impl.CacheStoreEntry;
 import org.fcrepo.utils.impl.LocalBinaryStoreEntry;
 import org.infinispan.Cache;
 import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
