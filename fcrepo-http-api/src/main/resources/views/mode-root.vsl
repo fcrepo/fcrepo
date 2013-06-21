@@ -1,3 +1,4 @@
+#* @vtlvariable name="uriInfo" type="javax.ws.rs.core.UriInfo" *#
 #set( $title = $topic )
 
 #parse("views/common.vsl")
@@ -42,6 +43,25 @@
         ## output actions
     <div class="actions">
         #parse("views/common-node-actions.vsl")
+        <hr />
+
+        <div>
+
+            <h3>Transactions</h3>
+        #if($uriInfo.getAbsolutePath().toString().contains("/tx:"))
+            <form id="action_commit_transaction" data-redirect-after-submit="$uriInfo.baseUriBuilder.build()" action="$uriInfo.absolutePathBuilder.build()/fcr:tx/fcr:commit" method="POST">
+                <button type="submit" class="btn">Commit</button>
+            </form>
+
+            <form id="action_rollback_transaction" data-redirect-after-submit="$uriInfo.baseUriBuilder.build()" action="$uriInfo.absolutePathBuilder.build()/fcr:tx/fcr:rollback" method="POST">
+                <button type="submit" class="btn btn-danger">Rollback</button>
+            </form>
+        #else
+            <form id="action_create_transaction" action="$uriInfo.baseUriBuilder.build()fcr:tx" method="POST">
+                <button type="submit" class="btn">Begin</button>
+            </form>
+        #end
+        </div>
 
     </div>
 

@@ -74,8 +74,36 @@ $(function() {
     $('#action_sparql_update').submit(sendSparqlUpdate);
     $('#action_register_namespace').submit(registerNamespace);
     $('#action_delete').submit(deleteItem);
+    $('#action_create_transaction').submit(submitAndFollowLocation);
+    $('#action_rollback_transaction').submit(submitAndRedirectToBase);
+    $('#action_commit_transaction').submit(submitAndRedirectToBase);
 
 });
+
+function submitAndFollowLocation() {
+    var $form = $(this);
+
+    var postURI = $form.attr('action');
+
+    $.post(postURI, "some-data-to-make-chrome-happy", function(data, textStatus, request) {
+        window.location = request.getResponseHeader('Location');
+    });
+
+    return false;
+}
+
+function submitAndRedirectToBase() {
+    var $form = $(this);
+
+
+    var postURI = $form.attr('action');
+
+    $.post(postURI, "some-data-to-make-chrome-happy", function(data, textStatus, request) {
+        window.location = $form.attr('data-redirect-after-submit');
+    });
+
+    return false;
+}
 
 
 function registerNamespace() {
