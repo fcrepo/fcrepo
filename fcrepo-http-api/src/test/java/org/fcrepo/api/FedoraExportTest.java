@@ -1,20 +1,5 @@
 package org.fcrepo.api;
 
-import org.fcrepo.FedoraObject;
-import org.fcrepo.serialization.FedoraObjectSerializer;
-import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.services.ObjectService;
-import org.fcrepo.test.util.TestHelpers;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
 import static org.mockito.Matchers.any;
@@ -22,6 +7,21 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.core.StreamingOutput;
+
+import org.fcrepo.FedoraObject;
+import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.SerializerUtil;
+import org.fcrepo.services.ObjectService;
+import org.fcrepo.test.util.TestHelpers;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FedoraExportTest {
 
