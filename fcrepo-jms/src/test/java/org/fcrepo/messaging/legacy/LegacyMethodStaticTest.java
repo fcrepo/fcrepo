@@ -6,36 +6,20 @@ import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.apache.abdera.model.Category;
-import org.apache.abdera.model.Entry;
-import org.apache.abdera.model.Person;
-import org.apache.abdera.model.Text;
-import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 public class LegacyMethodStaticTest {
         

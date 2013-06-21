@@ -6,20 +6,20 @@
 
 package org.fcrepo.binary;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.modeshape.jcr.api.JcrConstants;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Session;
 
-import static junit.framework.Assert.assertNull;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
 
 /**
  * @todo Add Documentation.

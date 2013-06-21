@@ -1,16 +1,14 @@
 package org.fcrepo;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.jcr.AccessDeniedException;
-import javax.jcr.ItemExistsException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.junit.Before;
+import org.junit.Test;
 
 public class TxAwareSessionTest {
     private Session mockSession;

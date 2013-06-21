@@ -4,13 +4,11 @@ package org.fcrepo.api;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ContiguousSet.create;
 import static com.google.common.collect.DiscreteDomain.integers;
-import static com.google.common.collect.ImmutableBiMap.of;
 import static com.google.common.collect.Range.closed;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.update.GraphStoreFactory.create;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.Response.created;
 import static org.fcrepo.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
@@ -20,7 +18,6 @@ import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,7 +31,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.AbstractResource;
@@ -47,7 +43,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
  * JAX-RS Resource offering PID creation.

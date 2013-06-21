@@ -4,7 +4,6 @@ package org.fcrepo.session;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;

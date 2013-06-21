@@ -43,8 +43,6 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
-import com.hp.hpl.jena.rdf.model.Literal;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
@@ -60,6 +58,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -214,7 +213,7 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     public static Model getJcrNodeIteratorModel(final GraphSubjects factory,
-                                                final Iterator nodeIterator, final Resource iteratorSubject)
+            final Iterator<Node> nodeIterator, final Resource iteratorSubject)
         throws RepositoryException {
 
         if (!nodeIterator.hasNext()) {

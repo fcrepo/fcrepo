@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,8 +29,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
-import com.google.common.base.Function;
-import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.rdf.GraphSubjects;
@@ -52,6 +49,9 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import com.google.common.base.Function;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * @todo Add Documentation.

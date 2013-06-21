@@ -9,8 +9,8 @@ package org.fcrepo.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +22,18 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.Datastream;
+import org.fcrepo.binary.PolicyDecisionPoint;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.utils.FixityResult;
+import org.fcrepo.utils.JcrRdfTools;
+import org.fcrepo.utils.LowLevelCacheEntry;
+import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.google.common.base.Function;
@@ -31,18 +43,6 @@ import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStoreFactory;
-import org.fcrepo.Datastream;
-import org.fcrepo.binary.PolicyDecisionPoint;
-import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.utils.ContentDigest;
-import org.fcrepo.utils.FixityResult;
-import org.fcrepo.utils.JcrRdfTools;
-import org.fcrepo.utils.LowLevelCacheEntry;
-import org.modeshape.jcr.api.JcrConstants;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.

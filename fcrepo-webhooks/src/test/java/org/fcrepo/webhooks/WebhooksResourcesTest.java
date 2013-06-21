@@ -1,7 +1,15 @@
 package org.fcrepo.webhooks;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import static org.fcrepo.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.core.UriInfo;
+
 import org.fcrepo.FedoraResource;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
@@ -10,16 +18,8 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
-import javax.ws.rs.core.UriInfo;
-
-import static org.fcrepo.RdfLexicon.HAS_FEED;
-import static org.fcrepo.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 public class WebhooksResourcesTest {
     private WebhooksResources testObj;

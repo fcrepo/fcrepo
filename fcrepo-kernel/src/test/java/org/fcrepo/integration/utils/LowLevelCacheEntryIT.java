@@ -29,7 +29,6 @@ import org.junit.runner.RunWith;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 

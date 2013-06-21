@@ -1,6 +1,5 @@
 package org.fcrepo.test.util;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,7 +25,6 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -38,8 +36,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.identifiers.UUIDPidMinter;
-import org.fcrepo.session.AuthenticatedSessionProvider;
-import org.fcrepo.session.SessionFactory;
 import org.fcrepo.utils.ContentDigest;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;

@@ -14,7 +14,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.MessageDigest;
 import java.util.Collection;
 
 import javax.inject.Inject;

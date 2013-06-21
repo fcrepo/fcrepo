@@ -1,5 +1,19 @@
 package org.fcrepo.responses;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.RdfLexicon;
+import org.fcrepo.test.util.TestHelpers;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
@@ -13,20 +27,6 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
-import org.fcrepo.RdfLexicon;
-import org.fcrepo.test.util.TestHelpers;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.ws.rs.core.UriInfo;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 public class ViewHelpersTest {
 

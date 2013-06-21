@@ -1,14 +1,14 @@
 package org.fcrepo.syndication;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 
 import javax.jcr.observation.Event;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.AbstractResource;
 import org.junit.Before;
 import org.junit.Test;
 
