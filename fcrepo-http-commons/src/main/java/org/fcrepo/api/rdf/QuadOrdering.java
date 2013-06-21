@@ -34,8 +34,4 @@ public class QuadOrdering implements Comparator<Quad> {
 
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return false;
-    }
 }
