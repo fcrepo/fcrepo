@@ -11,26 +11,9 @@
         <param-name>contextConfigLocation</param-name>
         <param-value>classpath:spring-test/repo.xml,classpath:spring-test/rest.xml,classpath:spring-test/eventing.xml</param-value>
     </context-param>
-    
-
-  <!-- engaging the ModeShape REST API -->
-
-    <context-param>
-      <param-name>org.modeshape.jcr.RepositoryName</param-name>
-      <param-value>repo</param-value>
-    </context-param>
-    <context-param>
-      <param-name>org.modeshape.jcr.URL</param-name>
-      <param-value>/test_repository.json</param-value>
-    </context-param>
 
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-    </listener>
-    
-    <!-- Required parameter for ModeShape REST - should not be modified -->
-    <listener>
-      <listener-class>org.modeshape.web.jcr.ModeShapeJcrDeployer</listener-class>
     </listener>
     
 	<servlet>
