@@ -20,9 +20,9 @@
     <input type="file" id="update_file"/>
     </label>
     <button type="submit" class="btn btn-primary">Add</button>
+    <hr />
 </form>
 
-<hr />
 
 <form id="action_sparql_update">
     <h3>Update Properties</h3>
@@ -33,16 +33,16 @@ INSERT { }
 WHERE { }
  </textarea>
     <button type="submit" class="btn btn-primary">Update</button>
+    <hr />
 </form>
 
-<hr />
 
 <form id="action_delete" action="javascript:deleteItem()">
     <h3>Delete Object</h3>
     <button type="submit" class="btn btn-danger">Delete</button>
+    <hr />
 </form>
 
-<hr />
 
 #set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
@@ -59,4 +59,24 @@ WHERE { }
     #end
     </ul>
 </div>
+<hr />
+#end
+
+
+#set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+
+#if($serializations.hasNext())
+<form id="action_import">
+<h3>Import</h3>
+
+<input type="file" id="import_file"/>
+
+    <select id="import_format" name="format">
+        #foreach($quad in $helpers.getSortedTriples($model, $serializations))
+            <option>$helpers.getObjectTitle($rdf, $quad.getObject())</option>
+        #end
+    </select>
+    <button type="submit" class="btn">Import</button>
+</form>
+
 #end

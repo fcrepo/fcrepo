@@ -61,6 +61,36 @@ function addChild()
     return false;
 }
 
+function sendImport() {
+    var mixin = $("#import_format").val();
+    var postURI = $('#main').attr('resource') + "/fcr:import?format=" + mixin;
+
+    var update_file = document.getElementById("import_file").files[0];
+    var reader = new FileReader();
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            window.location.reload();
+        }
+    }
+
+    xhr.open( "POST", postURI );
+
+    xhr.setRequestHeader("Content-type", update_file.type || "application/octet-stream");
+    reader.onload = function(e) {
+        var result = e.target.result;
+        var data = new Uint8Array(result.length);
+        for (var i = 0; i < result.length; i++) {
+            data[i] = (result.charCodeAt(i) & 0xff);
+        }
+        xhr.send(data.buffer);
+    };
+    reader.readAsBinaryString(update_file);
+
+    return false;
+
+}
+
 $(function() {
     $('#new_mixin').change(function() {
         if($('#new_mixin').val() == "fedora:datastream") {
@@ -77,6 +107,7 @@ $(function() {
     $('#action_create_transaction').submit(submitAndFollowLocation);
     $('#action_rollback_transaction').submit(submitAndRedirectToBase);
     $('#action_commit_transaction').submit(submitAndRedirectToBase);
+    $('#action_import').submit(sendImport);
 
 });
 

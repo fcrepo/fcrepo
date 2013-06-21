@@ -9,6 +9,10 @@ body { padding-top: 40px; }
     display: none;
 }
 
+.nt_file #action_import, .nt_resource #action_import {
+    display: none;
+}
+
 .well {
     text-indent: -35px;
     padding-left: 54px;

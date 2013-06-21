@@ -86,5 +86,29 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     }
 
+
+
+    @Test
+    public void shouldExportUsingTheRepositoryWideApi() throws IOException {
+        final String objName = "JcrXmlSerializerIT2";
+
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, "testDS", "stuff"));
+
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" + "/fcr:export");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
+
+
+
+    }
+
 }
 

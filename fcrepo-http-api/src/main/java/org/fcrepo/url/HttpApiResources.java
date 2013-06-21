@@ -22,10 +22,10 @@ import org.fcrepo.api.FedoraExport;
 import org.fcrepo.api.FedoraFieldSearch;
 import org.fcrepo.api.FedoraFixity;
 import org.fcrepo.api.FedoraSitemap;
-import org.fcrepo.api.FedoraTransactions;
 import org.fcrepo.api.FedoraVersions;
 import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.api.repository.FedoraRepositoryNamespaces;
+import org.fcrepo.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -61,6 +61,17 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             addContentStatements(resource, uriInfo, model, s);
         }
 
+        // fcr:export?format=xyz
+        for (final String key : serializers.keySet()) {
+            final Map<String, String> pathMap =
+                    of("path", resource.getPath().substring(1));
+            final Resource format = model.createResource(uriInfo
+                                                                 .getBaseUriBuilder().path(FedoraExport.class).queryParam("format", key)
+                                                                 .buildFromMap(pathMap).toASCIIString());
+            model.add(s, HAS_SERIALIZATION, format);
+            model.add(format, RDFS_LABEL, key);
+        }
+
         return model;
     }
 
@@ -74,17 +85,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
     }
 
     private void addNodeStatements(FedoraResource resource, UriInfo uriInfo, Model model, Resource s) throws RepositoryException {
-
-        // fcr:export?format=xyz
-        for (final String key : serializers.keySet()) {
-            final Map<String, String> pathMap =
-                    of("path", resource.getPath().substring(1));
-            final Resource format = model.createResource(uriInfo
-                                                                 .getBaseUriBuilder().path(FedoraExport.class).queryParam("format", key)
-                                                                 .buildFromMap(pathMap).toASCIIString());
-            model.add(s, HAS_SERIALIZATION, format);
-            model.add(format, RDFS_LABEL, key);
-        }
 
         // fcr:versions
         final Map<String, String> pathMap =
@@ -107,7 +107,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         // fcr:tx
         model.add(s, HAS_TRANSACTION_SERVICE, model.createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraTransactions.class).build()
+                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class).build()
                 .toASCIIString()));
 
         // fcr:namespaces
