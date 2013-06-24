@@ -10,7 +10,7 @@
     </label>
     <label>
         Identifier
-    <input type="text" id="new_id" placeholder="identifier"/>
+    <input type="text" id="new_id" placeholder="fcr:new (auto-generated identifier)"/>
     </label>
 
 
