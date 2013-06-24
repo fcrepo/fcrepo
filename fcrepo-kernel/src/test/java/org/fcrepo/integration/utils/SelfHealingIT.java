@@ -105,14 +105,14 @@ public class SelfHealingIT {
         final LowLevelCacheEntry entryToTamper = it.next();
         CacheStore store = ((CacheStoreEntry)entryToTamper).getLowLevelStore();
         if (store instanceof ChainingCacheStore) {
-        	store = ((ChainingCacheStore)store).getStores().keySet().iterator().next();
-        	OutputStream outputStream =
+            store = ((ChainingCacheStore)store).getStores().keySet().iterator().next();
+            OutputStream outputStream =
                     new StoreChunkOutputStream(store, entryToTamper.getKey().toString() +
-                    		"-data");
+                            "-data");
             IOUtils.copy(new ByteArrayInputStream("qwerty".getBytes()), outputStream);
             outputStream.close();
         } else {
-        	entryToTamper.storeValue(new ByteArrayInputStream("qwerty".getBytes()));
+            entryToTamper.storeValue(new ByteArrayInputStream("qwerty".getBytes()));
         }
         Thread.sleep(1000);
 

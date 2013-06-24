@@ -42,7 +42,7 @@ public abstract class LowLevelCacheEntry {
     protected final BinaryKey key;
     
     protected LowLevelCacheEntry(final BinaryKey key) {
-    	this.key = key;
+        this.key = key;
         this.externalId = "";
     }
 

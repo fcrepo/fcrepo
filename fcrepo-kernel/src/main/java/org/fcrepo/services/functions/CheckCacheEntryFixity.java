@@ -35,12 +35,12 @@ public class CheckCacheEntryFixity implements
         Serializable {
 
     /**
-	 * So that it can be communicated as state to cluster members
-	 * during distributed fixity checks
-	 */
-	private static final long serialVersionUID = 4701589005571818110L;
+     * So that it can be communicated as state to cluster members
+     * during distributed fixity checks
+     */
+    private static final long serialVersionUID = 4701589005571818110L;
 
-	private static final Logger logger =
+    private static final Logger logger =
             getLogger(LowLevelStorageService.class);
 
     private final URI dsChecksum;
@@ -77,14 +77,14 @@ public class CheckCacheEntryFixity implements
      */
     public MessageDigest getDigest() {
         try {
-			return MessageDigest.getInstance(ContentDigest.getAlgorithm(dsChecksum));
-		} catch (NoSuchAlgorithmException e) {
-			/**
-			 * @todo this really shouldn't ever happen, since it is derived from
-			 * an existing MessageDigest  
-			 */
-			return null;
-		}
+            return MessageDigest.getInstance(ContentDigest.getAlgorithm(dsChecksum));
+        } catch (NoSuchAlgorithmException e) {
+            /**
+             * @todo this really shouldn't ever happen, since it is derived from
+             * an existing MessageDigest
+             */
+            return null;
+        }
     }
 
     /**

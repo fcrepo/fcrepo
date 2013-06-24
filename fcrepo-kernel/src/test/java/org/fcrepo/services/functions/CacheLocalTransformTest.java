@@ -21,34 +21,32 @@ import com.google.common.base.Function;
 
 public class CacheLocalTransformTest {
 
-	@Test
-	public void testTransform() throws Exception {
-		
-		GetCacheStore cacheExtractor = mock(GetCacheStore.class);
-		Field field = CacheLocalTransform.class.getDeclaredField("TRANSFORM");
-		field.setAccessible(true);
-		field.set(CacheLocalTransform.class, cacheExtractor);
-		
-		BinaryStore mockStore = mock(BinaryStore.class);
-		
-		CacheStore mockCacheStore = mock(CacheStore.class);
-		
-		when(cacheExtractor.apply(any(Cache.class))).thenReturn(mockCacheStore);
-		
+    @Test
+    public void testTransform() throws Exception {
+
+        GetCacheStore cacheExtractor = mock(GetCacheStore.class);
+        Field field = CacheLocalTransform.class.getDeclaredField("TRANSFORM");
+        field.setAccessible(true);
+        field.set(CacheLocalTransform.class, cacheExtractor);
+
+        CacheStore mockCacheStore = mock(CacheStore.class);
+
+        when(cacheExtractor.apply(any(Cache.class))).thenReturn(mockCacheStore);
+
         final BinaryKey key = new BinaryKey("key-123");
 
         Function<LowLevelCacheEntry, Object> mockTransform =
-				mock(Function.class);
-		
-		
-		CacheLocalTransform<?, ?, Object> testObj =
-				new CacheLocalTransform<>(key, mockTransform);
+                mock(Function.class);
+
+
+        CacheLocalTransform<?, ?, Object> testObj =
+                new CacheLocalTransform<>(key, mockTransform);
         CacheImpl mockCache = mock(CacheImpl.class);
         when(mockCache.getName()).thenReturn("foo");
         testObj.setEnvironment(mockCache, null);
-		
-		testObj.call();
-		
-		verify(mockTransform).apply(eq(new CacheStoreEntry(mockCacheStore, "foo", key)));
-	}
+
+        testObj.call();
+
+        verify(mockTransform).apply(eq(new CacheStoreEntry(mockCacheStore, "foo", key)));
+    }
 }

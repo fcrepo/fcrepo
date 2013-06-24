@@ -160,7 +160,7 @@ public class JcrRdfToolsTest {
         when(mockNode.getPath()).thenReturn("/abc");
 
         assertEquals("info:fedora/abc",
-        		JcrRdfTools.getGraphSubject(testSubjects, mockNode)
+                JcrRdfTools.getGraphSubject(testSubjects, mockNode)
                 .toString());
     }
 
@@ -178,7 +178,7 @@ public class JcrRdfToolsTest {
         when(mockSession.nodeExists("/abc")).thenReturn(true);
         when(mockSession.getNode("/abc")).thenReturn(mockNode);
         assertEquals(mockNode,
-        		JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
+                JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
                 ResourceFactory.createResource("info:fedora/abc")));
     }
 
@@ -188,7 +188,7 @@ public class JcrRdfToolsTest {
         when(mockSession.nodeExists("/abc/jcr:content")).thenReturn(true);
         when(mockSession.getNode("/abc/jcr:content")).thenReturn(mockNode);
         assertEquals(mockNode,
-        		JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
+                JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,
                 ResourceFactory.createResource("info:fedora/abc/fcr:content")));
     }
 
@@ -197,8 +197,8 @@ public class JcrRdfToolsTest {
             throws RepositoryException {
         when(mockSession.nodeExists("/does-not-exist")).thenReturn(false);
         assertNull("should receive null for a non-JCR resource",
-        		JcrRdfTools.getNodeFromGraphSubject(
-        				testSubjects, mockSession, ResourceFactory
+                JcrRdfTools.getNodeFromGraphSubject(
+                        testSubjects, mockSession, ResourceFactory
                         .createResource("this-is-not-a-fedora-node/abc")));
         assertNull("should receive null a JCR node that isn't found",
                 JcrRdfTools.getNodeFromGraphSubject(testSubjects, mockSession,

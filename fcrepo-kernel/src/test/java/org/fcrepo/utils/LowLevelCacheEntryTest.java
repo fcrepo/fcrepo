@@ -70,8 +70,8 @@ public class LowLevelCacheEntryTest {
         mockLowLevelCacheStore = mock(CacheStore.class);
         testIspnObj =
             new CacheStoreEntry(mockLowLevelCacheStore,
-            		"foo",
-            		testKey);
+                    "foo",
+                    testKey);
     }
 
     /**
@@ -80,7 +80,7 @@ public class LowLevelCacheEntryTest {
     @Test
     public void shouldBeEqualIfTheKeyAndStoreAreEqual() throws Exception {
         LowLevelCacheEntry otherObj = 
-        		new LocalBinaryStoreEntry(mockStore, testKey);
+                new LocalBinaryStoreEntry(mockStore, testKey);
 
         assertTrue(testObj.equals(otherObj));
     }
@@ -112,7 +112,7 @@ public class LowLevelCacheEntryTest {
     @Test
     public void shouldNotBeEqualIfTheBinaryKeyIsDifferent() throws Exception {
         LowLevelCacheEntry otherObj = 
-        		new LocalBinaryStoreEntry(mockStore, new BinaryKey("321-yek-tset"));
+                new LocalBinaryStoreEntry(mockStore, new BinaryKey("321-yek-tset"));
 
         assertFalse(testObj.equals(otherObj));
     }
@@ -126,7 +126,7 @@ public class LowLevelCacheEntryTest {
         BinaryStore otherStore = mock(BinaryStore.class);
 
         LowLevelCacheEntry otherObj = 
-        		new LocalBinaryStoreEntry(otherStore, testKey);
+                new LocalBinaryStoreEntry(otherStore, testKey);
 
         assertFalse(testObj.equals(otherObj));
     }

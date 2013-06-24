@@ -168,13 +168,13 @@ public class LowLevelStorageServiceTest {
      * @todo Add Documentation.
      */
     @SuppressWarnings("unchecked")
-	@Test
+    @Test
     public void shouldRetrieveLowLevelCacheStoresForCompositeStore()
             throws Exception {
 
         mockStatic(ServiceHelpers.class);
         
-    	final Cache<?, ?> ispnCache1 = mock(Cache.class);
+        final Cache<?, ?> ispnCache1 = mock(Cache.class);
         final Cache<?, ?> ispnCache2 = mock(Cache.class);
         final CacheStore ispnCacheStore1 = mock(CacheStore.class);
         final CacheStore ispnCacheStore2 = mock(CacheStore.class);
@@ -203,23 +203,23 @@ public class LowLevelStorageServiceTest {
                 map.entrySet().iterator());
 
         final DistributedExecutorService mockCluster =
-        		mock(DistributedExecutorService.class);
+                mock(DistributedExecutorService.class);
         when(ServiceHelpers.getClusterExecutor(infinispanBinaryStore))
             .thenReturn(mockCluster);
 
         final BinaryKey key = new BinaryKey("key-123");
         
         LowLevelCacheEntry cacheEntry1 =
-        		new CacheStoreEntry(ispnCacheStore1,
-        				"cache1",
-        				key);
+                new CacheStoreEntry(ispnCacheStore1,
+                        "cache1",
+                        key);
         ImmutableSet.Builder<LowLevelCacheEntry> builder = ImmutableSet.builder();
         Set<LowLevelCacheEntry> cacheResponse1 = builder.add(cacheEntry1).build();
         builder = ImmutableSet.builder();
         LowLevelCacheEntry cacheEntry2 =
-        		new CacheStoreEntry(ispnCacheStore2,
-        				"cache2",
-        				key);
+                new CacheStoreEntry(ispnCacheStore2,
+                        "cache2",
+                        key);
         Set<LowLevelCacheEntry> cacheResponse2 = builder.add(cacheEntry2).build();
         Future<Collection<LowLevelCacheEntry>> future1 = mock(Future.class);
         Future<Collection<LowLevelCacheEntry>> future2 = mock(Future.class);

@@ -85,7 +85,7 @@ public class LowLevelStorageService {
             final Function <LowLevelCacheEntry, T>
             transform)
          throws RepositoryException {
-    	
+
         return transformLowLevelCacheEntries(getBinaryKey.apply(jcrBinaryProperty), transform);
     }
     
@@ -93,28 +93,28 @@ public class LowLevelStorageService {
             final Function <LowLevelCacheEntry, T>
             transform)
          throws RepositoryException {
-    	
+
         final BinaryStore store = getBinaryStore.apply(repo);
 
         if (store == null) {
-			return ImmutableSet.of();
+            return ImmutableSet.of();
         }
         if (store instanceof CompositeBinaryStore) {
             return
-            		transformLowLevelCacheEntries((CompositeBinaryStore) store,
+                    transformLowLevelCacheEntries((CompositeBinaryStore) store,
                                                  key, transform);
 
         } else if (store instanceof InfinispanBinaryStore) {
             try {
-				return getClusterResults(
-						(InfinispanBinaryStore) store, key, transform);
-			} catch (InterruptedException e) {
-				logger.error(e.getMessage(), e);
-				return ImmutableSet.of();
-			} catch (ExecutionException e) {
-				logger.error(e.getMessage(), e);
-				return ImmutableSet.of();
-			}
+                return getClusterResults(
+                        (InfinispanBinaryStore) store, key, transform);
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage(), e);
+                return ImmutableSet.of();
+            } catch (ExecutionException e) {
+                logger.error(e.getMessage(), e);
+                return ImmutableSet.of();
+            }
         } else {
             final ImmutableSet.Builder<T> blobs = builder();
             blobs.add(transform.apply(new LocalBinaryStoreEntry(store, key)));
@@ -128,7 +128,7 @@ public class LowLevelStorageService {
      * @return a set of transformed objects
      */
     protected <T> Set<T> transformLowLevelCacheEntries(
-    		final CompositeBinaryStore compositeStore,
+            final CompositeBinaryStore compositeStore,
             final BinaryKey key,
             final Function <LowLevelCacheEntry, T> transform) {
 
@@ -145,9 +145,9 @@ public class LowLevelStorageService {
             if (bs.hasBinary(key)) {
 
                 final Function <LowLevelCacheEntry, T> decorator =
-                		new ExternalIdDecorator<>(entry.getKey(), transform);
+                        new ExternalIdDecorator<>(entry.getKey(), transform);
                 final Set<T> transformeds =
-                		transformLowLevelCacheEntries(bs, key, decorator);
+                        transformLowLevelCacheEntries(bs, key, decorator);
                 results.addAll(transformeds);
                 
             }
@@ -163,21 +163,21 @@ public class LowLevelStorageService {
      * @return a set of transformed objects
      */
     protected <T> Set<T> transformLowLevelCacheEntries(
-    		final BinaryStore store,
+            final BinaryStore store,
             final BinaryKey key,
             final Function <LowLevelCacheEntry, T> transform) {
 
         if (store == null) {
-			return ImmutableSet.of();
+            return ImmutableSet.of();
         }
         if (store instanceof CompositeBinaryStore) {
             return
-            		transformLowLevelCacheEntries((CompositeBinaryStore) store,
+                    transformLowLevelCacheEntries((CompositeBinaryStore) store,
                                                  key, transform);
 
         } else if (store instanceof InfinispanBinaryStore) {
             try {
-			    return getClusterResults(
+                return getClusterResults(
                     (InfinispanBinaryStore) store, key, transform);
             } catch (InterruptedException e) {
                 logger.error(e.getMessage(), e);
@@ -234,7 +234,7 @@ public class LowLevelStorageService {
         final BinaryStore store = getBinaryStore.apply(repo);
 
         if (store == null) {
-			return ImmutableSet.of();
+            return ImmutableSet.of();
         }
 
         return getLowLevelCacheEntriesFromStore(store, key);
@@ -298,40 +298,40 @@ public class LowLevelStorageService {
                      "InfinispanBinaryStore {}", key, ispnStore);
 
         try {
-			return getClusterResults(ispnStore, key, new Echo());
-		} catch (InterruptedException e) {
-			logger.error(e.getMessage(), e);
-			return ImmutableSet.of();
-		} catch (ExecutionException e) {
-			logger.error(e.getMessage(), e);
-			return ImmutableSet.of();
-		}
+            return getClusterResults(ispnStore, key, new Echo());
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage(), e);
+            return ImmutableSet.of();
+        } catch (ExecutionException e) {
+            logger.error(e.getMessage(), e);
+            return ImmutableSet.of();
+        }
     }
 
     public <T> Set<T> getClusterResults(InfinispanBinaryStore cacheStore,
-    		BinaryKey key, Function<LowLevelCacheEntry, T> transform)
-    	throws InterruptedException, ExecutionException {
-    	DistributedExecutorService exec =
-    			getClusterExecutor(cacheStore);
-    	@SuppressWarnings( {"synthetic-access", "unchecked", "rawtypes"} )
+            BinaryKey key, Function<LowLevelCacheEntry, T> transform)
+        throws InterruptedException, ExecutionException {
+        DistributedExecutorService exec =
+                getClusterExecutor(cacheStore);
+        @SuppressWarnings( {"synthetic-access", "unchecked", "rawtypes"} )
         List<Future<Collection<T>>> futures = exec.submitEverywhere(
-        		new CacheLocalTransform(key, new Unroll<T>(transform)));
-    	Set<T> results = new HashSet<T>(futures.size());
-    	while(futures.size() > 0) {
-    		Iterator<Future<Collection<T>>> futureIter =
-    				futures.iterator();
-    		while(futureIter.hasNext()) {
-    			Future<Collection<T>> future = futureIter.next();
-    			try {
-    				Collection<T> result = future.get(100, TimeUnit.MILLISECONDS);
-    				futureIter.remove();
-    				results.addAll(result);
-    			} catch (TimeoutException e) {
-    				// we're just going to ignore this and try again!
-    			}
-    		}
-    	}
-    	return results;
+                new CacheLocalTransform(key, new Unroll<T>(transform)));
+        Set<T> results = new HashSet<T>(futures.size());
+        while(futures.size() > 0) {
+            Iterator<Future<Collection<T>>> futureIter =
+                    futures.iterator();
+            while(futureIter.hasNext()) {
+                Future<Collection<T>> future = futureIter.next();
+                try {
+                    Collection<T> result = future.get(100, TimeUnit.MILLISECONDS);
+                    futureIter.remove();
+                    results.addAll(result);
+                } catch (TimeoutException e) {
+                    // we're just going to ignore this and try again!
+                }
+            }
+        }
+        return results;
     }
 
     /**
@@ -358,59 +358,58 @@ public class LowLevelStorageService {
     static class ExternalIdDecorator<T> 
         implements Function<LowLevelCacheEntry, T>, Serializable {
 
-    	/**
-		 * Must be serializable
-		 */
-		private static final long serialVersionUID = 7375231595038804409L;
-		final String externalId;
-    	final Function<LowLevelCacheEntry, T> transform;
-    	ExternalIdDecorator(String externalId, Function<LowLevelCacheEntry, T> transform) {
-    		this.externalId = externalId;
-    		this.transform = transform;
-    	}
-    	
-		@Override
-		public T apply(LowLevelCacheEntry input) {
-			input.setExternalId(externalId);
-			return transform.apply(input);
-		}
-    	
+        /**
+         * Must be serializable
+         */
+        private static final long serialVersionUID = 7375231595038804409L;
+        final String externalId;
+        final Function<LowLevelCacheEntry, T> transform;
+        ExternalIdDecorator(String externalId, Function<LowLevelCacheEntry, T> transform) {
+            this.externalId = externalId;
+            this.transform = transform;
+        }
+
+        @Override
+        public T apply(LowLevelCacheEntry input) {
+            input.setExternalId(externalId);
+            return transform.apply(input);
+        }
+
     }
     
     static class Echo implements Function<LowLevelCacheEntry, LowLevelCacheEntry>, Serializable {
 
-		private static final long serialVersionUID = -1L;
-		
-		@Override
-		public LowLevelCacheEntry apply(LowLevelCacheEntry input) {
-			return input;
-		}
-    	
+        private static final long serialVersionUID = -1L;
+
+        @Override
+        public LowLevelCacheEntry apply(LowLevelCacheEntry input) {
+            return input;
+        }
+
     }
     
     static class Unroll<T> implements Function<LowLevelCacheEntry, Collection<T>>, Serializable {
 
-    	private final Function<LowLevelCacheEntry, T> transform;
-    	
-    	Unroll(Function<LowLevelCacheEntry, T> transform) {
-    	    this.transform = transform;	
-    	}
-    	
-		private static final long serialVersionUID = -1L;
-		
-		@Override
-		public Collection<T> apply(LowLevelCacheEntry input) {
-			final ImmutableSet.Builder<T> entries = builder();
-			if (input instanceof ChainingCacheStoreEntry) {
-				entries.addAll(
-						transform(((ChainingCacheStoreEntry)input).chainedEntries(), transform)
-						);
-			} else {
-				entries.add(transform.apply(input)).build();
-			}
-			return entries.build();
-		}
-    	
+        private final Function<LowLevelCacheEntry, T> transform;
+
+        Unroll(Function<LowLevelCacheEntry, T> transform) {
+            this.transform = transform;
+        }
+
+        private static final long serialVersionUID = -1L;
+
+        @Override
+        public Collection<T> apply(LowLevelCacheEntry input) {
+            final ImmutableSet.Builder<T> entries = builder();
+            if (input instanceof ChainingCacheStoreEntry) {
+                entries.addAll(
+                        transform(((ChainingCacheStoreEntry)input).chainedEntries(), transform)
+                        );
+            } else {
+                entries.add(transform.apply(input)).build();
+            }
+            return entries.build();
+        }
     }
     
 }

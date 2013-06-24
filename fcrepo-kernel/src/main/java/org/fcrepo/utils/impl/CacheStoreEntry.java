@@ -32,9 +32,9 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
      * @todo Document.
      */
     public CacheStoreEntry(final CacheStore store,
-    		final String cacheName,
+            final String cacheName,
             final BinaryKey key) {
-    	super(key);
+        super(key);
         this.store = store;
         this.cacheName = cacheName;
     }
@@ -125,7 +125,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
     }
     
     private static String getStoreIdentifier(FileCacheStoreConfig config) {
-    	return config.getLocation();
+        return config.getLocation();
     }
 
 
@@ -142,7 +142,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
             final CacheStoreEntry that = (CacheStoreEntry) other;
 
             return key.equals(that.getKey()) &&
-            		cacheName.equals(that.cacheName) &&
+                    cacheName.equals(that.cacheName) &&
                     ((store == null && that.store == null) ||
                      (store != null && store.equals(that.store)));
          } else {

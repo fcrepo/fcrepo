@@ -21,7 +21,7 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
     private final BinaryStore store;
 
     public LocalBinaryStoreEntry(final BinaryStore store, final BinaryKey key) {
-    	super(key);
+        super(key);
         this.store = store;
     }
 
