@@ -42,7 +42,7 @@ public class InjectableSession implements Injectable<Session> {
     public Session getValue() {
         if (secContext.getUserPrincipal() != null) {
             logger.debug("Returning authenticated Session.");
-            sessionFactory.getSession(secContext, request);
+            return sessionFactory.getSession(secContext, request);
         } else {
             logger.debug("Returning unauthenticated Session.");
             try {
