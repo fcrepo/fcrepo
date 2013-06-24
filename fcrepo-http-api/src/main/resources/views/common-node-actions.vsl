@@ -4,7 +4,6 @@
     <label>
         Type
     <select id="new_mixin">
-        <option value="">folder</option>
         <option value="fedora:object">object</option>
         <option value="fedora:datastream">datastream</option>
     </select>
