@@ -14,7 +14,18 @@ import static org.fcrepo.metrics.RegistryService.getMetrics;
 public class UUIDPathMinter extends BasePidMinter {
 
     static final Timer timer = getMetrics().timer(name(UUIDPathMinter.class, "mint"));
+    private final int length;
+    private final int count;
 
+    public UUIDPathMinter() {
+        this(2,4);
+
+    }
+
+    public UUIDPathMinter(final int length, final int count) {
+        this.length = length;
+        this.count = count;
+    }
 
     /**
      * Mint a unique identifier as a UUID
@@ -27,7 +38,7 @@ public class UUIDPathMinter extends BasePidMinter {
 
         try {
             final String s = randomUUID().toString();
-            final Iterable<String> split = Splitter.fixedLength(2).split(s.substring(0, 8));
+            final Iterable<String> split = Splitter.fixedLength(length).split(s.substring(0, length * count));
 
             return Joiner.on("/").join(split) + "/" + s;
         } finally {

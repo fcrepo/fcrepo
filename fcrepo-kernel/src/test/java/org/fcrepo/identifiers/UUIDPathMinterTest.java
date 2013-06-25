@@ -24,7 +24,7 @@ public class UUIDPathMinterTest {
     @Test
     public void testMintPid() throws Exception {
 
-        final PidMinter pidMinter = new UUIDPathMinter();
+        final PidMinter pidMinter = new UUIDPathMinter(3, 1);
 
         final String pid = pidMinter.mintPid();
 
