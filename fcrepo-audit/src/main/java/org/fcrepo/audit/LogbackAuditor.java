@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
-
 import com.google.common.eventbus.Subscribe;
 
 /**
@@ -30,6 +29,9 @@ public class LogbackAuditor implements Auditor {
     @Inject
     private EventBus eventBus;
 
+    /**
+     * Register with the EventBus to receive events.
+     */
     @PostConstruct
     public void register() {
         logger.debug("Initializing: " + this.getClass().getCanonicalName());

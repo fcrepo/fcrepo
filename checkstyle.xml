@@ -30,12 +30,14 @@
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>
   </module>
-  <!-- Licence Header -->
+  <!-- License Header -->
+  <!-- disabled in favor of license-maven-plugin
   <module name="RegexpHeader">
     <property name="header"
       value="^/\*\*\n \* The contents of this file are subject to the license and copyright terms$\n^ \* detailed in the license directory at the root of the source tree \(also$\n^ \* available online at http://fedora-commons.org/license/\).$\n^ \*/"
     />
   </module>
+  -->
   <module name="TreeWalker">
     <!-- Checks for redundant import statements -->
     <module name="RedundantImport"/>
@@ -68,13 +70,6 @@
       <property name="allowMissingThrowsTags" value="true"/>
       <property name="allowMissingReturnTag" value="true"/>
     </module>
-    <module name="WriteTag">
-      <property name="id" value="dateTag"/>
-      <property name="tag" value="@date"/>
-      <property name="tagFormat" value="[A-Z][a-z]{2} \d{1,2}, \d{4}"/>
-      <property name="severity" value="error"/>
-      <property name="tagSeverity" value="ignore"/>
-    </module>
     <!-- K&R style braces -->
     <module name="NeedBraces"/>
     <module name="LeftCurly"/>
@@ -85,11 +80,10 @@
       />
     </module>
     <module name="Indentation"/>
-    <!-- Trailing Whitespace -->
-    <module name="Regexp">
-      <property name="format" value="[ \t]+$"/>
-      <property name="illegalPattern" value="true"/>
-      <property name="message" value="Trailing whitespace"/>
-    </module>
+  </module>
+  <!-- No Trailing Whitespace, except on lines that only have an asterisk (e.g. Javadoc comments) -->
+  <module name="RegexpSingleline">
+    <property name="format" value="(?&lt;!\*)\s+$|\*\s\s+$"/>
+    <property name="message" value="Trailing whitespace"/>
   </module>
 </module>

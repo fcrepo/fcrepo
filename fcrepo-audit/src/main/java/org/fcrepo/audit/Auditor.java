@@ -14,10 +14,9 @@ import com.google.common.eventbus.Subscribe;
 public interface Auditor {
 
     /**
-     * 
-     * @param e The {@Event} to record.
-     * 
-     * @throws RepositoryException 
+     * @param e
+     *        The {@Event} to record.
+     * @throws RepositoryException
      */
     @Subscribe
     void recordEvent(final Event e) throws RepositoryException;
