@@ -87,7 +87,7 @@ public abstract class JcrRdfTools {
      */
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
-    private static LowLevelStorageService llstore = new LowLevelStorageService();
+    private static LowLevelStorageService llstore;
 
     /**
      * Convert a Fedora RDF Namespace into its JCR equivalent
@@ -327,7 +327,8 @@ public abstract class JcrRdfTools {
         }
 
         /* and add the repository metrics to the RDF model */
-        model.add(
+        if (counters.containsKey("org.fcrepo.services.LowLevelStorageService.fixity-check-counter") ) {
+            model.add(
                          subject,
                          RdfLexicon.HAS_FIXITY_CHECK_COUNT,
                          ResourceFactory
@@ -336,7 +337,11 @@ public abstract class JcrRdfTools {
                                                                           "LowLevelStorageService." +
                                                                           "fixity-check-counter")
                                                              .getCount()));
-        model.add(
+        }
+
+
+        if (counters.containsKey("org.fcrepo.services.LowLevelStorageService.fixity-error-counter") ) {
+            model.add(
                   subject,
                   RdfLexicon.HAS_FIXITY_ERROR_COUNT,
                   ResourceFactory
@@ -345,7 +350,11 @@ public abstract class JcrRdfTools {
                                            "LowLevelStorageService." +
                                            "fixity-error-counter")
                                       .getCount()));
-        model.add(
+        }
+
+        if (counters.containsKey("org.fcrepo.services.LowLevelStorageService.fixity-repaired-counter") ) {
+
+            model.add(
                   subject,
                   RdfLexicon.HAS_FIXITY_REPAIRED_COUNT,
                   ResourceFactory
@@ -354,6 +363,8 @@ public abstract class JcrRdfTools {
                                            "LowLevelStorageService." +
                                            "fixity-repaired-counter")
                                       .getCount()));
+        }
+
     }
 
     /**
@@ -373,7 +384,9 @@ public abstract class JcrRdfTools {
 
         // TODO: get this from somewhere else.
 
-        if (llstore.getRepository() != null){
+
+        if (llstore == null) {
+            llstore = new LowLevelStorageService();
             llstore.setRepository(node.getSession().getRepository());
         }
 
