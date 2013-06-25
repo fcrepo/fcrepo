@@ -341,6 +341,10 @@ public class LowLevelStorageService {
         repo = repository;
     }
 
+    public Repository getRepository() {
+        return repo;
+    }
+
     /**
      * @todo Add Documentation.
      */

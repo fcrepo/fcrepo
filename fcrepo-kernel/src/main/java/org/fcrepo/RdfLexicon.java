@@ -20,6 +20,11 @@ public final class RdfLexicon {
     public static final Property HAS_COMPUTED_CHECKSUM = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedChecksum");
     public static final Property HAS_COMPUTED_SIZE = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#computedSize");
 
+    public static final Property HAS_FIXITY_CHECK_COUNT = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#numFixityChecks");
+    public static final Property HAS_FIXITY_ERROR_COUNT = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#numFixityErrors");
+    public static final Property HAS_FIXITY_REPAIRED_COUNT = ResourceFactory.createProperty("info:fedora/fedora-system:def/internal#numFixityRepaired");
+
+
     // SEARCH
     public static final Property SEARCH_HAS_TOTAL_RESULTS = ResourceFactory.createProperty("http://a9.com/-/spec/opensearch/1.1/totalResults");
     public static final Property SEARCH_ITEMS_PER_PAGE = ResourceFactory.createProperty("http://a9.com/-/spec/opensearch/1.1/itemsPerPage");

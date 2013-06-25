@@ -196,12 +196,16 @@ public abstract class FedoraTypesUtils {
         @Override
         public com.hp.hpl.jena.rdf.model.Property
         apply(final Property property) {
-            final Namespaced nsProperty = (Namespaced)property;
             try {
-                final String uri = nsProperty.getNamespaceURI();
-                return ResourceFactory
-                    .createProperty(getRDFNamespaceForJcrNamespace(uri),
-                                    nsProperty.getLocalName());
+                if (property instanceof Namespaced) {
+                    final Namespaced nsProperty = (Namespaced)property;
+                    final String uri = nsProperty.getNamespaceURI();
+                    return ResourceFactory
+                        .createProperty(getRDFNamespaceForJcrNamespace(uri),
+                                        nsProperty.getLocalName());
+                } else {
+                    return ResourceFactory.createProperty(property.getName());
+                }
             } catch (RepositoryException e) {
                 throw new IllegalStateException(e);
             }

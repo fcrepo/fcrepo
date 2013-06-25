@@ -58,7 +58,7 @@ public class FedoraTypesUtilsTest {
     // unfortunately, we need to be able to cast to two interfaces to perform
     // some tests this testing interface allows mocks to do that
     static interface PropertyMock extends Property, Namespaced {
-    };
+    }
 
     /**
      * @todo Add Documentation.

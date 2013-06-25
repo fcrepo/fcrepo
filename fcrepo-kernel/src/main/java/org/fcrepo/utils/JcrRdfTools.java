@@ -74,6 +74,7 @@ public abstract class JcrRdfTools {
 
     private static final Logger LOGGER = getLogger(JcrRdfTools.class);
 
+    private static GetClusterConfiguration getClusterConfiguration = new GetClusterConfiguration();
     /**
      * A map of JCR namespaces to Fedora's RDF namespaces
      */
@@ -86,6 +87,7 @@ public abstract class JcrRdfTools {
      */
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
+    private static LowLevelStorageService llstore = new LowLevelStorageService();
 
     /**
      * Convert a Fedora RDF Namespace into its JCR equivalent
@@ -251,7 +253,7 @@ public abstract class JcrRdfTools {
 
         final Model model = createDefaultJcrModel(node.getSession());
 
-        if (node.getPrimaryNodeType().getName().equals("mode:root")) {
+        if (node.getPrimaryNodeType().getName().equals(FedoraJcrTypes.ROOT)) {
             /* a rdf description of the root node */
             LOGGER.debug("Creating RDF response for repository description");
             addRepositoryMetricsToModel(factory, node, model);
@@ -314,8 +316,7 @@ public abstract class JcrRdfTools {
         /* add the configuration information */
 
         /* Get the cluster configuration for the RDF response */
-        final Map<String, String> config =
-            new GetClusterConfiguration().apply(repository);
+        final Map<String, String> config = getClusterConfiguration.apply(repository);
 
         assert (config != null);
 
@@ -327,17 +328,17 @@ public abstract class JcrRdfTools {
 
         /* and add the repository metrics to the RDF model */
         model.add(
-                  subject,
-                  model.createProperty("info:fedora/fedora-system:def/internal#numFixityChecks"),
-                  ResourceFactory
-                  .createTypedLiteral(counters
-                                      .get("org.fcrepo.services." +
-                                           "LowLevelStorageService." +
-                                           "fixity-check-counter")
-                                      .getCount()));
+                         subject,
+                         RdfLexicon.HAS_FIXITY_CHECK_COUNT,
+                         ResourceFactory
+                                 .createTypedLiteral(counters
+                                                             .get("org.fcrepo.services." +
+                                                                          "LowLevelStorageService." +
+                                                                          "fixity-check-counter")
+                                                             .getCount()));
         model.add(
                   subject,
-                  model.createProperty("info:fedora/fedora-system:def/internal#numFixityErrors"),
+                  RdfLexicon.HAS_FIXITY_ERROR_COUNT,
                   ResourceFactory
                   .createTypedLiteral(counters
                                       .get("org.fcrepo.services." +
@@ -346,7 +347,7 @@ public abstract class JcrRdfTools {
                                       .getCount()));
         model.add(
                   subject,
-                  model.createProperty("info:fedora/fedora-system:def/internal#numFixityRepaired"),
+                  RdfLexicon.HAS_FIXITY_REPAIRED_COUNT,
                   ResourceFactory
                   .createTypedLiteral(counters
                                       .get("org.fcrepo.services." +
@@ -371,8 +372,10 @@ public abstract class JcrRdfTools {
             factory.getGraphSubject(contentNode);
 
         // TODO: get this from somewhere else.
-        final LowLevelStorageService llstore = new LowLevelStorageService();
-        llstore.setRepository(node.getSession().getRepository());
+
+        if (llstore.getRepository() != null){
+            llstore.setRepository(node.getSession().getRepository());
+        }
 
         final Set<LowLevelCacheEntry> cacheEntries =
             llstore.getLowLevelCacheEntries(contentNode);
@@ -787,5 +790,13 @@ public abstract class JcrRdfTools {
             model.add(resultSubject, RdfLexicon.HAS_COMPUTED_SIZE, ResourceFactory.createTypedLiteral(result.computedSize));
         }
         return model;
+    }
+
+    public static void setGetClusterConfiguration(final GetClusterConfiguration getClusterConfiguration) {
+        JcrRdfTools.getClusterConfiguration = getClusterConfiguration;
+    }
+
+    public static void setLlstore(final LowLevelStorageService lowLevelStorageService) {
+        JcrRdfTools.llstore = lowLevelStorageService;
     }
 }
