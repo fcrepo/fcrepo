@@ -34,6 +34,10 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
+import javax.jcr.version.VersionManager;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
@@ -820,6 +824,35 @@ public class JcrRdfToolsTest {
         final Model jcrNamespaceModel = JcrRdfTools.getJcrNamespaceModel(mockSession);
         assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("info:fedora/fedora-system:def/internal#"), RdfLexicon.HAS_NAMESPACE_PREFIX, "fedora-internal"));
         assertTrue(jcrNamespaceModel.contains(ResourceFactory.createResource("registered-uri#"), RdfLexicon.HAS_NAMESPACE_PREFIX, "some-prefix"));
+    }
+
+    @Test
+    public void testGetJcrVersionsModel() throws Exception {
+
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        when(mockVersionManager.getVersionHistory(mockNode.getPath())).thenReturn(mockVersionHistory);
+
+        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockVersionIterator.hasNext()).thenReturn(true, false);
+        Version mockVersion = mock(Version.class);
+        Node mockFrozenNode = mock(Node.class);
+        when(mockFrozenNode.getPath()).thenReturn("/jcr:system/versions/test/jcr");
+        when(mockVersion.getFrozenNode()).thenReturn(mockFrozenNode);
+        when(mockVersionIterator.nextVersion()).thenReturn(mockVersion);
+        when(mockVersionHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionHistory.getVersionLabels(mockVersion)).thenReturn(new String[] { "abc" });
+
+        PropertyIterator mockProperties = mock(PropertyIterator.class);
+        when(mockProperties.hasNext()).thenReturn(false);
+        when(mockFrozenNode.getProperties()).thenReturn(mockProperties);
+        final Model actual = JcrRdfTools.getJcrVersionsModel(testSubjects, mockNode);
+
+        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode), RdfLexicon.HAS_VERSION, testSubjects.getGraphSubject(mockFrozenNode)));
+        assertTrue(actual.contains(testSubjects.getGraphSubject(mockFrozenNode), RdfLexicon.HAS_VERSION_LABEL, actual.createLiteral("abc")));
     }
 
     private void mockNamespaceRegistry() throws RepositoryException {
