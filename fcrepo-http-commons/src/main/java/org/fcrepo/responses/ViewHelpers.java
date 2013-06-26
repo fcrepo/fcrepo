@@ -196,4 +196,8 @@ public class ViewHelpers {
     public Node asNode(final Resource r) {
         return r.asNode();
     }
+
+    public int addOne(final int i) {
+        return i + 1;
+    }
 }
