@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -25,6 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.7.0</activemq.version>
     <enunciate.version>1.26.2</enunciate.version>
+    <fcrepo-build-tools.version>1.2</fcrepo-build-tools.version>
     <httpcomponents.version>4.2.5</httpcomponents.version>
     <infinispan.version>5.3.0.CR2</infinispan.version>
     <jersey.version>1.17.1</jersey.version>
@@ -40,10 +42,10 @@
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <powermock.version>1.5.1</powermock.version>
-    
+
     <!-- plugin versions -->
-    <!-- Until MCHECKSTYLE-169 is resolved, we're using a patched, snapshot of
-    checkstyle deployed to fcrepo.maven.org -->
+    <!-- Until MCHECKSTYLE-169 is resolved, we're using a patched, snapshot of checkstyle 
+      deployed to fcrepo.maven.org -->
     <checkstyle.plugin.version>2.11-SNAPSHOT</checkstyle.plugin.version>
   </properties>
 
@@ -451,6 +453,19 @@
     </dependencies>
   </dependencyManagement>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -480,6 +495,45 @@
           <version>1.8.1</version>
         </plugin>
         <plugin>
+          <groupId>com.mycila.maven-license-plugin</groupId>
+          <artifactId>maven-license-plugin</artifactId>
+          <version>1.10.b1</version>
+          <configuration>
+            <header>fcrepo-license/LICENSE_HEADER.txt</header>
+            <includes>
+              <include>**/src/main/java/**</include>
+              <include>**/src/test/java/**</include>
+            </includes>
+            <excludes>
+              <exclude>target/**</exclude>
+              <exclude>**/src/test/resources/**</exclude>
+              <exclude>**/src/main/resources/**</exclude>
+              <exclude>**/*.properties</exclude>
+            </excludes>
+            <properties>
+              <name>${project.artifactId}</name>
+              <year>${project.inceptionYear}</year>
+              <holder>${project.organization.name}</holder>
+            </properties>
+            <encoding>UTF-8</encoding>
+            <strictCheck>true</strictCheck>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.fcrepo</groupId>
+              <artifactId>fcrepo-build-tools</artifactId>
+              <version>${fcrepo-build-tools.version}</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
           <version>2.4.0</version>
@@ -492,7 +546,7 @@
             <dependency>
               <groupId>org.fcrepo</groupId>
               <artifactId>fcrepo-build-tools</artifactId>
-              <version>1.1</version>
+              <version>${fcrepo-build-tools.version}</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -531,43 +585,18 @@
           <artifactId>maven-deploy-plugin</artifactId>
           <version>2.7</version>
         </plugin>
-        <!-- oss-parent:7 declares maven-enforcer-plugin:1.0, which can't be
-        overridden in pluginManagement. Our deployment of snapshots via Jenkins
-        requires that we use at least version 1.1 because of 
-        http://jira.codehaus.org/browse/MENFORCER-118.
-        If/when oss-parent:8 is released we can re-instate this section of 
-        pluginManagement
-        <plugin>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>1.2</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <rules>
-                  <DependencyConvergence />
-                  <bannedDependencies>
-                    <searchTransitive>true</searchTransitive>
-                    <excludes>
-                      <exclude>commons-logging</exclude>
-                      <exclude>log4j:log4j</exclude>
-                      <exclude>org.slf4j:slf4j-jcl</exclude>
-                      <exclude>org.slf4j:slf4j-jdk14</exclude>
-                      <exclude>org.slf4j:slf4j-log4j12</exclude>
-                      <exclude>org.slf4j:slf4j-log4j13</exclude>
-                      <exclude>org.slf4j:slf4j-nop</exclude>
-                      <exclude>org.slf4j:slf4j-simple</exclude>
-                      <exclude>org.apache.cxf</exclude>
-                    </excludes>
-                  </bannedDependencies>
-                </rules>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        -->
+        <!-- oss-parent:7 declares maven-enforcer-plugin:1.0, which can't be overridden 
+          in pluginManagement. Our deployment of snapshots via Jenkins requires that we use 
+          at least version 1.1 because of http://jira.codehaus.org/browse/MENFORCER-118. If/when 
+          oss-parent:8 is released we can re-instate this section of pluginManagement <plugin> 
+          <artifactId>maven-enforcer-plugin</artifactId> <version>1.2</version> <executions> 
+          <execution> <goals> <goal>enforce</goal> </goals> <configuration> <rules> <DependencyConvergence 
+          /> <bannedDependencies> <searchTransitive>true</searchTransitive> <excludes> <exclude>commons-logging</exclude> 
+          <exclude>log4j:log4j</exclude> <exclude>org.slf4j:slf4j-jcl</exclude> <exclude>org.slf4j:slf4j-jdk14</exclude> 
+          <exclude>org.slf4j:slf4j-log4j12</exclude> <exclude>org.slf4j:slf4j-log4j13</exclude> 
+          <exclude>org.slf4j:slf4j-nop</exclude> <exclude>org.slf4j:slf4j-simple</exclude> 
+          <exclude>org.apache.cxf</exclude> </excludes> </bannedDependencies> </rules> </configuration> 
+          </execution> </executions> </plugin> -->
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>2.15</version>
@@ -661,6 +690,13 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>license-maven-plugin</artifactId>
           <version>1.5</version>
+          <configuration>
+            <licenseName>apache_v2</licenseName>
+            <roots>
+              <root>src/main/java</root>
+              <root>src/test/java</root>
+            </roots>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -704,7 +740,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -719,7 +755,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -732,7 +768,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -746,7 +782,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore/>
+                    <ignore />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -808,6 +844,10 @@
         <artifactId>site-maven-plugin</artifactId>
       </plugin>
       <plugin>
+        <groupId>com.mycila.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+      </plugin>
+      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
@@ -820,32 +860,32 @@
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>1.2</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <rules>
-                  <DependencyConvergence/>
-                  <bannedDependencies>
-                    <searchTransitive>true</searchTransitive>
-                    <excludes>
-                      <exclude>commons-logging</exclude>
-                      <exclude>log4j:log4j</exclude>
-                      <exclude>org.slf4j:slf4j-jcl</exclude>
-                      <exclude>org.slf4j:slf4j-jdk14</exclude>
-                      <exclude>org.slf4j:slf4j-log4j12</exclude>
-                      <exclude>org.slf4j:slf4j-log4j13</exclude>
-                      <exclude>org.slf4j:slf4j-nop</exclude>
-                      <exclude>org.slf4j:slf4j-simple</exclude>
-                      <exclude>org.apache.cxf</exclude>
-                    </excludes>
-                  </bannedDependencies>
-                </rules>
-              </configuration>
-            </execution>
-          </executions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <DependencyConvergence />
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>commons-logging</exclude>
+                    <exclude>log4j:log4j</exclude>
+                    <exclude>org.slf4j:slf4j-jcl</exclude>
+                    <exclude>org.slf4j:slf4j-jdk14</exclude>
+                    <exclude>org.slf4j:slf4j-log4j12</exclude>
+                    <exclude>org.slf4j:slf4j-log4j13</exclude>
+                    <exclude>org.slf4j:slf4j-nop</exclude>
+                    <exclude>org.slf4j:slf4j-simple</exclude>
+                    <exclude>org.apache.cxf</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -987,7 +1027,7 @@
       </snapshots>
     </repository>
   </repositories>
-  
+
   <pluginRepositories>
     <pluginRepository>
       <id>fcrepo-snapshot</id>
@@ -1167,16 +1207,10 @@
     </developer>
   </developers>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-junit4</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <organization>
+    <name>DuraSpace, Inc.</name>
+    <url>http://www.duraspace.org/</url>
+  </organization>
+
+  <inceptionYear>2013</inceptionYear>
 </project>
