@@ -14,7 +14,8 @@ import com.codahale.metrics.servlets.AdminServletContextListener;
  * Metrics servlets expect.
  * 
  * @author Edwin Shin
- * @see <a href="http://metrics.codahale.com/manual/servlets/">http://metrics.codahale.com/manual/servlets/</a>
+ * @see <a
+ *      href="http://metrics.codahale.com/manual/servlets/">http://metrics.codahale.com/manual/servlets/</a>
  */
 @WebListener
 public class MetricsContextListener extends AdminServletContextListener {

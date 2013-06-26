@@ -45,6 +45,12 @@ public class ReporterFactory {
         return reporter;
     }
 
+    /**
+     * TODO
+     * 
+     * @param prefix
+     * @return
+     */
     public JmxReporter getJmxReporter(final String prefix) {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         final JmxReporter reporter =
