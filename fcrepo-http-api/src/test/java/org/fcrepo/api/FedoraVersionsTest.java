@@ -7,6 +7,7 @@ import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 
 import java.io.IOException;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -19,8 +20,11 @@ import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.RDFMediaType;
 import org.fcrepo.responses.GraphStoreStreamingOutput;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
@@ -65,25 +69,18 @@ public class FedoraVersionsTest {
         String pid = "FedoraDatastreamsTest1";
         
         final FedoraResource mockResource = mock(FedoraResource.class);
-        
         final Request mockRequest = mock(Request.class);
         final Variant mockVariant = mock(Variant.class);        
         final Dataset mockDataset = mock(Dataset.class);
-        final Response mockResponse = mock(Response.class);
-        final Response mockResponseReturned = mock(Response.class);
 
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(mockVariant);        
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(mockResource);
-        
         when(mockResource.getVersionDataset(any(HttpGraphSubjects.class))).thenReturn(mockDataset);
-        final ResponseBuilder mockResponseBuilder = mock(ResponseBuilder.class);                
-//        when(mockResponse.ok(Mockito.anyObject())).thenReturn(mockResponseBuilder);
-//        when(mockResponseBuilder.build()).thenReturn(mockResponseReturned);
-//        
-//        final Response respReturned= testObj.getVersionList(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl());  
-//        
-//        assertNotNull(respReturned);
-//        assertEquals(mockResponseReturned.getStatus(), respReturned.getStatus());
+        when(mockVariant.getMediaType()).thenReturn(new MediaType("text","turtle"));
+        
+        final Response respReturned= testObj.getVersionList(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl());  
+        assertNotNull(respReturned);
+        assertEquals(200, respReturned.getStatus());
     }
     
     @Test    
