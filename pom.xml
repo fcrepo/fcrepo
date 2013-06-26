@@ -688,18 +688,6 @@
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
-          <artifactId>license-maven-plugin</artifactId>
-          <version>1.5</version>
-          <configuration>
-            <licenseName>apache_v2</licenseName>
-            <roots>
-              <root>src/main/java</root>
-              <root>src/test/java</root>
-            </roots>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
           <!-- reserve a port under the property ${test.port} for integration tests -->
@@ -904,10 +892,6 @@
         <configuration>
           <jacoco-agent.destFile>${project.basedir}/target/jacoco-it.exec</jacoco-agent.destFile>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>license-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
