@@ -53,11 +53,10 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
- * A simple JAX-RS Entity Provider that can accept RDF datasets
- * that represent Fedora resources and merge them into templates
- * chosen based on the primary node type of the backing JCR node
- * for that Fedora resource.
- *
+ * A simple JAX-RS Entity Provider that can accept RDF datasets that represent
+ * Fedora resources and merge them into templates chosen based on the primary
+ * node type of the backing JCR node for that Fedora resource.
+ * 
  * @author ajs6f
  * @date May 19, 2013
  */
@@ -71,7 +70,6 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
     @javax.ws.rs.core.Context
     UriInfo uriInfo;
 
-
     protected VelocityEngine velocity = new VelocityEngine();
 
     /**
@@ -80,8 +78,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
     public static final String templatesLocation = "/views";
 
     /**
-     * A map from String names for primary node types to the
-     * Velocity templates that should be used for those node types.
+     * A map from String names for primary node types to the Velocity templates
+     * that should be used for those node types.
      */
     protected Map<String, Template> templatesMap;
 
@@ -118,7 +116,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
                         primaryNodeTypes.nextNodeType().getName();
                 // for each node primary type, we try to find a template
                 final String templateLocation =
-                        templatesLocation + "/" + primaryNodeTypeName.replace(':', '-') +
+                        templatesLocation + "/" +
+                                primaryNodeTypeName.replace(':', '-') +
                                 templateFilenameExtension;
                 try {
                     final Template template =
@@ -127,25 +126,28 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
                     LOGGER.debug("Found template: {}", templateLocation);
                     templatesMapBuilder.put(primaryNodeTypeName, template);
                     LOGGER.debug(
-                                        "which we will use for nodes with primary type: {}",
-                                        primaryNodeTypeName);
+                            "which we will use for nodes with primary type: {}",
+                            primaryNodeTypeName);
                 } catch (final ResourceNotFoundException e) {
                     LOGGER.debug(
-                                        "Didn't find template for nodes with primary type: {} in location: {}",
-                                        primaryNodeTypeName, templateLocation);
+                            "Didn't find template for nodes with primary type: {} in location: {}",
+                            primaryNodeTypeName, templateLocation);
                     /*
                      * we don't care-- just means we don't have an HTML
-                     * representation
-                     * available for that kind of node
+                     * representation available for that kind of node
                      */
                 }
 
             }
 
-            List<String> otherTemplates = ImmutableList.of("search:results", "jcr:namespaces");
+            List<String> otherTemplates =
+                    ImmutableList.of("search:results", "jcr:namespaces");
 
-            for ( String key : otherTemplates) {
-                final Template template = velocity.getTemplate(templatesLocation + "/" + key.replace(':', '-') + templateFilenameExtension);
+            for (String key : otherTemplates) {
+                final Template template =
+                        velocity.getTemplate(templatesLocation + "/" +
+                                key.replace(':', '-') +
+                                templateFilenameExtension);
                 templatesMapBuilder.put(key, template);
             }
 
@@ -164,17 +166,18 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
             final OutputStream entityStream) throws IOException,
-            WebApplicationException {
+        WebApplicationException {
 
         LOGGER.debug("Writing an HTML response for: {}", rdf);
         LOGGER.trace("Attempting to discover our subject");
-		Node subject = getDatasetSubject(rdf);
+        Node subject = getDatasetSubject(rdf);
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) TEXT_HTML));
         setCachingHeaders(httpHeaders, rdf);
 
-        final Template nodeTypeTemplate = getTemplate(rdf, subject, annotations);
+        final Template nodeTypeTemplate =
+                getTemplate(rdf, subject, annotations);
 
         final Context context = getContext(rdf, subject);
 
@@ -204,7 +207,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
         return context;
     }
 
-    private Template getTemplate(final Dataset rdf, final Node subject, final Annotation[] annotations) {
+    private Template getTemplate(final Dataset rdf, final Node subject,
+            final Annotation[] annotations) {
         Template template = null;
 
         for (Annotation a : annotations) {
@@ -219,7 +223,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
         if (template == null) {
             LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
             final String nodeType =
-                    getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
+                    getFirstValueForPredicate(rdf, subject,
+                            primaryTypePredicate);
 
             LOGGER.debug("Found primary node type: {}", nodeType);
             template = templatesMap.get(nodeType);

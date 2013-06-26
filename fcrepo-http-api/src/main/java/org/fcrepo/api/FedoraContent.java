@@ -56,10 +56,11 @@ public class FedoraContent extends AbstractResource {
     private final Logger logger = getLogger(FedoraContent.class);
 
     /**
-     * Create an anonymous DS with a newly minted name
-     * and content from request body
+     * Create an anonymous DS with a newly minted name and content from request
+     * body
+     * 
      * @param pathList
-     * @throws RepositoryException 
+     * @throws RepositoryException
      */
     @POST
     @Timed
@@ -68,7 +69,8 @@ public class FedoraContent extends AbstractResource {
     final String checksumType, @QueryParam("checksum")
     final String checksum, @HeaderParam("Content-Type")
     final MediaType requestContentType, final InputStream requestBodyStream)
-            throws IOException, InvalidChecksumException, RepositoryException, URISyntaxException {
+        throws IOException, InvalidChecksumException, RepositoryException,
+        URISyntaxException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -82,13 +84,18 @@ public class FedoraContent extends AbstractResource {
 
         logger.debug("create Datastream {}", path);
         try {
-            final Node datastreamNode = datastreamService.createDatastreamNode(session, path, contentType.toString(), requestBodyStream, checksumType, checksum);
+            final Node datastreamNode =
+                    datastreamService.createDatastreamNode(session, path,
+                            contentType.toString(), requestBodyStream,
+                            checksumType, checksum);
 
+            final HttpGraphSubjects subjects =
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
 
-        final HttpGraphSubjects subjects =
-                new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
-
-        return created(new URI(subjects.getGraphSubject(datastreamNode.getNode(JcrConstants.JCR_CONTENT)).getURI())).build();
+            return created(
+                    new URI(subjects.getGraphSubject(
+                            datastreamNode.getNode(JcrConstants.JCR_CONTENT))
+                            .getURI())).build();
 
         } finally {
             session.save();
@@ -98,16 +105,14 @@ public class FedoraContent extends AbstractResource {
 
     /**
      * Modify an existing datastream's content
-     *
+     * 
      * @param pathList
-     * @param requestContentType
-     *            Content-Type header
-     * @param requestBodyStream
-     *            Binary blob
+     * @param requestContentType Content-Type header
+     * @param requestBodyStream Binary blob
      * @return 201 Created
      * @throws RepositoryException
      * @throws IOException
-     * @throws InvalidChecksumException 
+     * @throws InvalidChecksumException
      */
     @PUT
     @Timed
@@ -116,7 +121,7 @@ public class FedoraContent extends AbstractResource {
     final MediaType requestContentType, final InputStream requestBodyStream,
             @Context
             final Request request) throws RepositoryException, IOException,
-                                                                                       InvalidChecksumException, URISyntaxException {
+        InvalidChecksumException, URISyntaxException {
         try {
             final String path = toPath(pathList);
             final MediaType contentType =
@@ -150,9 +155,14 @@ public class FedoraContent extends AbstractResource {
 
             if (isNew) {
                 final HttpGraphSubjects subjects =
-                        new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+                        new HttpGraphSubjects(FedoraNodes.class, uriInfo,
+                                session);
 
-                return created(new URI(subjects.getGraphSubject(datastreamNode.getNode(JcrConstants.JCR_CONTENT)).getURI())).build();
+                return created(
+                        new URI(subjects.getGraphSubject(
+                                datastreamNode
+                                        .getNode(JcrConstants.JCR_CONTENT))
+                                .getURI())).build();
             } else {
                 return noContent().build();
             }
@@ -164,7 +174,7 @@ public class FedoraContent extends AbstractResource {
 
     /**
      * Get the binary content of a datastream
-     *
+     * 
      * @param pathList
      * @return Binary blob
      * @throws RepositoryException

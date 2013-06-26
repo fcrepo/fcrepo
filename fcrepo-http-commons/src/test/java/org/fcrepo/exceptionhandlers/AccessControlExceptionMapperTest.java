@@ -1,3 +1,4 @@
+
 package org.fcrepo.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
@@ -12,12 +13,12 @@ import org.junit.Test;
 public class AccessControlExceptionMapperTest {
 
     private AccessControlExceptionMapper testObj;
-    
+
     @Before
     public void setUp() {
         testObj = new AccessControlExceptionMapper();
     }
-    
+
     @Test
     public void testToResponse() {
         AccessControlException input = new AccessControlException();

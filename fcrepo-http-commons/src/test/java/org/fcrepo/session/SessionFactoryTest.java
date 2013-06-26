@@ -45,7 +45,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionWithNullPath() throws LoginException,
-                                                             RepositoryException {
+        RepositoryException {
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn(null);
 
@@ -53,11 +53,9 @@ public class SessionFactoryTest {
         verify(mockRepo).login();
     }
 
-
-
     @Test
     public void testGetSessionAuthenticated() throws LoginException,
-            RepositoryException {
+        RepositoryException {
         final SecurityContext mockContext = mock(SecurityContext.class);
         final Principal mockUser = mock(Principal.class);
         when(mockContext.getUserPrincipal()).thenReturn(mockUser);
@@ -69,26 +67,25 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionUnauthenticated() throws LoginException,
-            RepositoryException {
+        RepositoryException {
         testObj.getSession();
         verify(mockRepo).login();
     }
 
-
     @Test
     public void testGetSessionWithWorkspace() throws LoginException,
-                                                               RepositoryException {
+        RepositoryException {
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        when(mockRequest.getPathInfo()).thenReturn("/workspace:some-workspace/some/path");
+        when(mockRequest.getPathInfo()).thenReturn(
+                "/workspace:some-workspace/some/path");
 
         testObj.getSession(mockRequest);
         verify(mockRepo).login("some-workspace");
     }
 
-
     @Test
     public void testGetSessionWithTransaction() throws LoginException,
-                                                             RepositoryException {
+        RepositoryException {
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
 
@@ -102,26 +99,25 @@ public class SessionFactoryTest {
         assertEquals(mockTx.getSession(), session);
     }
 
-
     @Test
-    public void testGetAuthenticatedSessionWithWorkspace() throws LoginException,
-                                                             RepositoryException {
+    public void testGetAuthenticatedSessionWithWorkspace()
+        throws LoginException, RepositoryException {
 
         final SecurityContext mockContext = mock(SecurityContext.class);
         final Principal mockUser = mock(Principal.class);
         when(mockContext.getUserPrincipal()).thenReturn(mockUser);
 
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
-        when(mockRequest.getPathInfo()).thenReturn("/workspace:some-workspace/some/path");
+        when(mockRequest.getPathInfo()).thenReturn(
+                "/workspace:some-workspace/some/path");
 
-        testObj.getSession(mockContext,mockRequest);
+        testObj.getSession(mockContext, mockRequest);
         verify(mockRepo).login(any(Credentials.class), eq("some-workspace"));
     }
 
-
     @Test
-    public void testGetAuthenticatedSessionWithTransaction() throws LoginException,
-                                                               RepositoryException {
+    public void testGetAuthenticatedSessionWithTransaction()
+        throws LoginException, RepositoryException {
 
         final SecurityContext mockContext = mock(SecurityContext.class);
         final Principal mockUser = mock(Principal.class);
@@ -135,11 +131,12 @@ public class SessionFactoryTest {
         Transaction mockTx = mock(Transaction.class);
         final Session txSession = mock(Session.class);
         final Session mockSession = mock(Session.class);
-        when(txSession.impersonate(any(Credentials.class))).thenReturn(mockSession);
+        when(txSession.impersonate(any(Credentials.class))).thenReturn(
+                mockSession);
         when(mockTx.getSession()).thenReturn(txSession);
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
 
-        final Session session = testObj.getSession(mockContext,mockRequest);
+        final Session session = testObj.getSession(mockContext, mockRequest);
         assertEquals(mockSession, session);
         verify(txSession).impersonate(any(Credentials.class));
     }

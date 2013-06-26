@@ -60,19 +60,19 @@ public abstract class AbstractResourceIT {
     protected static HttpPost postDSMethod(final String pid, final String ds,
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/" + pid +
-                        "/" + ds + "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+                new HttpPost(serverAddress + "objects/" + pid + "/" + ds +
+                        "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
-        return new HttpPut(serverAddress + "objects/" + pid +
-                "/" + ds + "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+        return new HttpPut(serverAddress + "objects/" + pid + "/" + ds +
+                "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
     }
 
     protected int getStatus(final HttpUriRequest method)
-            throws ClientProtocolException, IOException {
+        throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());
         return client.execute(method).getStatusLine().getStatusCode();

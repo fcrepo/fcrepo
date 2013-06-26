@@ -44,11 +44,12 @@ import com.google.common.eventbus.Subscribe;
 @Scope("prototype")
 @Component
 public class FedoraWebhooks extends AbstractResource {
-    
+
     public static final String WEBHOOK_SEARCH = "webhook:*";
-    
-    public static final String WEBHOOK_CALLBACK_PROPERTY = "webhook:callbackUrl";
-    
+
+    public static final String WEBHOOK_CALLBACK_PROPERTY =
+            "webhook:callbackUrl";
+
     public static final String WEBHOOK_JCR_TYPE = "webhook:callback";
 
     private static final Logger LOGGER = LoggerFactory
@@ -58,7 +59,6 @@ public class FedoraWebhooks extends AbstractResource {
             new PoolingClientConnectionManager();
 
     protected static HttpClient client;
-
 
     @InjectedSession
     protected Session session;
@@ -77,8 +77,7 @@ public class FedoraWebhooks extends AbstractResource {
 
     @Override
     @PostConstruct
-    public void initialize() throws
-            RepositoryException {
+    public void initialize() throws RepositoryException {
 
         eventBus.register(this);
 
@@ -89,17 +88,18 @@ public class FedoraWebhooks extends AbstractResource {
     }
 
     /**
-     * Trigger all the registered webhook callbacks for a resource when
-     * the event is received
-     *
+     * Trigger all the registered webhook callbacks for a resource when the
+     * event is received
+     * 
      * @param resource
      * @param event
      * @throws RepositoryException
      */
     public void runHooks(final Node resource, final FedoraEvent event)
-            throws RepositoryException {
+        throws RepositoryException {
         if (resource == null) {
-            LOGGER.warn("resource node is null; event path is {}", event.getPath());
+            LOGGER.warn("resource node is null; event path is {}", event
+                    .getPath());
             return;
         }
 
@@ -126,7 +126,9 @@ public class FedoraWebhooks extends AbstractResource {
                 LOGGER.debug("Firing callback for" + hook.getName());
                 client.execute(method);
             } catch (final IOException e) {
-                LOGGER.warn("Got exception running webhook callback for {}: {}", hook.getName(), e);
+                LOGGER.warn(
+                        "Got exception running webhook callback for {}: {}",
+                        hook.getName(), e);
             }
 
         }
@@ -184,6 +186,7 @@ public class FedoraWebhooks extends AbstractResource {
 
     /**
      * Listen to the EventBus and trigger webhooks callbacks (see .runHooks)
+     * 
      * @param event
      */
     @Subscribe
@@ -191,7 +194,8 @@ public class FedoraWebhooks extends AbstractResource {
         try {
             LOGGER.debug("Webhooks received event: {}", event);
             final Node resource =
-                    jcrTools.findOrCreateNode(readOnlySession.getRepository().login(), event.getPath());
+                    jcrTools.findOrCreateNode(readOnlySession.getRepository()
+                            .login(), event.getPath());
 
             runHooks(resource, event);
         } catch (final RepositoryException e) {
@@ -202,7 +206,6 @@ public class FedoraWebhooks extends AbstractResource {
     public void setSession(final Session session) {
         this.session = session;
     }
-
 
     public void setReadOnlySessionSession(final Session session) {
         this.readOnlySession = session;

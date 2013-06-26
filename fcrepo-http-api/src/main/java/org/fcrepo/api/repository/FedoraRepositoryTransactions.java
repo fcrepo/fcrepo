@@ -1,3 +1,4 @@
+
 package org.fcrepo.api.repository;
 
 import org.fcrepo.api.FedoraTransactions;
@@ -7,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import javax.jcr.Session;
 import javax.ws.rs.Path;
-
 
 @Component
 @Scope("prototype")

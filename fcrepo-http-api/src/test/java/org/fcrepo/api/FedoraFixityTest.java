@@ -60,7 +60,7 @@ public class FedoraFixityTest {
 
     @Test
     public void testGetDatastreamFixity() throws RepositoryException,
-            IOException {
+        IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/objects/" + pid + "/testDS";
         final String dsId = "testDS";

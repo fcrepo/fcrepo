@@ -22,18 +22,17 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
-		final int status = getStatus( postObjMethod("DublinCoreTest1"));
-		assertEquals(201, status);
-		final HttpPost post = postObjMethod("DublinCoreTest1");
-		post.setHeader("Content-Type", "application/sparql-update");
-		BasicHttpEntity entity = new BasicHttpEntity();
-		String subjectURI = serverAddress + "objects/DublinCoreTest1";
-		entity.setContent(new ByteArrayInputStream(
-				("INSERT { <" + subjectURI +
-				 "> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
-				 .getBytes()));
-		post.setEntity(entity);
-		assertEquals(204, getStatus( post));
+        final int status = getStatus(postObjMethod("DublinCoreTest1"));
+        assertEquals(201, status);
+        final HttpPost post = postObjMethod("DublinCoreTest1");
+        post.setHeader("Content-Type", "application/sparql-update");
+        BasicHttpEntity entity = new BasicHttpEntity();
+        String subjectURI = serverAddress + "objects/DublinCoreTest1";
+        entity.setContent(new ByteArrayInputStream(
+                ("INSERT { <" + subjectURI + "> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
+                        .getBytes()));
+        post.setEntity(entity);
+        assertEquals(204, getStatus(post));
         final HttpGet getWorstCaseOaiMethod =
                 new HttpGet(serverOAIAddress + "objects/DublinCoreTest1/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
@@ -42,7 +41,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String content = EntityUtils.toString(response.getEntity());
-		logger.debug("Got content: {}", content);
+        logger.debug("Got content: {}", content);
         assertTrue("Didn't find oai_dc!", compile("oai_dc", DOTALL).matcher(
                 content).find());
 

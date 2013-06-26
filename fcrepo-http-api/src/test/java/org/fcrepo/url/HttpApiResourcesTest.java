@@ -1,3 +1,4 @@
+
 package org.fcrepo.url;
 
 import com.google.common.collect.ImmutableSet;
@@ -36,10 +37,15 @@ import static org.mockito.Mockito.when;
 public class HttpApiResourcesTest {
 
     private HttpApiResources testObj;
+
     private Node mockNode;
+
     private FedoraResource mockResource;
+
     private UriInfo uriInfo;
+
     private GraphSubjects mockSubjects;
+
     private SerializerUtil mockSerializers;
 
     @Before
@@ -56,7 +62,8 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateModeRootNodesWithRepositoryWideLinks() throws RepositoryException {
+    public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
+        throws RepositoryException {
 
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.isNodeType(FedoraJcrTypes.ROOT)).thenReturn(true);
@@ -65,7 +72,9 @@ public class HttpApiResourcesTest {
 
         Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
-        final Model model = testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo,
+                        mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_SEARCH_SERVICE));
         assertTrue(model.contains(graphSubject, HAS_SITEMAP));
@@ -74,7 +83,8 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateNodesWithLinksToVersionsAndExport() throws RepositoryException {
+    public void shouldDecorateNodesWithLinksToVersionsAndExport()
+        throws RepositoryException {
 
         when(mockNode.getPrimaryNodeType()).thenReturn(mock(NodeType.class));
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
@@ -82,22 +92,27 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(ImmutableSet.of("a", "b"));
         Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
-
-        final Model model = testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo,
+                        mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_VERSION_HISTORY));
-        assertEquals(2, model.listObjectsOfProperty(graphSubject, HAS_SERIALIZATION).toSet().size());
+        assertEquals(2, model.listObjectsOfProperty(graphSubject,
+                HAS_SERIALIZATION).toSet().size());
     }
 
     @Test
-    public void shouldDecorateDatastreamsWithLinksToFixityChecks() throws RepositoryException {
+    public void shouldDecorateDatastreamsWithLinksToFixityChecks()
+        throws RepositoryException {
         when(mockNode.hasNode(JcrConstants.JCR_CONTENT)).thenReturn(true);
         when(mockNode.getPrimaryNodeType()).thenReturn(mock(NodeType.class));
         when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
         Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
-        final Model model = testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo,
+                        mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_FIXITY_SERVICE));
     }

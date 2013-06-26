@@ -1,3 +1,4 @@
+
 package org.fcrepo.webhooks;
 
 import static org.fcrepo.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
@@ -22,10 +23,15 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 public class WebhooksResourcesTest {
+
     private WebhooksResources testObj;
+
     private Node mockNode;
+
     private FedoraResource mockResource;
+
     private UriInfo uriInfo;
+
     private GraphSubjects mockSubjects;
 
     @Before
@@ -39,7 +45,8 @@ public class WebhooksResourcesTest {
     }
 
     @Test
-    public void shouldDecorateModeRootNodesWithRepositoryWideLinks() throws RepositoryException {
+    public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
+        throws RepositoryException {
 
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.isNodeType(FedoraJcrTypes.ROOT)).thenReturn(true);
@@ -48,7 +55,9 @@ public class WebhooksResourcesTest {
 
         Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
-        final Model model = testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo,
+                        mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_SUBSCRIPTION_SERVICE));
     }

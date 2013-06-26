@@ -1,5 +1,5 @@
-package org.fcrepo.provider;
 
+package org.fcrepo.provider;
 
 public class PathListProvider {
 

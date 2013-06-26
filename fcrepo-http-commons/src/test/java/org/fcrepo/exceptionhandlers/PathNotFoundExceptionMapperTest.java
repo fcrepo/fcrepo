@@ -1,3 +1,4 @@
+
 package org.fcrepo.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -12,12 +13,12 @@ import org.junit.Test;
 public class PathNotFoundExceptionMapperTest {
 
     private PathNotFoundExceptionMapper testObj;
-    
+
     @Before
     public void setUp() {
         testObj = new PathNotFoundExceptionMapper();
     }
-    
+
     @Test
     public void testToResponse() {
         PathNotFoundException input = new PathNotFoundException();

@@ -164,8 +164,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
                 NodeFactory.createURI(txLocation + "/object-in-tx-commit"),
-                Node.ANY,
-                Node.ANY));
+                Node.ANY, Node.ANY));
 
         /* fetch the object-in-tx outside of the tx */
         final HttpGet getObj =

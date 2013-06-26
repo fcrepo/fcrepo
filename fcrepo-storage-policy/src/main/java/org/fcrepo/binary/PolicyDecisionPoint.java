@@ -13,10 +13,10 @@ import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 /**
- * Service that evaluates a set of storage policies for an object and provides storage hints
- * for a binary stream
+ * Service that evaluates a set of storage policies for an object and provides
+ * storage hints for a binary stream
+ * 
  * @author cbeer
  * @date Apr 25, 2013
  */
@@ -36,6 +36,7 @@ public class PolicyDecisionPoint {
 
     /**
      * Add a new storage policy
+     * 
      * @param p
      */
     public void addPolicy(final Policy p) {
@@ -45,6 +46,7 @@ public class PolicyDecisionPoint {
     /**
      * Given a JCR node (likely a jcr:content node), determine which storage
      * policy should apply
+     * 
      * @param n
      * @return
      */
@@ -64,7 +66,7 @@ public class PolicyDecisionPoint {
      */
     public void setPolicies(final List<Policy> policies) {
         logger.debug("Adding policies to binary PolicyDecisionPoint: {}",
-                     policies.toString());
+                policies.toString());
         this.policies = policies;
     }
 }

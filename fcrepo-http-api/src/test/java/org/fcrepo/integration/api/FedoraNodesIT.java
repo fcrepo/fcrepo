@@ -127,14 +127,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 TestHelpers.parseTriples(response.getEntity().getContent());
         logger.debug("Retrieved repository graph:\n" + graphStore.toString());
 
-        assertTrue(
-                "expected to find the root node data",
-                graphStore
-                        .contains(
-                                Node.ANY,
-                                Node.ANY,
-                                RdfLexicon.HAS_PRIMARY_TYPE.asNode(),
-                                Node.createLiteral(FedoraJcrTypes.ROOT)));
+        assertTrue("expected to find the root node data", graphStore.contains(
+                Node.ANY, Node.ANY, RdfLexicon.HAS_PRIMARY_TYPE.asNode(), Node
+                        .createLiteral(FedoraJcrTypes.ROOT)));
 
     }
 
@@ -165,31 +160,37 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue(
                 "Didn't find an expected ntriple",
                 compile(
-                        "<" + serverAddress
-                                + "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
+                        "<" +
+                                serverAddress +
+                                "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
         assertTrue(
                 "Didn't find an expected ntriple",
                 compile(
-                        "<" + serverAddress + "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
+                        "<" +
+                                serverAddress +
+                                "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
-
     }
-
 
     @Test
     public void testGetObjectGraphByUUID() throws Exception {
         client.execute(postObjMethod("FedoraDescribeTestGraphByUuid"));
 
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/FedoraDescribeTestGraphByUuid");
+                new HttpGet(serverAddress +
+                        "objects/FedoraDescribeTestGraphByUuid");
         getObjMethod.addHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        final GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent());
-        final Iterator<Quad> iterator = graphStore.find(Node.ANY, Node.createURI(serverAddress + "objects/FedoraDescribeTestGraphByUuid"), RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode(), Node.ANY);
+        final GraphStore graphStore =
+                TestHelpers.parseTriples(response.getEntity().getContent());
+        final Iterator<Quad> iterator =
+                graphStore.find(Node.ANY, Node.createURI(serverAddress +
+                        "objects/FedoraDescribeTestGraphByUuid"),
+                        RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode(), Node.ANY);
 
         assertTrue("Expected graph to contain a UUID", iterator.hasNext());
 
@@ -200,7 +201,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         getObjMethodByUuid.addHeader("Accept", "application/n3");
         final HttpResponse uuidResponse = client.execute(getObjMethod);
         assertEquals(200, uuidResponse.getStatusLine().getStatusCode());
-
 
     }
 
@@ -308,10 +308,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         Iterator<Triple> iterator =
-                graphStore
-                        .getDefaultGraph()
-                        .find(Node.ANY, RdfLexicon.HAS_OBJECT_SIZE.asNode(),
-                                Node.ANY);
+                graphStore.getDefaultGraph().find(Node.ANY,
+                        RdfLexicon.HAS_OBJECT_SIZE.asNode(), Node.ANY);
 
         final Integer oldSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -327,10 +325,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         iterator =
-                graphStore
-                        .getDefaultGraph()
-                        .find(Node.ANY, RdfLexicon.HAS_OBJECT_SIZE.asNode(),
-                                Node.ANY);
+                graphStore.getDefaultGraph().find(Node.ANY,
+                        RdfLexicon.HAS_OBJECT_SIZE.asNode(), Node.ANY);
 
         final Integer newSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -353,10 +349,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         Iterator<Triple> iterator =
-                graphStore
-                        .getDefaultGraph()
-                        .find(Node.ANY, RdfLexicon.HAS_OBJECT_COUNT.asNode(),
-                                Node.ANY);
+                graphStore.getDefaultGraph().find(Node.ANY,
+                        RdfLexicon.HAS_OBJECT_COUNT.asNode(), Node.ANY);
 
         final Integer oldSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -372,11 +366,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         iterator =
-                graphStore
-                        .getDefaultGraph()
-                        .find(Node.ANY,
-                                     RdfLexicon.HAS_OBJECT_COUNT.asNode(),
-                                Node.ANY);
+                graphStore.getDefaultGraph().find(Node.ANY,
+                        RdfLexicon.HAS_OBJECT_COUNT.asNode(), Node.ANY);
 
         final Integer newSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -388,15 +379,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     /**
-     * Given a directory at:
-     *  test-objects/FileSystem1/
-     *                          /ds1
-     *                          /ds2
-     *                          /TestSubdir/
-     * and a projection of test-objects as fedora:/files,
-     * then I should be able to retrieve an object from fedora:/files/FileSystem1
-     * that lists a child object at fedora:/files/FileSystem1/TestSubdir
-     * and lists datastreams ds1 and ds2
+     * Given a directory at: test-objects/FileSystem1/ /ds1 /ds2 /TestSubdir/
+     * and a projection of test-objects as fedora:/files, then I should be able
+     * to retrieve an object from fedora:/files/FileSystem1 that lists a child
+     * object at fedora:/files/FileSystem1/TestSubdir and lists datastreams ds1
+     * and ds2
      */
     @Test
     public void testGetProjectedNode() throws Exception {

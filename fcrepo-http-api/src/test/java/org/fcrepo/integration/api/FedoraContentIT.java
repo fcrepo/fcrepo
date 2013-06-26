@@ -1,3 +1,4 @@
+
 package org.fcrepo.integration.api;
 
 import static org.junit.Assert.assertEquals;
@@ -19,7 +20,6 @@ public class FedoraContentIT extends AbstractResourceIT {
     private static final String faulkner1 =
             "The past is never dead. It's not even past.";
 
-
     @Test
     public void testAddDatastream() throws Exception {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest2");
@@ -30,24 +30,25 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
-                            "Got wrong URI in Location header for datastream creation!",
-                            serverAddress + OBJECT_PATH.replace("/", "") +
-                                    "/FedoraDatastreamsTest2/zxc/fcr:content", location);
+                "Got wrong URI in Location header for datastream creation!",
+                serverAddress + OBJECT_PATH.replace("/", "") +
+                        "/FedoraDatastreamsTest2/zxc/fcr:content", location);
     }
 
     @Test
     public void testAddDeepDatastream() throws Exception {
         final HttpPost method =
-                postDSMethod("FedoraDatastreamsTest2/does/not/exist/yet", "zxc", "foo");
+                postDSMethod("FedoraDatastreamsTest2/does/not/exist/yet",
+                        "zxc", "foo");
         final HttpResponse response = client.execute(method);
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
-                            "Got wrong URI in Location header for datastream creation!",
-                            serverAddress + OBJECT_PATH.replace("/", "") +
-                                    "/FedoraDatastreamsTest2/does/not/exist/yet/zxc/fcr:content", location);
+                "Got wrong URI in Location header for datastream creation!",
+                serverAddress + OBJECT_PATH.replace("/", "") +
+                        "/FedoraDatastreamsTest2/does/not/exist/yet/zxc/fcr:content",
+                location);
     }
-
 
     @Test
     public void testPutDatastream() throws Exception {
@@ -59,9 +60,9 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
-                            "Got wrong URI in Location header for datastream creation!",
-                            serverAddress + OBJECT_PATH.replace("/", "") +
-                                    "/FedoraDatastreamsTestPut/zxc/fcr:content", location);
+                "Got wrong URI in Location header for datastream creation!",
+                serverAddress + OBJECT_PATH.replace("/", "") +
+                        "/FedoraDatastreamsTestPut/zxc/fcr:content", location);
     }
 
     @Test
@@ -69,12 +70,12 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpPost createObjectMethod =
                 postObjMethod("FedoraDatastreamsTest3");
         assertEquals("Couldn't create an object!", 201,
-                            getStatus(createObjectMethod));
+                getStatus(createObjectMethod));
 
         final HttpPost createDataStreamMethod =
                 postDSMethod("FedoraDatastreamsTest3", "ds1", "foo");
         assertEquals("Couldn't create a datastream!", 201,
-                            getStatus(createDataStreamMethod));
+                getStatus(createDataStreamMethod));
 
         final HttpPut mutateDataStreamMethod =
                 putDSMethod("FedoraDatastreamsTest3", "ds1", "bar");
@@ -88,10 +89,10 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet retrieveMutatedDataStreamMethod =
                 new HttpGet(serverAddress +
-                                    "objects/FedoraDatastreamsTest3/ds1/fcr:content");
+                        "objects/FedoraDatastreamsTest3/ds1/fcr:content");
         assertTrue("Datastream didn't accept mutation!", faulkner1
-                                                                 .equals(EntityUtils.toString(client.execute(
-                                                                                                                    retrieveMutatedDataStreamMethod).getEntity())));
+                .equals(EntityUtils.toString(client.execute(
+                        retrieveMutatedDataStreamMethod).getEntity())));
     }
 
     @Test
@@ -102,19 +103,19 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpPost createDSMethod =
                 postDSMethod("FedoraDatastreamsTest6", "ds1",
-                                    "marbles for everyone");
+                        "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
-                                    "objects/FedoraDatastreamsTest6/ds1/fcr:content");
+                        "objects/FedoraDatastreamsTest6/ds1/fcr:content");
         assertEquals(200, getStatus(method_test_get));
         final HttpResponse response = client.execute(method_test_get);
         logger.debug("Returned from HTTP GET, now checking content...");
         assertTrue("Got the wrong content back!", "marbles for everyone"
-                                                          .equals(EntityUtils.toString(response.getEntity())));
+                .equals(EntityUtils.toString(response.getEntity())));
 
         assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
-                            response.getFirstHeader("ETag").getValue().replace("\"", ""));
+                response.getFirstHeader("ETag").getValue().replace("\"", ""));
 
         logger.debug("Content was correct.");
     }
@@ -128,7 +129,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpPost createDSMethod =
                 postDSMethod("FedoraDatastreamsTest61", "ds1",
-                                    "marbles for everyone");
+                        "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
         final SimpleDateFormat format =
@@ -136,11 +137,11 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
-                                    "objects/FedoraDatastreamsTest61/ds1/fcr:content");
+                        "objects/FedoraDatastreamsTest61/ds1/fcr:content");
         method_test_get.setHeader("If-None-Match",
-                                         "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+                "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
         method_test_get.setHeader("If-Modified-Since", format
-                                                               .format(new Date()));
+                .format(new Date()));
 
         assertEquals(304, getStatus(method_test_get));
 
@@ -155,21 +156,21 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpPost createDSMethod =
                 postDSMethod("FedoraDatastreamsTest62", "ds1",
-                                    "marbles for everyone");
+                        "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpPut method_test_put =
                 new HttpPut(serverAddress +
-                                    "objects/FedoraDatastreamsTest62/ds1/fcr:content");
+                        "objects/FedoraDatastreamsTest62/ds1/fcr:content");
         method_test_put.setHeader("If-Match",
-                                         "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
-        method_test_put.setHeader("If-Unmodified-Since", "Sat, 29 Oct 1994 19:43:31 GMT");
+                "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+        method_test_put.setHeader("If-Unmodified-Since",
+                "Sat, 29 Oct 1994 19:43:31 GMT");
 
         method_test_put.setEntity(new StringEntity("asdf"));
 
         assertEquals(412, getStatus(method_test_put));
 
     }
-
 
 }

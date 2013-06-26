@@ -14,6 +14,7 @@ import javax.jcr.Node;
  * @date Apr 25, 2013
  */
 public interface Policy {
+
     /**
      * @todo Add Documentation.
      */

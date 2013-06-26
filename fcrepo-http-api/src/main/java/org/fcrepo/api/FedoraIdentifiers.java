@@ -49,7 +49,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * 
  * @author ajs6f
  * @author cbeer
- * 
  */
 @Component
 @Scope("prototype")
@@ -86,7 +85,6 @@ public class FedoraIdentifiers extends AbstractResource {
 
         final HttpGraphSubjects subjects =
                 new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
-
 
         for (final String identifier : identifiers) {
 

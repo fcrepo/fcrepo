@@ -1,3 +1,4 @@
+
 package org.fcrepo.responses;
 
 import static org.junit.Assert.assertEquals;
@@ -36,14 +37,20 @@ public class ViewHelpersTest {
     public void setUp() {
         testObj = ViewHelpers.getInstance();
     }
+
     @Test
     public void shouldConvertAUriToNodeBreadcrumbs() {
 
         UriInfo mockUriInfo = TestHelpers.getUriInfoImpl();
 
-        final Map<String,String> nodeBreadcrumbs = testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory.createResource("http://localhost/fcrepo/a/b/c").asNode());
+        final Map<String, String> nodeBreadcrumbs =
+                testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory
+                        .createResource("http://localhost/fcrepo/a/b/c")
+                        .asNode());
 
-        assertEquals(ImmutableMap.of("http://localhost/fcrepo/a", "a", "http://localhost/fcrepo/a/b", "b", "http://localhost/fcrepo/a/b/c", "c"), nodeBreadcrumbs);
+        assertEquals(ImmutableMap.of("http://localhost/fcrepo/a", "a",
+                "http://localhost/fcrepo/a/b", "b",
+                "http://localhost/fcrepo/a/b/c", "c"), nodeBreadcrumbs);
     }
 
     @Test
@@ -51,7 +58,9 @@ public class ViewHelpersTest {
 
         UriInfo mockUriInfo = TestHelpers.getUriInfoImpl();
 
-        final Map<String,String> nodeBreadcrumbs = testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory.createResource("http://somewhere/else/a/b/c").asNode());
+        final Map<String, String> nodeBreadcrumbs =
+                testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory
+                        .createResource("http://somewhere/else/a/b/c").asNode());
 
         assertTrue(nodeBreadcrumbs.isEmpty());
     }
@@ -59,16 +68,19 @@ public class ViewHelpersTest {
     @Test
     public void shouldTryToExtractDublinCoreTitleFromNode() {
         final DatasetGraph mem = DatasetGraphFactory.createMem();
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("a/b/c"), RdfLexicon.DC_TITLE.asNode(), NodeFactory.createLiteral("abc"));
+        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("a/b/c"),
+                RdfLexicon.DC_TITLE.asNode(), NodeFactory.createLiteral("abc"));
 
-        assertEquals("abc", testObj.getObjectTitle(mem,  NodeFactory.createURI("a/b/c")));
+        assertEquals("abc", testObj.getObjectTitle(mem, NodeFactory
+                .createURI("a/b/c")));
     }
 
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
         final DatasetGraph mem = DatasetGraphFactory.createMem();
 
-        assertEquals("a/b/c", testObj.getObjectTitle(mem,  NodeFactory.createURI("a/b/c")));
+        assertEquals("a/b/c", testObj.getObjectTitle(mem, NodeFactory
+                .createURI("a/b/c")));
 
     }
 
@@ -76,16 +88,33 @@ public class ViewHelpersTest {
     public void shouldConvertRdfObjectsToStrings() {
 
         final DatasetGraph mem = DatasetGraphFactory.createMem();
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"), NodeFactory.createURI("a/b/c"), NodeFactory.createLiteral("abc"));
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"), NodeFactory.createURI("a-numeric-type"), ResourceFactory.createTypedLiteral(0).asNode());
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"), NodeFactory.createURI("an-empty-string"), NodeFactory.createLiteral(""));
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"), NodeFactory.createURI("a-uri"), NodeFactory.createURI("some-uri"));
+        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
+                NodeFactory.createURI("a/b/c"), NodeFactory
+                        .createLiteral("abc"));
+        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
+                NodeFactory.createURI("a-numeric-type"), ResourceFactory
+                        .createTypedLiteral(0).asNode());
+        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
+                NodeFactory.createURI("an-empty-string"), NodeFactory
+                        .createLiteral(""));
+        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
+                NodeFactory.createURI("a-uri"), NodeFactory
+                        .createURI("some-uri"));
 
-        assertEquals("abc", testObj.getObjectsAsString(mem, NodeFactory.createURI("subject"), ResourceFactory.createResource("a/b/c")));
-        assertEquals("0", testObj.getObjectsAsString(mem, NodeFactory.createURI("subject"), ResourceFactory.createResource("a-numeric-type")));
-        assertEquals("<empty>", testObj.getObjectsAsString(mem, NodeFactory.createURI("subject"), ResourceFactory.createResource("an-empty-string")));
-        assertEquals("&lt;<a href=\"some-uri\">some-uri</a>&gt;", testObj.getObjectsAsString(mem, NodeFactory.createURI("subject"), ResourceFactory.createResource("a-uri")));
-        assertEquals("", testObj.getObjectsAsString(mem, NodeFactory.createURI("subject"), ResourceFactory.createResource("a-nonexistent-uri")));
+        assertEquals("abc", testObj.getObjectsAsString(mem, NodeFactory
+                .createURI("subject"), ResourceFactory.createResource("a/b/c")));
+        assertEquals("0", testObj.getObjectsAsString(mem, NodeFactory
+                .createURI("subject"), ResourceFactory
+                .createResource("a-numeric-type")));
+        assertEquals("<empty>", testObj.getObjectsAsString(mem, NodeFactory
+                .createURI("subject"), ResourceFactory
+                .createResource("an-empty-string")));
+        assertEquals("&lt;<a href=\"some-uri\">some-uri</a>&gt;", testObj
+                .getObjectsAsString(mem, NodeFactory.createURI("subject"),
+                        ResourceFactory.createResource("a-uri")));
+        assertEquals("", testObj.getObjectsAsString(mem, NodeFactory
+                .createURI("subject"), ResourceFactory
+                .createResource("a-nonexistent-uri")));
 
     }
 
@@ -95,7 +124,8 @@ public class ViewHelpersTest {
         model.setNsPrefix("prefix", "namespace");
 
         assertEquals("prefix:", testObj.getNamespacePrefix(model, "namespace"));
-        assertEquals("some-other-namespace", testObj.getNamespacePrefix(model, "some-other-namespace"));
+        assertEquals("some-other-namespace", testObj.getNamespacePrefix(model,
+                "some-other-namespace"));
     }
 
     @Test
@@ -119,16 +149,22 @@ public class ViewHelpersTest {
         model.add(a, propertyA, literalA);
         model.add(a, propertyA, literalB);
 
+        final Iterator<Quad> iterator =
+                DatasetFactory.create(model).asDatasetGraph().find();
 
-        final Iterator<Quad> iterator = DatasetFactory.create(model).asDatasetGraph().find();
+        final List<Quad> sortedTriples =
+                testObj.getSortedTriples(model, iterator);
 
-        final List<Quad> sortedTriples = testObj.getSortedTriples(model, iterator);
-
-        sortedTriples.get(0).matches(Node.ANY, a.asNode(), propertyA.asNode(), literalA.asNode());
-        sortedTriples.get(1).matches(Node.ANY, a.asNode(), propertyA.asNode(), literalB.asNode());
-        sortedTriples.get(2).matches(Node.ANY, a.asNode(), propertyB.asNode(), literalA.asNode());
-        sortedTriples.get(3).matches(Node.ANY, a.asNode(), propertyC.asNode(), literalA.asNode());
-        sortedTriples.get(4).matches(Node.ANY, resourceB.asNode(), propertyC.asNode(), literalA.asNode());
+        sortedTriples.get(0).matches(Node.ANY, a.asNode(), propertyA.asNode(),
+                literalA.asNode());
+        sortedTriples.get(1).matches(Node.ANY, a.asNode(), propertyA.asNode(),
+                literalB.asNode());
+        sortedTriples.get(2).matches(Node.ANY, a.asNode(), propertyB.asNode(),
+                literalA.asNode());
+        sortedTriples.get(3).matches(Node.ANY, a.asNode(), propertyC.asNode(),
+                literalA.asNode());
+        sortedTriples.get(4).matches(Node.ANY, resourceB.asNode(),
+                propertyC.asNode(), literalA.asNode());
 
     }
 
@@ -146,6 +182,7 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldConvertRdfResourcesToNodes() {
-        assertEquals(RdfLexicon.CREATED_BY.asNode(), testObj.asNode(RdfLexicon.CREATED_BY));
+        assertEquals(RdfLexicon.CREATED_BY.asNode(), testObj
+                .asNode(RdfLexicon.CREATED_BY));
     }
 }

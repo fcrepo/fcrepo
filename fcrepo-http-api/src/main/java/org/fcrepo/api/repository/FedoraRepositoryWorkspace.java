@@ -1,5 +1,5 @@
-package org.fcrepo.api.repository;
 
+package org.fcrepo.api.repository;
 
 import com.google.common.collect.ImmutableMap;
 import org.fcrepo.AbstractResource;
@@ -28,30 +28,29 @@ public class FedoraRepositoryWorkspace extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-
     @GET
     public Response getWorkspaces() throws RepositoryException {
-       return Response.ok(session.getWorkspace().getAccessibleWorkspaceNames()).build();
+        return Response
+                .ok(session.getWorkspace().getAccessibleWorkspaceNames())
+                .build();
     }
 
     @POST
     @Path("{path}")
-    public Response createWorkspace(@PathParam("path") final String path,
-                                    @Context final UriInfo uriInfo) throws RepositoryException, MalformedURLException {
+    public Response createWorkspace(@PathParam("path")
+    final String path, @Context
+    final UriInfo uriInfo) throws RepositoryException, MalformedURLException {
         final Workspace workspace = session.getWorkspace();
         workspace.createWorkspace(path);
 
         return Response.created(
-                                       uriInfo.getAbsolutePathBuilder()
-                                               .path(FedoraNodes.class)
-                                               .buildFromMap(ImmutableMap.of("path", path))
-        ).build();
+                uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
+                        .buildFromMap(ImmutableMap.of("path", path))).build();
 
     }
 
     public void setSession(final Session session) {
         this.session = session;
     }
-
 
 }

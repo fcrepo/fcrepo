@@ -1,3 +1,4 @@
+
 package org.fcrepo.observer;
 
 import static org.mockito.Matchers.any;
@@ -25,22 +26,22 @@ public class JMSTopicPublisherTest {
 
     @Mock
     JMSTopicPublisher testObj;
-    
+
     @Mock
     JMSEventMessageFactory mockEvents;
-    
+
     @Mock
     MessageProducer mockProducer;
-    
+
     @Mock
     ActiveMQConnectionFactory mockConnections;
-    
+
     @Mock
     Repository mockRepo;
-    
+
     @Mock
     EventBus mockBus;
-    
+
     @Before
     public void setUp() throws Exception {
         testObj = new JMSTopicPublisher();
@@ -49,13 +50,15 @@ public class JMSTopicPublisherTest {
         mockConnections = mock(ActiveMQConnectionFactory.class);
         mockRepo = mock(Repository.class);
         mockBus = mock(EventBus.class);
-        Field setField = JMSTopicPublisher.class.getDeclaredField("eventFactory");
+        Field setField =
+                JMSTopicPublisher.class.getDeclaredField("eventFactory");
         setField.setAccessible(true);
         setField.set(testObj, mockEvents);
         setField = JMSTopicPublisher.class.getDeclaredField("producer");
         setField.setAccessible(true);
         setField.set(testObj, mockProducer);
-        setField = JMSTopicPublisher.class.getDeclaredField("connectionFactory");
+        setField =
+                JMSTopicPublisher.class.getDeclaredField("connectionFactory");
         setField.setAccessible(true);
         setField.set(testObj, mockConnections);
         setField = JMSTopicPublisher.class.getDeclaredField("repo");
@@ -64,31 +67,32 @@ public class JMSTopicPublisherTest {
         setField = JMSTopicPublisher.class.getDeclaredField("eventBus");
         setField.setAccessible(true);
         setField.set(testObj, mockBus);
-        
+
     }
-    
+
     @Test
     public void testAcquireConnections() throws Exception {
         Connection mockConn = mock(Connection.class);
         javax.jms.Session mockSession = mock(javax.jms.Session.class);
         when(mockConnections.createConnection()).thenReturn(mockConn);
-        when(mockConn.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE)).thenReturn(mockSession);
+        when(mockConn.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE))
+                .thenReturn(mockSession);
         testObj.acquireConnections();
         verify(mockBus).register(any());
         verify(mockRepo).login();
     }
-    
+
     @Test
     public void testPublishJCREvent() throws Exception {
         Message mockMsg = mock(Message.class);
         Event mockEvent = mock(Event.class);
-        when(mockEvents.getMessage(
-                eq(mockEvent), 
-                any(javax.jcr.Session.class), 
-                any(javax.jms.Session.class))).thenReturn(mockMsg);
+        when(
+                mockEvents.getMessage(eq(mockEvent),
+                        any(javax.jcr.Session.class),
+                        any(javax.jms.Session.class))).thenReturn(mockMsg);
         testObj.publishJCREvent(mockEvent);
     }
-    
+
     @Test
     public void testReleaseConnections() throws Exception {
         Connection mockConn = mock(Connection.class);

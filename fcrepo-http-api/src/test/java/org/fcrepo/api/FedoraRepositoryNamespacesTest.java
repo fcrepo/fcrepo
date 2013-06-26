@@ -35,7 +35,7 @@ public class FedoraRepositoryNamespacesTest {
 
     @Before
     public void setUp() throws LoginException, RepositoryException,
-            URISyntaxException {
+        URISyntaxException {
         mockNodeService = mock(NodeService.class);
 
         testObj = new FedoraRepositoryNamespaces();

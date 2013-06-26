@@ -1,3 +1,4 @@
+
 package org.fcrepo.exceptionhandlers;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
@@ -12,7 +13,8 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 
 @Provider
-public class RepositoryExceptionMapper implements ExceptionMapper<RepositoryException> {
+public class RepositoryExceptionMapper implements
+        ExceptionMapper<RepositoryException> {
 
     private final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
 
@@ -23,6 +25,7 @@ public class RepositoryExceptionMapper implements ExceptionMapper<RepositoryExce
 
         LOGGER.warn("Caught repository exception: {}", e);
 
-        return serverError().entity(showStackTrace ? getStackTraceAsString(e) : null).build();
+        return serverError().entity(
+                showStackTrace ? getStackTraceAsString(e) : null).build();
     }
 }

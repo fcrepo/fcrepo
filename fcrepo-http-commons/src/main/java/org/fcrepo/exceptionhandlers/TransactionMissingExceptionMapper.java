@@ -1,3 +1,4 @@
+
 package org.fcrepo.exceptionhandlers;
 
 import org.fcrepo.exception.TransactionMissingException;
@@ -7,7 +8,8 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 @Provider
-public class TransactionMissingExceptionMapper implements ExceptionMapper<TransactionMissingException> {
+public class TransactionMissingExceptionMapper implements
+        ExceptionMapper<TransactionMissingException> {
 
     @Override
     public Response toResponse(TransactionMissingException exception) {

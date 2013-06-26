@@ -44,7 +44,6 @@ import com.hp.hpl.jena.query.Dataset;
  * simple, just a set of prefix-URI pairs.
  * 
  * @author ajs6f
- * 
  */
 @Component
 @Scope("prototype")
@@ -56,7 +55,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 
     /**
      * Register multiple object namespaces.
-     *
+     * 
      * @return 204
      * @throws RepositoryException
      */
@@ -64,7 +63,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     @Timed
     @Consumes({contentTypeSPARQLUpdate})
     public Response updateNamespaces(final InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+        throws RepositoryException, IOException {
 
         try {
             final Dataset dataset =

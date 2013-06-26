@@ -44,10 +44,10 @@ public class MimeTypePolicyTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-dummy");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
-            thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
-            thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
+                mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
+                mockProperty);
 
         String receivedHint = policy.evaluatePolicy(mockDsNode);
 
@@ -69,10 +69,10 @@ public class MimeTypePolicyTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("application/x-other");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
-            thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
-            thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
+                mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
+                mockProperty);
 
         String receivedHint = policy.evaluatePolicy(mockDsNode);
 
@@ -91,8 +91,8 @@ public class MimeTypePolicyTest {
         Session mockSession = mock(Session.class);
         Node mockDsNode = mock(Node.class);
 
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
-            thenThrow(new RepositoryException());
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenThrow(
+                new RepositoryException());
 
         String receivedHint = policy.evaluatePolicy(mockDsNode);
 

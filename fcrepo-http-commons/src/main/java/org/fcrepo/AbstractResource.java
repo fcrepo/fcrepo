@@ -43,7 +43,6 @@ import com.hp.hpl.jena.query.Dataset;
  * and methods.
  * 
  * @author ajs6f
- * 
  */
 public abstract class AbstractResource {
 
@@ -107,6 +106,7 @@ public abstract class AbstractResource {
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
+     * 
      * @param paths
      * @return
      */
@@ -121,7 +121,8 @@ public abstract class AbstractResource {
 
             if (p.equals("")) {
                 LOGGER.trace("Ignoring empty segment {}", p);
-            } else if (i == 0 && (p.startsWith("tx:") || p.startsWith("workspace:"))) {
+            } else if (i == 0 &&
+                    (p.startsWith("tx:") || p.startsWith("workspace:"))) {
                 LOGGER.trace("Ignoring internal segment {}", p);
                 i++;
             } else {
@@ -151,7 +152,7 @@ public abstract class AbstractResource {
             final InputStream requestBodyStream,
             final MediaType requestContentType, final String checksumType,
             final String checksum) throws RepositoryException,
-            InvalidChecksumException, IOException {
+        InvalidChecksumException, IOException {
 
         final FedoraResource result;
 
@@ -191,7 +192,7 @@ public abstract class AbstractResource {
     protected void addResponseInformationToDataset(
             final FedoraResource resource, final Dataset dataset,
             final UriInfo uriInfo, final GraphSubjects subjects)
-            throws RepositoryException {
+        throws RepositoryException {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResource(dataset, resource,
                     uriInfo, subjects);
@@ -200,6 +201,7 @@ public abstract class AbstractResource {
 
     /**
      * A testing convenience setter for otherwise injected resources
+     * 
      * @param uriInfo
      */
     public void setUriInfo(final UriInfo uriInfo) {
@@ -208,6 +210,7 @@ public abstract class AbstractResource {
 
     /**
      * A testing convenience setter for otherwise injected resources
+     * 
      * @param pidMinter
      */
     public void setPidMinter(final PidMinter pidMinter) {
@@ -216,6 +219,7 @@ public abstract class AbstractResource {
 
     /**
      * Set the NodeService, used primary for testing without spring
+     * 
      * @param nodeService
      */
     public void setNodeService(final NodeService nodeService) {
@@ -224,6 +228,7 @@ public abstract class AbstractResource {
 
     /**
      * Set the ObjectService, used primary for testing without spring
+     * 
      * @param objectService
      */
     public void setObjectService(final ObjectService objectService) {
@@ -232,6 +237,7 @@ public abstract class AbstractResource {
 
     /**
      * Set the DatastreamService, used primary for testing without spring
+     * 
      * @param datastreamService
      */
     public void setDatastreamService(final DatastreamService datastreamService) {
@@ -240,6 +246,7 @@ public abstract class AbstractResource {
 
     /**
      * Set the Event Bus, used primary for testing without spring
+     * 
      * @param eventBus
      */
     public void setEventBus(final EventBus eventBus) {

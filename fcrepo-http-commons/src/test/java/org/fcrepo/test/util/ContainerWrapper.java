@@ -1,3 +1,4 @@
+
 package org.fcrepo.test.util;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -34,7 +35,6 @@ import org.springframework.context.ApplicationContextAware;
 
 import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
-
 public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);
@@ -42,9 +42,9 @@ public class ContainerWrapper implements ApplicationContextAware {
     private int port;
 
     private HttpServer server;
-    
+
     private WebappContext appContext;
-    
+
     private String configLocation;
 
     public void setConfigLocation(final String configLocation) {
@@ -57,67 +57,72 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     @PostConstruct
     public void start() throws Exception {
-    	
-		JAXBContext context = JAXBContext.newInstance(WebAppConfig.class);
-		Unmarshaller u = context.createUnmarshaller();
-		WebAppConfig o = (WebAppConfig) u.unmarshal(getClass().getResource(this.configLocation));
-    	
+
+        JAXBContext context = JAXBContext.newInstance(WebAppConfig.class);
+        Unmarshaller u = context.createUnmarshaller();
+        WebAppConfig o =
+                (WebAppConfig) u.unmarshal(getClass().getResource(
+                        this.configLocation));
+
         final URI uri = URI.create("http://localhost:" + port);
 
         final Map<String, String> initParams = new HashMap<String, String>();
 
         server = GrizzlyServerFactory.createHttpServer(uri, new HttpHandler() {
 
-			@Override
-			public void service(Request req, Response res) throws Exception {
+            @Override
+            public void service(Request req, Response res) throws Exception {
                 res.setStatus(404, "Not found");
                 res.getWriter().write("404: not found");
-			}
+            }
         });
 
-        
         // create a "root" web application
         appContext = new WebappContext(o.displayName(), "/");
-        
-        for (ContextParam p: o.contextParams()) {
-        	appContext.addContextInitParameter(p.name(), p.value());
+
+        for (ContextParam p : o.contextParams()) {
+            appContext.addContextInitParameter(p.name(), p.value());
         }
-        
-        for (Listener l: o.listeners()) {
-        	appContext.addListener(l.className());
+
+        for (Listener l : o.listeners()) {
+            appContext.addListener(l.className());
         }
-        
-        for (Servlet s: o.servlets()) {
-            ServletRegistration servlet = appContext.addServlet(s.servletName(), s.servletClass());
-            
-            Collection<ServletMapping> mappings = o.servletMappings(s.servletName());
-            for (ServletMapping sm: mappings) {
-            	servlet.addMapping(sm.urlPattern());
+
+        for (Servlet s : o.servlets()) {
+            ServletRegistration servlet =
+                    appContext.addServlet(s.servletName(), s.servletClass());
+
+            Collection<ServletMapping> mappings =
+                    o.servletMappings(s.servletName());
+            for (ServletMapping sm : mappings) {
+                servlet.addMapping(sm.urlPattern());
             }
-            for (InitParam p: s.initParams()) {
-            	servlet.setInitParameter(p.name(), p.value());
+            for (InitParam p : s.initParams()) {
+                servlet.setInitParameter(p.name(), p.value());
             }
         }
-        
-        for (Filter f: o.filters()) {
-        	FilterRegistration filter = appContext.addFilter(f.filterName(), f.filterClass());
-            
-            Collection<FilterMapping> mappings = o.filterMappings(f.filterName());
-            for (FilterMapping sm: mappings) {
-            	String urlPattern = sm.urlPattern();
-            	String servletName = sm.servletName();
-            	if (urlPattern != null) {
-            		filter.addMappingForUrlPatterns(null, urlPattern);
-            	} else {
-            		filter.addMappingForServletNames(null, servletName);
-            	}
+
+        for (Filter f : o.filters()) {
+            FilterRegistration filter =
+                    appContext.addFilter(f.filterName(), f.filterClass());
+
+            Collection<FilterMapping> mappings =
+                    o.filterMappings(f.filterName());
+            for (FilterMapping sm : mappings) {
+                String urlPattern = sm.urlPattern();
+                String servletName = sm.servletName();
+                if (urlPattern != null) {
+                    filter.addMappingForUrlPatterns(null, urlPattern);
+                } else {
+                    filter.addMappingForServletNames(null, servletName);
+                }
 
             }
-            for (InitParam p: f.initParams()) {
-            	filter.setInitParameter(p.name(), p.value());
+            for (InitParam p : f.initParams()) {
+                filter.setInitParameter(p.name(), p.value());
             }
         }
-            	
+
         appContext.deploy(server);
 
         logger.debug("started grizzly webserver endpoint at " +
@@ -126,20 +131,20 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     @PreDestroy
     public void stop() {
-    	try {
-    		appContext.undeploy();
-    	} catch (Exception e) {
-    		logger.warn(e.getMessage(), e);
-    	} finally {
-        server.stop();
-    	}
+        try {
+            appContext.undeploy();
+        } catch (Exception e) {
+            logger.warn(e.getMessage(), e);
+        } finally {
+            server.stop();
+        }
     }
 
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext)
-			throws BeansException {
-		//this.applicationContext = applicationContext;
-		
-	}
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext)
+        throws BeansException {
+        // this.applicationContext = applicationContext;
+
+    }
 
 }

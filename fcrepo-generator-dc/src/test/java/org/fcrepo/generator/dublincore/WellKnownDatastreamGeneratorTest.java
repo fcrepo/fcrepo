@@ -1,3 +1,4 @@
+
 package org.fcrepo.generator.dublincore;
 
 import static org.junit.Assert.assertEquals;
@@ -18,23 +19,22 @@ import javax.jcr.Property;
 import org.junit.Before;
 import org.junit.Test;
 
-
 public class WellKnownDatastreamGeneratorTest {
 
     private WellKnownDatastreamGenerator testObj;
-    
+
     @Before
     public void setUp() {
         testObj = new WellKnownDatastreamGenerator();
     }
-    
+
     @Test
     public void testGetStreamAbsent() {
         Node mockNode = mock(Node.class);
         InputStream actual = testObj.getStream(mockNode);
         assertTrue(actual == null);
     }
-    
+
     @Test
     public void testGetStreamPresent() throws Exception {
         String dsid = "foo";
@@ -56,7 +56,9 @@ public class WellKnownDatastreamGeneratorTest {
     @Test
     public void testSetWellKnownDsid() throws Exception {
         testObj.setWellKnownDsid("foo");
-        Field field = WellKnownDatastreamGenerator.class.getDeclaredField("wellKnownDsid");
+        Field field =
+                WellKnownDatastreamGenerator.class
+                        .getDeclaredField("wellKnownDsid");
         field.setAccessible(true);
         String actual = (String) field.get(testObj);
         assertEquals("foo", actual);

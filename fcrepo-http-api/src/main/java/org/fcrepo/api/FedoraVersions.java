@@ -95,7 +95,7 @@ public class FedoraVersions extends AbstractResource {
 
             return Response.noContent().build();
         } finally {
-        	session.logout();
+            session.logout();
         }
     }
 
@@ -123,7 +123,7 @@ public class FedoraVersions extends AbstractResource {
             }
 
         } finally {
-        	session.logout();
+            session.logout();
         }
 
     }

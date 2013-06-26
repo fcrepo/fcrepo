@@ -63,10 +63,9 @@ public class FedoraDatastreams extends AbstractResource {
     private final Logger logger = getLogger(FedoraDatastreams.class);
 
     /**
-     * Update the content of multiple datastreams from a multipart POST.
-     *
-     * The datastream to update is given by the name of the content disposition.
-     *
+     * Update the content of multiple datastreams from a multipart POST. The
+     * datastream to update is given by the name of the content disposition.
+     * 
      * @param pathList
      * @param dsidList
      * @param multipart
@@ -80,7 +79,8 @@ public class FedoraDatastreams extends AbstractResource {
     public Response modifyDatastreams(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("delete")
     final List<String> dsidList, final MultiPart multipart)
-            throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
+        throws RepositoryException, IOException, InvalidChecksumException,
+        URISyntaxException {
 
         final String path = toPath(pathList);
         try {
@@ -113,7 +113,9 @@ public class FedoraDatastreams extends AbstractResource {
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
 
-            return created(new URI(subjects.getGraphSubject(session.getNode(path)).getURI())).build();
+            return created(
+                    new URI(subjects.getGraphSubject(session.getNode(path))
+                            .getURI())).build();
 
         } finally {
             session.logout();
@@ -122,7 +124,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Delete multiple datastreams given by the dsid query parameter
-     *
+     * 
      * @param pathList
      * @param dsidList
      * @return
@@ -149,7 +151,7 @@ public class FedoraDatastreams extends AbstractResource {
     /**
      * Retrieve multiple datastream bitstreams in a single request as a
      * multipart/mixed response.
-     *
+     * 
      * @param pathList
      * @param requestedDsids
      * @param request
@@ -165,7 +167,7 @@ public class FedoraDatastreams extends AbstractResource {
     final List<PathSegment> pathList, @QueryParam("dsid")
     final List<String> requestedDsids, @Context
     final Request request) throws RepositoryException, IOException,
-            NoSuchAlgorithmException {
+        NoSuchAlgorithmException {
 
         final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();
 
@@ -189,7 +191,8 @@ public class FedoraDatastreams extends AbstractResource {
                                 .toArray(new String[requestedDsids.size()]));
             }
 
-            // transform the nodes into datastreams, and calculate cache header data
+            // transform the nodes into datastreams, and calculate cache header
+            // data
             while (ni.hasNext()) {
 
                 final Node dsNode = ni.nextNode();

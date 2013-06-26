@@ -78,7 +78,7 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testModifyDatastreams() throws RepositoryException,
-                                                           IOException, InvalidChecksumException, URISyntaxException {
+        IOException, InvalidChecksumException, URISyntaxException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId1 = "testDs1";
         final String dsId2 = "testDs2";
@@ -88,7 +88,8 @@ public class FedoraDatastreamsTest {
         final MultiPart multipart = getStringsAsMultipart(atts);
         Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
-        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(mockNode);
+        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
+                mockNode);
         final Response actual =
                 testObj.modifyDatastreams(createPathList(pid), Arrays.asList(
                         dsId1, dsId2), multipart);
@@ -117,7 +118,7 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testGetDatastreamsContents() throws RepositoryException,
-            IOException, NoSuchAlgorithmException {
+        IOException, NoSuchAlgorithmException {
         final Request mockRequest = mock(Request.class);
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
@@ -157,7 +158,7 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testGetDatastreamsContentsCached() throws RepositoryException,
-            IOException, NoSuchAlgorithmException {
+        IOException, NoSuchAlgorithmException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -192,7 +193,7 @@ public class FedoraDatastreamsTest {
     }
 
     public static MultiPart getStringsAsMultipart(
-                                                         final Map<String, String> contents) {
+            final Map<String, String> contents) {
         final MultiPart multipart = new MultiPart();
         for (final Map.Entry<String, String> e : contents.entrySet()) {
             final String id = e.getKey();
@@ -202,7 +203,7 @@ public class FedoraDatastreamsTest {
             try {
                 final FormDataContentDisposition cd =
                         new FormDataContentDisposition("form-data;name=" + id +
-                                                               ";filename=" + id + ".txt");
+                                ";filename=" + id + ".txt");
                 part.contentDisposition(cd);
             } catch (final ParseException ex) {
                 ex.printStackTrace();

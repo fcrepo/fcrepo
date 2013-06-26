@@ -41,22 +41,23 @@ public class DublinCoreGenerator extends AbstractResource {
     public Response getObjectAsDublinCore(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
 
-		try {
-			final String path = toPath(pathList);
-			final FedoraResource obj = nodeService.getObject(session, path);
+        try {
+            final String path = toPath(pathList);
+            final FedoraResource obj = nodeService.getObject(session, path);
 
-			for (final DCGenerator indexer : dcgenerators) {
-				final InputStream inputStream = indexer.getStream(obj.getNode());
+            for (final DCGenerator indexer : dcgenerators) {
+                final InputStream inputStream =
+                        indexer.getStream(obj.getNode());
 
-				if (inputStream != null) {
-					return ok(inputStream).build();
-				}
-			}
-			// no indexers = no path for DC
-			throw new PathNotFoundException();
-		} finally {
-			session.logout();
-		}
+                if (inputStream != null) {
+                    return ok(inputStream).build();
+                }
+            }
+            // no indexers = no path for DC
+            throw new PathNotFoundException();
+        } finally {
+            session.logout();
+        }
 
     }
 

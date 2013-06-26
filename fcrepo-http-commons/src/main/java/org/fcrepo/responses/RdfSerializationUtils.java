@@ -60,12 +60,16 @@ public class RdfSerializationUtils {
             return null;
         }
     }
+
     static Node getDatasetSubject(final Dataset rdf) {
-		Context context = rdf.getContext();
-		String uri = context.getAsString(Symbol.create("uri"));
+        Context context = rdf.getContext();
+        String uri = context.getAsString(Symbol.create("uri"));
         logger.debug("uri from context: {}", uri);
-        if ( uri != null ) { return createURI(uri); }
-        else { return null; }
+        if (uri != null) {
+            return createURI(uri);
+        } else {
+            return null;
+        }
     }
 
     static void
@@ -77,7 +81,7 @@ public class RdfSerializationUtils {
         logger.trace("Attempting to discover the last-modified date of the node for the resource in question...");
         final String lastModifiedinXSDStyle =
                 getFirstValueForPredicate(rdf, getDatasetSubject(rdf),
-                    lastModifiedPredicate);
+                        lastModifiedPredicate);
         if (lastModifiedinXSDStyle != null) {
             logger.debug("Found last-modified date: {}", lastModifiedinXSDStyle);
             final String lastModified =

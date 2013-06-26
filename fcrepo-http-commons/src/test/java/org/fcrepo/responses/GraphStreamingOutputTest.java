@@ -30,7 +30,7 @@ public class GraphStreamingOutputTest {
 
     @Test
     public void testStuff() throws WebApplicationException, IOException,
-            RepositoryException {
+        RepositoryException {
         final GraphStore graphStore =
                 new GraphStoreBasic(DatasetFactory.create(createDefaultModel()));
         final Graph g = new GraphMem();

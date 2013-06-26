@@ -59,7 +59,7 @@ public class FedoraFieldSearchTest {
 
     @Test
     public void testFieldSearch() throws RepositoryException,
-            URISyntaxException {
+        URISyntaxException {
 
         final Request mockRequest = mock(Request.class);
 

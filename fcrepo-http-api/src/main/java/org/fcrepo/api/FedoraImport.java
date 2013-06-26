@@ -51,11 +51,10 @@ public class FedoraImport extends AbstractResource {
     final List<PathSegment> pathList, @QueryParam("format")
     @DefaultValue("jcr/xml")
     final String format, final InputStream stream) throws IOException,
-                                                                                                      RepositoryException, InvalidChecksumException, URISyntaxException {
+        RepositoryException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(pathList);
         logger.debug("Deserializing at {}", path);
-
 
         final HttpGraphSubjects subjects =
                 new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
@@ -64,7 +63,9 @@ public class FedoraImport extends AbstractResource {
             serializers.getSerializer(format)
                     .deserialize(session, path, stream);
             session.save();
-            return created(new URI(subjects.getGraphSubject(session.getNode(path)).getURI())).build();
+            return created(
+                    new URI(subjects.getGraphSubject(session.getNode(path))
+                            .getURI())).build();
         } finally {
             session.logout();
         }

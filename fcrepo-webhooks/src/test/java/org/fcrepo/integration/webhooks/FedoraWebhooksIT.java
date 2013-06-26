@@ -28,7 +28,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration({"/spring-test/test-container.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraWebhooksIT extends AbstractResourceIT {
-    
+
     @Test
     public void registerWebhookCallbackTest() throws IOException {
         final HttpPost method =

@@ -76,10 +76,12 @@ public class FedoraNodes extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     public Dataset describe(@PathParam("path")
-    final List<PathSegment> pathList,
-    @QueryParam("offset") @DefaultValue("0") final long offset,
-    @QueryParam("limit") @DefaultValue("-1") final int limit,
-    @Context final Request request, @Context
+    final List<PathSegment> pathList, @QueryParam("offset")
+    @DefaultValue("0")
+    final long offset, @QueryParam("limit")
+    @DefaultValue("-1")
+    final int limit, @Context
+    final Request request, @Context
     final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
@@ -122,6 +124,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Does nothing (good) yet -- just runs SPARQL-UPDATE statements
+     * 
      * @param pathList
      * @param requestBodyStream
      * @return 201
@@ -136,7 +139,7 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Content-Type")
             final MediaType requestContentType, @Context
             final Request request) throws RepositoryException, IOException,
-            InvalidChecksumException {
+        InvalidChecksumException {
         final String path = toPath(pathList);
         logger.debug("Modifying object with path: {}", path);
 
@@ -180,7 +183,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Update an object using SPARQL-UPDATE
-     *
+     * 
      * @param pathList
      * @return 201
      * @throws RepositoryException
@@ -193,7 +196,7 @@ public class FedoraNodes extends AbstractResource {
     public Response updateSparql(@PathParam("path")
     final List<PathSegment> pathList, @Context
     final UriInfo uriInfo, final InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+        throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);
@@ -237,8 +240,8 @@ public class FedoraNodes extends AbstractResource {
      * @param pathList
      * @return 201
      * @throws RepositoryException
-     * @throws InvalidChecksumException 
-     * @throws IOException 
+     * @throws InvalidChecksumException
+     * @throws IOException
      */
     @POST
     @Timed
@@ -250,7 +253,7 @@ public class FedoraNodes extends AbstractResource {
     final String checksum, @HeaderParam("Content-Type")
     final MediaType requestContentType, @Context
     final UriInfo uriInfo, final InputStream requestBodyStream)
-            throws RepositoryException, IOException, InvalidChecksumException {
+        throws RepositoryException, IOException, InvalidChecksumException {
 
         final String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);

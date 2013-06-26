@@ -1,3 +1,4 @@
+
 package org.fcrepo.messaging.legacy;
 
 import java.io.Reader;
@@ -8,7 +9,7 @@ import org.apache.abdera.model.Entry;
 import org.apache.abdera.parser.Parser;
 
 public abstract class EntryFactory {
-	
+
     private static final Abdera ABDERA = new Abdera();
 
     private static final Parser ABDERA_PARSER = ABDERA.getParser();
@@ -16,9 +17,9 @@ public abstract class EntryFactory {
     public static final String FORMAT =
             "info:fedora/fedora-system:ATOM-APIM-1.0";
 
-    //TODO get this out of the build properties
+    // TODO get this out of the build properties
     public static final String SERVER_VERSION = "4.0.0-SNAPSHOT";
-    
+
     private static final String TYPES_NS =
             "http://www.fedora.info/definitions/1/0/types/";
 
@@ -39,10 +40,9 @@ public abstract class EntryFactory {
         entry.addCategory(VERSION_PREDICATE, SERVER_VERSION, "version");
         return entry;
     }
-    
+
     static Entry parse(Reader input) {
-    	return (Entry) ABDERA_PARSER.parse(input)
-        .getRoot();
+        return (Entry) ABDERA_PARSER.parse(input).getRoot();
     }
 
 }

@@ -23,7 +23,6 @@ import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 
-
     @Test
     public void testSearchHtml() throws Exception {
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
@@ -42,7 +41,10 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     public void testSearchResultsHtml() throws Exception {
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "text/html");
-        URI uri = new URIBuilder(method.getURI()).addParameter("q", "testobj").addParameter("offset", "0").addParameter("limit", "1").build();
+        URI uri =
+                new URIBuilder(method.getURI()).addParameter("q", "testobj")
+                        .addParameter("offset", "0").addParameter("limit", "1")
+                        .build();
 
         method.setURI(uri);
 
@@ -65,25 +67,44 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         /* and add a dc title to the object so the query returns a result */
         HttpPost postDc = new HttpPost(serverAddress + "objects/testobj");
         postDc.setHeader("Content-Type", "application/sparql-update");
-        String updateString = "INSERT { <" + serverAddress + "objects/testobj> <http://purl.org/dc/terms/title> \"testobj\" } WHERE { }";
+        String updateString =
+                "INSERT { <" + serverAddress +
+                        "objects/testobj> <http://purl.org/dc/terms/title> \"testobj\" } WHERE { }";
         postDc.setEntity(new StringEntity(updateString));
         HttpResponse dcResp = execute(postDc);
-        assertEquals(dcResp.getStatusLine().toString(), 204, dcResp.getStatusLine().getStatusCode());
+        assertEquals(dcResp.getStatusLine().toString(), 204, dcResp
+                .getStatusLine().getStatusCode());
         postDc.releaseConnection();
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "application/n3");
-        URI uri = new URIBuilder(method.getURI()).addParameter("q", "testobj").addParameter("offset", "0").addParameter("limit", "1").build();
+        URI uri =
+                new URIBuilder(method.getURI()).addParameter("q", "testobj")
+                        .addParameter("offset", "0").addParameter("limit", "1")
+                        .build();
 
         method.setURI(uri);
 
         HttpResponse resp = execute(method);
 
-        final GraphStore graphStore = TestHelpers.parseTriples(resp.getEntity().getContent());
+        final GraphStore graphStore =
+                TestHelpers.parseTriples(resp.getEntity().getContent());
 
         logger.debug("Got search results graph: {}", graphStore);
         assertEquals(200, resp.getStatusLine().getStatusCode());
-        assertTrue(graphStore.contains(Node.ANY, ResourceFactory.createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(), ResourceFactory.createResource("http://a9.com/-/spec/opensearch/1.1/totalResults").asNode(), ResourceFactory.createTypedLiteral(1).asNode()));
+        assertTrue(graphStore
+                .contains(
+                        Node.ANY,
+                        ResourceFactory
+                                .createResource(
+                                        serverAddress +
+                                                "fcr:search?q=testobj&offset=0&limit=1")
+                                .asNode(),
+                        ResourceFactory
+                                .createResource(
+                                        "http://a9.com/-/spec/opensearch/1.1/totalResults")
+                                .asNode(), ResourceFactory
+                                .createTypedLiteral(1).asNode()));
 
     }
 
@@ -92,18 +113,29 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "application/n3");
-        URI uri = new URIBuilder(method.getURI()).addParameter("q", "testobj").addParameter("offset", "1").addParameter("limit", "1").build();
+        URI uri =
+                new URIBuilder(method.getURI()).addParameter("q", "testobj")
+                        .addParameter("offset", "1").addParameter("limit", "1")
+                        .build();
 
         method.setURI(uri);
 
         HttpResponse resp = execute(method);
 
-        final GraphStore graphStore = TestHelpers.parseTriples(resp.getEntity().getContent());
+        final GraphStore graphStore =
+                TestHelpers.parseTriples(resp.getEntity().getContent());
 
         logger.debug("Got search results graph: {}", graphStore);
         assertEquals(200, resp.getStatusLine().getStatusCode());
-        assertFalse(graphStore.contains(Node.ANY, ResourceFactory.createResource(serverAddress + "fcr:search?q=testobj&offset=1&limit=1").asNode(), RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY));
-
+        assertFalse(graphStore
+                .contains(
+                        Node.ANY,
+                        ResourceFactory
+                                .createResource(
+                                        serverAddress +
+                                                "fcr:search?q=testobj&offset=1&limit=1")
+                                .asNode(), RdfLexicon.HAS_MEMBER_OF_RESULT
+                                .asNode(), Node.ANY));
 
     }
 }

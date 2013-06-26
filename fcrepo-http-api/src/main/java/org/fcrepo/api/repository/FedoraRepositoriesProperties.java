@@ -43,7 +43,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
 
     /**
      * Update an object using SPARQL-UPDATE
-     *
+     * 
      * @return 201
      * @throws javax.jcr.RepositoryException
      * @throws java.io.IOException
@@ -52,7 +52,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     @Consumes({WebContent.contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(final InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+        throws RepositoryException, IOException {
 
         try {
             if (requestBodyStream != null) {
@@ -60,7 +60,8 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, "/");
 
-                result.updatePropertiesDataset(new HttpGraphSubjects(FedoraNodes.class, uriInfo, session), IOUtils
+                result.updatePropertiesDataset(new HttpGraphSubjects(
+                        FedoraNodes.class, uriInfo, session), IOUtils
                         .toString(requestBodyStream));
                 final Problems problems = result.getDatasetProblems();
                 if (problems != null && problems.hasProblems()) {

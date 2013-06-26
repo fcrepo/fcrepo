@@ -32,32 +32,32 @@ import org.slf4j.Logger;
 
 public class LegacyMethod {
 
-    //TODO Figure out where to get the base url
+    // TODO Figure out where to get the base url
     private static final String BASE_URL = "http://localhost:8080/rest";
 
     private static final Properties FEDORA_TYPES = new Properties();
 
     public static final String FEDORA_ID_SCHEME = "xsd:string";
-    
+
     public static final String DSID_CATEGORY_LABEL = "fedora-types:dsID";
 
     public static final String PID_CATEGORY_LABEL = "fedora-types:pid";
 
     private static final String INGEST_METHOD = "ingest";
-    
+
     private static final String MODIFY_OBJ_METHOD = "modifyObject";
-    
+
     private static final String PURGE_OBJ_METHOD = "purgeObject";
-    
+
     private static final String ADD_DS_METHOD = "addDatastream";
-    
+
     private static final String MODIFY_DS_METHOD = "modifyDatastream";
-    
+
     private static final String PURGE_DS_METHOD = "purgeDatastream";
-    
+
     private static final String[] METHODS = new String[] {INGEST_METHOD,
-    	MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD, MODIFY_DS_METHOD,
-    	PURGE_DS_METHOD};
+            MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD,
+            MODIFY_DS_METHOD, PURGE_DS_METHOD};
 
     private static final List<String> METHOD_NAMES = Arrays.asList(METHODS);
 
@@ -112,8 +112,7 @@ public class LegacyMethod {
     }
 
     public LegacyMethod(final String atomEntry) {
-        delegate =
-                EntryFactory.parse(new StringReader(atomEntry));
+        delegate = EntryFactory.parse(new StringReader(atomEntry));
     }
 
     public Entry getEntry() {
@@ -128,7 +127,7 @@ public class LegacyMethod {
         if (val == null) {
             delegate.addAuthor("unknown", null, BASE_URL);
         } else {
-        	delegate.addAuthor(val, null, BASE_URL);
+            delegate.addAuthor(val, null, BASE_URL);
         }
     }
 
@@ -151,12 +150,12 @@ public class LegacyMethod {
     public String getMethodName() {
         return delegate.getTitle();
     }
-    
+
     private void setLabelledCategory(String label, String val) {
         final List<Category> vals = delegate.getCategories(FEDORA_ID_SCHEME);
         Category found = null;
         if (vals != null && !vals.isEmpty()) {
-            for(Category c: vals) {
+            for (Category c : vals) {
                 if (label.equals(c.getLabel())) {
                     found = c.setTerm(val);
                 }
@@ -166,9 +165,10 @@ public class LegacyMethod {
             delegate.addCategory(FEDORA_ID_SCHEME, val, label);
         }
     }
-    
+
     private String getLabelledCategory(String label) {
-        final List<Category> categories = delegate.getCategories(FEDORA_ID_SCHEME);
+        final List<Category> categories =
+                delegate.getCategories(FEDORA_ID_SCHEME);
         for (final Category c : categories) {
             if (label.equals(c.getLabel())) {
                 return c.getTerm();
@@ -205,13 +205,14 @@ public class LegacyMethod {
         return objectToString(returnVal, datatype);
     }
 
-    protected static String objectToString(
-    		final String obj, final String xsdType) {
+    protected static String objectToString(final String obj,
+            final String xsdType) {
         if (obj == null) {
             return "null";
         }
         String term;
-        //TODO Most of these types are not yet relevant to FCR4, but we can borrow their serializations as necessary
+        // TODO Most of these types are not yet relevant to FCR4, but we can
+        // borrow their serializations as necessary
         // several circumstances yield null canonical names
         switch (xsdType) {
             case "fedora-types:ArrayOfString":
@@ -246,7 +247,7 @@ public class LegacyMethod {
             case PROPERTY_REMOVED:
                 return convertDateToXSDString(jcrEvent.getDate());
             default:
-            	return null;
+                return null;
         }
     }
 

@@ -38,20 +38,20 @@ import com.hp.hpl.jena.rdf.model.Resource;
 @Component
 public class HttpApiResources implements UriAwareResourceModelFactory {
 
-
     @Autowired
     protected SerializerUtil serializers;
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
             final UriInfo uriInfo, final GraphSubjects graphSubjects)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final Model model = createDefaultModel();
 
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType(FedoraJcrTypes.ROOT)) {
+        if (resource.getNode().getPrimaryNodeType().isNodeType(
+                FedoraJcrTypes.ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
         } else {
             addNodeStatements(resource, uriInfo, model, s);
@@ -65,9 +65,10 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         for (final String key : serializers.keySet()) {
             final Map<String, String> pathMap =
                     of("path", resource.getPath().substring(1));
-            final Resource format = model.createResource(uriInfo
-                                                                 .getBaseUriBuilder().path(FedoraExport.class).queryParam("format", key)
-                                                                 .buildFromMap(pathMap).toASCIIString());
+            final Resource format =
+                    model.createResource(uriInfo.getBaseUriBuilder().path(
+                            FedoraExport.class).queryParam("format", key)
+                            .buildFromMap(pathMap).toASCIIString());
             model.add(s, HAS_SERIALIZATION, format);
             model.add(format, RDFS_LABEL, key);
         }
@@ -75,7 +76,8 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         return model;
     }
 
-    private void addContentStatements(FedoraResource resource, UriInfo uriInfo, Model model, Resource s) throws RepositoryException {
+    private void addContentStatements(FedoraResource resource, UriInfo uriInfo,
+            Model model, Resource s) throws RepositoryException {
         // fcr:fixity
         final Map<String, String> pathMap =
                 of("path", resource.getPath().substring(1));
@@ -84,17 +86,19 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                         pathMap).toASCIIString()));
     }
 
-    private void addNodeStatements(FedoraResource resource, UriInfo uriInfo, Model model, Resource s) throws RepositoryException {
+    private void addNodeStatements(FedoraResource resource, UriInfo uriInfo,
+            Model model, Resource s) throws RepositoryException {
 
         // fcr:versions
         final Map<String, String> pathMap =
                 of("path", resource.getPath().substring(1));
         model.add(s, HAS_VERSION_HISTORY, model.createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraVersions.class)
-                .buildFromMap(pathMap).toASCIIString()));
+                .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
+                        pathMap).toASCIIString()));
     }
 
-    private void addRepositoryStatements(UriInfo uriInfo, Model model, Resource s) {
+    private void addRepositoryStatements(UriInfo uriInfo, Model model,
+            Resource s) {
         // fcr:search
         model.add(s, HAS_SEARCH_SERVICE, model.createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraFieldSearch.class).build()
@@ -107,8 +111,8 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         // fcr:tx
         model.add(s, HAS_TRANSACTION_SERVICE, model.createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class).build()
-                .toASCIIString()));
+                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)
+                .build().toASCIIString()));
 
         // fcr:namespaces
         model.add(s, HAS_NAMESPACE_SERVICE, model.createResource(uriInfo

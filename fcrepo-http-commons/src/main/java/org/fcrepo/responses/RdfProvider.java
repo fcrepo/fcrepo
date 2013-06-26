@@ -34,7 +34,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
             final OutputStream entityStream) throws IOException,
-            WebApplicationException {
+        WebApplicationException {
 
         logger.debug("Writing a response for: {} with MIMEtype: {}", rdf,
                 mediaType);
@@ -43,8 +43,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
         httpHeaders.put("Content-type", of((Object) mediaType.toString()));
         setCachingHeaders(httpHeaders, rdf);
 
-        new GraphStoreStreamingOutput(rdf, mediaType)
-                .write(entityStream);
+        new GraphStoreStreamingOutput(rdf, mediaType).write(entityStream);
     }
 
     @Override

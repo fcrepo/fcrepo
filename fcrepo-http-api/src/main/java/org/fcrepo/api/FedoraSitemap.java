@@ -105,11 +105,11 @@ public class FedoraSitemap extends AbstractResource {
 
     private RowIterator
             getSitemapEntries(final Session session, final long page)
-                    throws RepositoryException {
+                throws RepositoryException {
         final QueryManager queryManager =
                 session.getWorkspace().getQueryManager();
 
-        //TODO expand to more fields
+        // TODO expand to more fields
         final String sqlExpression =
                 "SELECT [" + JcrConstants.JCR_NAME + "],[" + JCR_LASTMODIFIED +
                         "] FROM [" + FEDORA_OBJECT + "]";
@@ -126,7 +126,7 @@ public class FedoraSitemap extends AbstractResource {
     }
 
     private SitemapEntry getSitemapEntry(final Row r)
-            throws RepositoryException {
+        throws RepositoryException {
         Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
         final String path = r.getNode().getPath();
 

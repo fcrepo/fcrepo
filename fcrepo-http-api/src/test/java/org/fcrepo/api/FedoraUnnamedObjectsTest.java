@@ -57,7 +57,7 @@ public class FedoraUnnamedObjectsTest {
 
     @Test
     public void testIngestAndMint() throws RepositoryException, IOException,
-                                                       InvalidChecksumException, URISyntaxException {
+        InvalidChecksumException, URISyntaxException {
         final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
         testObj.setPidMinter(mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");

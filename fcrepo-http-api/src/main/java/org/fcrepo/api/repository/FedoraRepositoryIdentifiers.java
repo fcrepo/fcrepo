@@ -9,11 +9,10 @@ import org.fcrepo.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-
 /**
- * This stub is a hack to mount the functionality of FedoraIdentifiers at
- * the root of this webapp. Without it, the globbing from FedoraNodes would
- * own this path instead.
+ * This stub is a hack to mount the functionality of FedoraIdentifiers at the
+ * root of this webapp. Without it, the globbing from FedoraNodes would own this
+ * path instead.
  */
 @Component
 @Scope("prototype")

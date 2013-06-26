@@ -50,7 +50,8 @@ public class FedoraRepositoriesPropertiesTest {
 
         testObj.updateSparql(mockStream);
 
-        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class), eq("my-sparql-statement"));
+        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
+                eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
     }

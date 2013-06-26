@@ -24,12 +24,13 @@ public class FedoraUnnamedObjectsIT extends AbstractResourceIT {
         assertEquals(201, status);
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
-        assertTrue("new object did not mint a PID", !content.endsWith("/fcr:new"));
+        assertTrue("new object did not mint a PID", !content
+                .endsWith("/fcr:new"));
     }
 
     @Test
     public void testRepositoryLevelIngestWithNew() throws Exception {
-        final HttpPost method =  new HttpPost(serverAddress + "fcr:new");
+        final HttpPost method = new HttpPost(serverAddress + "fcr:new");
 
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());
@@ -39,8 +40,9 @@ public class FedoraUnnamedObjectsIT extends AbstractResourceIT {
         }
         assertEquals(201, status);
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
-                                                    .find());
-        assertTrue("new object did not mint a PID", !content.endsWith("/fcr:new"));
+                .find());
+        assertTrue("new object did not mint a PID", !content
+                .endsWith("/fcr:new"));
     }
-    
+
 }

@@ -1,3 +1,4 @@
+
 package org.fcrepo.serialization;
 
 import org.slf4j.Logger;
@@ -18,12 +19,16 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Component
 public class SerializerUtil implements ApplicationContextAware {
+
     private static final Logger LOGGER = getLogger(SerializerUtil.class);
+
     private ApplicationContext applicationContext;
+
     private Map<String, FedoraObjectSerializer> serializerMap;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(ApplicationContext applicationContext)
+        throws BeansException {
         this.applicationContext = applicationContext;
     }
 
@@ -41,13 +46,15 @@ public class SerializerUtil implements ApplicationContextAware {
 
     @PostConstruct
     public void buildFedoraObjectSerializersMap() {
-        final Map<String, FedoraObjectSerializer> beans = applicationContext.getBeansOfType(FedoraObjectSerializer.class);
+        final Map<String, FedoraObjectSerializer> beans =
+                applicationContext.getBeansOfType(FedoraObjectSerializer.class);
 
         final Map<String, FedoraObjectSerializer> m = new HashMap<>();
 
-        for(Map.Entry<String, FedoraObjectSerializer> e : beans.entrySet()) {
+        for (Map.Entry<String, FedoraObjectSerializer> e : beans.entrySet()) {
             final FedoraObjectSerializer serializer = e.getValue();
-            LOGGER.info("Registering serializer {} for format {}", serializer, serializer.getKey());
+            LOGGER.info("Registering serializer {} for format {}", serializer,
+                    serializer.getKey());
             m.put(serializer.getKey(), serializer);
         }
 

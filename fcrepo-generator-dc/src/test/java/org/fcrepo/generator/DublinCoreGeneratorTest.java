@@ -1,3 +1,4 @@
+
 package org.fcrepo.generator;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
@@ -24,39 +25,43 @@ import org.junit.Test;
 public class DublinCoreGeneratorTest {
 
     DublinCoreGenerator testObj;
-	NodeService mockNodeService;
+
+    NodeService mockNodeService;
+
     DCGenerator mockGenerator;
-	Session mockSession;
-    
+
+    Session mockSession;
+
     @Before
     public void setUp() throws RepositoryException {
-		mockNodeService = mock(NodeService.class);
+        mockNodeService = mock(NodeService.class);
         testObj = new DublinCoreGenerator();
-		testObj.setNodeService(mockNodeService);
+        testObj.setNodeService(mockNodeService);
 
-		mockSession = TestHelpers.mockSession(testObj);
+        mockSession = TestHelpers.mockSession(testObj);
         testObj.setSession(mockSession);
         mockGenerator = mock(DCGenerator.class);
         testObj.dcgenerators = Arrays.asList(mockGenerator);
     }
-    
+
     @Test
     public void testGetObjectAsDublinCore() throws RepositoryException {
         testObj.dcgenerators = Arrays.asList(mockGenerator);
         InputStream mockIS = mock(InputStream.class);
-		FedoraResource mockResource = mock(FedoraResource.class);
-		when(mockResource.getNode()).thenReturn(mock(Node.class));
-		when(mockNodeService.getObject(mockSession, "/objects/foo")).thenReturn(mockResource);
+        FedoraResource mockResource = mock(FedoraResource.class);
+        when(mockResource.getNode()).thenReturn(mock(Node.class));
+        when(mockNodeService.getObject(mockSession, "/objects/foo"))
+                .thenReturn(mockResource);
         when(mockGenerator.getStream(any(Node.class))).thenReturn(mockIS);
-        testObj.getObjectAsDublinCore(createPathList("objects","foo"));
-        
+        testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
+
     }
-    
+
     @Test
     public void testNoGenerators() {
         testObj.dcgenerators = Arrays.asList(new DCGenerator[0]);
         try {
-            testObj.getObjectAsDublinCore(createPathList("objects","foo"));
+            testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
             fail("Should have failed without a generator configured!");
         } catch (PathNotFoundException ex) {
             // this is what we expect

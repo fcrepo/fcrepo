@@ -1,3 +1,4 @@
+
 package org.fcrepo.generator.dublincore;
 
 import static org.junit.Assert.assertTrue;
@@ -13,26 +14,25 @@ import org.fcrepo.generator.util.OaiDublinCore;
 import org.junit.Before;
 import org.junit.Test;
 
-
 public class WorstCaseGeneratorTest {
 
     private WorstCaseGenerator testObj;
-    
+
     private JAXBContext context;
-    
+
     @Before
     public void setUp() throws JAXBException {
         testObj = new WorstCaseGenerator();
-        context =
-                JAXBContext.newInstance(OaiDublinCore.class);
+        context = JAXBContext.newInstance(OaiDublinCore.class);
 
     }
-    
+
     @Test
     public void testGetStream() throws Exception {
         Node mockNode = mock(Node.class);
         InputStream out = testObj.getStream(mockNode);
-        OaiDublinCore actual = (OaiDublinCore)context.createUnmarshaller().unmarshal(out);
+        OaiDublinCore actual =
+                (OaiDublinCore) context.createUnmarshaller().unmarshal(out);
         assertTrue(actual != null);
     }
 }

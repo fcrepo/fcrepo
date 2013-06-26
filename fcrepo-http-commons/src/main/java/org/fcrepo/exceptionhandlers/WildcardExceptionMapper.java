@@ -31,9 +31,9 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
             return ((WebApplicationException) e).getResponse();
         }
 
-
         if (e.getCause() instanceof TransactionMissingException) {
-            return new TransactionMissingExceptionMapper().toResponse((TransactionMissingException)e.getCause());
+            return new TransactionMissingExceptionMapper()
+                    .toResponse((TransactionMissingException) e.getCause());
         }
 
         logger.error("Exception intercepted by WildcardExceptionMapper: \n", e);

@@ -1,5 +1,5 @@
-package org.fcrepo.integration.api;
 
+package org.fcrepo.integration.api;
 
 import static org.junit.Assert.assertEquals;
 
@@ -15,44 +15,52 @@ import org.junit.Test;
 
 public class FedoraExportIT extends AbstractResourceIT {
 
-	@Test
-	public void shouldRoundTripOneObject() throws IOException {
-		final String objName = "JcrXmlSerializerIT1";
+    @Test
+    public void shouldRoundTripOneObject() throws IOException {
+        final String objName = "JcrXmlSerializerIT1";
 
-		// set up the object
-		client.execute(postObjMethod(objName));
-		client.execute(postDSMethod(objName, "testDS", "stuff"));
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, "testDS", "stuff"));
 
-		// export it
-		logger.debug("Attempting to export: " + objName);
-		final HttpGet getObjMethod =
-				new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1" + "/fcr:export");
-		HttpResponse response = client.execute(getObjMethod);
-        assertEquals("application/xml", response.getEntity().getContentType().getValue());
-		assertEquals(200, response.getStatusLine().getStatusCode());
-		logger.debug("Successfully exported: " + objName);
-		final String content = EntityUtils.toString(response.getEntity());
-		logger.debug("Found exported object: " + content);
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1" +
+                        "/fcr:export");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
 
-		// delete it
-		client.execute(new HttpDelete(serverAddress + "objects/JcrXmlSerializerIT1"));
-		response = client.execute(new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1"));
-		assertEquals(404, response.getStatusLine().getStatusCode());
+        // delete it
+        client.execute(new HttpDelete(serverAddress +
+                "objects/JcrXmlSerializerIT1"));
+        response =
+                client.execute(new HttpGet(serverAddress +
+                        "objects/JcrXmlSerializerIT1"));
+        assertEquals(404, response.getStatusLine().getStatusCode());
 
-		// try to import it
-		HttpPost importMethod = new HttpPost(serverAddress + "objects/fcr:import");
-		importMethod.setEntity(new StringEntity(content));
-		assertEquals("Couldn't import!", 201, getStatus(importMethod));
+        // try to import it
+        HttpPost importMethod =
+                new HttpPost(serverAddress + "objects/fcr:import");
+        importMethod.setEntity(new StringEntity(content));
+        assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
-		//check that we made it
-		response = client.execute(new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1"));
-		assertEquals(200, response.getStatusLine().getStatusCode());
+        // check that we made it
+        response =
+                client.execute(new HttpGet(serverAddress +
+                        "objects/JcrXmlSerializerIT1"));
+        assertEquals(200, response.getStatusLine().getStatusCode());
 
     }
 
-
     @Test
-    public void shouldMoveObjectToTheRootLevelUsingTheRepositoryWideApi() throws IOException {
+    public void shouldMoveObjectToTheRootLevelUsingTheRepositoryWideApi()
+        throws IOException {
         final String objName = "JcrXmlSerializerIT2";
 
         // set up the object
@@ -62,7 +70,8 @@ public class FedoraExportIT extends AbstractResourceIT {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" + "/fcr:export");
+                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" +
+                        "/fcr:export");
         HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         logger.debug("Successfully exported: " + objName);
@@ -70,8 +79,11 @@ public class FedoraExportIT extends AbstractResourceIT {
         logger.debug("Found exported object: " + content);
 
         // delete it
-        client.execute(new HttpDelete(serverAddress + "objects/JcrXmlSerializerIT2"));
-        response = client.execute(new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2"));
+        client.execute(new HttpDelete(serverAddress +
+                "objects/JcrXmlSerializerIT2"));
+        response =
+                client.execute(new HttpGet(serverAddress +
+                        "objects/JcrXmlSerializerIT2"));
         assertEquals(404, response.getStatusLine().getStatusCode());
 
         // try to import it
@@ -79,14 +91,13 @@ public class FedoraExportIT extends AbstractResourceIT {
         importMethod.setEntity(new StringEntity(content));
         assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
-        //check that we made it
-        response = client.execute(new HttpGet(serverAddress + "JcrXmlSerializerIT2"));
+        // check that we made it
+        response =
+                client.execute(new HttpGet(serverAddress +
+                        "JcrXmlSerializerIT2"));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-
     }
-
-
 
     @Test
     public void shouldExportUsingTheRepositoryWideApi() throws IOException {
@@ -99,16 +110,14 @@ public class FedoraExportIT extends AbstractResourceIT {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" + "/fcr:export");
+                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" +
+                        "/fcr:export");
         HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         logger.debug("Successfully exported: " + objName);
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Found exported object: " + content);
 
-
-
     }
 
 }
-

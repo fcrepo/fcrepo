@@ -27,9 +27,8 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
 
     private final String format;
 
-
     public GraphStoreStreamingOutput(final GraphStore graphStore,
-                                     final MediaType mediaType) {
+            final MediaType mediaType) {
         this(graphStore.toDataset(), mediaType);
     }
 
@@ -42,7 +41,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
 
     @Override
     public void write(final OutputStream out) throws IOException,
-            WebApplicationException {
+        WebApplicationException {
         LOGGER.debug("Serializing graph  as {}", format);
         LOGGER.debug("Serializing default model");
         Model model = unifyDatasetModel(dataset);

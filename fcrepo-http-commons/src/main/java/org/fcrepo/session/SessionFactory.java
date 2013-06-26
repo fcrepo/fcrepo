@@ -17,7 +17,6 @@ import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
-
 public class SessionFactory {
 
     private static final Logger logger = getLogger(SessionFactory.class);
@@ -49,12 +48,12 @@ public class SessionFactory {
     }
 
     public Session getSession(final String workspace)
-            throws RepositoryException {
+        throws RepositoryException {
         return repo.login(workspace);
     }
 
     public Session getSession(final HttpServletRequest servletRequest)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final String workspace = getEmbeddedWorkspace(servletRequest);
         final Transaction transaction = getEmbeddedTransaction(servletRequest);
@@ -62,7 +61,8 @@ public class SessionFactory {
         final Session session;
 
         if (transaction != null) {
-            logger.debug("Returning a session in the transaction {}", transaction);
+            logger.debug("Returning a session in the transaction {}",
+                    transaction);
             session = transaction.getSession();
         } else if (workspace != null) {
             logger.debug("Returning a session in the workspace {}", workspace);
@@ -95,19 +95,24 @@ public class SessionFactory {
             final ServletCredentials creds =
                     getCredentials(securityContext, servletRequest);
 
-            final Transaction transaction = getEmbeddedTransaction(servletRequest);
+            final Transaction transaction =
+                    getEmbeddedTransaction(servletRequest);
 
             final Session session;
 
             if (transaction != null && creds != null) {
-                logger.debug("Returning a session in the transaction {} impersonating {}", transaction, creds);
+                logger.debug(
+                        "Returning a session in the transaction {} impersonating {}",
+                        transaction, creds);
                 session = transaction.getSession().impersonate(creds);
             } else if (creds != null) {
 
                 final String workspace = getEmbeddedWorkspace(servletRequest);
 
                 if (workspace != null) {
-                    logger.debug("Returning an authenticated session in the workspace {}", workspace);
+                    logger.debug(
+                            "Returning an authenticated session in the workspace {}",
+                            workspace);
                     session = repo.login(creds, workspace);
                 } else {
                     logger.debug("Returning an authenticated session in the default workspace");
@@ -133,7 +138,8 @@ public class SessionFactory {
         return new AuthenticatedSessionProviderImpl(repo, creds);
     }
 
-    private String getEmbeddedWorkspace(final HttpServletRequest servletRequest) {
+    private String
+            getEmbeddedWorkspace(final HttpServletRequest servletRequest) {
         final String requestPath = servletRequest.getPathInfo();
 
         if (requestPath == null) {
@@ -150,7 +156,9 @@ public class SessionFactory {
 
     }
 
-    private Transaction getEmbeddedTransaction(final HttpServletRequest servletRequest) throws TransactionMissingException {
+    private Transaction getEmbeddedTransaction(
+            final HttpServletRequest servletRequest)
+        throws TransactionMissingException {
         final String requestPath = servletRequest.getPathInfo();
 
         if (requestPath == null) {
@@ -167,7 +175,8 @@ public class SessionFactory {
         }
     }
 
-    public void setTransactionService(final TransactionService transactionService) {
+    public void setTransactionService(
+            final TransactionService transactionService) {
         this.transactionService = transactionService;
     }
 }

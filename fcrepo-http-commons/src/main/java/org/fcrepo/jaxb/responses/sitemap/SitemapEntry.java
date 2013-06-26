@@ -8,7 +8,8 @@ import javax.jcr.RepositoryException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "url", namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+@XmlRootElement(name = "url",
+        namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapEntry {
 
     @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
@@ -28,8 +29,7 @@ public class SitemapEntry {
         lastmod = null;
     }
 
-    public SitemapEntry(final URI loc)
-            throws RepositoryException {
+    public SitemapEntry(final URI loc) throws RepositoryException {
         this.loc = loc;
         lastmod = Calendar.getInstance();
     }

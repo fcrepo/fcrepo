@@ -1,3 +1,4 @@
+
 package org.fcrepo.messaging.legacy;
 
 import static org.junit.Assert.assertEquals;
@@ -39,21 +40,21 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class LegacyMethodTest {
 
     private LegacyMethod testObj;
-    
+
     private Entry mockDelegate;
 
     private Event mockEvent;
-    
+
     private Node mockSource;
-    
+
     private Category mockPidCategory;
-    
+
     private Category mockDsidCategory;
-    
+
     private static final String SOURCE_DSID = "sourceDsid";
 
     private static final String SOURCE_PID = "sourcePid";
-        
+
     @Before
     public void setUp() throws RepositoryException {
         // set up the supporting mocks for the constructor
@@ -65,7 +66,7 @@ public class LegacyMethodTest {
         when(mockSource.getParent()).thenReturn(mockParent);
         NodeType mockDSType = mock(NodeType.class);
         when(mockDSType.getName()).thenReturn(FedoraJcrTypes.FEDORA_DATASTREAM);
-        NodeType[] mockTypes = new NodeType[]{mockDSType};
+        NodeType[] mockTypes = new NodeType[] {mockDSType};
         when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);
         mockDelegate = mock(Entry.class);
         Text mockText = mock(Text.class);
@@ -74,17 +75,21 @@ public class LegacyMethodTest {
         PowerMockito.mockStatic(EntryFactory.class);
         when(EntryFactory.newEntry()).thenReturn(mockDelegate);
         mockPidCategory = mock(Category.class);
-        when(mockPidCategory.getLabel()).thenReturn(LegacyMethod.PID_CATEGORY_LABEL);
+        when(mockPidCategory.getLabel()).thenReturn(
+                LegacyMethod.PID_CATEGORY_LABEL);
         when(mockPidCategory.getTerm()).thenReturn(SOURCE_PID);
         mockDsidCategory = mock(Category.class);
-        when(mockDsidCategory.getLabel()).thenReturn(LegacyMethod.DSID_CATEGORY_LABEL);
+        when(mockDsidCategory.getLabel()).thenReturn(
+                LegacyMethod.DSID_CATEGORY_LABEL);
         when(mockDsidCategory.getTerm()).thenReturn(SOURCE_DSID);
-        List<Category> categories = Arrays.asList(new Category[]{mockPidCategory, mockDsidCategory});
-        when(mockDelegate.getCategories(LegacyMethod.FEDORA_ID_SCHEME)).thenReturn(categories);
+        List<Category> categories =
+                Arrays.asList(new Category[] {mockPidCategory, mockDsidCategory});
+        when(mockDelegate.getCategories(LegacyMethod.FEDORA_ID_SCHEME))
+                .thenReturn(categories);
         // construct the test object
         testObj = new LegacyMethod(mockEvent, mockSource);
     }
-        
+
     @Test
     public void testPidAccessors() {
         String newPid = "newPid";
@@ -102,14 +107,14 @@ public class LegacyMethodTest {
         verify(mockDsidCategory).setTerm(SOURCE_DSID);
         verify(mockDsidCategory).setTerm(newDsid);
     }
-    
+
     @Test
     public void textGetEntry() {
         Entry mockEntry = mock(Entry.class);
         LegacyMethod to = new LegacyMethod(mockEntry);
         assertEquals(mockEntry, to.getEntry());
     }
-    
+
     @Test
     public void testMethodNameAccessors() {
         when(mockDelegate.getTitle()).thenReturn("foo");
@@ -123,7 +128,7 @@ public class LegacyMethodTest {
         testObj.setMethodName(newTitle);
         verify(mockDelegate.setTitle(newTitle));
     }
-    
+
     @Test
     public void testModifiedAccesors() {
         testObj.getModified();
@@ -132,7 +137,7 @@ public class LegacyMethodTest {
         // called once in the constructor, once in the accessor
         verify(mockDelegate, times(2)).setUpdated(any(Date.class));
     }
-    
+
     @Test
     public void testUserIdAccessors() {
         Person mockPerson = mock(Person.class);
@@ -142,19 +147,20 @@ public class LegacyMethodTest {
         verify(mockDelegate).addAuthor(eq("foo"), anyString(), anyString());
         testObj.setUserId(null);
         // called once in the constructor, once in the accessor
-        verify(mockDelegate, times(2)).addAuthor(eq("unknown"), anyString(), anyString());
+        verify(mockDelegate, times(2)).addAuthor(eq("unknown"), anyString(),
+                anyString());
     }
-    
+
     @Test
     public void testSetContent() {
         testObj.setContent("foo");
         verify(mockDelegate).setContent("foo");
     }
-    
+
     @Test
     public void testWriteTo() throws IOException {
-    	Writer mockWriter = mock(Writer.class);
-    	testObj.writeTo(mockWriter);
-    	verify(mockDelegate).writeTo(mockWriter);
+        Writer mockWriter = mock(Writer.class);
+        testObj.writeTo(mockWriter);
+        verify(mockDelegate).writeTo(mockWriter);
     }
 }

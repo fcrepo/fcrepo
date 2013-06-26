@@ -49,7 +49,7 @@ public class JMSTopicPublisher {
 
     @Subscribe
     public void publishJCREvent(final Event fedoraEvent) throws JMSException,
-            RepositoryException, IOException {
+        RepositoryException, IOException {
         LOGGER.debug("Received an event from the internal bus.");
         final Message tm =
                 eventFactory.getMessage(fedoraEvent, session, jmsSession);

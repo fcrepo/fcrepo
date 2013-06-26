@@ -20,9 +20,10 @@ public interface FedoraObjectSerializer {
     String getMediaType();
 
     void serialize(final FedoraObject obj, final OutputStream out)
-            throws RepositoryException, IOException;
+        throws RepositoryException, IOException;
 
-    void deserialize(final Session session, final String path, final InputStream stream)
-            throws IOException, RepositoryException, InvalidChecksumException;
+    void deserialize(final Session session, final String path,
+            final InputStream stream) throws IOException, RepositoryException,
+        InvalidChecksumException;
 
 }

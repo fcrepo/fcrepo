@@ -1,3 +1,4 @@
+
 package org.fcrepo.integration.api;
 
 import com.hp.hpl.jena.update.GraphStore;
@@ -17,21 +18,29 @@ import static org.junit.Assert.assertEquals;
 public class FedoraWorkspacesIT extends AbstractResourceIT {
 
     @Test
-    public void shouldDemonstratePathsAndWorkspaces() throws IOException, RepositoryException {
-        final HttpPost httpCreateWorkspace = new HttpPost(serverAddress + "fcr:workspaces/some-workspace");
-        final HttpResponse createWorkspaceResponse = execute(httpCreateWorkspace);
-        assertEquals(201, createWorkspaceResponse.getStatusLine().getStatusCode());
+    public void shouldDemonstratePathsAndWorkspaces() throws IOException,
+        RepositoryException {
+        final HttpPost httpCreateWorkspace =
+                new HttpPost(serverAddress + "fcr:workspaces/some-workspace");
+        final HttpResponse createWorkspaceResponse =
+                execute(httpCreateWorkspace);
+        assertEquals(201, createWorkspaceResponse.getStatusLine()
+                .getStatusCode());
 
-
-        final HttpPost httpPost = new HttpPost(serverAddress + "workspace:some-workspace/FedoraWorkspacesTest");
+        final HttpPost httpPost =
+                new HttpPost(serverAddress +
+                        "workspace:some-workspace/FedoraWorkspacesTest");
         final HttpResponse response = execute(httpPost);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
-
-        final HttpGet httpGet = new HttpGet(serverAddress + "workspace:some-workspace/FedoraWorkspacesTest");
+        final HttpGet httpGet =
+                new HttpGet(serverAddress +
+                        "workspace:some-workspace/FedoraWorkspacesTest");
         final HttpResponse profileResponse = execute(httpGet);
         assertEquals(200, profileResponse.getStatusLine().getStatusCode());
-        final GraphStore graphStore = TestHelpers.parseTriples(profileResponse.getEntity().getContent());
+        final GraphStore graphStore =
+                TestHelpers.parseTriples(profileResponse.getEntity()
+                        .getContent());
         logger.info(graphStore.toString());
     }
 }

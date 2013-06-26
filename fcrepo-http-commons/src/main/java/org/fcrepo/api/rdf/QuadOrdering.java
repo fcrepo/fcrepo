@@ -1,3 +1,4 @@
+
 package org.fcrepo.api.rdf;
 
 import com.hp.hpl.jena.shared.PrefixMapping;
@@ -16,21 +17,27 @@ public class QuadOrdering implements Comparator<Quad> {
     }
 
     @Override
-    public int compare(com.hp.hpl.jena.sparql.core.Quad left, com.hp.hpl.jena.sparql.core.Quad right) {
+    public int compare(com.hp.hpl.jena.sparql.core.Quad left,
+            com.hp.hpl.jena.sparql.core.Quad right) {
 
-        final int s = left.getSubject().toString(prefixMapping, false).compareTo(right.getSubject().toString(prefixMapping, false));
+        final int s =
+                left.getSubject().toString(prefixMapping, false).compareTo(
+                        right.getSubject().toString(prefixMapping, false));
 
         if (s != 0) {
             return s;
         }
 
-        final int p = left.getPredicate().toString(prefixMapping, false).compareTo(right.getPredicate().toString(prefixMapping, false));
+        final int p =
+                left.getPredicate().toString(prefixMapping, false).compareTo(
+                        right.getPredicate().toString(prefixMapping, false));
 
         if (p != 0) {
             return p;
         }
 
-        return left.getObject().toString(false).compareTo(right.getObject().toString(false));
+        return left.getObject().toString(false).compareTo(
+                right.getObject().toString(false));
 
     }
 

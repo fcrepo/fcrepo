@@ -45,7 +45,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final GraphStore result =
                 TestHelpers.parseTriples(response.getEntity().getContent());
         logger.debug("Received triples: \n{}", result.toString());
-        final String subjectURI = serverAddress + "objects/FedoraDatastreamsTest7";
+        final String subjectURI =
+                serverAddress + "objects/FedoraDatastreamsTest7";
 
         assertTrue("Didn't find the first datastream! ", result.contains(
                 Node.ANY, Node.createURI(subjectURI), Node.ANY, Node
@@ -120,7 +121,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-        // TODO: we should actually evaluate the multipart response for the things we're expecting
+        // TODO: we should actually evaluate the multipart response for the
+        // things we're expecting
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest9/fcr:datastreams");
@@ -153,7 +155,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-        // TODO: we should actually evaluate the multipart response for the things we're expecting
+        // TODO: we should actually evaluate the multipart response for the
+        // things we're expecting
         final HttpGet getDSesMethod =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest10/fcr:datastreams?dsid=ds1");

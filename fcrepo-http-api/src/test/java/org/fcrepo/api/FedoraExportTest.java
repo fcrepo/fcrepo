@@ -1,3 +1,4 @@
+
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
@@ -32,6 +33,7 @@ public class FedoraExportTest {
     SerializerUtil mockSerializers;
 
     FedoraObjectSerializer mockSerializer;
+
     ObjectService mockObjects;
 
     @Before
@@ -43,7 +45,7 @@ public class FedoraExportTest {
         mockSerializers = mock(SerializerUtil.class);
         mockSerializer = mock(FedoraObjectSerializer.class);
         when(mockSerializers.getSerializer("fake-format")).thenReturn(
-                                                                             mockSerializer);
+                mockSerializer);
         mockObjects = mock(ObjectService.class);
         testObj.setSerializers(mockSerializers);
         testObj.setObjectService(mockObjects);
@@ -54,12 +56,15 @@ public class FedoraExportTest {
     @Test
     public void testExportObject() throws Exception {
         FedoraObject mockObject = mock(FedoraObject.class);
-        when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(mockObject);
+        when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
+                mockObject);
 
-        ((StreamingOutput)testObj.exportObject(createPathList("test", "object"), "fake-format").getEntity()).write(new ByteArrayOutputStream());
-        verify(mockSerializer).serialize(eq(mockObject), any(OutputStream.class));
+        ((StreamingOutput) testObj.exportObject(
+                createPathList("test", "object"), "fake-format").getEntity())
+                .write(new ByteArrayOutputStream());
+        verify(mockSerializer).serialize(eq(mockObject),
+                any(OutputStream.class));
 
     }
-
 
 }

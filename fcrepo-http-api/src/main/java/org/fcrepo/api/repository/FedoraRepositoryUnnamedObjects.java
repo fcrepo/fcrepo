@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
- * This stub is a hack to mount the functionality of FedoraUnnamedObjects at
- * the root of this webapp. Without it, the globbing from FedoraNodes would
- * own this path instead.
+ * This stub is a hack to mount the functionality of FedoraUnnamedObjects at the
+ * root of this webapp. Without it, the globbing from FedoraNodes would own this
+ * path instead.
  */
 @Component
 @Scope("prototype")
@@ -21,7 +21,6 @@ public class FedoraRepositoryUnnamedObjects extends FedoraUnnamedObjects {
 
     @InjectedSession
     protected Session session;
-
 
     public void setSession(final Session session) {
         this.session = session;

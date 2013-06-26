@@ -12,7 +12,8 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 public class PathSegmentImpl implements PathSegment {
 
-    //    private static final PathSegment EMPTY_PATH_SEGMENT = new PathSegmentImpl("", false);
+    // private static final PathSegment EMPTY_PATH_SEGMENT = new
+    // PathSegmentImpl("", false);
     private final String path;
 
     private final MultivaluedMap<String, String> matrixParameters;

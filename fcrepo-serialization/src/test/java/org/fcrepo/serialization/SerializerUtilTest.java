@@ -1,3 +1,4 @@
+
 package org.fcrepo.serialization;
 
 import com.google.common.collect.ImmutableMap;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.when;
 public class SerializerUtilTest {
 
     private ApplicationContext mockContext;
+
     private SerializerUtil testObj;
 
     @Before
@@ -22,13 +24,13 @@ public class SerializerUtilTest {
         testObj = new SerializerUtil();
         testObj.setApplicationContext(mockContext);
 
-
         FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
         when(mockA.getKey()).thenReturn("a");
         FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
         when(mockB.getKey()).thenReturn("b");
 
-        when(mockContext.getBeansOfType(FedoraObjectSerializer.class)).thenReturn(ImmutableMap.of("mockA", mockA, "mockB", mockB));
+        when(mockContext.getBeansOfType(FedoraObjectSerializer.class))
+                .thenReturn(ImmutableMap.of("mockA", mockA, "mockB", mockB));
 
         testObj.buildFedoraObjectSerializersMap();
 
@@ -46,7 +48,8 @@ public class SerializerUtilTest {
         FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
         when(mockB.getKey()).thenReturn("b");
 
-        when(mockContext.getBeansOfType(FedoraObjectSerializer.class)).thenReturn(ImmutableMap.of("mockA", mockA, "mockB", mockB));
+        when(mockContext.getBeansOfType(FedoraObjectSerializer.class))
+                .thenReturn(ImmutableMap.of("mockA", mockA, "mockB", mockB));
 
         testObj.buildFedoraObjectSerializersMap();
 
@@ -60,11 +63,13 @@ public class SerializerUtilTest {
         FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
         when(mockB.getKey()).thenReturn("b");
 
-        when(mockContext.getBeansOfType(FedoraObjectSerializer.class)).thenReturn(ImmutableMap.of("mockA", mockA, "mockB", mockB));
+        when(mockContext.getBeansOfType(FedoraObjectSerializer.class))
+                .thenReturn(ImmutableMap.of("mockA", mockA, "mockB", mockB));
 
         testObj.buildFedoraObjectSerializersMap();
 
-        assertEquals(ImmutableMap.of("a", mockA, "b", mockB), testObj.getFedoraObjectSerializers());
+        assertEquals(ImmutableMap.of("a", mockA, "b", mockB), testObj
+                .getFedoraObjectSerializers());
 
     }
 }

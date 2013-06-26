@@ -50,29 +50,32 @@ public class FedoraExport extends AbstractResource {
         logger.debug("Requested object serialization for: " + path +
                 " using serialization format " + format);
 
-
         final FedoraObjectSerializer serializer =
                 serializers.getSerializer(format);
 
-        return Response.ok().type(serializer.getMediaType()).entity(new StreamingOutput() {
+        return Response.ok().type(serializer.getMediaType()).entity(
+                new StreamingOutput() {
 
-            @Override
-            public void write(final OutputStream out) throws IOException {
+                    @Override
+                    public void write(final OutputStream out)
+                        throws IOException {
 
-                try {
-                    logger.debug("Selecting from serializer map: " +
-                            serializers);
-                    logger.debug("Retrieved serializer for format: " + format);
-                    serializer.serialize(
-                            objectService.getObject(session, path), out);
-                    logger.debug("Successfully serialized object: " + path);
-                } catch (final RepositoryException e) {
-                    throw new WebApplicationException(e);
-                } finally {
-                    session.logout();
-                }
-            }
-        }).build();
+                        try {
+                            logger.debug("Selecting from serializer map: " +
+                                    serializers);
+                            logger.debug("Retrieved serializer for format: " +
+                                    format);
+                            serializer.serialize(objectService.getObject(
+                                    session, path), out);
+                            logger.debug("Successfully serialized object: " +
+                                    path);
+                        } catch (final RepositoryException e) {
+                            throw new WebApplicationException(e);
+                        } finally {
+                            session.logout();
+                        }
+                    }
+                }).build();
 
     }
 

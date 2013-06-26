@@ -37,7 +37,8 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final Session session;
 
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris, final Session session) {
+    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris,
+            final Session session) {
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String basePath = nodesBuilder.build("").toString();
         if (!basePath.endsWith("/")) {
@@ -50,16 +51,16 @@ public class HttpGraphSubjects implements GraphSubjects {
         this.session = session;
     }
 
-
     public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
         this(relativeTo, uris, null);
 
     }
 
-
     @Override
-    public Resource getGraphSubject(final String absPath) throws RepositoryException {
-        final URI result = nodesBuilder.buildFromMap(getPathMap(session, absPath));
+    public Resource getGraphSubject(final String absPath)
+        throws RepositoryException {
+        final URI result =
+                nodesBuilder.buildFromMap(getPathMap(session, absPath));
         LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
         return ResourceFactory.createResource(result.toString());
     }
@@ -83,22 +84,26 @@ public class HttpGraphSubjects implements GraphSubjects {
 
         final StringBuilder pathBuilder = new StringBuilder();
         final String absPath;
-        final String[] pathSegments = subject.getURI().substring(pathIx).split("/");
+        final String[] pathSegments =
+                subject.getURI().substring(pathIx).split("/");
 
-        for ( String segment : pathSegments) {
+        for (String segment : pathSegments) {
             if (segment.startsWith("tx:")) {
                 String tx = segment.substring("tx:".length());
 
-                if (session instanceof TxSession && ((TxSession)session).getTxId().equals(tx)) {
+                if (session instanceof TxSession &&
+                        ((TxSession) session).getTxId().equals(tx)) {
 
                 } else {
-                    throw new RepositoryException("Subject is not in this transaction");
+                    throw new RepositoryException(
+                            "Subject is not in this transaction");
                 }
 
             } else if (segment.startsWith("workspace:")) {
                 String workspace = segment.substring("workspace:".length());
                 if (!session.getWorkspace().getName().equals(workspace)) {
-                    throw new RepositoryException("Subject is not in this workspace");
+                    throw new RepositoryException(
+                            "Subject is not in this workspace");
                 }
             } else {
                 if (!segment.isEmpty()) {
@@ -107,7 +112,6 @@ public class HttpGraphSubjects implements GraphSubjects {
                 }
             }
         }
-
 
         absPath = pathBuilder.toString();
 
@@ -138,28 +142,29 @@ public class HttpGraphSubjects implements GraphSubjects {
         return subject.isURIResource() && subject.getURI().startsWith(basePath);
     }
 
-    private static Map<String, String> getPathMap(final Session session, final Node node)
-            throws RepositoryException {
+    private static Map<String, String> getPathMap(final Session session,
+            final Node node) throws RepositoryException {
         return getPathMap(session, node.getPath());
     }
 
-    private static Map<String, String> getPathMap(final Session session, final String absPath)
-            throws RepositoryException {
+    private static Map<String, String> getPathMap(final Session session,
+            final String absPath) throws RepositoryException {
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
         if (path.endsWith(JcrConstants.JCR_CONTENT)) {
             path =
                     path.replace(JcrConstants.JCR_CONTENT,
-                                        FedoraJcrTypes.FCR_CONTENT);
+                            FedoraJcrTypes.FCR_CONTENT);
         }
 
         if (session != null) {
             final Workspace workspace = session.getWorkspace();
 
             if (session instanceof TxSession) {
-                path = "tx:" + ((TxSession)session).getTxId() + "/" + path;
+                path = "tx:" + ((TxSession) session).getTxId() + "/" + path;
 
-            } else if (workspace != null && !workspace.getName().equals("default")) {
+            } else if (workspace != null &&
+                    !workspace.getName().equals("default")) {
                 path = "workspace:" + workspace.getName() + "/" + path;
             }
         }

@@ -84,15 +84,16 @@ public class FedoraNodesTest {
 
     @Test
     public void testIngestAndMint() throws RepositoryException {
-        //final Response actual = testObj.ingestAndMint(createPathList("objects"));
-        //assertNotNull(actual);
-        //assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
-        //verify(mockSession).save();
+        // final Response actual =
+        // testObj.ingestAndMint(createPathList("objects"));
+        // assertNotNull(actual);
+        // assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+        // verify(mockSession).save();
     }
 
     @Test
     public void testModify() throws RepositoryException, IOException,
-            InvalidChecksumException {
+        InvalidChecksumException {
         final String pid = "testObject";
 
         final FedoraResource mockResource = mock(FedoraResource.class);
@@ -109,7 +110,8 @@ public class FedoraNodesTest {
                         .getBytes()), null, mockRequest);
         assertNotNull(actual);
         assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
-        // this verify will fail when modify is actually implemented, thus encouraging the unit test to be updated appropriately.
+        // this verify will fail when modify is actually implemented, thus
+        // encouraging the unit test to be updated appropriately.
         // HA!
         // verifyNoMoreInteractions(mockObjects);
         verify(mockSession).save();
@@ -117,7 +119,7 @@ public class FedoraNodesTest {
 
     @Test
     public void testCreateObject() throws RepositoryException, IOException,
-            InvalidChecksumException {
+        InvalidChecksumException {
         final String pid = "testObject";
         final String path = "/" + pid;
         final Response actual =
@@ -134,7 +136,7 @@ public class FedoraNodesTest {
 
     @Test
     public void testCreateDatastream() throws RepositoryException, IOException,
-            InvalidChecksumException {
+        InvalidChecksumException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -179,14 +181,16 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
-        when(mockObject.getPropertiesDataset(any(GraphSubjects.class), anyLong(), anyInt()))
-                .thenReturn(mockDataset);
+        when(
+                mockObject.getPropertiesDataset(any(GraphSubjects.class),
+                        anyLong(), anyInt())).thenReturn(mockDataset);
         when(
                 mockNodes.getObject(Mockito.isA(Session.class), Mockito
                         .isA(String.class))).thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Dataset dataset =
-                testObj.describe(createPathList(path), 0, -1, mockRequest, uriInfo);
+                testObj.describe(createPathList(path), 0, -1, mockRequest,
+                        uriInfo);
         assertNotNull(dataset.getDefaultModel());
 
     }

@@ -30,7 +30,8 @@ public class InjectableSessionTest {
         mockRepo = mock(Repository.class);
         final SessionFactory mockSessionFactory = mock(SessionFactory.class);
         mockSessionFactory.setRepository(mockRepo);
-        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
+        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(
+                mockSession);
         final SecurityContext mockSecurityContext = mock(SecurityContext.class);
         when(
                 mockSessionFactory.getSession(mockSecurityContext,

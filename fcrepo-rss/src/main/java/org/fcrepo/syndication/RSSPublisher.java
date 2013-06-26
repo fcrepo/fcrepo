@@ -51,6 +51,12 @@ public class RSSPublisher extends AbstractResource {
 
     private final SyndFeed feed = new SyndFeedImpl();
 
+    /**
+     * TODO
+     * 
+     * @return
+     * @throws FeedException
+     */
     @GET
     @Produces("application/rss+xml")
     public StreamSource getFeed() throws FeedException {
@@ -85,6 +91,9 @@ public class RSSPublisher extends AbstractResource {
 
             };
 
+    /**
+     * TODO
+     */
     @Override
     @PostConstruct
     public void initialize() {
@@ -94,6 +103,11 @@ public class RSSPublisher extends AbstractResource {
         feed.setDescription(FEED_DESCRIPTION);
     }
 
+    /**
+     * TODO
+     * 
+     * @param event
+     */
     @Subscribe
     public void newEvent(final Event event) {
         if (feedQueue.remainingCapacity() > 0) {

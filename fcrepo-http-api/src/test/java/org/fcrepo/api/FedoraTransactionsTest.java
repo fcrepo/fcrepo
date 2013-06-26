@@ -1,3 +1,4 @@
+
 package org.fcrepo.api;
 
 import org.fcrepo.Transaction;
@@ -19,10 +20,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class FedoraTransactionsTest {
-    FedoraTransactions testObj;
-    private Session mockSession;
-    private TransactionService txService;
 
+    FedoraTransactions testObj;
+
+    private Session mockSession;
+
+    private TransactionService txService;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -47,9 +50,9 @@ public class FedoraTransactionsTest {
         verify(txService).beginTransaction(regularSession);
     }
 
-
     @Test
-    public void shouldUpdateExpiryOnExistingTransaction() throws RepositoryException {
+    public void shouldUpdateExpiryOnExistingTransaction()
+        throws RepositoryException {
         Transaction mockTx = mock(Transaction.class);
         when(txService.getTransaction("123")).thenReturn(mockTx);
         testObj.createTransaction(createPathList());
@@ -63,14 +66,16 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransaction() throws RepositoryException {
+    public void shouldErrorIfTheContextSessionIsNotATransaction()
+        throws RepositoryException {
         testObj.setSession(mock(Session.class));
         final Response commit = testObj.commit(createPathList());
         assertEquals(400, commit.getStatus());
     }
 
     @Test
-    public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot() throws RepositoryException {
+    public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot()
+        throws RepositoryException {
         testObj.setSession(mock(Session.class));
         final Response commit = testObj.commit(createPathList("a"));
         assertEquals(400, commit.getStatus());
@@ -83,14 +88,16 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback() throws RepositoryException {
+    public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback()
+        throws RepositoryException {
         testObj.setSession(mock(Session.class));
         final Response commit = testObj.rollback(createPathList());
         assertEquals(400, commit.getStatus());
     }
 
     @Test
-    public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot() throws RepositoryException {
+    public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot()
+        throws RepositoryException {
         testObj.setSession(mock(Session.class));
         final Response commit = testObj.rollback(createPathList("a"));
         assertEquals(400, commit.getStatus());

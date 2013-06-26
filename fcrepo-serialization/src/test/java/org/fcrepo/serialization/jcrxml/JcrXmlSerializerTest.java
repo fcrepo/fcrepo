@@ -1,3 +1,4 @@
+
 package org.fcrepo.serialization.jcrxml;
 
 import static org.junit.Assert.assertEquals;
@@ -18,31 +19,33 @@ import org.fcrepo.serialization.JcrXmlSerializer;
 import org.junit.Test;
 
 public class JcrXmlSerializerTest {
-	@Test
-	public void testSerialize() throws Exception {
-		final Session mockSession = mock(Session.class);
-		final Node mockNode = mock(Node.class);
-		final FedoraObject mockObject = mock(FedoraObject.class);
-		when(mockObject.getNode()).thenReturn(mockNode);
-		when(mockNode.getSession()).thenReturn(mockSession);
-		when(mockNode.getPath()).thenReturn("/path/to/node");
 
-		final OutputStream os = new ByteArrayOutputStream();
+    @Test
+    public void testSerialize() throws Exception {
+        final Session mockSession = mock(Session.class);
+        final Node mockNode = mock(Node.class);
+        final FedoraObject mockObject = mock(FedoraObject.class);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/path/to/node");
 
-		new JcrXmlSerializer().serialize(mockObject, os);
+        final OutputStream os = new ByteArrayOutputStream();
 
-		verify(mockSession).exportSystemView("/path/to/node", os, false, false);
-	}
+        new JcrXmlSerializer().serialize(mockObject, os);
 
-	@Test
-	public void testDeserialize() throws Exception {
-		final Session mockSession = mock(Session.class);
-		final InputStream mockIS = mock(InputStream.class);
+        verify(mockSession).exportSystemView("/path/to/node", os, false, false);
+    }
 
-		new JcrXmlSerializer().deserialize(mockSession, "/objects", mockIS);
-		verify(mockSession).importXML("/objects", mockIS, ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
+    @Test
+    public void testDeserialize() throws Exception {
+        final Session mockSession = mock(Session.class);
+        final InputStream mockIS = mock(InputStream.class);
 
-	}
+        new JcrXmlSerializer().deserialize(mockSession, "/objects", mockIS);
+        verify(mockSession).importXML("/objects", mockIS,
+                ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
+
+    }
 
     @Test
     public void testGetKey() {

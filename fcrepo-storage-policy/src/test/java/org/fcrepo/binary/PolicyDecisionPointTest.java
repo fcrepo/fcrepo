@@ -27,8 +27,11 @@ import org.modeshape.jcr.api.JcrConstants;
  * @date Apr 25, 2013
  */
 public class PolicyDecisionPointTest {
+
     static PolicyDecisionPoint pt;
+
     static private String dummyHint;
+
     static private String tiffHint;
 
     /**
@@ -63,10 +66,10 @@ public class PolicyDecisionPointTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-dummy-type");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
-            thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
-            thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
+                mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
+                mockProperty);
 
         String receivedHint = pt.evaluatePolicies(mockDsNode);
         assertThat(receivedHint, is(dummyHint));
@@ -86,10 +89,10 @@ public class PolicyDecisionPointTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/tiff");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
-            thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
-            thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
+                mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
+                mockProperty);
 
         String receivedHint = pt.evaluatePolicies(mockDsNode);
         assertThat(receivedHint, is(tiffHint));
@@ -109,10 +112,10 @@ public class PolicyDecisionPointTest {
         Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-other");
         Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).
-            thenReturn(mockContentNode);
-        when(mockContentNode.getProperty(JCR_MIME_TYPE)).
-            thenReturn(mockProperty);
+        when(mockDsNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
+                mockContentNode);
+        when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
+                mockProperty);
 
         String receivedHint = pt.evaluatePolicies(mockDsNode);
         assertNull(receivedHint);

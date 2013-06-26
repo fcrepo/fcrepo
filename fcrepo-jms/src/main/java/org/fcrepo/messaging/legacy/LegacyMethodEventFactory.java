@@ -27,7 +27,7 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
     public Message getMessage(final Event jcrEvent,
             final javax.jcr.Session jcrSession,
             final javax.jms.Session jmsSession) throws RepositoryException,
-            IOException, JMSException {
+        IOException, JMSException {
         LOGGER.trace("Received an event to transform.");
         final String path = jcrEvent.getPath();
         LOGGER.trace("Retrieved path from event.");
@@ -46,7 +46,7 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
         tm.setStringProperty("methodName", legacy.getMethodName());
         tm.setJMSType(EntryFactory.FORMAT);
         tm.setStringProperty("fcrepo.server.version",
-        		EntryFactory.SERVER_VERSION);
+                EntryFactory.SERVER_VERSION);
         LOGGER.trace("Successfully created JMS message from event.");
         return tm;
     }

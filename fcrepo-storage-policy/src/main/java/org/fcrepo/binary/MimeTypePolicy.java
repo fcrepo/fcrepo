@@ -25,6 +25,7 @@ public class MimeTypePolicy implements Policy {
     private static final Logger logger = getLogger(MimeTypePolicy.class);
 
     private final String mimeType;
+
     private final String hint;
 
     /**
@@ -42,9 +43,9 @@ public class MimeTypePolicy implements Policy {
     public String evaluatePolicy(final Node n) {
         logger.debug("Evaluating MimeTypePolicy for {} -> {}", mimeType, hint);
         try {
-            final String nodeMimeType = n.getNode(JCR_CONTENT).
-                getProperty(JCR_MIME_TYPE).
-                getString();
+            final String nodeMimeType =
+                    n.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE)
+                            .getString();
             logger.debug("Found mime type {}", nodeMimeType);
             if (nodeMimeType.equals(mimeType)) {
                 return hint;

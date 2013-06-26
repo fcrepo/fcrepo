@@ -58,16 +58,16 @@ public class BaseHtmlProviderTest {
     public void testIsWriteable() {
         assertTrue(
                 "Gave false response to HtmlProvider.isWriteable() that contained a legitimate combination of parameters!",
-                baseHtmlProvider.isWriteable(Dataset.class, Dataset.class, null,
-                        TEXT_HTML_TYPE));
+                baseHtmlProvider.isWriteable(Dataset.class, Dataset.class,
+                        null, TEXT_HTML_TYPE));
         assertFalse(
                 "HtmlProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
                 baseHtmlProvider.isWriteable(BaseHtmlProvider.class,
                         BaseHtmlProvider.class, null, TEXT_HTML_TYPE));
         assertFalse(
                 "HtmlProvider.isWriteable() should return false to text/plain!",
-                baseHtmlProvider.isWriteable(Dataset.class, Dataset.class, null,
-                        TEXT_PLAIN_TYPE));
+                baseHtmlProvider.isWriteable(Dataset.class, Dataset.class,
+                        null, TEXT_PLAIN_TYPE));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteTo() throws WebApplicationException,
-            IllegalArgumentException, IOException {
+        IllegalArgumentException, IOException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
@@ -94,19 +94,18 @@ public class BaseHtmlProviderTest {
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
                 Mockito.isA(Writer.class));
         baseHtmlProvider.setTemplatesMap(of("nt:file", mockTemplate));
-        baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] {},
-                MediaType.valueOf("text/html"),
+        baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
+                new Annotation[] {}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 
     }
 
-
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteToWithAnnotation() throws WebApplicationException,
-                                             IllegalArgumentException, IOException {
+        IllegalArgumentException, IOException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
@@ -118,13 +117,14 @@ public class BaseHtmlProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
-                                           Mockito.isA(Writer.class));
+                Mockito.isA(Writer.class));
         baseHtmlProvider.setTemplatesMap(of("some:file", mockTemplate));
         HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
-        baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class), new Annotation[] { mockAnnotation },
-                                    MediaType.valueOf("text/html"),
-                                    (MultivaluedMap) new MultivaluedMapImpl(), outStream);
+        baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
+                new Annotation[] {mockAnnotation}, MediaType
+                        .valueOf("text/html"),
+                (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 

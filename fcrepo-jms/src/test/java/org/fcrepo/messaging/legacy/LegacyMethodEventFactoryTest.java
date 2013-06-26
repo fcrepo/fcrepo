@@ -1,3 +1,4 @@
+
 package org.fcrepo.messaging.legacy;
 
 import static javax.jcr.observation.Event.NODE_ADDED;
@@ -20,15 +21,15 @@ import org.junit.Test;
 public class LegacyMethodEventFactoryTest {
 
     private LegacyMethodEventFactory testObj;
-    
+
     @Before
     public void setUp() {
         testObj = new LegacyMethodEventFactory();
     }
-    
+
     @Test
     public void testGetMessage() throws Exception {
-        
+
         String testPath = "/foo/bar";
         javax.jms.Session mockJMS = mock(javax.jms.Session.class);
         TextMessage mockText = mock(TextMessage.class);
@@ -40,7 +41,7 @@ public class LegacyMethodEventFactoryTest {
         Node mockSource = mock(Node.class);
         NodeType mockType = mock(NodeType.class);
         when(mockType.getName()).thenReturn(FedoraJcrTypes.FEDORA_OBJECT);
-        NodeType[] mockTypes = new NodeType[]{mockType};
+        NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);
         when(mockJCR.getNode(testPath)).thenReturn(mockSource);
         Message actual = testObj.getMessage(mockEvent, mockJCR, mockJMS);

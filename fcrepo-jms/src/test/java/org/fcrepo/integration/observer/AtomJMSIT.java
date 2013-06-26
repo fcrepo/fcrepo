@@ -88,12 +88,13 @@ public class AtomJMSIT implements MessageListener {
     }
 
     @Test
-    public void testAtomStream() throws LoginException, RepositoryException, InterruptedException {
+    public void testAtomStream() throws LoginException, RepositoryException,
+        InterruptedException {
         Session session = repository.login();
         session.getRootNode().addNode("test1").addMixin(FEDORA_OBJECT);
         session.save();
 
-		waitForEntry();
+        waitForEntry();
 
         session.logout();
 
@@ -114,8 +115,9 @@ public class AtomJMSIT implements MessageListener {
 
     @Test
     public void testDatastreamTerm() throws NoSuchNodeTypeException,
-            VersionException, ConstraintViolationException, LockException,
-            ItemExistsException, PathNotFoundException, RepositoryException, InterruptedException {
+        VersionException, ConstraintViolationException, LockException,
+        ItemExistsException, PathNotFoundException, RepositoryException,
+        InterruptedException {
         logger.trace("BEGIN: testDatastreamTerm()");
         Session session = repository.login();
         final Node object = session.getRootNode().addNode("testDatastreamTerm");
@@ -123,7 +125,7 @@ public class AtomJMSIT implements MessageListener {
         session.save();
         logger.trace("testDatastreamTerm called session.save()");
 
-		waitForEntry();
+        waitForEntry();
         if (entry == null) fail("Waited a second, got no messages");
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         entry = null;
@@ -172,32 +174,32 @@ public class AtomJMSIT implements MessageListener {
 
         TextMessage tMessage = (TextMessage) message;
         try {
-        	if (LegacyMethod.canParse(message)){
-        		LegacyMethod legacy = new LegacyMethod(tMessage.getText());
-        		entry = legacy.getEntry();
-        		logger.debug("Parsed Entry: {}", entry.toString());
-        	} else {
-        		logger.warn("Could not parse message: {}", message);
-        	}
+            if (LegacyMethod.canParse(message)) {
+                LegacyMethod legacy = new LegacyMethod(tMessage.getText());
+                entry = legacy.getEntry();
+                logger.debug("Parsed Entry: {}", entry.toString());
+            } else {
+                logger.warn("Could not parse message: {}", message);
+            }
         } catch (Exception e) {
             logger.error("Exception receiving message: {}", e);
             fail(e.getMessage());
         }
-        synchronized(this) {
+        synchronized (this) {
             this.notify();
         }
     }
 
-	private void waitForEntry() throws InterruptedException {
-		for(int i = 0; i < 5; i++) {
-			if (entry == null) { // must not have rec'vd event yet
-				synchronized(this) {
-					this.wait(1000);
-				}
-			} else {
-				break;
-			}
-		}
-	}
+    private void waitForEntry() throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            if (entry == null) { // must not have rec'vd event yet
+                synchronized (this) {
+                    this.wait(1000);
+                }
+            } else {
+                break;
+            }
+        }
+    }
 
 }

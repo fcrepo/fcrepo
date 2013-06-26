@@ -11,7 +11,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.FedoraObject;
-import org.fcrepo.serialization.BaseFedoraObjectSerializer;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -29,16 +28,17 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
 
     @Override
     public void serialize(final FedoraObject obj, final OutputStream out)
-            throws RepositoryException, IOException {
+        throws RepositoryException, IOException {
         final Node node = obj.getNode();
         node.getSession().exportSystemView(node.getPath(), out, false, false);
     }
 
     @Override
-    public void deserialize(final Session session, final String path, final InputStream stream)
-            throws RepositoryException, IOException {
+    public void deserialize(final Session session, final String path,
+            final InputStream stream) throws RepositoryException, IOException {
 
-        session.importXML(path, stream, ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
+        session.importXML(path, stream,
+                ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
 
     }
 

@@ -8,7 +8,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlRootElement(name = "sitemapindex", namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+@XmlRootElement(name = "sitemapindex",
+        namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 @XmlType(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapIndex {
 
@@ -22,9 +23,9 @@ public class SitemapIndex {
         entries.add(e);
     }
 
-    @XmlElement(name = "sitemap", namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
-    public
-            List<SitemapEntry> getSitemapEntries() {
+    @XmlElement(name = "sitemap",
+            namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    public List<SitemapEntry> getSitemapEntries() {
         return entries;
     }
 }

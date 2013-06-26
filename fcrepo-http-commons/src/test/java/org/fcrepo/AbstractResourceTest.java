@@ -1,3 +1,4 @@
+
 package org.fcrepo;
 
 import static org.junit.Assert.assertEquals;
@@ -31,22 +32,23 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class AbstractResourceTest {
 
     AbstractResource testObj;
-    
+
     @Before
     public void setUp() {
         testObj = new AbstractResource() {
-            
+
         };
     }
-    
+
     @Test
     public void testInitialize() throws RepositoryException {
         NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
         mockStatic(NamespaceTools.class);
-        when(NamespaceTools.getNamespaceRegistry(any(Session.class))).thenReturn(mockNames);
-       testObj.initialize();
+        when(NamespaceTools.getNamespaceRegistry(any(Session.class)))
+                .thenReturn(mockNames);
+        testObj.initialize();
     }
-    
+
     @Test
     public void testSetPidMinter() {
         PidMinter mockPids = mock(PidMinter.class);
@@ -60,17 +62,18 @@ public class AbstractResourceTest {
         testObj.setNodeService(mockNodes);
         assertEquals(mockNodes, testObj.nodeService);
     }
-    
+
     @Test
     public void testSetUriInfo() {
         UriInfo mockUris = mock(UriInfo.class);
         testObj.setUriInfo(mockUris);
         assertEquals(mockUris, testObj.uriInfo);
     }
-    
+
     @Test
     public void testToPath() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("foo", "", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("foo", "", "bar", "baz");
         // empty path segments ('//') should be suppressed
         String expected = "/foo/bar/baz";
         String actual = AbstractResource.toPath(pathList);
@@ -79,17 +82,19 @@ public class AbstractResourceTest {
 
     @Test
     public void testToPathWorkspace() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("workspace:abc", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("workspace:abc", "bar", "baz");
         // workspaces should be ignored
         String expected = "/bar/baz";
         String actual = AbstractResource.toPath(pathList);
         assertEquals(expected, actual);
     }
 
-
     @Test
     public void testToPathWorkspaceInSomeOtherSegment() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("asdf", "workspace:abc", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("asdf", "workspace:abc", "bar",
+                        "baz");
         // workspaces should be ignored
         String expected = "/asdf/workspace:abc/bar/baz";
         String actual = AbstractResource.toPath(pathList);
@@ -98,7 +103,9 @@ public class AbstractResourceTest {
 
     @Test
     public void testToPathWorkspaceWithEmptyPrefix() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("", "workspace:abc", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("", "workspace:abc", "bar",
+                        "baz");
         // workspaces should be ignored
         String expected = "/bar/baz";
         String actual = AbstractResource.toPath(pathList);
@@ -107,7 +114,8 @@ public class AbstractResourceTest {
 
     @Test
     public void testToPathTransaction() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("tx:abc", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("tx:abc", "bar", "baz");
         // workspaces should be ignored
         String expected = "/bar/baz";
         String actual = AbstractResource.toPath(pathList);
@@ -116,7 +124,8 @@ public class AbstractResourceTest {
 
     @Test
     public void testToPathTxInSomeOtherSegment() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("asdf", "tx:abc", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("asdf", "tx:abc", "bar", "baz");
         // workspaces should be ignored
         String expected = "/asdf/tx:abc/bar/baz";
         String actual = AbstractResource.toPath(pathList);
@@ -125,7 +134,8 @@ public class AbstractResourceTest {
 
     @Test
     public void testToPathTxWithEmptyPrefix() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("", "tx:abc", "bar", "baz");
+        List<PathSegment> pathList =
+                PathSegmentImpl.createPathList("", "tx:abc", "bar", "baz");
         // workspaces should be ignored
         String expected = "/bar/baz";
         String actual = AbstractResource.toPath(pathList);

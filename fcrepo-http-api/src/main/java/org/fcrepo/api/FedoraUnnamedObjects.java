@@ -51,6 +51,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
 
     /**
      * Create an anonymous object with a newly minted name
+     * 
      * @param pathList
      * @return 201
      */
@@ -64,7 +65,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
     final MediaType requestContentType, final InputStream requestBodyStream,
             @Context
             final UriInfo uriInfo) throws RepositoryException, IOException,
-                                                                                       InvalidChecksumException, URISyntaxException {
+        InvalidChecksumException, URISyntaxException {
         final String pid = pidMinter.mintPid();
 
         final String path = toPath(pathList) + "/" + pid;
@@ -89,11 +90,12 @@ public class FedoraUnnamedObjects extends AbstractResource {
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
 
-            return created(new URI(subjects.getGraphSubject(resource.getNode()).getURI())).entity(path)
-                    .build();
+            return created(
+                    new URI(subjects.getGraphSubject(resource.getNode())
+                            .getURI())).entity(path).build();
 
         } finally {
-        	session.logout();
+            session.logout();
         }
     }
 

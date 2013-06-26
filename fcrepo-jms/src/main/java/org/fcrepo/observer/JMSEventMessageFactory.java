@@ -13,5 +13,5 @@ public interface JMSEventMessageFactory {
     Message getMessage(final Event jcrEvent,
             final javax.jcr.Session jcrSession,
             final javax.jms.Session jmsSession) throws RepositoryException,
-            IOException, JMSException;
+        IOException, JMSException;
 }

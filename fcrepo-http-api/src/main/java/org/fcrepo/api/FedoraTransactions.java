@@ -1,3 +1,4 @@
+
 package org.fcrepo.api;
 
 import static javax.ws.rs.core.Response.created;
@@ -37,27 +38,32 @@ public class FedoraTransactions extends AbstractResource {
 
     @POST
     public Response createTransaction(@PathParam("path")
-                                          final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList) throws RepositoryException {
 
         if (!pathList.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
         if (session instanceof TxSession) {
-            Transaction t = txService.getTransaction(((TxSession) session).getTxId());
+            Transaction t =
+                    txService.getTransaction(((TxSession) session).getTxId());
             t.updateExpiryDate();
             return noContent().expires(t.getExpires()).build();
 
         } else {
             Transaction t = txService.beginTransaction(session);
-    	    return created(uriInfo.getBaseUriBuilder().path(FedoraNodes.class).buildFromMap(ImmutableMap.of("path", "tx:" + t.getId()))).expires(t.getExpires()).build();
+            return created(
+                    uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
+                            .buildFromMap(
+                                    ImmutableMap.of("path", "tx:" + t.getId())))
+                    .expires(t.getExpires()).build();
         }
     }
 
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path")
-                               final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList) throws RepositoryException {
 
         final String path = toPath(pathList);
 
@@ -78,14 +84,13 @@ public class FedoraTransactions extends AbstractResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path")
-                                 final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList) throws RepositoryException {
 
         final String path = toPath(pathList);
 
         if (!path.equals("/")) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-
 
         if (session instanceof TxSession) {
             txService.rollback(((TxSession) session).getTxId());
