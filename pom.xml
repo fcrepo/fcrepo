@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -43,7 +42,9 @@
     <powermock.version>1.5.1</powermock.version>
     
     <!-- plugin versions -->
-    <checkstyle.version>2.10</checkstyle.version>
+    <!-- Until MCHECKSTYLE-169 is resolved, we're using a patched, snapshot of
+    checkstyle deployed to fcrepo.maven.org -->
+    <checkstyle.plugin.version>2.11-SNAPSHOT</checkstyle.plugin.version>
   </properties>
 
   <modules>
@@ -486,14 +487,22 @@
         </plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>${checkstyle.version}</version>
+          <version>${checkstyle.plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.fcrepo</groupId>
+              <artifactId>fcrepo-build-tools</artifactId>
+              <version>1.0</version>
+            </dependency>
+          </dependencies>
           <configuration>
             <consoleOutput>true</consoleOutput>
-            <configLocation>checkstyle.xml</configLocation>
-            <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+            <configLocation>fcrepo-checkstyle/checkstyle.xml</configLocation>
+            <suppressionsLocation>fcrepo-checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
           </configuration>
           <executions>
             <execution>
+              <id>checkstyle</id>
               <goals>
                 <goal>check</goal>
               </goals>
@@ -694,7 +703,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -709,7 +718,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -722,7 +731,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute />
+                    <execute/>
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -736,7 +745,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -802,7 +811,6 @@
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
       <plugin>
@@ -818,7 +826,7 @@
               </goals>
               <configuration>
                 <rules>
-                  <DependencyConvergence />
+                  <DependencyConvergence/>
                   <bannedDependencies>
                     <searchTransitive>true</searchTransitive>
                     <excludes>
@@ -869,11 +877,6 @@
 
   <reporting>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${checkstyle.version}</version>
-      </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>2.15</version>
@@ -983,6 +986,20 @@
       </snapshots>
     </repository>
   </repositories>
+  
+  <pluginRepositories>
+    <pluginRepository>
+      <id>fcrepo-snapshot</id>
+      <name>Fcrepo Snapshot Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 
   <scm>
     <connection>scm:git:git://github.com/futures/fcrepo4.git
