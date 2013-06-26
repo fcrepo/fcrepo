@@ -28,7 +28,9 @@ public class JcrPropertiesGenerator implements DCGenerator {
 
         final StringBuilder str = new StringBuilder();
 
-        str.append("<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n");
+        str.append("<oai_dc:dc "
+                + "xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" "
+                + "xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n");
 
         try {
             final PropertyIterator iter =

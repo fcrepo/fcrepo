@@ -38,8 +38,9 @@ public class DublinCoreGenerator extends AbstractResource {
 
     @GET
     @Produces(TEXT_XML)
-    public Response getObjectAsDublinCore(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException {
+    public Response getObjectAsDublinCore(
+            @PathParam("path")
+            final List<PathSegment> pathList) throws RepositoryException {
 
         try {
             final String path = toPath(pathList);

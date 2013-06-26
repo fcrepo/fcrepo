@@ -153,9 +153,11 @@ public class FedoraWebhooks extends AbstractResource {
 
     @POST
     @Path("{id}")
-    public Response registerWebhook(@PathParam("id")
-    final String id, @FormParam("callbackUrl")
-    final String callbackUrl) throws RepositoryException {
+    public Response registerWebhook(
+            @PathParam("id")
+            final String id, 
+            @FormParam("callbackUrl")
+            final String callbackUrl) throws RepositoryException {
 
         final Node n =
                 jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" +
