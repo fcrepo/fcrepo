@@ -13,13 +13,19 @@ import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
 import org.slf4j.Logger;
 
-
+/**
+ * A LowLevelCacheEntry within a local binary store
+ */
 public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
 
     private static final Logger LOGGER = getLogger(LocalBinaryStoreEntry.class);
 
     private final BinaryStore store;
 
+    /**
+     * @param store a Modeshape BinaryStore
+     * @param key the binary key we're interested in
+     */
     public LocalBinaryStoreEntry(final BinaryStore store, final BinaryKey key) {
         super(key);
         this.store = store;
@@ -76,7 +82,7 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
             return getExternalId() + "/" + store.toString();
         }
     }
-    
+
     /**
      * Two LowLevelCacheEntries are the same if they have the same key,
      * come from the same BinaryStore,

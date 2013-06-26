@@ -14,11 +14,19 @@ import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 
+/**
+ * A LowLevelCacheEntry that is aware of Infinispan ChainingCacheStores
+ */
 public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
 
     private final ChainingCacheStore store;
     private final String cacheName;
 
+    /**
+     * @param store the ChainingCacheStore
+     * @param cacheName the cache name to use by default
+     * @param key the binary key we're interested in
+     */
     public ChainingCacheStoreEntry(final ChainingCacheStore store,
             final String cacheName,
             final BinaryKey key) {
@@ -43,20 +51,30 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
         return null;
     }
 
+    /**
+     * Get the set of LowLevelCacheEntries for each of the Chained cache stores
+     */
     public Set<LowLevelCacheEntry> chainedEntries() {
         Set<CacheStore> stores = this.store.getStores().keySet();
         HashSet<LowLevelCacheEntry> result = new HashSet<LowLevelCacheEntry>(stores.size());
         for (CacheStore store: stores) {
             String cacheName = null;
             CacheStoreConfiguration config = this.store.getStores().get(store);
+
             if (config instanceof FileCacheStoreConfiguration) {
                 cacheName = ((FileCacheStoreConfiguration)config).location();
             }
+
             if (config instanceof AbstractStoreConfiguration) {
                 Object name = ((AbstractStoreConfiguration)config).properties().get("id");
-                if (name != null) cacheName = name.toString();
+                if (name != null) {
+                    cacheName = name.toString();
+                }
             }
-            if (cacheName == null) cacheName = this.cacheName;
+
+            if (cacheName == null) {
+                cacheName = this.cacheName;
+            }
 
             result.add(new CacheStoreEntry(store, cacheName, key));
         }

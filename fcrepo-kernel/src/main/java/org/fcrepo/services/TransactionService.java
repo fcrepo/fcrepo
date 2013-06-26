@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -45,6 +44,10 @@ public class TransactionService {
 
     public static final long REAP_INTERVAL = 1000;
 
+    /**
+     * Every REAP_INTERVAL milliseconds, check for expired transactions. If the tx is
+     * expired, roll it back and remove it from the registry.
+     */
     @Scheduled(fixedRate = REAP_INTERVAL)
     public void removeAndRollbackExpired() {
         synchronized (TRANSACTIONS) {
@@ -79,14 +82,16 @@ public class TransactionService {
      * Retrieve an open {@link Transaction}
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
-     * @throws PathNotFoundException if the {@link Transaction} with the given id has not be found
      */
     public Transaction getTransaction(final String txid)
-            throws TransactionMissingException {
+        throws TransactionMissingException {
+
         final Transaction tx = TRANSACTIONS.get(txid);
+
         if (tx == null) {
             throw new TransactionMissingException("Transaction is not available");
         }
+
         return tx;
     }
 
@@ -94,7 +99,6 @@ public class TransactionService {
      * Check if a Transaction exists
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
-     * @throws PathNotFoundException if the {@link Transaction} with the given id has not be found
      */
     public boolean exists(final String txid) {
         return TRANSACTIONS.containsKey(txid);

@@ -789,26 +789,47 @@ public abstract class JcrRdfTools {
         addJcrPropertiesToModel(factory, node, model);
 
         for ( FixityResult result : blobs) {
+            // fixity results are just blank nodes
             final Resource resultSubject = ResourceFactory.createResource();
 
-            model.add(resultSubject, RdfLexicon.IS_FIXITY_RESULT_OF, factory.getGraphSubject(node));
-            model.add(factory.getGraphSubject(node), RdfLexicon.HAS_FIXITY_RESULT, resultSubject);
+            model.add(resultSubject,
+                             RdfLexicon.IS_FIXITY_RESULT_OF,
+                             factory.getGraphSubject(node));
+            model.add(factory.getGraphSubject(node),
+                             RdfLexicon.HAS_FIXITY_RESULT,
+                             resultSubject);
 
-            model.add(resultSubject, RdfLexicon.HAS_LOCATION, ResourceFactory.createResource(result.getStoreIdentifier()));
+            model.add(resultSubject,
+                             RdfLexicon.HAS_LOCATION,
+                             ResourceFactory.createResource(result.getStoreIdentifier()));
+
             for (FixityResult.FixityState state : result.status) {
-                model.add(resultSubject, RdfLexicon.HAS_FIXITY_STATE, ResourceFactory.createTypedLiteral(state.toString()));
+                model.add(resultSubject,
+                                 RdfLexicon.HAS_FIXITY_STATE,
+                                 ResourceFactory.createTypedLiteral(state.toString()));
             }
 
-            model.add(resultSubject, RdfLexicon.HAS_COMPUTED_CHECKSUM, ResourceFactory.createResource(result.computedChecksum.toString()));
-            model.add(resultSubject, RdfLexicon.HAS_COMPUTED_SIZE, ResourceFactory.createTypedLiteral(result.computedSize));
+            final String checksum = result.computedChecksum.toString();
+            model.add(resultSubject,
+                             RdfLexicon.HAS_COMPUTED_CHECKSUM,
+                             ResourceFactory.createResource(checksum));
+            model.add(resultSubject,
+                             RdfLexicon.HAS_COMPUTED_SIZE,
+                             ResourceFactory.createTypedLiteral(result.computedSize));
         }
         return model;
     }
 
+    /**
+     * Set the function used to get the cluster configuration for Infinispan
+     */
     public static void setGetClusterConfiguration(final GetClusterConfiguration getClusterConfiguration) {
         JcrRdfTools.getClusterConfiguration = getClusterConfiguration;
     }
 
+    /**
+     * Set the Low-level storage server implementation
+     */
     public static void setLlstore(final LowLevelStorageService lowLevelStorageService) {
         JcrRdfTools.llstore = lowLevelStorageService;
     }

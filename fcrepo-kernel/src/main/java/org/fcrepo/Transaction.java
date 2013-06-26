@@ -59,10 +59,6 @@ public class Transaction {
         return TxAwareSession.newInstance(session, id);
     }
 
-    public Session getJcrSession() {
-        return session;
-    }
-
     /**
      * @todo Add Documentation.
      */

@@ -74,31 +74,41 @@ public class LowLevelStorageService {
      *    RepositoryException is thrown
      */
     public <T> Collection<T> transformLowLevelCacheEntries(final Node resource,
-                                                           final Function <LowLevelCacheEntry, T>
-                                                           transform)
+                                                           final Function <LowLevelCacheEntry, T> transform)
         throws RepositoryException {
         return transformLowLevelCacheEntries(resource.
                 getProperty(JcrConstants.JCR_DATA), transform);
     }
-    
+
+    /**
+     * Apply some Function to the low-level cache entries for the binary property
+     * @param jcrBinaryProperty  a binary property (e.g. jcr:data)
+     * @param transform a Function to transform the underlying cache entry with
+     * @throws RepositoryException
+     */
     public <T> Collection<T> transformLowLevelCacheEntries(final Property jcrBinaryProperty,
-            final Function <LowLevelCacheEntry, T>
-            transform)
-         throws RepositoryException {
+                                                           final Function <LowLevelCacheEntry, T> transform)
+        throws RepositoryException {
 
         return transformLowLevelCacheEntries(getBinaryKey.apply(jcrBinaryProperty), transform);
     }
-    
+
+    /**
+     * Apply some Function to the low-level cache entries for a BinaryKey in the store
+     * @param key a BinaryKey in the cahce stre
+     * @param transform a Function to transform the underlying cache entry with
+     * @throws RepositoryException
+     */
     public <T> Collection<T> transformLowLevelCacheEntries(final BinaryKey key,
-            final Function <LowLevelCacheEntry, T>
-            transform)
-         throws RepositoryException {
+                                                           final Function <LowLevelCacheEntry, T> transform)
+        throws RepositoryException {
 
         final BinaryStore store = getBinaryStore.apply(repo);
 
         if (store == null) {
             return ImmutableSet.of();
         }
+
         if (store instanceof CompositeBinaryStore) {
             return
                     transformLowLevelCacheEntries((CompositeBinaryStore) store,
@@ -121,7 +131,7 @@ public class LowLevelStorageService {
             return blobs.build();
         }
     }
-    
+
     /**
      * Transform low-level cache entries from a particular CompositeBinaryStore
      * @param key a Modeshape BinaryValue's key.
@@ -149,13 +159,12 @@ public class LowLevelStorageService {
                 final Set<T> transformeds =
                         transformLowLevelCacheEntries(bs, key, decorator);
                 results.addAll(transformeds);
-                
             }
         }
 
         return results.build();
     }
-    
+
     /**
      * Steer low-level cache entries to transform functions according
      * to the subtype of BinaryStore in question
@@ -252,14 +261,17 @@ public class LowLevelStorageService {
         final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
         if (store instanceof CompositeBinaryStore) {
-            for (LowLevelCacheEntry entries:
-            transformLowLevelCacheEntries((CompositeBinaryStore) store, key, new Echo())) {
+            final Set<LowLevelCacheEntry> lowLevelCacheEntries =
+                    transformLowLevelCacheEntries((CompositeBinaryStore)store, key, new Echo());
+
+            for (LowLevelCacheEntry entries : lowLevelCacheEntries) {
                 blobs.add(entries);
             }
 
         } else if (store instanceof InfinispanBinaryStore) {
-            for (LowLevelCacheEntry entries:
-            transformLowLevelCacheEntries((InfinispanBinaryStore) store, key, new Echo())) {
+            final Set<LowLevelCacheEntry> lowLevelCacheEntries =
+                    transformLowLevelCacheEntries((InfinispanBinaryStore)store, key, new Echo());
+            for (LowLevelCacheEntry entries : lowLevelCacheEntries) {
                 blobs.add(entries);
             }
 
@@ -278,8 +290,9 @@ public class LowLevelStorageService {
                                                                        final BinaryKey key) {
         final ImmutableSet.Builder<LowLevelCacheEntry> blobs = builder();
 
-        for (LowLevelCacheEntry entries:
-        transformLowLevelCacheEntries(compositeStore, key, new Echo())) {
+        final Set<LowLevelCacheEntry> lowLevelCacheEntries =
+                transformLowLevelCacheEntries(compositeStore, key, new Echo());
+        for (LowLevelCacheEntry entries : lowLevelCacheEntries) {
             blobs.add(entries);
         }
         return blobs.build();
@@ -308,6 +321,14 @@ public class LowLevelStorageService {
         }
     }
 
+    /**
+     * Get the transform results in a clustered Infinispan binary store
+     * @param cacheStore the Modeshape BinaryStore to use
+     * @param key the BinaryKey we want to transform
+     * @param transform the Function to apply
+     * @throws InterruptedException
+     * @throws ExecutionException
+     */
     public <T> Set<T> getClusterResults(InfinispanBinaryStore cacheStore,
             BinaryKey key, Function<LowLevelCacheEntry, T> transform)
         throws InterruptedException, ExecutionException {
@@ -317,10 +338,11 @@ public class LowLevelStorageService {
         List<Future<Collection<T>>> futures = exec.submitEverywhere(
                 new CacheLocalTransform(key, new Unroll<T>(transform)));
         Set<T> results = new HashSet<T>(futures.size());
-        while(futures.size() > 0) {
+
+        while (futures.size() > 0) {
             Iterator<Future<Collection<T>>> futureIter =
                     futures.iterator();
-            while(futureIter.hasNext()) {
+            while (futureIter.hasNext()) {
                 Future<Collection<T>> future = futureIter.next();
                 try {
                     Collection<T> result = future.get(100, TimeUnit.MILLISECONDS);
@@ -331,35 +353,32 @@ public class LowLevelStorageService {
                 }
             }
         }
+
         return results;
     }
 
     /**
-     * @todo Add Documentation.
+     * Set the repository (used for testing)
      */
     public void setRepository(final Repository repository) {
         repo = repository;
     }
 
-    public Repository getRepository() {
-        return repo;
-    }
-
     /**
-     * @todo Add Documentation.
+     * Set the function to use to retrieve the BinaryStore
      */
     public void setGetBinaryStore(final GetBinaryStore getBinaryStore) {
         this.getBinaryStore = getBinaryStore;
     }
 
     /**
-     * @todo Add Documentation.
+     * Set the function that retrieves a BinaryKey for a property
      */
     public void setGetBinaryKey(final GetBinaryKey getBinaryKey) {
         this.getBinaryKey = getBinaryKey;
     }
 
-    static class ExternalIdDecorator<T> 
+    static class ExternalIdDecorator<T>
         implements Function<LowLevelCacheEntry, T>, Serializable {
 
         /**
@@ -380,7 +399,7 @@ public class LowLevelStorageService {
         }
 
     }
-    
+
     static class Echo implements Function<LowLevelCacheEntry, LowLevelCacheEntry>, Serializable {
 
         private static final long serialVersionUID = -1L;
@@ -391,7 +410,7 @@ public class LowLevelStorageService {
         }
 
     }
-    
+
     static class Unroll<T> implements Function<LowLevelCacheEntry, Collection<T>>, Serializable {
 
         private final Function<LowLevelCacheEntry, T> transform;
@@ -406,14 +425,13 @@ public class LowLevelStorageService {
         public Collection<T> apply(LowLevelCacheEntry input) {
             final ImmutableSet.Builder<T> entries = builder();
             if (input instanceof ChainingCacheStoreEntry) {
-                entries.addAll(
-                        transform(((ChainingCacheStoreEntry)input).chainedEntries(), transform)
-                        );
+                final Collection<T> transformResult =
+                        transform(((ChainingCacheStoreEntry)input).chainedEntries(), transform);
+                entries.addAll(transformResult);
             } else {
                 entries.add(transform.apply(input)).build();
             }
             return entries.build();
         }
     }
-    
 }

@@ -17,11 +17,21 @@ public class UUIDPathMinter extends BasePidMinter {
     private final int length;
     private final int count;
 
+    /**
+     * Configure the path minter using some reasonable defaults for
+     * the length (2) and count (4) of the branch nodes
+     */
     public UUIDPathMinter() {
         this(2,4);
-
     }
 
+    /**
+     * Configure the path minter for the length of the keys and depth of
+     * the branch node prefix
+     *
+     * @param length how long the branch node identifiers should be
+     * @param count how many branch nodes should be inserted
+     */
     public UUIDPathMinter(final int length, final int count) {
         this.length = length;
         this.count = count;

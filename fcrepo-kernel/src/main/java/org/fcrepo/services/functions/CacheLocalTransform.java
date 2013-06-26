@@ -15,9 +15,14 @@ import org.modeshape.jcr.value.BinaryKey;
 
 import com.google.common.base.Function;
 
-
-public class CacheLocalTransform<K, V, T> 
-implements DistributedCallable<K, V, T>, Serializable {
+/**
+ * Apply a Function on a BinaryKey in a LOCAL CacheStore
+ * @param <K> Cache key class
+ * @param <V> Cache value class
+ * @param <T> Output of the transform
+ */
+public class CacheLocalTransform<K, V, T> implements
+        DistributedCallable<K, V, T>, Serializable {
 
     /**
      * Because this class will be communicated between cache nodes,
@@ -32,6 +37,11 @@ implements DistributedCallable<K, V, T>, Serializable {
     private CacheStore store;
     private String cacheName = "";
 
+    /**
+     *
+     * @param key the BinaryKey to transform
+     * @param entryTransform a Function from LowLevelCacheEntries to T
+     */
     public CacheLocalTransform(final BinaryKey key,
             final Function<LowLevelCacheEntry, T> entryTransform) {
 

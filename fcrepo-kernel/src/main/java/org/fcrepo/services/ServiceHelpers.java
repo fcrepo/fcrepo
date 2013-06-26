@@ -109,7 +109,7 @@ public abstract class ServiceHelpers {
 
         return size;
     }
-    
+
     /**
      * A static factory function to insulate services from the details of building
      * a DistributedExecutorService

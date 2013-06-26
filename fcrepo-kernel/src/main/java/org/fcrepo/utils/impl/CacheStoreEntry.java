@@ -55,7 +55,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         return new StoreChunkInputStream(store, key.toString() +
                                              DATA_SUFFIX);
     }
-    
+
     /**
      * Send a raw input stream to the underlying store for this entry; used for
      * fixing e.g. fixity failures.
@@ -76,7 +76,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         IOUtils.copy(stream, outputStream);
         outputStream.close();
     }
-    
+
     /**
      * Generate a human-readable identifier for the location of this entry
      *
@@ -90,13 +90,15 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
 
         if (config instanceof AbstractCacheStoreConfig) {
             ispnExternalId = getStoreIdentifier((AbstractCacheStoreConfig)config);
-            if (ispnExternalId != null) return ispnExternalId;
+            if (ispnExternalId != null) {
+                return ispnExternalId;
+            }
         }
 
         if (config instanceof FileCacheStoreConfig) {
             ispnExternalId = getStoreIdentifier((FileCacheStoreConfig) config);
         }
-        
+
         // ChainingCacheStore's have a null config
         if (config == null) {
             return getExternalId() + "/" + store.getClass().getName() + ":" +
@@ -114,7 +116,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
             config.getCacheLoaderClassName() +
             ":" + ispnExternalId;
     }
-        
+
     private static String getStoreIdentifier(AbstractCacheStoreConfig config) {
         final Properties properties =
                 config.getProperties();
@@ -123,7 +125,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         }
         return null;
     }
-    
+
     private static String getStoreIdentifier(FileCacheStoreConfig config) {
         return config.getLocation();
     }
@@ -142,12 +144,12 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
             final CacheStoreEntry that = (CacheStoreEntry) other;
 
             return key.equals(that.getKey()) &&
-                    cacheName.equals(that.cacheName) &&
-                    ((store == null && that.store == null) ||
-                     (store != null && store.equals(that.store)));
-         } else {
-             return false;
-         }
+                           cacheName.equals(that.cacheName) &&
+                           ((store == null && that.store == null) ||
+                                    (store != null && store.equals(that.store)));
+        } else {
+            return false;
+        }
     }
 
     /**

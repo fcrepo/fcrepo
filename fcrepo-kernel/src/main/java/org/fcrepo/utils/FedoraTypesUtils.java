@@ -192,26 +192,27 @@ public abstract class FedoraTypesUtils {
      * Map a JCR property to an RDF property with the right namespace URI and
      * local name
      */
-    public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty = new Function<Property,com.hp.hpl.jena.rdf.model.Property>() {
-        @Override
-        public com.hp.hpl.jena.rdf.model.Property
-        apply(final Property property) {
-            try {
-                if (property instanceof Namespaced) {
-                    final Namespaced nsProperty = (Namespaced)property;
-                    final String uri = nsProperty.getNamespaceURI();
-                    return ResourceFactory
-                        .createProperty(getRDFNamespaceForJcrNamespace(uri),
-                                        nsProperty.getLocalName());
-                } else {
-                    return ResourceFactory.createProperty(property.getName());
-                }
-            } catch (RepositoryException e) {
-                throw new IllegalStateException(e);
-            }
+    public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty =
+            new Function<Property,com.hp.hpl.jena.rdf.model.Property>() {
+                @Override
+                public com.hp.hpl.jena.rdf.model.Property
+                apply(final Property property) {
+                    try {
+                        if (property instanceof Namespaced) {
+                            final Namespaced nsProperty = (Namespaced)property;
+                            final String uri = nsProperty.getNamespaceURI();
+                            return ResourceFactory
+                                           .createProperty(getRDFNamespaceForJcrNamespace(uri),
+                                                                  nsProperty.getLocalName());
+                        } else {
+                            return ResourceFactory.createProperty(property.getName());
+                        }
+                    } catch (RepositoryException e) {
+                        throw new IllegalStateException(e);
+                    }
 
-        }
-    };
+                }
+            };
 
     /**
      * ISODateTimeFormat is thread-safe and immutable, and the formatters it
