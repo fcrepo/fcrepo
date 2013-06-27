@@ -26,7 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.7.0</activemq.version>
     <enunciate.version>1.26.2</enunciate.version>
-    <fcrepo-build-tools.version>1.2</fcrepo-build-tools.version>
+    <fcrepo-build-tools.version>1.3</fcrepo-build-tools.version>
     <httpcomponents.version>4.2.5</httpcomponents.version>
     <infinispan.version>5.3.0.CR2</infinispan.version>
     <jersey.version>1.17.1</jersey.version>
