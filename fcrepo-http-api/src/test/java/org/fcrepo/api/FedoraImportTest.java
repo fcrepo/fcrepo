@@ -74,4 +74,20 @@ public class FedoraImportTest {
                 mockInputStream);
 
     }
+
+    @Test
+    public void testImportObjectAtRoot() throws Exception {
+        final InputStream mockInputStream = mock(InputStream.class);
+        final FedoraObjectSerializer mockSerializer =
+                mock(FedoraObjectSerializer.class);
+        when(mockSerializers.getSerializer("fake-format")).thenReturn(mockSerializer);
+
+        Node mockNode = mock(Node.class);
+        when(mockNode.getPath()).thenReturn("/");
+        when(mockSession.getNode("/")).thenReturn(mockNode);
+
+        testObj.importObject(createPathList(), "fake-format", mockInputStream);
+        verify(mockSerializer).deserialize(mockSession, "/", mockInputStream);
+
+    }
 }
