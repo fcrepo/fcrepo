@@ -20,8 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import javax.jcr.LoginException;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
@@ -40,13 +38,13 @@ public class FedoraSitemapTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
         mockObjects = mock(ObjectService.class);
         testObj = new FedoraSitemap();
-        testObj.setObjectService(mockObjects);
+        TestHelpers.setField(testObj, "objectService", mockObjects);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
-        testObj.setSession(mockSession);
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After

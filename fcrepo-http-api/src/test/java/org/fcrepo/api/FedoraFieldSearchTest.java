@@ -27,7 +27,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
-import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
@@ -57,14 +56,14 @@ public class FedoraFieldSearchTest {
     private UriInfo uriInfo;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
         testObj = new FedoraFieldSearch();
         mockSession = TestHelpers.mockSession(testObj);
-        uriInfo = TestHelpers.getUriInfoImpl();
-        testObj.setUriInfo(uriInfo);
         mockNodeService = mock(NodeService.class);
-        testObj.setNodeService(mockNodeService);
-        testObj.setSession(mockSession);
+        this.uriInfo = TestHelpers.getUriInfoImpl();
+        TestHelpers.setField(testObj, "uriInfo", uriInfo);
+        TestHelpers.setField(testObj, "nodeService", mockNodeService);
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After

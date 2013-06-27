@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -77,19 +76,19 @@ public class FedoraNodesTest {
     private UriInfo uriInfo;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
         mockObjects = mock(ObjectService.class);
         mockDatastreams = mock(DatastreamService.class);
         mockNodes = mock(NodeService.class);
         testObj = new FedoraNodes();
+        TestHelpers.setField(testObj, "datastreamService", mockDatastreams);
+        TestHelpers.setField(testObj, "nodeService", mockNodes);
+        this.uriInfo = TestHelpers.getUriInfoImpl();
+        TestHelpers.setField(testObj, "uriInfo", uriInfo);
+        TestHelpers.setField(testObj, "pidMinter", new UUIDPidMinter());
+        TestHelpers.setField(testObj, "objectService", mockObjects);
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setObjectService(mockObjects);
-        testObj.setNodeService(mockNodes);
-        testObj.setSession(mockSession);
-        testObj.setDatastreamService(mockDatastreams);
-        uriInfo = TestHelpers.getUriInfoImpl();
-        testObj.setUriInfo(uriInfo);
-        testObj.setPidMinter(new UUIDPidMinter());
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After

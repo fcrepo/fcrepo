@@ -154,9 +154,4 @@ public class FedoraSitemap extends AbstractResource {
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
                 FedoraNodes.class).build(path.substring(1)), lastKnownDate);
     }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

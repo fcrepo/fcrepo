@@ -48,13 +48,13 @@ public class DublinCoreGeneratorTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws RepositoryException, NoSuchFieldException {
         mockNodeService = mock(NodeService.class);
         testObj = new DublinCoreGenerator();
-        testObj.setNodeService(mockNodeService);
+        TestHelpers.setField(testObj, "nodeService", mockNodeService);
 
-        mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
+		mockSession = TestHelpers.mockSession(testObj);
+        TestHelpers.setField(testObj, "session", mockSession);
         mockGenerator = mock(DCGenerator.class);
         testObj.dcgenerators = Arrays.asList(mockGenerator);
     }

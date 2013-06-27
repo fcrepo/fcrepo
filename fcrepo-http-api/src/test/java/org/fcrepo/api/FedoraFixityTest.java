@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -53,19 +52,17 @@ public class FedoraFixityTest {
     private Request mockRequest;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
 
         mockRequest = mock(Request.class);
         mockDatastreams = mock(DatastreamService.class);
 
         testObj = new FedoraFixity();
-        testObj.setDatastreamService(mockDatastreams);
-
-        uriInfo = TestHelpers.getUriInfoImpl();
-        testObj.setUriInfo(uriInfo);
-
+        TestHelpers.setField(testObj, "datastreamService", mockDatastreams);
+        this.uriInfo = TestHelpers.getUriInfoImpl();
+        TestHelpers.setField(testObj, "uriInfo", uriInfo);
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After

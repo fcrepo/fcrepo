@@ -116,11 +116,4 @@ public class FedoraTransactions extends AbstractResource {
         }
     }
 
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
-    public void setTxService(final TransactionService txService) {
-        this.txService = txService;
-    }
 }

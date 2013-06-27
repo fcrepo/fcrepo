@@ -45,13 +45,13 @@ public class FedoraRepositoriesPropertiesTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws Exception {
         mockNodes = mock(NodeService.class);
         testObj = new FedoraRepositoriesProperties();
         mockSession = TestHelpers.mockSession(testObj);
         testObj.setSession(mockSession);
-        testObj.setNodeService(mockNodes);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "nodeService", mockNodes);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
     }
 
     @Test

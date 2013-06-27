@@ -24,9 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -43,6 +40,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 public class FedoraUnnamedObjectsTest {
 
     FedoraUnnamedObjects testObj;
@@ -54,16 +54,16 @@ public class FedoraUnnamedObjectsTest {
     NodeService mockNodeService;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws Exception {
         mockObjects = mock(ObjectService.class);
         mockNodeService = mock(NodeService.class);
         testObj = new FedoraUnnamedObjects();
+        TestHelpers.setField(testObj, "objectService", mockObjects);
+        TestHelpers.setField(testObj, "nodeService", mockNodeService);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setNodeService(mockNodeService);
-        testObj.setObjectService(mockObjects);
-        testObj.setSession(mockSession);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
-    }
+        TestHelpers.setField(testObj, "session", mockSession);
+}
 
     @After
     public void tearDown() {
@@ -72,9 +72,9 @@ public class FedoraUnnamedObjectsTest {
 
     @Test
     public void testIngestAndMint() throws RepositoryException, IOException,
-        InvalidChecksumException, URISyntaxException {
+        InvalidChecksumException, URISyntaxException, NoSuchFieldException {
         final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
-        testObj.setPidMinter(mockMint);
+        TestHelpers.setField(testObj, "pidMinter", mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");
 
         final FedoraObject mockObject = mock(FedoraObject.class);

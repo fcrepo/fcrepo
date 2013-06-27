@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
@@ -36,9 +37,9 @@ import javax.ws.rs.core.StreamingOutput;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
+import org.fcrepo.session.InjectedSession;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.fcrepo.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -93,13 +94,4 @@ public class FedoraExport extends AbstractResource {
                 }).build();
 
     }
-
-    public void setSerializers(final SerializerUtil serializers) {
-        this.serializers = serializers;
-    }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

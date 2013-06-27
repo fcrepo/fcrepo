@@ -228,8 +228,4 @@ public class FedoraContent extends AbstractResource {
         }
     }
 
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

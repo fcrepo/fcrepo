@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -49,15 +48,15 @@ public class FedoraRepositoryNamespacesTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException,
-        URISyntaxException {
+    public void setUp() throws RepositoryException,
+        URISyntaxException, NoSuchFieldException {
         mockNodeService = mock(NodeService.class);
 
         testObj = new FedoraRepositoryNamespaces();
+        TestHelpers.setField(testObj, "nodeService", mockNodeService);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
-        testObj.setNodeService(mockNodeService);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After

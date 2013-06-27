@@ -77,8 +77,4 @@ public class DublinCoreGenerator extends AbstractResource {
 
     }
 
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

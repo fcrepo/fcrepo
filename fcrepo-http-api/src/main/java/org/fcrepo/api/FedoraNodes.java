@@ -251,7 +251,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Creates a new object.
-     * 
+     *
      * @param pathList
      * @return 201
      * @throws RepositoryException
@@ -295,7 +295,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Deletes an object.
-     * 
+     *
      * @param path
      * @return
      * @throws RepositoryException
@@ -313,9 +313,4 @@ public class FedoraNodes extends AbstractResource {
             session.logout();
         }
     }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

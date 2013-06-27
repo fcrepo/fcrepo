@@ -56,7 +56,7 @@ import com.hp.hpl.jena.query.Dataset;
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
  * and methods.
- * 
+ *
  * @author ajs6f
  */
 public abstract class AbstractResource {
@@ -213,59 +213,4 @@ public abstract class AbstractResource {
                     uriInfo, subjects);
         }
     }
-
-    /**
-     * A testing convenience setter for otherwise injected resources
-     * 
-     * @param uriInfo
-     */
-    public void setUriInfo(final UriInfo uriInfo) {
-        this.uriInfo = uriInfo;
-    }
-
-    /**
-     * A testing convenience setter for otherwise injected resources
-     * 
-     * @param pidMinter
-     */
-    public void setPidMinter(final PidMinter pidMinter) {
-        this.pidMinter = pidMinter;
-    }
-
-    /**
-     * Set the NodeService, used primary for testing without spring
-     * 
-     * @param nodeService
-     */
-    public void setNodeService(final NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
-
-    /**
-     * Set the ObjectService, used primary for testing without spring
-     * 
-     * @param objectService
-     */
-    public void setObjectService(final ObjectService objectService) {
-        this.objectService = objectService;
-    }
-
-    /**
-     * Set the DatastreamService, used primary for testing without spring
-     * 
-     * @param datastreamService
-     */
-    public void setDatastreamService(final DatastreamService datastreamService) {
-        this.datastreamService = datastreamService;
-    }
-
-    /**
-     * Set the Event Bus, used primary for testing without spring
-     * 
-     * @param eventBus
-     */
-    public void setEventBus(final EventBus eventBus) {
-        this.eventBus = eventBus;
-    }
-
 }

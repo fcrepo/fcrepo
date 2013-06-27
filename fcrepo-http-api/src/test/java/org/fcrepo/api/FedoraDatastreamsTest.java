@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -47,8 +46,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.file.StreamDataBodyPart;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
@@ -60,7 +57,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;
+import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
 public class FedoraDatastreamsTest {
 
@@ -73,17 +72,16 @@ public class FedoraDatastreamsTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
         mockDatastreams = mock(DatastreamService.class);
         mockNodes = mock(NodeService.class);
 
         testObj = new FedoraDatastreams();
-        testObj.setNodeService(mockNodes);
-        testObj.setDatastreamService(mockDatastreams);
-
+        TestHelpers.setField(testObj, "datastreamService", mockDatastreams);
+        TestHelpers.setField(testObj, "nodeService", mockNodes);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After

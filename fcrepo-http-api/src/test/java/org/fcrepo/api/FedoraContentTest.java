@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.Date;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -64,16 +63,16 @@ public class FedoraContentTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws Exception {
         mockDatastreams = mock(DatastreamService.class);
         mockNodeService = mock(NodeService.class);
 
         testObj = new FedoraContent();
-        testObj.setDatastreamService(mockDatastreams);
-        testObj.setNodeService(mockNodeService);
+        TestHelpers.setField(testObj, "datastreamService", mockDatastreams);
+        TestHelpers.setField(testObj, "nodeService", mockNodeService);
+        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
-        testObj.setUriInfo(TestHelpers.getUriInfoImpl());
+        TestHelpers.setField(testObj, "session", mockSession);
     }
 
     @After
@@ -143,7 +142,7 @@ public class FedoraContentTest {
 
     @Test
     public void testCreateContentAtMintedPath() throws RepositoryException,
-        IOException, InvalidChecksumException, URISyntaxException {
+        IOException, InvalidChecksumException, URISyntaxException, NoSuchFieldException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "fcr:new";
         final String dsContent = "asdf";
@@ -153,7 +152,7 @@ public class FedoraContentTest {
 
         PidMinter mockMinter = mock(PidMinter.class);
         when(mockMinter.mintPid()).thenReturn("xyz");
-        testObj.setPidMinter(mockMinter);
+        TestHelpers.setField(testObj, "pidMinter", mockMinter);
         when(mockNode.isNew()).thenReturn(true);
         Node mockContentNode = mock(Node.class);
         when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(

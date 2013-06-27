@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
@@ -84,13 +85,5 @@ public class FedoraImport extends AbstractResource {
         } finally {
             session.logout();
         }
-    }
-
-    public void setSerializers(final SerializerUtil serializers) {
-        this.serializers = serializers;
-    }
-
-    public void setSession(final Session session) {
-        this.session = session;
     }
 }

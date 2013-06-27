@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.Principal;
@@ -180,7 +181,7 @@ public abstract class TestHelpers {
     }
 
     public static Session mockSession(AbstractResource testObj)
-        throws RepositoryException {
+        throws RepositoryException, NoSuchFieldException {
 
         SecurityContext mockSecurityContext = mock(SecurityContext.class);
         Principal mockPrincipal = mock(Principal.class);
@@ -191,9 +192,8 @@ public abstract class TestHelpers {
         when(mockSession.getUserID()).thenReturn(mockUser);
         when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
         when(mockPrincipal.getName()).thenReturn(mockUser);
-        testObj.setUriInfo(getUriInfoImpl());
-        testObj.setPidMinter(new UUIDPidMinter());
-
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        setField(testObj, "pidMinter", new UUIDPidMinter());
         return mockSession;
 
     }
@@ -238,5 +238,37 @@ public abstract class TestHelpers {
 
         return GraphStoreFactory.create(model);
 
+    }
+
+    /**
+     * Set a field via reflection
+     * @param parent the owner object of the field
+     * @param name the name of the field
+     * @param obj the value to set
+     * @throws NoSuchFieldException
+     */
+    public static void setField(Object parent, String name, Object obj)
+            throws NoSuchFieldException {
+        /* check the parent class too if the field could not be found */
+        try {
+            Field f = findField(parent.getClass(), name);
+            f.setAccessible(true);
+            f.set(parent, obj);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Field findField(Class<?> clazz, String name) throws NoSuchFieldException{
+        for (Field f: clazz.getDeclaredFields()){
+            if (f.getName().equals(name)){
+                return f;
+            }
+        }
+        if (clazz.getSuperclass() == null) {
+            throw new NoSuchFieldException("Field " + name + " could not be found");
+        }else{
+            return findField(clazz.getSuperclass(), name);
+        }
     }
 }
