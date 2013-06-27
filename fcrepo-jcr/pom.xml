@@ -77,6 +77,22 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-leveldb</artifactId>
       <version>${infinispan.version}</version>
+      <exclusions>
+        <!-- leveldbjni platform-specific builds pull in different versions
+        of this dependency. we'll pull in the latest below. -->
+        <exclusion>
+          <groupId>org.fusesource.leveldbjni</groupId>
+          <artifactId>leveldbjni</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- pulling in the latest version of the dependency 
+    to make DependencyConvergence happy-->
+    <dependency>
+      <groupId>org.fusesource.leveldbjni</groupId>
+      <artifactId>leveldbjni</artifactId>
+      <version>1.7</version>
     </dependency>
 
     <dependency>
