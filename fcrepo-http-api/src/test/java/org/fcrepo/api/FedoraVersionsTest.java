@@ -10,27 +10,22 @@ import java.io.IOException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Variant;
 
 import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
-
 
 import javax.jcr.LoginException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.util.EntityUtils;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
-import org.fcrepo.http.RDFMediaType;
-import org.fcrepo.responses.GraphStoreStreamingOutput;
+
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import com.hp.hpl.jena.query.Dataset;
 
@@ -46,16 +41,13 @@ import static org.mockito.Mockito.when;
 public class FedoraVersionsTest {
 
     FedoraVersions testObj;
-
     NodeService mockNodes;
-
     Session mockSession;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
 
         testObj = new FedoraVersions();
-
         mockNodes = mock(NodeService.class);
         testObj.setNodeService(mockNodes);
         mockSession = TestHelpers.mockSession(testObj);
@@ -63,10 +55,9 @@ public class FedoraVersionsTest {
         testObj.setUriInfo(TestHelpers.getUriInfoImpl());        
     }
     
-    @SuppressWarnings("static-access")
-	@Test
+    @Test
     public void testGetVersionList () throws RepositoryException {
-        String pid = "FedoraDatastreamsTest1";
+        String pid = "FedoraVersioningTest";
         
         final FedoraResource mockResource = mock(FedoraResource.class);
         final Request mockRequest = mock(Request.class);
@@ -78,35 +69,33 @@ public class FedoraVersionsTest {
         when(mockResource.getVersionDataset(any(HttpGraphSubjects.class))).thenReturn(mockDataset);
         when(mockVariant.getMediaType()).thenReturn(new MediaType("text","turtle"));
         
-        final Response respReturned= testObj.getVersionList(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl());  
-        assertNotNull(respReturned);
-        assertEquals(200, respReturned.getStatus());
+        final Response response= testObj.getVersionList(createPathList(pid), mockRequest, TestHelpers.getUriInfoImpl());  
+        assertNotNull(response);
+        assertEquals(200, response.getStatus());
     }
     
     @Test    
     public void testAddVersionLabel () throws RepositoryException {
-    	String pid = "FedoraVersioningTest2";
-    	String versionLabel = "FedoraVersioningTest2/fcr:versions/v0.0.1";
+    	String pid = "FedoraVersioningTest";
+    	String versionLabel = "FedoraVersioningTest1/fcr:versions/v0.0.1";
     	
     	final FedoraResource mockResource = mock(FedoraResource.class);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(mockResource);
         
-    	final Response resp = testObj.addVersionLabel(createPathList(pid), versionLabel);
+    	final Response response = testObj.addVersionLabel(createPathList(pid), versionLabel);
     	verify(mockResource).addVersionLabel(anyString());
-    	assertNotNull(resp);
+    	assertNotNull(response);
     }
     
     @Test    
-    public void testGetVersionLabel () throws RepositoryException, IOException {
-    	String pid = "FedoraDatastreamsTest1";
+    public void testGetVersion () throws RepositoryException, IOException {
+    	String pid = "FedoraVersioningTest";
     	String versionLabel = "v0.0.1";
     	
     	final FedoraResource mockResource = mock(FedoraResource.class);    	
     	when(mockNodes.getObject(any(Session.class),any(String.class), any(String.class))).thenReturn(mockResource);
-    	
     	Dataset ds = testObj.getVersion(createPathList(pid), versionLabel, TestHelpers.getUriInfoImpl());
-    	verify(mockResource).getPropertiesDataset(any(HttpGraphSubjects.class), anyLong(), anyInt());
-    	
+    	verify(mockResource).getPropertiesDataset(any(HttpGraphSubjects.class), anyLong(), anyInt());    	
     }
 
 }
