@@ -30,13 +30,44 @@ import org.springframework.stereotype.Component;
 @Component
 public interface FedoraObjectSerializer {
 
+    /**
+     * Get the key for the serializer (that will be
+     * used at the REST API to identify the format)
+     * @return
+     */
     String getKey();
 
+    /**
+     * Get the media type for the serialized output
+     * (so we can send the right mime type as appropriate)
+     * @return
+     */
     String getMediaType();
 
+    /**
+     * Serialize a FedoraObject into some format, and write it
+     * to the given OutputStream
+     *
+     * @param obj
+     * @param out
+     * @throws RepositoryException
+     * @throws IOException
+     */
     void serialize(final FedoraObject obj, final OutputStream out)
         throws RepositoryException, IOException;
 
+    /**
+     * Read the given InputStream and de-serialize the content
+     * into new nodes in the given session using the given path
+     * as the parent node
+     *
+     * @param session
+     * @param path
+     * @param stream
+     * @throws IOException
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     */
     void deserialize(final Session session, final String path,
             final InputStream stream) throws IOException, RepositoryException,
         InvalidChecksumException;
