@@ -11,8 +11,12 @@
         "indexStorage" : {
             "type" : "filesystem",
             "location" : "${fcrepo.modeshape.index.location:target/indexes}",
-            "lockingStrategy" : "native",
+            "lockingStrategy" : "single",
             "fileSystemAccessType" : "auto"
+        },
+        "indexing" : {
+            "mode" : "sync",
+            "readerStrategy" : "not-shared"
         }
     },
     "storage" : {
