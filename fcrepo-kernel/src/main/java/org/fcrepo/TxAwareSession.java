@@ -58,6 +58,8 @@ public class TxAwareSession implements InvocationHandler {
             return null;
         } else if (method.getName().equals("getTxId")) {
             return txId;
+        } else if (method.getName().equals("impersonate")) {
+            return TxAwareSession.newInstance((Session)method.invoke(session, args), txId);
         } else {
             return method.invoke(session, args);
         }

@@ -15,10 +15,14 @@
  */
 package org.fcrepo;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import javax.jcr.Credentials;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -42,6 +46,19 @@ public class TxAwareSessionTest {
         testObj.getItem("/xyz");
         verify(mockSession).getItem("/xyz");
     }
+
+    @Test
+    public void shouldWrapImpersonateToReturnAnotherTxAwareSession() throws RepositoryException {
+        Credentials mockCredentials = mock(Credentials.class);
+        when(mockSession.impersonate(mockCredentials)).thenReturn(mockSession);
+        Session s = testObj.impersonate(mockCredentials);
+
+        assertTrue(s instanceof TxSession);
+
+        assertEquals(((TxSession)testObj).getTxId(), ((TxSession)s).getTxId());
+    }
+
+
 
     @Test
     public void shouldMakeLogoutANoop() {
