@@ -46,7 +46,6 @@ public class SessionProviderTest {
         mockSession = mock(Session.class);
         mockRepo = mock(Repository.class);
         final SessionFactory mockSessionFactory = mock(SessionFactory.class);
-        mockSessionFactory.setRepository(mockRepo);
         when(mockSessionFactory.getSession()).thenReturn(mockSession);
         final SecurityContext mockSecurityContext = mock(SecurityContext.class);
         final HttpServletRequest mockHttpServletRequest =

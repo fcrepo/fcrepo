@@ -46,6 +46,11 @@ public class SessionFactory {
 
     }
 
+    public SessionFactory(final Repository repo, final TransactionService transactionService) {
+        this.repo = repo;
+        this.transactionService = transactionService;
+    }
+
     @PostConstruct
     public void init() {
         if (repo == null) {
@@ -54,19 +59,34 @@ public class SessionFactory {
         }
     }
 
-    public void setRepository(final Repository repo) {
-        this.repo = repo;
-    }
-
+    /**
+     * Get a new JCR Session
+     *
+     * @return
+     * @throws RepositoryException
+     */
     public Session getSession() throws RepositoryException {
         return repo.login();
     }
 
+    /**
+     * Get a new JCR session in the given workspace
+     * @param workspace
+     * @return
+     * @throws RepositoryException
+     */
     public Session getSession(final String workspace)
         throws RepositoryException {
         return repo.login(workspace);
     }
 
+    /**
+     * Get a JCR session for the given HTTP servlet
+     * request (within the right transaction or workspace)
+     * @param servletRequest
+     * @return
+     * @throws RepositoryException
+     */
     public Session getSession(final HttpServletRequest servletRequest)
         throws RepositoryException {
 
@@ -90,19 +110,13 @@ public class SessionFactory {
         return session;
     }
 
-    private static ServletCredentials getCredentials(
-            final SecurityContext securityContext,
-            final HttpServletRequest servletRequest) {
-        if (securityContext.getUserPrincipal() != null) {
-            logger.debug("Authenticated user: " +
-                    securityContext.getUserPrincipal().getName());
-            return new ServletCredentials(servletRequest);
-        } else {
-            logger.debug("No authenticated user found!");
-            return null;
-        }
-    }
-
+    /**
+     * Get a JCR session for the given HTTP servlet request with
+     * a SecurityContext attached
+     * @param securityContext
+     * @param servletRequest
+     * @return
+     */
     public Session getSession(final SecurityContext securityContext,
             final HttpServletRequest servletRequest) {
 
@@ -144,6 +158,12 @@ public class SessionFactory {
         }
     }
 
+    /**
+     * Get the configured Session Provider
+     * @param securityContext
+     * @param servletRequest
+     * @return
+     */
     public AuthenticatedSessionProvider getSessionProvider(
             final SecurityContext securityContext,
             final HttpServletRequest servletRequest) {
@@ -153,6 +173,11 @@ public class SessionFactory {
         return new AuthenticatedSessionProviderImpl(repo, creds);
     }
 
+    /**
+     * Extract the workspace id embedded at the beginning of a request
+     * @param servletRequest
+     * @return
+     */
     private String
             getEmbeddedWorkspace(final HttpServletRequest servletRequest) {
         final String requestPath = servletRequest.getPathInfo();
@@ -171,6 +196,12 @@ public class SessionFactory {
 
     }
 
+    /**
+     * Extract the transaction id embedded at the beginning of a request
+     * @param servletRequest
+     * @return
+     * @throws TransactionMissingException
+     */
     private Transaction getEmbeddedTransaction(
             final HttpServletRequest servletRequest)
         throws TransactionMissingException {
@@ -190,8 +221,23 @@ public class SessionFactory {
         }
     }
 
-    public void setTransactionService(
-            final TransactionService transactionService) {
-        this.transactionService = transactionService;
+    /**
+     * Get the credentials for an authenticated session
+     * @param securityContext
+     * @param servletRequest
+     * @return
+     */
+    private static ServletCredentials getCredentials(
+                                                            final SecurityContext securityContext,
+                                                            final HttpServletRequest servletRequest) {
+        if (securityContext.getUserPrincipal() != null) {
+            logger.debug("Authenticated user: " +
+                                 securityContext.getUserPrincipal().getName());
+            return new ServletCredentials(servletRequest);
+        } else {
+            logger.debug("No authenticated user found!");
+            return null;
+        }
     }
+
 }

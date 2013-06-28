@@ -45,11 +45,13 @@ public class SessionFactoryTest {
 
     Repository mockRepo;
 
+    TransactionService mockTxService;
+
     @Before
     public void setUp() {
         mockRepo = mock(Repository.class);
-        testObj = new SessionFactory();
-        testObj.setRepository(mockRepo);
+        mockTxService = mock(TransactionService.class);
+        testObj = new SessionFactory(mockRepo, mockTxService);
         testObj.init();
     }
 
@@ -104,8 +106,6 @@ public class SessionFactoryTest {
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
 
-        TransactionService mockTxService = mock(TransactionService.class);
-        testObj.setTransactionService(mockTxService);
         Transaction mockTx = mock(Transaction.class);
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
@@ -141,8 +141,6 @@ public class SessionFactoryTest {
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
 
-        TransactionService mockTxService = mock(TransactionService.class);
-        testObj.setTransactionService(mockTxService);
         Transaction mockTx = mock(Transaction.class);
         final Session txSession = mock(Session.class);
         final Session mockSession = mock(Session.class);
