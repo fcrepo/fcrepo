@@ -56,6 +56,13 @@ public class FedoraTransactions extends AbstractResource {
     @InjectedSession
     protected Session session;
 
+    /**
+     * Create a new transaction resource and add it to the registry
+     *
+     * @param pathList
+     * @return
+     * @throws RepositoryException
+     */
     @POST
     public Response createTransaction(@PathParam("path")
     final List<PathSegment> pathList) throws RepositoryException {
@@ -82,6 +89,12 @@ public class FedoraTransactions extends AbstractResource {
         }
     }
 
+    /**
+     * Commit a transaction resource
+     * @param pathList
+     * @return
+     * @throws RepositoryException
+     */
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path")
@@ -112,6 +125,9 @@ public class FedoraTransactions extends AbstractResource {
 
     }
 
+    /**
+     * Rollback a transaction
+     */
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path")

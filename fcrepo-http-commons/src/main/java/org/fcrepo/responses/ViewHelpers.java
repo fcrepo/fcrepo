@@ -231,10 +231,23 @@ public class ViewHelpers {
         return sb.toString();
     }
 
+    /**
+     * Convert an RDF resource to an RDF node
+     *
+     * @param r
+     * @return
+     */
     public Node asNode(final Resource r) {
         return r.asNode();
     }
 
+    /**
+     * Yes, we really did create a method to increment
+     * a given int. You can't do math in a velocity template.
+     *
+     * @param i
+     * @return
+     */
     public int addOne(final int i) {
         return i + 1;
     }

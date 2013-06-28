@@ -35,6 +35,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.MalformedURLException;
 
+/**
+ * This class exposes the JCR workspace functionality. It may be
+ * too JCR-y in the long run, but this lets us exercise the functionality.
+ */
 @Component
 @Scope("prototype")
 @Path("/fcr:workspaces")
@@ -43,6 +47,13 @@ public class FedoraRepositoryWorkspace extends AbstractResource {
     @InjectedSession
     protected Session session;
 
+    /**
+     * Get the list of accessible workspaces in this repository.
+     *
+     * TODO: serialize this as RDF (?)
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     public Response getWorkspaces() throws RepositoryException {
         return Response
@@ -50,6 +61,15 @@ public class FedoraRepositoryWorkspace extends AbstractResource {
                 .build();
     }
 
+    /**
+     * Create a new workspace in the repository
+     *
+     * @param path
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     * @throws MalformedURLException
+     */
     @POST
     @Path("{path}")
     public Response createWorkspace(@PathParam("path")
@@ -63,9 +83,4 @@ public class FedoraRepositoryWorkspace extends AbstractResource {
                         .buildFromMap(ImmutableMap.of("path", path))).build();
 
     }
-
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
 }

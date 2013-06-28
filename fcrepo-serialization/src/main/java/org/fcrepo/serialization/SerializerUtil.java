@@ -47,18 +47,36 @@ public class SerializerUtil implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
+    /**
+     * Get the list of Fedora serializer keys
+     * @return
+     */
     public Set<String> keySet() {
         return getFedoraObjectSerializers().keySet();
     }
 
+    /**
+     * Get a Fedora Object Serializer by its key
+     * @param format
+     * @return
+     */
     public FedoraObjectSerializer getSerializer(final String format) {
         return getFedoraObjectSerializers().get(format);
     }
 
+    /**
+     * Get the whole list of FedoraObjectSerializers
+     * @return
+     */
     public Map<String, FedoraObjectSerializer> getFedoraObjectSerializers() {
         return serializerMap;
     }
 
+    /**
+     * Hook into Spring to get the list of all FedoraObjectSerializers that
+     * were (supposedly) component scanned, and register them in our own
+     * map.
+     */
     @PostConstruct
     public void buildFedoraObjectSerializersMap() {
         final Map<String, FedoraObjectSerializer> beans =

@@ -103,7 +103,6 @@ public class FedoraWebhooksTest {
         when(mockSession.getNode(mockPath)).thenReturn(mockNode);
         when(mockRoot.getNode(mockPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj.getSession();
         testObj.registerWebhook("foo");
     }
 
@@ -134,13 +133,11 @@ public class FedoraWebhooksTest {
                 IndexOutOfBoundsException.class);
         when(mockRoot.getNodes(FedoraWebhooks.WEBHOOK_SEARCH)).thenReturn(
                 mockNodes);
-        testObj.getSession();
         testObj.onEvent(mockEvent);
     }
 
     @Test
     public void testSessions() {
-        testObj.getSession();
         testObj.logoutSession();
         verify(mockSession).logout();
     }

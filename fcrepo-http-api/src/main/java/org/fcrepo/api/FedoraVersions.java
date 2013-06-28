@@ -67,6 +67,15 @@ public class FedoraVersions extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
 
+    /**
+     * Get the list of versions for the object
+     *
+     * @param pathList
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Response getVersionList(@PathParam("path")
@@ -96,6 +105,14 @@ public class FedoraVersions extends AbstractResource {
 
     }
 
+    /**
+     * Tag the current version of an object with the given label
+     *
+     * @param pathList
+     * @param versionLabel
+     * @return
+     * @throws RepositoryException
+     */
     @POST
     @Path("/{versionLabel}")
     public Response addVersionLabel(@PathParam("path")
@@ -114,6 +131,15 @@ public class FedoraVersions extends AbstractResource {
         }
     }
 
+    /**
+     * Retrieve the tagged version of an object
+     * @param pathList
+     * @param versionLabel
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     */
     @Path("/{versionLabel}")
     @GET
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
