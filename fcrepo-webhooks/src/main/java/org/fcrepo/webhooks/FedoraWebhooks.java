@@ -148,6 +148,12 @@ public class FedoraWebhooks extends AbstractResource {
         }
     }
 
+    /**
+     * List all of the registered webhooks for the repository
+     *
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     public Response showWebhooks() throws RepositoryException {
 
@@ -165,6 +171,13 @@ public class FedoraWebhooks extends AbstractResource {
         return ok(str.toString()).build();
     }
 
+    /**
+     * Register a new webhook to receive callbacks repository-wide
+     * @param id
+     * @param callbackUrl
+     * @return
+     * @throws RepositoryException
+     */
     @POST
     @Path("{id}")
     public Response registerWebhook(
@@ -185,6 +198,12 @@ public class FedoraWebhooks extends AbstractResource {
         return created(uriInfo.getAbsolutePath()).build();
     }
 
+    /**
+     * Remove a webhook callback
+     * @param id
+     * @return
+     * @throws RepositoryException
+     */
     @DELETE
     @Path("{id}")
     public Response registerWebhook(@PathParam("id")
@@ -219,16 +238,8 @@ public class FedoraWebhooks extends AbstractResource {
         }
     }
 
-    public void setSession(final Session session) {
-        this.session = session;
-    }
-
-    public void setReadOnlySessionSession(final Session session) {
-        this.readOnlySession = session;
-    }
-
     @PostConstruct
-    public final void getSession() {
+    public final void setReadOnlySession() {
         try {
             readOnlySession = sessions.getSession();
         } catch (final RepositoryException e) {

@@ -58,8 +58,8 @@ public class FedoraWebhooksTest {
         NodeTypeManager mockNT = mock(NodeTypeManager.class);
         when(mockWS.getNodeTypeManager()).thenReturn(mockNT);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
-        testObj.setSession(mockSession);
-        testObj.setReadOnlySessionSession(mockSession);
+        TestHelpers.setField(testObj, "session", mockSession);
+        TestHelpers.setField(testObj, "readOnlySession", mockSession);
         SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getSession()).thenReturn(mockSession);
         TestHelpers.setField(testObj, "sessions", mockSessions);
