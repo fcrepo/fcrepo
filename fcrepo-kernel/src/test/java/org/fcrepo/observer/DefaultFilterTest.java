@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
@@ -123,39 +122,29 @@ public class DefaultFilterTest {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void shouldNotApplyToNonExistentNodes() throws Exception {
+    public void shouldNotApplyToJcrProperties() throws Exception {
 
-        final String testPath = "/foo/bar";
+        final String testPath = "/foo/bar/jcr:name";
         final Event mockEvent = mock(Event.class);
         when(mockEvent.getPath()).thenReturn(testPath);
         when(mockSession.getNode(testPath)).thenThrow(
                 PathNotFoundException.class);
         assertEquals(false, testObj.apply(mockEvent));
-        verify(mockSession).getNode(testPath);
     }
 
     /**
      * @todo Add Documentation.
      */
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldNotApplyToSystemNodes() throws Exception {
-        @SuppressWarnings("unchecked")
-        final Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+    public void shouldNotApplyToJcrSystemNodes() throws Exception {
 
-        try {
-            FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
-            FedoraTypesUtils.isFedoraObject = mockFuncFalse;
-            final String testPath = "/foo/bar";
-            final Event mockEvent = mock(Event.class);
-            when(mockEvent.getPath()).thenReturn(testPath);
-            final Node mockNode = mock(Node.class);
-            when(mockSession.getNode(testPath)).thenReturn(mockNode);
-            assertEquals(false, testObj.apply(mockEvent));
-        } finally {
-            FedoraTypesUtils.isFedoraDatastream = holdDS;
-            FedoraTypesUtils.isFedoraObject = holdO;
-        }
+        final String testPath = "/jcr:system/foo/bar";
+        final Event mockEvent = mock(Event.class);
+        when(mockEvent.getPath()).thenReturn(testPath);
+        when(mockSession.getNode(testPath)).thenThrow(
+                PathNotFoundException.class);
+        assertEquals(false, testObj.apply(mockEvent));
     }
+
 }
