@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LogbackAuditor.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-audit</a> &gt; <a href="index.html" class="el_package">org.fcrepo.audit</a> &gt; <span class="el_source">LogbackAuditor.java</span></div><h1>LogbackAuditor.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.audit;
+
+import static org.fcrepo.utils.EventType.getEventName;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.jcr.RepositoryException;
+import javax.jcr.observation.Event;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+/**
+ * A proof-of-concept Auditor implementation that uses Logback.
+ * 
+ * @author Edwin Shin
+ */
+<span class="fc" id="L37">public class LogbackAuditor implements Auditor {</span>
+
+    /**
+     * Logger for this class.
+     */
+<span class="fc" id="L42">    private final Logger logger = LoggerFactory.getLogger(LogbackAuditor.class);</span>
+
+    @Inject
+    private EventBus eventBus;
+
+    /**
+     * Register with the EventBus to receive events.
+     */
+    @PostConstruct
+    public void register() {
+<span class="nc" id="L52">        logger.debug(&quot;Initializing: &quot; + this.getClass().getCanonicalName());</span>
+<span class="nc" id="L53">        eventBus.register(this);</span>
+<span class="nc" id="L54">    }</span>
+
+    @Override
+    @Subscribe
+    public void recordEvent(final Event e) throws RepositoryException {
+<span class="fc" id="L59">        logger.info(e.getUserID() + &quot; &quot; + getEventName(e.getType()) + &quot; &quot; +</span>
+                e.getPath());
+<span class="fc" id="L61">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

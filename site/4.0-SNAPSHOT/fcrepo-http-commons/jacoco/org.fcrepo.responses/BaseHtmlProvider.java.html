@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BaseHtmlProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-commons</a> &gt; <a href="index.html" class="el_package">org.fcrepo.responses</a> &gt; <span class="el_source">BaseHtmlProvider.java</span></div><h1>BaseHtmlProvider.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.responses;
+
+import static com.google.common.collect.ImmutableList.of;
+import static com.google.common.collect.ImmutableMap.builder;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static org.fcrepo.responses.RdfSerializationUtils.getDatasetSubject;
+import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
+import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.responses.RdfSerializationUtils.setCachingHeaders;
+import static org.fcrepo.responses.RdfSerializationUtils.unifyDatasetModel;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeTypeIterator;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.context.Context;
+import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.RdfLexicon;
+import org.fcrepo.session.SessionFactory;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+
+/**
+ * A simple JAX-RS Entity Provider that can accept RDF datasets that represent
+ * Fedora resources and merge them into templates chosen based on the primary
+ * node type of the backing JCR node for that Fedora resource.
+ * 
+ * @author ajs6f
+ * @date May 19, 2013
+ */
+
+@Provider
+<span class="fc" id="L80">public class BaseHtmlProvider implements MessageBodyWriter&lt;Dataset&gt; {</span>
+
+    @Autowired
+    SessionFactory sessionFactory;
+
+    @javax.ws.rs.core.Context
+    UriInfo uriInfo;
+
+<span class="fc" id="L88">    protected VelocityEngine velocity = new VelocityEngine();</span>
+
+    /**
+     * Location in the classpath where Velocity templates are to be found.
+     */
+    public static final String templatesLocation = &quot;/views&quot;;
+
+    /**
+     * A map from String names for primary node types to the Velocity templates
+     * that should be used for those node types.
+     */
+    protected Map&lt;String, Template&gt; templatesMap;
+
+    public static final String templateFilenameExtension = &quot;.vsl&quot;;
+
+<span class="fc" id="L103">    private static final Logger LOGGER = getLogger(BaseHtmlProvider.class);</span>
+
+    public static final String velocityPropertiesLocation =
+            &quot;/velocity.properties&quot;;
+
+    @PostConstruct
+    void init() throws IOException, RepositoryException {
+
+<span class="nc" id="L111">        LOGGER.trace(&quot;Velocity engine initializing...&quot;);</span>
+<span class="nc" id="L112">        final Properties properties = new Properties();</span>
+<span class="nc" id="L113">        final URL propertiesUrl =</span>
+                getClass().getResource(velocityPropertiesLocation);
+<span class="nc" id="L115">        LOGGER.debug(&quot;Using Velocity configuration from {}&quot;, propertiesUrl);</span>
+<span class="nc" id="L116">        try (final InputStream propertiesStream = propertiesUrl.openStream()) {</span>
+<span class="nc" id="L117">            properties.load(propertiesStream);</span>
+<span class="nc bnc" id="L118" title="All 8 branches missed.">        }</span>
+<span class="nc" id="L119">        velocity.init(properties);</span>
+<span class="nc" id="L120">        LOGGER.trace(&quot;Velocity engine initialized.&quot;);</span>
+
+<span class="nc" id="L122">        LOGGER.trace(&quot;Assembling a map of node primary types -&gt; templates...&quot;);</span>
+<span class="nc" id="L123">        final Builder&lt;String, Template&gt; templatesMapBuilder = builder();</span>
+<span class="nc" id="L124">        final Session session = sessionFactory.getSession();</span>
+        try {
+            // we search all of the possible node primary types
+<span class="nc" id="L127">            for (final NodeTypeIterator primaryNodeTypes =</span>
+                    session.getWorkspace().getNodeTypeManager()
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                            .getPrimaryNodeTypes(); primaryNodeTypes.hasNext();) {</span>
+<span class="nc" id="L130">                final String primaryNodeTypeName =</span>
+                        primaryNodeTypes.nextNodeType().getName();
+                // for each node primary type, we try to find a template
+<span class="nc" id="L133">                final String templateLocation =</span>
+                        templatesLocation + &quot;/&quot; +
+                                primaryNodeTypeName.replace(':', '-') +
+                                templateFilenameExtension;
+                try {
+<span class="nc" id="L138">                    final Template template =</span>
+                            velocity.getTemplate(templateLocation);
+<span class="nc" id="L140">                    template.setName(templateLocation);</span>
+<span class="nc" id="L141">                    LOGGER.debug(&quot;Found template: {}&quot;, templateLocation);</span>
+<span class="nc" id="L142">                    templatesMapBuilder.put(primaryNodeTypeName, template);</span>
+<span class="nc" id="L143">                    LOGGER.debug(</span>
+                            &quot;which we will use for nodes with primary type: {}&quot;,
+                            primaryNodeTypeName);
+<span class="nc" id="L146">                } catch (final ResourceNotFoundException e) {</span>
+<span class="nc" id="L147">                    LOGGER.debug(</span>
+                            &quot;Didn't find template for nodes with primary type: {} in location: {}&quot;,
+                            primaryNodeTypeName, templateLocation);
+                    /*
+                     * we don't care-- just means we don't have an HTML
+                     * representation available for that kind of node
+                     */
+<span class="nc" id="L154">                }</span>
+
+<span class="nc" id="L156">            }</span>
+
+<span class="nc" id="L158">            List&lt;String&gt; otherTemplates =</span>
+                    ImmutableList.of(&quot;search:results&quot;, &quot;jcr:namespaces&quot;);
+
+<span class="nc bnc" id="L161" title="All 2 branches missed.">            for (String key : otherTemplates) {</span>
+<span class="nc" id="L162">                final Template template =</span>
+                        velocity.getTemplate(templatesLocation + &quot;/&quot; +
+                                key.replace(':', '-') +
+                                templateFilenameExtension);
+<span class="nc" id="L166">                templatesMapBuilder.put(key, template);</span>
+<span class="nc" id="L167">            }</span>
+
+<span class="nc" id="L169">            templatesMap = templatesMapBuilder.build();</span>
+
+        } finally {
+<span class="nc" id="L172">            session.logout();</span>
+<span class="nc" id="L173">        }</span>
+<span class="nc" id="L174">        LOGGER.trace(&quot;Assembled template map.&quot;);</span>
+<span class="nc" id="L175">        LOGGER.trace(&quot;HtmlProvider initialization complete.&quot;);</span>
+<span class="nc" id="L176">    }</span>
+
+    @Override
+    public void writeTo(final Dataset rdf, final Class&lt;?&gt; type,
+            final Type genericType, final Annotation[] annotations,
+            final MediaType mediaType,
+            final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+            final OutputStream entityStream) throws IOException,
+        WebApplicationException {
+
+<span class="fc" id="L186">        LOGGER.debug(&quot;Writing an HTML response for: {}&quot;, rdf);</span>
+<span class="fc" id="L187">        LOGGER.trace(&quot;Attempting to discover our subject&quot;);</span>
+<span class="fc" id="L188">        Node subject = getDatasetSubject(rdf);</span>
+
+        // add standard headers
+<span class="fc" id="L191">        httpHeaders.put(&quot;Content-type&quot;, of((Object) TEXT_HTML));</span>
+<span class="fc" id="L192">        setCachingHeaders(httpHeaders, rdf);</span>
+
+<span class="fc" id="L194">        final Template nodeTypeTemplate =</span>
+                getTemplate(rdf, subject, annotations);
+
+<span class="fc" id="L197">        final Context context = getContext(rdf, subject);</span>
+
+        // the contract of MessageBodyWriter&lt;T&gt; is _not_ to close the stream
+        // after writing to it
+<span class="fc" id="L201">        final Writer outWriter = new OutputStreamWriter(entityStream);</span>
+<span class="fc" id="L202">        nodeTypeTemplate.merge(context, outWriter);</span>
+<span class="fc" id="L203">        outWriter.flush();</span>
+
+<span class="fc" id="L205">    }</span>
+
+    protected Context getContext(Dataset rdf, Node subject) {
+<span class="fc" id="L208">        final FieldTool fieldTool = new FieldTool();</span>
+
+<span class="fc" id="L210">        final Context context = new VelocityContext();</span>
+<span class="fc" id="L211">        context.put(&quot;rdfLexicon&quot;, fieldTool.in(RdfLexicon.class));</span>
+<span class="fc" id="L212">        context.put(&quot;helpers&quot;, ViewHelpers.getInstance());</span>
+<span class="fc" id="L213">        context.put(&quot;rdf&quot;, rdf.asDatasetGraph());</span>
+
+<span class="fc" id="L215">        Model model = unifyDatasetModel(rdf);</span>
+
+<span class="fc" id="L217">        context.put(&quot;model&quot;, model);</span>
+<span class="fc" id="L218">        context.put(&quot;subjects&quot;, model.listSubjects());</span>
+<span class="fc" id="L219">        context.put(&quot;nodeany&quot;, Node.ANY);</span>
+<span class="fc" id="L220">        context.put(&quot;topic&quot;, subject);</span>
+<span class="fc" id="L221">        context.put(&quot;uriInfo&quot;, uriInfo);</span>
+<span class="fc" id="L222">        return context;</span>
+    }
+
+    private Template getTemplate(final Dataset rdf, final Node subject,
+            final Annotation[] annotations) {
+<span class="fc" id="L227">        Template template = null;</span>
+
+<span class="pc bfc" id="L229" title="All 2 branches covered.">        for (Annotation a : annotations) {</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">            if (a instanceof HtmlTemplate) {</span>
+<span class="fc" id="L231">                final String value = ((HtmlTemplate) a).value();</span>
+<span class="fc" id="L232">                LOGGER.debug(&quot;Found an HtmlTemplate annotation {}&quot;, value);</span>
+<span class="fc" id="L233">                template = templatesMap.get(value);</span>
+<span class="fc" id="L234">                break;</span>
+            }
+        }
+
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        if (template == null) {</span>
+<span class="fc" id="L239">            LOGGER.trace(&quot;Attempting to discover the primary type of the node for the resource in question...&quot;);</span>
+<span class="fc" id="L240">            final String nodeType =</span>
+                    getFirstValueForPredicate(rdf, subject,
+                            primaryTypePredicate);
+
+<span class="fc" id="L244">            LOGGER.debug(&quot;Found primary node type: {}&quot;, nodeType);</span>
+<span class="fc" id="L245">            template = templatesMap.get(nodeType);</span>
+        }
+
+<span class="fc" id="L248">        LOGGER.debug(&quot;Choosing template: {}&quot;, template.getName());</span>
+<span class="fc" id="L249">        return template;</span>
+    }
+
+    public void setTemplatesMap(final Map&lt;String, Template&gt; templatesMap) {
+<span class="fc" id="L253">        this.templatesMap = templatesMap;</span>
+<span class="fc" id="L254">    }</span>
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type, final Type genericType,
+            final Annotation[] annotations, final MediaType mediaType) {
+<span class="pc bpc" id="L259" title="1 of 6 branches missed.">        return mediaType.equals(TEXT_HTML_TYPE) &amp;&amp;</span>
+                (Dataset.class.isAssignableFrom(type) || Dataset.class
+                        .isAssignableFrom(genericType.getClass()));
+    }
+
+    @Override
+    public long getSize(final Dataset t, final Class&lt;?&gt; type,
+            final Type genericType, final Annotation[] annotations,
+            final MediaType mediaType) {
+        // we don't know in advance how large the result might be
+<span class="fc" id="L269">        return -1;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

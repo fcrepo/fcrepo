@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RdfSerializationUtils.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-commons</a> &gt; <a href="index.html" class="el_package">org.fcrepo.responses</a> &gt; <span class="el_source">RdfSerializationUtils.java</span></div><h1>RdfSerializationUtils.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.responses;
+
+import static com.google.common.collect.ImmutableList.of;
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.joda.time.format.DateTimeFormat.forPattern;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+
+import javax.ws.rs.core.MultivaluedMap;
+
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.util.Context;
+import com.hp.hpl.jena.sparql.util.Symbol;
+
+<span class="nc" id="L42">public class RdfSerializationUtils {</span>
+
+<span class="fc" id="L44">    private static final Logger logger = getLogger(RdfSerializationUtils.class);</span>
+
+    /**
+     * The RDF predicate that will indicate the primary node type.
+     */
+<span class="fc" id="L49">    public static Node primaryTypePredicate =</span>
+            createURI(getRDFNamespaceForJcrNamespace(&quot;http://www.jcp.org/jcr/1.0&quot;) +
+                    &quot;primaryType&quot;);
+
+    /**
+     * The RDF predicate that will indicate the last-modified date of the node.
+     */
+<span class="fc" id="L56">    public static Node lastModifiedPredicate =</span>
+            createURI(getRDFNamespaceForJcrNamespace(&quot;http://www.jcp.org/jcr/1.0&quot;) +
+                    &quot;lastModified&quot;);
+
+<span class="fc" id="L60">    public static DateTimeFormatter RFC2822DATEFORMAT =</span>
+            forPattern(&quot;EEE, dd MMM yyyy HH:mm:ss Z&quot;);
+
+    static String getFirstValueForPredicate(final Dataset rdf,
+            final Node subject, final Node predicate) {
+<span class="fc" id="L65">        final Iterator&lt;Quad&gt; statements =</span>
+                rdf.asDatasetGraph().find(ANY, subject, predicate, ANY);
+        // we'll take the first one we get
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if (statements.hasNext()) {</span>
+<span class="fc" id="L69">            final Quad statement = statements.next();</span>
+<span class="fc" id="L70">            logger.trace(&quot;Checking statement: {}&quot;, statement);</span>
+<span class="fc" id="L71">            return statement.asTriple().getObject().getLiteral()</span>
+                    .getLexicalForm();
+        } else {
+<span class="fc" id="L74">            logger.trace(&quot;No value found for predicate: {}&quot;, predicate);</span>
+<span class="fc" id="L75">            return null;</span>
+        }
+    }
+
+    static Node getDatasetSubject(final Dataset rdf) {
+<span class="fc" id="L80">        Context context = rdf.getContext();</span>
+<span class="fc" id="L81">        String uri = context.getAsString(Symbol.create(&quot;uri&quot;));</span>
+<span class="fc" id="L82">        logger.debug(&quot;uri from context: {}&quot;, uri);</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (uri != null) {</span>
+<span class="nc" id="L84">            return createURI(uri);</span>
+        } else {
+<span class="fc" id="L86">            return null;</span>
+        }
+    }
+
+    static void
+            setCachingHeaders(final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+                    final Dataset rdf) {
+<span class="fc" id="L93">        httpHeaders.put(&quot;Cache-Control&quot;, of((Object) &quot;max-age=0&quot;));</span>
+<span class="fc" id="L94">        httpHeaders.put(&quot;Cache-Control&quot;, of((Object) &quot;must-revalidate&quot;));</span>
+
+<span class="fc" id="L96">        logger.trace(&quot;Attempting to discover the last-modified date of the node for the resource in question...&quot;);</span>
+<span class="fc" id="L97">        final String lastModifiedinXSDStyle =</span>
+                getFirstValueForPredicate(rdf, getDatasetSubject(rdf),
+                        lastModifiedPredicate);
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (lastModifiedinXSDStyle != null) {</span>
+<span class="nc" id="L101">            logger.debug(&quot;Found last-modified date: {}&quot;, lastModifiedinXSDStyle);</span>
+<span class="nc" id="L102">            final String lastModified =</span>
+                    RFC2822DATEFORMAT.print(ISODateTimeFormat.dateTime()
+                            .withOffsetParsed().parseDateTime(
+                                    lastModifiedinXSDStyle));
+<span class="nc" id="L106">            httpHeaders.put(&quot;Last-Modified&quot;, of((Object) lastModified));</span>
+        }
+<span class="fc" id="L108">    }</span>
+
+    static Model unifyDatasetModel(final Dataset dataset) {
+<span class="fc" id="L111">        final Iterator&lt;String&gt; iterator = dataset.listNames();</span>
+<span class="fc" id="L112">        Model model = ModelFactory.createDefaultModel();</span>
+
+<span class="fc" id="L114">        model = model.union(dataset.getDefaultModel());</span>
+
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        while (iterator.hasNext()) {</span>
+<span class="nc" id="L117">            final String modelName = iterator.next();</span>
+<span class="nc" id="L118">            logger.debug(&quot;Serializing model {}&quot;, modelName);</span>
+<span class="nc" id="L119">            model = model.union(dataset.getNamedModel(modelName));</span>
+<span class="nc" id="L120">        }</span>
+
+<span class="fc" id="L122">        model.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());</span>
+<span class="fc" id="L123">        return model;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

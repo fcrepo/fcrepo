@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraVersions.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-api</a> &gt; <a href="index.html" class="el_package">org.fcrepo.api</a> &gt; <span class="el_source">FedoraVersions.java</span></div><h1>FedoraVersions.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.api;
+
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.fcrepo.http.RDFMediaType.N3;
+import static org.fcrepo.http.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.http.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.RDFMediaType.TURTLE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Variant;
+
+import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraResource;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.responses.GraphStoreStreamingOutput;
+import org.fcrepo.session.InjectedSession;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.hp.hpl.jena.query.Dataset;
+
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:versions&quot;)
+<span class="fc" id="L63">public class FedoraVersions extends AbstractResource {</span>
+
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L68">    private static final Logger LOGGER = getLogger(FedoraNodes.class);</span>
+
+    /**
+     * Get the list of versions for the object
+     *
+     * @param pathList
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    public Response getVersionList(@PathParam(&quot;path&quot;)
+    final List&lt;PathSegment&gt; pathList, @Context
+    final Request request, @Context
+    final UriInfo uriInfo) throws RepositoryException {
+<span class="fc" id="L85">        final String path = toPath(pathList);</span>
+
+<span class="fc" id="L87">        LOGGER.trace(&quot;getting versions list for {}&quot;, path);</span>
+
+<span class="fc" id="L89">        final Variant bestPossibleResponse =</span>
+                request.selectVariant(POSSIBLE_RDF_VARIANTS);
+
+        try {
+<span class="fc" id="L93">            final FedoraResource resource =</span>
+                    nodeService.getObject(session, path);
+
+<span class="fc" id="L96">            return Response.ok(</span>
+                    new GraphStoreStreamingOutput(resource
+                            .getVersionDataset(new HttpGraphSubjects(
+                                    FedoraNodes.class, uriInfo, session)),
+                            bestPossibleResponse.getMediaType())).build();
+
+        } finally {
+<span class="pc" id="L103">            session.logout();</span>
+        }
+
+    }
+
+    /**
+     * Tag the current version of an object with the given label
+     *
+     * @param pathList
+     * @param versionLabel
+     * @return
+     * @throws RepositoryException
+     */
+    @POST
+    @Path(&quot;/{versionLabel}&quot;)
+    public Response addVersionLabel(@PathParam(&quot;path&quot;)
+    final List&lt;PathSegment&gt; pathList, @PathParam(&quot;versionLabel&quot;)
+    final String versionLabel) throws RepositoryException {
+
+<span class="fc" id="L122">        final String path = toPath(pathList);</span>
+        try {
+<span class="fc" id="L124">            final FedoraResource resource =</span>
+                    nodeService.getObject(session, path);
+<span class="fc" id="L126">            resource.addVersionLabel(versionLabel);</span>
+
+<span class="fc" id="L128">            return Response.noContent().build();</span>
+        } finally {
+<span class="pc" id="L130">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Retrieve the tagged version of an object
+     * @param pathList
+     * @param versionLabel
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @Path(&quot;/{versionLabel}&quot;)
+    @GET
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    public Dataset getVersion(@PathParam(&quot;path&quot;)
+    final List&lt;PathSegment&gt; pathList, @PathParam(&quot;versionLabel&quot;)
+    final String versionLabel, @Context
+    final UriInfo uriInfo) throws RepositoryException, IOException {
+<span class="fc" id="L150">        final String path = toPath(pathList);</span>
+<span class="fc" id="L151">        LOGGER.trace(&quot;getting version profile for {} at version {}&quot;, path,</span>
+                versionLabel);
+
+        try {
+<span class="fc" id="L155">            final FedoraResource resource =</span>
+                    nodeService.getObject(session, path, versionLabel);
+
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">            if (resource == null) {</span>
+<span class="nc" id="L159">                throw new WebApplicationException(status(NOT_FOUND).build());</span>
+            } else {
+
+<span class="fc" id="L162">                return resource.getPropertiesDataset(new HttpGraphSubjects(</span>
+                        FedoraNodes.class, uriInfo, session), 0, -1);
+            }
+
+        } finally {
+<span class="pc" id="L167">            session.logout();</span>
+        }
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

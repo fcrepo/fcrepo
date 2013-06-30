@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ViewHelpers.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-commons</a> &gt; <a href="index.html" class="el_package">org.fcrepo.responses</a> &gt; <span class="el_source">ViewHelpers.java</span></div><h1>ViewHelpers.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.responses;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Ordering;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.shared.PrefixMapping;
+import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Quad;
+import org.fcrepo.RdfLexicon;
+import org.fcrepo.api.rdf.QuadOrdering;
+import org.slf4j.Logger;
+
+import javax.ws.rs.core.UriInfo;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+public class ViewHelpers {
+
+<span class="fc" id="L42">    private final Logger LOGGER = getLogger(ViewHelpers.class);</span>
+
+<span class="fc" id="L44">    private static ViewHelpers instance = null;</span>
+
+<span class="fc" id="L46">    protected ViewHelpers() {</span>
+        // Exists only to defeat instantiation.
+<span class="fc" id="L48">    }</span>
+
+    public static ViewHelpers getInstance() {
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (instance == null) {</span>
+<span class="fc" id="L52">            instance = new ViewHelpers();</span>
+        }
+<span class="fc" id="L54">        return instance;</span>
+    }
+
+    /**
+     * Return an iterator of Quads that match the given subject and predicate
+     * 
+     * @param dataset
+     * @param subject
+     * @param predicate
+     * @return
+     */
+    public Iterator&lt;Quad&gt; getObjects(final DatasetGraph dataset,
+            final Node subject, final Resource predicate) {
+<span class="fc" id="L67">        return dataset.find(Node.ANY, subject, predicate.asNode(), Node.ANY);</span>
+    }
+
+    /**
+     * Get the canonical title of a subject from the graph
+     * 
+     * @param dataset
+     * @param subject
+     * @return
+     */
+    public String
+            getObjectTitle(final DatasetGraph dataset, final Node subject) {
+
+<span class="fc" id="L80">        Property[] properties =</span>
+                new Property[] {RdfLexicon.RDFS_LABEL, RdfLexicon.DC_TITLE};
+
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        for (Property p : properties) {</span>
+<span class="fc" id="L84">            final Iterator&lt;Quad&gt; objects = getObjects(dataset, subject, p);</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            if (objects.hasNext()) {</span>
+<span class="fc" id="L87">                return objects.next().getObject().getLiteralValue().toString();</span>
+            }
+        }
+
+<span class="fc" id="L91">        return subject.getURI();</span>
+    }
+
+    /**
+     * Get the string version of the object that matches the given subject and
+     * predicate
+     * 
+     * @param dataset
+     * @param subject
+     * @param predicate
+     * @return
+     */
+    public String getObjectsAsString(final DatasetGraph dataset,
+            final Node subject, final Resource predicate) {
+<span class="fc" id="L105">        final Iterator&lt;Quad&gt; iterator = getObjects(dataset, subject, predicate);</span>
+
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (iterator.hasNext()) {</span>
+<span class="fc" id="L108">            final Node object = iterator.next().getObject();</span>
+
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            if (object.isLiteral()) {</span>
+<span class="fc" id="L111">                final String s = object.getLiteralValue().toString();</span>
+
+<span class="fc bfc" id="L113" title="All 2 branches covered.">                if (s.isEmpty()) {</span>
+<span class="fc" id="L114">                    return &quot;&lt;empty&gt;&quot;;</span>
+                } else {
+<span class="fc" id="L116">                    return s;</span>
+                }
+            } else {
+<span class="fc" id="L119">                return &quot;&amp;lt;&lt;a href=\&quot;&quot; + object.getURI() + &quot;\&quot;&gt;&quot; +</span>
+                        object.getURI() + &quot;&lt;/a&gt;&amp;gt;&quot;;
+            }
+        } else {
+<span class="fc" id="L123">            return &quot;&quot;;</span>
+        }
+    }
+
+    /**
+     * Generate url -&gt; local name breadcrumbs for a given node's tree
+     * 
+     * @param uriInfo
+     * @param subject
+     * @return
+     */
+    public Map&lt;String, String&gt; getNodeBreadcrumbs(final UriInfo uriInfo,
+            final Node subject) {
+<span class="fc" id="L136">        final String topic = subject.getURI();</span>
+
+<span class="fc" id="L138">        LOGGER.trace(&quot;Generating breadcrumbs for subject {}&quot;, subject);</span>
+<span class="fc" id="L139">        final ImmutableMap.Builder&lt;String, String&gt; builder =</span>
+                ImmutableMap.builder();
+
+<span class="fc" id="L142">        final String baseUri = uriInfo.getBaseUri().toString();</span>
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (!topic.startsWith(baseUri)) {</span>
+<span class="fc" id="L145">            LOGGER.trace(&quot;Topic wasn't part of our base URI {}&quot;, baseUri);</span>
+<span class="fc" id="L146">            return builder.build();</span>
+        }
+
+<span class="fc" id="L149">        final String salientPath = topic.substring(baseUri.length());</span>
+
+<span class="fc" id="L151">        final String[] split = salientPath.split(&quot;/&quot;);</span>
+
+<span class="fc" id="L153">        StringBuilder cumulativePath = new StringBuilder();</span>
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        for (final String path : split) {</span>
+
+<span class="fc bfc" id="L157" title="All 2 branches covered.">            if (path.isEmpty()) {</span>
+<span class="fc" id="L158">                continue;</span>
+            }
+
+<span class="fc" id="L161">            cumulativePath.append(path);</span>
+
+<span class="fc" id="L163">            final String uri =</span>
+                    uriInfo.getBaseUriBuilder().path(cumulativePath.toString())
+                            .build().toString();
+
+<span class="fc" id="L167">            LOGGER.trace(&quot;Adding breadcrumb for path segment {} =&gt; {}&quot;, path,</span>
+                    uri);
+
+<span class="fc" id="L170">            builder.put(uri, path);</span>
+
+<span class="fc" id="L172">            cumulativePath.append(&quot;/&quot;);</span>
+
+        }
+
+<span class="fc" id="L176">        return builder.build();</span>
+
+    }
+
+    /**
+     * Sort a Iterator of Quads alphabetically by its subject, predicate, and
+     * object
+     * 
+     * @param model
+     * @param it
+     * @return
+     */
+    public List&lt;Quad&gt; getSortedTriples(final Model model,
+            final Iterator&lt;Quad&gt; it) {
+<span class="fc" id="L190">        return Ordering.from(new QuadOrdering(model)).sortedCopy(</span>
+                ImmutableList.copyOf(it));
+    }
+
+    /**
+     * Get the namespace prefix (or the namespace URI itself, if no prefix is
+     * available) from a prefix mapping
+     * 
+     * @param mapping
+     * @param namespace
+     * @return
+     */
+    public String getNamespacePrefix(final PrefixMapping mapping,
+            final String namespace) {
+<span class="fc" id="L204">        final String nsURIPrefix = mapping.getNsURIPrefix(namespace);</span>
+
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        if (nsURIPrefix == null) {</span>
+<span class="fc" id="L207">            return namespace;</span>
+        } else {
+<span class="fc" id="L209">            return nsURIPrefix + &quot;:&quot;;</span>
+        }
+    }
+
+    /**
+     * Get a prefix preamble appropriate for a SPARQL-UPDATE query from a prefix
+     * mapping object
+     * 
+     * @param mapping
+     * @return
+     */
+    public String getPrefixPreamble(final PrefixMapping mapping) {
+<span class="fc" id="L221">        StringBuilder sb = new StringBuilder();</span>
+
+<span class="fc" id="L223">        final Map&lt;String, String&gt; nsPrefixMap = mapping.getNsPrefixMap();</span>
+
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        for (Map.Entry&lt;String, String&gt; entry : nsPrefixMap.entrySet()) {</span>
+<span class="fc" id="L226">            sb.append(&quot;PREFIX &quot; + entry.getKey() + &quot;: &lt;&quot; + entry.getValue() +</span>
+                    &quot;&gt;\n&quot;);
+<span class="fc" id="L228">        }</span>
+
+<span class="fc" id="L230">        sb.append(&quot;\n&quot;);</span>
+<span class="fc" id="L231">        return sb.toString();</span>
+    }
+
+    /**
+     * Convert an RDF resource to an RDF node
+     *
+     * @param r
+     * @return
+     */
+    public Node asNode(final Resource r) {
+<span class="fc" id="L241">        return r.asNode();</span>
+    }
+
+    /**
+     * Yes, we really did create a method to increment
+     * a given int. You can't do math in a velocity template.
+     *
+     * @param i
+     * @return
+     */
+    public int addOne(final int i) {
+<span class="nc" id="L252">        return i + 1;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

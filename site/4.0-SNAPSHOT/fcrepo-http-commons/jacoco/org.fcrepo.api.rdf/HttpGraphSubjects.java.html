@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>HttpGraphSubjects.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-commons</a> &gt; <a href="index.html" class="el_package">org.fcrepo.api.rdf</a> &gt; <span class="el_source">HttpGraphSubjects.java</span></div><h1>HttpGraphSubjects.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.api.rdf;
+
+import static org.fcrepo.utils.FedoraJcrTypes.FCR_CONTENT;
+
+import java.net.URI;
+import java.util.Map;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.TxSession;
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableBiMap;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+
+public class HttpGraphSubjects implements GraphSubjects {
+
+<span class="fc" id="L44">    private static final Logger LOGGER = LoggerFactory</span>
+            .getLogger(HttpGraphSubjects.class);
+
+    private final UriBuilder nodesBuilder;
+
+    private final String basePath;
+
+    private final int pathIx;
+
+    private final Session session;
+
+    public HttpGraphSubjects(final Class&lt;?&gt; relativeTo, final UriInfo uris,
+<span class="fc" id="L56">            final Session session) {</span>
+<span class="fc" id="L57">        this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);</span>
+<span class="fc" id="L58">        String basePath = nodesBuilder.build(&quot;&quot;).toString();</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        if (!basePath.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L60">            basePath = basePath + &quot;/&quot;;</span>
+        }
+<span class="fc" id="L62">        this.basePath = basePath;</span>
+<span class="fc" id="L63">        this.pathIx = basePath.length() - 1;</span>
+<span class="fc" id="L64">        LOGGER.debug(&quot;Resolving graph subjects to a base URI of \&quot;{}\&quot;&quot;,</span>
+                basePath);
+<span class="fc" id="L66">        this.session = session;</span>
+<span class="fc" id="L67">    }</span>
+
+    public HttpGraphSubjects(final Class&lt;?&gt; relativeTo, final UriInfo uris) {
+<span class="nc" id="L70">        this(relativeTo, uris, null);</span>
+
+<span class="nc" id="L72">    }</span>
+
+    @Override
+    public Resource getGraphSubject(final String absPath)
+        throws RepositoryException {
+<span class="nc" id="L77">        final URI result =</span>
+                nodesBuilder.buildFromMap(getPathMap(session, absPath));
+<span class="nc" id="L79">        LOGGER.debug(&quot;Translated path {} into RDF subject {}&quot;, absPath, result);</span>
+<span class="nc" id="L80">        return ResourceFactory.createResource(result.toString());</span>
+    }
+
+    @Override
+    public Resource getGraphSubject(final Node node) throws RepositoryException {
+<span class="fc" id="L85">        final URI result = nodesBuilder.buildFromMap(getPathMap(session, node));</span>
+<span class="fc" id="L86">        LOGGER.debug(&quot;Translated node {} into RDF subject {}&quot;, node, result);</span>
+<span class="fc" id="L87">        return ResourceFactory.createResource(result.toString());</span>
+    }
+
+    @Override
+    public Node getNodeFromGraphSubject(final Session session,
+            final Resource subject) throws RepositoryException {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (!isFedoraGraphSubject(subject)) {</span>
+<span class="fc" id="L94">            LOGGER.debug(</span>
+                    &quot;RDF resource {} was not a URI resource with our expected basePath {}, aborting.&quot;,
+                    subject, basePath);
+<span class="fc" id="L97">            return null;</span>
+        }
+
+<span class="fc" id="L100">        final StringBuilder pathBuilder = new StringBuilder();</span>
+        final String absPath;
+<span class="fc" id="L102">        final String[] pathSegments =</span>
+                subject.getURI().substring(pathIx).split(&quot;/&quot;);
+
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for (String segment : pathSegments) {</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            if (segment.startsWith(&quot;tx:&quot;)) {</span>
+<span class="nc" id="L107">                String tx = segment.substring(&quot;tx:&quot;.length());</span>
+
+<span class="nc bnc" id="L109" title="All 4 branches missed.">                if (session instanceof TxSession &amp;&amp;</span>
+                        ((TxSession) session).getTxId().equals(tx)) {
+
+                } else {
+<span class="nc" id="L113">                    throw new RepositoryException(</span>
+                            &quot;Subject is not in this transaction&quot;);
+                }
+
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">            } else if (segment.startsWith(&quot;workspace:&quot;)) {</span>
+<span class="nc" id="L118">                String workspace = segment.substring(&quot;workspace:&quot;.length());</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                if (!session.getWorkspace().getName().equals(workspace)) {</span>
+<span class="nc" id="L120">                    throw new RepositoryException(</span>
+                            &quot;Subject is not in this workspace&quot;);
+                }
+<span class="nc" id="L123">            } else {</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">                if (!segment.isEmpty()) {</span>
+<span class="fc" id="L125">                    pathBuilder.append(&quot;/&quot;);</span>
+<span class="fc" id="L126">                    pathBuilder.append(segment);</span>
+                }
+            }
+        }
+
+<span class="fc" id="L131">        absPath = pathBuilder.toString();</span>
+
+        final Node node;
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (absPath.endsWith(FCR_CONTENT)) {</span>
+<span class="fc" id="L135">            node =</span>
+                    session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT,
+                            JcrConstants.JCR_CONTENT));
+<span class="fc" id="L138">            LOGGER.trace(</span>
+                    &quot;RDF resource {} is a fcr:content node, retrieving the corresponding JCR content node {}&quot;,
+                    subject, node);
+<span class="fc bfc" id="L141" title="All 2 branches covered.">        } else if (session.nodeExists(absPath)) {</span>
+<span class="fc" id="L142">            node = session.getNode(absPath);</span>
+<span class="fc" id="L143">            LOGGER.trace(&quot;RDF resource {} maps to JCR node {}&quot;, subject, node);</span>
+        } else {
+<span class="fc" id="L145">            node = null;</span>
+<span class="fc" id="L146">            LOGGER.debug(</span>
+                    &quot;RDF resource {} looks like a Fedora node, but when we checked was not in the repository&quot;,
+                    subject);
+        }
+
+<span class="fc" id="L151">        return node;</span>
+
+    }
+
+    @Override
+    public boolean isFedoraGraphSubject(final Resource subject) {
+<span class="pc bpc" id="L157" title="1 of 4 branches missed.">        return subject.isURIResource() &amp;&amp; subject.getURI().startsWith(basePath);</span>
+    }
+
+    private static Map&lt;String, String&gt; getPathMap(final Session session,
+            final Node node) throws RepositoryException {
+<span class="fc" id="L162">        return getPathMap(session, node.getPath());</span>
+    }
+
+    private static Map&lt;String, String&gt; getPathMap(final Session session,
+            final String absPath) throws RepositoryException {
+        // the path param value doesn't start with a slash
+<span class="fc" id="L168">        String path = absPath.substring(1);</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        if (path.endsWith(JcrConstants.JCR_CONTENT)) {</span>
+<span class="fc" id="L170">            path =</span>
+                    path.replace(JcrConstants.JCR_CONTENT,
+                            FedoraJcrTypes.FCR_CONTENT);
+        }
+
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        if (session != null) {</span>
+<span class="fc" id="L176">            final Workspace workspace = session.getWorkspace();</span>
+
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">            if (session instanceof TxSession) {</span>
+<span class="nc" id="L179">                path = &quot;tx:&quot; + ((TxSession) session).getTxId() + &quot;/&quot; + path;</span>
+
+<span class="pc bpc" id="L181" title="2 of 4 branches missed.">            } else if (workspace != null &amp;&amp;</span>
+                    !workspace.getName().equals(&quot;default&quot;)) {
+<span class="nc" id="L183">                path = &quot;workspace:&quot; + workspace.getName() + &quot;/&quot; + path;</span>
+            }
+        }
+
+<span class="fc" id="L187">        return ImmutableBiMap.of(&quot;path&quot;, path);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

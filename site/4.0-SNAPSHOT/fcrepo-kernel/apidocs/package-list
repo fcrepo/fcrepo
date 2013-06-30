@@ -1,6 +1,13 @@
 org.fcrepo
+org.fcrepo.exception
 org.fcrepo.identifiers
 org.fcrepo.observer
+org.fcrepo.rdf
+org.fcrepo.rdf.impl
 org.fcrepo.services
+org.fcrepo.services.functions
 org.fcrepo.spring
 org.fcrepo.utils
+org.fcrepo.utils.impl
+org.fcrepo.utils.infinispan
+org.modeshape.jcr
