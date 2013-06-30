@@ -23,10 +23,14 @@ import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
+import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -94,17 +98,25 @@ public class RdfSerializationUtils {
         httpHeaders.put("Cache-Control", of((Object) "must-revalidate"));
 
         logger.trace("Attempting to discover the last-modified date of the node for the resource in question...");
-        final String lastModifiedinXSDStyle =
-                getFirstValueForPredicate(rdf, getDatasetSubject(rdf),
-                        lastModifiedPredicate);
-        if (lastModifiedinXSDStyle != null) {
-            logger.debug("Found last-modified date: {}", lastModifiedinXSDStyle);
-            final String lastModified =
-                    RFC2822DATEFORMAT.print(ISODateTimeFormat.dateTime()
-                            .withOffsetParsed().parseDateTime(
-                                    lastModifiedinXSDStyle));
-            httpHeaders.put("Last-Modified", of((Object) lastModified));
+        final Iterator<Quad> iterator = rdf.asDatasetGraph().find(ANY, getDatasetSubject(rdf), lastModifiedPredicate, ANY);
+
+        if (!iterator.hasNext()) {
+            return;
         }
+
+        final Object dateObject = iterator.next().getObject().getLiteralValue();
+
+        if (!(dateObject instanceof XSDDateTime)) {
+            logger.debug("Found last-modified date, but it was" +
+                                 "not an XSDDateTime: {}", dateObject);
+
+            return;
+        }
+
+        final XSDDateTime lastModified = (XSDDateTime) dateObject;
+        logger.debug("Found last-modified date: {}", lastModified);
+        final String lastModifiedAsRdf2822 = RFC2822DATEFORMAT.print(new DateTime(lastModified.asCalendar()));
+        httpHeaders.put("Last-Modified", of((Object) lastModifiedAsRdf2822));
     }
 
     static Model unifyDatasetModel(final Dataset dataset) {
