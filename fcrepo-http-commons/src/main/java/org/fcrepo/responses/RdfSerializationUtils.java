@@ -23,8 +23,6 @@ import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -32,7 +30,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Node;
