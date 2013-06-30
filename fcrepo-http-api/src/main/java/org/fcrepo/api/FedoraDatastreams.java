@@ -67,6 +67,10 @@ import com.sun.jersey.multipart.BodyPart;
 import com.sun.jersey.multipart.BodyPartEntity;
 import com.sun.jersey.multipart.MultiPart;
 
+/**
+ * Controller for manipulating binary streams in larger batches
+ * by using multipart requests and responses
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:datastreams")

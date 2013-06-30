@@ -42,6 +42,9 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap;
 
+/**
+ * Transactions over REST
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:tx")

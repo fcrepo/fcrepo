@@ -77,6 +77,9 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * CRUD operations on Fedora Nodes
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}")
@@ -87,6 +90,18 @@ public class FedoraNodes extends AbstractResource {
 
     private static final Logger logger = getLogger(FedoraNodes.class);
 
+    /**
+     * Retrieve the node profile
+     *
+     * @param pathList
+     * @param offset with limit, control the pagination window of details for child nodes
+     * @param limit  with offset, control the pagination window of details for child nodes
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     */
     @GET
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})

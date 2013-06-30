@@ -27,6 +27,9 @@ import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
+/**
+ * Provide a quasi-useful stacktrace when a generic RepositoryException is caught
+ */
 @Provider
 public class RepositoryExceptionMapper implements
         ExceptionMapper<RepositoryException> {

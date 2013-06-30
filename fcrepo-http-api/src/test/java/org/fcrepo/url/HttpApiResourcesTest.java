@@ -64,7 +64,7 @@ public class HttpApiResourcesTest {
     private SerializerUtil mockSerializers;
 
     @Before
-    public void setUp() {
+    public void setUp() throws NoSuchFieldException {
         testObj = new HttpApiResources();
         mockNode = mock(Node.class);
         mockResource = new FedoraResource(mockNode);
@@ -73,7 +73,7 @@ public class HttpApiResourcesTest {
         mockSubjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
 
         mockSerializers = mock(SerializerUtil.class);
-        testObj.setSerializers(mockSerializers);
+        TestHelpers.setField(testObj, "serializers", mockSerializers);
     }
 
     @Test

@@ -50,6 +50,9 @@ import org.springframework.stereotype.Component;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * Inject our HTTP API methods into the object graphs
+ */
 @Component
 public class HttpApiResources implements UriAwareResourceModelFactory {
 
@@ -133,10 +136,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         model.add(s, HAS_NAMESPACE_SERVICE, model.createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryNamespaces.class)
                 .build().toASCIIString()));
-    }
-
-    public void setSerializers(final SerializerUtil serializerUtil) {
-        this.serializers = serializerUtil;
     }
 
 }

@@ -30,6 +30,9 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * Inject our RSS event feed links for the repository graph
+ */
 @Component
 public class RssResources implements UriAwareResourceModelFactory {
 

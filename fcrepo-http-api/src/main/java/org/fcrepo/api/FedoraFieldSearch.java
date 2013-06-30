@@ -62,6 +62,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
+ * Basic administrative search across the repository
+ *
  * @author Frank Asseg
  * @author ajs6f
  */
@@ -77,6 +79,20 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     private static final Logger LOGGER = getLogger(FedoraFieldSearch.class);
 
+    /**
+     * A stub method so we can return a text/html representation using
+     * the right template.
+     *
+     * {@link #searchSubmitHtml(String, long, int, javax.ws.rs.core.Request, javax.ws.rs.core.UriInfo)}
+     *
+     * @param terms
+     * @param offset
+     * @param limit
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Timed
     @HtmlTemplate("search:results")
@@ -93,6 +109,19 @@ public class FedoraFieldSearch extends AbstractResource implements
         return getSearchDataset(terms, offset, limit, uriInfo);
     }
 
+    /**
+     * Execute a basic full-text search across the repository
+     *
+     * GET /fcr:search?q=term
+     *
+     * @param terms
+     * @param offset
+     * @param limit
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Timed
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})

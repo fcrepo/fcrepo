@@ -28,6 +28,9 @@ import javax.jcr.Session;
 import org.fcrepo.FedoraObject;
 import org.springframework.stereotype.Component;
 
+/**
+ * Serialize a FedoraObject using the modeshape-provided JCR/XML format
+ */
 @Component
 public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
 

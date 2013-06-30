@@ -49,6 +49,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 
 /**
+ * Run a fixity check on a path
+ *
  * @author ajs6f
  * @date Jun 12, 2013
  */
@@ -60,6 +62,17 @@ public class FedoraFixity extends AbstractResource {
     @InjectedSession
     protected Session session;
 
+    /**
+     * Get the results of a fixity check for a path
+     *
+     * GET /path/to/some/datastream/fcr:fixity
+     *
+     * @param pathList
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Timed
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,

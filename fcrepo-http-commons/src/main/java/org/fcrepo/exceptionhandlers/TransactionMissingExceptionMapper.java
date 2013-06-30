@@ -22,6 +22,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+/**
+ * If a transaction is requested that has been closed (or never existed),
+ * just return an HTTP 410 Gone.
+ */
 @Provider
 public class TransactionMissingExceptionMapper implements
         ExceptionMapper<TransactionMissingException> {

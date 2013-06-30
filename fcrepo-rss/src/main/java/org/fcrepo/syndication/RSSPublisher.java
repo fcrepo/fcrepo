@@ -49,6 +49,10 @@ import com.sun.syndication.feed.synd.SyndFeedImpl;
 import com.sun.syndication.io.FeedException;
 import com.sun.syndication.io.SyndFeedOutput;
 
+/**
+ * Listen to the event bus and record the most recent 10
+ * events, and provide them as an RSS feed.
+ */
 @Component
 @Path("/fcr:rss")
 public class RSSPublisher extends AbstractResource {

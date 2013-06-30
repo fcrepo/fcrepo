@@ -54,6 +54,11 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.Subscribe;
 
+/**
+ * Webhooks callbacks
+ *
+ * @todo disentangle the JAX-RS and webhooks service
+ */
 @Path("/fcr:webhooks")
 @Scope("prototype")
 @Component

@@ -60,6 +60,10 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
+/**
+ * Content controller for adding, reading, and manipulating
+ * binary streams
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:content")

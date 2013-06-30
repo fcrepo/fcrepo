@@ -30,6 +30,17 @@ import com.hp.hpl.jena.rdf.model.Model;
  */
 public interface UriAwareResourceModelFactory {
 
+    /**
+     * Given a resource, the UriInfo and a way to generate graph subjects,
+     * create a model with triples to inject into an RDF response for the
+     * resource (e.g. to add HATEOAS links)
+     *
+     * @param resource
+     * @param uriInfo
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
     Model createModelForResource(final FedoraResource resource,
             final UriInfo uriInfo, GraphSubjects graphSubjects)
         throws RepositoryException;

@@ -18,6 +18,10 @@ package org.fcrepo.responses;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * JAX-RS provider for taking a dataset graph and
+ * returning some nice looking HTML
+ */
 @Component
 public class HtmlProvider extends BaseHtmlProvider {
 }

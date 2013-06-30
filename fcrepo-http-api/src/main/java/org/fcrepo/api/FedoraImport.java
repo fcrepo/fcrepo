@@ -46,6 +46,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
+ * Import serialized objects at a given endpoint
+ *
  * @author ajs6f
  * @author cbeer
  */
@@ -62,6 +64,21 @@ public class FedoraImport extends AbstractResource {
 
     private final Logger logger = getLogger(this.getClass());
 
+    /**
+     * Deserialize a serialized object at the current path
+     *
+     * POST /fcr:import?format=jcr/xml
+     * (with a JCR/XML payload)
+     *
+     * @param pathList
+     * @param format
+     * @param stream
+     * @return
+     * @throws IOException
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     * @throws URISyntaxException
+     */
     @POST
     public Response importObject(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("format")

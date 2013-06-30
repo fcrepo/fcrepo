@@ -29,6 +29,9 @@ import org.springframework.stereotype.Component;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
+/**
+ * Register webhooks resource URIs for the root object
+ */
 @Component
 public class WebhooksResources implements UriAwareResourceModelFactory {
 

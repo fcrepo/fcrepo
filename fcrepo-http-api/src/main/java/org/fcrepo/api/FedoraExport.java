@@ -43,6 +43,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+/**
+ * Serialization for nodes
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:export")
@@ -56,6 +59,16 @@ public class FedoraExport extends AbstractResource {
 
     private final Logger logger = getLogger(this.getClass());
 
+    /**
+     * Export an object with the given format, e.g.:
+     *
+     * GET /path/to/object/fcr:export?format=jcr/xml
+     * -> the node as JCR/XML
+     *
+     * @param pathList
+     * @param format
+     * @return
+     */
     @GET
     public Response exportObject(@PathParam("path")
     final List<PathSegment> pathList, @QueryParam("format")

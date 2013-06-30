@@ -27,6 +27,9 @@ import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
+/**
+ * Translate PathNotFound exceptions into HTTP 404 errors
+ */
 @Provider
 public class PathNotFoundExceptionMapper implements
         ExceptionMapper<PathNotFoundException> {

@@ -52,6 +52,10 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 
 /**
+ * A Sitemap implementation for Fedora objects
+ *
+ * @todo should this be fcr:sitemap?
+ *
  * @author ajs6f
  * @author cbeer
  */
@@ -67,6 +71,14 @@ public class FedoraSitemap extends AbstractResource {
 
     public static final long entriesPerPage = 50000;
 
+    /**
+     * Get the sitemap index for the repository
+     *
+     * GET /sitemap
+     *
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Timed
     @Produces(TEXT_XML)
@@ -94,6 +106,13 @@ public class FedoraSitemap extends AbstractResource {
         }
     }
 
+    /**
+     * Get the sitemap at a given page
+     *
+     * @param page
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Path("/{page}")
     @Timed

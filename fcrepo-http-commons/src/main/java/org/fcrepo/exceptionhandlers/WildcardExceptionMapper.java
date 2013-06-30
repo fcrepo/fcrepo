@@ -28,6 +28,9 @@ import javax.ws.rs.ext.Provider;
 import org.fcrepo.exception.TransactionMissingException;
 import org.slf4j.Logger;
 
+/**
+ * Catch all the exceptions!
+ */
 @Provider
 public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 

@@ -20,6 +20,9 @@ import javax.ws.rs.ext.Provider;
 
 import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
 
+/**
+ * Provide a metrics registry for Jersey instrumenting
+ */
 @Provider
 public class MetricsProvider extends InstrumentedResourceMethodDispatchAdapter {
 

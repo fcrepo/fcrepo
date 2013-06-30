@@ -19,6 +19,9 @@ import com.hp.hpl.jena.rdf.model.Property;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 
+/**
+ * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use
+ */
 public final class RdfLexicon {
 
     public static final String INTERNAL_NAMESPACE = "info:fedora/fedora-system:def/internal#";

@@ -26,6 +26,9 @@ import org.modeshape.jcr.value.BinaryValue;
 
 import com.google.common.base.Function;
 
+/**
+ * Get the internal Modeshape BinaryKey for a binary property
+ */
 public class GetBinaryKey implements Function<Property, BinaryKey> {
 
     @Override

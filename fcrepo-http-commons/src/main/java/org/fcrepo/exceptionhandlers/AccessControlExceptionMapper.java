@@ -27,6 +27,9 @@ import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
+/**
+ * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ */
 @Provider
 public class AccessControlExceptionMapper implements
         ExceptionMapper<AccessControlException> {

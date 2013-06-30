@@ -114,6 +114,11 @@ public abstract class AbstractResource {
      */
     protected static final JcrTools jcrTools = new JcrTools(true);
 
+    /**
+     * Initialize our resource
+     * @todo is this actually needed?
+     * @throws RepositoryException
+     */
     @PostConstruct
     public void initialize() throws RepositoryException {
 

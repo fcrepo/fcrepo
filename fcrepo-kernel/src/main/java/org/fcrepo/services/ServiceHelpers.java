@@ -38,6 +38,9 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import com.google.common.base.Function;
 import org.springframework.stereotype.Component;
 
+/**
+ * Uncategorized helper methods
+ */
 @Component
 public abstract class ServiceHelpers {
 

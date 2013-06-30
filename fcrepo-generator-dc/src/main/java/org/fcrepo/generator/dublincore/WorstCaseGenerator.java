@@ -26,12 +26,16 @@ import javax.jcr.Node;
 
 import org.slf4j.Logger;
 
+/**
+ * If all other DC generators fail, just publish an empty XML document
+ */
 public class WorstCaseGenerator implements DCGenerator {
 
     private static final Logger logger = getLogger(WorstCaseGenerator.class);
 
     @Override
     public InputStream getStream(final Node node) {
+        logger.debug("Writing an empty oai dc document");
         final String str =
                 "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" ></oai_dc:dc>";
 

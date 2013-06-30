@@ -30,6 +30,9 @@ import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * Auto-wire some helpful services for the FedoraObjectSerializer
+ */
 public abstract class BaseFedoraObjectSerializer implements
         FedoraObjectSerializer {
 

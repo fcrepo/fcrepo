@@ -45,6 +45,10 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
+/**
+ * Utility endpoint for running SPARQL Update queries on any object
+ * in the repository
+ */
 @Component
 @Scope("prototype")
 @Path("/fcr:properties")

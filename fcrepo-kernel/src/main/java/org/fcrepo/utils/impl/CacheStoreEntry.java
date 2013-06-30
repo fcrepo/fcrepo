@@ -35,7 +35,9 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.slf4j.Logger;
 
-
+/**
+ * An entry in a specific BinaryStore
+ */
 public class CacheStoreEntry extends LowLevelCacheEntry {
 
     private static final Logger LOGGER = getLogger(CacheStoreEntry.class);

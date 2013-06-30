@@ -51,6 +51,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
+ * Utility for creating new objects at automatically
+ * generated path
+ *
  * @author ajs6f
  * @author cbeer
  */

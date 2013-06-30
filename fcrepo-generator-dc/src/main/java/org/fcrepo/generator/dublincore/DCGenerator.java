@@ -20,8 +20,17 @@ import java.io.InputStream;
 
 import javax.jcr.Node;
 
+/**
+ * Interface for retrieving a Dublin Core XML output
+ * from a node
+ */
 public interface DCGenerator {
 
+    /**
+     * Get the Dublin Core content as an InputStream
+     * @param node node to retrieve a Dublin Core serialization for
+     * @return
+     */
     InputStream getStream(final Node node);
 
 }

@@ -37,6 +37,10 @@ import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * Helper for writing Datasets out in a variety of serialization formats
+ * with cache headers.
+ */
 @Provider
 @Component
 public class RdfProvider implements MessageBodyWriter<Dataset> {

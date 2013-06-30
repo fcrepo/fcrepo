@@ -27,6 +27,10 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.springframework.stereotype.Component;
 
+/**
+ * Interface for serializing/deserializing a FedoraObject
+ * to some transportable format
+ */
 @Component
 public interface FedoraObjectSerializer {
 

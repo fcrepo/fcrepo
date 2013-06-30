@@ -57,6 +57,11 @@ import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * Endpoint for retrieving previous versions of nodes
+ *
+ * @todo note that the versioning mechanics are not fully wired up yet
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:versions")

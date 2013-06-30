@@ -25,6 +25,9 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * The runtime-injected JCR Session
+ */
 @Target({FIELD, PARAMETER, METHOD})
 @Retention(RUNTIME)
 @Documented

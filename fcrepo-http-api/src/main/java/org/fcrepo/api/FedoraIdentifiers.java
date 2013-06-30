@@ -74,6 +74,10 @@ public class FedoraIdentifiers extends AbstractResource {
     protected Session session;
 
     /**
+     * Mint identifiers (without creating the objects)
+     *
+     * POST /path/to/mint/from/fcr:pid?numPids=15
+     *
      * @param numPids number of PIDs to return
      * @return HTTP 200 with block of PIDs
      */

@@ -29,6 +29,9 @@ import org.slf4j.Logger;
 
 import com.sun.jersey.spi.inject.Injectable;
 
+/**
+ * Scary JAX-RS magic to inject a JCR Session as a field for every request
+ */
 public class InjectableSession implements Injectable<Session> {
 
     private SessionFactory sessionFactory;
@@ -39,6 +42,12 @@ public class InjectableSession implements Injectable<Session> {
 
     private static final Logger logger = getLogger(InjectableSession.class);
 
+    /**
+     * Construct our request-context and authorization-context aware session factory
+     * @param sessionFactory
+     * @param reqContext
+     * @param request
+     */
     public InjectableSession(final SessionFactory sessionFactory,
             final SecurityContext reqContext, final HttpServletRequest request) {
         checkNotNull(sessionFactory, "SessionFactory cannot be null!");

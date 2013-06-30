@@ -37,6 +37,9 @@ import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * General view helpers for rendering HTML responses
+ */
 public class ViewHelpers {
 
     private final Logger LOGGER = getLogger(ViewHelpers.class);
@@ -47,6 +50,10 @@ public class ViewHelpers {
         // Exists only to defeat instantiation.
     }
 
+    /**
+     * ViewHelpers are singletons. Initialize or return the existing object
+     * @return
+     */
     public static ViewHelpers getInstance() {
         if (instance == null) {
             instance = new ViewHelpers();

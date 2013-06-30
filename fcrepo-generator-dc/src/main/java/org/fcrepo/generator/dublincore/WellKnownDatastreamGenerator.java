@@ -28,6 +28,10 @@ import javax.jcr.RepositoryException;
 
 import org.slf4j.Logger;
 
+/**
+ * Retrieve a Dublin Core document from a well-known datastream
+ * ( e.g. "DC")
+ */
 public class WellKnownDatastreamGenerator implements DCGenerator {
 
     private static final Logger logger =
@@ -62,6 +66,10 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
         }
     }
 
+    /**
+     * Set the well-known datastream to retrieve content from
+     * @param wellKnownDsid
+     */
     public void setWellKnownDsid(final String wellKnownDsid) {
         this.wellKnownDsid = wellKnownDsid;
     }

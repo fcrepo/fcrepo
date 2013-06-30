@@ -30,6 +30,10 @@ import javax.jcr.Value;
 
 import org.slf4j.Logger;
 
+/**
+ * Derive a Dublin Core document from the JCR properties within
+ * the DC namespace.
+ */
 public class JcrPropertiesGenerator implements DCGenerator {
 
     private static final Logger logger =

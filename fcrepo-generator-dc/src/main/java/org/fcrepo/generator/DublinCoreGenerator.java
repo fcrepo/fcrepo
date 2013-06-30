@@ -40,6 +40,9 @@ import org.fcrepo.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+/**
+ * Dublin Core output controller
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/oai:dc")
@@ -51,6 +54,12 @@ public class DublinCoreGenerator extends AbstractResource {
     @InjectedSession
     protected Session session;
 
+    /**
+     * Get Dublin Core XML for a node
+     * @param pathList
+     * @return
+     * @throws RepositoryException
+     */
     @GET
     @Produces(TEXT_XML)
     public Response getObjectAsDublinCore(
