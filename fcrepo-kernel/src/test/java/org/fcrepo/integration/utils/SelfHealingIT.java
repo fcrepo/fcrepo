@@ -53,11 +53,7 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
+
 public class SelfHealingIT {
 
     protected Logger logger;
@@ -70,17 +66,11 @@ public class SelfHealingIT {
 
     private LowLevelStorageService lowLevelService;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setRepository() throws RepositoryException {
 
@@ -137,9 +127,6 @@ public class SelfHealingIT {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testEddiesMagicSelfHealingRepository() throws Exception {
         final Session session = repo.login();

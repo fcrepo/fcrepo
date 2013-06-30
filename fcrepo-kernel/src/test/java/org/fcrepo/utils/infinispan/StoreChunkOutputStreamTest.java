@@ -31,11 +31,6 @@ import org.infinispan.loaders.CacheStore;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date May 9, 2013
- */
 public class StoreChunkOutputStreamTest {
 
     private static final int DATA_SIZE = 1024;
@@ -49,9 +44,6 @@ public class StoreChunkOutputStreamTest {
     private String mockKey = "key-to-a-mock-blob";
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() {
         mockStore = mock(CacheStore.class);
@@ -59,9 +51,6 @@ public class StoreChunkOutputStreamTest {
         testObj = new StoreChunkOutputStream(mockStore, mockKey);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testWritingMultipleChunks()
         throws IOException, CacheLoaderException {
@@ -74,9 +63,6 @@ public class StoreChunkOutputStreamTest {
         assertEquals(2, testObj.getNumberChunks());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testWritingMultipleChunksOnVersionedKey()
         throws IOException, CacheLoaderException {

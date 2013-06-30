@@ -91,9 +91,6 @@ public class FedoraObject extends FedoraResource {
         return node.getName();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static boolean hasMixin(Node node) throws RepositoryException {
         return isFedoraObject.apply(node);
     }

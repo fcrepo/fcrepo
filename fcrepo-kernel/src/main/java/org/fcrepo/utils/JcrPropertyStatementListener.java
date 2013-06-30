@@ -37,11 +37,7 @@ import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date May 3, 2013
- */
+
 public class JcrPropertyStatementListener extends StatementListener {
 
     private Problems problems;
@@ -53,9 +49,6 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final Session session;
 
-    /**
-     * @todo Add Documentation.
-     */
     public JcrPropertyStatementListener(final GraphSubjects subjects,
                                         final Session session)
         throws RepositoryException {

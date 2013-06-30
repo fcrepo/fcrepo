@@ -45,11 +45,7 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date May 3, 2013
- */
+
 public class TiffPolicyStorageIT {
 
     protected Logger logger;
@@ -66,17 +62,11 @@ public class TiffPolicyStorageIT {
 
     GetBinaryKey getBinaryKey = new GetBinaryKey();
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setRepository() throws RepositoryException {
 
@@ -99,9 +89,6 @@ public class TiffPolicyStorageIT {
         lowLevelService.setRepository(repo);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     @Ignore
     public void testPolicyDrivenStorage() throws Exception {

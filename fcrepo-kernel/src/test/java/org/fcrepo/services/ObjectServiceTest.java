@@ -34,11 +34,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date Apr 1, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
@@ -48,9 +43,6 @@ public class ObjectServiceTest implements FedoraJcrTypes {
 
     private Node mockRoot;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws RepositoryException {
         mockSession = mock(Session.class);
@@ -58,16 +50,10 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         when(mockSession.getRootNode()).thenReturn(mockRoot);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @After
     public void tearDown() {
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testCreateObject() throws Exception {
         final Node mockNode = mock(Node.class);
@@ -84,9 +70,6 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         assertEquals(mockNode, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetObject() throws RepositoryException {
         final Session mockSession = mock(Session.class);
@@ -103,9 +86,6 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         verify(mockSession).getNode(testPath);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetObjectNode() throws RepositoryException {
         final Session mockSession = mock(Session.class);

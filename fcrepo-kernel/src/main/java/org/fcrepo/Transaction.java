@@ -30,9 +30,6 @@ public class Transaction {
 
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo4.tx.timeout";
 
-    /**
-     * @todo Add Documentation.
-     */
     public static enum State {
         DIRTY, NEW, COMMITED, ROLLED_BACK;
     }
@@ -54,9 +51,6 @@ public class Transaction {
         this.expires = null;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public Transaction(Session session) {
         super();
         this.session = session;
@@ -66,31 +60,19 @@ public class Transaction {
         this.updateExpiryDate();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public Session getSession() {
         updateExpiryDate();
         return TxAwareSession.newInstance(session, id);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public Date getCreated() {
         return created;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public String getId() {
         return id;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public State getState() throws RepositoryException {
         if (this.session != null && this.session.hasPendingChanges()) {
             return State.DIRTY;
@@ -98,16 +80,10 @@ public class Transaction {
         return state;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public Date getExpires() {
         return expires.getTime();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public void commit() throws RepositoryException {
         this.session.save();
         this.state = State.COMMITED;

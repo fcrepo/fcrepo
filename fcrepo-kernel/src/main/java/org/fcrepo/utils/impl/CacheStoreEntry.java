@@ -54,9 +54,6 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         this.cacheName = cacheName;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public CacheStore getLowLevelStore() {
         return store;
     }
@@ -167,9 +164,6 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public int hashCode() {
         return hash(store, key);

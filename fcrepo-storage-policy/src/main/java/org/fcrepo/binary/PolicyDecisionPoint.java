@@ -36,7 +36,7 @@ public class PolicyDecisionPoint {
     private List<Policy> policies;
 
     /**
-     * @todo Add Documentation.
+     * Initialize the policy storage machinery
      */
     public PolicyDecisionPoint() {
         logger.debug("Initializing binary PolicyDecisionPoint");
@@ -70,9 +70,6 @@ public class PolicyDecisionPoint {
         return null;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public void setPolicies(final List<Policy> policies) {
         logger.debug("Adding policies to binary PolicyDecisionPoint: {}",
                 policies.toString());

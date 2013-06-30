@@ -26,11 +26,6 @@ import javax.jcr.Session;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date May 21, 2013
- */
 public class NamespaceChangedStatementListener extends StatementListener {
 
     private static final Logger LOGGER =
@@ -38,17 +33,11 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
     private final NamespaceRegistry namespaceRegistry;
 
-    /**
-     * @todo Add Documentation.
-     */
     public NamespaceChangedStatementListener(final Session session)
         throws RepositoryException {
         this.namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public void addedStatement(Statement s) {
 
@@ -69,9 +58,6 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public void removedStatement(Statement s) {
 

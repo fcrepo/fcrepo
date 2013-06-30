@@ -31,7 +31,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 import org.slf4j.Logger;
 
 /**
- * @todo Add Documentation.
+ * Tools for replacing, appending and deleting JCR node properties
  * @author Chris Beer
  * @date May 10, 2013
  */

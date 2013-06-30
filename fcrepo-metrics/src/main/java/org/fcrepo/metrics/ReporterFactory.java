@@ -31,7 +31,7 @@ import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 
 /**
- * @todo Add Documentation.
+ * Helpers for making the upstream metrics reporters play nice with Springg
  * @author cbeer
  * @date Mar 22, 2013
  */
@@ -39,9 +39,6 @@ public class ReporterFactory {
 
     private static final Logger logger = getLogger(ReporterFactory.class);
 
-    /**
-     * @todo Add Documentation.
-     */
     public GraphiteReporter getGraphiteReporter(final String prefix,
             final Graphite g) {
         final GraphiteReporter reporter =
@@ -73,9 +70,6 @@ public class ReporterFactory {
         return reporter;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static ReporterFactory buildDefaultReporterFactory() {
         return new ReporterFactory();
     }

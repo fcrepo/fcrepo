@@ -57,11 +57,6 @@ import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Predicate;
 
-/**
- * @todo Add Documentation.
- Benjamin Armintor * @author
- * @date May 13, 2013
- */
 public class FedoraTypesUtilsTest {
 
     // unfortunately, we need to be able to cast to two interfaces to perform
@@ -69,9 +64,6 @@ public class FedoraTypesUtilsTest {
     static interface PropertyMock extends Property, Namespaced {
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testIsMultipleValuedProperty() throws RepositoryException {
         final Property mockYes = mock(Property.class);
@@ -90,9 +82,6 @@ public class FedoraTypesUtilsTest {
         assertEquals(false, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetValueFactory() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -105,18 +94,12 @@ public class FedoraTypesUtilsTest {
         assertEquals(mockVF, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetPredicateForProperty() {
         final PropertyMock mockProp = mock(PropertyMock.class);
         getPredicateForProperty.apply(mockProp);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetBinary() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -135,9 +118,6 @@ public class FedoraTypesUtilsTest {
         verify(mockJVF).createBinary(mockInput, mockHint);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetDefinitionForPropertyName() throws RepositoryException {
         final Node mockNode = mock(Node.class);
@@ -165,9 +145,6 @@ public class FedoraTypesUtilsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testConvertDateToXSDString() {
         final String expected = "2006-11-13T09:40:55.001Z";
@@ -178,9 +155,6 @@ public class FedoraTypesUtilsTest {
                                                                        .getTimeInMillis()));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetBaseVersionForNode() throws RepositoryException {
         final Version mockVersion = mock(Version.class);
@@ -202,9 +176,6 @@ public class FedoraTypesUtilsTest {
         assertEquals(mockVersion, versionHistory);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetVersionHistoryForNode() throws RepositoryException {
         final VersionHistory mockVersionHistory = mock(VersionHistory.class);
@@ -227,9 +198,6 @@ public class FedoraTypesUtilsTest {
         assertEquals(mockVersionHistory, versionHistory);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetVersionHistoryForSessionAndPath()
         throws RepositoryException {
@@ -250,9 +218,6 @@ public class FedoraTypesUtilsTest {
         assertEquals(mockVersionHistory, versionHistory);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testInternalNode() throws RepositoryException {
         Node mockNode = mock(Node.class);
@@ -265,9 +230,6 @@ public class FedoraTypesUtilsTest {
                    FedoraTypesUtils.isInternalNode.apply(mockNode));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testNonInternalNode() throws RepositoryException {
         Node mockNode = mock(Node.class);
@@ -281,9 +243,6 @@ public class FedoraTypesUtilsTest {
                     FedoraTypesUtils.isInternalNode.apply(mockNode));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetObjectSize() throws RepositoryException {
 
@@ -326,9 +285,6 @@ public class FedoraTypesUtilsTest {
         verify(mockSession, never()).save();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetObjectCount() throws RepositoryException {
         Repository mockRepository = mock(Repository.class);

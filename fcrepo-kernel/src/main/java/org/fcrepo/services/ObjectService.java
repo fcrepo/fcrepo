@@ -72,9 +72,6 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         return new FedoraObject(getObjectNode(session, path));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static ObjectService get(Repository repository) {
         ObjectService o = new ObjectService();
         o.setRepository(repository);

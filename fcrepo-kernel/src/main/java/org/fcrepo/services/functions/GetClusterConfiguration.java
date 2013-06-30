@@ -34,7 +34,8 @@ import org.slf4j.Logger;
 import com.google.common.base.Function;
 
 /**
- * @todo Add Documentation.
+ * Extract the Infinispan cluster configuration and state
+ * from a running Modeshape repository
  * @author Gregory Jansen
  * @date Apr 26, 2013
  */

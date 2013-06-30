@@ -28,11 +28,6 @@ import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Apr 25, 2013
- */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class PolicyDecisionPointDemoIT extends AbstractIT {
 
@@ -45,9 +40,6 @@ public class PolicyDecisionPointDemoIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldDemonstratePolicyDecisionPoints() throws Exception {
 

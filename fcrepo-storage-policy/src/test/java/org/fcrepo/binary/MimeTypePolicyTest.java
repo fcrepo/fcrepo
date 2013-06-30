@@ -30,16 +30,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
-/**
- * @todo Add Documentation.
- * @author cbeer
- * @date Apr 25, 2013
- */
 public class MimeTypePolicyTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldEvaluatePolicyAndReturnHint() throws Exception {
         String hint = "store-id";
@@ -63,9 +55,6 @@ public class MimeTypePolicyTest {
         assertThat(receivedHint, is(hint));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldEvaluatePolicyAndReturnNoHint() throws Exception {
         String hint = "store-id";
@@ -88,9 +77,6 @@ public class MimeTypePolicyTest {
         assertNull(receivedHint);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldEvaluatePolicyAndReturnNoHintOnException()
         throws Exception {

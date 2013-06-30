@@ -40,11 +40,7 @@ import org.junit.Test;
 import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.test.context.ContextConfiguration;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
+
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class DatastreamServiceIT extends AbstractIT {
 
@@ -57,9 +53,6 @@ public class DatastreamServiceIT extends AbstractIT {
     @Inject
     DatastreamService datastreamService;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
@@ -78,9 +71,6 @@ public class DatastreamServiceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
@@ -102,9 +92,6 @@ public class DatastreamServiceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testChecksumBlobs() throws Exception {
 

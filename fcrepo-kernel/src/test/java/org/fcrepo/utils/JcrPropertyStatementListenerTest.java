@@ -40,12 +40,6 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date May 13, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({JcrRdfTools.class, NodePropertiesTools.class})
@@ -65,9 +59,6 @@ public class JcrPropertyStatementListenerTest {
 
     private Property mockPredicate;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws RepositoryException {
         mockNode = mock(Node.class);
@@ -82,9 +73,6 @@ public class JcrPropertyStatementListenerTest {
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testAddedIrrelevantStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -98,9 +86,6 @@ public class JcrPropertyStatementListenerTest {
         assertEquals(0, testObj.getProblems().size());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testAddedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -120,9 +105,6 @@ public class JcrPropertyStatementListenerTest {
         assertEquals(1, testObj.getProblems().size());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testAddedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -146,9 +128,6 @@ public class JcrPropertyStatementListenerTest {
         assertEquals(0, testObj.getProblems().size());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test(expected = RuntimeException.class)
     public void testAddedStatementRepositoryException() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -166,9 +145,6 @@ public class JcrPropertyStatementListenerTest {
         testObj.addedStatement(mockStatement);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testRemovedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -196,9 +172,6 @@ public class JcrPropertyStatementListenerTest {
     }
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test(expected = RuntimeException.class)
     public void testRemovedStatementRepositoryException() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -216,9 +189,6 @@ public class JcrPropertyStatementListenerTest {
         testObj.removedStatement(mockStatement);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testRemovedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
@@ -245,9 +215,6 @@ public class JcrPropertyStatementListenerTest {
         assertEquals(1, testObj.getProblems().size());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testRemovedIrrelevantStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);

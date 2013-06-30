@@ -30,11 +30,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.modeshape.jcr.api.JcrConstants;
 
-/**
- * @todo Add Documentation.
- * @author cbeer
- * @date Apr 25, 2013
- */
+
 public class PolicyDecisionPointTest {
 
     static PolicyDecisionPoint pt;
@@ -43,9 +39,6 @@ public class PolicyDecisionPointTest {
 
     static private String tiffHint;
 
-    /**
-     * @todo Add Documentation.
-     */
     @BeforeClass
     public static void setupPdp() {
         pt = new PolicyDecisionPoint();
@@ -61,9 +54,6 @@ public class PolicyDecisionPointTest {
         pt.addPolicy(tiffPolicy);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testDummyNode() throws Exception {
 
@@ -84,9 +74,6 @@ public class PolicyDecisionPointTest {
         assertThat(receivedHint, is(dummyHint));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testTiffNode() throws Exception {
 
@@ -107,9 +94,6 @@ public class PolicyDecisionPointTest {
         assertThat(receivedHint, is(tiffHint));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testOtherNode() throws Exception {
 

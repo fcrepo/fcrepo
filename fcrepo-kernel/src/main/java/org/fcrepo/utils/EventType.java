@@ -25,9 +25,6 @@ public enum EventType {
     NODE_ADDED, NODE_REMOVED, PROPERTY_ADDED, PROPERTY_REMOVED,
     PROPERTY_CHANGED, NODE_MOVED, PERSIST;
 
-    /**
-     * @todo Add Documentation.
-     */
     public static EventType getEventType(final Integer i) {
         switch (i) {
             case 0x1:

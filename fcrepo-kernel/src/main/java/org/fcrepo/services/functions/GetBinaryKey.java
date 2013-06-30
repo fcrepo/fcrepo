@@ -26,16 +26,8 @@ import org.modeshape.jcr.value.BinaryValue;
 
 import com.google.common.base.Function;
 
-/**
- * @todo Add Documentation.
- * @author barmintor
- * @date Apr 2, 2013
- */
 public class GetBinaryKey implements Function<Property, BinaryKey> {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public BinaryKey apply(final Property input) {
         checkArgument(input != null, "null cannot have a Binarykey!");

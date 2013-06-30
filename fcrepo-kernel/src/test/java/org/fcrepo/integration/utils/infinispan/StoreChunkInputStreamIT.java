@@ -29,16 +29,9 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.Test;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
+
 public class StoreChunkInputStreamIT {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void tryRetrievingContentFromInfinispanIT() throws IOException {
         final EmbeddedCacheManager cm =

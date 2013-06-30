@@ -57,11 +57,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-/**
- * @todo Add Documentation.
- * @author ajs6f
- * @date Feb 21, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({ "org.slf4j.*",
             "javax.xml.parsers.*",
@@ -81,9 +76,6 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     Node mockDsNode;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() {
 
@@ -102,9 +94,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @After
     public void tearDown() {
         mockSession = null;
@@ -112,17 +101,11 @@ public class DatastreamTest implements FedoraJcrTypes {
         mockDsNode = null;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetNode() {
         assertEquals(testObj.getNode(), mockDsNode);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetContent() throws RepositoryException, IOException {
         final String expected = "asdf";
@@ -133,9 +116,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         verify(mockContent).getProperty(JCR_DATA);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testSetContent() throws RepositoryException,
             InvalidChecksumException {
@@ -160,9 +140,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         testObj.setContent(mockStream);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
@@ -174,9 +151,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals(expectedContentLength, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void getContentDigest() throws RepositoryException {
         final String content = "asdf";
@@ -189,18 +163,12 @@ public class DatastreamTest implements FedoraJcrTypes {
         verify(mockContent).getProperty(CONTENT_DIGEST);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetDsId() throws RepositoryException {
         final String actual = testObj.getDsId();
         assertEquals(testDsId, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetObject() throws RepositoryException {
         final Node mockObjectNode = mock(Node.class);
@@ -213,9 +181,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals(mockObjectNode, actual.getNode());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetMimeType() throws RepositoryException {
         final Node mockContent = TestHelpers.getContentNodeMock(8);
@@ -229,18 +194,12 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals("application/x-mime-type", testObj.getMimeType());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetMimeTypeWithNoContent() throws RepositoryException {
         when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(false);
         assertEquals("application/octet-stream", testObj.getMimeType());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetMimeTypeWithDefault() throws RepositoryException {
         final Node mockContent = TestHelpers.getContentNodeMock(8);
@@ -251,9 +210,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals("application/octet-stream", testObj.getMimeType());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetCreatedDate() throws RepositoryException {
         final Date expected = new Date();
@@ -267,9 +223,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals(expected.getTime(), actual.getTime());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetLastModifiedDate() throws RepositoryException {
         final Date expected = new Date();
@@ -283,9 +236,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals(expected.getTime(), actual.getTime());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetSize() throws RepositoryException {
         final int expectedProps = 1;
@@ -308,9 +258,6 @@ public class DatastreamTest implements FedoraJcrTypes {
         assertEquals(3, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testHasMixin() throws RepositoryException {
         final NodeType mockYes = mock(NodeType.class);

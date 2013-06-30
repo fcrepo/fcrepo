@@ -25,16 +25,8 @@ import java.security.NoSuchAlgorithmException;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date to return, with
- */
 public class FixityInputStreamTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void SimpleFixityInputStreamTest() throws NoSuchAlgorithmException {
         final FixityInputStream is =

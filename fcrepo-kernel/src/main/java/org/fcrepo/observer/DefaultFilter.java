@@ -69,17 +69,11 @@ public class DefaultFilter implements EventFilter {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @PostConstruct
     public void acquireSession() throws RepositoryException {
         session = repository.login();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @PreDestroy
     public void releaseSession() {
         session.logout();

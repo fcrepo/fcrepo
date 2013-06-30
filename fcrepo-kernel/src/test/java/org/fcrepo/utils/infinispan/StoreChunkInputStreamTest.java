@@ -32,11 +32,6 @@ import org.infinispan.loaders.CacheStore;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Mar 14, 2013
- */
 public class StoreChunkInputStreamTest {
 
     private static final int DATA_SIZE = 1024;
@@ -52,9 +47,6 @@ public class StoreChunkInputStreamTest {
     private String mockFirstChunk = mockKey + "-0";
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws CacheLoaderException {
         mockStore = mock(CacheStore.class);
@@ -63,17 +55,11 @@ public class StoreChunkInputStreamTest {
         testObj = new StoreChunkInputStream(mockStore, mockKey);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testRead() throws IOException {
         testObj.read();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testBufferedRead() throws IOException, CacheLoaderException {
         InternalCacheEntry mockEntry = mock(InternalCacheEntry.class);
@@ -99,9 +85,6 @@ public class StoreChunkInputStreamTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testAvailable() throws IOException, CacheLoaderException {
         byte[] data = TestHelpers.randomData(DATA_SIZE);
@@ -120,9 +103,6 @@ public class StoreChunkInputStreamTest {
         assertEquals(-1, testObj.available());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testSkip() throws IOException, CacheLoaderException {
         long expected = (DATA_SIZE - 1);
@@ -138,9 +118,6 @@ public class StoreChunkInputStreamTest {
         assertEquals(-1, testObj.read());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testSkipMultipleBuffers()
         throws IOException, CacheLoaderException {
@@ -168,9 +145,6 @@ public class StoreChunkInputStreamTest {
         verify(mockEntry, times(2)).getValue();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testNextChunk() throws IOException {
         testObj.nextChunk();

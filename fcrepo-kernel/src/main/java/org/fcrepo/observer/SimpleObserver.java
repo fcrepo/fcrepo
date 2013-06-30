@@ -71,9 +71,6 @@ public class SimpleObserver implements EventListener {
     @Inject
     private EventFilter eventFilter;
 
-    /**
-     * @todo Add Documentation.
-     */
     @PostConstruct
     public void buildListener() throws RepositoryException {
         final Session session = repository.login();

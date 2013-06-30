@@ -41,11 +41,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.core.io.Resource;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date May 14, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ObjectService.class})
@@ -59,9 +54,6 @@ public class ModeShapeRepositoryFactoryBeanTest {
 
     private JcrRepositoryFactory mockRepos;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws RepositoryException, IOException {
         mockConfig = mock(Resource.class);
@@ -77,9 +69,6 @@ public class ModeShapeRepositoryFactoryBeanTest {
         inject("jcrRepositoryFactory", mockRepos, testObj);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testFactory() throws RepositoryException, IOException {
         mockStatic(ObjectService.class);
@@ -89,9 +78,6 @@ public class ModeShapeRepositoryFactoryBeanTest {
         assertEquals(mockRepo, testObj.getObject());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testFactoryMetadata() {
         assertEquals(Repository.class, testObj.getObjectType());

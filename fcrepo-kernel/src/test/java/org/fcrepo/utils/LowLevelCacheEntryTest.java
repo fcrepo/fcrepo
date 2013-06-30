@@ -52,11 +52,6 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Mar 15, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({StoreChunkInputStream.class})
 public class LowLevelCacheEntryTest {
@@ -68,9 +63,6 @@ public class LowLevelCacheEntryTest {
     CacheStore mockLowLevelCacheStore;
     BinaryKey testKey;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws Exception {
         mockStore = mock(BinaryStore.class);
@@ -84,9 +76,6 @@ public class LowLevelCacheEntryTest {
                     testKey);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldBeEqualIfTheKeyAndStoreAreEqual() throws Exception {
         LowLevelCacheEntry otherObj = 
@@ -95,9 +84,6 @@ public class LowLevelCacheEntryTest {
         assertTrue(testObj.equals(otherObj));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldBeEqualIfTheKeyStoreAndCacheStoreAreEqual()
         throws Exception {
@@ -107,18 +93,12 @@ public class LowLevelCacheEntryTest {
         assertTrue(testIspnObj.equals(ispnObject));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldNotBeEqualIfTheOtherObjectIsTotallyDifferent()
         throws Exception {
         assertFalse(testObj.equals(""));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldNotBeEqualIfTheBinaryKeyIsDifferent() throws Exception {
         LowLevelCacheEntry otherObj = 
@@ -127,9 +107,6 @@ public class LowLevelCacheEntryTest {
         assertFalse(testObj.equals(otherObj));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldNotBeEqualIfTheStoreIsDifferent() throws Exception {
 
@@ -141,9 +118,6 @@ public class LowLevelCacheEntryTest {
         assertFalse(testObj.equals(otherObj));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetInputStream() throws Exception {
         InputStream mockIS = mock(InputStream.class);
@@ -153,9 +127,6 @@ public class LowLevelCacheEntryTest {
     }
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetInputStreamWithAnInfinispanStore() throws Exception {
 
@@ -167,9 +138,6 @@ public class LowLevelCacheEntryTest {
         assertTrue(is instanceof StoreChunkInputStream);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testStoreValue() throws Exception {
         InputStream mockIS = mock(InputStream.class);
@@ -187,9 +155,6 @@ public class LowLevelCacheEntryTest {
         verify(mockLowLevelCacheStore).store(any(InternalCacheEntry.class));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetExternalIdentifier() throws Exception {
         when(mockStore.toString()).thenReturn("i-am-a-mock-store");
@@ -197,9 +162,6 @@ public class LowLevelCacheEntryTest {
         assertEquals("zyx/i-am-a-mock-store", testObj.getExternalIdentifier());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testFileSystemExternalIdentifier() throws Exception {
         FileSystemBinaryStore fsbs = mock(FileSystemBinaryStore.class);
@@ -215,9 +177,6 @@ public class LowLevelCacheEntryTest {
         assertTrue(identifier.endsWith(File.separator + "tmp" + File.separator + "xyz"));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetFixity()
         throws BinaryStoreException, IOException, NoSuchAlgorithmException {

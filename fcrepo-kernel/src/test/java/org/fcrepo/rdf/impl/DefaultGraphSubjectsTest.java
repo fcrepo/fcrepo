@@ -30,26 +30,15 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date May 15, 2013
- */
 public class DefaultGraphSubjectsTest {
 
     private DefaultGraphSubjects testObj;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp(){
         testObj = new DefaultGraphSubjects();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetGraphSubject() throws RepositoryException {
         String testPath = "/foo/bar";
@@ -63,9 +52,6 @@ public class DefaultGraphSubjectsTest {
         assertEquals(expected + "/fcr:content", actual.getURI());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetNodeFromGraphSubject()
         throws PathNotFoundException, RepositoryException {
@@ -97,9 +83,6 @@ public class DefaultGraphSubjectsTest {
         verify(mockSession).getNode(expected + "/jcr:content");
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testIsFedoraGraphSubject() {
         Resource mockSubject = mock(Resource.class);

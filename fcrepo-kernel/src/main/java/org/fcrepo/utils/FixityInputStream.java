@@ -22,7 +22,8 @@ import java.security.MessageDigest;
 import org.apache.commons.io.input.CountingInputStream;
 
 /**
- * @todo Add Documentation.
+ * An InputStream wrapper that calculates the size and digest
+ * while reading from the stream.
  * @author Chris Beer
  * @date Mar 12, 2013
  */
@@ -40,9 +41,6 @@ public class FixityInputStream extends CountingInputStream {
         super(new DigestInputStream(in, digest));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public MessageDigest getMessageDigest() {
         return ((DigestInputStream) in).getMessageDigest();
     }

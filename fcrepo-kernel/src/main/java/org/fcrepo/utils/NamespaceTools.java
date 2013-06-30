@@ -25,23 +25,18 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import com.google.common.base.Function;
 
 /**
- * @todo Add Documentation.
+ * Tools for working with the JCR Namespace Registry
+ * (wrapping some non-standard Modeshape machinery)
  * @author Benjamin Armintor
  * @date May 13, 2013
  */
 public abstract class NamespaceTools {
 
-    /**
-     * @todo Add Documentation.
-     */
     public static NamespaceRegistry getNamespaceRegistry(final Session session)
         throws RepositoryException {
         return (NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static NamespaceRegistry getNamespaceRegistry(final Item item)
         throws RepositoryException {
         return getNamespaceRegistry(item.getSession());

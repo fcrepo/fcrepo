@@ -25,7 +25,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * @todo Add Documentation.
+ * A binary storage policy based on the mime type of the node
  * @author cbeer
  * @date Apr 25, 2013
  */
@@ -38,7 +38,7 @@ public class MimeTypePolicy implements Policy {
     private final String hint;
 
     /**
-     * @todo Add Documentation.
+     * Register a mime type => binary storage hint mapping
      */
     public MimeTypePolicy(final String mimeType, final String hint) {
         this.mimeType = mimeType;
@@ -46,7 +46,8 @@ public class MimeTypePolicy implements Policy {
     }
 
     /**
-     * @todo Add Documentation.
+     * Evaluate the mime type policy. If the content node's mime type matches this
+     * policy's mime type, return the hint.
      */
     @Override
     public String evaluatePolicy(final Node n) {
@@ -55,8 +56,9 @@ public class MimeTypePolicy implements Policy {
             final String nodeMimeType =
                     n.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE)
                             .getString();
-            logger.debug("Found mime type {}", nodeMimeType);
+            logger.trace("Found mime type {}", nodeMimeType);
             if (nodeMimeType.equals(mimeType)) {
+                logger.trace(" {} matched this mime type. Returning hint {} ", mimeType, hint);
                 return hint;
             }
         } catch (RepositoryException e) {

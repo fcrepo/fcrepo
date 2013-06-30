@@ -33,11 +33,6 @@ import org.springframework.test.context.ContextConfiguration;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
 @ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
 
@@ -49,9 +44,6 @@ public class SimpleObserverIT extends AbstractIT {
     @Inject
     private EventBus eventBus;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void TestEventBusPublishing() throws RepositoryException {
 
@@ -77,26 +69,17 @@ public class SimpleObserverIT extends AbstractIT {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Subscribe
     public void countMessages(final FedoraEvent e) {
         eventBusMessageCount++;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void acquireConnections() {
         eventBusMessageCount = 0;
         eventBus.register(this);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @After
     public void releaseConnections() {
         eventBus.unregister(this);

@@ -20,16 +20,8 @@ import org.junit.Test;
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertTrue;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Mar 14, 2013
- */
 public class UUIDPathMinterTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testMintPid() throws Exception {
 

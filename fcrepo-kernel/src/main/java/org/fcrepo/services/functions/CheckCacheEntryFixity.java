@@ -64,9 +64,6 @@ public class CheckCacheEntryFixity implements
         this.dsSize = dsSize;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public FixityResult apply(final LowLevelCacheEntry input) {
         logger.debug("Checking fixity for resource in cache store " +

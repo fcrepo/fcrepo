@@ -28,7 +28,10 @@ import org.infinispan.loaders.CacheStore;
 import org.modeshape.common.logging.Logger;
 
 /**
- * @todo Add Documentation.
+ * A near-copy of a Modeshape class (of the same name, but is
+ * unfortunately hidden from us) that takes a single OutputStream
+ * and chunks it into 1MB chunks for Infinispan
+ *
  * @author Chris Beer
  * @date Mar 14, 2013
  */
@@ -52,9 +55,6 @@ public class StoreChunkOutputStream extends OutputStream {
     private final InternalEntryFactory entryFactory =
         new InternalEntryFactoryImpl();
 
-    /**
-     * @todo Add Documentation.
-     */
     public StoreChunkOutputStream(final CacheStore blobCache,
                                   final String keyPrefix) {
         logger = Logger.getLogger(getClass());
@@ -70,9 +70,6 @@ public class StoreChunkOutputStream extends OutputStream {
         return chunkIndex;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public void write(final int b) throws IOException {
         if (chunkBuffer.size() == CHUNKSIZE) {
@@ -81,9 +78,6 @@ public class StoreChunkOutputStream extends OutputStream {
         chunkBuffer.write(b);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public void write(final byte[] b, final int off, final int len)
         throws IOException {
@@ -97,9 +91,6 @@ public class StoreChunkOutputStream extends OutputStream {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public void close() throws IOException {
         logger.debug("Close. Buffer size at close: {0}", chunkBuffer.size());

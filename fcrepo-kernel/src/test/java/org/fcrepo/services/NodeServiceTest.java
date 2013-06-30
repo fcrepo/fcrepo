@@ -37,12 +37,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date May 9, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
@@ -54,9 +48,6 @@ public class NodeServiceTest {
 
     private NodeService testObj;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws RepositoryException {
         testObj = new NodeService();
@@ -65,16 +56,10 @@ public class NodeServiceTest {
         when(mockSession.getRootNode()).thenReturn(mockRoot);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @After
     public void tearDown() {
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @SuppressWarnings("unchecked")
     @Test
     public void testGetObjectNames() throws RepositoryException {
@@ -96,9 +81,6 @@ public class NodeServiceTest {
         assertEquals("foo", actual.iterator().next());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testDeleteOBject() throws RepositoryException {
         final String objPath = "foo";

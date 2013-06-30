@@ -48,11 +48,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.update.UpdateAction;
 
-/**
- * @todo Add Documentation.
- * @author cbeer
- * @date May 9, 2013
- */
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraResource.class);
@@ -64,9 +59,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private JcrPropertyStatementListener listener;
 
-    /**
-     * @todo Add Documentation.
-     */
     public FedoraResource() {
         node = null;
     }
@@ -134,9 +126,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return node;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public String getPath() throws RepositoryException {
         return node.getPath();
     }

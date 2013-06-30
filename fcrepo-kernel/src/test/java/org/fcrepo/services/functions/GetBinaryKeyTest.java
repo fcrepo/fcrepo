@@ -30,16 +30,8 @@ import org.junit.Test;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date Apr 3, 2013
- */
 public class GetBinaryKeyTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testApply() throws LoginException, RepositoryException {
         final Node mockNode = mock(Node.class);

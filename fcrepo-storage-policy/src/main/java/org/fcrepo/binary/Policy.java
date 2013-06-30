@@ -18,14 +18,15 @@ package org.fcrepo.binary;
 import javax.jcr.Node;
 
 /**
- * @todo Add Documentation.
+ * A binary storage policy definition and evaluation machinery
  * @author cbeer
  * @date Apr 25, 2013
  */
 public interface Policy {
 
     /**
-     * @todo Add Documentation.
+     * Evaluate the policy; if the policy matches, return the
+     * binary storage hint. If not, return null.
      */
     String evaluatePolicy(Node n);
 }

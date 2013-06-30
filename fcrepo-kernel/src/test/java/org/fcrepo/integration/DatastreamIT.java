@@ -34,11 +34,6 @@ import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class DatastreamIT extends AbstractIT {
 
@@ -51,10 +46,6 @@ public class DatastreamIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
-
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testCreatedDate() throws RepositoryException, IOException,
                                          InvalidChecksumException {
@@ -76,9 +67,6 @@ public class DatastreamIT extends AbstractIT {
                       .getCreatedDate());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testDatastreamContent()
         throws IOException, RepositoryException, InvalidChecksumException {
@@ -102,9 +90,6 @@ public class DatastreamIT extends AbstractIT {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testDatastreamContentDigestAndLength()
         throws IOException, RepositoryException, InvalidChecksumException {
@@ -131,9 +116,6 @@ public class DatastreamIT extends AbstractIT {
         assertEquals("asdf", contentString);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testModifyDatastreamContentDigestAndLength()
         throws IOException, RepositoryException, InvalidChecksumException {
@@ -164,9 +146,6 @@ public class DatastreamIT extends AbstractIT {
         assertEquals("0123456789", contentString);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testDatastreamContentWithChecksum()
         throws IOException, RepositoryException, InvalidChecksumException {

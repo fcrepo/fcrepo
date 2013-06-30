@@ -23,7 +23,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 
 /**
- * @todo Add Documentation.
+ * Provide helpers for working with the Metrics registry
  * @author cbeer
  * @date Mar 22, 2013
  */
@@ -32,16 +32,10 @@ public abstract class RegistryService {
     private static final MetricRegistry METRICS = SharedMetricRegistries
             .getOrCreate("fcrepo-metrics");
 
-    /**
-     * @todo Add Documentation.
-     */
     public static MetricRegistry getMetrics() {
         return METRICS;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static void dumpMetrics(final PrintStream os) {
 
         final MetricRegistry registry = getMetrics();

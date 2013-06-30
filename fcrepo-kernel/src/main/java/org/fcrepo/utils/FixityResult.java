@@ -21,9 +21,8 @@ import java.net.URI;
 import java.util.EnumSet;
 
 /**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Mar 12, 2013
+ * Structure for presenting the results of a fixity check
+ * (and any repair operations that may have occurred)
  */
 public class FixityResult {
 
@@ -50,32 +49,20 @@ public class FixityResult {
 
     private final LowLevelCacheEntry entry;
 
-    /**
-     * @todo Add Documentation.
-     */
     public FixityResult() {
         entry = null;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public FixityResult(final LowLevelCacheEntry entry) {
         this.entry = entry;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public FixityResult(final long size, final URI checksum) {
         entry = null;
         computedSize = size;
         computedChecksum = checksum;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public FixityResult(final LowLevelCacheEntry entry, final long size,
                         final URI checksum) {
         this.entry = entry;
@@ -83,16 +70,10 @@ public class FixityResult {
         computedChecksum = checksum;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public String getStoreIdentifier() {
         return entry.getExternalIdentifier();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public boolean equals(final Object obj) {
 
@@ -107,40 +88,25 @@ public class FixityResult {
         return result;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public int hashCode() {
         return hash(computedSize, computedChecksum);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public String toString() {
         return "Fixity: checksum: " + computedChecksum.toString() + " / " +
             Long.toString(computedSize);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public LowLevelCacheEntry getEntry() {
         return entry;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public boolean matches(final URI checksum) {
         return computedChecksum.equals(checksum);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public boolean matches(final long size) {
         return computedSize == size;
     }
@@ -155,16 +121,10 @@ public class FixityResult {
         return matches(size) && matches(checksum);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public boolean isSuccess() {
         return status.contains(FixityState.SUCCESS);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public void setRepaired() {
         status.add(FixityState.REPAIRED);
     }

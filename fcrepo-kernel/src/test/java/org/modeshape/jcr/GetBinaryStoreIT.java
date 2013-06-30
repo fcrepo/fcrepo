@@ -28,12 +28,6 @@ import org.modeshape.jcr.value.binary.TransientBinaryStore;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Apr 30, 2013
- */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({ "/spring-test/repo.xml" })
 public class GetBinaryStoreIT {
@@ -41,9 +35,6 @@ public class GetBinaryStoreIT {
     @Inject
     javax.jcr.Repository repo;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testApply() throws RepositoryException {
         final GetBinaryStore testObj = new GetBinaryStore();

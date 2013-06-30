@@ -63,19 +63,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 
-/**
- * @todo Add Documentation.
- * @autho Chris Beerr
- * @date Mar 11, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
 public class LowLevelStorageServiceTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testTransformBinaryBlobs() throws RepositoryException {
         final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
@@ -104,9 +96,6 @@ public class LowLevelStorageServiceTest {
         verify(testFunc).apply(any(LowLevelCacheEntry.class));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetBinaryBlobs() throws RepositoryException {
         final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
@@ -129,9 +118,6 @@ public class LowLevelStorageServiceTest {
         assertEquals("/foo", actual.iterator().next().getExternalIdentifier());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldRetrieveLowLevelCacheEntryForDefaultBinaryStore()
             throws RepositoryException {
@@ -150,9 +136,6 @@ public class LowLevelStorageServiceTest {
                 key);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldRetrieveLowLevelCacheStoresForBinaryKey()
             throws RepositoryException {
@@ -172,10 +155,6 @@ public class LowLevelStorageServiceTest {
                         "key-123"))));
     }
 
-    /**
-     * @throws Exception 
-     * @todo Add Documentation.
-     */
     @SuppressWarnings("unchecked")
     @Test
     public void shouldRetrieveLowLevelCacheStoresForCompositeStore()
@@ -266,9 +245,6 @@ public class LowLevelStorageServiceTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldReturnAnEmptySetForMissingBinaryStore()
             throws RepositoryException {

@@ -21,25 +21,9 @@ import javax.jcr.observation.Event;
 
 import org.junit.Test;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Mar 14, 2013
- */
 public class EventTypeTest {
 
-    /**
-     * @todo Add Documentation.
-     */
-    @Test
-    public void testGetEventType() throws Exception {
-        // assertEquals(javax.jcr.observation.Event.NODE_ADDED,
-        // EventType.getEventType(0x1));
-    }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetEventName() throws Exception {
         assertEquals("node added", EventType.getEventName(Event.NODE_ADDED));

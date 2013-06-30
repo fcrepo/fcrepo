@@ -38,17 +38,9 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import com.google.common.base.Function;
 import org.springframework.stereotype.Component;
 
-/**
- * @todo Add Documentation.
- * @author barmintor
- * @date Mar 23, 2013
- */
 @Component
 public abstract class ServiceHelpers {
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Long getNodePropertySize(final Node node)
         throws RepositoryException {
         Long size = 0L;
@@ -93,17 +85,11 @@ public abstract class ServiceHelpers {
         return size;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Long getDatastreamSize(final Node ds)
         throws RepositoryException {
         return getNodePropertySize(ds) + getContentSize(ds);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Long getContentSize(final Node ds)
         throws RepositoryException {
         long size = 0L;
@@ -131,9 +117,6 @@ public abstract class ServiceHelpers {
         return new DefaultExecutorService(cacheStore.getCaches().get(1));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Function<LowLevelCacheEntry, FixityResult> getCheckCacheFixityFunction(final URI dsChecksum,
                                                                                          final long dsSize) {
         return new CheckCacheEntryFixity(dsChecksum, dsSize);

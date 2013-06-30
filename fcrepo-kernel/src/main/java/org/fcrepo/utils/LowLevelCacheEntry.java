@@ -157,9 +157,6 @@ public abstract class LowLevelCacheEntry {
         return externalId;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public BinaryKey getKey() {
         return key;
     }

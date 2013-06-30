@@ -46,9 +46,6 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
         this.store = store;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     BinaryStore getStore() {
         return store;
     }
@@ -118,9 +115,6 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public int hashCode() {
         return hash(store, key);

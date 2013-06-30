@@ -34,19 +34,11 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date Apr 3, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ComponentRegistry.class})
 public class GetCacheStoreTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @SuppressWarnings("unchecked")
     @Test
     public void testApply() throws LoginException, RepositoryException {

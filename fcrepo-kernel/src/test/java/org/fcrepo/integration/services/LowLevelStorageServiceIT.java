@@ -38,11 +38,7 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class LowLevelStorageServiceIT {
@@ -60,9 +56,6 @@ public class LowLevelStorageServiceIT {
     LowLevelStorageService lowLevelService;
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetBinaryBlobs() throws Exception {
         final Session session = repo.login();

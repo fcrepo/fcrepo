@@ -25,16 +25,8 @@ import javax.jcr.Workspace;
 
 import org.junit.Test;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date May 13, 2013
- */
 public class NamespaceToolsTest {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetNamespaceRegistry() throws RepositoryException {
         Node mockNode = mock(Node.class);
@@ -45,9 +37,6 @@ public class NamespaceToolsTest {
         NamespaceTools.getNamespaceRegistry(mockNode);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testFunction() throws RepositoryException {
         Node mockNode = mock(Node.class);

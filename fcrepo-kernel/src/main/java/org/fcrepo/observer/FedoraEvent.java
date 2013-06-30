@@ -34,65 +34,41 @@ public class FedoraEvent implements Event {
 
     private Event e;
 
-    /**
-     * @todo Add Documentation.
-     */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
         this.e = e;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public int getType() {
         return e.getType();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public String getPath() throws RepositoryException {
         return e.getPath();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public String getUserID() {
         return e.getUserID();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public String getIdentifier() throws RepositoryException {
         return e.getIdentifier();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public Map<?, ?> getInfo() throws RepositoryException {
         return e.getInfo();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public String getUserData() throws RepositoryException {
         return e.getUserData();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public long getDate() throws RepositoryException {
         return e.getDate();

@@ -30,7 +30,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
- * @todo Add Documentation.
+ * Translates JCR names into "fedora" subjects (by replacing jcr-specific names
+ * with fedora names)
  * @author barmintor
  * @date May 15, 2013
  */
@@ -49,17 +50,11 @@ public class DefaultGraphSubjects implements GraphSubjects {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public Resource getGraphSubject(Node node) throws RepositoryException {
         return getGraphSubject(node.getPath());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public Node getNodeFromGraphSubject(Session session, Resource subject)
         throws RepositoryException {
@@ -80,9 +75,6 @@ public class DefaultGraphSubjects implements GraphSubjects {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public boolean isFedoraGraphSubject(Resource subject) {
         checkArgument(subject != null, "null cannot be a Fedora object!");

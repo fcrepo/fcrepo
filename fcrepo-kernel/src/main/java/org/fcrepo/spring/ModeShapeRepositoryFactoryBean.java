@@ -34,7 +34,8 @@ import org.springframework.core.io.Resource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * @todo Add Documentation.
+ * A Modeshape factory shim to make it play nice with our
+ * Spring-based configuration
  * @author Edwin Shin
  * @date Feb 7, 2013
  */
@@ -50,9 +51,6 @@ public class ModeShapeRepositoryFactoryBean implements
 
     private JcrRepository repository;
 
-    /**
-     * @todo Add Documentation.
-     */
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
         if (repositoryConfiguration instanceof ClassPathResource) {
@@ -67,33 +65,21 @@ public class ModeShapeRepositoryFactoryBean implements
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public JcrRepository getObject() throws RepositoryException, IOException {
         return repository;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public Class<?> getObjectType() {
         return Repository.class;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public boolean isSingleton() {
         return true;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public void setRepositoryConfiguration(
             final Resource repositoryConfiguration) {
         this.repositoryConfiguration = repositoryConfiguration;

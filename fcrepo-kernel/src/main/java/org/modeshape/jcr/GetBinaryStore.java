@@ -25,7 +25,7 @@ import org.modeshape.jcr.value.binary.BinaryStore;
 import com.google.common.base.Function;
 
 /**
- * @todo Add Documentation.
+ * Retrieve the BinaryStore from a running Modeshape Repository
  * @author cbeer
  * @date Apr 30, 2013
  */

@@ -37,11 +37,6 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.update.UpdateAction;
 
-/**
- * @todo Add Documentation.
- * @author fasseg
- * @date Mar 20, 2013
- */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraObjectIT extends AbstractIT {
 
@@ -51,9 +46,6 @@ public class FedoraObjectIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testCreatedObject() throws RepositoryException, IOException {
         Session session = repo.login();
@@ -66,9 +58,6 @@ public class FedoraObjectIT extends AbstractIT {
         assertNotNull("Couldn't find object!", obj);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetSizeWhenInATree() throws Exception {
 
@@ -86,9 +75,6 @@ public class FedoraObjectIT extends AbstractIT {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testObjectGraph() throws Exception {
         final Session session = repo.login();

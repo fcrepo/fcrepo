@@ -51,11 +51,6 @@ import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date May 9, 2013
- */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraResourceIT extends AbstractIT {
 
@@ -71,9 +66,6 @@ public class FedoraResourceIT extends AbstractIT {
     @Inject
     DatastreamService datastreamService;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetRootNode() throws IOException, RepositoryException {
         Session session = repo.login();
@@ -82,9 +74,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testRandomNodeGraph() throws IOException, RepositoryException {
         Session session = repo.login();
@@ -103,9 +92,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testRepositoryRootGraph() throws IOException,
             RepositoryException {
@@ -139,9 +125,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testObjectGraph() throws IOException, RepositoryException {
         Session session = repo.login();
@@ -171,9 +154,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testDatastreamGraph() throws IOException, RepositoryException,
             InvalidChecksumException {
@@ -258,9 +238,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testObjectGraphWindow() throws IOException, RepositoryException {
         Session session = repo.login();
@@ -306,9 +283,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testUpdatingObjectGraph() throws RepositoryException {
 
@@ -346,9 +320,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testAddVersionLabel() throws RepositoryException {
 
@@ -370,9 +341,6 @@ public class FedoraResourceIT extends AbstractIT {
         session.logout();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetObjectVersionGraph() throws RepositoryException {
 

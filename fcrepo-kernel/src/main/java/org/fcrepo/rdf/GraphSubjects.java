@@ -22,7 +22,8 @@ import javax.jcr.Session;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * @todo Add Documentation.
+ * Translate internal JCR node identifiers to external Fedora identifiers
+ * (and vice versa)
  * @author barmintor
  * @date May 15, 2013
  */

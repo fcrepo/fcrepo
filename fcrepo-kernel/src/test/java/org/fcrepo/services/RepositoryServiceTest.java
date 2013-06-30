@@ -67,12 +67,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
-
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date Mar 11, 2013
- */
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -105,9 +99,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     Map<String, String> expectedNS;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() {
         final String relPath = "/" + testPid + "/" + testDsId;
@@ -175,54 +166,36 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @After
     public void tearDown() {
 
     }
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetRepositorySize() throws RepositoryException {
         final Long actual = testObj.getRepositorySize();
         assertEquals(expectedSize, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetRepositoryObjectCount() {
         final Long actual = testObj.getRepositoryObjectCount();
         assertEquals(expectedCount, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetAllNodeTypes() throws RepositoryException {
         final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
         assertEquals(mockNTI, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGetRepositoryNamespaces() throws RepositoryException {
         final Map<String, String> actual = getRepositoryNamespaces(mockSession);
         assertEquals(expectedNS, actual);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testExists() throws RepositoryException {
         final String existsPath = "/foo/bar/exists";
@@ -231,9 +204,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testSearchRepository() throws RepositoryException {
 

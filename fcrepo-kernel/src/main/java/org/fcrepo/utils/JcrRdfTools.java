@@ -75,7 +75,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
- * @todo Add Documentation.
+ * A set of helpful tools for converting JCR properties to RDF
  * @author Chris Beer
  * @date May 10, 2013
  */

@@ -43,12 +43,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-
-/**
- * @todo Add Documentation.
- * @author Chris Beer
- * @date May 10, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*" })
 @PrepareForTest({FedoraTypesUtils.class })
@@ -59,9 +53,6 @@ public class NodePropertiesToolsTest {
     private Node mockNode;
     private Property mockProperty;
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws RepositoryException {
         PowerMockito.mockStatic(FedoraTypesUtils.class);
@@ -77,9 +68,6 @@ public class NodePropertiesToolsTest {
         when(mockNode.getProperty("mockPropertyName")).thenReturn(mockProperty);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void addNewSingleValuedProperty() throws RepositoryException {
 
@@ -95,9 +83,6 @@ public class NodePropertiesToolsTest {
     }
 
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void addNewMultiValuedProperty() throws RepositoryException {
         when(mockDefinition.isMultiple()).thenReturn(true);
@@ -113,9 +98,6 @@ public class NodePropertiesToolsTest {
                          Arrays.asList(mockValue).toArray(new Value[0]));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void replaceExistingSingleValuedPropertyWithValue()
         throws RepositoryException {
@@ -131,9 +113,6 @@ public class NodePropertiesToolsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void appendValueToExistingMultivaluedProperty()
         throws RepositoryException {
@@ -164,9 +143,6 @@ public class NodePropertiesToolsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void addMultiValuedPropertyWithSameValueAsExistingProperty()
         throws RepositoryException {
@@ -185,9 +161,6 @@ public class NodePropertiesToolsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldBeANoopWhenRemovingPropertyThatDoesntExist()
         throws RepositoryException {
@@ -201,9 +174,6 @@ public class NodePropertiesToolsTest {
         verifyZeroInteractions(mockProperty);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldRemoveASingleValuedProperty() throws RepositoryException {
 
@@ -221,9 +191,6 @@ public class NodePropertiesToolsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldRemoveAMultiValuedProperty() throws RepositoryException {
 
@@ -240,9 +207,6 @@ public class NodePropertiesToolsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldRemoveAValueFromMultiValuedProperty()
         throws RepositoryException {
@@ -274,9 +238,6 @@ public class NodePropertiesToolsTest {
 
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void shouldRemoveAllMatchingValuesFromAMultivaluedProperty()
         throws RepositoryException {

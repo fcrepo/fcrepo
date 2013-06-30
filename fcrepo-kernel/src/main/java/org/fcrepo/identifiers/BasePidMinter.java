@@ -25,16 +25,10 @@ import com.google.common.base.Function;
  */
 public abstract class BasePidMinter implements PidMinter {
 
-    /**
-     * @todo Add Documentation.
-     */
     @Override
     public Function<Object, String> makePid() {
         return new Function<Object, String>() {
 
-            /**
-             * @todo Add Documentation.
-             */
             @Override
             public String apply(final Object input) {
                 return mintPid();

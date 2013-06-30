@@ -39,7 +39,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 /**
- * @todo Add Documentation.
+ * Helpers to make writing unit tests easier (by providing some generic
+ * mocks)
  * @author fasseg
  * @date May 2, 2013
  */
@@ -48,23 +49,14 @@ public abstract class TestHelpers {
     private static final SecureRandom GARBAGE_GENERATOR = new SecureRandom(
             "G4RbAG3".getBytes());
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Node getContentNodeMock(final int size) {
         return getContentNodeMock(randomData(size));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Node getContentNodeMock(final String content) {
         return getContentNodeMock(content.getBytes());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static Node getContentNodeMock(final byte[] content) {
         final Node mock = mock(Node.class);
         final long size = content.length;
@@ -81,9 +73,6 @@ public abstract class TestHelpers {
             when(mockBin.getSize()).thenReturn(size);
             when(mockBin.getStream()).thenAnswer(new Answer<InputStream>() {
 
-    /**
-     * @todo Add Documentation.
-     */
                 @Override
                 public InputStream answer(final InvocationOnMock inv) {
                     return new ByteArrayInputStream(content);
@@ -101,16 +90,10 @@ public abstract class TestHelpers {
         return mock;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static String checksumString(final String content) {
         return checksumString(content.getBytes());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static String checksumString(final byte[] content) {
         try {
             final MessageDigest d = MessageDigest.getInstance("SHA-1");
@@ -122,9 +105,6 @@ public abstract class TestHelpers {
         return "";
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @SuppressWarnings("unchecked")
     public static PropertyIterator getPropertyIterator(final int numValues,
             final long size) {
@@ -156,9 +136,6 @@ public abstract class TestHelpers {
         return mock;
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     public static byte[] randomData(final int byteLength) {
         final byte[] bytes = new byte[byteLength];
         GARBAGE_GENERATOR.nextBytes(bytes);

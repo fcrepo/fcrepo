@@ -20,7 +20,7 @@ import javax.jcr.observation.Event;
 import com.google.common.base.Predicate;
 
 /**
- * @todo Add Documentation.
+ * Filter JCR events to remove extraneous events
  * @author eddies
  * @date Feb 7, 2013
  */

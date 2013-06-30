@@ -46,11 +46,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.EventBus;
 
-/**
- * @todo Add Documentation.
- * @author Edwin Shin
- * @date Feb 7, 2013
- */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({com.google.common.collect.Iterables.class})
@@ -67,17 +62,11 @@ public class SimpleObserverTest {
         field.set(obj, val);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws Exception {
         testObj = new SimpleObserver();
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testBuildListener() throws Exception {
         final Repository mockRepository = mock(Repository.class);
@@ -93,9 +82,6 @@ public class SimpleObserverTest {
                 "/", true, null, null, false);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @SuppressWarnings("unchecked")
     @Test
     public void testOnEvent() throws Exception {
@@ -112,9 +98,6 @@ public class SimpleObserverTest {
         verify(mockBus).post(any(Event.class));
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @SuppressWarnings("unchecked")
     @Test
     public void testOnEventAllFiltered() throws Exception {

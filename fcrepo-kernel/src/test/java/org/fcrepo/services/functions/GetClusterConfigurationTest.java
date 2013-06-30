@@ -42,21 +42,12 @@ import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date May 13, 2013
- */
 public class GetClusterConfigurationTest {
 
     private GetClusterConfiguration testObj;
     
     private GetBinaryStore mockGetBinaryStore;
 
-    /**
-     * @throws Exception 
-     * @todo Add Documentation.
-     */
     @Before
     public void setUp() throws Exception {
         testObj = new GetClusterConfiguration();
@@ -66,9 +57,6 @@ public class GetClusterConfigurationTest {
         field.set(testObj, mockGetBinaryStore);
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testGood() throws Exception {
         final JcrRepository mockRepo = mock(JcrRepository.class);
@@ -99,9 +87,6 @@ public class GetClusterConfigurationTest {
         assertFalse(actual.isEmpty());
     }
 
-    /**
-     * @todo Add Documentation.
-     */
     @Test
     public void testBad() {
         final JcrRepository mockRepo = mock(JcrRepository.class);

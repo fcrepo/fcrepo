@@ -26,17 +26,8 @@ import org.fcrepo.utils.LowLevelCacheEntry;
 import org.junit.Test;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 
-/**
- * @todo Add Documentation.
- * @author Benjamin Armintor
- * @date Apr 3, 2013
- */
 public class CheckCacheEntryFixityTest {
 
-    /**
-     * @throws BinaryStoreException, NoSuchAlgorithmException 
-     * @todo Add Documentation.
-     */
     @Test
     public void testApply() throws BinaryStoreException, BinaryStoreException, NoSuchAlgorithmException {
         final URI testUri = URI.create("sha1:foo:bar");
