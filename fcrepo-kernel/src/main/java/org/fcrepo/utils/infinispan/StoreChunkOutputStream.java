@@ -55,6 +55,12 @@ public class StoreChunkOutputStream extends OutputStream {
     private final InternalEntryFactory entryFactory =
         new InternalEntryFactoryImpl();
 
+    /**
+     * Prepare to store the OutputStream in the given CacheStore
+     * with the given prefix
+     * @param blobCache
+     * @param keyPrefix
+     */
     public StoreChunkOutputStream(final CacheStore blobCache,
                                   final String keyPrefix) {
         logger = Logger.getLogger(getClass());

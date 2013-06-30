@@ -25,6 +25,11 @@ public enum EventType {
     NODE_ADDED, NODE_REMOVED, PROPERTY_ADDED, PROPERTY_REMOVED,
     PROPERTY_CHANGED, NODE_MOVED, PERSIST;
 
+    /**
+     * Get the Fedora event type for a JCR type
+     * @param i
+     * @return
+     */
     public static EventType getEventType(final Integer i) {
         switch (i) {
             case 0x1:

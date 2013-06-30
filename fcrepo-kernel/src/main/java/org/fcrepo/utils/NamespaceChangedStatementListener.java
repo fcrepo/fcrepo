@@ -26,6 +26,9 @@ import javax.jcr.Session;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * Listener that maps changes to actions in the JCR namespace registry
+ */
 public class NamespaceChangedStatementListener extends StatementListener {
 
     private static final Logger LOGGER =
@@ -33,6 +36,11 @@ public class NamespaceChangedStatementListener extends StatementListener {
 
     private final NamespaceRegistry namespaceRegistry;
 
+    /**
+     * Use the given session to perform namespace changes
+     * @param session
+     * @throws RepositoryException
+     */
     public NamespaceChangedStatementListener(final Session session)
         throws RepositoryException {
         this.namespaceRegistry = session.getWorkspace().getNamespaceRegistry();

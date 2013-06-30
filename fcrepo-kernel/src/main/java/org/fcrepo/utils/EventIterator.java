@@ -28,6 +28,10 @@ public class EventIterator implements Iterator<Event>, Iterable<Event> {
 
     private javax.jcr.observation.EventIterator i;
 
+    /**
+     * Wrap the given EventIterator with the generic Iterator<Event>
+     * @param i
+     */
     public EventIterator(final javax.jcr.observation.EventIterator i) {
         this.i = i;
     }

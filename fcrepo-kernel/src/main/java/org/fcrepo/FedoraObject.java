@@ -91,7 +91,13 @@ public class FedoraObject extends FedoraResource {
         return node.getName();
     }
 
-    public static boolean hasMixin(Node node) throws RepositoryException {
+    /**
+     * Check if the node has a fedora:object mixin
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean hasMixin(final Node node) throws RepositoryException {
         return isFedoraObject.apply(node);
     }
 

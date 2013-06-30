@@ -71,6 +71,10 @@ public class SimpleObserver implements EventListener {
     @Inject
     private EventFilter eventFilter;
 
+    /**
+     * Register this observer with the JCR event listeners
+     * @throws RepositoryException
+     */
     @PostConstruct
     public void buildListener() throws RepositoryException {
         final Session session = repository.login();

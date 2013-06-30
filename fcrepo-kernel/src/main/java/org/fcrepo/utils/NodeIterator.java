@@ -28,6 +28,10 @@ public class NodeIterator implements Iterator<Node> {
 
     private javax.jcr.NodeIterator i;
 
+    /**
+     * Wrap the NodeIterator with our generic version
+     * @param i
+     */
     public NodeIterator(final javax.jcr.NodeIterator i) {
         this.i = i;
     }

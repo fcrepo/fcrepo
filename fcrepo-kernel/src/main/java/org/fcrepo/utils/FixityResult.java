@@ -49,20 +49,36 @@ public class FixityResult {
 
     private final LowLevelCacheEntry entry;
 
+    /**
+     * Initialize an empty fixity result
+     */
     public FixityResult() {
-        entry = null;
+        this(null);
     }
 
+    /**
+     * Prepare a fixity result for a Low-Level cache entry
+     * @param entry
+     */
     public FixityResult(final LowLevelCacheEntry entry) {
         this.entry = entry;
     }
 
+    /**
+     * Prepare a fixity result given the computed checksum and size
+     * @param size
+     * @param checksum
+     */
     public FixityResult(final long size, final URI checksum) {
-        entry = null;
-        computedSize = size;
-        computedChecksum = checksum;
+        this(null, size, checksum);
     }
 
+    /**
+     * Prepare a fixity result with the expected size and checksum
+     * @param entry
+     * @param size
+     * @param checksum
+     */
     public FixityResult(final LowLevelCacheEntry entry, final long size,
                         final URI checksum) {
         this.entry = entry;
@@ -70,6 +86,10 @@ public class FixityResult {
         computedChecksum = checksum;
     }
 
+    /**
+     * Get the identifier for the entry's store
+     * @return
+     */
     public String getStoreIdentifier() {
         return entry.getExternalIdentifier();
     }
@@ -99,14 +119,28 @@ public class FixityResult {
             Long.toString(computedSize);
     }
 
+    /**
+     * Get the underlying Low-Level cache entry
+     * @return
+     */
     public LowLevelCacheEntry getEntry() {
         return entry;
     }
 
+    /**
+     * Check if the fixity result matches the given checksum URI
+     * @param checksum
+     * @return
+     */
     public boolean matches(final URI checksum) {
         return computedChecksum.equals(checksum);
     }
 
+    /**
+     * Check if the fixity result matches the given size
+     * @param size
+     * @return
+     */
     public boolean matches(final long size) {
         return computedSize == size;
     }
@@ -121,10 +155,17 @@ public class FixityResult {
         return matches(size) && matches(checksum);
     }
 
+    /**
+     * Was the fixity declared a success
+     * @return
+     */
     public boolean isSuccess() {
         return status.contains(FixityState.SUCCESS);
     }
 
+    /**
+     * Mark the fixity result as been automatically repaired
+     */
     public void setRepaired() {
         status.add(FixityState.REPAIRED);
     }

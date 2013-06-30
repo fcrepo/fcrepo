@@ -41,6 +41,10 @@ public class FixityInputStream extends CountingInputStream {
         super(new DigestInputStream(in, digest));
     }
 
+    /**
+     * Retrieve the calculated digest for the input stream
+     * @return
+     */
     public MessageDigest getMessageDigest() {
         return ((DigestInputStream) in).getMessageDigest();
     }

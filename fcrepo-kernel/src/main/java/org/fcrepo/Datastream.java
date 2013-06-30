@@ -182,6 +182,12 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     }
 
+    /**
+     * Set the content of this datastream
+     * @param content
+     * @throws InvalidChecksumException
+     * @throws RepositoryException
+     */
     public void setContent(InputStream content) throws InvalidChecksumException,
                                                        RepositoryException {
         setContent(content, null, null, null, null);
@@ -288,7 +294,13 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
                      dataProperty.getPath());
     }
 
-    public static boolean hasMixin(Node node) throws RepositoryException {
+    /**
+     * Check if the node has a fedora:datastream mixin
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean hasMixin(final Node node) throws RepositoryException {
         return isFedoraDatastream.apply(node);
     }
 

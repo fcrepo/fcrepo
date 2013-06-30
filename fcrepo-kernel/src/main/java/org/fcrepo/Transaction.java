@@ -44,13 +44,10 @@ public class Transaction {
 
     private State state = State.NEW;
 
-    private Transaction() {
-        this.session = null;
-        this.created = null;
-        this.id = null;
-        this.expires = null;
-    }
-
+    /**
+     * Create a transaction for the given Session
+     * @param session
+     */
     public Transaction(Session session) {
         super();
         this.session = session;
@@ -60,19 +57,36 @@ public class Transaction {
         this.updateExpiryDate();
     }
 
+    /**
+     * Get the transaction-aware session
+     * @return
+     */
     public Session getSession() {
         updateExpiryDate();
         return TxAwareSession.newInstance(session, id);
     }
 
+    /**
+     * Get the date this transaction was created
+     * @return
+     */
     public Date getCreated() {
         return created;
     }
 
+    /**
+     * Get the transaction identifier
+     * @return
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Get the state of this transaction
+     * @return
+     * @throws RepositoryException
+     */
     public State getState() throws RepositoryException {
         if (this.session != null && this.session.hasPendingChanges()) {
             return State.DIRTY;
@@ -80,10 +94,19 @@ public class Transaction {
         return state;
     }
 
+    /**
+     * Get the Date when this transaction is expired and can be
+     * garbage-collected
+     * @return
+     */
     public Date getExpires() {
         return expires.getTime();
     }
 
+    /**
+     * "Commit" the transaction by saving the backing-session
+     * @throws RepositoryException
+     */
     public void commit() throws RepositoryException {
         this.session.save();
         this.state = State.COMMITED;

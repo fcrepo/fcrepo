@@ -54,6 +54,10 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         this.cacheName = cacheName;
     }
 
+    /**
+     * Get the low-level cache store this entry is contained in
+     * @return
+     */
     public CacheStore getLowLevelStore() {
         return store;
     }

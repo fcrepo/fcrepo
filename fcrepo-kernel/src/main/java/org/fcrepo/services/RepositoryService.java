@@ -270,6 +270,10 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     }
 
+    /**
+     * Set the repository to back this RepositoryService
+     * @param repository
+     */
     public void setRepository(final Repository repository) {
         repo = repository;
     }

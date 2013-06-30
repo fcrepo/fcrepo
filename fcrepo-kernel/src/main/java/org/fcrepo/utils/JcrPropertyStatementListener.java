@@ -37,7 +37,10 @@ import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-
+/**
+ * Listen to Jena statement events, and when the statement is changed
+ * in the graph store, make the change within JCR as well.
+ */
 public class JcrPropertyStatementListener extends StatementListener {
 
     private Problems problems;
@@ -49,6 +52,12 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final Session session;
 
+    /**
+     * Construct a statement listener within the given session
+     * @param subjects
+     * @param session
+     * @throws RepositoryException
+     */
     public JcrPropertyStatementListener(final GraphSubjects subjects,
                                         final Session session)
         throws RepositoryException {

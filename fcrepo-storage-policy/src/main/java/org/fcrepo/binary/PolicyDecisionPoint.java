@@ -70,9 +70,13 @@ public class PolicyDecisionPoint {
         return null;
     }
 
+    /**
+     * Explicitly set the policies this PDP should use
+     * @param policies
+     */
     public void setPolicies(final List<Policy> policies) {
-        logger.debug("Adding policies to binary PolicyDecisionPoint: {}",
-                policies.toString());
+        logger.debug("Adding policies to " +
+                             "PolicyDecisionPoint: {}", policies.toString());
         this.policies = policies;
     }
 }

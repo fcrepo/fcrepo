@@ -34,6 +34,10 @@ public class FedoraEvent implements Event {
 
     private Event e;
 
+    /**
+     * Wrap a JCR Event with our FedoraEvent decorators
+     * @param e
+     */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
         this.e = e;

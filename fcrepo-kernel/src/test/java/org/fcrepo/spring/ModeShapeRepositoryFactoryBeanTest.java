@@ -71,9 +71,6 @@ public class ModeShapeRepositoryFactoryBeanTest {
 
     @Test
     public void testFactory() throws RepositoryException, IOException {
-        mockStatic(ObjectService.class);
-        ObjectService mockObjects = mock(ObjectService.class);
-        when(ObjectService.get(mockRepo)).thenReturn(mockObjects);
         testObj.buildRepository();
         assertEquals(mockRepo, testObj.getObject());
     }

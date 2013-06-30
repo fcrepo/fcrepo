@@ -46,19 +46,23 @@ public class MimeTypePolicy implements Policy {
     }
 
     /**
-     * Evaluate the mime type policy. If the content node's mime type matches this
-     * policy's mime type, return the hint.
+     * Evaluate the mime type policy. If the content node's mime type matches
+     * this policy's mime type, return the hint.
      */
     @Override
     public String evaluatePolicy(final Node n) {
-        logger.debug("Evaluating MimeTypePolicy for {} -> {}", mimeType, hint);
+        logger.debug("Evaluating MimeTypePolicy ({} -> {}) for {} ",
+                            mimeType, hint, n);
         try {
-            final String nodeMimeType =
-                    n.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE)
-                            .getString();
+            final String nodeMimeType = n.getNode(JCR_CONTENT)
+                                                .getProperty(JCR_MIME_TYPE)
+                                                .getString();
+
             logger.trace("Found mime type {}", nodeMimeType);
+
             if (nodeMimeType.equals(mimeType)) {
-                logger.trace(" {} matched this mime type. Returning hint {} ", mimeType, hint);
+                logger.trace("{} matched this mime type." +
+                                     "Returning hint {} ", mimeType, hint);
                 return hint;
             }
         } catch (RepositoryException e) {

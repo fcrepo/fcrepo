@@ -68,6 +68,11 @@ public class StoreChunkInputStream extends InputStream {
 
     private int chunkNumber;
 
+    /**
+     * Get the chunk input stream for the given key in the given Infinispan CacheStore
+     * @param blobCache
+     * @param key
+     */
     public StoreChunkInputStream(final CacheStore blobCache, final String key) {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;

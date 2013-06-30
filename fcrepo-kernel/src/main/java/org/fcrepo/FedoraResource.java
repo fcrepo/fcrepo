@@ -59,6 +59,9 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private JcrPropertyStatementListener listener;
 
+    /**
+     * Construct a FedoraObject without a backing JCR Node
+     */
     public FedoraResource() {
         node = null;
     }
@@ -126,6 +129,11 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return node;
     }
 
+    /**
+     * Get the path to the JCR node
+     * @return
+     * @throws RepositoryException
+     */
     public String getPath() throws RepositoryException {
         return node.getPath();
     }

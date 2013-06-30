@@ -51,6 +51,11 @@ public class ModeShapeRepositoryFactoryBean implements
 
     private JcrRepository repository;
 
+    /**
+     * Generate a JCR repository from the given configuration
+     * @throws RepositoryException
+     * @throws IOException
+     */
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
         if (repositoryConfiguration instanceof ClassPathResource) {
@@ -80,6 +85,10 @@ public class ModeShapeRepositoryFactoryBean implements
         return true;
     }
 
+    /**
+     * Set the configuration to use for creating the repository
+     * @param repositoryConfiguration
+     */
     public void setRepositoryConfiguration(
             final Resource repositoryConfiguration) {
         this.repositoryConfiguration = repositoryConfiguration;

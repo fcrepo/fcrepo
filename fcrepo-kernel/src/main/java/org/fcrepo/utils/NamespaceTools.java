@@ -32,11 +32,23 @@ import com.google.common.base.Function;
  */
 public abstract class NamespaceTools {
 
+    /**
+     * Get the namespace registry for the session
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
     public static NamespaceRegistry getNamespaceRegistry(final Session session)
         throws RepositoryException {
         return (NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
     }
 
+    /**
+     * Get the namespace registry for the given node
+     * @param item
+     * @return
+     * @throws RepositoryException
+     */
     public static NamespaceRegistry getNamespaceRegistry(final Item item)
         throws RepositoryException {
         return getNamespaceRegistry(item.getSession());

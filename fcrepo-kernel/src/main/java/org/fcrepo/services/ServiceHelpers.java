@@ -41,6 +41,12 @@ import org.springframework.stereotype.Component;
 @Component
 public abstract class ServiceHelpers {
 
+    /**
+     * Get the total size of a Node's properties
+     * @param node
+     * @return size in bytes
+     * @throws RepositoryException
+     */
     public static Long getNodePropertySize(final Node node)
         throws RepositoryException {
         Long size = 0L;
@@ -85,11 +91,24 @@ public abstract class ServiceHelpers {
         return size;
     }
 
+    /**
+     * Get the size of a datastream by calculating the size of the
+     * properties and the binary properties
+     * @param ds
+     * @return
+     * @throws RepositoryException
+     */
     public static Long getDatastreamSize(final Node ds)
         throws RepositoryException {
         return getNodePropertySize(ds) + getContentSize(ds);
     }
 
+    /**
+     * Get the size of the JCR content binary property
+     * @param ds
+     * @return
+     * @throws RepositoryException
+     */
     public static Long getContentSize(final Node ds)
         throws RepositoryException {
         long size = 0L;
@@ -117,6 +136,12 @@ public abstract class ServiceHelpers {
         return new DefaultExecutorService(cacheStore.getCaches().get(1));
     }
 
+    /**
+     * Get the fixity function to map a low-level cache entry to its fixity result
+     * @param dsChecksum
+     * @param dsSize
+     * @return
+     */
     public static Function<LowLevelCacheEntry, FixityResult> getCheckCacheFixityFunction(final URI dsChecksum,
                                                                                          final long dsSize) {
         return new CheckCacheEntryFixity(dsChecksum, dsSize);

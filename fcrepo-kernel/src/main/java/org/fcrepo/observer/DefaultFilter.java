@@ -69,11 +69,20 @@ public class DefaultFilter implements EventFilter {
         }
     }
 
+    /**
+     * Initialize a long-running read-only JCR session
+     * to use for filtering events
+     * @throws RepositoryException
+     */
     @PostConstruct
     public void acquireSession() throws RepositoryException {
         session = repository.login();
     }
 
+    /**
+     * Log-out of the read-only JCR session before destroying
+     * the filter.
+     */
     @PreDestroy
     public void releaseSession() {
         session.logout();

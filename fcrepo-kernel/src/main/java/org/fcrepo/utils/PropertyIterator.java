@@ -28,6 +28,10 @@ public class PropertyIterator implements Iterator<Property> {
 
     private javax.jcr.PropertyIterator i;
 
+    /**
+     * Wrap the JCR PropertyIterator with our generic iterator
+     * @param i
+     */
     public PropertyIterator(final javax.jcr.PropertyIterator i) {
         this.i = i;
     }

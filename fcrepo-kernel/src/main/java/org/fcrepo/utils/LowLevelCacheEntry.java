@@ -157,6 +157,10 @@ public abstract class LowLevelCacheEntry {
         return externalId;
     }
 
+    /**
+     * Get the BinaryKey for this cache entry
+     * @return
+     */
     public BinaryKey getKey() {
         return key;
     }
