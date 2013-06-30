@@ -39,6 +39,12 @@ public class ReporterFactory {
 
     private static final Logger logger = getLogger(ReporterFactory.class);
 
+    /**
+     * Start a new GraphiteReporter, with reports every minute
+     * @param prefix graphite metrics prefix
+     * @param g a graphite client instance
+     * @return
+     */
     public GraphiteReporter getGraphiteReporter(final String prefix,
             final Graphite g) {
         final GraphiteReporter reporter =
@@ -52,7 +58,7 @@ public class ReporterFactory {
     }
 
     /**
-     * TODO
+     * Publish metrics to JMX
      * 
      * @param prefix
      * @return
@@ -70,7 +76,4 @@ public class ReporterFactory {
         return reporter;
     }
 
-    public static ReporterFactory buildDefaultReporterFactory() {
-        return new ReporterFactory();
-    }
 }

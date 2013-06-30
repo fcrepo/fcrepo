@@ -35,11 +35,20 @@ import com.codahale.metrics.servlets.AdminServletContextListener;
 @WebListener
 public class MetricsContextListener extends AdminServletContextListener {
 
+    /**
+     * Get the metrics registry for fcrepo
+     * @return
+     */
     @Override
     protected MetricRegistry getMetricRegistry() {
         return getMetrics();
     }
 
+    /**
+     * Provide a health-check registry
+     * @todo actually populate the health-check registry with checks
+     * @return
+     */
     @Override
     protected HealthCheckRegistry getHealthCheckRegistry() {
         return new HealthCheckRegistry();

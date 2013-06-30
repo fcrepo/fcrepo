@@ -32,10 +32,19 @@ public abstract class RegistryService {
     private static final MetricRegistry METRICS = SharedMetricRegistries
             .getOrCreate("fcrepo-metrics");
 
+    /**
+     * Get the current registry service
+     * @todo the new upstream SharedMetricRegistries may make this obsolete
+     * @return
+     */
     public static MetricRegistry getMetrics() {
         return METRICS;
     }
 
+    /**
+     * Immediately dump the current metrics to the console
+     * @param os
+     */
     public static void dumpMetrics(final PrintStream os) {
 
         final MetricRegistry registry = getMetrics();
