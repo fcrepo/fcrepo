@@ -118,7 +118,7 @@ public class FedoraSitemap extends AbstractResource {
     @Timed
     @Produces(TEXT_XML)
     public SitemapUrlSet getSitemap(@PathParam("page")
-    final String page) throws RepositoryException {
+            final String page) throws RepositoryException {
         try {
             final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 
@@ -137,9 +137,8 @@ public class FedoraSitemap extends AbstractResource {
         }
     }
 
-    private RowIterator
-            getSitemapEntries(final Session session, final long page)
-                throws RepositoryException {
+    private RowIterator getSitemapEntries(final Session session, final long pg)
+        throws RepositoryException {
         final QueryManager queryManager =
                 session.getWorkspace().getQueryManager();
 
@@ -149,7 +148,7 @@ public class FedoraSitemap extends AbstractResource {
                         "] FROM [" + FEDORA_OBJECT + "]";
         final Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);
 
-        query.setOffset(page * entriesPerPage);
+        query.setOffset(pg * entriesPerPage);
         query.setLimit(entriesPerPage);
 
         final QueryResult queryResults = query.execute();

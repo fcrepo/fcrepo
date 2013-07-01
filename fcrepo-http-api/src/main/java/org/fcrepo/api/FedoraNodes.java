@@ -1,17 +1,12 @@
 /**
- * Copyright 2013 DuraSpace, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2013 DuraSpace, Inc. Licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law
+ * or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  */
 
 package org.fcrepo.api;
@@ -92,10 +87,12 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Retrieve the node profile
-     *
+     * 
      * @param pathList
-     * @param offset with limit, control the pagination window of details for child nodes
-     * @param limit  with offset, control the pagination window of details for child nodes
+     * @param offset with limit, control the pagination window of details for
+     *        child nodes
+     * @param limit with offset, control the pagination window of details for
+     *        child nodes
      * @param request
      * @param uriInfo
      * @return
@@ -106,13 +103,17 @@ public class FedoraNodes extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     public Dataset describe(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("offset")
-    @DefaultValue("0")
-    final long offset, @QueryParam("limit")
-    @DefaultValue("-1")
-    final int limit, @Context
-    final Request request, @Context
-    final UriInfo uriInfo) throws RepositoryException, IOException {
+            final List<PathSegment> pathList,
+            @QueryParam("offset")
+            @DefaultValue("0")
+            final long offset,
+            @QueryParam("limit")
+            @DefaultValue("-1")
+            final int limit,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
 
@@ -163,25 +164,27 @@ public class FedoraNodes extends AbstractResource {
     @PUT
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response modifyObject(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final UriInfo uriInfo, final InputStream requestBodyStream,
+    public Response modifyObject(
+            @PathParam("path")
+            final List<PathSegment> pathList,
+            @Context
+            final UriInfo uriInfo,
+            final InputStream requestBodyStream,
             @HeaderParam("Content-Type")
-            final MediaType requestContentType, @Context
+            final MediaType requestContentType,
+            @Context
             final Request request) throws RepositoryException, IOException,
         InvalidChecksumException {
         final String path = toPath(pathList);
         logger.debug("Modifying object with path: {}", path);
 
         try {
-
             final FedoraResource resource =
                     nodeService.findOrCreateObject(session, path);
 
             final boolean isNew = resource.isNew();
 
             if (!isNew) {
-
                 final Date date = resource.getLastModifiedDate();
                 final Date roundedDate = new Date();
                 roundedDate.setTime(date.getTime() - date.getTime() % 1000);
@@ -224,8 +227,10 @@ public class FedoraNodes extends AbstractResource {
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final UriInfo uriInfo, final InputStream requestBodyStream)
+            final List<PathSegment> pathList,
+            @Context
+            final UriInfo uriInfo,
+            final InputStream requestBodyStream)
         throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
@@ -266,7 +271,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Creates a new object.
-     *
+     * 
      * @param pathList
      * @return 201
      * @throws RepositoryException
@@ -276,13 +281,18 @@ public class FedoraNodes extends AbstractResource {
     @POST
     @Timed
     public Response createObject(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("mixin")
-    @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
-    final String mixin, @QueryParam("checksumType")
-    final String checksumType, @QueryParam("checksum")
-    final String checksum, @HeaderParam("Content-Type")
-    final MediaType requestContentType, @Context
-    final UriInfo uriInfo, final InputStream requestBodyStream)
+            final List<PathSegment> pathList,
+            @QueryParam("mixin")
+            @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
+            final String mixin,
+            @QueryParam("checksumType")
+            final String checksumType,
+            @QueryParam("checksum")
+            final String checksum,
+            @HeaderParam("Content-Type")
+            final MediaType requestContentType,
+            @Context
+            final UriInfo uriInfo, final InputStream requestBodyStream)
         throws RepositoryException, IOException, InvalidChecksumException {
 
         final String path = toPath(pathList);
@@ -310,7 +320,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Deletes an object.
-     *
+     * 
      * @param path
      * @return
      * @throws RepositoryException
@@ -318,7 +328,7 @@ public class FedoraNodes extends AbstractResource {
     @DELETE
     @Timed
     public Response deleteObject(@PathParam("path")
-    final List<PathSegment> path) throws RepositoryException {
+            final List<PathSegment> path) throws RepositoryException {
 
         try {
             nodeService.deleteObject(session, toPath(path));

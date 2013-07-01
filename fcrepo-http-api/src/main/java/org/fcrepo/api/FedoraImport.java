@@ -81,10 +81,12 @@ public class FedoraImport extends AbstractResource {
      */
     @POST
     public Response importObject(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("format")
-    @DefaultValue("jcr/xml")
-    final String format, final InputStream stream) throws IOException,
-        RepositoryException, InvalidChecksumException, URISyntaxException {
+            final List<PathSegment> pathList,
+            @QueryParam("format")
+            @DefaultValue("jcr/xml")
+            final String format,
+            final InputStream stream) throws IOException, RepositoryException,
+        InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(pathList);
         logger.debug("Deserializing at {}", path);

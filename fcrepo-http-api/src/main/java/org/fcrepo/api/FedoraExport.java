@@ -71,9 +71,10 @@ public class FedoraExport extends AbstractResource {
      */
     @GET
     public Response exportObject(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("format")
-    @DefaultValue("jcr/xml")
-    final String format) {
+            final List<PathSegment> pathList,
+            @QueryParam("format")
+            @DefaultValue("jcr/xml")
+            final String format) {
         final String path = toPath(pathList);
 
         logger.debug("Requested object serialization for: " + path +

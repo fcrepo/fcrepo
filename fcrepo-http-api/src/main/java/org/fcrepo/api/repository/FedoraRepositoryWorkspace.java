@@ -16,12 +16,7 @@
 
 package org.fcrepo.api.repository;
 
-import com.google.common.collect.ImmutableMap;
-import org.fcrepo.AbstractResource;
-import org.fcrepo.api.FedoraNodes;
-import org.fcrepo.session.InjectedSession;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import java.net.MalformedURLException;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -33,7 +28,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.MalformedURLException;
+
+import org.fcrepo.AbstractResource;
+import org.fcrepo.api.FedoraNodes;
+import org.fcrepo.session.InjectedSession;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
  * This class exposes the JCR workspace functionality. It may be
@@ -73,8 +75,10 @@ public class FedoraRepositoryWorkspace extends AbstractResource {
     @POST
     @Path("{path}")
     public Response createWorkspace(@PathParam("path")
-    final String path, @Context
-    final UriInfo uriInfo) throws RepositoryException, MalformedURLException {
+            final String path,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException,
+        MalformedURLException {
         final Workspace workspace = session.getWorkspace();
         workspace.createWorkspace(path);
 

@@ -84,9 +84,11 @@ public class FedoraVersions extends AbstractResource {
     @GET
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Response getVersionList(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final Request request, @Context
-    final UriInfo uriInfo) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
 
         LOGGER.trace("getting versions list for {}", path);
@@ -121,8 +123,9 @@ public class FedoraVersions extends AbstractResource {
     @POST
     @Path("/{versionLabel}")
     public Response addVersionLabel(@PathParam("path")
-    final List<PathSegment> pathList, @PathParam("versionLabel")
-    final String versionLabel) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @PathParam("versionLabel")
+            final String versionLabel) throws RepositoryException {
 
         final String path = toPath(pathList);
         try {
@@ -149,9 +152,11 @@ public class FedoraVersions extends AbstractResource {
     @GET
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset getVersion(@PathParam("path")
-    final List<PathSegment> pathList, @PathParam("versionLabel")
-    final String versionLabel, @Context
-    final UriInfo uriInfo) throws RepositoryException, IOException {
+            final List<PathSegment> pathList,
+            @PathParam("versionLabel")
+            final String versionLabel,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         LOGGER.trace("getting version profile for {} at version {}", path,
                 versionLabel);

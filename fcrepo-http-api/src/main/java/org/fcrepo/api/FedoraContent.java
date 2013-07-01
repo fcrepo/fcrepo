@@ -83,11 +83,16 @@ public class FedoraContent extends AbstractResource {
      */
     @POST
     @Timed
-    public Response create(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("checksumType")
-    final String checksumType, @QueryParam("checksum")
-    final String checksum, @HeaderParam("Content-Type")
-    final MediaType requestContentType, final InputStream requestBodyStream)
+    public Response create(
+            @PathParam("path")
+            final List<PathSegment> pathList,
+            @QueryParam("checksumType")
+            final String checksumType,
+            @QueryParam("checksum")
+            final String checksum,
+            @HeaderParam("Content-Type")
+            final MediaType requestContentType,
+            final InputStream requestBodyStream)
         throws IOException, InvalidChecksumException, RepositoryException,
         URISyntaxException {
         final MediaType contentType =
@@ -135,9 +140,12 @@ public class FedoraContent extends AbstractResource {
      */
     @PUT
     @Timed
-    public Response modifyContent(@PathParam("path")
-    final List<PathSegment> pathList, @HeaderParam("Content-Type")
-    final MediaType requestContentType, final InputStream requestBodyStream,
+    public Response modifyContent(
+            @PathParam("path")
+            final List<PathSegment> pathList,
+            @HeaderParam("Content-Type")
+            final MediaType requestContentType,
+            final InputStream requestBodyStream,
             @Context
             final Request request) throws RepositoryException, IOException,
         InvalidChecksumException, URISyntaxException {
@@ -201,8 +209,9 @@ public class FedoraContent extends AbstractResource {
     @GET
     @Timed
     public Response getContent(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final Request request) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @Context
+            final Request request) throws RepositoryException {
 
         try {
             final String path = toPath(pathList);

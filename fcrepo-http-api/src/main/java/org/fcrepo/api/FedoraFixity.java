@@ -78,9 +78,11 @@ public class FedoraFixity extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     public Dataset getDatastreamFixity(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final Request request, @Context
-    final UriInfo uriInfo) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException {
 
         try {
             final String path = toPath(pathList);

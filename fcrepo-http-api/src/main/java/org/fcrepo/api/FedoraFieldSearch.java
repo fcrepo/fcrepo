@@ -83,7 +83,8 @@ public class FedoraFieldSearch extends AbstractResource implements
      * A stub method so we can return a text/html representation using
      * the right template.
      *
-     * {@link #searchSubmitHtml(String, long, int, javax.ws.rs.core.Request, javax.ws.rs.core.UriInfo)}
+     * {@link #searchSubmitHtml(String, long, int, javax.ws.rs.core.Request,
+     * javax.ws.rs.core.UriInfo)}
      *
      * @param terms
      * @param offset
@@ -98,14 +99,17 @@ public class FedoraFieldSearch extends AbstractResource implements
     @HtmlTemplate("search:results")
     @Produces({TEXT_HTML})
     public Dataset searchSubmitHtml(@QueryParam("q")
-    final String terms, @QueryParam("offset")
-    @DefaultValue("0")
-    final long offset, @QueryParam("limit")
-    @DefaultValue("25")
-    final int limit, @Context
-    final Request request, @Context
-    final UriInfo uriInfo) throws RepositoryException {
-
+            final String terms,
+            @QueryParam("offset")
+            @DefaultValue("0")
+            final long offset,
+            @QueryParam("limit")
+            @DefaultValue("25")
+            final int limit,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException {
         return getSearchDataset(terms, offset, limit, uriInfo);
     }
 
@@ -126,13 +130,17 @@ public class FedoraFieldSearch extends AbstractResource implements
     @Timed
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset searchSubmitRdf(@QueryParam("q")
-    final String terms, @QueryParam("offset")
-    @DefaultValue("0")
-    final long offset, @QueryParam("limit")
-    @DefaultValue("25")
-    final int limit, @Context
-    final Request request, @Context
-    final UriInfo uriInfo) throws RepositoryException {
+            final String terms,
+            @QueryParam("offset")
+            @DefaultValue("0")
+            final long offset,
+            @QueryParam("limit")
+            @DefaultValue("25")
+            final int limit,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException {
 
         if (terms == null) {
             LOGGER.trace("Received search request, but terms was empty. Aborting.");

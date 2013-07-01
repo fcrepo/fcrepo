@@ -86,10 +86,12 @@ public class FedoraIdentifiers extends AbstractResource {
     @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     public Dataset getNextPid(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("numPids")
-    @DefaultValue("1")
-    final Integer numPids, @Context
-    final UriInfo uriInfo) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @QueryParam("numPids")
+            @DefaultValue("1")
+            final Integer numPids,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException {
 
         final String path = toPath(pathList);
 

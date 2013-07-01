@@ -96,8 +96,10 @@ public class FedoraDatastreams extends AbstractResource {
     @POST
     @Timed
     public Response modifyDatastreams(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("delete")
-    final List<String> dsidList, final MultiPart multipart)
+            final List<PathSegment> pathList,
+            @QueryParam("delete")
+            final List<String> dsidList,
+            final MultiPart multipart)
         throws RepositoryException, IOException, InvalidChecksumException,
         URISyntaxException {
 
@@ -152,8 +154,9 @@ public class FedoraDatastreams extends AbstractResource {
     @DELETE
     @Timed
     public Response deleteDatastreams(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("dsid")
-    final List<String> dsidList) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @QueryParam("dsid")
+            final List<String> dsidList) throws RepositoryException {
         try {
             final String path = toPath(pathList);
             for (final String dsid : dsidList) {
@@ -183,9 +186,11 @@ public class FedoraDatastreams extends AbstractResource {
     @Produces("multipart/mixed")
     @Timed
     public Response getDatastreamsContents(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("dsid")
-    final List<String> requestedDsids, @Context
-    final Request request) throws RepositoryException, IOException,
+            final List<PathSegment> pathList,
+            @QueryParam("dsid")
+            final List<String> requestedDsids,
+            @Context
+            final Request request) throws RepositoryException, IOException,
         NoSuchAlgorithmException {
 
         final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();

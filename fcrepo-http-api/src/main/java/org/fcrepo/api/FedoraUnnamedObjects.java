@@ -74,13 +74,19 @@ public class FedoraUnnamedObjects extends AbstractResource {
      * @return 201
      */
     @POST
-    public Response ingestAndMint(@PathParam("path")
-    final List<PathSegment> pathList, @QueryParam("mixin")
-    @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
-    final String mixin, @QueryParam("checksumType")
-    final String checksumType, @QueryParam("checksum")
-    final String checksum, @HeaderParam("Content-Type")
-    final MediaType requestContentType, final InputStream requestBodyStream,
+    public Response ingestAndMint(
+            @PathParam("path")
+            final List<PathSegment> pathList,
+            @QueryParam("mixin")
+            @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
+            final String mixin,
+            @QueryParam("checksumType")
+            final String checksumType,
+            @QueryParam("checksum")
+            final String checksum,
+            @HeaderParam("Content-Type")
+            final MediaType requestContentType,
+            final InputStream requestBodyStream,
             @Context
             final UriInfo uriInfo) throws RepositoryException, IOException,
         InvalidChecksumException, URISyntaxException {
