@@ -50,7 +50,7 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 public class MetricsConfig {
 
     /**
-     * TODO
+     * Provide the reporter factory to Spring
      * 
      * @return
      */

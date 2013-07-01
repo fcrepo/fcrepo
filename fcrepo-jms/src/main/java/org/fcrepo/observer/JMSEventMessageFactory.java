@@ -23,10 +23,14 @@ import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+/**
+ * Produce a JMS Message from a JCR Event
+ */
 public interface JMSEventMessageFactory {
 
     /**
-     * TODO
+     * Produce a JMS message from a JCR event with the
+     * given session
      * 
      * @param jcrEvent
      * @param jcrSession

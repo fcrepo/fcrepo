@@ -22,24 +22,27 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Suspiciously similar to {@link SitemapIndex}, a sitemap of entries.
+ *
+ * @TODO replace with a 3rd party sitemap impl
+ */
 @XmlRootElement(name = "urlset",
         namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapUrlSet {
 
-    @XmlElement(name = "url",
-            namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private final List<SitemapEntry> sitemapEntries =
             new ArrayList<SitemapEntry>();
 
     /**
-     * TODO
+     * Create a new sitemap with the default settings
      */
     public SitemapUrlSet() {
 
     }
 
     /**
-     * TODO
+     * Add an entry to the sitemap
      * 
      * @param e
      */
@@ -48,10 +51,12 @@ public class SitemapUrlSet {
     }
 
     /**
-     * TODO
+     * Get all the sitemap entries
      * 
      * @return
      */
+    @XmlElement(name = "url",
+             namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     public List<SitemapEntry> getSitemapEntries() {
         return sitemapEntries;
     }

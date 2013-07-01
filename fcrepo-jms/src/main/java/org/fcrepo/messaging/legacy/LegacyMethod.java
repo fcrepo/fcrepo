@@ -45,6 +45,10 @@ import org.apache.abdera.model.Entry;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
 
+/**
+ * Serialize events as ATOM XML messages similar to
+ * Fedora 3.x
+ */
 public class LegacyMethod {
 
     // TODO Figure out where to get the base url

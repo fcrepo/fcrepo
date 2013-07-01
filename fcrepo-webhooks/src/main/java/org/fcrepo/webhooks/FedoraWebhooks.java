@@ -272,10 +272,11 @@ public class FedoraWebhooks extends AbstractResource {
     }
 
     /**
-     * TODO
+     * Destroy the read-only session when we're done with it
      */
     @PreDestroy
     public final void logoutSession() {
+        eventBus.unregister(this);
         readOnlySession.logout();
     }
 }

@@ -52,7 +52,7 @@ public class SessionProvider extends
     private static final Logger logger = getLogger(SessionProvider.class);
 
     /**
-     * TODO
+     * Yes, this provider really provides sessions
      */
     public SessionProvider() {
         super(Session.class);

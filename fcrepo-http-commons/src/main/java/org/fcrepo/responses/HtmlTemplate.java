@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 public @interface HtmlTemplate {
 
     /**
-     * TODO
+     * The name of the HMTL template to render for this method
      * 
      * @return
      */

@@ -32,6 +32,10 @@ import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * Factory for generating sessions for HTTP requests, taking
+ * into account transactions, workspaces, and authentication.
+ */
 public class SessionFactory {
 
     private static final Logger logger = getLogger(SessionFactory.class);
@@ -43,14 +47,14 @@ public class SessionFactory {
     private TransactionService transactionService;
 
     /**
-     * TODO
+     * initialize an empty session factory
      */
     public SessionFactory() {
 
     }
 
     /**
-     * TODO
+     * Initialize a session factory for the given Repository
      * 
      * @param repo
      * @param transactionService
@@ -62,7 +66,7 @@ public class SessionFactory {
     }
 
     /**
-     * TODO
+     * Validate the spring wiring
      */
     @PostConstruct
     public void init() {

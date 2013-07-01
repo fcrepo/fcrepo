@@ -38,6 +38,10 @@ import org.slf4j.Logger;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+/**
+ * Machinery to publish JMS messages when an EventBus
+ * message is received.
+ */
 public class JMSTopicPublisher {
 
     @Inject
@@ -63,7 +67,8 @@ public class JMSTopicPublisher {
     private javax.jcr.Session session;
 
     /**
-     * TODO
+     * When an EventBus mesage is received, map it to our JMS
+     * message payload and push it onto the queue.
      * 
      * @param fedoraEvent
      * @throws JMSException
@@ -83,7 +88,7 @@ public class JMSTopicPublisher {
     }
 
     /**
-     * TODO
+     * Connect to JCR Repostory and JMS queue
      * 
      * @throws JMSException
      * @throws RepositoryException
@@ -102,7 +107,7 @@ public class JMSTopicPublisher {
     }
 
     /**
-     * TODO
+     * Close external connections
      * 
      * @throws JMSException
      */

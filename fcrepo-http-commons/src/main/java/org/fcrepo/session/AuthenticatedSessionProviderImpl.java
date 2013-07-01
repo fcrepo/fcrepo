@@ -34,13 +34,13 @@ public class AuthenticatedSessionProviderImpl implements
     private final ServletCredentials credentials;
 
     /**
-     * TODO
+     * Get a new session provider for the JCR repository
      * 
      * @param repo
      * @param creds
      */
-    public AuthenticatedSessionProviderImpl(Repository repo,
-            ServletCredentials creds) {
+    public AuthenticatedSessionProviderImpl(final Repository repo,
+            final ServletCredentials creds) {
         repository = repo;
         credentials = creds;
     }

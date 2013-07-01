@@ -27,6 +27,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 import javax.ws.rs.GET;
@@ -71,7 +72,7 @@ public class RSSPublisher extends AbstractResource {
     private final SyndFeed feed = new SyndFeedImpl();
 
     /**
-     * TODO
+     * Get the RSS feed
      * 
      * @return
      * @throws FeedException
@@ -111,7 +112,7 @@ public class RSSPublisher extends AbstractResource {
             };
 
     /**
-     * TODO
+     * Engage the eventbus listener and set basic feed properties
      */
     @Override
     @PostConstruct
@@ -123,7 +124,15 @@ public class RSSPublisher extends AbstractResource {
     }
 
     /**
-     * TODO
+     * Remove our EventBus listener
+     */
+    @PreDestroy
+    public void shutDown() {
+        eventBus.unregister(this);
+    }
+
+    /**
+     * When a new event is received, add it to the buffer.
      * 
      * @param event
      */

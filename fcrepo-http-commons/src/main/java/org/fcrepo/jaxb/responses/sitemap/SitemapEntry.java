@@ -24,6 +24,11 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 
+/**
+ * Entry in a sitemap document
+ *
+ *  @TODO replace with a 3rd party sitemap impl
+ */
 @XmlRootElement(name = "url",
         namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapEntry {
@@ -41,26 +46,24 @@ public class SitemapEntry {
     private static final double priority = 0.8;
 
     /**
-     * TODO
+     * (default constructor used by JAX-B)
      */
-    public SitemapEntry() {
-        loc = null;
-        lastmod = null;
+    public SitemapEntry() throws RepositoryException {
+        this(null, null);
     }
 
     /**
-     * TODO
+     * Sitemap entry for a URL with a default last modified date
      * 
      * @param loc
      * @throws RepositoryException
      */
     public SitemapEntry(final URI loc) throws RepositoryException {
-        this.loc = loc;
-        lastmod = Calendar.getInstance();
+        this(loc, Calendar.getInstance());
     }
 
     /**
-     * TODO
+     * Sitemap entry for a URL with a last modified date
      * 
      * @param loc
      * @param lastmod
