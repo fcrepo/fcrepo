@@ -37,7 +37,7 @@ public class WorstCaseGenerator implements DCGenerator {
     public InputStream getStream(final Node node) {
         logger.debug("Writing an empty oai dc document");
         final String str =
-                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" ></oai_dc:dc>";
+                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" />";
 
         return new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
     }
