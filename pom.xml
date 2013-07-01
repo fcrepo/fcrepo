@@ -31,6 +31,7 @@
     <infinispan.version>5.3.0.Final</infinispan.version>
     <jersey.version>1.17.1</jersey.version>
     <jgroups.version>3.3.1.Final</jgroups.version>
+    <logback.version>1.0.13</logback.version>
     <metrics.version>3.0.0</metrics.version>
     <modeshape.version>3.3.0.Final</modeshape.version>
     <sesame.version>2.7.2</sesame.version>
@@ -95,6 +96,11 @@
         <version>2.0</version>
       </dependency>
       <dependency>
+        <groupId>javax.mail</groupId>
+        <artifactId>mail</artifactId>
+        <version>1.4.4</version>
+      </dependency>
+      <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>3.0.1</version>
@@ -105,9 +111,66 @@
         <version>2.2</version>
       </dependency>
       <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>1.0.13</version>
+      </dependency>
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>14.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-grizzly2</artifactId>
+        <version>${jersey.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <!-- jersey-grizzly2 depends on grizzly-http-2.2.16, but grizzly-http-server 
+            depends on grizzly-http-2.2.21 -->
+          <exclusion>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.jersey-test-framework</groupId>
+        <artifactId>jersey-test-framework-grizzly2</artifactId>
+        <version>${jersey.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-grizzly2-servlet</artifactId>
+        <version>${jersey.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.contribs</groupId>
+        <artifactId>jersey-multipart</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.contribs</groupId>
+        <artifactId>jersey-spring</artifactId>
+        <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-json</artifactId>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.abdera</groupId>
@@ -157,6 +220,18 @@
         <groupId>org.apache.velocity</groupId>
         <artifactId>velocity</artifactId>
         <version>1.7</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http-server</artifactId>
+        <scope>test</scope>
+        <version>${grizzly.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.grizzly</groupId>
+        <artifactId>grizzly-http-servlet</artifactId>
+        <scope>test</scope>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>org.infinispan</groupId>
@@ -239,75 +314,6 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>mail</artifactId>
-        <version>1.4.4</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-http-server</artifactId>
-        <scope>test</scope>
-        <version>${grizzly.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-http-servlet</artifactId>
-        <scope>test</scope>
-        <version>${grizzly.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-grizzly2</artifactId>
-        <version>${jersey.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <!-- jersey-grizzly2 depends on grizzly-http-2.2.16, but grizzly-http-server 
-            depends on grizzly-http-2.2.21 -->
-          <exclusion>
-            <groupId>org.glassfish.grizzly</groupId>
-            <artifactId>grizzly-http</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey.jersey-test-framework</groupId>
-        <artifactId>jersey-test-framework-grizzly2</artifactId>
-        <version>${jersey.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-grizzly2-servlet</artifactId>
-        <version>${jersey.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-core</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey.contribs</groupId>
-        <artifactId>jersey-multipart</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey.contribs</groupId>
-        <artifactId>jersey-spring</artifactId>
-        <version>${jersey.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-json</artifactId>
-        <version>${jersey.version}</version>
       </dependency>
 
       <!-- sesame/openrdf dependencies that were previously provided by the Aduna 
