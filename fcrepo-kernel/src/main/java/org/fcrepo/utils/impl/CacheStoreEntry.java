@@ -46,7 +46,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
     private final String cacheName;
 
     /**
-     * @todo Document.
+     * An entry in an infinispan CacheStore
      */
     public CacheStoreEntry(final CacheStore store,
             final String cacheName,

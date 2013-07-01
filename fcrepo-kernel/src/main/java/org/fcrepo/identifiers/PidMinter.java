@@ -28,12 +28,12 @@ import com.google.common.base.Function;
 public interface PidMinter {
 
     /**
-     * @todo Document.
+     * Mint a new PID
      */
     String mintPid();
 
     /**
-     * @todo Document.
+     * Provide a helpful function to mint any number of PIDs
      */
     Function<Object, String> makePid();
 }

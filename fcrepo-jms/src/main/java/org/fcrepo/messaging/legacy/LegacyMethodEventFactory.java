@@ -31,12 +31,15 @@ import javax.jms.TextMessage;
 import org.fcrepo.observer.JMSEventMessageFactory;
 import org.slf4j.Logger;
 
+/**
+ * Create Fedora 3.x-like ATOM payloads for events
+ */
 public class LegacyMethodEventFactory implements JMSEventMessageFactory {
 
     private final Logger LOGGER = getLogger(LegacyMethodEventFactory.class);
 
     /**
-     * TODO
+     * Default event factory settings
      */
     public LegacyMethodEventFactory() {
     }
