@@ -23,6 +23,9 @@ import org.apache.abdera.Abdera;
 import org.apache.abdera.model.Entry;
 import org.apache.abdera.parser.Parser;
 
+/**
+ * Create and parse ATOM events
+ */
 public abstract class EntryFactory {
 
     private static final Abdera ABDERA = new Abdera();
@@ -46,6 +49,10 @@ public abstract class EntryFactory {
     public static final String FORMAT_PREDICATE =
             "http://www.fedora.info/definitions/1/0/types/formatURI";
 
+    /**
+     * Create a new base Abdera document for our ATOM entry
+     * @return
+     */
     static Entry newEntry() {
         final Entry entry = ABDERA.newEntry();
         entry.declareNS(XSD_NS, "xsd");
@@ -56,6 +63,11 @@ public abstract class EntryFactory {
         return entry;
     }
 
+    /**
+     * Parse an ATOM entry document into Abdera
+     * @param input
+     * @return
+     */
     static Entry parse(Reader input) {
         return (Entry) ABDERA_PARSER.parse(input).getRoot();
     }
