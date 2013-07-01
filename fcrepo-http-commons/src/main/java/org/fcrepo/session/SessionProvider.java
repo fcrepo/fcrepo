@@ -32,6 +32,9 @@ import com.sun.jersey.core.spi.component.ComponentContext;
 import com.sun.jersey.spi.inject.Injectable;
 import com.sun.jersey.spi.inject.PerRequestTypeInjectableProvider;
 
+/**
+ * Provide a JCR session within the current request context
+ */
 @Provider
 public class SessionProvider extends
         PerRequestTypeInjectableProvider<InjectedSession, Session> {
@@ -57,17 +60,5 @@ public class SessionProvider extends
             final InjectedSession a) {
         logger.trace("Returning new InjectableSession...");
         return new InjectableSession(sessionFactory, secContext, request);
-    }
-
-    public void setSessionFactory(final SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
-
-    public void setSecContext(final SecurityContext secContext) {
-        this.secContext = secContext;
-    }
-
-    public void setRequest(final HttpServletRequest request) {
-        this.request = request;
     }
 }

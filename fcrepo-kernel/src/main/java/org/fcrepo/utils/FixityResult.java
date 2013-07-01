@@ -26,6 +26,9 @@ import java.util.EnumSet;
  */
 public class FixityResult {
 
+    /**
+     * The possible fixity states (which may be ORed together later)
+     */
     public static enum FixityState {
         SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE
     }
@@ -43,8 +46,17 @@ public class FixityResult {
      */
     public EnumSet<FixityState> status = EnumSet.noneOf(FixityState.class);
 
+
+    /**
+     * the size computed by the fixity check
+     * @todo make this private
+     */
     public long computedSize;
 
+    /**
+     * the checksum computed by the fixity check
+     * @todo make this private
+     */
     public URI computedChecksum;
 
     private final LowLevelCacheEntry entry;

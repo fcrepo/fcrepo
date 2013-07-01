@@ -48,6 +48,10 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.update.UpdateAction;
 
+/**
+ * Common behaviors across FedoraObject and Datastream types; also used
+ * when the exact type of an object is irrelevant
+ */
 public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraResource.class);

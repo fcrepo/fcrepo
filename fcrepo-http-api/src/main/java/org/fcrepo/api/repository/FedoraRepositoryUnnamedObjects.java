@@ -37,7 +37,4 @@ public class FedoraRepositoryUnnamedObjects extends FedoraUnnamedObjects {
     @InjectedSession
     protected Session session;
 
-    public void setSession(final Session session) {
-        this.session = session;
-    }
 }

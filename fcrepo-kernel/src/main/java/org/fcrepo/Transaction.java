@@ -23,6 +23,10 @@ import java.util.UUID;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+/**
+ * A Fedora Transaction wraps a JCR session with some expiration logic.
+ * Whenever the transaction's session is requested, the expiration is extended
+ */
 public class Transaction {
 
     // the default timeout is 3 minutes
@@ -30,8 +34,11 @@ public class Transaction {
 
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo4.tx.timeout";
 
+    /**
+     * Information about the state of the transaction
+     */
     public static enum State {
-        DIRTY, NEW, COMMITED, ROLLED_BACK;
+        DIRTY, NEW, COMMITED, ROLLED_BACK
     }
 
     private final Session session;

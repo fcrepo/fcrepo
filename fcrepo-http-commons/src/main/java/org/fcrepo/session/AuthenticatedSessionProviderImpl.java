@@ -22,6 +22,10 @@ import javax.jcr.Session;
 
 import org.modeshape.jcr.api.ServletCredentials;
 
+/**
+ * Retrieve a JCR session by just passing along the HTTP
+ * credentials.
+ */
 public class AuthenticatedSessionProviderImpl implements
         AuthenticatedSessionProvider {
 

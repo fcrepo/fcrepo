@@ -59,6 +59,12 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
                 showStackTrace ? getStackTraceAsString(e) : null).build();
     }
 
+    /**
+     * Set whether the full stack trace should be returned as part of the
+     * error response. This may be a bad idea if the stack trace is exposed
+     * to the public.
+     * @param showStackTrace
+     */
     public void setShowStackTrace(final Boolean showStackTrace) {
         this.showStackTrace = showStackTrace;
     }

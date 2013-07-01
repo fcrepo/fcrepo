@@ -49,7 +49,7 @@ public class FedoraRepositoriesPropertiesTest {
         mockNodes = mock(NodeService.class);
         testObj = new FedoraRepositoriesProperties();
         mockSession = TestHelpers.mockSession(testObj);
-        testObj.setSession(mockSession);
+        TestHelpers.setField(testObj, "session", mockSession);
         TestHelpers.setField(testObj, "nodeService", mockNodes);
         TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
     }

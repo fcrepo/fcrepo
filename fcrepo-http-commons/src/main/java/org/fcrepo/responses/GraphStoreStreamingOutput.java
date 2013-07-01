@@ -33,6 +33,10 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * Helper for serializing a GraphStore or Dataset to a RDF
+ * serialization format (given by the serialization's mime type)
+ */
 public class GraphStoreStreamingOutput implements StreamingOutput {
 
     private static final Logger LOGGER =
@@ -42,11 +46,23 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
 
     private final String format;
 
+    /**
+     * Construct the StreamingOutput machinery to serialize
+     * a GraphStore to the mime type given
+     * @param graphStore
+     * @param mediaType
+     */
     public GraphStoreStreamingOutput(final GraphStore graphStore,
             final MediaType mediaType) {
         this(graphStore.toDataset(), mediaType);
     }
 
+    /**
+     * Construct the StreamingOutput machinery to serialize
+     * a Dataset to the mime type given
+     * @param dataset
+     * @param mediaType
+     */
     public GraphStoreStreamingOutput(final Dataset dataset,
             final MediaType mediaType) {
         this.dataset = dataset;

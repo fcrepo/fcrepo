@@ -40,6 +40,9 @@ import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
+/**
+ * Utilities to help with serializing a graph to an HTTP resource
+ */
 public class RdfSerializationUtils {
 
     private static final Logger logger = getLogger(RdfSerializationUtils.class);
@@ -61,6 +64,15 @@ public class RdfSerializationUtils {
     public static DateTimeFormatter RFC2822DATEFORMAT =
             forPattern("EEE, dd MMM yyyy HH:mm:ss Z");
 
+    /**
+     * Get the very first value for a predicate as a string, or null
+     * if the predicate is not used
+     *
+     * @param rdf
+     * @param subject
+     * @param predicate
+     * @return
+     */
     static String getFirstValueForPredicate(final Dataset rdf,
             final Node subject, final Node predicate) {
         final Iterator<Quad> statements =
@@ -77,6 +89,11 @@ public class RdfSerializationUtils {
         }
     }
 
+    /**
+     * Get the subject of the dataset, given by the context's "uri"
+     * @param rdf
+     * @return
+     */
     static Node getDatasetSubject(final Dataset rdf) {
         Context context = rdf.getContext();
         String uri = context.getAsString(Symbol.create("uri"));
@@ -88,6 +105,13 @@ public class RdfSerializationUtils {
         }
     }
 
+    /**
+     * Set the cache control and last modified HTTP headers from data
+     * in the graph
+     *
+     * @param httpHeaders
+     * @param rdf
+     */
     static void
             setCachingHeaders(final MultivaluedMap<String, Object> httpHeaders,
                     final Dataset rdf) {
@@ -116,6 +140,12 @@ public class RdfSerializationUtils {
         httpHeaders.put("Last-Modified", of((Object) lastModifiedAsRdf2822));
     }
 
+    /**
+     * Merge a dataset's named graphs into a single model, in order to provide
+     * a cohesive serialization.
+     * @param dataset
+     * @return
+     */
     static Model unifyDatasetModel(final Dataset dataset) {
         final Iterator<String> iterator = dataset.listNames();
         Model model = ModelFactory.createDefaultModel();

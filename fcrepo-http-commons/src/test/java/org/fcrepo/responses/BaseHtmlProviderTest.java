@@ -41,6 +41,7 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -95,7 +96,7 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteTo() throws WebApplicationException,
-        IllegalArgumentException, IOException {
+        IllegalArgumentException, IOException, NoSuchFieldException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
@@ -108,7 +109,7 @@ public class BaseHtmlProviderTest {
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
                 Mockito.isA(Writer.class));
-        baseHtmlProvider.setTemplatesMap(of("nt:file", mockTemplate));
+        TestHelpers.setField(baseHtmlProvider, "templatesMap", of("nt:file", mockTemplate));
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
                 new Annotation[] {}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
@@ -120,7 +121,7 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteToWithAnnotation() throws WebApplicationException,
-        IllegalArgumentException, IOException {
+        IllegalArgumentException, IOException, NoSuchFieldException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
@@ -133,7 +134,8 @@ public class BaseHtmlProviderTest {
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
                 Mockito.isA(Writer.class));
-        baseHtmlProvider.setTemplatesMap(of("some:file", mockTemplate));
+
+        TestHelpers.setField(baseHtmlProvider, "templatesMap", of("some:file", mockTemplate));
         HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),

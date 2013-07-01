@@ -24,6 +24,11 @@ import org.springframework.stereotype.Component;
 import javax.jcr.Session;
 import javax.ws.rs.Path;
 
+/**
+ * This stub is a hack to mount the functionality of FedoraTransactions at the
+ * root of this webapp. Without it, the globbing from FedoraNodes would own this
+ * path instead.
+ */
 @Component
 @Scope("prototype")
 @Path("/fcr:tx")

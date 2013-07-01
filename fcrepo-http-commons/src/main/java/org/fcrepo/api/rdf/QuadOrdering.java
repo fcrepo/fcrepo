@@ -21,10 +21,18 @@ import com.hp.hpl.jena.sparql.core.Quad;
 
 import java.util.Comparator;
 
+/**
+ * Comparator to sort a list of Quads by subject, predicate, and object
+ * to ensure a consistent order for human-readable output
+ */
 public class QuadOrdering implements Comparator<Quad> {
 
     private final PrefixMapping prefixMapping;
 
+    /**
+     * When sorting predicates, take into account the given PrefixMapping
+     * @param prefixMapping
+     */
     public QuadOrdering(final PrefixMapping prefixMapping) {
         super();
 

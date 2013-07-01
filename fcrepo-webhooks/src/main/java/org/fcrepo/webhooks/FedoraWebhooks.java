@@ -64,11 +64,20 @@ import com.google.common.eventbus.Subscribe;
 @Component
 public class FedoraWebhooks extends AbstractResource {
 
+    /**
+     * Prefix to use to find webhooks callback-bearing nodes
+     */
     public static final String WEBHOOK_SEARCH = "webhook:*";
 
+    /**
+     * Property to look for Webhooks callback at
+     */
     public static final String WEBHOOK_CALLBACK_PROPERTY =
             "webhook:callbackUrl";
 
+    /**
+     * JCR type to assign to newly created webhooks nodes
+     */
     public static final String WEBHOOK_JCR_TYPE = "webhook:callback";
 
     private static final Logger LOGGER = LoggerFactory
@@ -94,6 +103,13 @@ public class FedoraWebhooks extends AbstractResource {
         client = new DefaultHttpClient(connectionManager);
     }
 
+    /**
+     * Register a listener on the eventbus to
+     * use for firing webhooks requests, and register our
+     * webhooks CND file.
+     *
+     * @throws RepositoryException
+     */
     @Override
     @PostConstruct
     public void initialize() throws RepositoryException {
@@ -243,6 +259,9 @@ public class FedoraWebhooks extends AbstractResource {
         }
     }
 
+    /**
+     * Grab a read-only session to use for listening for events with
+     */
     @PostConstruct
     public final void setReadOnlySession() {
         try {

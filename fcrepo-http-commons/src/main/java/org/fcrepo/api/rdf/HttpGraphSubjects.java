@@ -39,6 +39,9 @@ import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
+/**
+ * Translate JCR paths to URLs to the given class
+ */
 public class HttpGraphSubjects implements GraphSubjects {
 
     private static final Logger LOGGER = LoggerFactory
@@ -52,6 +55,16 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final Session session;
 
+    /**
+     * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
+     *
+     * The session may provide additional information (e.g. workspaces) that need to be
+     * taken into account.
+     *
+     * @param relativeTo
+     * @param uris
+     * @param session
+     */
     public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris,
             final Session session) {
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
@@ -66,6 +79,11 @@ public class HttpGraphSubjects implements GraphSubjects {
         this.session = session;
     }
 
+    /**
+     * Build HTTP graphs to resources relative to the given JAX-RS resource
+     * @param relativeTo
+     * @param uris
+     */
     public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
         this(relativeTo, uris, null);
 

@@ -27,6 +27,7 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
+import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ public class SessionProviderTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws RepositoryException, NoSuchFieldException {
         mockSession = mock(Session.class);
         mockRepo = mock(Repository.class);
         final SessionFactory mockSessionFactory = mock(SessionFactory.class);
@@ -55,9 +56,9 @@ public class SessionProviderTest {
                         mockHttpServletRequest)).thenReturn(mockSession);
 
         testObj = new SessionProvider();
-        testObj.setSessionFactory(mockSessionFactory);
-        testObj.setSecContext(mockSecurityContext);
-        testObj.setRequest(mockHttpServletRequest);
+        TestHelpers.setField(testObj, "sessionFactory", mockSessionFactory);
+        TestHelpers.setField(testObj, "secContext", mockSecurityContext);
+        TestHelpers.setField(testObj, "request", mockHttpServletRequest);
 
     }
 

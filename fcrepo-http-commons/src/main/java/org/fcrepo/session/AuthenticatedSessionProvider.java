@@ -18,7 +18,14 @@ package org.fcrepo.session;
 
 import javax.jcr.Session;
 
+/**
+ * Provide a JCR session for an authenticated HTTP session
+ */
 public interface AuthenticatedSessionProvider {
 
+    /**
+     * Get an authenticated JCR session
+     * @return
+     */
     Session getAuthenticatedSession();
 }

@@ -75,7 +75,6 @@ import com.hp.hpl.jena.rdf.model.Model;
  * @author ajs6f
  * @date May 19, 2013
  */
-
 @Provider
 public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
@@ -247,10 +246,6 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
         LOGGER.debug("Choosing template: {}", template.getName());
         return template;
-    }
-
-    public void setTemplatesMap(final Map<String, Template> templatesMap) {
-        this.templatesMap = templatesMap;
     }
 
     @Override
