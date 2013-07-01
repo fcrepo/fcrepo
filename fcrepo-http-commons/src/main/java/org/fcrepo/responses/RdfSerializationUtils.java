@@ -61,6 +61,10 @@ public class RdfSerializationUtils {
             createURI(getRDFNamespaceForJcrNamespace("http://www.jcp.org/jcr/1.0") +
                     "lastModified");
 
+    /**
+     * DateTimeFormatter for RFC2822 (used in HTTP headers), e.g.:
+     *    Mon, 01 Jul 2013 07:51:23Z
+     */
     public static DateTimeFormatter RFC2822DATEFORMAT =
             forPattern("EEE, dd MMM yyyy HH:mm:ss Z");
 
