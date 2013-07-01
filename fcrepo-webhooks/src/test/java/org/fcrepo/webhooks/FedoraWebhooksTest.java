@@ -137,9 +137,14 @@ public class FedoraWebhooksTest {
     }
 
     @Test
-    public void testSessions() {
+    public void testSessions() throws NoSuchFieldException {
+
+        EventBus mockBus = mock(EventBus.class);
+        TestHelpers.setField(testObj, "eventBus", mockBus);
+
         testObj.logoutSession();
         verify(mockSession).logout();
+        verify(mockBus).unregister(testObj);
     }
 
 }
