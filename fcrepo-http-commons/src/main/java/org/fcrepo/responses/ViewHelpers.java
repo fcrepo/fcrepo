@@ -16,6 +16,18 @@
 
 package org.fcrepo.responses;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.RdfLexicon;
+import org.fcrepo.api.rdf.QuadOrdering;
+import org.slf4j.Logger;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
@@ -26,16 +38,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
-import org.fcrepo.RdfLexicon;
-import org.fcrepo.api.rdf.QuadOrdering;
-import org.slf4j.Logger;
-
-import javax.ws.rs.core.UriInfo;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * General view helpers for rendering HTML responses
@@ -81,8 +83,8 @@ public class ViewHelpers {
      * @param subject
      * @return
      */
-    public String
-            getObjectTitle(final DatasetGraph dataset, final Node subject) {
+    public String getObjectTitle(final DatasetGraph dataset,
+            final Node subject) {
 
         Property[] properties =
                 new Property[] {RdfLexicon.RDFS_LABEL, RdfLexicon.DC_TITLE};

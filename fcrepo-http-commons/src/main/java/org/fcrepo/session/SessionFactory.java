@@ -42,15 +42,28 @@ public class SessionFactory {
     @Autowired
     private TransactionService transactionService;
 
+    /**
+     * TODO
+     */
     public SessionFactory() {
 
     }
 
-    public SessionFactory(final Repository repo, final TransactionService transactionService) {
+    /**
+     * TODO
+     * 
+     * @param repo
+     * @param transactionService
+     */
+    public SessionFactory(final Repository repo,
+            final TransactionService transactionService) {
         this.repo = repo;
         this.transactionService = transactionService;
     }
 
+    /**
+     * TODO
+     */
     @PostConstruct
     public void init() {
         if (repo == null) {
@@ -61,7 +74,7 @@ public class SessionFactory {
 
     /**
      * Get a new JCR Session
-     *
+     * 
      * @return
      * @throws RepositoryException
      */
@@ -71,6 +84,7 @@ public class SessionFactory {
 
     /**
      * Get a new JCR session in the given workspace
+     * 
      * @param workspace
      * @return
      * @throws RepositoryException
@@ -81,8 +95,9 @@ public class SessionFactory {
     }
 
     /**
-     * Get a JCR session for the given HTTP servlet
-     * request (within the right transaction or workspace)
+     * Get a JCR session for the given HTTP servlet request (within the right
+     * transaction or workspace)
+     * 
      * @param servletRequest
      * @return
      * @throws RepositoryException
@@ -111,8 +126,9 @@ public class SessionFactory {
     }
 
     /**
-     * Get a JCR session for the given HTTP servlet request with
-     * a SecurityContext attached
+     * Get a JCR session for the given HTTP servlet request with a
+     * SecurityContext attached
+     * 
      * @param securityContext
      * @param servletRequest
      * @return
@@ -160,6 +176,7 @@ public class SessionFactory {
 
     /**
      * Get the configured Session Provider
+     * 
      * @param securityContext
      * @param servletRequest
      * @return
@@ -175,12 +192,12 @@ public class SessionFactory {
 
     /**
      * Extract the workspace id embedded at the beginning of a request
-     * @param servletRequest
+     * 
+     * @param request
      * @return
      */
-    private String
-            getEmbeddedWorkspace(final HttpServletRequest servletRequest) {
-        final String requestPath = servletRequest.getPathInfo();
+    private String getEmbeddedWorkspace(final HttpServletRequest request) {
+        final String requestPath = request.getPathInfo();
 
         if (requestPath == null) {
             return null;
@@ -198,6 +215,7 @@ public class SessionFactory {
 
     /**
      * Extract the transaction id embedded at the beginning of a request
+     * 
      * @param servletRequest
      * @return
      * @throws TransactionMissingException
@@ -223,16 +241,17 @@ public class SessionFactory {
 
     /**
      * Get the credentials for an authenticated session
+     * 
      * @param securityContext
      * @param servletRequest
      * @return
      */
     private static ServletCredentials getCredentials(
-                                                            final SecurityContext securityContext,
-                                                            final HttpServletRequest servletRequest) {
+            final SecurityContext securityContext,
+            final HttpServletRequest servletRequest) {
         if (securityContext.getUserPrincipal() != null) {
             logger.debug("Authenticated user: " +
-                                 securityContext.getUserPrincipal().getName());
+                    securityContext.getUserPrincipal().getName());
             return new ServletCredentials(servletRequest);
         } else {
             logger.debug("No authenticated user found!");

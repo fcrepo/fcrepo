@@ -33,6 +33,12 @@ public class AuthenticatedSessionProviderImpl implements
 
     private final ServletCredentials credentials;
 
+    /**
+     * TODO
+     * 
+     * @param repo
+     * @param creds
+     */
     public AuthenticatedSessionProviderImpl(Repository repo,
             ServletCredentials creds) {
         repository = repo;

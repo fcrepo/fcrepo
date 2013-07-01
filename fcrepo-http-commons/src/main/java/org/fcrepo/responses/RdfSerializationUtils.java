@@ -27,11 +27,11 @@ import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
 
-import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -65,9 +65,9 @@ public class RdfSerializationUtils {
             forPattern("EEE, dd MMM yyyy HH:mm:ss Z");
 
     /**
-     * Get the very first value for a predicate as a string, or null
-     * if the predicate is not used
-     *
+     * Get the very first value for a predicate as a string, or null if the
+     * predicate is not used
+     * 
      * @param rdf
      * @param subject
      * @param predicate
@@ -91,6 +91,7 @@ public class RdfSerializationUtils {
 
     /**
      * Get the subject of the dataset, given by the context's "uri"
+     * 
      * @param rdf
      * @return
      */
@@ -106,20 +107,21 @@ public class RdfSerializationUtils {
     }
 
     /**
-     * Set the cache control and last modified HTTP headers from data
-     * in the graph
-     *
+     * Set the cache control and last modified HTTP headers from data in the
+     * graph
+     * 
      * @param httpHeaders
      * @param rdf
      */
-    static void
-            setCachingHeaders(final MultivaluedMap<String, Object> httpHeaders,
-                    final Dataset rdf) {
+    static void setCachingHeaders(final MultivaluedMap<String,
+            Object> httpHeaders, final Dataset rdf) {
         httpHeaders.put("Cache-Control", of((Object) "max-age=0"));
         httpHeaders.put("Cache-Control", of((Object) "must-revalidate"));
 
         logger.trace("Attempting to discover the last-modified date of the node for the resource in question...");
-        final Iterator<Quad> iterator = rdf.asDatasetGraph().find(ANY, getDatasetSubject(rdf), lastModifiedPredicate, ANY);
+        final Iterator<Quad> iterator =
+                rdf.asDatasetGraph().find(ANY, getDatasetSubject(rdf),
+                        lastModifiedPredicate, ANY);
 
         if (!iterator.hasNext()) {
             return;
@@ -128,21 +130,24 @@ public class RdfSerializationUtils {
         final Object dateObject = iterator.next().getObject().getLiteralValue();
 
         if (!(dateObject instanceof XSDDateTime)) {
-            logger.debug("Found last-modified date, but it was" +
-                                 "not an XSDDateTime: {}", dateObject);
+            logger.debug("Found last-modified date, but it was"
+                    + "not an XSDDateTime: {}", dateObject);
 
             return;
         }
 
         final XSDDateTime lastModified = (XSDDateTime) dateObject;
         logger.debug("Found last-modified date: {}", lastModified);
-        final String lastModifiedAsRdf2822 = RFC2822DATEFORMAT.print(new DateTime(lastModified.asCalendar()));
+        final String lastModifiedAsRdf2822 =
+                RFC2822DATEFORMAT
+                        .print(new DateTime(lastModified.asCalendar()));
         httpHeaders.put("Last-Modified", of((Object) lastModifiedAsRdf2822));
     }
 
     /**
-     * Merge a dataset's named graphs into a single model, in order to provide
-     * a cohesive serialization.
+     * Merge a dataset's named graphs into a single model, in order to provide a
+     * cohesive serialization.
+     * 
      * @param dataset
      * @return
      */

@@ -23,6 +23,7 @@ import javax.jcr.RepositoryException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+
 @XmlRootElement(name = "url",
         namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
 public class SitemapEntry {
@@ -39,18 +40,34 @@ public class SitemapEntry {
     @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     private static final double priority = 0.8;
 
+    /**
+     * TODO
+     */
     public SitemapEntry() {
         loc = null;
         lastmod = null;
     }
 
+    /**
+     * TODO
+     * 
+     * @param loc
+     * @throws RepositoryException
+     */
     public SitemapEntry(final URI loc) throws RepositoryException {
         this.loc = loc;
         lastmod = Calendar.getInstance();
     }
 
+    /**
+     * TODO
+     * 
+     * @param loc
+     * @param lastmod
+     * @throws RepositoryException
+     */
     public SitemapEntry(final URI loc, final Calendar lastmod)
-            throws RepositoryException {
+        throws RepositoryException {
         this.loc = loc;
         this.lastmod = lastmod;
     }

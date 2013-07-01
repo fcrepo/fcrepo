@@ -30,14 +30,27 @@ public class SitemapIndex {
 
     private final List<SitemapEntry> entries = new ArrayList<SitemapEntry>();
 
+    /**
+     * TODO
+     */
     public SitemapIndex() {
 
     }
 
+    /**
+     * TODO
+     * 
+     * @param e
+     */
     public void appendSitemapEntry(final SitemapEntry e) {
         entries.add(e);
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     @XmlElement(name = "sitemap",
             namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
     public List<SitemapEntry> getSitemapEntries() {

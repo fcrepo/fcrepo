@@ -79,10 +79,8 @@ public class HttpTripleUtil implements ApplicationContextAware {
 
     }
 
-    private Map<String, UriAwareResourceModelFactory>
-            getUriAwareTripleFactories() {
+    private Map<String, UriAwareResourceModelFactory> getUriAwareTripleFactories() {
         return applicationContext
                 .getBeansOfType(UriAwareResourceModelFactory.class);
-
     }
 }

@@ -31,14 +31,27 @@ public class SitemapUrlSet {
     private final List<SitemapEntry> sitemapEntries =
             new ArrayList<SitemapEntry>();
 
+    /**
+     * TODO
+     */
     public SitemapUrlSet() {
 
     }
 
+    /**
+     * TODO
+     * 
+     * @param e
+     */
     public void appendSitemapEntry(final SitemapEntry e) {
         sitemapEntries.add(e);
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public List<SitemapEntry> getSitemapEntries() {
         return sitemapEntries;
     }

@@ -51,6 +51,9 @@ public class SessionProvider extends
 
     private static final Logger logger = getLogger(SessionProvider.class);
 
+    /**
+     * TODO
+     */
     public SessionProvider() {
         super(Session.class);
     }
