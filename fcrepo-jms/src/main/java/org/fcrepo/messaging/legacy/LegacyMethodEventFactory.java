@@ -35,6 +35,9 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
 
     private final Logger LOGGER = getLogger(LegacyMethodEventFactory.class);
 
+    /**
+     * TODO
+     */
     public LegacyMethodEventFactory() {
     }
 

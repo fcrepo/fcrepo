@@ -25,6 +25,17 @@ import javax.jms.Message;
 
 public interface JMSEventMessageFactory {
 
+    /**
+     * TODO
+     * 
+     * @param jcrEvent
+     * @param jcrSession
+     * @param jmsSession
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     * @throws JMSException
+     */
     Message getMessage(final Event jcrEvent,
             final javax.jcr.Session jcrSession,
             final javax.jms.Session jmsSession) throws RepositoryException,

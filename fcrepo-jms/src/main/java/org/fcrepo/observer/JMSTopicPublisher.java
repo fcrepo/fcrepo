@@ -62,6 +62,14 @@ public class JMSTopicPublisher {
 
     private javax.jcr.Session session;
 
+    /**
+     * TODO
+     * 
+     * @param fedoraEvent
+     * @throws JMSException
+     * @throws RepositoryException
+     * @throws IOException
+     */
     @Subscribe
     public void publishJCREvent(final Event fedoraEvent) throws JMSException,
         RepositoryException, IOException {
@@ -74,6 +82,12 @@ public class JMSTopicPublisher {
         LOGGER.debug("Put event: \n{}\n onto JMS.", tm.getJMSMessageID());
     }
 
+    /**
+     * TODO
+     * 
+     * @throws JMSException
+     * @throws RepositoryException
+     */
     @PostConstruct
     public void acquireConnections() throws JMSException, RepositoryException {
         LOGGER.debug("Initializing: " + this.getClass().getCanonicalName());
@@ -87,6 +101,11 @@ public class JMSTopicPublisher {
         session = repo.login();
     }
 
+    /**
+     * TODO
+     * 
+     * @throws JMSException
+     */
     @PreDestroy
     public void releaseConnections() throws JMSException {
         LOGGER.debug("Tearing down: " + this.getClass().getCanonicalName());

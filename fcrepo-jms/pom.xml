@@ -94,20 +94,6 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
-      <!-- This maven-checkstyle-plugin is defined here as a stop-gap.
-      Once the checkstyle violations are resolved, this should be removed -->
-      <plugin>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>checkstyle</id>
-            <phase>none</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>

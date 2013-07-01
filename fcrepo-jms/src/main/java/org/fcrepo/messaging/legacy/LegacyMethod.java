@@ -71,8 +71,8 @@ public class LegacyMethod {
     private static final String PURGE_DS_METHOD = "purgeDatastream";
 
     private static final String[] METHODS = new String[] {INGEST_METHOD,
-            MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD,
-            MODIFY_DS_METHOD, PURGE_DS_METHOD};
+        MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD,
+        MODIFY_DS_METHOD, PURGE_DS_METHOD};
 
     private static final List<String> METHOD_NAMES = Arrays.asList(METHODS);
 
@@ -93,8 +93,15 @@ public class LegacyMethod {
 
     private final Entry delegate;
 
+    /**
+     * TODO
+     * 
+     * @param jcrEvent
+     * @param resource
+     * @throws RepositoryException
+     */
     public LegacyMethod(final Event jcrEvent, final Node resource)
-            throws RepositoryException {
+        throws RepositoryException {
         this(EntryFactory.newEntry());
 
         final boolean isDatastreamNode =
@@ -122,22 +129,47 @@ public class LegacyMethod {
         setModified(new Date(jcrEvent.getDate()));
     }
 
+    /**
+     * TODO
+     * 
+     * @param atomEntry
+     */
     public LegacyMethod(final Entry atomEntry) {
         delegate = atomEntry;
     }
 
+    /**
+     * TODO
+     * 
+     * @param atomEntry
+     */
     public LegacyMethod(final String atomEntry) {
         delegate = EntryFactory.parse(new StringReader(atomEntry));
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public Entry getEntry() {
         return delegate;
     }
 
+    /**
+     * TODO
+     * 
+     * @param content
+     */
     public void setContent(final String content) {
         delegate.setContent(content);
     }
 
+    /**
+     * TODO
+     * 
+     * @param val
+     */
     public void setUserId(String val) {
         if (val == null) {
             delegate.addAuthor("unknown", null, BASE_URL);
@@ -146,22 +178,47 @@ public class LegacyMethod {
         }
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public String getUserID() {
         return delegate.getAuthor().getName();
     }
 
+    /**
+     * TODO
+     * 
+     * @param date
+     */
     public void setModified(final Date date) {
         delegate.setUpdated(date);
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public Date getModified() {
         return delegate.getUpdated();
     }
 
+    /**
+     * TODO
+     * 
+     * @param val
+     */
     public void setMethodName(final String val) {
         delegate.setTitle(val).setBaseUri(BASE_URL);
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public String getMethodName() {
         return delegate.getTitle();
     }
@@ -192,23 +249,49 @@ public class LegacyMethod {
         return null;
     }
 
+    /**
+     * TODO
+     * 
+     * @param val
+     */
     public void setPid(final String val) {
         setLabelledCategory(PID_CATEGORY_LABEL, val);
         delegate.setSummary(val);
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public String getPid() {
         return getLabelledCategory(PID_CATEGORY_LABEL);
     }
 
+    /**
+     * TODO
+     * 
+     * @param val
+     */
     public void setDsId(final String val) {
         setLabelledCategory(DSID_CATEGORY_LABEL, val);
     }
 
+    /**
+     * TODO
+     * 
+     * @return
+     */
     public String getDsId() {
         return getLabelledCategory(DSID_CATEGORY_LABEL);
     }
 
+    /**
+     * TODO
+     * 
+     * @param writer
+     * @throws IOException
+     */
     public void writeTo(final Writer writer) throws IOException {
         delegate.writeTo(writer);
     }
@@ -283,6 +366,12 @@ public class LegacyMethod {
         return null;
     }
 
+    /**
+     * TODO
+     * 
+     * @param jmsMessage
+     * @return
+     */
     public static boolean canParse(final Message jmsMessage) {
         try {
             return EntryFactory.FORMAT.equals(jmsMessage.getJMSType()) &&
