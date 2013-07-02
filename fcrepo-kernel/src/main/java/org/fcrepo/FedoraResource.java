@@ -278,9 +278,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
         com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
-        if ( context == null ) {
-            context = new com.hp.hpl.jena.sparql.util.Context();
-        }
         context.set(Symbol.create("uri"),uri);
 
         return dataset;
@@ -319,9 +316,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
         com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
-        if ( context == null ) {
-            context = new com.hp.hpl.jena.sparql.util.Context();
-        }
         context.set(Symbol.create("uri"),uri);
 
         return dataset;
