@@ -970,80 +970,6 @@
     </plugins>
   </reporting>
 
-  <repositories>
-    <repository>
-      <id>fcrepo-snapshot</id>
-      <name>Fcrepo Snapshot Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>fcrepo-thirdparty</id>
-      <name>Fcrepo Thirdparty Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>jboss-public-repository-group</id>
-      <name>JBoss Public Maven Repository Group</name>
-      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
-      <layout>default</layout>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>fcrepo-snapshot</id>
-      <name>Fcrepo Snapshot Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-
-  <scm>
-    <connection>scm:git:git://github.com/futures/fcrepo4.git
-    </connection>
-    <developerConnection>scm:git:git@github.com:futures/fcrepo4.git
-    </developerConnection>
-    <url>https://github.com/futures/fcrepo4</url>
-  </scm>
-
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
-
   <profiles>
     <profile>
       <id>release-sign-artifacts</id>
@@ -1075,23 +1001,8 @@
       </build>
     </profile>
   </profiles>
-
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-      <comments>Copyright (c) 2013 DuraSpace</comments>
-    </license>
-  </licenses>
-
-  <distributionManagement>
-    <site>
-      <id>gh-pages</id>
-      <name>Deployment through GitHub's site deployment plugin</name>
-      <url>site/${project.version}</url>
-    </site>
-  </distributionManagement>
-
+  
+  <!-- More Project Information (http://maven.apache.org/pom.html#More_Project_Information) -->
   <developers>
     <developer>
       <id>eddies</id>
@@ -1196,11 +1107,33 @@
       <timezone>-5</timezone>
     </developer>
   </developers>
-
+  
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <comments>Copyright (c) 2013 DuraSpace</comments>
+    </license>
+  </licenses>
+  
   <organization>
     <name>DuraSpace, Inc.</name>
     <url>http://www.duraspace.org/</url>
   </organization>
+  
+  <!-- Environment settings (http://maven.apache.org/pom.html#Environment_Settings) -->
+  <ciManagement>
+    <system>jenkins</system>
+    <url>http://ci.fcrepo.org/</url>
+  </ciManagement>
+  
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <name>Deployment through GitHub's site deployment plugin</name>
+      <url>site/${project.version}</url>
+    </site>
+  </distributionManagement>
 
   <inceptionYear>2013</inceptionYear>
   
@@ -1218,4 +1151,78 @@
       <archive>https://groups.google.com/d/forum/ff-tech</archive>
     </mailingList>
   </mailingLists>
+  
+  <pluginRepositories>
+    <pluginRepository>
+      <id>fcrepo-snapshot</id>
+      <name>Fcrepo Snapshot Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+  
+  <prerequisites>
+    <maven>3.0.0</maven>
+  </prerequisites>
+  
+  <repositories>
+    <repository>
+      <id>fcrepo-snapshot</id>
+      <name>Fcrepo Snapshot Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>fcrepo-thirdparty</id>
+      <name>Fcrepo Thirdparty Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>jboss-public-repository-group</id>
+      <name>JBoss Public Maven Repository Group</name>
+      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>maven2-repository.dev.java.net</id>
+      <name>Java.net Repository for Maven</name>
+      <url>http://download.java.net/maven/2/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  
+  <scm>
+    <connection>scm:git:git://github.com/futures/fcrepo4.git
+    </connection>
+    <developerConnection>scm:git:git@github.com:futures/fcrepo4.git
+    </developerConnection>
+    <url>https://github.com/futures/fcrepo4</url>
+  </scm>
 </project>

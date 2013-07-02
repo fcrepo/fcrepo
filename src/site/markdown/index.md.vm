@@ -2,7 +2,13 @@ ${project.description}
 
 ## About
 
-fcrepo4 is...
+This is the automatically generated documentation for Fedora 4.
+
+You're probably looking for the [javadocs](apidocs/index.html).
+
+Otherwise, all of the hand-written, community documentation is on the 
+[wiki](https://wiki.duraspace.org/display/FF/).
+
 
 ## Usage
 
