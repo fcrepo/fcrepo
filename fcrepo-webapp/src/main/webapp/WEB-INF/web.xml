@@ -31,14 +31,5 @@
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping> 
   
-  <!-- BASIC security parameters -->
-  <login-config>
-    <auth-method>BASIC</auth-method>
-    <realm-name>fcrepo</realm-name>
-  </login-config>
-  
-  <security-role>
-    <role-name>admin</role-name>
-  </security-role>
 
 </web-app>
