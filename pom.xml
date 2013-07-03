@@ -7,22 +7,18 @@
     <artifactId>oss-parent</artifactId>
     <version>7</version>
   </parent>
-
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
   <version>4.0-SNAPSHOT</version>
   <name>fcrepo4</name>
   <description>Parent project for fcrepo4</description>
   <packaging>pom</packaging>
-
   <properties>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
       replacements of "fcrepo4" in child modules (for scm, site-distribution, etc -->
     <project_name>fcrepo4</project_name>
-
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
     <!-- Dependency version properties -->
     <activemq.version>5.7.0</activemq.version>
     <enunciate.version>1.26.2</enunciate.version>
@@ -37,19 +33,15 @@
     <sesame.version>2.7.2</sesame.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.3.RELEASE</spring.version>
-
     <grizzly.version>2.2.21</grizzly.version>
-
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <powermock.version>1.5.1</powermock.version>
-
     <!-- plugin versions -->
-    <!-- Until MCHECKSTYLE-169 is resolved, we're using a patched, snapshot of checkstyle 
-      deployed to fcrepo.maven.org -->
+    <!-- Until MCHECKSTYLE-169 is resolved, we're using a patched, snapshot 
+      of checkstyle deployed to fcrepo.maven.org -->
     <checkstyle.plugin.version>2.11-SNAPSHOT</checkstyle.plugin.version>
   </properties>
-
   <modules>
     <module>fcrepo-kernel</module>
     <module>fcrepo-audit</module>
@@ -65,13 +57,13 @@
     <module>fcrepo-jcr</module>
     <module>fcrepo-serialization</module>
   </modules>
-
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the "dependenciesManagement" 
-        section defaults for all of the modules we might need, but we still have to include 
-        in the "dependencies" section the modules we DO need. The benefit is that we don't 
-        have to specify the versions of any of those modules. -->
+      <!-- Import the ModeShape BOM for embedded usage. This adds to the 
+        "dependenciesManagement" section defaults for all of the modules we might 
+        need, but we still have to include in the "dependencies" section the modules 
+        we DO need. The benefit is that we don't have to specify the versions of 
+        any of those modules. -->
       <dependency>
         <groupId>org.modeshape.bom</groupId>
         <artifactId>modeshape-bom-embedded</artifactId>
@@ -181,14 +173,14 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
-          <!-- abdera-parser declares a dependency on jaxen-1.1.1, but via axiom-api 
-            transitively depends on jaxen-1.1.4 -->
+          <!-- abdera-parser declares a dependency on jaxen-1.1.1, but via 
+            axiom-api transitively depends on jaxen-1.1.4 -->
           <exclusion>
             <groupId>jaxen</groupId>
             <artifactId>jaxen</artifactId>
           </exclusion>
-          <!-- abdera-parser (via abdera-core) depends on commons-codec-1.4 but we're 
-            using commons-codec-1.6 elsewhere -->
+          <!-- abdera-parser (via abdera-core) depends on commons-codec-1.4 
+            but we're using commons-codec-1.6 elsewhere -->
           <exclusion>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
@@ -315,9 +307,8 @@
           </exclusion>
         </exclusions>
       </dependency>
-
-      <!-- sesame/openrdf dependencies that were previously provided by the Aduna 
-        Maven repo -->
+      <!-- sesame/openrdf dependencies that were previously provided by the 
+        Aduna Maven repo -->
       <dependency>
         <groupId>org.openrdf.sesame</groupId>
         <artifactId>sesame-model</artifactId>
@@ -363,7 +354,6 @@
         <artifactId>sesame-sail-memory</artifactId>
         <version>${sesame.version}</version>
       </dependency>
-
       <!-- test gear -->
       <dependency>
         <groupId>junit</groupId>
@@ -380,7 +370,8 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${httpcomponents.version}</version>
-        <!-- commented out since fcrepo-webhooks uses httpclient at compile time -->
+        <!-- commented out since fcrepo-webhooks uses httpclient at compile 
+          time -->
         <!-- <scope>test</scope> -->
         <exclusions>
           <exclusion>
@@ -425,9 +416,8 @@
             <groupId>org.objenesis</groupId>
             <artifactId>objenesis</artifactId>
           </exclusion>
-
-          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls in the 
-            more recent 1.3 -->
+          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls 
+            in the more recent 1.3 -->
           <exclusion>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
@@ -458,7 +448,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>org.powermock</groupId>
@@ -471,7 +460,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <pluginManagement>
       <plugins>
@@ -480,8 +468,10 @@
           <artifactId>site-maven-plugin</artifactId>
           <version>0.8</version>
           <configuration>
-            <message>Creating site for ${project.artifactId}, ${project.version}</message>
-            <!-- this does the trick to place every module in the correct subfolder -->
+            <message>Creating site for ${project.artifactId},
+              ${project.version}</message>
+            <!-- this does the trick to place every module in the correct 
+              subfolder -->
             <path>${project.distributionManagement.site.url}</path>
             <merge>true</merge>
           </configuration>
@@ -591,18 +581,19 @@
           <artifactId>maven-deploy-plugin</artifactId>
           <version>2.7</version>
         </plugin>
-        <!-- oss-parent:7 declares maven-enforcer-plugin:1.0, which can't be overridden 
-          in pluginManagement. Our deployment of snapshots via Jenkins requires that we use 
-          at least version 1.1 because of http://jira.codehaus.org/browse/MENFORCER-118. If/when 
-          oss-parent:8 is released we can re-instate this section of pluginManagement <plugin> 
-          <artifactId>maven-enforcer-plugin</artifactId> <version>1.2</version> <executions> 
-          <execution> <goals> <goal>enforce</goal> </goals> <configuration> <rules> <DependencyConvergence 
-          /> <bannedDependencies> <searchTransitive>true</searchTransitive> <excludes> <exclude>commons-logging</exclude> 
-          <exclude>log4j:log4j</exclude> <exclude>org.slf4j:slf4j-jcl</exclude> <exclude>org.slf4j:slf4j-jdk14</exclude> 
+        <!-- oss-parent:7 declares maven-enforcer-plugin:1.0, which can't 
+          be overridden in pluginManagement. Our deployment of snapshots via Jenkins 
+          requires that we use at least version 1.1 because of http://jira.codehaus.org/browse/MENFORCER-118. 
+          If/when oss-parent:8 is released we can re-instate this section of pluginManagement 
+          <plugin> <artifactId>maven-enforcer-plugin</artifactId> <version>1.2</version> 
+          <executions> <execution> <goals> <goal>enforce</goal> </goals> <configuration> 
+          <rules> <DependencyConvergence /> <bannedDependencies> <searchTransitive>true</searchTransitive> 
+          <excludes> <exclude>commons-logging</exclude> <exclude>log4j:log4j</exclude> 
+          <exclude>org.slf4j:slf4j-jcl</exclude> <exclude>org.slf4j:slf4j-jdk14</exclude> 
           <exclude>org.slf4j:slf4j-log4j12</exclude> <exclude>org.slf4j:slf4j-log4j13</exclude> 
           <exclude>org.slf4j:slf4j-nop</exclude> <exclude>org.slf4j:slf4j-simple</exclude> 
-          <exclude>org.apache.cxf</exclude> </excludes> </bannedDependencies> </rules> </configuration> 
-          </execution> </executions> </plugin> -->
+          <exclude>org.apache.cxf</exclude> </excludes> </bannedDependencies> </rules> 
+          </configuration> </execution> </executions> </plugin> -->
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>2.15</version>
@@ -611,10 +602,10 @@
               <test.port>${test.port}</test.port>
               <test.context.path>${test.context.path}</test.context.path>
               <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
-                ${project.build.directory}/object-store-default
+                ${project.build.directory}/object-store-default 
               </com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
               <com.arjuna.ats.arjuna.objectstore.objectStoreDir>
-                ${project.build.directory}/object-store
+                ${project.build.directory}/object-store 
               </com.arjuna.ats.arjuna.objectstore.objectStoreDir>
             </systemPropertyVariables>
           </configuration>
@@ -668,8 +659,8 @@
           </configuration>
           <dependencies>
             <dependency>
-              <!-- allows markdown syntax for site generation. To use it place files 
-                below src/site/markdown/[filename].md -->
+              <!-- allows markdown syntax for site generation. To use it 
+                place files below src/site/markdown/[filename].md -->
               <groupId>org.apache.maven.doxia</groupId>
               <artifactId>doxia-module-markdown</artifactId>
               <version>1.3</version>
@@ -696,7 +687,8 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
-          <!-- reserve a port under the property ${test.port} for integration tests -->
+          <!-- reserve a port under the property ${test.port} for integration 
+            tests -->
           <configuration>
             <portNames>
               <portName>test.port</portName>
@@ -905,7 +897,6 @@
       </plugin>
     </plugins>
   </build>
-
   <reporting>
     <plugins>
       <plugin>
@@ -969,7 +960,84 @@
       </plugin>
     </plugins>
   </reporting>
-
+  
+  <repositories>
+    <repository>
+      <id>fcrepo-snapshot</id>
+      <name>Fcrepo Snapshot Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>fcrepo-thirdparty</id>
+      <name>Fcrepo Thirdparty Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>jboss-public-repository-group</id>
+      <name>JBoss Public Maven Repository Group</name>
+      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>maven2-repository.dev.java.net</id>
+      <name>Java.net Repository for Maven</name>
+      <url>http://download.java.net/maven/2/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>Apache Snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>fcrepo-snapshot</id>
+      <name>Fcrepo Snapshot Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+  <scm>
+    <connection>scm:git:git://github.com/futures/fcrepo4.git
+    </connection>
+    <developerConnection>scm:git:git@github.com:futures/fcrepo4.git
+    </developerConnection>
+    <url>https://github.com/futures/fcrepo4</url>
+  </scm>
+  <prerequisites>
+    <maven>3.0.0</maven>
+  </prerequisites>
   <profiles>
     <profile>
       <id>release-sign-artifacts</id>
@@ -1001,8 +1069,20 @@
       </build>
     </profile>
   </profiles>
-  
-  <!-- More Project Information (http://maven.apache.org/pom.html#More_Project_Information) -->
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <comments>Copyright (c) 2013 DuraSpace</comments>
+    </license>
+  </licenses>
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <name>Deployment through GitHub's site deployment plugin</name>
+      <url>site/${project.version}</url>
+    </site>
+  </distributionManagement>
   <developers>
     <developer>
       <id>eddies</id>
@@ -1107,41 +1187,15 @@
       <timezone>-5</timezone>
     </developer>
   </developers>
-  
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-      <comments>Copyright (c) 2013 DuraSpace</comments>
-    </license>
-  </licenses>
-  
   <organization>
     <name>DuraSpace, Inc.</name>
     <url>http://www.duraspace.org/</url>
   </organization>
-  
-  <!-- Environment settings (http://maven.apache.org/pom.html#Environment_Settings) -->
-  <ciManagement>
-    <system>jenkins</system>
-    <url>http://ci.fcrepo.org/</url>
-  </ciManagement>
-  
-  <distributionManagement>
-    <site>
-      <id>gh-pages</id>
-      <name>Deployment through GitHub's site deployment plugin</name>
-      <url>site/${project.version}</url>
-    </site>
-  </distributionManagement>
-
   <inceptionYear>2013</inceptionYear>
-  
   <issueManagement>
     <system>GitHub</system>
     <url>https://github.com/futures/fcrepo4/issues</url>
   </issueManagement>
-  
   <mailingLists>
     <mailingList>
       <name>ff-tech</name>
@@ -1151,78 +1205,4 @@
       <archive>https://groups.google.com/d/forum/ff-tech</archive>
     </mailingList>
   </mailingLists>
-  
-  <pluginRepositories>
-    <pluginRepository>
-      <id>fcrepo-snapshot</id>
-      <name>Fcrepo Snapshot Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-  
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
-  
-  <repositories>
-    <repository>
-      <id>fcrepo-snapshot</id>
-      <name>Fcrepo Snapshot Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>fcrepo-thirdparty</id>
-      <name>Fcrepo Thirdparty Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>jboss-public-repository-group</id>
-      <name>JBoss Public Maven Repository Group</name>
-      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
-      <layout>default</layout>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-  
-  <scm>
-    <connection>scm:git:git://github.com/futures/fcrepo4.git
-    </connection>
-    <developerConnection>scm:git:git@github.com:futures/fcrepo4.git
-    </developerConnection>
-    <url>https://github.com/futures/fcrepo4</url>
-  </scm>
 </project>
