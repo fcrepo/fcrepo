@@ -105,7 +105,7 @@ public class DatastreamService extends RepositoryService {
         throws RepositoryException, IOException, InvalidChecksumException {
 
         return createDatastreamNode(session, dsPath, contentType,
-                                    requestBodyStream, null, null);
+                                    requestBodyStream, null);
     }
 
     /**
@@ -114,8 +114,7 @@ public class DatastreamService extends RepositoryService {
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
      * @param requestBodyStream binary payload for the datastream
-     * @param checksumType digest algorithm used to calculate the checksum
-     * @param checksum the digest for the binary payload
+     * @param checksum the digest for the binary payload (as urn:sha1:xyz)
      * @return
      * @throws RepositoryException
      * @throws IOException
@@ -125,12 +124,11 @@ public class DatastreamService extends RepositoryService {
                                      final String dsPath,
                                      final String contentType,
                                      final InputStream requestBodyStream,
-                                     final String checksumType,
-                                     final String checksum)
+                                     final URI checksum)
         throws RepositoryException, IOException, InvalidChecksumException {
 
         final Datastream ds = new Datastream(session, dsPath);
-        ds.setContent(requestBodyStream, contentType, checksumType, checksum,
+        ds.setContent(requestBodyStream, contentType, checksum,
                       getStoragePolicyDecisionPoint());
         return ds.getNode();
     }

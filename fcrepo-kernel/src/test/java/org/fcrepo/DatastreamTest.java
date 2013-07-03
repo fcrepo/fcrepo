@@ -30,6 +30,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -138,6 +139,30 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream);
+    }
+
+    @Test(expected = InvalidChecksumException.class)
+    public void testSetContentWithChecksumMismatch() throws RepositoryException,
+            InvalidChecksumException, URISyntaxException {
+        final org.modeshape.jcr.api.Binary mockBin =
+                mock(org.modeshape.jcr.api.Binary.class);
+        final InputStream mockStream = mock(InputStream.class);
+        PowerMockito.mockStatic(FedoraTypesUtils.class);
+        when(
+                FedoraTypesUtils.getBinary(any(Node.class),
+                        any(InputStream.class), any(String.class))).thenReturn(
+                mockBin);
+        final Node mockContent = TestHelpers.getContentNodeMock(8);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
+        final Property mockData = mock(Property.class);
+        when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
+        when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockData.getBinary()).thenReturn(mockBin);
+        testObj.setContent(mockStream, null, new URI("urn:sha1:xyz"), null);
     }
 
     @Test

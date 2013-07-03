@@ -32,6 +32,8 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 
 import javax.jcr.Node;
@@ -133,12 +135,12 @@ public class FedoraNodesTest {
 
     @Test
     public void testCreateObject() throws RepositoryException, IOException,
-        InvalidChecksumException {
+        InvalidChecksumException, URISyntaxException {
         final String pid = "testObject";
         final String path = "/" + pid;
         final Response actual =
                 testObj.createObject(createPathList(pid),
-                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null,
+                        FedoraJcrTypes.FEDORA_OBJECT, null, null,
                         TestHelpers.getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
@@ -150,7 +152,7 @@ public class FedoraNodesTest {
 
     @Test
     public void testCreateDatastream() throws RepositoryException, IOException,
-        InvalidChecksumException {
+        InvalidChecksumException, URISyntaxException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -161,15 +163,14 @@ public class FedoraNodesTest {
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
                         eq(dsPath), anyString(), eq(dsContentStream),
-                        anyString(), anyString())).thenReturn(mockNode);
+                        any(URI.class))).thenReturn(mockNode);
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
-                        FedoraJcrTypes.FEDORA_DATASTREAM, null, null, null,
+                        FedoraJcrTypes.FEDORA_DATASTREAM, null, null,
                         TestHelpers.getUriInfoImpl(), dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq(dsPath), anyString(), any(InputStream.class), anyString(),
-                anyString());
+                eq(dsPath), anyString(), any(InputStream.class), any(URI.class));
         verify(mockSession).save();
     }
 

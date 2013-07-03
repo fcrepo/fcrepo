@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 
@@ -128,15 +129,15 @@ public class FedoraContentTest {
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
                         eq(dsPath), anyString(), any(InputStream.class),
-                        eq((String) null), eq((String) null))).thenReturn(
+                        eq((URI) null))).thenReturn(
                 mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-                testObj.create(createPathList(pid, dsId), null, null,
+                testObj.create(createPathList(pid, dsId), null,
                         MediaType.TEXT_PLAIN_TYPE, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession, dsPath,
-                "text/plain", dsContentStream, null, null);
+                "text/plain", dsContentStream, null);
         verify(mockSession).save();
     }
 
@@ -162,15 +163,15 @@ public class FedoraContentTest {
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
                         eq("/" + pid + "/xyz"), anyString(),
-                        any(InputStream.class), eq((String) null),
-                        eq((String) null))).thenReturn(mockNode);
+                        any(InputStream.class), eq((URI) null)
+                        )).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-                testObj.create(createPathList(pid, dsId), null, null,
+                testObj.create(createPathList(pid, dsId), null,
                         MediaType.TEXT_PLAIN_TYPE, dsContentStream);
         assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession,
-                "/" + pid + "/xyz", "text/plain", dsContentStream, null, null);
+                "/" + pid + "/xyz", "text/plain", dsContentStream, null);
         verify(mockSession).save();
     }
 

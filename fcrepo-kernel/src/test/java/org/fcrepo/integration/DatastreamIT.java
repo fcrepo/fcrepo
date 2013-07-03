@@ -31,6 +31,7 @@ import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.ContentDigest;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -156,8 +157,8 @@ public class DatastreamIT extends AbstractIT {
                                   "/testDatastreamObject/testDatastreamNode4",
                                   "application/octet-stream",
                                   new ByteArrayInputStream("asdf".getBytes()),
-                                  "SHA-1",
-                                  "3da541559918a808c2402bba5012f6c60b27661c");
+                                  ContentDigest.asURI("SHA-1",
+                                  "3da541559918a808c2402bba5012f6c60b27661c"));
 
         session.save();
 

@@ -86,8 +86,6 @@ public class FedoraContent extends AbstractResource {
     public Response create(
             @PathParam("path")
             final List<PathSegment> pathList,
-            @QueryParam("checksumType")
-            final String checksumType,
             @QueryParam("checksum")
             final String checksum,
             @HeaderParam("Content-Type")
@@ -108,10 +106,18 @@ public class FedoraContent extends AbstractResource {
 
         logger.debug("create Datastream {}", path);
         try {
+            final URI checksumURI;
+
+            if (checksum != null && !checksum.equals("")) {
+                checksumURI = new URI(checksum);
+            } else {
+                checksumURI = null;
+            }
+
             final Node datastreamNode =
                     datastreamService.createDatastreamNode(session, path,
                             contentType.toString(), requestBodyStream,
-                            checksumType, checksum);
+                            checksumURI);
 
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);

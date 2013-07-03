@@ -123,7 +123,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public void setContent(final InputStream content, final String contentType,
-                           final String checksumType, final String checksum,
+                           final URI checksum,
                            PolicyDecisionPoint storagePolicyDecisionPoint)
         throws RepositoryException, InvalidChecksumException {
 
@@ -168,8 +168,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         final String dsChecksum = binary.getHexHash();
-        if (checksum != null && !checksum.equals("") &&
-            !checksum.equals(binary.getHexHash())) {
+        if (checksum != null && !checksum.equals(ContentDigest.asURI("SHA-1", dsChecksum))) {
             LOGGER.debug("Failed checksum test");
             throw new InvalidChecksumException("Checksum Mismatch of " +
                                                dsChecksum + " and " + checksum);
@@ -190,7 +189,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      */
     public void setContent(InputStream content) throws InvalidChecksumException,
                                                        RepositoryException {
-        setContent(content, null, null, null, null);
+        setContent(content, null, null, null);
     }
 
     /**

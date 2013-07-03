@@ -36,6 +36,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
@@ -290,15 +292,13 @@ public class FedoraNodes extends AbstractResource {
             @QueryParam("mixin")
             @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
             final String mixin,
-            @QueryParam("checksumType")
-            final String checksumType,
             @QueryParam("checksum")
             final String checksum,
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
             @Context
             final UriInfo uriInfo, final InputStream requestBodyStream)
-        throws RepositoryException, IOException, InvalidChecksumException {
+        throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(pathList);
         logger.debug("Attempting to ingest with path: {}", path);
@@ -309,9 +309,18 @@ public class FedoraNodes extends AbstractResource {
                         path + " is an existing resource!").build();
             }
 
+
+            final URI checksumURI;
+
+            if (checksum != null && !checksum.equals("")) {
+                checksumURI = new URI(checksum);
+            } else {
+                checksumURI = null;
+            }
+
             createObjectOrDatastreamFromRequestContent(FedoraNodes.class,
                     session, path, mixin, uriInfo, requestBodyStream,
-                    requestContentType, checksumType, checksum);
+                    requestContentType, checksumURI);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);

@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -40,6 +41,7 @@ import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.LowLevelStorageService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.ContentDigest;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.LowLevelCacheEntry;
 import org.fcrepo.utils.impl.CacheStoreEntry;
@@ -136,12 +138,12 @@ public class SelfHealingIT {
         final String contentB =
             "2e6sxpys67dslongzydxosx6ndze5vbgb6fnj1rr53buk405i1380a868xsb";
 
-        final String shaA =
+        final URI shaA = ContentDigest.asURI("SHA-1",
             Hex.encodeHexString(MessageDigest.getInstance("SHA-1")
-                                .digest(contentA.getBytes()));
-        final String shaB =
+                                .digest(contentA.getBytes())));
+        final URI shaB = ContentDigest.asURI("SHA-1",
             Hex.encodeHexString(MessageDigest.getInstance("SHA-1")
-                                .digest(contentB.getBytes()));
+                                .digest(contentB.getBytes())));
         objectService.createObject(session, "/testSelfHealingObject");
 
         datastreamService
@@ -149,13 +151,13 @@ public class SelfHealingIT {
                                   "/testSelfHealingObject/testDatastreamNode4",
                                   "application/octet-stream",
                                   new ByteArrayInputStream(contentA.getBytes()),
-                                  "SHA-1", shaA);
+                                  shaA);
         datastreamService
             .createDatastreamNode(session,
                                   "/testSelfHealingObject/testDatastreamNode5",
                                   "application/octet-stream",
                                   new ByteArrayInputStream(contentB.getBytes()),
-                                  "SHA-1", shaB);
+                                  shaB);
 
         session.save();
 
@@ -186,9 +188,7 @@ public class SelfHealingIT {
 
         for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
-                fixityResult.computedChecksum
-                .toString()
-                .equals("urn:sha1:" + shaA);
+                fixityResult.computedChecksum.equals(shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -199,9 +199,7 @@ public class SelfHealingIT {
 
         for (final FixityResult fixityResult : nodeFixity2) {
             fixityOk &=
-                fixityResult.computedChecksum
-                .toString()
-                .equals("urn:sha1:" + shaB);
+                fixityResult.computedChecksum.equals(shaB);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -213,9 +211,7 @@ public class SelfHealingIT {
         fixityOk = true;
         for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
-                fixityResult.computedChecksum
-                .toString()
-                .equals("urn:sha1:" + shaA);
+                fixityResult.computedChecksum.equals(shaA);
         }
 
         assertFalse("Expected the fixity check to fail.", fixityOk);
@@ -227,9 +223,7 @@ public class SelfHealingIT {
         fixityOk = true;
         for (final FixityResult fixityResult : nodeFixity) {
             fixityOk &=
-                fixityResult.computedChecksum
-                .toString()
-                .equals("urn:sha1:" + shaA);
+                fixityResult.computedChecksum.equals(shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);

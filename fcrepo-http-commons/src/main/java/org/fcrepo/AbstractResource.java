@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -170,8 +171,8 @@ public abstract class AbstractResource {
             final Class<?> pathsRelativeTo, final Session session,
             final String path, final String mixin, final UriInfo uriInfo,
             final InputStream requestBodyStream,
-            final MediaType requestContentType, final String checksumType,
-            final String checksum) throws RepositoryException,
+            final MediaType requestContentType,
+            final URI checksum) throws RepositoryException,
         InvalidChecksumException, IOException {
 
         final FedoraResource result;
@@ -198,7 +199,7 @@ public abstract class AbstractResource {
                 final Node node =
                         datastreamService.createDatastreamNode(session, path,
                                 contentType.toString(), requestBodyStream,
-                                checksumType, checksum);
+                                checksum);
                 result = new Datastream(node);
                 break;
             default:

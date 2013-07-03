@@ -80,8 +80,6 @@ public class FedoraUnnamedObjects extends AbstractResource {
             @QueryParam("mixin")
             @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
             final String mixin,
-            @QueryParam("checksumType")
-            final String checksumType,
             @QueryParam("checksum")
             final String checksum,
             @HeaderParam("Content-Type")
@@ -102,11 +100,20 @@ public class FedoraUnnamedObjects extends AbstractResource {
                         path + " is an existing resource").build();
             }
 
+            final URI checksumURI;
+
+            if (checksum != null && !checksum.equals("")) {
+                checksumURI = new URI(checksum);
+            } else {
+                checksumURI = null;
+            }
+
+
             final FedoraResource resource =
                     createObjectOrDatastreamFromRequestContent(
                             FedoraNodes.class, session, path, mixin, uriInfo,
                             requestBodyStream, requestContentType,
-                            checksumType, checksum);
+                            checksumURI);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, path);
