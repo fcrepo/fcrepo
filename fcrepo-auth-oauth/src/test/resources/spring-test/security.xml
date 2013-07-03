@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+  <!-- Context that supports the actual ModeShape JCR itself -->
+
+  <context:annotation-config/>
+
+  <bean name="oauthFilter" class="org.fcrepo.auth.oauth.filter.OAuthFilter">
+    <property name="realm" value="fedora"/>
+    <property name="provider">
+      <bean class="org.fcrepo.auth.oauth.DefaultOAuthResourceProvider">
+        <property name="sessionFactory">
+          <!-- mints JCR Sessions : needs to reappear here because it can't be autowired from the enclosed contexts-->
+          <ref bean="org.fcrepo.session.SessionFactory"/>
+        </property>
+      </bean>
+    </property>
+    <property name="parameterStyles">
+      <set
+        value-type="org.apache.oltu.oauth2.common.message.types.ParameterStyle">
+        <value>QUERY</value>
+        <value>HEADER</value>
+      </set>
+    </property>
+  </bean>
+
+  <bean name="wrapFilter"
+    class="org.fcrepo.auth.oauth.test.filter.AuthenticatedRequestWrappingFilter"/>
+
+
+  <bean name="authNFilter"
+    class="org.fcrepo.auth.oauth.filter.RestrictToAuthNFilter"/>
+
+</beans>
