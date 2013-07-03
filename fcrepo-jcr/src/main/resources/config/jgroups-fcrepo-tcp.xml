@@ -35,7 +35,7 @@
           enable_bundling="true"
           use_send_queues="true"
           enable_diagnostics="false"
-          bundler_type="old"
+          bundler_type="new"
 
           thread_naming_pattern="pl"
 
