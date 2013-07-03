@@ -1,3 +1,4 @@
+<!DOCTYPE HTML>
 #parse("views/common.vsl")
 <html>
 <head>

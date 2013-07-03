@@ -1,8 +1,10 @@
-#set( $title = $topic )
+<!DOCTYPE HTML>
+#set( $title = $helpers.getObjectTitle($rdf, $topic) )
 
 #parse("views/common.vsl")
 <html>
 <head>
+    <title>$title</title>
     #parse("views/common-head.vsl")
 </head>
 
@@ -32,7 +34,7 @@
             #foreach($subject in $model.listSubjects())
                 #if( $subject != $topic )
                     <div class="well" resource="$subject.getURI()">
-                        <h3><a href="$subject.getURI()">$helpers.getObjectTitle($rdf, $subject.asNode())</a></h3>
+                        <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                         #triples($subject.asNode())
                     </div>
                 #end

@@ -2,6 +2,7 @@
 #* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
 #* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
 #* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+<!DOCTYPE HTML>
 #parse("views/common.vsl")
 <html>
   <head>
@@ -34,7 +35,7 @@
       #foreach($subject in $model.listSubjects())
           #if( $subject != $topic )
           <div class="well" resource="$subject.getURI()">
-              <h3><a href="$subject.getURI()">$helpers.getObjectTitle($rdf, $subject.asNode())</a></h3>
+              <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
               #triples($subject.asNode())
           </div>
           #end

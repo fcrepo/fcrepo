@@ -1,18 +1,18 @@
 
 <dl>
-    <dt>UUID</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_PRIMARY_IDENTIFIER)</dd>
+    <dt>UUID</dt> <dd>$esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_PRIMARY_IDENTIFIER))</dd>
 
     <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_DATE)
-    by $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_BY)</dd>
+    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_BY))</dd>
 
     <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_DATE)
-    by $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_BY)</dd>
+    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_BY))</dd>
 
-    <dt><h3>Children <span class="badge">$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CHILD_COUNT)</span></h3></dt>
+    <dt>Children <span class="badge">$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CHILD_COUNT)</span></dt>
     <dd>
         <ol>
             #foreach($quad in $helpers.getObjects($rdf, $topic, $rdfLexicon.HAS_CHILD))
-                <li><a href="$quad.getObject().getURI()">$helpers.getObjectTitle($rdf, $quad.getObject())</a></li>
+                <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
             #end
         </ol>
     </dd>

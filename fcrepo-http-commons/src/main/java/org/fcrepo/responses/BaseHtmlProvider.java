@@ -55,6 +55,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.session.SessionFactory;
@@ -83,6 +84,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
     @javax.ws.rs.core.Context
     UriInfo uriInfo;
+
+    private static EscapeTool escapeTool = new EscapeTool();
 
     protected VelocityEngine velocity = new VelocityEngine();
 
@@ -209,6 +212,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
         final Context context = new VelocityContext();
         context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
         context.put("helpers", ViewHelpers.getInstance());
+        context.put("esc", escapeTool);
         context.put("rdf", rdf.asDatasetGraph());
 
         Model model = unifyDatasetModel(rdf);

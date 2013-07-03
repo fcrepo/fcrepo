@@ -10,9 +10,9 @@
 </dt>
                     <dd>
                         #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
-                            <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$quad.getObject()</a>
+                            <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</a>
                         #else
-                            <span property="$quad.getPredicate().toString()">$quad.getObject()</span>
+                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
                         #end
                         #if( $quad.getPredicate().toString().equals("info:fedora/digest") )
                             <a href="$topic/fcr:fixity">check fixity</a>
