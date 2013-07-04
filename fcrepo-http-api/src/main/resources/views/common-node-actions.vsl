@@ -14,9 +14,9 @@
     </label>
 
 
-    <label id="datastream_payload">
+    <label for="datastream_payload">
         File
-    <input type="file" id="update_file"/>
+    <input type="file" id="datastream_payload"/>
     </label>
     <button type="submit" class="btn btn-primary">Add</button>
     <hr />

@@ -1,11 +1,12 @@
 #* @vtlvariable name="uriInfo" type="javax.ws.rs.core.UriInfo" *#
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
 
 #parse("views/common.vsl")
 <html>
 <head>
     <title>$title</title>
+    <meta charset="UTF-8">
     #parse("views/common-head.vsl")
 </head>
 
