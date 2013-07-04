@@ -15,13 +15,13 @@
  */
 package org.fcrepo.identifiers;
 
-import com.codahale.metrics.Timer;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
+
+import com.codahale.metrics.Timer;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 
 /**
  * PID minter that creates hierarchical IDs for a UUID

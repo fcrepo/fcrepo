@@ -21,7 +21,9 @@ import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import org.modeshape.jcr.api.NamespaceRegistry;
+
 import com.google.common.base.Function;
 
 /**

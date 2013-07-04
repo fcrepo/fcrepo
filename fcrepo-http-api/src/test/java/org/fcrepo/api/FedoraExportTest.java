@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.StreamingOutput;
 

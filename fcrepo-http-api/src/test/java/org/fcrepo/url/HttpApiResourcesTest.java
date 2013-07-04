@@ -16,27 +16,6 @@
 
 package org.fcrepo.url;
 
-import com.google.common.collect.ImmutableSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.FedoraResource;
-import org.fcrepo.api.FedoraNodes;
-import org.fcrepo.api.rdf.HttpGraphSubjects;
-import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.FedoraJcrTypes;
-import org.junit.Before;
-import org.junit.Test;
-import org.modeshape.jcr.api.JcrConstants;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
-import javax.ws.rs.core.UriInfo;
-
-import java.util.HashSet;
-
 import static org.fcrepo.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_NAMESPACE_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_SEARCH_SERVICE;
@@ -48,6 +27,28 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.FedoraResource;
+import org.fcrepo.api.FedoraNodes;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.serialization.SerializerUtil;
+import org.fcrepo.test.util.TestHelpers;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.junit.Before;
+import org.junit.Test;
+import org.modeshape.jcr.api.JcrConstants;
+
+import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 public class HttpApiResourcesTest {
 
