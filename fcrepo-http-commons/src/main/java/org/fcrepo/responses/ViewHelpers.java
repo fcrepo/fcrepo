@@ -97,7 +97,14 @@ public class ViewHelpers {
             }
         }
 
-        return subject.getURI();
+        if (subject.isURI()) {
+            return subject.getURI();
+        } else if (subject.isBlank()) {
+            return subject.getBlankNodeLabel();
+        } else {
+            return subject.toString();
+        }
+
     }
 
     /**

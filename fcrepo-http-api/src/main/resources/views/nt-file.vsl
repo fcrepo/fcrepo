@@ -30,10 +30,17 @@
             <h2>Triples for other nodes</h2>
             #foreach($subject in $model.listSubjects())
                 #if( $subject != $topic )
+                    #if ( $subject.getURI() )
                     <div class="well" resource="$subject.getURI()">
                         <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                         #triples($subject.asNode())
                     </div>
+                    #else
+                    <div class="well" resource="$subject.getId()">
+                        <h3>$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
+                        #triples($subject.asNode())
+                    </div>
+                    #end
                 #end
             #end
         </div>

@@ -38,6 +38,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.rdf.GraphSubjects;
@@ -185,7 +188,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         Model mockModel = mock(Model.class);
         when(JcrRdfTools.getFixityResultsModel(eq(mockSubjects), eq(mockNode), any(Collection.class))).thenReturn(mockModel);
 
-        testObj.getFixityResultsModel(mockSubjects, mockDatastream);
+
+        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(ResourceFactory.createResource("abc"));
+        final Dataset fixityResultsModel = testObj.getFixityResultsModel(mockSubjects, mockDatastream);
+
+        assertTrue(fixityResultsModel.getContext().isDefined(Symbol.create("uri")));
     }
 
 

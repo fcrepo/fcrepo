@@ -31,6 +31,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -172,12 +173,12 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Get the fixity results for the datastream as a RDF Dataset
-     * @param factory
+     * @param subjects
      * @param datastream
      * @return
      * @throws RepositoryException
      */
-    public Dataset getFixityResultsModel(final GraphSubjects factory,
+    public Dataset getFixityResultsModel(final GraphSubjects subjects,
                                          final Datastream datastream)
         throws RepositoryException {
 
@@ -185,9 +186,16 @@ public class DatastreamService extends RepositoryService {
         final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
 
 
-        final Model model = JcrRdfTools.getFixityResultsModel(factory, datastream.getNode(), blobs);
+        final Model model = JcrRdfTools.getFixityResultsModel(subjects, datastream.getNode(), blobs);
 
-        return GraphStoreFactory.create(model).toDataset();
+
+        final Dataset dataset = GraphStoreFactory.create(model).toDataset();
+
+        String uri = JcrRdfTools.getGraphSubject(subjects, datastream.getNode()).getURI();
+        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        context.set(Symbol.create("uri"),uri);
+
+        return dataset;
     }
 
     /**
@@ -265,7 +273,6 @@ public class DatastreamService extends RepositoryService {
      * against the given checksum and size.
      *
      * @param resource
-     * @param digest
      * @param dsChecksum -the checksum and algorithm represented as a URI
      * @param dsSize
      * @return

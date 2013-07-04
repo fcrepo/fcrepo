@@ -100,6 +100,20 @@ public class ViewHelpersTest {
     }
 
     @Test
+    public void shouldUsetheBNodeIdIfItIsABNode() {
+        final DatasetGraph mem = DatasetGraphFactory.createMem();
+        final Node anon = NodeFactory.createAnon();
+        assertEquals(anon.getBlankNodeLabel(), testObj.getObjectTitle(mem, anon));
+    }
+
+    @Test
+    public void shouldJustUseTheStringIfItIsALiteral() {
+        final DatasetGraph mem = DatasetGraphFactory.createMem();
+        final Node lit = NodeFactory.createLiteral("xyz");
+        assertEquals("\"xyz\"", testObj.getObjectTitle(mem, lit));
+    }
+
+    @Test
     public void shouldConvertRdfObjectsToStrings() {
 
         final DatasetGraph mem = DatasetGraphFactory.createMem();
