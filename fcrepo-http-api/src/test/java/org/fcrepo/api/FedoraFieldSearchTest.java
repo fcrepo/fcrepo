@@ -40,7 +40,6 @@ import javax.ws.rs.core.Variant;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,11 +64,6 @@ public class FedoraFieldSearchTest {
         TestHelpers.setField(testObj, "uriInfo", uriInfo);
         TestHelpers.setField(testObj, "nodeService", mockNodeService);
         TestHelpers.setField(testObj, "session", mockSession);
-    }
-
-    @After
-    public void tearDown() {
-
     }
 
     @SuppressWarnings("unchecked")

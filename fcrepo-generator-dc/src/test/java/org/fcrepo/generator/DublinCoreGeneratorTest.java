@@ -16,15 +16,16 @@
 
 package org.fcrepo.generator;
 
+import static java.util.Arrays.asList;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
-import java.util.Arrays;
-
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -33,7 +34,6 @@ import javax.jcr.Session;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,19 +51,19 @@ public class DublinCoreGeneratorTest {
     public void setUp() throws RepositoryException, NoSuchFieldException {
         mockNodeService = mock(NodeService.class);
         testObj = new DublinCoreGenerator();
-        TestHelpers.setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "nodeService", mockNodeService);
 
-		mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
         mockGenerator = mock(DCGenerator.class);
-        testObj.dcgenerators = Arrays.asList(mockGenerator);
+        testObj.dcgenerators = asList(mockGenerator);
     }
 
     @Test
     public void testGetObjectAsDublinCore() throws RepositoryException {
-        testObj.dcgenerators = Arrays.asList(mockGenerator);
-        InputStream mockIS = mock(InputStream.class);
-        FedoraResource mockResource = mock(FedoraResource.class);
+        testObj.dcgenerators = asList(mockGenerator);
+        final InputStream mockIS = mock(InputStream.class);
+        final FedoraResource mockResource = mock(FedoraResource.class);
         when(mockResource.getNode()).thenReturn(mock(Node.class));
         when(mockNodeService.getObject(mockSession, "/objects/foo"))
                 .thenReturn(mockResource);
@@ -74,13 +74,13 @@ public class DublinCoreGeneratorTest {
 
     @Test
     public void testNoGenerators() {
-        testObj.dcgenerators = Arrays.asList(new DCGenerator[0]);
+        testObj.dcgenerators = asList(new DCGenerator[0]);
         try {
             testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
             fail("Should have failed without a generator configured!");
-        } catch (PathNotFoundException ex) {
+        } catch (final PathNotFoundException ex) {
             // this is what we expect
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             fail("unexpected RepositoryException: " + e.getMessage());
         }
     }

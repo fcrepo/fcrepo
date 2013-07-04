@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -31,7 +32,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.junit.Test;
@@ -63,11 +63,11 @@ public class RdfProviderTest {
         assertTrue(
                 "Gave false response to RdfProvider.isWriteable() that contained a legitimate combination of parameters!",
                 rdfProvider.isWriteable(Dataset.class, Dataset.class, null,
-                        MediaType.valueOf("application/rdf+xml")));
+                        valueOf("application/rdf+xml")));
         assertFalse(
                 "RdfProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
                 rdfProvider.isWriteable(RdfProvider.class, RdfProvider.class,
-                        null, MediaType.valueOf("application/rdf+xml")));
+                        null, valueOf("application/rdf+xml")));
         assertFalse(
                 "RdfProvider.isWriteable() should return false to text/html!",
                 rdfProvider.isWriteable(Dataset.class, Dataset.class, null,
@@ -84,11 +84,11 @@ public class RdfProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteTo() throws WebApplicationException,
-        IllegalArgumentException, IOException {
+            IllegalArgumentException, IOException {
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
         rdfProvider.writeTo(testData, Dataset.class, mock(Type.class), null,
-                MediaType.valueOf("application/rdf+xml"),
+                valueOf("application/rdf+xml"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);

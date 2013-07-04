@@ -16,6 +16,8 @@
 
 package org.fcrepo.test.util;
 
+import static java.net.URI.create;
+import static org.fcrepo.utils.ContentDigest.asURI;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -53,7 +55,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.identifiers.UUIDPidMinter;
-import org.fcrepo.utils.ContentDigest;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -79,8 +80,8 @@ public abstract class TestHelpers {
         final Answer<UriBuilder> answer = new Answer<UriBuilder>() {
 
             @Override
-            public UriBuilder answer(InvocationOnMock invocation)
-                throws Throwable {
+            public UriBuilder answer(final InvocationOnMock invocation)
+                    throws Throwable {
 
                 final UriBuilder ub = new UriBuilderImpl();
                 ub.scheme("http");
@@ -93,7 +94,7 @@ public abstract class TestHelpers {
 
         when(ui.getRequestUri()).thenReturn(
                 URI.create("http://localhost/fcrepo"));
-        when(ui.getBaseUri()).thenReturn(URI.create("http://localhost/fcrepo"));
+        when(ui.getBaseUri()).thenReturn(create("http://localhost/fcrepo"));
         when(ui.getBaseUriBuilder()).thenAnswer(answer);
         when(ui.getAbsolutePathBuilder()).thenAnswer(answer);
 
@@ -171,24 +172,24 @@ public abstract class TestHelpers {
         return mockSession;
     }
 
-    public static Collection<String> parseChildren(HttpEntity entity)
-        throws IOException {
-        String body = EntityUtils.toString(entity);
+    public static Collection<String> parseChildren(final HttpEntity entity)
+            throws IOException {
+        final String body = EntityUtils.toString(entity);
         System.err.println(body);
-        String[] names =
+        final String[] names =
                 body.replace("[", "").replace("]", "").trim().split(",\\s?");
         return Arrays.asList(names);
     }
 
-    public static Session mockSession(AbstractResource testObj)
-        throws RepositoryException, NoSuchFieldException {
+    public static Session mockSession(final AbstractResource testObj)
+            throws RepositoryException, NoSuchFieldException {
 
-        SecurityContext mockSecurityContext = mock(SecurityContext.class);
-        Principal mockPrincipal = mock(Principal.class);
+        final SecurityContext mockSecurityContext = mock(SecurityContext.class);
+        final Principal mockPrincipal = mock(Principal.class);
 
-        String mockUser = "testuser";
+        final String mockUser = "testuser";
 
-        Session mockSession = mock(Session.class);
+        final Session mockSession = mock(Session.class);
         when(mockSession.getUserID()).thenReturn(mockUser);
         when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
         when(mockPrincipal.getName()).thenReturn(mockUser);
@@ -199,7 +200,7 @@ public abstract class TestHelpers {
     }
 
     public static Repository mockRepository() throws LoginException,
-        RepositoryException {
+            RepositoryException {
         final Repository mockRepo = mock(Repository.class);
         final Session mockSession = mock(Session.class);
         when(mockRepo.login()).thenReturn(mockSession);
@@ -221,7 +222,7 @@ public abstract class TestHelpers {
             if (content != null) {
                 final MessageDigest md = MessageDigest.getInstance("SHA-1");
                 final byte[] digest = md.digest(content.getBytes());
-                final URI cd = ContentDigest.asURI("SHA-1", digest);
+                final URI cd = asURI("SHA-1", digest);
                 when(mockDs.getContent()).thenReturn(
                         IOUtils.toInputStream(content));
                 when(mockDs.getContentDigest()).thenReturn(cd);
@@ -242,32 +243,35 @@ public abstract class TestHelpers {
 
     /**
      * Set a field via reflection
+     * 
      * @param parent the owner object of the field
      * @param name the name of the field
      * @param obj the value to set
      * @throws NoSuchFieldException
      */
-    public static void setField(Object parent, String name, Object obj)
-            throws NoSuchFieldException {
+    public static void setField(final Object parent, final String name,
+            final Object obj) throws NoSuchFieldException {
         /* check the parent class too if the field could not be found */
         try {
-            Field f = findField(parent.getClass(), name);
+            final Field f = findField(parent.getClass(), name);
             f.setAccessible(true);
             f.set(parent, obj);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static Field findField(Class<?> clazz, String name) throws NoSuchFieldException{
-        for (Field f: clazz.getDeclaredFields()){
-            if (f.getName().equals(name)){
+    private static Field findField(final Class<?> clazz, final String name)
+            throws NoSuchFieldException {
+        for (final Field f : clazz.getDeclaredFields()) {
+            if (f.getName().equals(name)) {
                 return f;
             }
         }
         if (clazz.getSuperclass() == null) {
-            throw new NoSuchFieldException("Field " + name + " could not be found");
-        }else{
+            throw new NoSuchFieldException("Field " + name +
+                    " could not be found");
+        } else {
             return findField(clazz.getSuperclass(), name);
         }
     }

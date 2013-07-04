@@ -18,6 +18,7 @@ package org.fcrepo.api.rdf;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -48,7 +49,7 @@ public class HttpGraphSubjectsTest {
 
     @Before
     public void setUp() {
-        UriInfo uris = getUriInfoImpl(testPath);
+        final UriInfo uris = getUriInfoImpl(testPath);
         mockSession = mock(Session.class);
         testObj =
                 new HttpGraphSubjects(MockNodeController.class, uris,
@@ -57,10 +58,10 @@ public class HttpGraphSubjectsTest {
 
     @Test
     public void testGetGraphSubject() throws RepositoryException {
-        String expected = "http://localhost:8080/fcrepo/rest" + testPath;
-        Node mockNode = mock(Node.class);
+        final String expected = "http://localhost:8080/fcrepo/rest" + testPath;
+        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn(testPath);
-        Workspace mockWorkspace = mock(Workspace.class);
+        final Workspace mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockNode.getSession()).thenReturn(mockSession);
@@ -73,16 +74,16 @@ public class HttpGraphSubjectsTest {
 
     @Test
     public void testGetNodeFromGraphSubject() throws PathNotFoundException,
-        RepositoryException {
-        Session mockSession = mock(Session.class);
-        Node mockNode = mock(Node.class);
+            RepositoryException {
+        final Session mockSession = mock(Session.class);
+        final Node mockNode = mock(Node.class);
         when(mockSession.nodeExists(testPath)).thenReturn(true);
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
-        Workspace mockWorkspace = mock(Workspace.class);
+        final Workspace mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         // test a good subject
-        Resource mockSubject = mock(Resource.class);
+        final Resource mockSubject = mock(Resource.class);
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest" + testPath);
         when(mockSubject.isURIResource()).thenReturn(true);
@@ -105,12 +106,12 @@ public class HttpGraphSubjectsTest {
                         "http://localhost:8080/fcrepo/rest" + testPath +
                                 "/fcr:content");
         actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
-        Mockito.verify(mockSession).getNode(testPath + "/jcr:content");
+        verify(mockSession).getNode(testPath + "/jcr:content");
     }
 
     @Test
     public void testIsFedoraGraphSubject() {
-        Resource mockSubject = mock(Resource.class);
+        final Resource mockSubject = mock(Resource.class);
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest/foo");
         when(mockSubject.isURIResource()).thenReturn(true);
@@ -121,7 +122,7 @@ public class HttpGraphSubjectsTest {
         assertEquals(false, actual);
     }
 
-    private static UriInfo getUriInfoImpl(String path) {
+    private static UriInfo getUriInfoImpl(final String path) {
         // UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
         final UriInfo ui = mock(UriInfo.class);
         final UriBuilder ub = new UriBuilderImpl();

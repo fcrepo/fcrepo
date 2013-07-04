@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.responses.RdfSerializationUtils.RFC2822DATEFORMAT;
 import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.lastModifiedPredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.setCachingHeaders;
@@ -37,7 +38,6 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
@@ -77,7 +77,7 @@ public class RdfSerializationUtilsTest {
     public void testSetCachingHeadersWithLastModified() {
         final MultivaluedMap<?, ?> headers = new MultivaluedMapImpl();
 
-        final Model m = ModelFactory.createDefaultModel();
+        final Model m = createDefaultModel();
 
         final Calendar c = Calendar.getInstance();
         m.add(m.createResource("test:subject"), m
@@ -90,9 +90,8 @@ public class RdfSerializationUtilsTest {
         setCachingHeaders((MultivaluedMap<String, Object>) headers,
                 testDatasetWithLastModified);
         assertTrue(new DateTime(c).withMillisOfSecond(0).isEqual(
-                RdfSerializationUtils.RFC2822DATEFORMAT
-                        .parseDateTime((String) headers.get("Last-Modified")
-                                .get(0))));
+                RFC2822DATEFORMAT.parseDateTime((String) headers.get(
+                        "Last-Modified").get(0))));
     }
 
 }

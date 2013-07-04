@@ -25,7 +25,6 @@ import javax.jcr.Session;
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,11 +44,6 @@ public class FedoraSitemapTest {
         TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
         TestHelpers.setField(testObj, "session", mockSession);
-    }
-
-    @After
-    public void tearDown() {
-
     }
 
     @Test

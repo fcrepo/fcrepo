@@ -31,7 +31,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class MimeTypePolicy implements Policy {
 
-    private static final Logger logger = getLogger(MimeTypePolicy.class);
+    private static final Logger LOGGER = getLogger(MimeTypePolicy.class);
 
     private final String mimeType;
 
@@ -51,22 +51,22 @@ public class MimeTypePolicy implements Policy {
      */
     @Override
     public String evaluatePolicy(final Node n) {
-        logger.debug("Evaluating MimeTypePolicy ({} -> {}) for {} ",
+        LOGGER.debug("Evaluating MimeTypePolicy ({} -> {}) for {} ",
                             mimeType, hint, n);
         try {
             final String nodeMimeType = n.getNode(JCR_CONTENT)
                                                 .getProperty(JCR_MIME_TYPE)
                                                 .getString();
 
-            logger.trace("Found mime type {}", nodeMimeType);
+            LOGGER.trace("Found mime type {}", nodeMimeType);
 
             if (nodeMimeType.equals(mimeType)) {
-                logger.trace("{} matched this mime type." +
+                LOGGER.trace("{} matched this mime type." +
                                      "Returning hint {} ", mimeType, hint);
                 return hint;
             }
         } catch (RepositoryException e) {
-            logger.warn("Got Exception evaluating policy: {}", e);
+            LOGGER.warn("Got Exception evaluating policy: {}", e);
             return null;
         }
 

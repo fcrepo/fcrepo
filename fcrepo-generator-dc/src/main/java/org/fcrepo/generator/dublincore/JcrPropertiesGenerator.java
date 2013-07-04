@@ -16,12 +16,11 @@
 
 package org.fcrepo.generator.dublincore;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
@@ -31,12 +30,12 @@ import javax.jcr.Value;
 import org.slf4j.Logger;
 
 /**
- * Derive a Dublin Core document from the JCR properties within
- * the DC namespace.
+ * Derive a Dublin Core document from the JCR properties within the DC
+ * namespace.
  */
 public class JcrPropertiesGenerator implements DCGenerator {
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
             getLogger(JcrPropertiesGenerator.class);
 
     public static final String[] SALIENT_DC_PROPERTY_NAMESPACES =
@@ -73,10 +72,9 @@ public class JcrPropertiesGenerator implements DCGenerator {
 
             str.append("</oai_dc:dc>");
 
-            return new ByteArrayInputStream(str.toString().getBytes(
-                    StandardCharsets.UTF_8));
+            return new ByteArrayInputStream(str.toString().getBytes(UTF_8));
         } catch (final RepositoryException e) {
-            logger.error("Repository exception: {}", e);
+            LOGGER.error("Repository exception: {}", e);
             return null;
         }
     }

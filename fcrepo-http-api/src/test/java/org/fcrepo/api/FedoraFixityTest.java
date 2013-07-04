@@ -35,7 +35,6 @@ import org.fcrepo.Datastream;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.test.util.TestHelpers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,14 +64,9 @@ public class FedoraFixityTest {
         TestHelpers.setField(testObj, "session", mockSession);
     }
 
-    @After
-    public void tearDown() {
-
-    }
-
     @Test
     public void testGetDatastreamFixity() throws RepositoryException,
-        IOException {
+            IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/objects/" + pid + "/testDS";
         final String dsId = "testDS";

@@ -34,7 +34,7 @@ import org.slf4j.Logger;
  */
 public class WellKnownDatastreamGenerator implements DCGenerator {
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
             getLogger(WellKnownDatastreamGenerator.class);
 
     private String wellKnownDsid;
@@ -46,7 +46,7 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
             return getContentInputStream(node);
         } catch (final RepositoryException e) {
 
-            logger.warn("logged exception", e);
+            LOGGER.warn("logged exception", e);
 
             return null;
         }
