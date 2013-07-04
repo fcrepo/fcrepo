@@ -16,19 +16,19 @@
 
 package org.fcrepo.integration.api;
 
-import com.hp.hpl.jena.update.GraphStore;
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+
+import javax.jcr.RepositoryException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Workspace;
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
+import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraWorkspacesIT extends AbstractResourceIT {
 

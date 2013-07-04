@@ -15,16 +15,17 @@
  */
 package org.fcrepo.utils;
 
-import com.hp.hpl.jena.rdf.listeners.StatementListener;
-import com.hp.hpl.jena.rdf.model.Statement;
-import org.fcrepo.RdfLexicon;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.RdfLexicon;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.rdf.listeners.StatementListener;
+import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * Listener that maps changes to actions in the JCR namespace registry

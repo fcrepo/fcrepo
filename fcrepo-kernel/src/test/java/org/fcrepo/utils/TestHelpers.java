@@ -15,8 +15,8 @@
  */
 package org.fcrepo.utils;
 
-import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_DIGEST;
+import static org.fcrepo.utils.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATEDBY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

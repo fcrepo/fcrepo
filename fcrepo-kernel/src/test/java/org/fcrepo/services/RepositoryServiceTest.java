@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.services;
 
 import static org.fcrepo.services.RepositoryService.getRepositoryNamespaces;
@@ -26,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.Node;
@@ -70,9 +70,9 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
-                         "org.xml.sax.*", "javax.management.*"})
+        "org.xml.sax.*", "javax.management.*"})
 @PrepareForTest({NamespaceTools.class, JcrRdfTools.class,
-                        FedoraTypesUtils.class})
+        FedoraTypesUtils.class})
 public class RepositoryServiceTest implements FedoraJcrTypes {
 
     String testPid = "testObj";
@@ -171,7 +171,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     }
 
-
     @Test
     public void testGetRepositorySize() throws RepositoryException {
         final Long actual = testObj.getRepositorySize();
@@ -209,43 +208,41 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
         PowerMockito.mockStatic(JcrRdfTools.class);
 
-        Resource subject =
-            ResourceFactory.createResource("info:fedora/search/request");
-        Workspace mockWorkspace = mock(Workspace.class);
-        QueryManager mockQueryManager = mock(QueryManager.class);
-        QueryObjectModelFactory mockQOMFactory =
-            mock(QueryObjectModelFactory.class);
-        QueryObjectModel mockQuery = mock(QueryObjectModel.class);
-        QueryResult mockQueryResults = mock(QueryResult.class);
-        NodeIterator mockIterator = mock(NodeIterator.class);
-        GraphSubjects mockSubjectFactory = mock(GraphSubjects.class);
+        final Resource subject =
+                ResourceFactory.createResource("info:fedora/search/request");
+        final Workspace mockWorkspace = mock(Workspace.class);
+        final QueryManager mockQueryManager = mock(QueryManager.class);
+        final QueryObjectModelFactory mockQOMFactory =
+                mock(QueryObjectModelFactory.class);
+        final QueryObjectModel mockQuery = mock(QueryObjectModel.class);
+        final QueryResult mockQueryResults = mock(QueryResult.class);
+        final NodeIterator mockIterator = mock(NodeIterator.class);
+        final GraphSubjects mockSubjectFactory = mock(GraphSubjects.class);
 
-
-        ValueFactory mockFactory = mock(ValueFactory.class);
+        final ValueFactory mockFactory = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockFactory);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
         when(mockQueryManager.getQOMFactory()).thenReturn(mockQOMFactory);
-        when(mockQOMFactory.createQuery(null, null, null, null))
-            .thenReturn(mockQuery);
+        when(mockQOMFactory.createQuery(null, null, null, null)).thenReturn(
+                mockQuery);
 
         when(mockQuery.execute()).thenReturn(mockQueryResults);
         when(mockQueryResults.getNodes()).thenReturn(mockIterator);
         when(mockIterator.getSize()).thenReturn(500L);
         when(mockIterator.next()).thenReturn("");
-        when(JcrRdfTools.getJcrNodeIteratorModel(eq(mockSubjectFactory),
-                                                 any(Iterator.class),
-                                                 eq(subject)))
-            .thenReturn(ModelFactory.createDefaultModel());
+        when(
+                JcrRdfTools.getJcrNodeIteratorModel(eq(mockSubjectFactory),
+                        any(org.fcrepo.utils.NodeIterator.class), eq(subject)))
+                .thenReturn(ModelFactory.createDefaultModel());
 
         testObj.searchRepository(mockSubjectFactory, subject, mockSession,
-                                 "search terms", 10, 0L);
+                "search terms", 10, 0L);
 
         // n+1
         verify(mockQuery).setLimit(11);
         verify(mockQuery).setOffset(0);
         verify(mockQuery).execute();
-
 
     }
 }

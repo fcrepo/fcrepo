@@ -16,9 +16,12 @@
 
 package org.fcrepo.integration.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static junit.framework.TestCase.assertFalse;
+import static org.fcrepo.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -63,12 +66,10 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final String subjectURI =
                 serverAddress + "objects/FedoraDatastreamsTest7";
 
-        assertTrue("Didn't find the first datastream! ", result.contains(
-                Node.ANY, Node.createURI(subjectURI), Node.ANY, Node
-                        .createURI(subjectURI + "/ds1")));
-        assertTrue("Didn't find the second datastream! ", result.contains(
-                Node.ANY, Node.createURI(subjectURI), Node.ANY, Node
-                        .createURI(subjectURI + "/ds2")));
+        assertTrue("Didn't find the first datastream! ", result.contains(ANY,
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(ANY,
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds2")));
     }
 
     @Test
@@ -105,16 +106,13 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final String subjectURI =
                 serverAddress + "objects/FedoraDatastreamsTest8";
         final GraphStore result =
-                TestHelpers.parseTriples(response.getEntity().getContent());
-        assertTrue("Didn't find the first datastream! ", result.contains(
-                Node.ANY, Node.createURI(subjectURI), Node.ANY, Node
-                        .createURI(subjectURI + "/ds1")));
-        assertTrue("Didn't find the second datastream! ", result.contains(
-                Node.ANY, Node.createURI(subjectURI), Node.ANY, Node
-                        .createURI(subjectURI + "/ds2")));
+                parseTriples(response.getEntity().getContent());
+        assertTrue("Didn't find the first datastream! ", result.contains(ANY,
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(ANY,
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds2")));
         assertFalse("Found the deleted datastream! ", result.contains(Node.ANY,
-                Node.createURI(subjectURI), Node.ANY, Node
-                        .createURI(subjectURI + "/ds_void")));
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds_void")));
 
     }
 

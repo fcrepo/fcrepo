@@ -16,13 +16,22 @@
 
 package org.fcrepo.integration.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
-import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
-import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
+import static org.fcrepo.RdfLexicon.HAS_OBJECT_SIZE;
+import static org.fcrepo.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
+import static org.fcrepo.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.utils.FedoraJcrTypes.ROOT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -34,8 +43,6 @@ import java.io.InputStream;
 import java.util.Iterator;
 
 import javax.jcr.RepositoryException;
-import javax.ws.rs.core.Response;
-
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
@@ -48,7 +55,6 @@ import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.FedoraJcrTypes;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -156,8 +162,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Retrieved repository graph:\n" + graphStore.toString());
 
         assertTrue("expected to find the root node data", graphStore.contains(
-                Node.ANY, Node.ANY, RdfLexicon.HAS_PRIMARY_TYPE.asNode(), Node
-                        .createLiteral(FedoraJcrTypes.ROOT)));
+                ANY, ANY, HAS_PRIMARY_TYPE.asNode(), createLiteral(ROOT)));
 
     }
 
@@ -219,9 +224,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final GraphStore graphStore =
                 TestHelpers.parseTriples(response.getEntity().getContent());
         final Iterator<Quad> iterator =
-                graphStore.find(Node.ANY, Node.createURI(serverAddress +
+                graphStore.find(ANY, createURI(serverAddress +
                         "objects/FedoraDescribeTestGraphByUuid"),
-                        RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode(), Node.ANY);
+                        HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
 
         assertTrue("Expected graph to contain a UUID", iterator.hasNext());
 
@@ -249,8 +254,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         .getBytes()));
         updateObjectGraphMethod.setEntity(e);
         final HttpResponse response = client.execute(updateObjectGraphMethod);
-        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response
-                .getStatusLine().getStatusCode());
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
 
     }
 
@@ -288,8 +293,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         updateObjectGraphMethod.setEntity(e);
 
         final HttpResponse response = client.execute(updateObjectGraphMethod);
-        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response
-                .getStatusLine().getStatusCode());
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
 
         final HttpGet getObjMethod =
 
@@ -335,8 +340,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         HttpResponse response = client.execute(describeMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        GraphStore graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
+        GraphStore graphStore = parseTriples(response.getEntity().getContent());
         logger.debug("For testDescribeSize() first size retrieved repository graph:\n" +
                 graphStore.toString());
 
@@ -355,14 +359,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
         response = client.execute(describeMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
+        graphStore = parseTriples(response.getEntity().getContent());
         logger.debug("For testDescribeSize() new size retrieved repository graph:\n" +
                 graphStore.toString());
 
         iterator =
-                graphStore.getDefaultGraph().find(Node.ANY,
-                        RdfLexicon.HAS_OBJECT_SIZE.asNode(), Node.ANY);
+                graphStore.getDefaultGraph().find(ANY,
+                        HAS_OBJECT_SIZE.asNode(), ANY);
 
         final Integer newSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -380,8 +383,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         HttpResponse response = client.execute(describeMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        GraphStore graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
+        GraphStore graphStore = parseTriples(response.getEntity().getContent());
         logger.debug("For testDescribeCount() first count retrieved repository graph:\n" +
                 graphStore.toString());
 
@@ -400,8 +402,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         response = client.execute(describeMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
+        graphStore = parseTriples(response.getEntity().getContent());
         logger.debug("For testDescribeCount() first count repository graph:\n" +
                 graphStore.toString());
 
@@ -436,19 +437,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final String subjectURI = serverAddress + "files/FileSystem1";
         final Graph result =
-                TestHelpers.parseTriples(response.getEntity().getContent())
+                parseTriples(response.getEntity().getContent())
                         .getDefaultGraph();
         logger.debug("For testGetProjectedNode() retrieved graph:\n" +
                 result.toString());
-        assertTrue("Didn't find the first datastream! ", result.contains(Node
-                .createURI(subjectURI), Node.ANY, Node.createURI(subjectURI +
-                "/ds1")));
-        assertTrue("Didn't find the second datastream! ", result.contains(Node
-                .createURI(subjectURI), Node.ANY, Node.createURI(subjectURI +
-                "/ds2")));
-        assertTrue("Didn't find the first object! ", result.contains(Node
-                .createURI(subjectURI), Node.ANY, Node.createURI(subjectURI +
-                "/TestSubdir")));
+        assertTrue("Didn't find the first datastream! ", result.contains(
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
+        assertTrue("Didn't find the second datastream! ", result.contains(
+                createURI(subjectURI), ANY, createURI(subjectURI + "/ds2")));
+        assertTrue("Didn't find the first object! ", result.contains(
+                createURI(subjectURI), ANY, createURI(subjectURI +
+                        "/TestSubdir")));
 
     }
 

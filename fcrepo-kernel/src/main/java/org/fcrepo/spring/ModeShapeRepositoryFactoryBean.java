@@ -15,6 +15,8 @@
  */
 package org.fcrepo.spring;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 import java.util.Collections;
 
@@ -30,8 +32,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * A Modeshape factory shim to make it play nice with our

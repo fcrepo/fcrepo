@@ -20,9 +20,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.xml.bind.JAXBContext;
@@ -73,20 +70,18 @@ public class ContainerWrapper implements ApplicationContextAware {
     @PostConstruct
     public void start() throws Exception {
 
-        JAXBContext context = JAXBContext.newInstance(WebAppConfig.class);
-        Unmarshaller u = context.createUnmarshaller();
-        WebAppConfig o =
+        final JAXBContext context = JAXBContext.newInstance(WebAppConfig.class);
+        final Unmarshaller u = context.createUnmarshaller();
+        final WebAppConfig o =
                 (WebAppConfig) u.unmarshal(getClass().getResource(
                         this.configLocation));
 
         final URI uri = URI.create("http://localhost:" + port);
 
-        final Map<String, String> initParams = new HashMap<String, String>();
-
         server = GrizzlyServerFactory.createHttpServer(uri, new HttpHandler() {
 
             @Override
-            public void service(Request req, Response res) throws Exception {
+            public void service(final Request req, final Response res) throws Exception {
                 res.setStatus(404, "Not found");
                 res.getWriter().write("404: not found");
             }
@@ -95,37 +90,37 @@ public class ContainerWrapper implements ApplicationContextAware {
         // create a "root" web application
         appContext = new WebappContext(o.displayName(), "/");
 
-        for (ContextParam p : o.contextParams()) {
+        for (final ContextParam p : o.contextParams()) {
             appContext.addContextInitParameter(p.name(), p.value());
         }
 
-        for (Listener l : o.listeners()) {
+        for (final Listener l : o.listeners()) {
             appContext.addListener(l.className());
         }
 
-        for (Servlet s : o.servlets()) {
-            ServletRegistration servlet =
+        for (final Servlet s : o.servlets()) {
+            final ServletRegistration servlet =
                     appContext.addServlet(s.servletName(), s.servletClass());
 
-            Collection<ServletMapping> mappings =
+            final Collection<ServletMapping> mappings =
                     o.servletMappings(s.servletName());
-            for (ServletMapping sm : mappings) {
+            for (final ServletMapping sm : mappings) {
                 servlet.addMapping(sm.urlPattern());
             }
-            for (InitParam p : s.initParams()) {
+            for (final InitParam p : s.initParams()) {
                 servlet.setInitParameter(p.name(), p.value());
             }
         }
 
-        for (Filter f : o.filters()) {
-            FilterRegistration filter =
+        for (final Filter f : o.filters()) {
+            final FilterRegistration filter =
                     appContext.addFilter(f.filterName(), f.filterClass());
 
-            Collection<FilterMapping> mappings =
+            final Collection<FilterMapping> mappings =
                     o.filterMappings(f.filterName());
-            for (FilterMapping sm : mappings) {
-                String urlPattern = sm.urlPattern();
-                String servletName = sm.servletName();
+            for (final FilterMapping sm : mappings) {
+                final String urlPattern = sm.urlPattern();
+                final String servletName = sm.servletName();
                 if (urlPattern != null) {
                     filter.addMappingForUrlPatterns(null, urlPattern);
                 } else {
@@ -133,7 +128,7 @@ public class ContainerWrapper implements ApplicationContextAware {
                 }
 
             }
-            for (InitParam p : f.initParams()) {
+            for (final InitParam p : f.initParams()) {
                 filter.setInitParameter(p.name(), p.value());
             }
         }
@@ -148,7 +143,7 @@ public class ContainerWrapper implements ApplicationContextAware {
     public void stop() {
         try {
             appContext.undeploy();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.warn(e.getMessage(), e);
         } finally {
             server.stop();
@@ -156,8 +151,8 @@ public class ContainerWrapper implements ApplicationContextAware {
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext)
-        throws BeansException {
+    public void setApplicationContext(final ApplicationContext applicationContext)
+            throws BeansException {
         // this.applicationContext = applicationContext;
 
     }

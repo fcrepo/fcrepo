@@ -16,10 +16,10 @@
 
 package org.fcrepo.api.rdf;
 
+import java.util.Comparator;
+
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.Quad;
-
-import java.util.Comparator;
 
 /**
  * Comparator to sort a list of Quads by subject, predicate, and object

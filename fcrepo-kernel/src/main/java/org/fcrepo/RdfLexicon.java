@@ -15,9 +15,9 @@
  */
 package org.fcrepo;
 
-import com.hp.hpl.jena.rdf.model.Property;
-
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+
+import com.hp.hpl.jena.rdf.model.Property;
 
 /**
  * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use

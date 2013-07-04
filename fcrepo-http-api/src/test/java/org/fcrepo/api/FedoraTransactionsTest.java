@@ -16,23 +16,23 @@
 
 package org.fcrepo.api;
 
-import org.fcrepo.Transaction;
-import org.fcrepo.TxAwareSession;
-import org.fcrepo.services.TransactionService;
-import org.fcrepo.test.util.TestHelpers;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.core.Response;
-
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.Transaction;
+import org.fcrepo.TxAwareSession;
+import org.fcrepo.services.TransactionService;
+import org.fcrepo.test.util.TestHelpers;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FedoraTransactionsTest {
 

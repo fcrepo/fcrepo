@@ -29,12 +29,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
-import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})

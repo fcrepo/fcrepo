@@ -16,6 +16,8 @@
 
 package org.fcrepo.api;
 
+import static com.hp.hpl.jena.query.DatasetFactory.createMem;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -42,7 +44,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class FedoraFieldSearchTest {
@@ -71,9 +72,10 @@ public class FedoraFieldSearchTest {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testFieldSearch() throws RepositoryException,
-        URISyntaxException {
+            URISyntaxException {
 
         final Request mockRequest = mock(Request.class);
 
@@ -87,10 +89,9 @@ public class FedoraFieldSearchTest {
                 mockNodeService
                         .searchRepository(
                                 any(GraphSubjects.class),
-                                eq(ResourceFactory
-                                        .createResource("http://localhost/fcrepo/path/to/query/endpoint")),
+                                eq(createResource("http://localhost/fcrepo/path/to/query/endpoint")),
                                 eq(mockSession), eq("ZZZ"), eq(0), eq(0L)))
-                .thenReturn(DatasetFactory.create());
+                .thenReturn(createMem());
         final UriBuilder mockUriBuilder = mock(UriBuilder.class);
 
         when(mockUriBuilder.path(FedoraFieldSearch.class)).thenReturn(

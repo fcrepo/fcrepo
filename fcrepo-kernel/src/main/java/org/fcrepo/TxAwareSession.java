@@ -15,11 +15,12 @@
  */
 package org.fcrepo;
 
-import javax.jcr.Session;
+import static java.lang.reflect.Proxy.newProxyInstance;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-import static java.lang.reflect.Proxy.newProxyInstance;
+import javax.jcr.Session;
 
 /**
  * A dynamic proxy that wraps JCR sessions. It is aware of fcrepo transactions, and
