@@ -16,6 +16,17 @@
 
 package org.fcrepo.responses;
 
+import static com.google.common.collect.ImmutableMap.of;
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static com.hp.hpl.jena.sparql.core.DatasetGraphFactory.createMem;
+import static org.fcrepo.RdfLexicon.DC_TITLE;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -30,7 +41,6 @@ import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.query.DatasetFactory;
@@ -56,14 +66,13 @@ public class ViewHelpersTest {
     @Test
     public void shouldConvertAUriToNodeBreadcrumbs() {
 
-        UriInfo mockUriInfo = TestHelpers.getUriInfoImpl();
+        final UriInfo mockUriInfo = TestHelpers.getUriInfoImpl();
 
         final Map<String, String> nodeBreadcrumbs =
-                testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory
-                        .createResource("http://localhost/fcrepo/a/b/c")
-                        .asNode());
+                testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
+                        "http://localhost/fcrepo/a/b/c").asNode());
 
-        assertEquals(ImmutableMap.of("http://localhost/fcrepo/a", "a",
+        assertEquals(of("http://localhost/fcrepo/a", "a",
                 "http://localhost/fcrepo/a/b", "b",
                 "http://localhost/fcrepo/a/b/c", "c"), nodeBreadcrumbs);
     }
@@ -71,7 +80,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldRefuseToConvertAForeignUriToNodeBreadcrumbs() {
 
-        UriInfo mockUriInfo = TestHelpers.getUriInfoImpl();
+        final UriInfo mockUriInfo = getUriInfoImpl();
 
         final Map<String, String> nodeBreadcrumbs =
                 testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory
@@ -82,74 +91,66 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldTryToExtractDublinCoreTitleFromNode() {
-        final DatasetGraph mem = DatasetGraphFactory.createMem();
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("a/b/c"),
-                RdfLexicon.DC_TITLE.asNode(), NodeFactory.createLiteral("abc"));
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b/c"), DC_TITLE.asNode(),
+                createLiteral("abc"));
 
-        assertEquals("abc", testObj.getObjectTitle(mem, NodeFactory
-                .createURI("a/b/c")));
+        assertEquals("abc", testObj.getObjectTitle(mem, createURI("a/b/c")));
     }
 
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
         final DatasetGraph mem = DatasetGraphFactory.createMem();
 
-        assertEquals("a/b/c", testObj.getObjectTitle(mem, NodeFactory
-                .createURI("a/b/c")));
+        assertEquals("a/b/c", testObj.getObjectTitle(mem, createURI("a/b/c")));
 
     }
 
     @Test
     public void shouldUsetheBNodeIdIfItIsABNode() {
-        final DatasetGraph mem = DatasetGraphFactory.createMem();
-        final Node anon = NodeFactory.createAnon();
-        assertEquals(anon.getBlankNodeLabel(), testObj.getObjectTitle(mem, anon));
+        final DatasetGraph mem = createMem();
+        final Node anon = createAnon();
+        assertEquals(anon.getBlankNodeLabel(), testObj
+                .getObjectTitle(mem, anon));
     }
 
     @Test
     public void shouldJustUseTheStringIfItIsALiteral() {
-        final DatasetGraph mem = DatasetGraphFactory.createMem();
-        final Node lit = NodeFactory.createLiteral("xyz");
+        final DatasetGraph mem = createMem();
+        final Node lit = createLiteral("xyz");
         assertEquals("\"xyz\"", testObj.getObjectTitle(mem, lit));
     }
 
     @Test
     public void shouldConvertRdfObjectsToStrings() {
 
-        final DatasetGraph mem = DatasetGraphFactory.createMem();
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
-                NodeFactory.createURI("a/b/c"), NodeFactory
-                        .createLiteral("abc"));
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
-                NodeFactory.createURI("a-numeric-type"), ResourceFactory
-                        .createTypedLiteral(0).asNode());
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
-                NodeFactory.createURI("an-empty-string"), NodeFactory
-                        .createLiteral(""));
-        mem.add(NodeFactory.createAnon(), NodeFactory.createURI("subject"),
-                NodeFactory.createURI("a-uri"), NodeFactory
-                        .createURI("some-uri"));
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("subject"), createURI("a/b/c"),
+                NodeFactory.createLiteral("abc"));
+        mem.add(createAnon(), createURI("subject"),
+                createURI("a-numeric-type"), createTypedLiteral(0).asNode());
+        mem.add(createAnon(), createURI("subject"),
+                createURI("an-empty-string"), createLiteral(""));
+        mem.add(createAnon(), createURI("subject"), createURI("a-uri"),
+                createURI("some-uri"));
 
-        assertEquals("abc", testObj.getObjectsAsString(mem, NodeFactory
-                .createURI("subject"), ResourceFactory.createResource("a/b/c")));
-        assertEquals("0", testObj.getObjectsAsString(mem, NodeFactory
-                .createURI("subject"), ResourceFactory
-                .createResource("a-numeric-type")));
-        assertEquals("<empty>", testObj.getObjectsAsString(mem, NodeFactory
-                .createURI("subject"), ResourceFactory
-                .createResource("an-empty-string")));
+        assertEquals("abc", testObj.getObjectsAsString(mem,
+                createURI("subject"), createResource("a/b/c")));
+        assertEquals("0", testObj.getObjectsAsString(mem, createURI("subject"),
+                createResource("a-numeric-type")));
+        assertEquals("<empty>", testObj.getObjectsAsString(mem,
+                createURI("subject"), createResource("an-empty-string")));
         assertEquals("&lt;<a href=\"some-uri\">some-uri</a>&gt;", testObj
-                .getObjectsAsString(mem, NodeFactory.createURI("subject"),
-                        ResourceFactory.createResource("a-uri")));
-        assertEquals("", testObj.getObjectsAsString(mem, NodeFactory
-                .createURI("subject"), ResourceFactory
-                .createResource("a-nonexistent-uri")));
+                .getObjectsAsString(mem, createURI("subject"),
+                        createResource("a-uri")));
+        assertEquals("", testObj.getObjectsAsString(mem, createURI("subject"),
+                createResource("a-nonexistent-uri")));
 
     }
 
     @Test
     public void shouldExtractNamespaceAndPrefix() {
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
         model.setNsPrefix("prefix", "namespace");
 
         assertEquals("prefix:", testObj.getNamespacePrefix(model, "namespace"));
@@ -159,7 +160,7 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldSortTriplesForDisplay() {
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
 
         model.setNsPrefix("prefix", "namespace");
         final Property propertyA = model.createProperty("namespace", "a");
@@ -184,15 +185,15 @@ public class ViewHelpersTest {
         final List<Quad> sortedTriples =
                 testObj.getSortedTriples(model, iterator);
 
-        sortedTriples.get(0).matches(Node.ANY, a.asNode(), propertyA.asNode(),
+        sortedTriples.get(0).matches(ANY, a.asNode(), propertyA.asNode(),
                 literalA.asNode());
-        sortedTriples.get(1).matches(Node.ANY, a.asNode(), propertyA.asNode(),
+        sortedTriples.get(1).matches(ANY, a.asNode(), propertyA.asNode(),
                 literalB.asNode());
-        sortedTriples.get(2).matches(Node.ANY, a.asNode(), propertyB.asNode(),
+        sortedTriples.get(2).matches(ANY, a.asNode(), propertyB.asNode(),
                 literalA.asNode());
-        sortedTriples.get(3).matches(Node.ANY, a.asNode(), propertyC.asNode(),
+        sortedTriples.get(3).matches(ANY, a.asNode(), propertyC.asNode(),
                 literalA.asNode());
-        sortedTriples.get(4).matches(Node.ANY, resourceB.asNode(),
+        sortedTriples.get(4).matches(ANY, resourceB.asNode(),
                 propertyC.asNode(), literalA.asNode());
 
     }

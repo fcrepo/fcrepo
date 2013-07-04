@@ -44,9 +44,9 @@ public class WorstCaseGeneratorTest {
 
     @Test
     public void testGetStream() throws Exception {
-        Node mockNode = mock(Node.class);
-        InputStream out = testObj.getStream(mockNode);
-        OaiDublinCore actual =
+        final Node mockNode = mock(Node.class);
+        final InputStream out = testObj.getStream(mockNode);
+        final OaiDublinCore actual =
                 (OaiDublinCore) context.createUnmarshaller().unmarshal(out);
         assertTrue(actual != null);
     }

@@ -40,7 +40,7 @@ import com.hp.hpl.jena.update.GraphStore;
 
 public class GraphStreamingOutputTest {
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
             getLogger(GraphStreamingOutputTest.class);
 
     @Test
@@ -57,7 +57,7 @@ public class GraphStreamingOutputTest {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             test.write(out);
             final String serialized = out.toString();
-            logger.debug("Created serialized RDF: \n {}", serialized);
+            LOGGER.debug("Created serialized RDF: \n {}", serialized);
             assertTrue("Couldn't find test subject!", serialized
                     .contains("test:subject"));
             assertTrue("Couldn't find test predicate!", serialized

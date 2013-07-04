@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo;
 
+import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -24,7 +26,11 @@ import static org.mockito.Mockito.when;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import static org.fcrepo.Transaction.State.ROLLED_BACK;
 
+import static org.fcrepo.Transaction.State.DIRTY;
+import static org.fcrepo.Transaction.State.NEW;
+import static org.fcrepo.Transaction.State.COMMITED;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +41,7 @@ public class TransactionTest {
     private Session mockSession;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         mockSession = mock(Session.class);
         testObj = new Transaction(mockSession);
     }
@@ -45,8 +51,8 @@ public class TransactionTest {
         testObj.rollback();
         verify(mockSession).refresh(false);
         verify(mockSession).logout();
-        assertEquals(Transaction.State.ROLLED_BACK, testObj.getState());
-        long update = testObj.getExpires().getTime();
+        assertEquals(ROLLED_BACK, testObj.getState());
+        final long update = testObj.getExpires().getTime();
         assertTrue(update <= System.currentTimeMillis());
     }
 
@@ -55,37 +61,37 @@ public class TransactionTest {
         testObj.commit();
         verify(mockSession).save();
         verify(mockSession).logout();
-        assertEquals(Transaction.State.COMMITED, testObj.getState());
-        long update = testObj.getExpires().getTime();
+        assertEquals(COMMITED, testObj.getState());
+        final long update = testObj.getExpires().getTime();
         assertTrue(update <= System.currentTimeMillis());
     }
 
     @Test
     public void testExpire() throws RepositoryException {
-        long orig = testObj.getExpires().getTime();
+        final long orig = testObj.getExpires().getTime();
         testObj.expire();
         verify(mockSession, never()).save();
         verify(mockSession).logout();
-        long update = testObj.getExpires().getTime();
+        final long update = testObj.getExpires().getTime();
         assertTrue(update < orig);
-        assertTrue(update <= System.currentTimeMillis());
+        assertTrue(update <= currentTimeMillis());
         assertTrue(update < orig);
     }
 
     @Test
     public void testExpiryUpdate() throws RepositoryException {
-        long orig = testObj.getExpires().getTime();
+        final long orig = testObj.getExpires().getTime();
         testObj.updateExpiryDate();
-        long update = testObj.getExpires().getTime();
+        final long update = testObj.getExpires().getTime();
         assertTrue("Unexpected negative expiry delta: " + (update - orig),
                 update - orig >= 0);
     }
 
     @Test
     public void testState() throws RepositoryException {
-        assertEquals(Transaction.State.NEW, testObj.getState());
+        assertEquals(NEW, testObj.getState());
         when(mockSession.hasPendingChanges()).thenReturn(true, false);
-        assertEquals(Transaction.State.DIRTY, testObj.getState());
+        assertEquals(DIRTY, testObj.getState());
         testObj.commit();
     }
 }

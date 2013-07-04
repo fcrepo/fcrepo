@@ -30,7 +30,6 @@ import javax.jcr.Session;
 import org.fcrepo.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,8 +47,8 @@ public class FedoraRepositoryNamespacesTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws RepositoryException,
-        URISyntaxException, NoSuchFieldException {
+    public void setUp() throws RepositoryException, URISyntaxException,
+            NoSuchFieldException {
         mockNodeService = mock(NodeService.class);
 
         testObj = new FedoraRepositoryNamespaces();
@@ -57,11 +56,6 @@ public class FedoraRepositoryNamespacesTest {
         TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
         TestHelpers.setField(testObj, "session", mockSession);
-    }
-
-    @After
-    public void tearDown() {
-
     }
 
     @Test

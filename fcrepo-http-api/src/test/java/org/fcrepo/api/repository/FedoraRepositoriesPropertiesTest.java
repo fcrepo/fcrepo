@@ -16,6 +16,8 @@
 
 package org.fcrepo.api.repository;
 
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -48,10 +50,10 @@ public class FedoraRepositoriesPropertiesTest {
     public void setUp() throws Exception {
         mockNodes = mock(NodeService.class);
         testObj = new FedoraRepositoriesProperties();
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
-        TestHelpers.setField(testObj, "nodeService", mockNodes);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
+        setField(testObj, "nodeService", mockNodes);
+        setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
     }
 
     @Test

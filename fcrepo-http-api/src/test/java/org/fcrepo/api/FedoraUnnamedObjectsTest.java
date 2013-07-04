@@ -17,13 +17,16 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.setField;
+import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+import static javax.ws.rs.core.Response.Status.CREATED;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -38,8 +41,6 @@ import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.FedoraJcrTypes;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,42 +59,35 @@ public class FedoraUnnamedObjectsTest {
         mockObjects = mock(ObjectService.class);
         mockNodeService = mock(NodeService.class);
         testObj = new FedoraUnnamedObjects();
-        TestHelpers.setField(testObj, "objectService", mockObjects);
-        TestHelpers.setField(testObj, "nodeService", mockNodeService);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
+        setField(testObj, "objectService", mockObjects);
+        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
-}
-
-    @After
-    public void tearDown() {
-
+        setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testIngestAndMint() throws RepositoryException, IOException,
-        InvalidChecksumException, URISyntaxException, NoSuchFieldException {
+            InvalidChecksumException, URISyntaxException, NoSuchFieldException {
         final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
-        TestHelpers.setField(testObj, "pidMinter", mockMint);
+        setField(testObj, "pidMinter", mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");
 
         final FedoraObject mockObject = mock(FedoraObject.class);
         final String path = "/objects/uuid-123";
         when(mockObject.getPath()).thenReturn(path);
-        Node mockNode = mock(Node.class);
+        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn(path);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockObjects.createObject(mockSession, path))
                 .thenReturn(mockObject);
         final Response actual =
-                testObj.ingestAndMint(createPathList("objects"),
-                        FedoraJcrTypes.FEDORA_OBJECT, null, null, null,
-                        TestHelpers.getUriInfoImpl());
+                testObj.ingestAndMint(createPathList("objects"), FEDORA_OBJECT,
+                        null, null, null, getUriInfoImpl());
         assertNotNull(actual);
         assertEquals("http://localhost/fcrepo/objects/uuid-123", actual
                 .getMetadata().getFirst("Location").toString());
-        assertEquals(Response.Status.CREATED.getStatusCode(), actual
-                .getStatus());
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("uuid-123"));
         verify(mockObjects).createObject(mockSession, path);
         verify(mockNodeService).exists(mockSession, path);

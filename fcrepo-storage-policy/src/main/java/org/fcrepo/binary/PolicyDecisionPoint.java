@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.binary;
 
 import javax.jcr.Node;
@@ -31,7 +32,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class PolicyDecisionPoint {
 
-    private static final Logger logger = getLogger(MimeTypePolicy.class);
+    private static final Logger LOGGER = getLogger(MimeTypePolicy.class);
 
     private List<Policy> policies;
 
@@ -39,7 +40,7 @@ public class PolicyDecisionPoint {
      * Initialize the policy storage machinery
      */
     public PolicyDecisionPoint() {
-        logger.debug("Initializing binary PolicyDecisionPoint");
+        LOGGER.debug("Initializing binary PolicyDecisionPoint");
         policies = new ArrayList<Policy>();
     }
 
@@ -60,23 +61,23 @@ public class PolicyDecisionPoint {
      * @return
      */
     public String evaluatePolicies(final Node n) {
-        for (Policy p : policies) {
-            String h = p.evaluatePolicy(n);
+        for (final Policy p : policies) {
+            final String h = p.evaluatePolicy(n);
             if (h != null) {
                 return h;
             }
         }
-
         return null;
     }
 
     /**
      * Explicitly set the policies this PDP should use
+     * 
      * @param policies
      */
     public void setPolicies(final List<Policy> policies) {
-        logger.debug("Adding policies to " +
-                             "PolicyDecisionPoint: {}", policies.toString());
+        LOGGER.debug("Adding policies to " + "PolicyDecisionPoint: {}",
+                policies.toString());
         this.policies = policies;
     }
 }
