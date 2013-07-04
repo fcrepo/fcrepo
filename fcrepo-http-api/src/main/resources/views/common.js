@@ -21,8 +21,7 @@ function addChild()
     }
 
     if (mixin == "fedora:datastream") {
-        var update_file = document.getElementById("update_file").files[0];
-        var reader = new FileReader();
+        var update_file = document.getElementById("datastream_payload").files[0];var reader = new FileReader();
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
