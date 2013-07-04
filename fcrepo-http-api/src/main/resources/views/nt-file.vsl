@@ -1,9 +1,10 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
 
 #parse("views/common.vsl")
 <html>
 <head>
+	<meta charset="UTF-8">
     <title>$title</title>
     #parse("views/common-head.vsl")
 </head>
