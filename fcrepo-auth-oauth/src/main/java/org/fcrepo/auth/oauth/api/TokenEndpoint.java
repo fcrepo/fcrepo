@@ -86,9 +86,8 @@ public class TokenEndpoint extends AbstractResource {
     @POST
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Produces(APPLICATION_JSON)
-    public Response getToken(@Context
-    final HttpServletRequest request) throws OAuthSystemException,
-        RepositoryException {
+    public Response getToken(@Context final HttpServletRequest request) throws
+        OAuthSystemException, RepositoryException {
         LOGGER.debug("Received request for token carried on request: {}",
                 request);
         OAuthTokenRequest oauthRequest = null;
@@ -244,6 +243,10 @@ public class TokenEndpoint extends AbstractResource {
         return false;
     }
 
+    /**
+     * Create the OAuth workspace in JCR to store all our tokens
+     * @throws RepositoryException
+     */
     @PostConstruct
     public void init() throws RepositoryException {
         createOauthWorkspace(sessions);

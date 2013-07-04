@@ -155,14 +155,6 @@
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
       <plugin>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <consoleOutput>true</consoleOutput>
-          <configLocation>fcrepo-checkstyle/checkstyle.xml</configLocation>
-          <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
       </plugin>

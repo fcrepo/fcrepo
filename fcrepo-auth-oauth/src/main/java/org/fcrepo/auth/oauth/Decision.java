@@ -32,6 +32,11 @@ public class Decision implements OAuthDecision {
 
     private boolean isAuthorized;
 
+    /**
+     * Initialize the decision for a client and principal
+     * @param client
+     * @param principal
+     */
     public Decision(final String client, final String principal) {
         this.oAuthClient = new OAuthClient() {
 
@@ -66,6 +71,10 @@ public class Decision implements OAuthDecision {
         return isAuthorized;
     }
 
+    /**
+     * Set whether the principal is authorized
+     * @param isAuthorized
+     */
     public void setAuthorized(final boolean isAuthorized) {
         this.isAuthorized = isAuthorized;
     }

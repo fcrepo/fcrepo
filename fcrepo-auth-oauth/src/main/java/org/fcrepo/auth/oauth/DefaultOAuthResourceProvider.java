@@ -86,6 +86,10 @@ public class DefaultOAuthResourceProvider implements OAuthRSProvider {
         return null;
     }
 
+    /**
+     * Test wiring, so w e can set the sessionFactory field without spring
+     * @param sessionFactory
+     */
     public void setSessionFactory(final SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }

@@ -64,12 +64,20 @@ public class OAuthFilter implements Filter {
 
     private Set<ParameterStyle> parameterStyles;
 
+    /**
+     * no-op
+     */
     @PostConstruct
     public void init() {
         LOGGER.debug("Initializing {}", getClass().getName());
 
     }
 
+    /**
+     * no-op
+     * @param filterConfig
+     * @throws ServletException
+     */
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
         init();
@@ -131,6 +139,9 @@ public class OAuthFilter implements Filter {
 
     }
 
+    /**
+     * noop
+     */
     @Override
     public void destroy() {
 
@@ -196,8 +207,7 @@ public class OAuthFilter implements Filter {
     /**
      * @param parameterStylesSet
      */
-    public void
-            setParameterStyles(final Set<ParameterStyle> parameterStylesSet) {
+    public void setParameterStyles(final Set<ParameterStyle> parameterStylesSet) {
         this.parameterStyles = parameterStylesSet;
     }
 

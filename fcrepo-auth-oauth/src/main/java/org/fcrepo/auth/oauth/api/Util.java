@@ -35,9 +35,8 @@ public class Util {
      * @param sessionFactory
      * @throws RepositoryException
      */
-    public static void
-            createOauthWorkspace(final SessionFactory sessionFactory)
-                throws RepositoryException {
+    public static void createOauthWorkspace(final SessionFactory sessionFactory)
+        throws RepositoryException {
         final Session session = sessionFactory.getSession();
         try {
             if (!copyOf(session.getWorkspace().getAccessibleWorkspaceNames())

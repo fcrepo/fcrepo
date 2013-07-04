@@ -47,6 +47,9 @@ public class RestrictToAuthNFilter implements Filter {
         init();
     }
 
+    /**
+     * no-op
+     */
     @PostConstruct
     public void init() {
         LOGGER.debug("Initialized {}", this.getClass().getName());
