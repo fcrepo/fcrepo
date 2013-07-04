@@ -16,6 +16,9 @@
 
 package org.fcrepo.metrics;
 
+import static java.lang.Integer.parseInt;
+import static java.lang.System.getProperty;
+
 import java.net.InetSocketAddress;
 
 import org.springframework.context.annotation.Bean;
@@ -85,11 +88,10 @@ public class MetricsConfig {
          */
         @Bean
         public Graphite graphiteClient() {
-            String hostname =
-                    System.getProperty("fcrepo.metrics.host", "localhost");
-            int port =
-                    Integer.parseInt(System.getProperty("fcrepo.metrics.port",
-                            "2003"));
+            final String hostname =
+                    getProperty("fcrepo.metrics.host", "localhost");
+            final int port =
+                    parseInt(getProperty("fcrepo.metrics.port", "2003"));
 
             return new Graphite(new InetSocketAddress(hostname, port));
         }
@@ -99,9 +101,9 @@ public class MetricsConfig {
          */
         @Bean
         public GraphiteReporter graphiteReporter() {
-            MetricsConfig cfg = new MetricsConfig();
-            String prefix =
-                    System.getProperty("fcrepo.metrics.prefix", "org.fcrepo");
+            final MetricsConfig cfg = new MetricsConfig();
+            final String prefix =
+                    getProperty("fcrepo.metrics.prefix", "org.fcrepo");
             return cfg.reporterFactory().getGraphiteReporter(prefix,
                     graphiteClient());
         }
@@ -120,15 +122,14 @@ public class MetricsConfig {
     @Profile({"metrics", "metrics.jmx"})
     public static class JmxConfig {
 
-        String prefix = System.getProperty("fcrepo.metrics.prefix",
-                "org.fcrepo");
+        String prefix = getProperty("fcrepo.metrics.prefix", "org.fcrepo");
 
         /**
          * @return a Reporter that exposes metrics under the "org.fcrepo" prefix
          */
         @Bean
         public JmxReporter jmxReporter() {
-            MetricsConfig cfg = new MetricsConfig();
+            final MetricsConfig cfg = new MetricsConfig();
             return cfg.reporterFactory().getJmxReporter(prefix);
         }
     }

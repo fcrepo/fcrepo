@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo;
 
+import static org.fcrepo.TxAwareSession.newInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -30,14 +32,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TxAwareSessionTest {
+
     private Session mockSession;
+
     private Session testObj;
 
     @Before
     public void setUp() {
         mockSession = mock(Session.class);
-        testObj = TxAwareSession.newInstance(mockSession, "txid");
-
+        testObj = newInstance(mockSession, "txid");
 
     }
 
@@ -48,17 +51,16 @@ public class TxAwareSessionTest {
     }
 
     @Test
-    public void shouldWrapImpersonateToReturnAnotherTxAwareSession() throws RepositoryException {
-        Credentials mockCredentials = mock(Credentials.class);
+    public void shouldWrapImpersonateToReturnAnotherTxAwareSession()
+            throws RepositoryException {
+        final Credentials mockCredentials = mock(Credentials.class);
         when(mockSession.impersonate(mockCredentials)).thenReturn(mockSession);
-        Session s = testObj.impersonate(mockCredentials);
+        final Session s = testObj.impersonate(mockCredentials);
 
         assertTrue(s instanceof TxSession);
 
-        assertEquals(((TxSession)testObj).getTxId(), ((TxSession)s).getTxId());
+        assertEquals(((TxSession) testObj).getTxId(), ((TxSession) s).getTxId());
     }
-
-
 
     @Test
     public void shouldMakeLogoutANoop() {

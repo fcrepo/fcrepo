@@ -16,6 +16,7 @@
 
 package org.fcrepo.session;
 
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -27,7 +28,6 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,9 +56,9 @@ public class SessionProviderTest {
                         mockHttpServletRequest)).thenReturn(mockSession);
 
         testObj = new SessionProvider();
-        TestHelpers.setField(testObj, "sessionFactory", mockSessionFactory);
-        TestHelpers.setField(testObj, "secContext", mockSecurityContext);
-        TestHelpers.setField(testObj, "request", mockHttpServletRequest);
+        setField(testObj, "sessionFactory", mockSessionFactory);
+        setField(testObj, "secContext", mockSecurityContext);
+        setField(testObj, "request", mockHttpServletRequest);
 
     }
 

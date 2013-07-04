@@ -16,12 +16,11 @@
 
 package org.fcrepo.generator.dublincore;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
 import javax.jcr.Node;
 
 import org.slf4j.Logger;
@@ -31,14 +30,14 @@ import org.slf4j.Logger;
  */
 public class WorstCaseGenerator implements DCGenerator {
 
-    private static final Logger logger = getLogger(WorstCaseGenerator.class);
+    private static final Logger LOGGER = getLogger(WorstCaseGenerator.class);
 
     @Override
     public InputStream getStream(final Node node) {
-        logger.debug("Writing an empty oai dc document");
+        LOGGER.debug("Writing an empty oai dc document");
         final String str =
                 "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" />";
 
-        return new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayInputStream(str.getBytes(UTF_8));
     }
 }

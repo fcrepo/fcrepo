@@ -23,9 +23,12 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -41,7 +44,6 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -96,11 +98,11 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteTo() throws WebApplicationException,
-        IllegalArgumentException, IOException, NoSuchFieldException {
+            IllegalArgumentException, IOException, NoSuchFieldException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
-        Mockito.doAnswer(new Answer<Object>() {
+        doAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -108,8 +110,8 @@ public class BaseHtmlProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
-                Mockito.isA(Writer.class));
-        TestHelpers.setField(baseHtmlProvider, "templatesMap", of("nt:file", mockTemplate));
+                isA(Writer.class));
+        setField(baseHtmlProvider, "templatesMap", of("nt:file", mockTemplate));
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
                 new Annotation[] {}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
@@ -121,11 +123,11 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteToWithAnnotation() throws WebApplicationException,
-        IllegalArgumentException, IOException, NoSuchFieldException {
+            IllegalArgumentException, IOException, NoSuchFieldException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
-        Mockito.doAnswer(new Answer<Object>() {
+        doAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -133,10 +135,11 @@ public class BaseHtmlProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(Mockito.isA(Context.class),
-                Mockito.isA(Writer.class));
+                isA(Writer.class));
 
-        TestHelpers.setField(baseHtmlProvider, "templatesMap", of("some:file", mockTemplate));
-        HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
+        setField(baseHtmlProvider, "templatesMap",
+                of("some:file", mockTemplate));
+        final HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
                 new Annotation[] {mockAnnotation}, MediaType

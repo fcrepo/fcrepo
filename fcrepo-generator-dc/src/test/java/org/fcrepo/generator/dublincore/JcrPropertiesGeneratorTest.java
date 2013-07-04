@@ -16,6 +16,7 @@
 
 package org.fcrepo.generator.dublincore;
 
+import static org.fcrepo.generator.dublincore.JcrPropertiesGenerator.SALIENT_DC_PROPERTY_NAMESPACES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -58,8 +59,7 @@ public class JcrPropertiesGeneratorTest {
 
         final PropertyIterator mockIterator = mock(PropertyIterator.class);
         when(mockIterator.hasNext()).thenReturn(false);
-        when(
-                mockNode.getProperties(JcrPropertiesGenerator.SALIENT_DC_PROPERTY_NAMESPACES))
+        when(mockNode.getProperties(SALIENT_DC_PROPERTY_NAMESPACES))
                 .thenReturn(mockIterator);
 
         final InputStream inputStream =
@@ -97,8 +97,7 @@ public class JcrPropertiesGeneratorTest {
         when(mockIterator.nextProperty()).thenReturn(mockProperty1,
                 mockProperty2);
 
-        when(
-                mockNode.getProperties(JcrPropertiesGenerator.SALIENT_DC_PROPERTY_NAMESPACES))
+        when(mockNode.getProperties(SALIENT_DC_PROPERTY_NAMESPACES))
                 .thenReturn(mockIterator);
 
         final InputStream inputStream =
@@ -138,8 +137,7 @@ public class JcrPropertiesGeneratorTest {
 
         when(mockIterator.nextProperty()).thenReturn(mockProperty1);
 
-        when(
-                mockNode.getProperties(JcrPropertiesGenerator.SALIENT_DC_PROPERTY_NAMESPACES))
+        when(mockNode.getProperties(SALIENT_DC_PROPERTY_NAMESPACES))
                 .thenReturn(mockIterator);
 
         final InputStream inputStream =

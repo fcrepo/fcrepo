@@ -13,27 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.metrics;
+
+import static com.codahale.metrics.ConsoleReporter.forRegistry;
+import static com.codahale.metrics.MetricFilter.ALL;
+import static com.codahale.metrics.SharedMetricRegistries.getOrCreate;
 
 import java.io.PrintStream;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 
 /**
  * Provide helpers for working with the Metrics registry
+ * 
  * @author cbeer
  * @date Mar 22, 2013
  */
 public abstract class RegistryService {
 
-    private static final MetricRegistry METRICS = SharedMetricRegistries
-            .getOrCreate("fcrepo-metrics");
+    private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
 
     /**
      * Get the current registry service
+     * 
      * @todo the new upstream SharedMetricRegistries may make this obsolete
      * @return
      */
@@ -43,15 +48,15 @@ public abstract class RegistryService {
 
     /**
      * Immediately dump the current metrics to the console
+     * 
      * @param os
      */
     public static void dumpMetrics(final PrintStream os) {
 
         final MetricRegistry registry = getMetrics();
 
-        final MetricFilter filter = MetricFilter.ALL;
-        final ConsoleReporter reporter =
-                ConsoleReporter.forRegistry(registry).build();
+        final MetricFilter filter = ALL;
+        final ConsoleReporter reporter = forRegistry(registry).build();
 
         reporter.report(registry.getGauges(filter), registry
                 .getCounters(filter), registry.getHistograms(filter), registry

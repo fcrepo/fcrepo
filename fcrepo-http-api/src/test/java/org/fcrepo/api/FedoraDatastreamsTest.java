@@ -53,7 +53,6 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,14 +83,9 @@ public class FedoraDatastreamsTest {
         TestHelpers.setField(testObj, "session", mockSession);
     }
 
-    @After
-    public void tearDown() {
-
-    }
-
     @Test
     public void testModifyDatastreams() throws RepositoryException,
-        IOException, InvalidChecksumException, URISyntaxException {
+            IOException, InvalidChecksumException, URISyntaxException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId1 = "testDs1";
         final String dsId2 = "testDs2";
@@ -99,7 +93,7 @@ public class FedoraDatastreamsTest {
         atts.put(dsId1, "asdf");
         atts.put(dsId2, "sdfg");
         final MultiPart multipart = getStringsAsMultipart(atts);
-        Node mockNode = mock(Node.class);
+        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                 mockNode);
@@ -131,7 +125,7 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testGetDatastreamsContents() throws RepositoryException,
-        IOException, NoSuchAlgorithmException {
+            IOException, NoSuchAlgorithmException {
         final Request mockRequest = mock(Request.class);
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
@@ -171,7 +165,7 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testGetDatastreamsContentsCached() throws RepositoryException,
-        IOException, NoSuchAlgorithmException {
+            IOException, NoSuchAlgorithmException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";

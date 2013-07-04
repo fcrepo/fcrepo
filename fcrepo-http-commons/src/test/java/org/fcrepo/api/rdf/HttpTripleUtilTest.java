@@ -16,6 +16,8 @@
 
 package org.fcrepo.api.rdf;
 
+import static com.google.common.collect.ImmutableBiMap.of;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -32,7 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 
-import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -63,15 +64,15 @@ public class HttpTripleUtilTest {
 
     @Test
     public void shouldAddTriplesFromRegisteredBeans()
-        throws RepositoryException {
+            throws RepositoryException {
         final FedoraResource mockResource = mock(FedoraResource.class);
 
-        UriAwareResourceModelFactory mockBean1 =
+        final UriAwareResourceModelFactory mockBean1 =
                 mock(UriAwareResourceModelFactory.class);
-        UriAwareResourceModelFactory mockBean2 =
+        final UriAwareResourceModelFactory mockBean2 =
                 mock(UriAwareResourceModelFactory.class);
-        Map<String, UriAwareResourceModelFactory> mockBeans =
-                ImmutableBiMap.of("doesnt", mockBean1, "matter", mockBean2);
+        final Map<String, UriAwareResourceModelFactory> mockBeans =
+                of("doesnt", mockBean1, "matter", mockBean2);
         when(mockContext.getBeansOfType(UriAwareResourceModelFactory.class))
                 .thenReturn(mockBeans);
         when(
@@ -81,7 +82,7 @@ public class HttpTripleUtilTest {
         when(
                 mockBean2.createModelForResource(eq(mockResource),
                         eq(mockUriInfo), eq(mockSubjects))).thenReturn(
-                ModelFactory.createDefaultModel());
+                createDefaultModel());
 
         testObj.addHttpComponentModelsForResource(dataset, mockResource,
                 mockUriInfo, mockSubjects);

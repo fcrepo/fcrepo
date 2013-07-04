@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo;
 
+import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
+import static org.fcrepo.utils.TestHelpers.checksumString;
+import static org.fcrepo.utils.TestHelpers.getContentNodeMock;
+import static org.fcrepo.utils.TestHelpers.getPropertyIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -46,7 +51,6 @@ import org.apache.tika.io.IOUtils;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
-import org.fcrepo.utils.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,10 +63,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({ "org.slf4j.*",
-            "javax.xml.parsers.*",
-            "org.apache.xerces.*" })
-@PrepareForTest({ FedoraTypesUtils.class })
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
+@PrepareForTest({FedoraTypesUtils.class})
 public class DatastreamTest implements FedoraJcrTypes {
 
     String testPid = "testObj";
@@ -110,7 +112,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void testGetContent() throws RepositoryException, IOException {
         final String expected = "asdf";
-        final Node mockContent = TestHelpers.getContentNodeMock(expected);
+        final Node mockContent = getContentNodeMock(expected);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
@@ -125,10 +127,9 @@ public class DatastreamTest implements FedoraJcrTypes {
         final InputStream mockStream = mock(InputStream.class);
         PowerMockito.mockStatic(FedoraTypesUtils.class);
         when(
-                FedoraTypesUtils.getBinary(any(Node.class),
-                        any(InputStream.class), any(String.class))).thenReturn(
-                mockBin);
-        final Node mockContent = TestHelpers.getContentNodeMock(8);
+                getBinary(any(Node.class), any(InputStream.class),
+                        any(String.class))).thenReturn(mockBin);
+        final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
@@ -142,8 +143,9 @@ public class DatastreamTest implements FedoraJcrTypes {
     }
 
     @Test(expected = InvalidChecksumException.class)
-    public void testSetContentWithChecksumMismatch() throws RepositoryException,
-            InvalidChecksumException, URISyntaxException {
+    public void testSetContentWithChecksumMismatch()
+            throws RepositoryException, InvalidChecksumException,
+            URISyntaxException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         final InputStream mockStream = mock(InputStream.class);
@@ -152,7 +154,7 @@ public class DatastreamTest implements FedoraJcrTypes {
                 FedoraTypesUtils.getBinary(any(Node.class),
                         any(InputStream.class), any(String.class))).thenReturn(
                 mockBin);
-        final Node mockContent = TestHelpers.getContentNodeMock(8);
+        final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
@@ -168,8 +170,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
-        final Node mockContent =
-                TestHelpers.getContentNodeMock(expectedContentLength);
+        final Node mockContent = getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
         verify(mockContent).getProperty(CONTENT_SIZE);
@@ -179,9 +180,8 @@ public class DatastreamTest implements FedoraJcrTypes {
     @Test
     public void getContentDigest() throws RepositoryException {
         final String content = "asdf";
-        final URI expected =
-                URI.create(TestHelpers.checksumString(content));
-        final Node mockContent = TestHelpers.getContentNodeMock(content);
+        final URI expected = URI.create(checksumString(content));
+        final Node mockContent = getContentNodeMock(content);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final URI actual = testObj.getContentDigest();
         assertEquals(expected, actual);
@@ -199,7 +199,8 @@ public class DatastreamTest implements FedoraJcrTypes {
         final Node mockObjectNode = mock(Node.class);
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
-        when(mockObjectNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockNodeType });
+        when(mockObjectNode.getMixinNodeTypes()).thenReturn(
+                new NodeType[] {mockNodeType});
         when(mockDsNode.getParent()).thenReturn(mockObjectNode);
         final FedoraObject actual = testObj.getObject();
         assertNotNull(actual);
@@ -208,7 +209,7 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test
     public void testGetMimeType() throws RepositoryException {
-        final Node mockContent = TestHelpers.getContentNodeMock(8);
+        final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockContent.hasProperty(JCR_MIME_TYPE)).thenReturn(true);
@@ -227,7 +228,7 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test
     public void testGetMimeTypeWithDefault() throws RepositoryException {
-        final Node mockContent = TestHelpers.getContentNodeMock(8);
+        final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockContent.hasProperty(JCR_MIME_TYPE)).thenReturn(false);
@@ -265,8 +266,7 @@ public class DatastreamTest implements FedoraJcrTypes {
     public void testGetSize() throws RepositoryException {
         final int expectedProps = 1;
         final int expectedContentLength = 2;
-        final Node mockContent =
-                TestHelpers.getContentNodeMock(expectedContentLength);
+        final Node mockContent = getContentNodeMock(expectedContentLength);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.getProperties()).thenAnswer(
                 new Answer<PropertyIterator>() {
@@ -274,8 +274,7 @@ public class DatastreamTest implements FedoraJcrTypes {
                     @Override
                     public PropertyIterator answer(
                             final InvocationOnMock invocation) {
-                        return TestHelpers
-                                .getPropertyIterator(1, expectedProps);
+                        return getPropertyIterator(1, expectedProps);
                     }
                 });
         final long actual = testObj.getSize();
