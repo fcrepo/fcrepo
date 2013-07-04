@@ -19,6 +19,8 @@
 
 package org.fcrepo.services;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,8 +34,6 @@ import org.fcrepo.exception.TransactionMissingException;
 import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * This is part of the Strawman implementation for Fedora transactions

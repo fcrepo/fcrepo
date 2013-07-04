@@ -16,11 +16,11 @@
 
 package org.fcrepo.exceptionhandlers;
 
-import org.fcrepo.exception.TransactionMissingException;
-
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+
+import org.fcrepo.exception.TransactionMissingException;
 
 /**
  * If a transaction is requested that has been closed (or never existed),

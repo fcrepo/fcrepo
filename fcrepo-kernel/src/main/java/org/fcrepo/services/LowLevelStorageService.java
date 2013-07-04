@@ -51,10 +51,10 @@ import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.CompositeBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
-import org.springframework.stereotype.Component;
 
 /**
  * Service for managing access to low-level binary blobs (which may include redundant copies, etc)

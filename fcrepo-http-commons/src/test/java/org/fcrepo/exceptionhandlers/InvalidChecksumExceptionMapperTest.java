@@ -16,14 +16,14 @@
 
 package org.fcrepo.exceptionhandlers;
 
-import org.fcrepo.exception.InvalidChecksumException;
-import org.junit.Before;
-import org.junit.Test;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static org.junit.Assert.assertEquals;
 
 import javax.ws.rs.core.Response;
 
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static org.junit.Assert.assertEquals;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.junit.Before;
+import org.junit.Test;
 
 public class InvalidChecksumExceptionMapperTest {
 

@@ -16,10 +16,10 @@
 package org.fcrepo;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;

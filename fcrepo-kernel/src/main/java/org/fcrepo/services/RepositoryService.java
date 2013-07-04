@@ -17,8 +17,8 @@ package org.fcrepo.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,10 +35,6 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -49,11 +45,16 @@ import org.fcrepo.utils.NamespaceTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
 import com.codahale.metrics.Timer;
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.springframework.stereotype.Component;
+import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * Repository-global helper methods

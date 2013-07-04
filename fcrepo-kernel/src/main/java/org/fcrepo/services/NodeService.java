@@ -31,9 +31,9 @@ import org.fcrepo.FedoraResource;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableSet;
-import org.springframework.stereotype.Component;
 
 /**
  * Service for managing access to Fedora 'nodes' (either datastreams or objects, we don't care.)

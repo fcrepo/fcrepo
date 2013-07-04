@@ -15,10 +15,10 @@
  */
 package org.fcrepo.identifiers;
 
-import org.junit.Test;
-
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 public class UUIDPathMinterTest {
 
