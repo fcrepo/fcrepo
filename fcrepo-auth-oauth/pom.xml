@@ -11,7 +11,7 @@
   <description>Fedora OAuth 2.0 module</description>
   <packaging>bundle</packaging>
   <properties>
-    <oltu.version>0.31-SNAPSHOT</oltu.version>
+    <oltu.version>0.31</oltu.version>
   </properties>
   <dependencies>
     <dependency>
@@ -40,7 +40,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.oltu.oauth2</groupId>
-      <artifactId>oltu-oauth2-resourceserver-filter</artifactId>
+      <artifactId>org.apache.oltu.oauth2.resourceserver-filter</artifactId>
       <version>${oltu.version}</version>
       <exclusions>
         <!-- Dependency convergence: fcrepo-http-api (via jersey-json:1.17.1) 
@@ -160,13 +160,4 @@
       </plugin>
     </plugins>
   </build>
-  <repositories>
-    <repository>
-      <id>Apache Snapshots</id>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 </project>
