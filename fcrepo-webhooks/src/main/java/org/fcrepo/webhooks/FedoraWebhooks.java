@@ -160,11 +160,14 @@ public class FedoraWebhooks extends AbstractResource {
             try {
                 LOGGER.debug("Firing callback for" + hook.getName());
                 client.execute(method);
+                method.releaseConnection();
             } catch (final IOException e) {
                 LOGGER.warn(
                         "Got exception running webhook callback for {}: {}",
                         hook.getName(), e);
             }
+
+
 
         }
     }
