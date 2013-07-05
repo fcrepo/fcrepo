@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.spring;
 
+import static java.util.Collections.singletonMap;
+import static org.modeshape.jcr.api.RepositoryFactory.URL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.util.Collections;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -27,22 +28,23 @@ import javax.jcr.RepositoryException;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.api.Repository;
-import org.modeshape.jcr.api.RepositoryFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 /**
- * A Modeshape factory shim to make it play nice with our
- * Spring-based configuration
+ * A Modeshape factory shim to make it play nice with our Spring-based
+ * configuration
+ * 
  * @author Edwin Shin
  * @date Feb 7, 2013
  */
 public class ModeShapeRepositoryFactoryBean implements
         FactoryBean<JcrRepository> {
 
-    private static final Logger LOGGER = getLogger(ModeShapeRepositoryFactoryBean.class);
+    private static final Logger LOGGER =
+            getLogger(ModeShapeRepositoryFactoryBean.class);
 
     @Inject
     private JcrRepositoryFactory jcrRepositoryFactory;
@@ -53,6 +55,7 @@ public class ModeShapeRepositoryFactoryBean implements
 
     /**
      * Generate a JCR repository from the given configuration
+     * 
      * @throws RepositoryException
      * @throws IOException
      */
@@ -60,12 +63,12 @@ public class ModeShapeRepositoryFactoryBean implements
     public void buildRepository() throws RepositoryException, IOException {
         if (repositoryConfiguration instanceof ClassPathResource) {
             LOGGER.debug("Using repo config: {}",
-                         ((ClassPathResource) repositoryConfiguration).getPath());
+                    ((ClassPathResource) repositoryConfiguration).getPath());
         }
 
         repository =
-                (JcrRepository) jcrRepositoryFactory.getRepository(Collections
-                        .singletonMap(RepositoryFactory.URL,
+                (JcrRepository) jcrRepositoryFactory
+                        .getRepository(singletonMap(URL,
                                 repositoryConfiguration.getURL()));
 
     }
@@ -87,6 +90,7 @@ public class ModeShapeRepositoryFactoryBean implements
 
     /**
      * Set the configuration to use for creating the repository
+     * 
      * @param repositoryConfiguration
      */
     public void setRepositoryConfiguration(

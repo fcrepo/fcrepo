@@ -59,7 +59,7 @@ public class CacheLocalTransformTest {
     public void testTransform() throws Exception {
 
         final Field field =
-                CacheLocalTransform.class.getDeclaredField("TRANSFORM");
+                CacheLocalTransform.class.getDeclaredField("transform");
         field.setAccessible(true);
         field.set(CacheLocalTransform.class, cacheExtractor);
         when(cacheExtractor.apply(any(Cache.class))).thenReturn(mockCacheStore);

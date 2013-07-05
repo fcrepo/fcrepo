@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
 import java.util.Iterator;
@@ -21,15 +22,17 @@ import javax.jcr.Property;
 
 /**
  * A type-aware iterator that wraps the generic JCR PropertyIterator
+ * 
  * @author ajs6f
  * @date Apr 25, 2013
  */
-public class PropertyIterator implements Iterator<Property> {
+public class PropertyIterator implements Iterator<Property>, Iterable<Property> {
 
     private javax.jcr.PropertyIterator i;
 
     /**
      * Wrap the JCR PropertyIterator with our generic iterator
+     * 
      * @param i
      */
     public PropertyIterator(final javax.jcr.PropertyIterator i) {
@@ -49,5 +52,10 @@ public class PropertyIterator implements Iterator<Property> {
     @Override
     public void remove() {
         i.remove();
+    }
+
+    @Override
+    public Iterator<Property> iterator() {
+        return this;
     }
 }

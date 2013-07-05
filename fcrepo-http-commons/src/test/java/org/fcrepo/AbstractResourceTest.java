@@ -16,10 +16,14 @@
 
 package org.fcrepo;
 
+import static org.fcrepo.AbstractResource.toPath;
+import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.setField;
+import static org.fcrepo.utils.NamespaceTools.getNamespaceRegistry;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.List;
@@ -31,12 +35,11 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.test.util.PathSegmentImpl;
-import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.utils.NamespaceTools;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -47,131 +50,135 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest({NamespaceTools.class})
 public class AbstractResourceTest {
 
-    AbstractResource testObj;
+    private AbstractResource testObj;
+
+    @Mock
+    private NodeService mockNodes;
+
+    @Mock
+    private PidMinter mockPids;
+
+    @Mock
+    private UriInfo mockUris;
+
+    @Mock
+    private NamespaceRegistry mockNames;
 
     @Before
     public void setUp() {
-        testObj = new AbstractResource() {
-
-        };
+        initMocks(this);
+        testObj = new AbstractResource() {};
     }
 
     @Test
     public void testInitialize() throws RepositoryException {
-        NamespaceRegistry mockNames = mock(NamespaceRegistry.class);
         mockStatic(NamespaceTools.class);
-        when(NamespaceTools.getNamespaceRegistry(any(Session.class)))
-                .thenReturn(mockNames);
+        when(getNamespaceRegistry(any(Session.class))).thenReturn(mockNames);
         testObj.initialize();
     }
 
     @Test
-    public void testSetPidMinter()throws Exception {
-        PidMinter mockPids = mock(PidMinter.class);
-        TestHelpers.setField(testObj, "pidMinter", mockPids);
+    public void testSetPidMinter() throws Exception {
+        setField(testObj, "pidMinter", mockPids);
         assertEquals(mockPids, testObj.pidMinter);
     }
 
     @Test
-    public void testSetNodeService() throws Exception{
-        NodeService mockNodes = mock(NodeService.class);
-        TestHelpers.setField(testObj, "nodeService", mockNodes);
+    public void testSetNodeService() throws Exception {
+        setField(testObj, "nodeService", mockNodes);
         assertEquals(mockNodes, testObj.nodeService);
     }
 
     @Test
-    public void testSetUriInfo() throws Exception{
-        UriInfo mockUris = mock(UriInfo.class);
-        TestHelpers.setField(testObj, "uriInfo", mockUris);
+    public void testSetUriInfo() throws Exception {
+        setField(testObj, "uriInfo", mockUris);
         assertEquals(mockUris, testObj.uriInfo);
     }
 
     @Test
     public void testToPath() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("foo", "", "bar", "baz");
+        final List<PathSegment> pathList =
+                createPathList("foo", "", "bar", "baz");
         // empty path segments ('//') should be suppressed
-        String expected = "/foo/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/foo/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathWorkspace() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("workspace:abc", "bar", "baz");
+        final List<PathSegment> pathList =
+                createPathList("workspace:abc", "bar", "baz");
         // workspaces should be ignored
-        String expected = "/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathWorkspaceInSomeOtherSegment() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("asdf", "workspace:abc", "bar",
-                        "baz");
+        final List<PathSegment> pathList =
+                createPathList("asdf", "workspace:abc", "bar", "baz");
         // workspaces should be ignored
-        String expected = "/asdf/workspace:abc/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/asdf/workspace:abc/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathWorkspaceWithEmptyPrefix() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("", "workspace:abc", "bar",
-                        "baz");
+        final List<PathSegment> pathList =
+                createPathList("", "workspace:abc", "bar", "baz");
         // workspaces should be ignored
-        String expected = "/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathTransaction() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("tx:abc", "bar", "baz");
+        final List<PathSegment> pathList =
+                createPathList("tx:abc", "bar", "baz");
         // workspaces should be ignored
-        String expected = "/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathTxInSomeOtherSegment() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("asdf", "tx:abc", "bar", "baz");
+        final List<PathSegment> pathList =
+                createPathList("asdf", "tx:abc", "bar", "baz");
         // workspaces should be ignored
-        String expected = "/asdf/tx:abc/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/asdf/tx:abc/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathTxWithEmptyPrefix() {
-        List<PathSegment> pathList =
-                PathSegmentImpl.createPathList("", "tx:abc", "bar", "baz");
+        final List<PathSegment> pathList =
+                createPathList("", "tx:abc", "bar", "baz");
         // workspaces should be ignored
-        String expected = "/bar/baz";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/bar/baz";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathUuid() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList("[foo]");
-        String expected = "[foo]";
-        String actual = AbstractResource.toPath(pathList);
+        final List<PathSegment> pathList = createPathList("[foo]");
+        final String expected = "[foo]";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testToPathEmpty() {
-        List<PathSegment> pathList = PathSegmentImpl.createPathList();
+        final List<PathSegment> pathList = createPathList();
         // empty path segments ('//') should be suppressed
-        String expected = "/";
-        String actual = AbstractResource.toPath(pathList);
+        final String expected = "/";
+        final String actual = toPath(pathList);
         assertEquals(expected, actual);
     }
 }
