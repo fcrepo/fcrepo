@@ -18,14 +18,15 @@ package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
 import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -40,43 +41,49 @@ import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class FedoraUnnamedObjectsTest {
 
-    FedoraUnnamedObjects testObj;
+    private FedoraUnnamedObjects testObj;
 
-    Session mockSession;
+    private Session mockSession;
 
-    ObjectService mockObjects;
+    @Mock
+    private ObjectService mockObjects;
 
-    NodeService mockNodeService;
+    @Mock
+    private NodeService mockNodeService;
+
+    @Mock
+    private UUIDPidMinter mockMint;
+
+    @Mock
+    private FedoraObject mockObject;
+
+    @Mock
+    private Node mockNode;
 
     @Before
     public void setUp() throws Exception {
-        mockObjects = mock(ObjectService.class);
-        mockNodeService = mock(NodeService.class);
+        initMocks(this);
         testObj = new FedoraUnnamedObjects();
         setField(testObj, "objectService", mockObjects);
         setField(testObj, "nodeService", mockNodeService);
-        setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testIngestAndMint() throws RepositoryException, IOException,
             InvalidChecksumException, URISyntaxException, NoSuchFieldException {
-        final UUIDPidMinter mockMint = mock(UUIDPidMinter.class);
         setField(testObj, "pidMinter", mockMint);
         when(mockMint.mintPid()).thenReturn("uuid-123");
-
-        final FedoraObject mockObject = mock(FedoraObject.class);
         final String path = "/objects/uuid-123";
         when(mockObject.getPath()).thenReturn(path);
-        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn(path);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockObjects.createObject(mockSession, path))

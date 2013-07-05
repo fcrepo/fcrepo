@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-
+import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
 import java.net.URI;
 
 import org.junit.Test;
@@ -61,9 +62,8 @@ public class FixityResultTest {
     @Test
     public void testIsSuccess() throws Exception {
         FixityResult result = new FixityResult(100L, new URI("urn:123"));
-        result.status.add(FixityResult.FixityState.SUCCESS);
+        result.status.add(SUCCESS);
         assertTrue("expected fixity to be a success", result.isSuccess());
-
 
         result = new FixityResult(100L, new URI("urn:123"));
         assertFalse("expected fixity to not be a success", result.isSuccess());
@@ -71,14 +71,14 @@ public class FixityResultTest {
 
     @Test
     public void testMatchesArguments() throws Exception {
-        FixityResult result = new FixityResult(100L, new URI("urn:123"));
-        assertTrue("expected fixity to match",
-                   result.matches(100L, new URI("urn:123")));
-        assertFalse("unexpected match when size differs",
-                    result.matches(99L, new URI("urn:123")));
-        assertFalse("unexpected match when checksum differs",
-                    result.matches(100L, new URI("urn:312")));
-        assertFalse("unexpected match when size and checksum differs",
-                    result.matches(99L, new URI("urn:312")));
+        final FixityResult result = new FixityResult(100L, new URI("urn:123"));
+        assertTrue("expected fixity to match", result.matches(100L, new URI(
+                "urn:123")));
+        assertFalse("unexpected match when size differs", result.matches(99L,
+                new URI("urn:123")));
+        assertFalse("unexpected match when checksum differs", result.matches(
+                100L, new URI("urn:312")));
+        assertFalse("unexpected match when size and checksum differs", result
+                .matches(99L, new URI("urn:312")));
     }
 }

@@ -18,15 +18,17 @@ package org.fcrepo.api;
 
 import static com.hp.hpl.jena.query.DatasetFactory.createMem;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
@@ -39,46 +41,48 @@ import javax.ws.rs.core.Variant;
 
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mock;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class FedoraFieldSearchTest {
 
-    FedoraFieldSearch testObj;
+    private FedoraFieldSearch testObj;
 
-    Session mockSession;
+    private Session mockSession;
 
+    @Mock
+    private Request mockRequest;
+
+    @Mock
     private NodeService mockNodeService;
 
     private UriInfo uriInfo;
 
+    @Mock
+    private UriBuilder mockUriBuilder;
+
     @Before
     public void setUp() throws Exception {
+        initMocks(this);
         testObj = new FedoraFieldSearch();
-        mockSession = TestHelpers.mockSession(testObj);
-        mockNodeService = mock(NodeService.class);
-        this.uriInfo = TestHelpers.getUriInfoImpl();
-        TestHelpers.setField(testObj, "uriInfo", uriInfo);
-        TestHelpers.setField(testObj, "nodeService", mockNodeService);
-        TestHelpers.setField(testObj, "session", mockSession);
+        mockSession = mockSession(testObj);
+        this.uriInfo = getUriInfoImpl();
+        setField(testObj, "uriInfo", uriInfo);
+        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "session", mockSession);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testFieldSearch() throws RepositoryException,
-            URISyntaxException {
-
-        final Request mockRequest = mock(Request.class);
-
+    public void testFieldSearch() throws RepositoryException {
         when(uriInfo.getRequestUri()).thenReturn(
-                new URI("http://localhost/fcrepo/path/to/query/endpoint"));
-        when(mockRequest.selectVariant(any(List.class))).thenReturn(
+                URI.create("http://localhost/fcrepo/path/to/query/endpoint"));
+        when(mockRequest.selectVariant(anyListOf(Variant.class))).thenReturn(
                 new Variant(MediaType.valueOf("application/n-triples"), null,
                         null));
-
         when(
                 mockNodeService
                         .searchRepository(
@@ -86,12 +90,10 @@ public class FedoraFieldSearchTest {
                                 eq(createResource("http://localhost/fcrepo/path/to/query/endpoint")),
                                 eq(mockSession), eq("ZZZ"), eq(0), eq(0L)))
                 .thenReturn(createMem());
-        final UriBuilder mockUriBuilder = mock(UriBuilder.class);
-
         when(mockUriBuilder.path(FedoraFieldSearch.class)).thenReturn(
                 mockUriBuilder);
-        when(mockUriBuilder.buildFromMap(any(Map.class))).thenReturn(
-                new URI("path/to/object"));
+        when(mockUriBuilder.buildFromMap(Matchers.<Map<String, Object>> any()))
+                .thenReturn(URI.create("path/to/object"));
 
         when(uriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder);
 

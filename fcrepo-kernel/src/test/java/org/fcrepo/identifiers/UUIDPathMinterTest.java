@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.identifiers;
 
 import static java.util.regex.Pattern.compile;
@@ -22,16 +23,16 @@ import org.junit.Test;
 
 public class UUIDPathMinterTest {
 
+    private static final String PID_PATTERN =
+            "[a-f0-9]{3}/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+
     @Test
     public void testMintPid() throws Exception {
 
-        final PidMinter pidMinter = new UUIDPathMinter(3, 1);
+        final String pid = new UUIDPathMinter(3, 1).mintPid();
 
-        final String pid = pidMinter.mintPid();
-
-        assertTrue("PID wasn't a UUID path", compile(
-                "[a-f0-9]{3}/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")
-                .matcher(pid).find());
+        assertTrue("PID wasn't a UUID path", compile(PID_PATTERN).matcher(pid)
+                .find());
 
     }
 }

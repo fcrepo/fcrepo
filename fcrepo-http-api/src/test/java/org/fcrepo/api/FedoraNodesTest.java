@@ -36,6 +36,7 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -60,9 +61,11 @@ import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mock;
+
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -70,25 +73,44 @@ public class FedoraNodesTest {
 
     FedoraNodes testObj;
 
-    ObjectService mockObjects;
+    @Mock
+    private ObjectService mockObjects;
 
-    NodeService mockNodes;
+    @Mock
+    private NodeService mockNodes;
 
-    DatastreamService mockDatastreams;
+    @Mock
+    private Node mockNode;
+
+    @Mock
+    private DatastreamService mockDatastreams;
+
+    @Mock
+    private Request mockRequest;
+
+    @Mock
+    private FedoraResource mockResource;
 
     Session mockSession;
+
+    @Mock
+    private FedoraObject mockObject;
+
+    @Mock
+    private Dataset mockDataset;
+
+    @Mock
+    private Model mockModel;
 
     private UriInfo uriInfo;
 
     @Before
     public void setUp() throws Exception {
-        mockObjects = mock(ObjectService.class);
-        mockDatastreams = mock(DatastreamService.class);
-        mockNodes = mock(NodeService.class);
+        initMocks(this);
         testObj = new FedoraNodes();
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodes);
-        this.uriInfo = TestHelpers.getUriInfoImpl();
+        this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
         setField(testObj, "pidMinter", new UUIDPidMinter());
         setField(testObj, "objectService", mockObjects);
@@ -97,6 +119,7 @@ public class FedoraNodesTest {
     }
 
     @Test
+    @Ignore
     public void testIngestAndMint() throws RepositoryException {
         // final Response actual =
         // testObj.ingestAndMint(createPathList("objects"));
@@ -109,21 +132,17 @@ public class FedoraNodesTest {
     public void testModify() throws RepositoryException, IOException,
             InvalidChecksumException {
         final String pid = "testObject";
-
-        final FedoraResource mockResource = mock(FedoraResource.class);
         when(mockResource.isNew()).thenReturn(false);
         when(mockResource.getLastModifiedDate()).thenReturn(new Date());
         when(mockNodes.findOrCreateObject(mockSession, "/testObject"))
                 .thenReturn(mockResource);
-        final Request mockRequest = mock(Request.class);
         when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
                 null);
         try (final InputStream emptyInputStream =
                 new ByteArrayInputStream("".getBytes())) {
             final Response actual =
-                    testObj.modifyObject(createPathList(pid), TestHelpers
-                            .getUriInfoImpl(), emptyInputStream, null,
-                            mockRequest);
+                    testObj.modifyObject(createPathList(pid), getUriInfoImpl(),
+                            emptyInputStream, null, mockRequest);
             assertNotNull(actual);
             assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
             // this verify will fail when modify is actually implemented, thus
@@ -159,7 +178,6 @@ public class FedoraNodesTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        final Node mockNode = mock(Node.class);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
@@ -192,9 +210,6 @@ public class FedoraNodesTest {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 
-        final FedoraObject mockObject = mock(FedoraObject.class);
-        final Dataset mockDataset = mock(Dataset.class);
-        final Model mockModel = mock(Model.class);
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
@@ -215,9 +230,6 @@ public class FedoraNodesTest {
     public void testSparqlUpdate() throws RepositoryException, IOException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
-
-        final FedoraObject mockObject = mock(FedoraObject.class);
-
         when(mockObject.getDatasetProblems()).thenReturn(null);
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());

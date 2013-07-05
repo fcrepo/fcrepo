@@ -16,15 +16,19 @@
 
 package org.fcrepo.services;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.services.RepositoryService.getRepositoryNamespaces;
+import static org.fcrepo.utils.JcrRdfTools.getJcrNodeIteratorModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,20 +56,17 @@ import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.NamespaceTools;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
@@ -75,69 +76,99 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
         FedoraTypesUtils.class})
 public class RepositoryServiceTest implements FedoraJcrTypes {
 
-    String testPid = "testObj";
+    private static final String TESTPID = "testObj";
 
-    String testDsId = "testDs";
+    private static final String TESTDSID = "testDs";
 
-    String mockPrefix = "mock1";
+    private static final String MOCKPREFIX = "mock1";
 
-    RepositoryService testObj;
+    private static final Long EXPECTED_SIZE = 5L;
 
-    Repository mockRepo;
+    private static final Long EXPECTED_COUNT = 0L;
 
-    Session mockSession;
+    private RepositoryService testObj;
 
-    Node mockRootNode;
+    @Mock
+    private Repository mockRepo;
 
-    Node mockDsNode;
+    @Mock
+    private Session mockSession;
 
-    Long expectedSize = 5L;
+    @Mock
+    private Node mockRootNode;
 
-    Long expectedCount = 0L;
+    @Mock
+    private Node mockDsNode;
 
-    NodeTypeIterator mockNTI;
+    @Mock
+    private Property mockProp;
 
-    Map<String, String> expectedNS;
+    @Mock
+    private NodeIterator mockNI;
+
+    @Mock
+    private NodeTypeIterator mockNTI;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private QueryManager mockQueryManager;
+
+    @Mock
+    QueryObjectModel mockQueryOM;
+
+    @Mock
+    private QueryResult mockQueryResult;
+
+    @Mock
+    private Query mockQuery;
+
+    @Mock
+    private RowIterator mockRI;
+
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private Row mockRow;
+
+    @Mock
+    private GraphSubjects mockSubjectFactory;
+
+    @Mock
+    private QueryObjectModelFactory mockQOMFactory;
+
+    @Mock
+    private NodeTypeManager mockNodeTypeManager;
+
+    @Mock
+    private ValueFactory mockFactory;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
+    private Map<String, String> expectedNS;
 
     @Before
     public void setUp() {
-        final String relPath = "/" + testPid + "/" + testDsId;
-        final String[] mockPrefixes = {mockPrefix};
+        initMocks(this);
+        final String relPath = "/" + TESTPID + "/" + TESTDSID;
+        final String[] mockPrefixes = {MOCKPREFIX};
         expectedNS = new HashMap<String, String>();
-
-        mockSession = mock(Session.class);
-        mockRootNode = mock(Node.class);
-        mockDsNode = mock(Node.class);
-        mockRepo = mock(Repository.class);
-        final NodeIterator mockNI = mock(NodeIterator.class);
-        final Property mockProp = mock(Property.class);
-
         try {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
             when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
             when(mockRootNode.getProperty("fedora:size")).thenReturn(mockProp);
-            when(mockProp.getLong()).thenReturn(expectedSize);
+            when(mockProp.getLong()).thenReturn(EXPECTED_SIZE);
             when(mockRepo.login()).thenReturn(mockSession);
 
-            final Workspace mockWorkspace = mock(Workspace.class);
-            final QueryManager mockQueryManager = mock(QueryManager.class);
-            final QueryResult mockQueryResult = mock(QueryResult.class);
-            final Query mockQuery = mock(Query.class);
-            final RowIterator mockRI = mock(RowIterator.class);
-            final Value mockValue = mock(Value.class);
-            final Row mockRow = mock(Row.class);
-            final NodeTypeManager mockNodeTypeManager =
-                    mock(NodeTypeManager.class);
-            final NamespaceRegistry mockNamespaceRegistry =
-                    mock(NamespaceRegistry.class);
-
-            mockNTI = mock(NodeTypeIterator.class);
             testObj = new RepositoryService();
             testObj.setRepository(mockRepo);
 
             when(mockSession.getNode("/objects")).thenReturn(mockRootNode);
             when(mockRootNode.getNodes()).thenReturn(mockNI);
-            when(mockNI.getSize()).thenReturn(expectedSize);
+            when(mockNI.getSize()).thenReturn(EXPECTED_SIZE);
             when(testObj.findOrCreateNode(mockSession, "/objects")).thenReturn(
                     mockRootNode);
             when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -155,10 +186,10 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
             when(mockRI.hasNext()).thenReturn(true, false);
             when(mockRI.nextRow()).thenReturn(mockRow);
             when(mockRow.getValue(CONTENT_SIZE)).thenReturn(mockValue);
-            when(mockValue.getLong()).thenReturn(expectedSize);
+            when(mockValue.getLong()).thenReturn(EXPECTED_SIZE);
 
             expectedNS
-                    .put(mockPrefix, mockNamespaceRegistry.getURI(mockPrefix));
+                    .put(MOCKPREFIX, mockNamespaceRegistry.getURI(MOCKPREFIX));
 
         } catch (final RepositoryException e) {
             e.printStackTrace();
@@ -166,21 +197,16 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         }
     }
 
-    @After
-    public void tearDown() {
-
-    }
-
     @Test
     public void testGetRepositorySize() throws RepositoryException {
         final Long actual = testObj.getRepositorySize();
-        assertEquals(expectedSize, actual);
+        assertEquals(EXPECTED_SIZE, actual);
     }
 
     @Test
     public void testGetRepositoryObjectCount() {
         final Long actual = testObj.getRepositoryObjectCount();
-        assertEquals(expectedCount, actual);
+        assertEquals(EXPECTED_COUNT, actual);
     }
 
     @Test
@@ -206,43 +232,32 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     @Test
     public void testSearchRepository() throws RepositoryException {
 
-        PowerMockito.mockStatic(JcrRdfTools.class);
+        mockStatic(JcrRdfTools.class);
 
-        final Resource subject =
-                ResourceFactory.createResource("info:fedora/search/request");
-        final Workspace mockWorkspace = mock(Workspace.class);
-        final QueryManager mockQueryManager = mock(QueryManager.class);
-        final QueryObjectModelFactory mockQOMFactory =
-                mock(QueryObjectModelFactory.class);
-        final QueryObjectModel mockQuery = mock(QueryObjectModel.class);
-        final QueryResult mockQueryResults = mock(QueryResult.class);
-        final NodeIterator mockIterator = mock(NodeIterator.class);
-        final GraphSubjects mockSubjectFactory = mock(GraphSubjects.class);
+        final Resource subject = createResource("info:fedora/search/request");
 
-        final ValueFactory mockFactory = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockFactory);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
         when(mockQueryManager.getQOMFactory()).thenReturn(mockQOMFactory);
         when(mockQOMFactory.createQuery(null, null, null, null)).thenReturn(
-                mockQuery);
-
-        when(mockQuery.execute()).thenReturn(mockQueryResults);
-        when(mockQueryResults.getNodes()).thenReturn(mockIterator);
-        when(mockIterator.getSize()).thenReturn(500L);
-        when(mockIterator.next()).thenReturn("");
+                mockQueryOM);
+        when(mockQueryOM.execute()).thenReturn(mockQueryResult);
+        when(mockQueryResult.getNodes()).thenReturn(mockNI);
+        when(mockNI.getSize()).thenReturn(500L);
+        when(mockNI.next()).thenReturn("");
         when(
-                JcrRdfTools.getJcrNodeIteratorModel(eq(mockSubjectFactory),
+                getJcrNodeIteratorModel(eq(mockSubjectFactory),
                         any(org.fcrepo.utils.NodeIterator.class), eq(subject)))
-                .thenReturn(ModelFactory.createDefaultModel());
+                .thenReturn(createDefaultModel());
 
         testObj.searchRepository(mockSubjectFactory, subject, mockSession,
                 "search terms", 10, 0L);
 
         // n+1
-        verify(mockQuery).setLimit(11);
-        verify(mockQuery).setOffset(0);
-        verify(mockQuery).execute();
+        verify(mockQueryOM).setLimit(11);
+        verify(mockQueryOM).setOffset(0);
+        verify(mockQueryOM).execute();
 
     }
 }

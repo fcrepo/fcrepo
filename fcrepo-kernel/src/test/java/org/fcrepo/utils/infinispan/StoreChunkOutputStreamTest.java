@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils.infinispan;
 
+import static org.fcrepo.utils.TestHelpers.randomData;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 
-import org.fcrepo.utils.TestHelpers;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class StoreChunkOutputStreamTest {
 
@@ -37,25 +39,25 @@ public class StoreChunkOutputStreamTest {
 
     private StoreChunkOutputStream testObj;
 
+    @Mock
     private CacheStore mockStore;
 
+    @Mock
     private InternalCacheEntry mockEntry;
 
-    private String mockKey = "key-to-a-mock-blob";
-
+    private static final String MOCK_KEY = "key-to-a-mock-blob";
 
     @Before
     public void setUp() {
-        mockStore = mock(CacheStore.class);
-        mockEntry = mock(InternalCacheEntry.class);
-        testObj = new StoreChunkOutputStream(mockStore, mockKey);
+        initMocks(this);
+        testObj = new StoreChunkOutputStream(mockStore, MOCK_KEY);
     }
 
     @Test
-    public void testWritingMultipleChunks()
-        throws IOException, CacheLoaderException {
-        byte[] data = TestHelpers.randomData(DATA_SIZE);
-        for (int i=0; i< 1025; i++) {
+    public void testWritingMultipleChunks() throws IOException,
+            CacheLoaderException {
+        final byte[] data = randomData(DATA_SIZE);
+        for (int i = 0; i < 1025; i++) {
             testObj.write(data);
         }
         testObj.close();
@@ -64,15 +66,15 @@ public class StoreChunkOutputStreamTest {
     }
 
     @Test
-    public void testWritingMultipleChunksOnVersionedKey()
-        throws IOException, CacheLoaderException {
-        byte[] data = TestHelpers.randomData(DATA_SIZE);
-        when(mockStore.load(mockKey + "-0")).thenReturn(mockEntry);
-        for (int i=0; i< 1025; i++) {
+    public void testWritingMultipleChunksOnVersionedKey() throws IOException,
+            CacheLoaderException {
+        final byte[] data = randomData(DATA_SIZE);
+        when(mockStore.load(MOCK_KEY + "-0")).thenReturn(mockEntry);
+        for (int i = 0; i < 1025; i++) {
             testObj.write(data);
         }
         testObj.close();
-        verify(mockStore).load(mockKey + "-0");
+        verify(mockStore).load(MOCK_KEY + "-0");
         verify(mockStore, times(2)).store(any(InternalCacheEntry.class));
         assertEquals(2, testObj.getNumberChunks());
     }

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.services.functions;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
@@ -25,24 +26,40 @@ import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 
 public class GetBinaryKeyTest {
 
-    @Test
-    public void testApply() throws LoginException, RepositoryException {
-        final Node mockNode = mock(Node.class);
-        final Node mockContent = mock(Node.class);
-        final Property mockProp = mock(Property.class);
-        final BinaryValue mockBin = mock(BinaryValue.class);
-        final BinaryKey binaryKey = new BinaryKey("abc");
+    @Mock
+    private Node mockNode;
+
+    @Mock
+    private Node mockContent;
+
+    @Mock
+    private Property mockProp;
+
+    @Mock
+    private BinaryValue mockBin;
+
+    private BinaryKey binaryKey;
+
+    @Before
+    public void setUp() throws Exception {
+        initMocks(this);
+        binaryKey = new BinaryKey("abc");
         when(mockBin.getKey()).thenReturn(binaryKey);
         when(mockProp.getBinary()).thenReturn(mockBin);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProp);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+    }
+
+    @Test
+    public void testApply() throws LoginException, RepositoryException {
         final GetBinaryKey testObj = new GetBinaryKey();
         assertEquals(binaryKey, testObj.apply(mockProp));
     }

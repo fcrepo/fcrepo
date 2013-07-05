@@ -35,6 +35,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -58,6 +59,7 @@ import org.fcrepo.utils.NamespaceTools;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.modeshape.common.collection.Problems;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -76,26 +78,29 @@ import com.hp.hpl.jena.sparql.util.Symbol;
         FedoraTypesUtils.class})
 public class FedoraResourceTest {
 
-    FedoraResource testObj;
+    private FedoraResource testObj;
 
-    Node mockNode;
+    @Mock
+    private Node mockNode;
 
-    Node mockRoot;
+    @Mock
+    private Node mockRoot;
 
-    Session mockSession;
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Property mockProp;
 
     @Before
     public void setUp() {
-        mockSession = mock(Session.class);
-        mockNode = mock(Node.class);
+        initMocks(this);
         testObj = new FedoraResource(mockNode);
         assertEquals(mockNode, testObj.getNode());
     }
 
     @Test
     public void testPathConstructor() throws RepositoryException {
-        final Node mockNode = mock(Node.class);
-        final Node mockRoot = mock(Node.class);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
@@ -131,7 +136,6 @@ public class FedoraResourceTest {
 
     @Test
     public void testGetCreatedDate() throws RepositoryException {
-        final Property mockProp = mock(Property.class);
         final Calendar someDate = Calendar.getInstance();
         when(mockProp.getDate()).thenReturn(someDate);
         when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
@@ -147,7 +151,6 @@ public class FedoraResourceTest {
         someDate.add(Calendar.DATE, -1);
         try {
             when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(false);
-            final Property mockProp = mock(Property.class);
             when(mockProp.getDate()).thenReturn(someDate);
             when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
             when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
@@ -167,7 +170,6 @@ public class FedoraResourceTest {
         final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
         try {
-            final Property mockProp = mock(Property.class);
             when(mockProp.getDate()).thenReturn(someDate);
             when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
             when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);

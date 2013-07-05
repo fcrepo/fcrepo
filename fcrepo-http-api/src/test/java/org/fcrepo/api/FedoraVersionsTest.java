@@ -18,15 +18,18 @@ package org.fcrepo.api;
 
 import static org.fcrepo.http.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 
@@ -43,37 +46,43 @@ import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
-
+import org.mockito.Mock;
 import com.hp.hpl.jena.query.Dataset;
 
 public class FedoraVersionsTest {
 
-    FedoraVersions testObj;
+    private FedoraVersions testObj;
 
-    NodeService mockNodes;
+    @Mock
+    private NodeService mockNodes;
 
-    Session mockSession;
+    private Session mockSession;
+
+    @Mock
+    private FedoraResource mockResource;
+
+    @Mock
+    private Request mockRequest;
+
+    @Mock
+    private Variant mockVariant;
+
+    @Mock
+    private Dataset mockDataset;
 
     @Before
     public void setUp() throws Exception {
-
+        initMocks(this);
         testObj = new FedoraVersions();
-        mockNodes = mock(NodeService.class);
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "nodeService", mockNodes);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        TestHelpers.setField(testObj, "session", mockSession);
+        mockSession = mockSession(testObj);
+        setField(testObj, "nodeService", mockNodes);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testGetVersionList() throws RepositoryException {
         final String pid = "FedoraVersioningTest";
-
-        final FedoraResource mockResource = mock(FedoraResource.class);
-        final Request mockRequest = mock(Request.class);
-        final Variant mockVariant = mock(Variant.class);
-        final Dataset mockDataset = mock(Dataset.class);
-
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
@@ -85,7 +94,7 @@ public class FedoraVersionsTest {
 
         final Response response =
                 testObj.getVersionList(createPathList(pid), mockRequest,
-                        TestHelpers.getUriInfoImpl());
+                        getUriInfoImpl());
         assertNotNull(response);
         assertEquals(200, response.getStatus());
     }
@@ -94,8 +103,6 @@ public class FedoraVersionsTest {
     public void testAddVersionLabel() throws RepositoryException {
         final String pid = "FedoraVersioningTest";
         final String versionLabel = "FedoraVersioningTest1/fcr:versions/v0.0.1";
-
-        final FedoraResource mockResource = mock(FedoraResource.class);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
 
@@ -109,8 +116,6 @@ public class FedoraVersionsTest {
     public void testGetVersion() throws RepositoryException, IOException {
         final String pid = "FedoraVersioningTest";
         final String versionLabel = "v0.0.1";
-
-        final FedoraResource mockResource = mock(FedoraResource.class);
         when(
                 mockNodes.getObject(any(Session.class), any(String.class),
                         any(String.class))).thenReturn(mockResource);

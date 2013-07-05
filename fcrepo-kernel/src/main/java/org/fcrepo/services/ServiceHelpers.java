@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.services;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -46,6 +47,7 @@ public abstract class ServiceHelpers {
 
     /**
      * Get the total size of a Node's properties
+     * 
      * @param node
      * @return size in bytes
      * @throws RepositoryException
@@ -71,8 +73,7 @@ public abstract class ServiceHelpers {
      * @return object size in bytes
      * @throws RepositoryException
      */
-    public static Long getObjectSize(final Node obj)
-        throws RepositoryException {
+    public static Long getObjectSize(final Node obj) throws RepositoryException {
         return getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
@@ -95,8 +96,9 @@ public abstract class ServiceHelpers {
     }
 
     /**
-     * Get the size of a datastream by calculating the size of the
-     * properties and the binary properties
+     * Get the size of a datastream by calculating the size of the properties
+     * and the binary properties
+     * 
      * @param ds
      * @return
      * @throws RepositoryException
@@ -108,19 +110,20 @@ public abstract class ServiceHelpers {
 
     /**
      * Get the size of the JCR content binary property
+     * 
      * @param ds
      * @return
      * @throws RepositoryException
      */
-    public static Long getContentSize(final Node ds)
-        throws RepositoryException {
+    public static Long getContentSize(final Node ds) throws RepositoryException {
         long size = 0L;
         if (ds.hasNode(JCR_CONTENT)) {
             final Node contentNode = ds.getNode(JCR_CONTENT);
 
             if (contentNode.hasProperty(JCR_DATA)) {
-                size = ds.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary()
-                    .getSize();
+                size =
+                        ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)
+                                .getBinary().getSize();
             }
         }
 
@@ -128,25 +131,31 @@ public abstract class ServiceHelpers {
     }
 
     /**
-     * A static factory function to insulate services from the details of building
-     * a DistributedExecutorService
+     * A static factory function to insulate services from the details of
+     * building a DistributedExecutorService
+     * 
      * @param cache
      * @return
      */
-    public static DistributedExecutorService getClusterExecutor(InfinispanBinaryStore cacheStore) {
-        // Watch out! This is trying to pluck out the blob cache store. This works as long as
+    public static DistributedExecutorService getClusterExecutor(
+            final InfinispanBinaryStore cacheStore) {
+        // Watch out! This is trying to pluck out the blob cache store. This
+        // works as long as
         // modeshape continues to be ordered..
         return new DefaultExecutorService(cacheStore.getCaches().get(1));
     }
 
     /**
-     * Get the fixity function to map a low-level cache entry to its fixity result
+     * Get the fixity function to map a low-level cache entry to its fixity
+     * result
+     * 
      * @param dsChecksum
      * @param dsSize
      * @return
      */
-    public static Function<LowLevelCacheEntry, FixityResult> getCheckCacheFixityFunction(final URI dsChecksum,
-                                                                                         final long dsSize) {
+    public static
+    Function<LowLevelCacheEntry, FixityResult>
+    getCheckCacheFixityFunction(final URI dsChecksum, final long dsSize) {
         return new CheckCacheEntryFixity(dsChecksum, dsSize);
     }
 

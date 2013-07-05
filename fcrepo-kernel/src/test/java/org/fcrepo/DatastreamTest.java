@@ -16,6 +16,7 @@
 
 package org.fcrepo;
 
+import static org.fcrepo.Datastream.hasMixin;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.TestHelpers.checksumString;
 import static org.fcrepo.utils.TestHelpers.getContentNodeMock;
@@ -28,9 +29,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,9 +58,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -67,24 +70,25 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest({FedoraTypesUtils.class})
 public class DatastreamTest implements FedoraJcrTypes {
 
-    String testPid = "testObj";
-
-    String testDsId = "testDs";
+    private static final String testDsId = "testDs";
 
     Datastream testObj;
 
+    @Mock
     Session mockSession;
 
+    @Mock
     Node mockRootNode;
 
+    @Mock
     Node mockDsNode;
+
+    @Mock
+    ValueFactory mockVF;
 
     @Before
     public void setUp() {
-
-        mockSession = mock(Session.class);
-        mockRootNode = mock(Node.class);
-        mockDsNode = mock(Node.class);
+        initMocks(this);
         final NodeType[] nodeTypes = new NodeType[0];
         try {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
@@ -125,13 +129,12 @@ public class DatastreamTest implements FedoraJcrTypes {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         final InputStream mockStream = mock(InputStream.class);
-        PowerMockito.mockStatic(FedoraTypesUtils.class);
+        mockStatic(FedoraTypesUtils.class);
         when(
                 getBinary(any(Node.class), any(InputStream.class),
                         any(String.class))).thenReturn(mockBin);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
         final Property mockData = mock(Property.class);
@@ -149,14 +152,12 @@ public class DatastreamTest implements FedoraJcrTypes {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         final InputStream mockStream = mock(InputStream.class);
-        PowerMockito.mockStatic(FedoraTypesUtils.class);
+        mockStatic(FedoraTypesUtils.class);
         when(
-                FedoraTypesUtils.getBinary(any(Node.class),
-                        any(InputStream.class), any(String.class))).thenReturn(
-                mockBin);
+                getBinary(any(Node.class), any(InputStream.class),
+                        any(String.class))).thenReturn(mockBin);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
         final Property mockData = mock(Property.class);
@@ -291,8 +292,8 @@ public class DatastreamTest implements FedoraJcrTypes {
         final NodeType[] types = new NodeType[] {mockYes};
         final Node test = mock(Node.class);
         when(test.getMixinNodeTypes()).thenReturn(types);
-        assertEquals(true, Datastream.hasMixin(test));
+        assertEquals(true, hasMixin(test));
         types[0] = mockNo;
-        assertEquals(false, Datastream.hasMixin(test));
+        assertEquals(false, hasMixin(test));
     }
 }
