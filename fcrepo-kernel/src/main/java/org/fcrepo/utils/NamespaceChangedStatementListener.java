@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.NamespaceRegistry;
@@ -33,12 +36,13 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class NamespaceChangedStatementListener extends StatementListener {
 
     private static final Logger LOGGER =
-        getLogger(NamespaceChangedStatementListener.class);
+            getLogger(NamespaceChangedStatementListener.class);
 
     private final NamespaceRegistry namespaceRegistry;
 
     /**
      * Use the given session to perform namespace changes
+     * 
      * @param session
      * @throws RepositoryException
      */
@@ -48,27 +52,27 @@ public class NamespaceChangedStatementListener extends StatementListener {
     }
 
     @Override
-    public void addedStatement(Statement s) {
+    public void addedStatement(final Statement s) {
 
         LOGGER.debug(">> added statement {}", s);
-        if (!s.getPredicate().equals(RdfLexicon.HAS_NAMESPACE_PREFIX)) {
+        if (!s.getPredicate().equals(HAS_NAMESPACE_PREFIX)) {
             return;
         }
 
         try {
             final String prefix = s.getObject().asLiteral().getString();
             final String uri = s.getSubject().asResource().getURI();
-            LOGGER.debug("Registering namespace prefix {} for uri {}",
-                         prefix, uri);
+            LOGGER.debug("Registering namespace prefix {} for uri {}", prefix,
+                    uri);
             namespaceRegistry.registerNamespace(prefix, uri);
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw propagate(e);
         }
 
     }
 
     @Override
-    public void removedStatement(Statement s) {
+    public void removedStatement(final Statement s) {
 
         LOGGER.debug(">> removed statement {}", s);
 
@@ -81,11 +85,11 @@ public class NamespaceChangedStatementListener extends StatementListener {
             final String uri = s.getSubject().asResource().getURI();
             if (namespaceRegistry.getPrefix(uri).equals(prefix)) {
                 LOGGER.debug("De-registering namespace prefix {} for uri {}",
-                             prefix, uri);
+                        prefix, uri);
                 namespaceRegistry.unregisterNamespace(prefix);
             }
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw propagate(e);
         }
     }
 

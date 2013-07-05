@@ -25,6 +25,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.sparql.core.DatasetGraphFactory.createMem;
+import static org.fcrepo.RdfLexicon.CREATED_BY;
 import static org.fcrepo.RdfLexicon.DC_TITLE;
 import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
@@ -36,8 +37,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.RdfLexicon;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,12 +45,9 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.DatasetGraphFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
 
 public class ViewHelpersTest {
@@ -66,7 +62,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldConvertAUriToNodeBreadcrumbs() {
 
-        final UriInfo mockUriInfo = TestHelpers.getUriInfoImpl();
+        final UriInfo mockUriInfo = getUriInfoImpl();
 
         final Map<String, String> nodeBreadcrumbs =
                 testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
@@ -83,8 +79,8 @@ public class ViewHelpersTest {
         final UriInfo mockUriInfo = getUriInfoImpl();
 
         final Map<String, String> nodeBreadcrumbs =
-                testObj.getNodeBreadcrumbs(mockUriInfo, ResourceFactory
-                        .createResource("http://somewhere/else/a/b/c").asNode());
+                testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
+                        "http://somewhere/else/a/b/c").asNode());
 
         assertTrue(nodeBreadcrumbs.isEmpty());
     }
@@ -100,7 +96,7 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
-        final DatasetGraph mem = DatasetGraphFactory.createMem();
+        final DatasetGraph mem = createMem();
 
         assertEquals("a/b/c", testObj.getObjectTitle(mem, createURI("a/b/c")));
 
@@ -201,7 +197,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldConvertPrefixMappingToSparqlUpdatePrefixPreamble() {
 
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
 
         model.setNsPrefix("prefix", "namespace");
 
@@ -212,7 +208,6 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldConvertRdfResourcesToNodes() {
-        assertEquals(RdfLexicon.CREATED_BY.asNode(), testObj
-                .asNode(RdfLexicon.CREATED_BY));
+        assertEquals(CREATED_BY.asNode(), testObj.asNode(CREATED_BY));
     }
 }

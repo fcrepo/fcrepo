@@ -87,7 +87,6 @@ public abstract class ServiceHelpers {
         Long size = 0L;
         for (final NodeIterator i = obj.getNodes(); i.hasNext();) {
             final Node node = i.nextNode();
-
             if (node.isNodeType(NT_FILE)) {
                 size += getDatastreamSize(node);
             }

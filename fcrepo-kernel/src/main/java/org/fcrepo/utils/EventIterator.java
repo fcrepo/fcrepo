@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
 import java.util.Iterator;
@@ -20,7 +21,9 @@ import java.util.Iterator;
 import javax.jcr.observation.Event;
 
 /**
- * Encapsulate JCR iterators with a type-aware, plain Iterator
+ * Encapsulates JCR's pre-generics {@link EventIterator} with a fully-typed
+ * {@link Iterator}<Event>
+ * 
  * @author ajs6f
  * @date Apr 20, 2013
  */
@@ -30,6 +33,7 @@ public class EventIterator implements Iterator<Event>, Iterable<Event> {
 
     /**
      * Wrap the given EventIterator with the generic Iterator<Event>
+     * 
      * @param i
      */
     public EventIterator(final javax.jcr.observation.EventIterator i) {

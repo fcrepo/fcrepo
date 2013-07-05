@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo;
 
 import static java.lang.reflect.Proxy.newProxyInstance;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import javax.jcr.Session;
 
 /**
- * A dynamic proxy that wraps JCR sessions. It is aware of fcrepo transactions, and
- * turns mutating methods (e.g. logout, session) into no-ops. Those
- * no-op'ed methods should be called from the Transaction level instead.
+ * A dynamic proxy that wraps JCR sessions. It is aware of fcrepo transactions,
+ * and turns mutating methods (e.g. logout, session) into no-ops. Those no-op'ed
+ * methods should be called from the Transaction level instead.
  */
 public class TxAwareSession implements InvocationHandler {
+
     private final String txId;
+
     private Session session;
 
     /**
@@ -42,25 +44,28 @@ public class TxAwareSession implements InvocationHandler {
 
     /**
      * Wrap a JCR session with this dynamic proxy
-     *
+     * 
      * @param session a JCR session
      * @param txId the transaction identifier
      * @return a wrapped JCR session
      */
     public static Session newInstance(final Session session, final String txId) {
         return (Session) newProxyInstance(session.getClass().getClassLoader(),
-                                                 new Class[]{TxSession.class},
-                                                 new TxAwareSession(session, txId));
+                new Class[] {TxSession.class},
+                new TxAwareSession(session, txId));
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getName().equals("logout") || method.getName().equals("save")) {
+    public Object invoke(final Object proxy, final Method method,
+            final Object[] args) throws ReflectiveOperationException,
+            IllegalArgumentException {
+        if (method.getName().equals("logout") ||
+                method.getName().equals("save")) {
             return null;
         } else if (method.getName().equals("getTxId")) {
             return txId;
         } else if (method.getName().equals("impersonate")) {
-            return TxAwareSession.newInstance((Session)method.invoke(session, args), txId);
+            return newInstance((Session) method.invoke(session, args), txId);
         } else {
             return method.invoke(session, args);
         }

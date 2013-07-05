@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.utils.JcrRdfTools.createValue;
 import static org.fcrepo.utils.JcrRdfTools.getNodeFromGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
 import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.utils.NodePropertiesTools.removeNodeProperty;
+import static org.modeshape.jcr.JcrI18n.couldNotStoreProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -38,15 +42,15 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
- * Listen to Jena statement events, and when the statement is changed
- * in the graph store, make the change within JCR as well.
+ * Listen to Jena statement events, and when the statement is changed in the
+ * graph store, make the change within JCR as well.
  */
 public class JcrPropertyStatementListener extends StatementListener {
 
     private Problems problems;
 
     private static final Logger LOGGER =
-        getLogger(JcrPropertyStatementListener.class);
+            getLogger(JcrPropertyStatementListener.class);
 
     private final GraphSubjects subjects;
 
@@ -54,13 +58,13 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * Construct a statement listener within the given session
+     * 
      * @param subjects
      * @param session
      * @throws RepositoryException
      */
     public JcrPropertyStatementListener(final GraphSubjects subjects,
-                                        final Session session)
-        throws RepositoryException {
+            final Session session) throws RepositoryException {
         this.session = session;
         this.subjects = subjects;
         this.problems = new SimpleProblems();
@@ -68,10 +72,11 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * When a statement is added to the graph, serialize it to a JCR property
+     * 
      * @param s
      */
     @Override
-    public void addedStatement( Statement s ) {
+    public void addedStatement(final Statement s) {
         LOGGER.debug(">> added statement {}", s);
 
         try {
@@ -83,32 +88,31 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             final Node subjectNode =
-                getNodeFromGraphSubject(subjects, getSession(), subject);
+                    getNodeFromGraphSubject(subjects, getSession(), subject);
 
             // extract the JCR propertyName from the predicate
             final String propertyName =
-                getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+                    getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
             if (validateModificationsForPropertyName(subjectNode, propertyName)) {
                 final Value v =
-                    JcrRdfTools.createValue(subjectNode,
-                                            s.getObject(),
-                                            getPropertyType(subjectNode,
-                                                            propertyName));
+                        createValue(subjectNode, s.getObject(),
+                                getPropertyType(subjectNode, propertyName));
                 appendOrReplaceNodeProperty(subjectNode, propertyName, v);
             }
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw propagate(e);
         }
 
     }
 
     /**
      * When a statement is removed, remove it from the JCR properties
+     * 
      * @param s
      */
     @Override
-    public void removedStatement( Statement s ) {
+    public void removedStatement(final Statement s) {
         LOGGER.trace(">> removed statement {}", s);
 
         try {
@@ -120,35 +124,33 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             final Node subjectNode =
-                getNodeFromGraphSubject(subjects, getSession(), subject);
+                    getNodeFromGraphSubject(subjects, getSession(), subject);
 
             final String propertyName =
-                getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+                    getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
             // if the property doesn't exist, we don't need to worry about it.
             if (subjectNode.hasProperty(propertyName) &&
-                validateModificationsForPropertyName(subjectNode,
-                                                     propertyName)) {
+                    validateModificationsForPropertyName(subjectNode,
+                            propertyName)) {
                 final Value v =
-                    JcrRdfTools.createValue(subjectNode,
-                                            s.getObject(),
-                                            getPropertyType(subjectNode,
-                                                            propertyName));
+                        createValue(subjectNode, s.getObject(),
+                                getPropertyType(subjectNode, propertyName));
                 removeNodeProperty(subjectNode, propertyName, v);
             }
 
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw propagate(e);
         }
 
     }
 
-    private boolean validateModificationsForPropertyName(final Node subjectNode,
-                                                         final String propertyName) {
+    private boolean validateModificationsForPropertyName(
+            final Node subjectNode, final String propertyName) {
         if (propertyName.startsWith("jcr:") ||
-            propertyName.startsWith("fedora:")) {
-            problems.addError(org.modeshape.jcr.JcrI18n.couldNotStoreProperty,
-                              "", subjectNode, propertyName);
+                propertyName.startsWith("fedora:")) {
+            problems.addError(couldNotStoreProperty, "", subjectNode,
+                    propertyName);
             return false;
         }
 
@@ -158,6 +160,7 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * Get a list of any problems from trying to apply the statement changes to
      * the node's properties
+     * 
      * @return
      */
     public Problems getProblems() {

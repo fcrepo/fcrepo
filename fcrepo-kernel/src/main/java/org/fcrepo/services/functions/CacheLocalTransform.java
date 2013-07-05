@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.services.functions;
 
 import java.io.Serializable;
@@ -32,6 +33,7 @@ import com.google.common.base.Function;
 
 /**
  * Apply a Function on a BinaryKey in a LOCAL CacheStore
+ * 
  * @param <K> Cache key class
  * @param <V> Cache value class
  * @param <T> Output of the transform
@@ -40,20 +42,22 @@ public class CacheLocalTransform<K, V, T> implements
         DistributedCallable<K, V, T>, Serializable {
 
     /**
-     * Because this class will be communicated between cache nodes,
-     * it must be serializable
+     * Because this class will be communicated between cache nodes, it must be
+     * serializable
      */
     private static final long serialVersionUID = -7014104738830230123L;
 
-    private static GetCacheStore TRANSFORM = new GetCacheStore();
+    private static GetCacheStore transform = new GetCacheStore();
 
     private BinaryKey key;
+
     private Function<LowLevelCacheEntry, T> entryTransform;
+
     private CacheStore store;
+
     private String cacheName = "";
 
     /**
-     *
      * @param key the BinaryKey to transform
      * @param entryTransform a Function from LowLevelCacheEntries to T
      */
@@ -65,17 +69,18 @@ public class CacheLocalTransform<K, V, T> implements
     }
 
     @Override
-    public T call() throws Exception {
-        LowLevelCacheEntry entry =
-                (store instanceof ChainingCacheStore) ?
-                        new ChainingCacheStoreEntry((ChainingCacheStore)store, cacheName, key) :
-                            new CacheStoreEntry(store, cacheName, key);
+    public T call() {
+        final LowLevelCacheEntry entry =
+                (store instanceof ChainingCacheStore)
+                        ? new ChainingCacheStoreEntry(
+                                (ChainingCacheStore) store, cacheName, key)
+                        : new CacheStoreEntry(store, cacheName, key);
         return this.entryTransform.apply(entry);
     }
 
     @Override
-    public void setEnvironment(Cache<K, V> cache, Set<K> keys) {
-        this.store = TRANSFORM.apply(cache);
+    public void setEnvironment(final Cache<K, V> cache, final Set<K> keys) {
+        this.store = transform.apply(cache);
         this.cacheName = ((CacheImpl<K, V>) cache).getName();
     }
 }

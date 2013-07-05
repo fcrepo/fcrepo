@@ -39,7 +39,6 @@ import org.junit.Test;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 public class RdfProviderTest {
 
@@ -81,15 +80,15 @@ public class RdfProviderTest {
 
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("unchecked")
     @Test
     public void testWriteTo() throws WebApplicationException,
             IllegalArgumentException, IOException {
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
         rdfProvider.writeTo(testData, Dataset.class, mock(Type.class), null,
-                valueOf("application/rdf+xml"),
-                (MultivaluedMap) new MultivaluedMapImpl(), outStream);
+                valueOf("application/rdf+xml"), mock(MultivaluedMap.class),
+                outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
         assertTrue("Couldn't find test RDF-object mentioned!", new String(

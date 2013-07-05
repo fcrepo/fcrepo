@@ -19,6 +19,7 @@ package org.fcrepo.session;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -28,25 +29,31 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class InjectableSessionTest {
 
     InjectableSession testObj;
 
-    Repository mockRepo;
+    @Mock
+    private Repository mockRepo;
 
-    Session mockSession;
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private SessionFactory mockSessionFactory;
+
+    @Mock
+    private SecurityContext mockSecurityContext;
 
     @Before
     public void setUp() throws RepositoryException {
+        initMocks(this);
         final HttpServletRequest mockHttpServletRequest =
                 mock(HttpServletRequest.class);
-        mockSession = mock(Session.class);
-        mockRepo = mock(Repository.class);
-        final SessionFactory mockSessionFactory = mock(SessionFactory.class);
         when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(
                 mockSession);
-        final SecurityContext mockSecurityContext = mock(SecurityContext.class);
         when(
                 mockSessionFactory.getSession(mockSecurityContext,
                         mockHttpServletRequest)).thenReturn(mockSession);
