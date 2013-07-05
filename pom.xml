@@ -38,9 +38,9 @@
     <github.global.server>github</github.global.server>
     <powermock.version>1.5.1</powermock.version>
     <!-- plugin versions -->
-    <!-- Until MCHECKSTYLE-169 is resolved, we're using a patched, snapshot 
+    <!-- Until MCHECKSTYLE-169 is resolved, we're using our own, patched version 
       of checkstyle deployed to fcrepo.maven.org -->
-    <checkstyle.plugin.version>2.11-SNAPSHOT</checkstyle.plugin.version>
+    <checkstyle.plugin.version>2.10-fcrepo</checkstyle.plugin.version>
   </properties>
   <modules>
     <module>fcrepo-kernel</module>
@@ -1012,14 +1012,14 @@
   </repositories>
   <pluginRepositories>
     <pluginRepository>
-      <id>fcrepo-snapshot</id>
-      <name>Fcrepo Snapshot Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
+      <id>fcrepo-thirdparty</id>
+      <name>Fcrepo Thirdparty Repository</name>
+      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
       <releases>
-        <enabled>false</enabled>
+        <enabled>true</enabled>
       </releases>
       <snapshots>
-        <enabled>true</enabled>
+        <enabled>false</enabled>
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
