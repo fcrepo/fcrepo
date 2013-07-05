@@ -16,15 +16,24 @@
 
 package org.fcrepo.api;
 
+import static java.util.Arrays.asList;
+import static javax.ws.rs.core.Response.notModified;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockDatastream;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,18 +53,15 @@ import javax.jcr.Session;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
-
+import org.mockito.Mock;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
@@ -64,23 +70,38 @@ public class FedoraDatastreamsTest {
 
     FedoraDatastreams testObj;
 
-    DatastreamService mockDatastreams;
+    @Mock
+    private DatastreamService mockDatastreams;
 
-    NodeService mockNodes;
+    @Mock
+    private NodeService mockNodes;
 
-    Session mockSession;
+    @Mock
+    private Node mockDsNode;
+
+    @Mock
+    private FedoraResource mockObject;
+
+    @Mock
+    private NodeIterator mockIterator;
+
+    @Mock
+    private Request mockRequest;
+
+    private Session mockSession;
+
+    @Mock
+    private Node mockNode;
 
     @Before
     public void setUp() throws Exception {
-        mockDatastreams = mock(DatastreamService.class);
-        mockNodes = mock(NodeService.class);
-
+        initMocks(this);
         testObj = new FedoraDatastreams();
-        TestHelpers.setField(testObj, "datastreamService", mockDatastreams);
-        TestHelpers.setField(testObj, "nodeService", mockNodes);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "datastreamService", mockDatastreams);
+        setField(testObj, "nodeService", mockNodes);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
     }
 
     @Test
@@ -93,14 +114,13 @@ public class FedoraDatastreamsTest {
         atts.put(dsId1, "asdf");
         atts.put(dsId2, "sdfg");
         final MultiPart multipart = getStringsAsMultipart(atts);
-        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                 mockNode);
         final Response actual =
                 testObj.modifyDatastreams(createPathList(pid), Arrays.asList(
                         dsId1, dsId2), multipart);
-        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq("/" + pid + "/" + dsId1), anyString(),
                 any(InputStream.class));
@@ -114,10 +134,10 @@ public class FedoraDatastreamsTest {
     public void testDeleteDatastreams() throws RepositoryException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/" + pid;
-        final List<String> dsidList = Arrays.asList("ds1", "ds2");
+        final List<String> dsidList = asList("ds1", "ds2");
         final Response actual =
                 testObj.deleteDatastreams(createPathList(pid), dsidList);
-        assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
+        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockNodes).deleteObject(mockSession, path + "/" + "ds1");
         verify(mockNodes).deleteObject(mockSession, path + "/" + "ds2");
         verify(mockSession).save();
@@ -126,31 +146,22 @@ public class FedoraDatastreamsTest {
     @Test
     public void testGetDatastreamsContents() throws RepositoryException,
             IOException, NoSuchAlgorithmException {
-        final Request mockRequest = mock(Request.class);
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
-
-        final Datastream mockDs =
-                TestHelpers.mockDatastream(pid, dsId, dsContent);
+        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockDs.hasContent()).thenReturn(true);
-        final Node mockDsNode = mock(Node.class);
-        final FedoraResource mockObject = mock(FedoraResource.class);
-        final Node mockNode = mock(Node.class);
-        final NodeIterator mockIterator = mock(NodeIterator.class);
         when(mockIterator.hasNext()).thenReturn(true, false);
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
-
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
-
         when(mockNodes.getObject(mockSession, "/FedoraDatastreamsTest1"))
                 .thenReturn(mockObject);
         when(mockDatastreams.asDatastream(mockDsNode)).thenReturn(mockDs);
 
         final Response resp =
-                testObj.getDatastreamsContents(createPathList(pid), Arrays
-                        .asList(dsId), mockRequest);
+                testObj.getDatastreamsContents(createPathList(pid),
+                        asList(dsId), mockRequest);
         final MultiPart multipart = (MultiPart) resp.getEntity();
 
         verify(mockDs).getContent();
@@ -169,34 +180,24 @@ public class FedoraDatastreamsTest {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
-        final Datastream mockDs =
-                TestHelpers.mockDatastream(pid, dsId, dsContent);
-        final Node mockDsNode = mock(Node.class);
-        final FedoraResource mockObject = mock(FedoraResource.class);
-        final Node mockNode = mock(Node.class);
-        final NodeIterator mockIterator = mock(NodeIterator.class);
+        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockIterator.hasNext()).thenReturn(true, false);
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
-
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
-
         when(mockNodes.getObject(mockSession, "/FedoraDatastreamsTest1"))
                 .thenReturn(mockObject);
         when(mockDatastreams.asDatastream(mockDsNode)).thenReturn(mockDs);
-
-        final Request mockRequest = mock(Request.class);
         when(
                 mockRequest.evaluatePreconditions(any(Date.class),
-                        any(EntityTag.class))).thenReturn(
-                Response.notModified());
+                        any(EntityTag.class))).thenReturn(notModified());
 
         final Response resp =
-                testObj.getDatastreamsContents(createPathList(pid), Arrays
-                        .asList(dsId), mockRequest);
+                testObj.getDatastreamsContents(createPathList(pid),
+                        asList(dsId), mockRequest);
         verify(mockDs, never()).getContent();
         verify(mockSession, never()).save();
-        assertEquals(Status.NOT_MODIFIED.getStatusCode(), resp.getStatus());
+        assertEquals(NOT_MODIFIED.getStatusCode(), resp.getStatus());
     }
 
     public static MultiPart getStringsAsMultipart(

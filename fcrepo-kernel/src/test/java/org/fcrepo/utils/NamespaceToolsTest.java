@@ -13,37 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
-import static org.mockito.Mockito.mock;
+import static org.fcrepo.utils.NamespaceTools.getNamespaceRegistry;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class NamespaceToolsTest {
 
+    @Mock
+    private Node mockNode;
+
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Workspace mockWork;
+
+    @Before
+    public void setUp() throws RepositoryException {
+        initMocks(this);
+    }
+
     @Test
     public void testGetNamespaceRegistry() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        Workspace mockWork = mock(Workspace.class);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWork);
-        NamespaceTools.getNamespaceRegistry(mockNode);
+        getNamespaceRegistry(mockNode);
     }
 
     @Test
     public void testFunction() throws RepositoryException {
-        Node mockNode = mock(Node.class);
-        Session mockSession = mock(Session.class);
-        Workspace mockWork = mock(Workspace.class);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWork);
-        NamespaceTools.getNamespaceRegistry.apply(mockNode);
+        getNamespaceRegistry.apply(mockNode);
     }
 }

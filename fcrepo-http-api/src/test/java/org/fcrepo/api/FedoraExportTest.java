@@ -18,11 +18,12 @@ package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -37,43 +38,43 @@ import org.fcrepo.services.ObjectService;
 import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class FedoraExportTest {
 
     FedoraExport testObj;
 
-    Session mockSession;
+    private Session mockSession;
 
-    SerializerUtil mockSerializers;
+    @Mock
+    private SerializerUtil mockSerializers;
 
-    FedoraObjectSerializer mockSerializer;
+    @Mock
+    private FedoraObjectSerializer mockSerializer;
 
-    ObjectService mockObjects;
+    @Mock
+    private ObjectService mockObjects;
+
+    @Mock
+    private FedoraObject mockObject;
 
     @Before
     public void setUp() throws Exception {
-
+        initMocks(this);
         testObj = new FedoraExport();
-
         mockSession = mockSession(testObj);
-        mockSerializers = mock(SerializerUtil.class);
-        mockSerializer = mock(FedoraObjectSerializer.class);
         when(mockSerializers.getSerializer("fake-format")).thenReturn(
                 mockSerializer);
-        mockObjects = mock(ObjectService.class);
-        TestHelpers.setField(testObj, "objectService", mockObjects);
-        TestHelpers.setField(testObj, "serializers", mockSerializers);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "objectService", mockObjects);
+        setField(testObj, "serializers", mockSerializers);
+        setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
+        setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testExportObject() throws Exception {
-        FedoraObject mockObject = mock(FedoraObject.class);
         when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
                 mockObject);
-
         ((StreamingOutput) testObj.exportObject(
                 createPathList("test", "object"), "fake-format").getEntity())
                 .write(new ByteArrayOutputStream());

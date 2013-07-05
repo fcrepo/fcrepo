@@ -16,40 +16,43 @@
 
 package org.fcrepo.api;
 
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Session;
 
 import org.fcrepo.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.services.ObjectService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class FedoraSitemapTest {
 
-    FedoraSitemap testObj;
+    private FedoraSitemap testObj;
 
-    ObjectService mockObjects;
+    @Mock
+    private ObjectService mockObjects;
 
-    Session mockSession;
+    private Session mockSession;
 
     @Before
     public void setUp() throws Exception {
-        mockObjects = mock(ObjectService.class);
+        initMocks(this);
         testObj = new FedoraSitemap();
-        TestHelpers.setField(testObj, "objectService", mockObjects);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "objectService", mockObjects);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testGetSitemapIndex() throws Exception {
         when(mockObjects.getRepositoryObjectCount()).thenReturn(49999L);
-
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
 
         assertEquals(1, sitemapIndex.getSitemapEntries().size());
@@ -58,7 +61,6 @@ public class FedoraSitemapTest {
     @Test
     public void testGetSitemapIndexMultiplePages() throws Exception {
         when(mockObjects.getRepositoryObjectCount()).thenReturn(50001L);
-
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
 
         assertEquals(2, sitemapIndex.getSitemapEntries().size());

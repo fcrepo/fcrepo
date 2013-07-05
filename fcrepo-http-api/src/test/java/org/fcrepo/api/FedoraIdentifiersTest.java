@@ -19,9 +19,13 @@ package org.fcrepo.api;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -33,9 +37,9 @@ import javax.jcr.Session;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.identifiers.PidMinter;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
@@ -45,30 +49,33 @@ public class FedoraIdentifiersTest {
 
     private static final Logger LOGGER = getLogger(FedoraIdentifiersTest.class);
 
+    @Mock
     private PidMinter mockPidMinter;
 
     private FedoraIdentifiers testObj;
+
+    @Mock
+    private Node mockNode;
 
     private UriInfo uriInfo;
 
     private Session mockSession;
 
     @Before
-    public void initMocks() throws Exception {
+    public void setUp() throws Exception {
+        initMocks(this);
         testObj = new FedoraIdentifiers();
-
-        mockPidMinter = mock(PidMinter.class);
-        TestHelpers.setField(testObj, "pidMinter", mockPidMinter);
-        this.uriInfo = TestHelpers.getUriInfoImpl();
-        TestHelpers.setField(testObj, "uriInfo", uriInfo);
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "pidMinter", mockPidMinter);
+        this.uriInfo = getUriInfoImpl();
+        setField(testObj, "uriInfo", uriInfo);
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
 
     }
 
     @Test
-    public void testGetNextPidAtRoot()
-        throws NoSuchFieldException, RepositoryException, URISyntaxException {
+    public void testGetNextPidAtRoot() throws NoSuchFieldException,
+            RepositoryException, URISyntaxException {
         when(mockPidMinter.makePid()).thenReturn(
                 new Function<Object, String>() {
 
@@ -78,12 +85,12 @@ public class FedoraIdentifiersTest {
                     }
                 });
 
-        TestHelpers.setField(testObj, "pidMinter", mockPidMinter);
+        setField(testObj, "pidMinter", mockPidMinter);
 
         when(uriInfo.getAbsolutePath()).thenReturn(
                 new URI("http://localhost/fcrepo/fcr:pid"));
 
-        Node mockNode = mock(Node.class);
+        final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/asdf:123");
         when(mockSession.getNode("/asdf:123")).thenReturn(mockNode);
 
@@ -108,12 +115,11 @@ public class FedoraIdentifiersTest {
                     }
                 });
 
-        TestHelpers.setField(testObj, "pidMinter", mockPidMinter);
+        setField(testObj, "pidMinter", mockPidMinter);
 
         when(uriInfo.getAbsolutePath()).thenReturn(
                 new URI("http://localhost/fcrepo/objects/fcr:pid"));
 
-        Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/objects/asdf:123");
         when(mockSession.getNode("/objects/asdf:123")).thenReturn(mockNode);
 

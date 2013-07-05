@@ -16,7 +16,14 @@
 
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockDatastream;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -25,6 +32,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,43 +45,49 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.Datastream;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.JcrConstants;
+import org.mockito.Mock;
 
 public class FedoraContentTest {
 
     FedoraContent testObj;
 
-    DatastreamService mockDatastreams;
+    @Mock
+    private DatastreamService mockDatastreams;
 
-    NodeService mockNodeService;
+    @Mock
+    private NodeService mockNodeService;
 
-    Session mockSession;
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Node mockNode;
+
+    @Mock
+    private Node mockContentNode;
+
+    @Mock
+    private PidMinter mockMinter;
 
     @Before
     public void setUp() throws Exception {
-        mockDatastreams = mock(DatastreamService.class);
-        mockNodeService = mock(NodeService.class);
-
+        initMocks(this);
         testObj = new FedoraContent();
-        TestHelpers.setField(testObj, "datastreamService", mockDatastreams);
-        TestHelpers.setField(testObj, "nodeService", mockNodeService);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "datastreamService", mockDatastreams);
+        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
     }
 
     @Test
@@ -83,11 +98,8 @@ public class FedoraContentTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        final Node mockNode = mock(Node.class);
         when(mockNode.isNew()).thenReturn(true);
-        final Node mockContentNode = mock(Node.class);
-        when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
-                mockContentNode);
+        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
         when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
         when(
@@ -98,7 +110,7 @@ public class FedoraContentTest {
         final Response actual =
                 testObj.modifyContent(createPathList(pid, dsId), null,
                         dsContentStream, null);
-        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class));
         verify(mockSession).save();
@@ -112,12 +124,8 @@ public class FedoraContentTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        final Node mockNode = mock(Node.class);
-
         when(mockNode.isNew()).thenReturn(true);
-        final Node mockContentNode = mock(Node.class);
-        when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
-                mockContentNode);
+        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
         when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
         when(
@@ -127,8 +135,8 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
                 testObj.create(createPathList(pid, dsId), null,
-                        MediaType.TEXT_PLAIN_TYPE, dsContentStream);
-        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+                        TEXT_PLAIN_TYPE, dsContentStream);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession, dsPath,
                 "text/plain", dsContentStream, null);
         verify(mockSession).save();
@@ -143,15 +151,10 @@ public class FedoraContentTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        final Node mockNode = mock(Node.class);
-
-        final PidMinter mockMinter = mock(PidMinter.class);
         when(mockMinter.mintPid()).thenReturn("xyz");
-        TestHelpers.setField(testObj, "pidMinter", mockMinter);
+        setField(testObj, "pidMinter", mockMinter);
         when(mockNode.isNew()).thenReturn(true);
-        final Node mockContentNode = mock(Node.class);
-        when(mockNode.getNode(JcrConstants.JCR_CONTENT)).thenReturn(
-                mockContentNode);
+        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
         when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
         when(
@@ -162,8 +165,8 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
                 testObj.create(createPathList(pid, dsId), null,
-                        MediaType.TEXT_PLAIN_TYPE, dsContentStream);
-        assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
+                        TEXT_PLAIN_TYPE, dsContentStream);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession,
                 "/" + pid + "/xyz", "text/plain", dsContentStream, null);
         verify(mockSession).save();
@@ -177,11 +180,8 @@ public class FedoraContentTest {
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        final Node mockNode = mock(Node.class);
         when(mockNode.isNew()).thenReturn(false);
-
-        final Datastream mockDs =
-                TestHelpers.mockDatastream(pid, dsId, dsContent);
+        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, dsPath)).thenReturn(
                 mockDs);
         final Request mockRequest = mock(Request.class);
@@ -196,7 +196,7 @@ public class FedoraContentTest {
         final Response actual =
                 testObj.modifyContent(createPathList(pid, dsId), null,
                         dsContentStream, mockRequest);
-        assertEquals(Status.NO_CONTENT.getStatusCode(), actual.getStatus());
+        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), any(InputStream.class));
         verify(mockSession).save();
@@ -208,8 +208,7 @@ public class FedoraContentTest {
         final String dsId = "testDS";
         final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
-        final Datastream mockDs =
-                TestHelpers.mockDatastream(pid, dsId, dsContent);
+        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
                 mockDs);
         final Request mockRequest = mock(Request.class);

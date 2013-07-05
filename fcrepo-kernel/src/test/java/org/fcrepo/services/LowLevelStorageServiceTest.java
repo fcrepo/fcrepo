@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.services;
 
+import static com.google.common.collect.ImmutableSet.of;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.fcrepo.services.ServiceHelpers.getClusterExecutor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -24,6 +28,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
@@ -33,8 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Repository;
@@ -48,8 +52,10 @@ import org.fcrepo.utils.impl.LocalBinaryStoreEntry;
 import org.infinispan.Cache;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.loaders.CacheStore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.BinaryKey;
@@ -61,24 +67,43 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
 public class LowLevelStorageServiceTest {
 
+    @Mock
+    private GetBinaryStore mockStoreFunc;
+
+    @Mock
+    private GetBinaryKey mockKeyFunc;
+
+    @Mock
+    private Node mockNode;
+
+    @Mock
+    private Repository mockRepo;
+
+    @Mock
+    private BinaryKey mockKey;
+
+    @Mock
+    private BinaryStore mockStore;
+
+    @Mock
+    private Property mockProperty;
+
+    @Before
+    public void setUp() {
+        initMocks(this);
+    }
+
     @Test
     public void testTransformBinaryBlobs() throws RepositoryException {
-        final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
-        final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
-        final Node mockNode = mock(Node.class);
-        final Repository mockRepo = mock(Repository.class);
-        final BinaryKey mockKey = mock(BinaryKey.class);
-        final BinaryStore mockStore = mock(BinaryStore.class);
 
-        final Property mockProperty = mock(Property.class);
-        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
+        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(
+                mockProperty);
         when(mockStore.toString()).thenReturn("foo");
         when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
@@ -98,14 +123,8 @@ public class LowLevelStorageServiceTest {
 
     @Test
     public void testGetBinaryBlobs() throws RepositoryException {
-        final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
-        final GetBinaryKey mockKeyFunc = mock(GetBinaryKey.class);
-        final Node mockNode = mock(Node.class);
-        final Property mockProperty = mock(Property.class);
-        when(mockNode.getProperty(JcrConstants.JCR_DATA)).thenReturn(mockProperty);
-        final Repository mockRepo = mock(Repository.class);
-        final BinaryKey mockKey = mock(BinaryKey.class);
-        final BinaryStore mockStore = mock(BinaryStore.class);
+
+        when(mockNode.getProperty(JCR_DATA)).thenReturn(mockProperty);
         when(mockStore.toString()).thenReturn("foo");
         when(mockKeyFunc.apply(mockProperty)).thenReturn(mockKey);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
@@ -122,9 +141,6 @@ public class LowLevelStorageServiceTest {
     public void shouldRetrieveLowLevelCacheEntryForDefaultBinaryStore()
             throws RepositoryException {
         final BinaryKey key = new BinaryKey("key-123");
-        final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
-        final Repository mockRepo = mock(Repository.class);
-        final BinaryStore mockStore = mock(BinaryStore.class);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
 
         final LowLevelStorageService testObj =
@@ -139,8 +155,6 @@ public class LowLevelStorageServiceTest {
     @Test
     public void shouldRetrieveLowLevelCacheStoresForBinaryKey()
             throws RepositoryException {
-
-        final BinaryStore mockStore = mock(BinaryStore.class);
 
         final LowLevelStorageService testObj = new LowLevelStorageService();
 
@@ -161,7 +175,7 @@ public class LowLevelStorageServiceTest {
             throws Exception {
 
         mockStatic(ServiceHelpers.class);
-        
+
         final Cache<?, ?> ispnCache1 = mock(Cache.class);
         final Cache<?, ?> ispnCache2 = mock(Cache.class);
         final CacheStore ispnCacheStore1 = mock(CacheStore.class);
@@ -192,38 +206,34 @@ public class LowLevelStorageServiceTest {
 
         final DistributedExecutorService mockCluster =
                 mock(DistributedExecutorService.class);
-        when(ServiceHelpers.getClusterExecutor(infinispanBinaryStore))
-            .thenReturn(mockCluster);
+        when(getClusterExecutor(infinispanBinaryStore)).thenReturn(mockCluster);
 
         final BinaryKey key = new BinaryKey("key-123");
-        
-        LowLevelCacheEntry cacheEntry1 =
-                new CacheStoreEntry(ispnCacheStore1,
-                        "cache1",
-                        key);
-        ImmutableSet.Builder<LowLevelCacheEntry> builder = ImmutableSet.builder();
-        Set<LowLevelCacheEntry> cacheResponse1 = builder.add(cacheEntry1).build();
-        builder = ImmutableSet.builder();
-        LowLevelCacheEntry cacheEntry2 =
-                new CacheStoreEntry(ispnCacheStore2,
-                        "cache2",
-                        key);
-        Set<LowLevelCacheEntry> cacheResponse2 = builder.add(cacheEntry2).build();
-        Future<Collection<LowLevelCacheEntry>> future1 = mock(Future.class);
-        Future<Collection<LowLevelCacheEntry>> future2 = mock(Future.class);
-        when(future1.get(any(Long.class), eq(TimeUnit.MILLISECONDS)))
-            .thenReturn(cacheResponse1);
-        when(future2.get(any(Long.class), eq(TimeUnit.MILLISECONDS)))
-        .thenReturn(cacheResponse2);
 
-        List<Future<?>> mockClusterResults = new ArrayList<Future<?>>(2);
+        final LowLevelCacheEntry cacheEntry1 =
+                new CacheStoreEntry(ispnCacheStore1, "cache1", key);
+        final Set<LowLevelCacheEntry> cacheResponse1 = of(cacheEntry1);
+        final LowLevelCacheEntry cacheEntry2 =
+                new CacheStoreEntry(ispnCacheStore2, "cache2", key);
+        final Set<LowLevelCacheEntry> cacheResponse2 = of(cacheEntry2);
+        final Future<Collection<LowLevelCacheEntry>> future1 =
+                mock(Future.class);
+        final Future<Collection<LowLevelCacheEntry>> future2 =
+                mock(Future.class);
+        when(future1.get(any(Long.class), eq(MILLISECONDS))).thenReturn(
+                cacheResponse1);
+        when(future2.get(any(Long.class), eq(MILLISECONDS))).thenReturn(
+                cacheResponse2);
+
+        final List<Future<?>> mockClusterResults = new ArrayList<Future<?>>(2);
         mockClusterResults.add(future1);
         mockClusterResults.add(future2);
 
-        when(mockCluster.submitEverywhere(any(org.fcrepo.services.functions.CacheLocalTransform.class)))
-            .thenReturn(mockClusterResults);
+        when(
+                mockCluster
+                        .submitEverywhere(any(org.fcrepo.services.functions.CacheLocalTransform.class)))
+                .thenReturn(mockClusterResults);
 
-        
         final LowLevelStorageService testObj = new LowLevelStorageService();
 
         when(plainBinaryStore.hasBinary(key)).thenReturn(true);
@@ -236,12 +246,12 @@ public class LowLevelStorageServiceTest {
 
         assertTrue(entries.contains(new LocalBinaryStoreEntry(plainBinaryStore,
                 key)));
-        assertFalse(entries.contains(new LocalBinaryStoreEntry(plainBinaryStore2,
-                key)));
-        assertTrue(entries.contains(new CacheStoreEntry(
-                ispnCacheStore1, "cache1", key)));
-        assertTrue(entries.contains(new CacheStoreEntry(
-                ispnCacheStore2, "cache2", key)));
+        assertFalse(entries.contains(new LocalBinaryStoreEntry(
+                plainBinaryStore2, key)));
+        assertTrue(entries.contains(new CacheStoreEntry(ispnCacheStore1,
+                "cache1", key)));
+        assertTrue(entries.contains(new CacheStoreEntry(ispnCacheStore2,
+                "cache2", key)));
 
     }
 
@@ -249,8 +259,6 @@ public class LowLevelStorageServiceTest {
     public void shouldReturnAnEmptySetForMissingBinaryStore()
             throws RepositoryException {
 
-        final GetBinaryStore mockStoreFunc = mock(GetBinaryStore.class);
-        final Repository mockRepo = mock(Repository.class);
         when(mockStoreFunc.apply(mockRepo)).thenReturn(null);
 
         final LowLevelStorageService testObj = new LowLevelStorageService();

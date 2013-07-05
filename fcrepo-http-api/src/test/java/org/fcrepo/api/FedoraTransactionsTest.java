@@ -17,11 +17,13 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -30,48 +32,49 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.Transaction;
 import org.fcrepo.TxAwareSession;
 import org.fcrepo.services.TransactionService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class FedoraTransactionsTest {
 
-    FedoraTransactions testObj;
+    private FedoraTransactions testObj;
 
     private Session mockSession;
 
-    private TransactionService txService;
+    @Mock
+    private Session regularSession;
+
+    @Mock
+    private Transaction mockTx;
+
+    @Mock
+    private TransactionService mockTxService;
 
     @Before
     public void setUp() throws RepositoryException, NoSuchFieldException {
-
+        initMocks(this);
         testObj = new FedoraTransactions();
-
         mockSession = TxAwareSession.newInstance(mockSession(testObj), "123");
-
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        TestHelpers.setField(testObj, "session", mockSession);
-
-        txService = mock(TransactionService.class);
-        TestHelpers.setField(testObj, "txService", txService);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        setField(testObj, "session", mockSession);
+        setField(testObj, "txService", mockTxService);
 
     }
 
     @Test
-    public void shouldStartANewTransaction() throws RepositoryException, NoSuchFieldException {
-        Transaction mockTx = mock(Transaction.class);
-        final Session regularSession = mock(Session.class);
-        TestHelpers.setField(testObj, "session", regularSession);
-        when(txService.beginTransaction(regularSession)).thenReturn(mockTx);
+    public void shouldStartANewTransaction() throws RepositoryException,
+            NoSuchFieldException {
+        setField(testObj, "session", regularSession);
+        when(mockTxService.beginTransaction(regularSession)).thenReturn(mockTx);
         testObj.createTransaction(createPathList());
-        verify(txService).beginTransaction(regularSession);
+        verify(mockTxService).beginTransaction(regularSession);
     }
 
     @Test
     public void shouldUpdateExpiryOnExistingTransaction()
-        throws RepositoryException {
-        Transaction mockTx = mock(Transaction.class);
-        when(txService.getTransaction("123")).thenReturn(mockTx);
+            throws RepositoryException {
+        when(mockTxService.getTransaction("123")).thenReturn(mockTx);
         testObj.createTransaction(createPathList());
         verify(mockTx).updateExpiryDate();
     }
@@ -79,21 +82,21 @@ public class FedoraTransactionsTest {
     @Test
     public void shouldCommitATransaction() throws RepositoryException {
         testObj.commit(createPathList());
-        verify(txService).commit("123");
+        verify(mockTxService).commit("123");
     }
 
     @Test
     public void shouldErrorIfTheContextSessionIsNotATransaction()
-        throws RepositoryException, NoSuchFieldException {
-        TestHelpers.setField(testObj, "session", mock(Session.class));
+            throws RepositoryException, NoSuchFieldException {
+        setField(testObj, "session", regularSession);
         final Response commit = testObj.commit(createPathList());
         assertEquals(400, commit.getStatus());
     }
 
     @Test
     public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot()
-        throws RepositoryException, NoSuchFieldException {
-        TestHelpers.setField(testObj, "session", mock(Session.class));
+            throws RepositoryException, NoSuchFieldException {
+        setField(testObj, "session", regularSession);
         final Response commit = testObj.commit(createPathList("a"));
         assertEquals(400, commit.getStatus());
     }
@@ -101,21 +104,21 @@ public class FedoraTransactionsTest {
     @Test
     public void shouldRollBackATransaction() throws RepositoryException {
         testObj.commit(createPathList());
-        verify(txService).commit("123");
+        verify(mockTxService).commit("123");
     }
 
     @Test
     public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback()
-        throws RepositoryException, NoSuchFieldException {
-        TestHelpers.setField(testObj, "session", mock(Session.class));
+            throws RepositoryException, NoSuchFieldException {
+        setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback(createPathList());
         assertEquals(400, commit.getStatus());
     }
 
     @Test
     public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot()
-        throws RepositoryException, NoSuchFieldException {
-        TestHelpers.setField(testObj, "session", mock(Session.class));
+            throws RepositoryException, NoSuchFieldException {
+        setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback(createPathList("a"));
         assertEquals(400, commit.getStatus());
     }

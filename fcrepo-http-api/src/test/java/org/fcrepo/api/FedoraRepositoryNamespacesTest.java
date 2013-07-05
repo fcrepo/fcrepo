@@ -16,9 +16,13 @@
 
 package org.fcrepo.api;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,40 +33,38 @@ import javax.jcr.Session;
 
 import org.fcrepo.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.services.NodeService;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
-
+import org.mockito.Mock;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 public class FedoraRepositoryNamespacesTest {
 
     FedoraRepositoryNamespaces testObj;
 
-    NodeService mockNodeService;
+    @Mock
+    private NodeService mockNodeService;
+
+    @Mock
+    private Dataset mockDataset;
 
     private Session mockSession;
 
     @Before
     public void setUp() throws RepositoryException, URISyntaxException,
             NoSuchFieldException {
-        mockNodeService = mock(NodeService.class);
-
+        initMocks(this);
         testObj = new FedoraRepositoryNamespaces();
-        TestHelpers.setField(testObj, "nodeService", mockNodeService);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testGetNamespaces() throws RepositoryException, IOException {
-
-        final Dataset mockDataset = mock(Dataset.class);
-
         when(mockNodeService.getNamespaceRegistryGraph(mockSession))
                 .thenReturn(mockDataset);
         assertEquals(mockDataset, testObj.getNamespaces());
@@ -71,9 +73,8 @@ public class FedoraRepositoryNamespacesTest {
     @Test
     public void testUpdateNamespaces() throws RepositoryException, IOException {
 
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
         final Dataset mockDataset = DatasetFactory.create(model);
-
         when(mockNodeService.getNamespaceRegistryGraph(mockSession))
                 .thenReturn(mockDataset);
 
