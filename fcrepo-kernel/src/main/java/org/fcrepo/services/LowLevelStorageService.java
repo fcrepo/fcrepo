@@ -89,8 +89,8 @@ public class LowLevelStorageService {
      *         RepositoryException is thrown
      */
     public <T> Collection<T> transformLowLevelCacheEntries(final Node resource,
-            final Function<LowLevelCacheEntry, T> transform)
-            throws RepositoryException {
+        final Function<LowLevelCacheEntry, T> transform)
+        throws RepositoryException {
         return transformLowLevelCacheEntries(resource.getProperty(JCR_DATA),
                 transform);
     }
@@ -104,9 +104,9 @@ public class LowLevelStorageService {
      * @throws RepositoryException
      */
     public <T> Collection<T> transformLowLevelCacheEntries(
-            final Property jcrBinaryProperty,
-            final Function<LowLevelCacheEntry, T> transform)
-            throws RepositoryException {
+        final Property jcrBinaryProperty,
+        final Function<LowLevelCacheEntry, T> transform)
+        throws RepositoryException {
 
         return transformLowLevelCacheEntries(getBinaryKey
                 .apply(jcrBinaryProperty), transform);
@@ -121,8 +121,8 @@ public class LowLevelStorageService {
      * @throws RepositoryException
      */
     public <T> Collection<T> transformLowLevelCacheEntries(final BinaryKey key,
-            final Function<LowLevelCacheEntry, T> transform)
-            throws RepositoryException {
+        final Function<LowLevelCacheEntry, T> transform)
+        throws RepositoryException {
 
         final BinaryStore store = getBinaryStore.apply(repo);
 
@@ -188,9 +188,9 @@ public class LowLevelStorageService {
      * @return a set of transformed objects
      */
     protected <T> Set<T>
-            transformLowLevelCacheEntries(final BinaryStore store,
-                    final BinaryKey key,
-                    final Function<LowLevelCacheEntry, T> transform) {
+    transformLowLevelCacheEntries(final BinaryStore store,
+        final BinaryKey key,
+        final Function<LowLevelCacheEntry, T> transform) {
 
         if (store == null) {
             return emptySet();
@@ -227,7 +227,7 @@ public class LowLevelStorageService {
      *         RepositoryException is thrown
      */
     public Set<LowLevelCacheEntry> getLowLevelCacheEntries(final Node resource)
-            throws RepositoryException {
+        throws RepositoryException {
 
         return getLowLevelCacheEntries(resource.getProperty(JCR_DATA));
 
@@ -349,10 +349,10 @@ public class LowLevelStorageService {
      * @throws ExecutionException
      */
     public <T> Set<T>
-            getClusterResults(final InfinispanBinaryStore cacheStore,
-                    final BinaryKey key,
-                    final Function<LowLevelCacheEntry, T> transform)
-                    throws InterruptedException, ExecutionException {
+    getClusterResults(final InfinispanBinaryStore cacheStore,
+        final BinaryKey key,
+        final Function<LowLevelCacheEntry, T> transform)
+        throws InterruptedException, ExecutionException {
         final DistributedExecutorService exec = getClusterExecutor(cacheStore);
         @SuppressWarnings({"synthetic-access", "unchecked", "rawtypes"})
         final List<Future<Collection<T>>> futures =

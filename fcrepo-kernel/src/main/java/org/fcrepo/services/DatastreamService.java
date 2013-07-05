@@ -121,9 +121,9 @@ public class DatastreamService extends RepositoryService {
      * @throws InvalidChecksumException
      */
     public Node createDatastreamNode(final Session session,
-            final String dsPath, final String contentType,
-            final InputStream requestBodyStream, final URI checksum)
-            throws RepositoryException, IOException, InvalidChecksumException {
+        final String dsPath, final String contentType,
+        final InputStream requestBodyStream, final URI checksum)
+        throws RepositoryException, IOException, InvalidChecksumException {
 
         final Datastream ds = new Datastream(session, dsPath);
         ds.setContent(requestBodyStream, contentType, checksum,
@@ -139,7 +139,7 @@ public class DatastreamService extends RepositoryService {
      * @throws RepositoryException
      */
     public Node getDatastreamNode(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         logger.trace("Executing getDatastreamNode() with path: {}", path);
         final Node dsNode = getDatastream(session, path).getNode();
         logger.trace("Retrieved datastream node: {}", dsNode.getName());
@@ -154,7 +154,7 @@ public class DatastreamService extends RepositoryService {
      * @throws RepositoryException
      */
     public Datastream getDatastream(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         return new Datastream(session, path);
     }
 

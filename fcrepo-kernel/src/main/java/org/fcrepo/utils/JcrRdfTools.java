@@ -170,7 +170,7 @@ public abstract class JcrRdfTools {
      */
     public static Node getNodeFromGraphSubject(final GraphSubjects factory,
             final Session session, final Resource subject)
-            throws RepositoryException {
+        throws RepositoryException {
         return factory.getNodeFromGraphSubject(session, subject);
     }
 
@@ -190,7 +190,7 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     private static Model createDefaultJcrModel(final Session session)
-            throws RepositoryException {
+        throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
 
         final javax.jcr.NamespaceRegistry namespaceRegistry =
@@ -222,7 +222,7 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     public static Model getJcrNamespaceModel(final Session session)
-            throws RepositoryException {
+        throws RepositoryException {
         final Model model = createDefaultJcrModel(session);
 
         final Map<String, String> prefixMap = model.getNsPrefixMap();
@@ -250,7 +250,7 @@ public abstract class JcrRdfTools {
      */
     public static Model getJcrNodeIteratorModel(final GraphSubjects factory,
             final Iterator<Node> nodeIterator, final Resource iteratorSubject)
-            throws RepositoryException {
+        throws RepositoryException {
 
         if (!nodeIterator.hasNext()) {
             return ModelFactory.createDefaultModel();
@@ -307,7 +307,7 @@ public abstract class JcrRdfTools {
      */
     private static void addRepositoryMetricsToModel(
             final GraphSubjects factory, final Node node, final Model model)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final Repository repository = node.getSession().getRepository();
         /* retreive the metrics from the service */
@@ -391,7 +391,7 @@ public abstract class JcrRdfTools {
      */
     private static void addJcrContentLocationInformationToModel(
             final GraphSubjects factory, final Node node, final Model model)
-            throws RepositoryException {
+        throws RepositoryException {
         final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
         final Resource contentNodeSubject =
                 factory.getGraphSubject(contentNode);
@@ -423,7 +423,7 @@ public abstract class JcrRdfTools {
      */
     public static Model getJcrTreeModel(final GraphSubjects factory,
             final Node node, final long offset, final int limit)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final Model model = createDefaultJcrModel(node.getSession());
 
@@ -576,7 +576,7 @@ public abstract class JcrRdfTools {
      */
     public static void addPropertyToModel(final Resource subject,
             final Model model, final Property property)
-            throws RepositoryException {
+        throws RepositoryException {
         if (property.isMultiple()) {
             final Value[] values = property.getValues();
 
@@ -601,7 +601,7 @@ public abstract class JcrRdfTools {
      */
     public static void addPropertyToModel(final Resource subject,
             final Model model, final Property property, final Value v)
-            throws RepositoryException {
+        throws RepositoryException {
 
         if (v.getType() == BINARY) {
             // exclude binary types from property serialization
@@ -663,7 +663,7 @@ public abstract class JcrRdfTools {
      */
     public static String getPropertyNameFromPredicate(final Node node,
             final com.hp.hpl.jena.rdf.model.Property predicate)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final String prefix;
 
@@ -701,8 +701,8 @@ public abstract class JcrRdfTools {
      * @throws RepositoryException
      */
     private static Node
-            getNodeFromObjectPath(final Node node, final String path)
-                    throws RepositoryException {
+    getNodeFromObjectPath(final Node node, final String path)
+        throws RepositoryException {
         return node.getSession()
                 .getNode(path.substring("info:fedora".length()));
     }
@@ -765,7 +765,7 @@ public abstract class JcrRdfTools {
      */
     public static Model getFixityResultsModel(final GraphSubjects factory,
             final Node node, final Iterable<FixityResult> blobs)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final Model model = createDefaultJcrModel(node.getSession());
 

@@ -46,7 +46,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public FedoraObject createObject(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         return new FedoraObject(session, path, NT_FOLDER);
     }
 
@@ -56,7 +56,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Node getObjectNode(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         return session.getNode(path);
     }
 
@@ -67,7 +67,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public FedoraObject getObject(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         logger.trace("Executing getObject() with path: {}", path);
         return new FedoraObject(getObjectNode(session, path));
     }

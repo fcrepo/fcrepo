@@ -19,8 +19,8 @@ package org.fcrepo.session;
 import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -30,6 +30,7 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import com.sun.jersey.core.spi.component.ComponentContext;
 import com.sun.jersey.spi.inject.Injectable;
@@ -38,23 +39,34 @@ public class SessionProviderTest {
 
     SessionProvider testObj;
 
-    Repository mockRepo;
+    @Mock
+    private Repository mockRepo;
 
-    Session mockSession;
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private SessionFactory mockSessionFactory;
+
+    @Mock
+    private SecurityContext mockSecurityContext;
+
+    @Mock
+    private ComponentContext con;
+
+    @Mock
+    private InjectedSession in;
+
+    @Mock
+    private HttpServletRequest mockHttpServletRequest;
 
     @Before
     public void setUp() throws RepositoryException, NoSuchFieldException {
-        mockSession = mock(Session.class);
-        mockRepo = mock(Repository.class);
-        final SessionFactory mockSessionFactory = mock(SessionFactory.class);
+        initMocks(this);
         when(mockSessionFactory.getSession()).thenReturn(mockSession);
-        final SecurityContext mockSecurityContext = mock(SecurityContext.class);
-        final HttpServletRequest mockHttpServletRequest =
-                mock(HttpServletRequest.class);
         when(
                 mockSessionFactory.getSession(mockSecurityContext,
                         mockHttpServletRequest)).thenReturn(mockSession);
-
         testObj = new SessionProvider();
         setField(testObj, "sessionFactory", mockSessionFactory);
         setField(testObj, "secContext", mockSecurityContext);
@@ -64,8 +76,6 @@ public class SessionProviderTest {
 
     @Test
     public void testGetInjectable() {
-        final ComponentContext con = mock(ComponentContext.class);
-        final InjectedSession in = mock(InjectedSession.class);
         final Injectable<Session> inj = testObj.getInjectable(con, in);
         assertNotNull("Didn't get an Injectable<Session>!", inj);
         assertTrue("Didn't get an InjectableSession!", InjectableSession.class

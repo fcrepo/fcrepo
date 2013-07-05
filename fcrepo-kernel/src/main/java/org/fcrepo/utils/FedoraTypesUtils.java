@@ -68,8 +68,7 @@ import com.google.common.base.Predicate;
  */
 public abstract class FedoraTypesUtils {
 
-
-    private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
+    static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
@@ -294,7 +293,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static NodeTypeManager getNodeTypeManager(final Node node)
-            throws RepositoryException {
+        throws RepositoryException {
         return node.getSession().getWorkspace().getNodeTypeManager();
     }
 
@@ -308,7 +307,7 @@ public abstract class FedoraTypesUtils {
      * @throws javax.jcr.RepositoryException
      */
     public static PropertyDefinition getDefinitionForPropertyName(
-        final Node node, final String propertyName)
+            final Node node, final String propertyName)
         throws RepositoryException {
         final PropertyDefinition[] propertyDefinitions =
                 getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE)
@@ -331,7 +330,7 @@ public abstract class FedoraTypesUtils {
      * @return An ImmutableSet copy of input after transformation by f
      */
     public static <F, T> Collection<T> map(final F[] input,
-        final Function<F, T> f) {
+            final Function<F, T> f) {
         return transform(copyOf(input), f);
     }
 
@@ -367,7 +366,7 @@ public abstract class FedoraTypesUtils {
      */
 
     public static VersionHistory getVersionHistory(final Node node)
-            throws RepositoryException {
+        throws RepositoryException {
         return getVersionHistory(node.getSession(), node.getPath());
     }
 
@@ -380,7 +379,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static VersionHistory getVersionHistory(final Session session,
-        final String path) throws RepositoryException {
+            final String path) throws RepositoryException {
         return session.getWorkspace().getVersionManager().getVersionHistory(
                 path);
     }
@@ -390,7 +389,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static long getRepositoryCount(final Repository repository)
-            throws RepositoryException {
+        throws RepositoryException {
         final Session session = repository.login();
         try {
             final QueryManager queryManager =
@@ -415,7 +414,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static long getRepositorySize(final Repository repository)
-            throws RepositoryException {
+        throws RepositoryException {
         final Session session = repository.login();
         long sum = 0;
         final QueryManager queryManager =

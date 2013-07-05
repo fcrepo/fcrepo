@@ -19,9 +19,9 @@ package org.fcrepo.api.rdf;
 import static com.google.common.collect.ImmutableBiMap.of;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Map;
 
@@ -32,6 +32,7 @@ import org.fcrepo.FedoraResource;
 import org.fcrepo.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -44,33 +45,35 @@ public class HttpTripleUtilTest {
 
     private Dataset dataset;
 
+    @Mock
     private UriInfo mockUriInfo;
 
+    @Mock
     private GraphSubjects mockSubjects;
 
+    @Mock
+    private UriAwareResourceModelFactory mockBean1;
+
+    @Mock
+    private UriAwareResourceModelFactory mockBean2;
+
+    @Mock
     private ApplicationContext mockContext;
+
+    @Mock
+    private FedoraResource mockResource;
 
     @Before
     public void setUp() {
-        mockContext = mock(ApplicationContext.class);
+        initMocks(this);
         testObj = new HttpTripleUtil();
         testObj.setApplicationContext(mockContext);
-
-        dataset = DatasetFactory.create(ModelFactory.createDefaultModel());
-        mockUriInfo = mock(UriInfo.class);
-        mockSubjects = mock(GraphSubjects.class);
-
+        dataset = DatasetFactory.create(createDefaultModel());
     }
 
     @Test
     public void shouldAddTriplesFromRegisteredBeans()
             throws RepositoryException {
-        final FedoraResource mockResource = mock(FedoraResource.class);
-
-        final UriAwareResourceModelFactory mockBean1 =
-                mock(UriAwareResourceModelFactory.class);
-        final UriAwareResourceModelFactory mockBean2 =
-                mock(UriAwareResourceModelFactory.class);
         final Map<String, UriAwareResourceModelFactory> mockBeans =
                 of("doesnt", mockBean1, "matter", mockBean2);
         when(mockContext.getBeansOfType(UriAwareResourceModelFactory.class))

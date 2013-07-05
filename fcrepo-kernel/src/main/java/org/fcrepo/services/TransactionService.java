@@ -103,7 +103,7 @@ public class TransactionService {
      * @return the {@link Transaction}
      */
     public Transaction getTransaction(final String txid)
-            throws TransactionMissingException {
+        throws TransactionMissingException {
 
         final Transaction tx = transactions.get(txid);
 

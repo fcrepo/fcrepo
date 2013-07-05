@@ -95,7 +95,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public boolean exists(final Session session, final String path)
-            throws RepositoryException {
+        throws RepositoryException {
         return session.nodeExists(path);
     }
 
@@ -142,7 +142,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public NodeTypeIterator getAllNodeTypes(final Session session)
-            throws RepositoryException {
+        throws RepositoryException {
         final NodeTypeManager ntmanager =
                 (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
         return ntmanager.getAllNodeTypes();
@@ -182,7 +182,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Dataset getNamespaceRegistryGraph(final Session session)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final Model model = getJcrNamespaceModel(session);
 
@@ -210,7 +210,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     public Dataset searchRepository(final GraphSubjects subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final Model model;
 
