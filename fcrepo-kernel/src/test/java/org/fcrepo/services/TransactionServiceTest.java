@@ -63,7 +63,7 @@ public class TransactionServiceTest {
         service = new TransactionService();
         when(mockTx.getId()).thenReturn(IS_A_TX);
         final Field txsField =
-                TransactionService.class.getDeclaredField("TRANSACTIONS");
+                TransactionService.class.getDeclaredField("transactions");
         txsField.setAccessible(true);
         @SuppressWarnings("unchecked")
         final Map<String, Transaction> txs =

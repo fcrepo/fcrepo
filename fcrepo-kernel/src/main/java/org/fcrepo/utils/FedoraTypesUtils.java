@@ -17,6 +17,7 @@
 package org.fcrepo.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -66,6 +67,7 @@ import com.google.common.base.Predicate;
  * @date Feb 14, 2013
  */
 public abstract class FedoraTypesUtils {
+
 
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
@@ -165,7 +167,7 @@ public abstract class FedoraTypesUtils {
                     try {
                         return p.isMultiple();
                     } catch (final RepositoryException e) {
-                        throw new RuntimeException(e);
+                        throw propagate(e);
                     }
                 }
             };
@@ -185,7 +187,7 @@ public abstract class FedoraTypesUtils {
                 return primaryNodeType != null &&
                         primaryNodeType.isNodeType("mode:system");
             } catch (final RepositoryException e) {
-                throw new RuntimeException(e);
+                throw propagate(e);
             }
         }
     };
@@ -231,7 +233,7 @@ public abstract class FedoraTypesUtils {
                             return createProperty(property.getName());
                         }
                     } catch (final RepositoryException e) {
-                        throw new IllegalStateException(e);
+                        throw propagate(e);
                     }
 
                 }
@@ -292,7 +294,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static NodeTypeManager getNodeTypeManager(final Node node)
-        throws RepositoryException {
+            throws RepositoryException {
         return node.getSession().getWorkspace().getNodeTypeManager();
     }
 
@@ -365,7 +367,7 @@ public abstract class FedoraTypesUtils {
      */
 
     public static VersionHistory getVersionHistory(final Node node)
-        throws RepositoryException {
+            throws RepositoryException {
         return getVersionHistory(node.getSession(), node.getPath());
     }
 
@@ -388,7 +390,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static long getRepositoryCount(final Repository repository)
-        throws RepositoryException {
+            throws RepositoryException {
         final Session session = repository.login();
         try {
             final QueryManager queryManager =
@@ -413,7 +415,7 @@ public abstract class FedoraTypesUtils {
      * @throws RepositoryException
      */
     public static long getRepositorySize(final Repository repository)
-        throws RepositoryException {
+            throws RepositoryException {
         final Session session = repository.login();
         long sum = 0;
         final QueryManager queryManager =

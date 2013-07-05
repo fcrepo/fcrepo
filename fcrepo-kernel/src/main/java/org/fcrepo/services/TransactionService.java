@@ -19,6 +19,7 @@
 
 package org.fcrepo.services;
 
+import static java.lang.System.currentTimeMillis;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
@@ -36,13 +37,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * This is part of the Strawman implementation for Fedora transactions
- * This service  implements a simple {@link Transaction} service which is able to
- * create/commit/rollback {@link Transaction} objects
- *
- * A {@link Scheduled} annotation is used for removing timed out Transactions
+ * This is part of the strawman implementation for Fedora transactions This
+ * service implements a simple {@link Transaction} service which is able to
+ * create/commit/rollback {@link Transaction} objects A {@link Scheduled}
+ * annotation is used for removing timed out Transactions
+ * 
  * @author frank asseg
- *
  */
 @Component
 public class TransactionService {
@@ -51,30 +51,32 @@ public class TransactionService {
 
     /*
      * TODO: since transactions have to be available on all nodes, they have to
-     * be either persisted or written to a distributed map or sth, not just
-     * this plain hashmap that follows
+     * be either persisted or written to a distributed map or sth, not just this
+     * plain hashmap that follows
      */
-    private static Map<String, Transaction> TRANSACTIONS =
+    private static Map<String, Transaction> transactions =
             new ConcurrentHashMap<String, Transaction>();
 
     public static final long REAP_INTERVAL = 1000;
 
     /**
-     * Every REAP_INTERVAL milliseconds, check for expired transactions. If the tx is
-     * expired, roll it back and remove it from the registry.
+     * Every REAP_INTERVAL milliseconds, check for expired transactions. If the
+     * tx is expired, roll it back and remove it from the registry.
      */
     @Scheduled(fixedRate = REAP_INTERVAL)
     public void removeAndRollbackExpired() {
-        synchronized (TRANSACTIONS) {
-            Iterator<Entry<String, Transaction>> txs =
-                    TRANSACTIONS.entrySet().iterator();
+        synchronized (transactions) {
+            final Iterator<Entry<String, Transaction>> txs =
+                    transactions.entrySet().iterator();
             while (txs.hasNext()) {
-                Transaction tx = txs.next().getValue();
-                if (tx.getExpires().getTime() <= System.currentTimeMillis()) {
+                final Transaction tx = txs.next().getValue();
+                if (tx.getExpires().getTime() <= currentTimeMillis()) {
                     try {
                         tx.rollback();
-                    } catch (RepositoryException e) {
-                        LOGGER.warn("Got exception rolling back expired transaction {}: {}", tx, e);
+                    } catch (final RepositoryException e) {
+                        LOGGER.error(
+                                "Got exception rolling back expired transaction {}: {}",
+                                tx, e);
                     }
                     txs.remove();
                 }
@@ -84,27 +86,30 @@ public class TransactionService {
 
     /**
      * Create a new Transaction and add it to the currently open ones
+     * 
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
     public Transaction beginTransaction(final Session sess) {
         final Transaction tx = new Transaction(sess);
-        TRANSACTIONS.put(tx.getId(), tx);
+        transactions.put(tx.getId(), tx);
         return tx;
     }
 
     /**
      * Retrieve an open {@link Transaction}
+     * 
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
     public Transaction getTransaction(final String txid)
-        throws TransactionMissingException {
+            throws TransactionMissingException {
 
-        final Transaction tx = TRANSACTIONS.get(txid);
+        final Transaction tx = transactions.get(txid);
 
         if (tx == null) {
-            throw new TransactionMissingException("Transaction is not available");
+            throw new TransactionMissingException(
+                    "Transaction is not available");
         }
 
         return tx;
@@ -112,20 +117,22 @@ public class TransactionService {
 
     /**
      * Check if a Transaction exists
+     * 
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
     public boolean exists(final String txid) {
-        return TRANSACTIONS.containsKey(txid);
+        return transactions.containsKey(txid);
     }
 
     /**
      * Commit a {@link Transaction} with the given id
+     * 
      * @param txid the id of the {@link Transaction}
      * @throws RepositoryException
      */
     public Transaction commit(final String txid) throws RepositoryException {
-        final Transaction tx = TRANSACTIONS.remove(txid);
+        final Transaction tx = transactions.remove(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");
@@ -136,12 +143,13 @@ public class TransactionService {
 
     /**
      * Roll a {@link Transaction} back
+     * 
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
      * @throws RepositoryException if the {@link Transaction} could not be found
      */
     public Transaction rollback(final String txid) throws RepositoryException {
-        final Transaction tx = TRANSACTIONS.remove(txid);
+        final Transaction tx = transactions.remove(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
                     " is not available");

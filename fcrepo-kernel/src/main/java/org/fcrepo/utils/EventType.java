@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
 /**
  * A convenient abstraction over JCR's integer-typed events.
- *
+ * 
  * @author ajs6f
  * @date Feb 7, 2013
  */
@@ -27,24 +28,25 @@ public enum EventType {
 
     /**
      * Get the Fedora event type for a JCR type
+     * 
      * @param i
      * @return
      */
     public static EventType getEventType(final Integer i) {
         switch (i) {
-            case 0x1:
+            case javax.jcr.observation.Event.NODE_ADDED:
                 return NODE_ADDED;
-            case 0x2:
+            case javax.jcr.observation.Event.NODE_REMOVED:
                 return NODE_REMOVED;
-            case 0x4:
+            case javax.jcr.observation.Event.PROPERTY_ADDED:
                 return PROPERTY_ADDED;
-            case 0x8:
+            case javax.jcr.observation.Event.PROPERTY_REMOVED:
                 return PROPERTY_REMOVED;
-            case 0x10:
+            case javax.jcr.observation.Event.PROPERTY_CHANGED:
                 return PROPERTY_CHANGED;
-            case 0x20:
+            case javax.jcr.observation.Event.NODE_MOVED:
                 return NODE_MOVED;
-            case 0x40:
+            case javax.jcr.observation.Event.PERSIST:
                 return PERSIST;
                 // no default
             default:

@@ -53,7 +53,7 @@ public abstract class ServiceHelpers {
      * @throws RepositoryException
      */
     public static Long getNodePropertySize(final Node node)
-        throws RepositoryException {
+            throws RepositoryException {
         Long size = 0L;
         for (final PropertyIterator i = node.getProperties(); i.hasNext();) {
             final Property p = i.nextProperty();
@@ -83,11 +83,10 @@ public abstract class ServiceHelpers {
      * @throws RepositoryException
      */
     private static Long getObjectDSSize(final Node obj)
-        throws RepositoryException {
+            throws RepositoryException {
         Long size = 0L;
         for (final NodeIterator i = obj.getNodes(); i.hasNext();) {
             final Node node = i.nextNode();
-
             if (node.isNodeType(NT_FILE)) {
                 size += getDatastreamSize(node);
             }
@@ -104,7 +103,7 @@ public abstract class ServiceHelpers {
      * @throws RepositoryException
      */
     public static Long getDatastreamSize(final Node ds)
-        throws RepositoryException {
+            throws RepositoryException {
         return getNodePropertySize(ds) + getContentSize(ds);
     }
 
@@ -154,8 +153,8 @@ public abstract class ServiceHelpers {
      * @return
      */
     public static
-    Function<LowLevelCacheEntry, FixityResult>
-    getCheckCacheFixityFunction(final URI dsChecksum, final long dsSize) {
+       Function<LowLevelCacheEntry, FixityResult>
+       getCheckCacheFixityFunction(final URI dsChecksum, final long dsSize) {
         return new CheckCacheEntryFixity(dsChecksum, dsSize);
     }
 
