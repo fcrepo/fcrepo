@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils;
 
+import static java.net.URI.create;
+import static org.fcrepo.utils.ContentDigest.asURI;
+import static org.fcrepo.utils.ContentDigest.getAlgorithm;
 import static org.junit.Assert.assertEquals;
-
-import java.net.URI;
 
 import org.junit.Test;
 
@@ -25,20 +27,19 @@ public class ContentDigestTest {
 
     @Test
     public void testSHA_1() {
-        assertEquals("Failed to produce a proper content digest URI!", URI
-                .create("urn:sha1:fake"), ContentDigest.asURI("SHA-1", "fake"));
+        assertEquals("Failed to produce a proper content digest URI!",
+                create("urn:sha1:fake"), asURI("SHA-1", "fake"));
     }
 
     @Test
     public void testSHA1() {
-        assertEquals("Failed to produce a proper content digest URI!", URI
-                .create("urn:sha1:fake"), ContentDigest.asURI("SHA1", "fake"));
+        assertEquals("Failed to produce a proper content digest URI!",
+                create("urn:sha1:fake"), asURI("SHA1", "fake"));
     }
 
     @Test
     public void testGetAlgorithm() {
         assertEquals("Failed to produce a proper digest algorithm!", "SHA-1",
-                     ContentDigest.getAlgorithm(ContentDigest.asURI("SHA-1",
-                                                                    "fake")));
+                getAlgorithm(asURI("SHA-1", "fake")));
     }
 }

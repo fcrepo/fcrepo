@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.spring;
 
+import static com.google.common.base.Throwables.propagate;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -31,6 +34,7 @@ import org.fcrepo.services.ObjectService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.JcrSession;
@@ -38,6 +42,7 @@ import org.modeshape.jcr.api.Repository;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.slf4j.Logger;
 import org.springframework.core.io.Resource;
 
 @RunWith(PowerMockRunner.class)
@@ -45,26 +50,30 @@ import org.springframework.core.io.Resource;
 @PrepareForTest({ObjectService.class})
 public class ModeShapeRepositoryFactoryBeanTest {
 
+    private static final Logger LOGGER =
+            getLogger(ModeShapeRepositoryFactoryBeanTest.class);
+
     private ModeShapeRepositoryFactoryBean testObj;
 
+    @Mock
     private Resource mockConfig;
 
+    @Mock
     private JcrRepository mockRepo;
 
+    @Mock
     private JcrRepositoryFactory mockRepos;
+
+    @Mock
+    private JcrSession mockSession;
 
     @Before
     public void setUp() throws RepositoryException, IOException {
-        mockConfig = mock(Resource.class);
-        mockRepos = mock(JcrRepositoryFactory.class);
-        mockRepo = mock(JcrRepository.class);
-        JcrSession mockSession = mock(JcrSession.class);
-        when(mockRepo.login())
-        .thenReturn(mockSession);
+        initMocks(this);
+        when(mockRepo.login()).thenReturn(mockSession);
         testObj = new ModeShapeRepositoryFactoryBean();
         testObj.setRepositoryConfiguration(mockConfig);
-        when(mockRepos.getRepository(any(Map.class)))
-        .thenReturn(mockRepo);
+        when(mockRepos.getRepository(any(Map.class))).thenReturn(mockRepo);
         inject("jcrRepositoryFactory", mockRepos, testObj);
     }
 
@@ -80,19 +89,20 @@ public class ModeShapeRepositoryFactoryBeanTest {
         assertEquals(true, testObj.isSingleton());
     }
 
-    private static void inject(String name, Object value, Object object) {
+    private static void inject(final String name, final Object value,
+            final Object object) {
         try {
-            Field field =
-                ModeShapeRepositoryFactoryBean.class.getDeclaredField(name);
+            final Field field =
+                    ModeShapeRepositoryFactoryBean.class.getDeclaredField(name);
             if (!field.isAnnotationPresent(Inject.class)) {
-                System.err.println(
-                        "WARNING: test sets ModeShapeRepositoryFactoryBean." +
-                                name + ", which is not annotated as an @Inject");
+                LOGGER.error(
+                        "WARNING: test sets ModeShapeRepositoryFactoryBean.{}, which is not annotated as an @Inject!",
+                        name);
             }
             field.setAccessible(true);
             field.set(object, value);
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
+        } catch (final Throwable t) {
+            propagate(t);
         }
     }
 }

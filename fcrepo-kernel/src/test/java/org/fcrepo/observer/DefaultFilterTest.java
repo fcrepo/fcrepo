@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.observer;
 
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
 
@@ -32,24 +36,27 @@ import javax.jcr.observation.Event;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.modeshape.jcr.api.Repository;
 
 import com.google.common.base.Predicate;
-
 
 public class DefaultFilterTest {
 
     private DefaultFilter testObj;
 
+    @Mock
     private Session mockSession;
+
+    @Mock
+    private Repository mockRepo;
 
     @Before
     public void setUp() throws Exception {
+        initMocks(this);
         testObj = new DefaultFilter();
         final Field repoF = DefaultFilter.class.getDeclaredField("repository");
         repoF.setAccessible(true);
-        final Repository mockRepo = mock(Repository.class);
-        mockSession = mock(Session.class);
         when(mockRepo.login()).thenReturn(mockSession);
         repoF.set(testObj, mockRepo);
         testObj.acquireSession();
@@ -62,8 +69,8 @@ public class DefaultFilterTest {
         when(mockFuncTrue.apply(any(Node.class))).thenReturn(true);
         @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+        final Predicate<Node> holdDS = isFedoraDatastream;
+        final Predicate<Node> holdO = isFedoraObject;
 
         try {
             FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
@@ -75,8 +82,8 @@ public class DefaultFilterTest {
             when(mockSession.getNode(testPath)).thenReturn(mockNode);
             assertTrue(testObj.apply(mockEvent));
         } finally {
-            FedoraTypesUtils.isFedoraDatastream = holdDS;
-            FedoraTypesUtils.isFedoraObject = holdO;
+            isFedoraDatastream = holdDS;
+            isFedoraObject = holdO;
         }
     }
 
@@ -87,12 +94,12 @@ public class DefaultFilterTest {
         when(mockFuncTrue.apply(any(Node.class))).thenReturn(true);
         @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+        final Predicate<Node> holdDS = isFedoraDatastream;
+        final Predicate<Node> holdO = isFedoraObject;
 
         try {
-            FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
-            FedoraTypesUtils.isFedoraObject = mockFuncTrue;
+            isFedoraDatastream = mockFuncFalse;
+            isFedoraObject = mockFuncTrue;
             final String testPath = "/foo/bar";
             final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
@@ -100,8 +107,8 @@ public class DefaultFilterTest {
             when(mockSession.getNode(testPath)).thenReturn(mockNode);
             assertTrue(testObj.apply(mockEvent));
         } finally {
-            FedoraTypesUtils.isFedoraDatastream = holdDS;
-            FedoraTypesUtils.isFedoraObject = holdO;
+            isFedoraDatastream = holdDS;
+            isFedoraObject = holdO;
         }
     }
 
@@ -122,12 +129,12 @@ public class DefaultFilterTest {
     public void shouldNotApplyToSystemNodes() throws Exception {
         @SuppressWarnings("unchecked")
         final Predicate<Node> mockFuncFalse = mock(Predicate.class);
-        final Predicate<Node> holdDS = FedoraTypesUtils.isFedoraDatastream;
-        final Predicate<Node> holdO = FedoraTypesUtils.isFedoraObject;
+        final Predicate<Node> holdDS = isFedoraDatastream;
+        final Predicate<Node> holdO = isFedoraObject;
 
         try {
-            FedoraTypesUtils.isFedoraDatastream = mockFuncFalse;
-            FedoraTypesUtils.isFedoraObject = mockFuncFalse;
+            isFedoraDatastream = mockFuncFalse;
+            isFedoraObject = mockFuncFalse;
             final String testPath = "/foo/bar";
             final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
@@ -135,8 +142,8 @@ public class DefaultFilterTest {
             when(mockSession.getNode(testPath)).thenReturn(mockNode);
             assertEquals(false, testObj.apply(mockEvent));
         } finally {
-            FedoraTypesUtils.isFedoraDatastream = holdDS;
-            FedoraTypesUtils.isFedoraObject = holdO;
+            isFedoraDatastream = holdDS;
+            isFedoraObject = holdO;
         }
     }
 }

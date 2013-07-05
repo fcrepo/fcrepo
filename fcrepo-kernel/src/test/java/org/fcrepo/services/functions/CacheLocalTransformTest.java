@@ -18,9 +18,9 @@ package org.fcrepo.services.functions;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
 
@@ -29,36 +29,43 @@ import org.fcrepo.utils.impl.CacheStoreEntry;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
 import org.infinispan.loaders.CacheStore;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.modeshape.jcr.value.BinaryKey;
 
 import com.google.common.base.Function;
 
 public class CacheLocalTransformTest {
 
-    @SuppressWarnings("unchecked")
+    @Mock
+    private GetCacheStore cacheExtractor;
+
+    @Mock
+    private CacheStore mockCacheStore;
+
+    @Mock
+    private Function<LowLevelCacheEntry, Object> mockTransform;
+
+    @Mock
+    private CacheImpl<Object, Object> mockCache;
+
+    @Before
+    public void setUp() {
+        initMocks(this);
+    }
+
     @Test
     public void testTransform() throws Exception {
 
-        final GetCacheStore cacheExtractor = mock(GetCacheStore.class);
         final Field field =
                 CacheLocalTransform.class.getDeclaredField("TRANSFORM");
         field.setAccessible(true);
         field.set(CacheLocalTransform.class, cacheExtractor);
-
-        final CacheStore mockCacheStore = mock(CacheStore.class);
-
         when(cacheExtractor.apply(any(Cache.class))).thenReturn(mockCacheStore);
-
         final BinaryKey key = new BinaryKey("key-123");
-
-        final Function<LowLevelCacheEntry, Object> mockTransform =
-                mock(Function.class);
-
-        final CacheLocalTransform<?, ?, Object> testObj =
+        final CacheLocalTransform<Object, Object, Object> testObj =
                 new CacheLocalTransform<>(key, mockTransform);
-        @SuppressWarnings("rawtypes")
-        final CacheImpl mockCache = mock(CacheImpl.class);
         when(mockCache.getName()).thenReturn("foo");
         testObj.setEnvironment(mockCache, null);
 

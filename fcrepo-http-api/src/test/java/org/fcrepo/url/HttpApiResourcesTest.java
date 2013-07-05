@@ -24,11 +24,14 @@ import static org.fcrepo.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_VERSION_HISTORY;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.fcrepo.utils.FedoraJcrTypes.ROOT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.HashSet;
@@ -43,9 +46,9 @@ import org.fcrepo.api.FedoraNodes;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -53,34 +56,34 @@ public class HttpApiResourcesTest {
 
     private HttpApiResources testObj;
 
+    @Mock
     private Node mockNode;
 
     private FedoraResource mockResource;
 
     private UriInfo uriInfo;
 
+    @Mock
+    private NodeType mockNodeType;
+
     private GraphSubjects mockSubjects;
 
+    @Mock
     private SerializerUtil mockSerializers;
 
     @Before
     public void setUp() throws NoSuchFieldException {
+        initMocks(this);
         testObj = new HttpApiResources();
-        mockNode = mock(Node.class);
         mockResource = new FedoraResource(mockNode);
-
-        uriInfo = TestHelpers.getUriInfoImpl();
+        uriInfo = getUriInfoImpl();
         mockSubjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
-
-        mockSerializers = mock(SerializerUtil.class);
-        TestHelpers.setField(testObj, "serializers", mockSerializers);
+        setField(testObj, "serializers", mockSerializers);
     }
 
     @Test
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
             throws RepositoryException {
-
-        final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");

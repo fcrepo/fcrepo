@@ -16,13 +16,16 @@
 
 package org.fcrepo.services;
 
+import static java.lang.System.currentTimeMillis;
+import static org.fcrepo.Transaction.State.NEW;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
 import java.util.Date;
@@ -32,11 +35,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.Transaction;
-import org.fcrepo.Transaction.State;
 import org.fcrepo.exception.TransactionMissingException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Mock;
 
 /**
  * @author frank asseg
@@ -49,14 +51,16 @@ public class TransactionServiceTest {
 
     TransactionService service;
 
-    Session mockSession;
+    @Mock
+    private Session mockSession;
 
-    Transaction mockTx;
+    @Mock
+    private Transaction mockTx;
 
     @Before
     public void setup() throws Exception {
+        initMocks(this);
         service = new TransactionService();
-        mockTx = mock(Transaction.class);
         when(mockTx.getId()).thenReturn(IS_A_TX);
         final Field txsField =
                 TransactionService.class.getDeclaredField("TRANSACTIONS");
@@ -70,7 +74,7 @@ public class TransactionServiceTest {
 
     @Test
     public void testExpiration() throws Exception {
-        final Date fiveSecondsAgo = new Date(System.currentTimeMillis() - 5000);
+        final Date fiveSecondsAgo = new Date(currentTimeMillis() - 5000);
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
         service.removeAndRollbackExpired();
         verify(mockTx).rollback();
@@ -78,8 +82,8 @@ public class TransactionServiceTest {
 
     @Test
     public void testExpirationThrowsRepositoryException() throws Exception {
-        final Date fiveSecondsAgo = new Date(System.currentTimeMillis() - 5000);
-        Mockito.doThrow(new RepositoryException("")).when(mockTx).rollback();
+        final Date fiveSecondsAgo = new Date(currentTimeMillis() - 5000);
+        doThrow(new RepositoryException("")).when(mockTx).rollback();
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
         service.removeAndRollbackExpired();
     }
@@ -90,7 +94,7 @@ public class TransactionServiceTest {
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
-        assertEquals(State.NEW, tx.getState());
+        assertEquals(NEW, tx.getState());
     }
 
     @Test
@@ -115,7 +119,6 @@ public class TransactionServiceTest {
     @Test
     public void testCommitTx() throws Exception {
         final Transaction tx = service.commit(IS_A_TX);
-
         assertNotNull(tx);
         verify(mockTx).commit();
     }
@@ -129,7 +132,6 @@ public class TransactionServiceTest {
     @Test
     public void testRollbackTx() throws Exception {
         final Transaction tx = service.rollback(IS_A_TX);
-
         assertNotNull(tx);
         verify(mockTx).rollback();
     }

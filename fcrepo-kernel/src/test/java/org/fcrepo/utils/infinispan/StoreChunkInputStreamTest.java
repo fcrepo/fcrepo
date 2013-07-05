@@ -13,24 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.utils.infinispan;
 
+import static org.fcrepo.utils.TestHelpers.randomData;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 
-import org.fcrepo.utils.TestHelpers;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class StoreChunkInputStreamTest {
 
@@ -38,21 +40,21 @@ public class StoreChunkInputStreamTest {
 
     private StoreChunkInputStream testObj;
 
+    @Mock
     private CacheStore mockStore;
 
+    @Mock
     private InternalCacheEntry mockEntry;
 
-    private String mockKey = "key-to-a-mock-blob";
+    private static final String MOCK_KEY = "key-to-a-mock-blob";
 
-    private String mockFirstChunk = mockKey + "-0";
-
+    private static final String MOCK_FIRST_CHUNK = MOCK_KEY + "-0";
 
     @Before
     public void setUp() throws CacheLoaderException {
-        mockStore = mock(CacheStore.class);
-        when(mockStore.containsKey(mockFirstChunk)).thenReturn(true);
-        mockEntry = mock(InternalCacheEntry.class);
-        testObj = new StoreChunkInputStream(mockStore, mockKey);
+        initMocks(this);
+        when(mockStore.containsKey(MOCK_FIRST_CHUNK)).thenReturn(true);
+        testObj = new StoreChunkInputStream(mockStore, MOCK_KEY);
     }
 
     @Test
@@ -62,36 +64,35 @@ public class StoreChunkInputStreamTest {
 
     @Test
     public void testBufferedRead() throws IOException, CacheLoaderException {
-        InternalCacheEntry mockEntry = mock(InternalCacheEntry.class);
-        byte[] data = TestHelpers.randomData(DATA_SIZE);
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
-        when(mockStore.load(anyString())).thenReturn(mockEntry)
-            .thenReturn(mockEntry).thenReturn(null);
-        int partition = 234;
-        int expected = (DATA_SIZE - partition);
-        byte [] buffer = new byte[DATA_SIZE];
+        when(mockStore.load(anyString())).thenReturn(mockEntry).thenReturn(
+                mockEntry).thenReturn(null);
+        final int partition = 234;
+        final int expected = (DATA_SIZE - partition);
+        final byte[] buffer = new byte[DATA_SIZE];
         long actual = testObj.read(buffer, 0, expected);
         // can read less than a block of data
         assertEquals(expected, actual);
         // will not load the next chunk if more data is available
-        actual = testObj.read(buffer,0, DATA_SIZE);
+        actual = testObj.read(buffer, 0, DATA_SIZE);
         assertEquals(partition, actual);
-        actual = testObj.read(buffer,0, DATA_SIZE);
+        actual = testObj.read(buffer, 0, DATA_SIZE);
         // will load the next chunk if no data is available
         assertEquals(DATA_SIZE, actual);
         // and will report the end of the data accurately
-        actual = testObj.read(buffer,0, DATA_SIZE);
+        actual = testObj.read(buffer, 0, DATA_SIZE);
         assertEquals(-1, actual);
 
     }
 
     @Test
     public void testAvailable() throws IOException, CacheLoaderException {
-        byte[] data = TestHelpers.randomData(DATA_SIZE);
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
-        when(mockStore.load(mockFirstChunk)).thenReturn(mockEntry);
+        when(mockStore.load(MOCK_FIRST_CHUNK)).thenReturn(mockEntry);
         assertEquals(0, testObj.available());
-        int partition = 435;
+        final int partition = 435;
         testObj.skip(partition);
         // part of the first buffer remains
         assertEquals(DATA_SIZE - partition, testObj.available());
@@ -105,28 +106,26 @@ public class StoreChunkInputStreamTest {
 
     @Test
     public void testSkip() throws IOException, CacheLoaderException {
-        long expected = (DATA_SIZE - 1);
-        byte[] data = TestHelpers.randomData(DATA_SIZE);
+        final long expected = (DATA_SIZE - 1);
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
-        when(mockStore.load(mockFirstChunk)).thenReturn(mockEntry);
-        long actual = testObj.skip(expected);
+        when(mockStore.load(MOCK_FIRST_CHUNK)).thenReturn(mockEntry);
+        final long actual = testObj.skip(expected);
         assertEquals(expected, actual);
         verify(mockStore).load(anyString());
-        verify(mockStore).load(mockFirstChunk);
+        verify(mockStore).load(MOCK_FIRST_CHUNK);
         verify(mockEntry).getValue();
         assertTrue(testObj.read() > -1);
         assertEquals(-1, testObj.read());
     }
 
     @Test
-    public void testSkipMultipleBuffers()
-        throws IOException, CacheLoaderException {
-        InternalCacheEntry mockEntry = mock(InternalCacheEntry.class);
-        byte[] data = TestHelpers.randomData(DATA_SIZE);
+    public void testSkipMultipleBuffers() throws IOException,
+            CacheLoaderException {
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
-        when(mockStore.load(anyString())).thenReturn(mockEntry)
-            .thenReturn(mockEntry).thenReturn(null);
-
+        when(mockStore.load(anyString())).thenReturn(mockEntry).thenReturn(
+                mockEntry).thenReturn(null);
         long expected = (DATA_SIZE);
         // ask for more than the buffer
         long actual = testObj.skip(DATA_SIZE + 1);

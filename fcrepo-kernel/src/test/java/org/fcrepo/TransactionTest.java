@@ -19,10 +19,10 @@ package org.fcrepo;
 import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -33,16 +33,18 @@ import static org.fcrepo.Transaction.State.NEW;
 import static org.fcrepo.Transaction.State.COMMITED;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class TransactionTest {
 
     private Transaction testObj;
 
+    @Mock
     private Session mockSession;
 
     @Before
     public void setUp() {
-        mockSession = mock(Session.class);
+        initMocks(this);
         testObj = new Transaction(mockSession);
     }
 

@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo;
 
+import static org.fcrepo.services.ServiceHelpers.getObjectSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -38,7 +42,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -50,33 +54,35 @@ import com.google.common.base.Predicate;
 @PrepareForTest({ServiceHelpers.class})
 public class FedoraObjectTest implements FedoraJcrTypes {
 
-    String testPid = "testObj";
+    private static final String testPid = "testObj";
 
-    String mockUser = "mockUser";
+    private static final String mockUser = "mockUser";
 
-    Session mockSession;
+    @Mock
+    private Session mockSession;
 
-    Node mockRootNode;
+    @Mock
+    private Node mockRootNode;
 
-    Node mockObjNode;
+    @Mock
+    private Node mockObjNode;
 
-    FedoraObject testFedoraObject;
+    @Mock
+    private Property mockProp;
 
-    NodeType[] mockNodetypes;
+    @Mock
+    private Predicate<Node> mockPredicate;
+
+    private FedoraObject testFedoraObject;
+
+    private NodeType[] mockNodetypes;
 
     @Before
     public void setUp() throws LoginException, RepositoryException {
+        initMocks(this);
         final String relPath = "/" + testPid;
-
-        mockSession = mock(Session.class);
-        mockRootNode = mock(Node.class);
-        mockObjNode = mock(Node.class);
-        NodeType[] types = new NodeType[0];
-        @SuppressWarnings("unchecked")
-        final Predicate<Node> mockPredicate = mock(Predicate.class);
-
+        final NodeType[] types = new NodeType[0];
         try {
-
             when(mockObjNode.getName()).thenReturn(testPid);
             when(mockObjNode.getSession()).thenReturn(mockSession);
             when(mockObjNode.getMixinNodeTypes()).thenReturn(types);
@@ -119,7 +125,6 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     @Test
     public void testGetCreated() throws RepositoryException {
-        final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
         when(mockObjNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
@@ -129,7 +134,6 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     @Test
     public void testGetLastModified() throws RepositoryException {
-        final Property mockProp = mock(Property.class);
         when(mockObjNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
@@ -139,9 +143,9 @@ public class FedoraObjectTest implements FedoraJcrTypes {
 
     @Test
     public void testGetSize() throws RepositoryException {
-        PowerMockito.mockStatic(ServiceHelpers.class);
+        mockStatic(ServiceHelpers.class);
         // obviously not a real value
-        when(ServiceHelpers.getObjectSize(mockObjNode)).thenReturn(-8L);
+        when(getObjectSize(mockObjNode)).thenReturn(-8L);
         final long actual = testFedoraObject.getSize();
         assertEquals(-8, actual);
     }

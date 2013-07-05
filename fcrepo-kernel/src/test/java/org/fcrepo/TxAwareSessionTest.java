@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Credentials;
 import javax.jcr.RepositoryException;
@@ -30,16 +31,18 @@ import javax.jcr.Session;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class TxAwareSessionTest {
 
+    @Mock
     private Session mockSession;
 
     private Session testObj;
 
     @Before
     public void setUp() {
-        mockSession = mock(Session.class);
+        initMocks(this);
         testObj = newInstance(mockSession, "txid");
 
     }

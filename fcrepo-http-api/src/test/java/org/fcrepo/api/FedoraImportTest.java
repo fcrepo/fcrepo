@@ -17,10 +17,12 @@
 package org.fcrepo.api;
 
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
-import static org.mockito.Mockito.mock;
+import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.InputStream;
 
@@ -29,9 +31,9 @@ import javax.jcr.Session;
 
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class FedoraImportTest {
 
@@ -39,53 +41,48 @@ public class FedoraImportTest {
 
     Session mockSession;
 
-    SerializerUtil mockSerializers;
+    @Mock
+    private SerializerUtil mockSerializers;
 
-    FedoraObjectSerializer mockSerializer;
+    @Mock
+    private FedoraObjectSerializer mockSerializer;
+
+    @Mock
+    private InputStream mockInputStream;
+
+    @Mock
+    private Node mockNode;
 
     @Before
     public void setUp() throws Exception {
-
+        initMocks(this);
         testObj = new FedoraImport();
 
         mockSession = mockSession(testObj);
-        mockSerializers = mock(SerializerUtil.class);
-        mockSerializer = mock(FedoraObjectSerializer.class);
         when(mockSerializers.getSerializer("fake-format")).thenReturn(
                 mockSerializer);
-        TestHelpers.setField(testObj, "serializers", mockSerializers);
-        TestHelpers.setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
-        mockSession = TestHelpers.mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "serializers", mockSerializers);
+        setField(testObj, "uriInfo", getUriInfoImpl());
+        mockSession = mockSession(testObj);
+        setField(testObj, "session", mockSession);
     }
 
     @Test
     public void testImportObject() throws Exception {
-        final InputStream mockInputStream = mock(InputStream.class);
-
-        Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/test/object");
         when(mockSession.getNode("/test/object")).thenReturn(mockNode);
-
         testObj.importObject(createPathList("test", "object"), "fake-format",
                 mockInputStream);
-
         verify(mockSerializer).deserialize(mockSession, "/test/object",
                 mockInputStream);
-
     }
 
     @Test
     public void testImportObjectAtRoot() throws Exception {
-        final InputStream mockInputStream = mock(InputStream.class);
-        final FedoraObjectSerializer mockSerializer =
-                mock(FedoraObjectSerializer.class);
-        when(mockSerializers.getSerializer("fake-format")).thenReturn(mockSerializer);
-
-        Node mockNode = mock(Node.class);
+        when(mockSerializers.getSerializer("fake-format")).thenReturn(
+                mockSerializer);
         when(mockNode.getPath()).thenReturn("/");
         when(mockSession.getNode("/")).thenReturn(mockNode);
-
         testObj.importObject(createPathList(), "fake-format", mockInputStream);
         verify(mockSerializer).deserialize(mockSession, "/", mockInputStream);
 
