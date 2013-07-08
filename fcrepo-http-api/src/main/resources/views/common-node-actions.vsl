@@ -14,7 +14,7 @@
     </label>
 
 
-    <label for="datastream_payload">
+    <label id="datastream_payload_container" for="datastream_payload">
         File
     <input type="file" id="datastream_payload"/>
     </label>

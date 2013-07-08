@@ -93,9 +93,9 @@ function sendImport() {
 $(function() {
     $('#new_mixin').change(function() {
         if($('#new_mixin').val() == "fedora:datastream") {
-            $('#datastream_payload').show();
+            $('#datastream_payload_container').show();
         } else {
-            $('#datastream_payload').hide();
+            $('#datastream_payload_container').hide();
         }
     });
 

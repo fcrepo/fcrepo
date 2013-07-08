@@ -18,6 +18,6 @@ body { padding-top: 40px; }
     padding-left: 54px;
 }
 
-#datastream_payload {
+#datastream_payload_container {
     display: none;
 }
