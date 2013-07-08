@@ -158,7 +158,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
             }
 
             List<String> otherTemplates =
-                    ImmutableList.of("search:results", "jcr:namespaces");
+                    ImmutableList.of("search:results", "jcr:namespaces", "node");
 
             for (String key : otherTemplates) {
                 final Template template =
@@ -246,6 +246,11 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
             LOGGER.debug("Found primary node type: {}", nodeType);
             template = templatesMap.get(nodeType);
+        }
+
+        if (template == null) {
+            LOGGER.debug("Falling back on default node template");
+            template = templatesMap.get("node");
         }
 
         LOGGER.debug("Choosing template: {}", template.getName());
