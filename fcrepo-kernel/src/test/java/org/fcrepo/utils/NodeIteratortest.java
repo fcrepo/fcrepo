@@ -54,7 +54,7 @@ public class NodeIteratortest {
 
     @Test
     public void testNext() {
-        when(i.nextNode()).thenReturn(node1, node2);
+        when(i.next()).thenReturn(node1, node2);
         assertEquals(node1, testIterator.next());
         assertEquals(node2, testIterator.next());
     }

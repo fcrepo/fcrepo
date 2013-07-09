@@ -40,9 +40,6 @@ public class SessionProviderTest {
     SessionProvider testObj;
 
     @Mock
-    private Repository mockRepo;
-
-    @Mock
     private Session mockSession;
 
     @Mock

@@ -57,6 +57,7 @@ import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.UUIDPidMinter;
+import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
@@ -101,7 +102,7 @@ public class FedoraNodesTest {
 
     @Mock
     private Model mockModel;
-
+    
     private UriInfo uriInfo;
 
     @Before
@@ -230,11 +231,13 @@ public class FedoraNodesTest {
     public void testSparqlUpdate() throws RepositoryException, IOException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
-        when(mockObject.getDatasetProblems()).thenReturn(null);
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
-
+        when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
+        .thenReturn(mockDataset);
+        when(mockDataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME))
+        .thenReturn(mockModel);
         testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream);
 
         verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),

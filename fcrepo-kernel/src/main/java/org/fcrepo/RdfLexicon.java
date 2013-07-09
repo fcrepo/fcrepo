@@ -24,7 +24,8 @@ import com.hp.hpl.jena.rdf.model.Property;
  */
 public final class RdfLexicon {
 
-    public static final String INTERNAL_NAMESPACE = "info:fedora/fedora-system:def/internal#";
+    public static final String INTERNAL_NAMESPACE =
+            "info:fedora/fedora-system:def/internal#";
 
     // MEMBERSHIP
     public static final Property HAS_MEMBER_OF_RESULT =
@@ -98,7 +99,9 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_SERVICE =
             createProperty("info:fedora/hasFixity");
     public static final Property HAS_FEED =
-            createProperty("http://www.whatwg.org/specs/web-apps/current-work/#feed0");
+            createProperty(
+                    "http://www.whatwg.org/specs/web-apps/current-work/#",
+                    "feed0");
     public static final Property HAS_SUBSCRIPTION_SERVICE =
             createProperty("http://microformats.org/wiki/rel-subscription");
 
@@ -119,6 +122,10 @@ public final class RdfLexicon {
             createProperty(INTERNAL_NAMESPACE + "hasVersion");
     public static final Property HAS_VERSION_LABEL =
             createProperty(INTERNAL_NAMESPACE + "hasVersionLabel");
+
+    // RDF EXTRACTION
+    public static final Property COULD_NOT_STORE_PROPERTY =
+            createProperty(INTERNAL_NAMESPACE + "couldNotStoreProperty");
 
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =

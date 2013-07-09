@@ -59,7 +59,7 @@ public class LegacyMethodEventFactoryTest {
         NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);
         when(mockJCR.getNode(testPath)).thenReturn(mockSource);
-        Message actual = testObj.getMessage(mockEvent, mockJCR, mockJMS);
+        testObj.getMessage(mockEvent, mockJCR, mockJMS);
         verify(mockText).setStringProperty("methodName", "ingest");
     }
 }

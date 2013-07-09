@@ -55,7 +55,8 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(Datastream.class);
 
-    static final Histogram contentSizeHistogram = getMetrics().histogram(name(Datastream.class, "content-size"));
+    static final Histogram contentSizeHistogram =
+            getMetrics().histogram(name(Datastream.class, "content-size"));
 
     /**
      * The JCR node for this datastream
@@ -168,7 +169,8 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         final String dsChecksum = binary.getHexHash();
-        if (checksum != null && !checksum.equals(ContentDigest.asURI("SHA-1", dsChecksum))) {
+        if (checksum != null &&
+                !checksum.equals(ContentDigest.asURI("SHA-1", dsChecksum))) {
             LOGGER.debug("Failed checksum test");
             throw new InvalidChecksumException("Checksum Mismatch of " +
                                                dsChecksum + " and " + checksum);

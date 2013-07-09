@@ -326,10 +326,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         .getBytes()));
         getObjMethod.setEntity(e);
         final HttpResponse response = client.execute(getObjMethod);
+        if (response.getStatusLine().getStatusCode() != 403  && response.getEntity() != null) {
+            final String content = EntityUtils.toString(response.getEntity());
+            logger.error("Got unexpected update response:\n" + content);
+        }
         assertEquals(403, response.getStatusLine().getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
-
-        logger.debug("Got update response:\n" + content);
 
     }
 

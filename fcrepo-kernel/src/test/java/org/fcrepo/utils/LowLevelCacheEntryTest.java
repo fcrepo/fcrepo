@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -77,9 +76,6 @@ public class LowLevelCacheEntryTest {
     private BinaryStore mockStore;
 
     @Mock
-    private BinaryStore mockIspnStore;
-
-    @Mock
     private BinaryStore otherStore;
 
     @Mock
@@ -95,7 +91,6 @@ public class LowLevelCacheEntryTest {
 
     @Before
     public void setUp() throws Exception {
-        initMocks(this);
         testKey = new BinaryKey("test-key-123");
         testObj = new LocalBinaryStoreEntry(mockStore, testKey);
         testIspnObj =

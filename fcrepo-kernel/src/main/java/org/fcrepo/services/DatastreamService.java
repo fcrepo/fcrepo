@@ -39,6 +39,7 @@ import javax.jcr.Session;
 import org.fcrepo.Datastream;
 import org.fcrepo.binary.PolicyDecisionPoint;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FixityResult;
 import org.fcrepo.utils.JcrRdfTools;
@@ -54,7 +55,6 @@ import com.google.common.base.Predicate;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 
 /**
@@ -192,7 +192,7 @@ public class DatastreamService extends RepositoryService {
         final String uri =
                 getGraphSubject(subjects, datastream.getNode()).getURI();
         final Context context = dataset.getContext();
-        context.set(Symbol.create("uri"), uri);
+        context.set(GraphProperties.URI_SYMBOL, uri);
 
         return dataset;
     }

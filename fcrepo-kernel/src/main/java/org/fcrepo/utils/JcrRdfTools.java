@@ -298,6 +298,14 @@ public abstract class JcrRdfTools {
     }
 
     /**
+     * Get a model in which to collect statements of RDF extraction problems
+     * @return
+     */
+    public static Model getProblemsModel() {
+        return ModelFactory.createDefaultModel();
+    }
+
+    /**
      * Add repository metrics data to the given JCR model
      * 
      * @param factory

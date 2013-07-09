@@ -36,9 +36,6 @@ public class InjectableSessionTest {
     InjectableSession testObj;
 
     @Mock
-    private Repository mockRepo;
-
-    @Mock
     private Session mockSession;
 
     @Mock

@@ -23,7 +23,10 @@ import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -33,6 +36,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +46,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -73,12 +78,15 @@ public class JcrPropertyStatementListenerTest {
 
     @Mock
     private Node mockSubjectNode;
+    
+    @Mock
+    private Model mockProblems;
 
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = new JcrPropertyStatementListener(mockSubjects, mockSession);
+        testObj = JcrPropertyStatementListener.getListener(mockSubjects, mockSession, mockProblems);
         when(mockStatement.getSubject()).thenReturn(mockSubject);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
     }
@@ -92,7 +100,7 @@ public class JcrPropertyStatementListenerTest {
         getNodeFromGraphSubject(any(GraphSubjects.class), any(Session.class),
                 any(Resource.class));
         // this was ignored, but not a problem
-        assertEquals(0, testObj.getProblems().size());
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test
@@ -106,7 +114,7 @@ public class JcrPropertyStatementListenerTest {
                 .thenReturn(mockPropertyName);
 
         testObj.addedStatement(mockStatement);
-        assertEquals(1, testObj.getProblems().size());
+        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq(mockPropertyName));
     }
 
     @Test
@@ -123,7 +131,7 @@ public class JcrPropertyStatementListenerTest {
         when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.addedStatement(mockStatement);
-        assertEquals(0, testObj.getProblems().size());
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test(expected = RuntimeException.class)
@@ -137,6 +145,7 @@ public class JcrPropertyStatementListenerTest {
                 .thenThrow(new RepositoryException());
 
         testObj.addedStatement(mockStatement);
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test
@@ -153,7 +162,7 @@ public class JcrPropertyStatementListenerTest {
         when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.removedStatement(mockStatement);
-        assertEquals(0, testObj.getProblems().size());
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test(expected = RuntimeException.class)
@@ -167,6 +176,7 @@ public class JcrPropertyStatementListenerTest {
                 .thenThrow(new RepositoryException());
 
         testObj.removedStatement(mockStatement);
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test
@@ -183,7 +193,7 @@ public class JcrPropertyStatementListenerTest {
         when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.removedStatement(mockStatement);
-        assertEquals(1, testObj.getProblems().size());
+        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq(mockPropertyName));
     }
 
     @Test
@@ -195,7 +205,7 @@ public class JcrPropertyStatementListenerTest {
         getNodeFromGraphSubject(any(GraphSubjects.class), any(Session.class),
                 any(Resource.class));
         // this was ignored, but not a problem
-        assertEquals(0, testObj.getProblems().size());
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
 }

@@ -50,9 +50,6 @@ public class HttpGraphSubjectsTest {
     @Mock
     private Session mockSession;
     
-    @Mock private UriInfo ui ;
-    @Mock private UriBuilder ub;
-
     @Mock
     private Workspace mockWorkspace;
     

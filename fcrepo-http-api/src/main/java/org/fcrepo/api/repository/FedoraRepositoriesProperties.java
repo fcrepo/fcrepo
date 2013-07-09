@@ -37,13 +37,15 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.FedoraNodes;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.session.InjectedSession;
-import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * Utility endpoint for running SPARQL Update queries on any object
@@ -79,11 +81,12 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, "/");
 
-                result.updatePropertiesDataset(new HttpGraphSubjects(
+                Dataset dataset = result.updatePropertiesDataset(new HttpGraphSubjects(
                         FedoraNodes.class, uriInfo, session), IOUtils
                         .toString(requestBodyStream));
-                final Problems problems = result.getDatasetProblems();
-                if (problems != null && problems.hasProblems()) {
+                if (dataset.containsNamedModel(GraphProperties.PROBLEMS_MODEL_NAME)) {
+                    Model problems = dataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME);
+
                     logger.info(
                             "Found these problems updating the properties for {}: {}",
                             "/", problems.toString());

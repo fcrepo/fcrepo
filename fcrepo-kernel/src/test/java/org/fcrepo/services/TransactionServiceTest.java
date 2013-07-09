@@ -52,9 +52,6 @@ public class TransactionServiceTest {
     TransactionService service;
 
     @Mock
-    private Session mockSession;
-
-    @Mock
     private Transaction mockTx;
 
     @Before

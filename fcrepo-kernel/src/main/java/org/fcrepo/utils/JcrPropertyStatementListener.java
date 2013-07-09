@@ -24,7 +24,6 @@ import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.utils.NodePropertiesTools.removeNodeProperty;
-import static org.modeshape.jcr.JcrI18n.couldNotStoreProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -32,12 +31,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
-import org.modeshape.common.collection.Problems;
-import org.modeshape.common.collection.SimpleProblems;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
@@ -47,7 +46,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  */
 public class JcrPropertyStatementListener extends StatementListener {
 
-    private Problems problems;
+    private Model problems;
 
     private static final Logger LOGGER =
             getLogger(JcrPropertyStatementListener.class);
@@ -57,17 +56,31 @@ public class JcrPropertyStatementListener extends StatementListener {
     private final Session session;
 
     /**
+     * Return a Listener given the subject factory and JcrSession.
+     * @param subjects
+     * @param session
+     * @param problemModel
+     * @return
+     * @throws RepositoryException
+     */
+    public static JcrPropertyStatementListener getListener(
+            final GraphSubjects subjects, final Session session, Model problemModel)
+        throws RepositoryException {
+        return new JcrPropertyStatementListener(subjects, session, problemModel);
+    }
+
+    /**
      * Construct a statement listener within the given session
      * 
      * @param subjects
      * @param session
      * @throws RepositoryException
      */
-    public JcrPropertyStatementListener(final GraphSubjects subjects,
-            final Session session) throws RepositoryException {
+    private JcrPropertyStatementListener(final GraphSubjects subjects,
+            final Session session, final Model problems) throws RepositoryException {
         this.session = session;
         this.subjects = subjects;
-        this.problems = new SimpleProblems();
+        this.problems = problems;
     }
 
     /**
@@ -94,7 +107,8 @@ public class JcrPropertyStatementListener extends StatementListener {
             final String propertyName =
                     getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
-            if (validateModificationsForPropertyName(subjectNode, propertyName)) {
+            if (validateModificationsForPropertyName(
+                    subject, propertyName)) {
                 final Value v =
                         createValue(subjectNode, s.getObject(),
                                 getPropertyType(subjectNode, propertyName));
@@ -131,7 +145,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // if the property doesn't exist, we don't need to worry about it.
             if (subjectNode.hasProperty(propertyName) &&
-                    validateModificationsForPropertyName(subjectNode,
+                    validateModificationsForPropertyName(subject,
                             propertyName)) {
                 final Value v =
                         createValue(subjectNode, s.getObject(),
@@ -146,11 +160,11 @@ public class JcrPropertyStatementListener extends StatementListener {
     }
 
     private boolean validateModificationsForPropertyName(
-            final Node subjectNode, final String propertyName) {
+            final Resource subject, final String propertyName) {
         if (propertyName.startsWith("jcr:") ||
                 propertyName.startsWith("fedora:")) {
-            problems.addError(couldNotStoreProperty, "", subjectNode,
-                    propertyName);
+            LOGGER.debug("problem with <{}> <{}> <{}>", subject.getURI(), RdfLexicon.COULD_NOT_STORE_PROPERTY, propertyName);
+            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, propertyName);
             return false;
         }
 
@@ -163,7 +177,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * 
      * @return
      */
-    public Problems getProblems() {
+    public Model getProblems() {
         return problems;
     }
 

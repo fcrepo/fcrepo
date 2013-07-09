@@ -52,6 +52,7 @@ import javax.jcr.query.qom.Constraint;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
+import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -68,7 +69,6 @@ import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * Repository-global helper methods
@@ -272,7 +272,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         final Context context =
                 dataset.getContext() != null ? dataset.getContext()
                         : new Context();
-        context.set(Symbol.create("uri"), uri);
+        context.set(GraphProperties.URI_SYMBOL, uri);
 
         return dataset;
 

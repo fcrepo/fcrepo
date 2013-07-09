@@ -17,7 +17,6 @@
 package org.fcrepo.api.repository;
 
 import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.test.util.TestHelpers.mockSession;
 import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -39,6 +38,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import com.hp.hpl.jena.query.Dataset;
+
 public class FedoraRepositoriesPropertiesTest {
 
     private FedoraRepositoriesProperties testObj;
@@ -48,14 +49,17 @@ public class FedoraRepositoriesPropertiesTest {
 
     @Mock
     private FedoraObject mockObject;
+    
+    @Mock
+    private Dataset mockDataset;
 
+    @Mock
     private Session mockSession;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
         testObj = new FedoraRepositoriesProperties();
-        mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
@@ -63,10 +67,11 @@ public class FedoraRepositoriesPropertiesTest {
 
     @Test
     public void testSparqlUpdate() throws RepositoryException, IOException {
-        when(mockObject.getDatasetProblems()).thenReturn(null);
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, "/")).thenReturn(mockObject);
+        when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
+            .thenReturn(mockDataset);
         testObj.updateSparql(mockStream);
 
         verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),

@@ -28,6 +28,7 @@ import java.util.Iterator;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.fcrepo.rdf.SerializationUtils;
+import org.fcrepo.rdf.GraphProperties;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.util.Context;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
@@ -86,6 +88,23 @@ public class RdfSerializationUtils {
                     .getLexicalForm();
         } else {
             logger.trace("No value found for predicate: {}", predicate);
+            return null;
+        }
+    }
+
+    /**
+     * Get the subject of the dataset, given by the context's "uri"
+     * 
+     * @param rdf
+     * @return
+     */
+    static Node getDatasetSubject(final Dataset rdf) {
+        Context context = rdf.getContext();
+        String uri = context.getAsString(GraphProperties.URI_SYMBOL);
+        logger.debug("uri from context: {}", uri);
+        if (uri != null) {
+            return createURI(uri);
+        } else {
             return null;
         }
     }

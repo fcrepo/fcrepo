@@ -32,12 +32,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 
+import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.rdf.impl.JcrGraphProperties;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.fcrepo.utils.JcrPropertyStatementListener;
 import org.fcrepo.utils.JcrRdfTools;
-import org.modeshape.common.collection.Problems;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -45,7 +45,6 @@ import org.slf4j.Logger;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.update.UpdateAction;
 
 /**
@@ -56,18 +55,22 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraResource.class);
 
+    private static final GraphProperties DEFAULT_PROPERTY_FACTORY =
+            new JcrGraphProperties();
+
     public static final GraphSubjects DEFAULT_SUBJECT_FACTORY =
         new DefaultGraphSubjects();
 
     protected Node node;
 
-    private JcrPropertyStatementListener listener;
+    private GraphProperties properties;
 
     /**
      * Construct a FedoraObject without a backing JCR Node
      */
     public FedoraResource() {
         node = null;
+        this.properties = DEFAULT_PROPERTY_FACTORY;
     }
 
     /**
@@ -77,6 +80,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public FedoraResource(final Node node) {
         super(false);
         this.node = node;
+        this.properties = DEFAULT_PROPERTY_FACTORY;
     }
 
     /**
@@ -89,7 +93,8 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
                           final String nodeType)
         throws RepositoryException {
         super(false);
-        this.node = findOrCreateNode(session, path, JcrConstants.NT_FOLDER, nodeType);
+        this.node = findOrCreateNode(
+                session, path, JcrConstants.NT_FOLDER, nodeType);
 
         if (!hasMixin(node)) {
             node.addMixin(FEDORA_RESOURCE);
@@ -102,7 +107,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
             node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
         }
-
+        this.properties = DEFAULT_PROPERTY_FACTORY;
     }
 
     /**
@@ -203,21 +208,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * After applying a SPARQL Update to the properties dataset, this may
-     * contain Problems with applying the update.
-     *
-     * @return
-     * @throws RepositoryException
-     */
-    public Problems getDatasetProblems() throws RepositoryException {
-        if (listener != null) {
-            return listener.getProblems();
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * Update the properties Dataset with a SPARQL Update query. The updated
      * properties may be serialized to the JCR store.
      *
@@ -229,11 +219,12 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param sparqlUpdateStatement
      * @throws RepositoryException
      */
-    public void updatePropertiesDataset(final GraphSubjects subjects,
+    public Dataset updatePropertiesDataset(final GraphSubjects subjects,
                                         final String sparqlUpdateStatement)
         throws RepositoryException {
         final Dataset dataset = getPropertiesDataset(subjects, 0, 0);
         UpdateAction.parseExecute(sparqlUpdateStatement, dataset);
+        return dataset;
     }
 
     /**
@@ -247,9 +238,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param sparqlUpdateStatement
      * @throws RepositoryException
      */
-    public void updatePropertiesDataset(final String sparqlUpdateStatement)
+    public Dataset updatePropertiesDataset(final String sparqlUpdateStatement)
         throws RepositoryException {
-        updatePropertiesDataset(DEFAULT_SUBJECT_FACTORY, sparqlUpdateStatement);
+        return updatePropertiesDataset(DEFAULT_SUBJECT_FACTORY,
+                sparqlUpdateStatement);
     }
 
     /**
@@ -258,29 +250,20 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      *
      * @param subjects
      * @param offset
-     *@param limit @return
+     * @param limit
+     * @return
      * @throws RepositoryException
      */
-    public Dataset getPropertiesDataset(final GraphSubjects subjects, final long offset, final int limit)
+    public Dataset getPropertiesDataset(final GraphSubjects subjects,
+            final long offset, final int limit)
         throws RepositoryException {
 
-        final Model model = JcrRdfTools.getJcrPropertiesModel(subjects, node);
-        final Model treeModel = JcrRdfTools.getJcrTreeModel(subjects, node, offset, limit);
-
-        listener =
-            new JcrPropertyStatementListener(subjects, node.getSession());
-
-        model.register(listener);
-        treeModel.register(listener);
-
-        final Dataset dataset = DatasetFactory.create(model);
-        dataset.addNamedModel("tree", treeModel);
-
-        String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
-        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
-        context.set(Symbol.create("uri"),uri);
-
-        return dataset;
+        if (this.properties != null) {
+            return this.properties.getProperties(
+                    node, subjects, offset, limit);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -288,7 +271,8 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getPropertiesDataset(final GraphSubjects subjects) throws RepositoryException {
+    public Dataset getPropertiesDataset(final GraphSubjects subjects)
+        throws RepositoryException {
         return getPropertiesDataset(subjects, 0, -1);
     }
 
@@ -298,7 +282,8 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getPropertiesDataset() throws RepositoryException {
+    public Dataset getPropertiesDataset()
+        throws RepositoryException {
         return getPropertiesDataset(DEFAULT_SUBJECT_FACTORY);
     }
 
@@ -316,7 +301,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
         com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
-        context.set(Symbol.create("uri"),uri);
+        context.set(GraphProperties.URI_SYMBOL,uri);
 
         return dataset;
     }

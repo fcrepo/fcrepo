@@ -32,6 +32,7 @@ import static org.fcrepo.http.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
+import static org.fcrepo.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -71,13 +72,13 @@ import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.FedoraJcrTypes;
-import org.modeshape.common.collection.Problems;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * CRUD operations on Fedora Nodes
@@ -250,14 +251,14 @@ public class FedoraNodes extends AbstractResource {
                 final FedoraResource result =
                         nodeService.getObject(session, path);
 
-                result.updatePropertiesDataset(new HttpGraphSubjects(
+                Dataset properties = result.updatePropertiesDataset(new HttpGraphSubjects(
                         FedoraNodes.class, uriInfo, session), IOUtils
                         .toString(requestBodyStream));
-                final Problems problems = result.getDatasetProblems();
-                if (problems != null && problems.hasProblems()) {
+                Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
+                if (problems.size() > 0) {
                     logger.info(
                             "Found these problems updating the properties for {}: {}",
-                            path, problems.toString());
+                            path, problems);
                     return status(FORBIDDEN).entity(problems.toString())
                             .build();
 
