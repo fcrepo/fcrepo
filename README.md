@@ -14,13 +14,9 @@ System Requirements
 
 Technical goals:
 * Improved scalability and performance
-* flexible storage options
-* dynamic metadata
-* globally unique and reliable identifiers
-* improved audit trail for capturing lifecycle events
-
-Other goals:
-* straightforward API
+* More flexible storage options
+* Improved reporting and metrics
+* Improved durability
 
 ## Running fcrepo4
 
@@ -28,6 +24,7 @@ Other goals:
 $ mvn install
 $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
-$ curl "http://localhost:8080/rest/"
 ```
+
+That's it! Your Fedora repository is up and running at: [http://localhost:8080/rest/](http://localhost:8080/rest/)
 
