@@ -53,11 +53,13 @@ import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({StoreChunkInputStream.class})
 public class LowLevelCacheEntryTest {
 
