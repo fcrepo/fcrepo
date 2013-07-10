@@ -17,7 +17,7 @@
 package org.fcrepo.responses;
 
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
-import static org.fcrepo.responses.RdfSerializationUtils.unifyDatasetModel;
+import static org.fcrepo.rdf.SerializationUtils.unifyDatasetModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;

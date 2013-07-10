@@ -27,6 +27,7 @@ import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.fcrepo.rdf.SerializationUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -34,11 +35,7 @@ import org.slf4j.Logger;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
@@ -94,23 +91,6 @@ public class RdfSerializationUtils {
     }
 
     /**
-     * Get the subject of the dataset, given by the context's "uri"
-     * 
-     * @param rdf
-     * @return
-     */
-    static Node getDatasetSubject(final Dataset rdf) {
-        Context context = rdf.getContext();
-        String uri = context.getAsString(Symbol.create("uri"));
-        logger.debug("uri from context: {}", uri);
-        if (uri != null) {
-            return createURI(uri);
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * Set the cache control and last modified HTTP headers from data in the
      * graph
      * 
@@ -124,7 +104,7 @@ public class RdfSerializationUtils {
 
         logger.trace("Attempting to discover the last-modified date of the node for the resource in question...");
         final Iterator<Quad> iterator =
-                rdf.asDatasetGraph().find(ANY, getDatasetSubject(rdf),
+                rdf.asDatasetGraph().find(ANY, SerializationUtils.getDatasetSubject(rdf),
                         lastModifiedPredicate, ANY);
 
         if (!iterator.hasNext()) {
@@ -148,26 +128,4 @@ public class RdfSerializationUtils {
         httpHeaders.put("Last-Modified", of((Object) lastModifiedAsRdf2822));
     }
 
-    /**
-     * Merge a dataset's named graphs into a single model, in order to provide a
-     * cohesive serialization.
-     * 
-     * @param dataset
-     * @return
-     */
-    static Model unifyDatasetModel(final Dataset dataset) {
-        final Iterator<String> iterator = dataset.listNames();
-        Model model = ModelFactory.createDefaultModel();
-
-        model = model.union(dataset.getDefaultModel());
-
-        while (iterator.hasNext()) {
-            final String modelName = iterator.next();
-            logger.debug("Serializing model {}", modelName);
-            model = model.union(dataset.getNamedModel(modelName));
-        }
-
-        model.setNsPrefixes(dataset.getDefaultModel().getNsPrefixMap());
-        return model;
-    }
 }
