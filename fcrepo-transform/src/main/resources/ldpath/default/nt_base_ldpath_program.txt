@@ -1,0 +1,4 @@
+@prefix fedora-internal : <info:fedora/fedora-system:def/internal#>
+id      = . :: xsd:string ;
+title = dc:title :: xsd:string;
+uuid = fedora-internal:uuid :: xsd:string ;

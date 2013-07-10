@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>fcrepo</artifactId>
+    <groupId>org.fcrepo</groupId>
+    <version>4.0.0-alpha-2-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>fcrepo-transform</artifactId>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jboss.jbossts</groupId>
+          <artifactId>jbossjta</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-beans</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-http-commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.marmotta</groupId>
+      <artifactId>ldpath-core</artifactId>
+      <version>3.1.0-incubating-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.marmotta</groupId>
+      <artifactId>ldpath-backend-jena</artifactId>
+      <version>3.1.0-incubating-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.jena</groupId>
+          <artifactId>jena-core</artifactId>
+        </exclusion>
+
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- test gear -->
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-http-commons</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
+
+    <dependency>
+      <groupId>com.sun.jersey.contribs</groupId>
+      <artifactId>jersey-spring</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http-servlet</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-grizzly2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-json</artifactId>
+    </dependency>
+
+    <!-- This dependency is for compile-time: it keeps this module independent
+      of any given choice of JAX-RS implementation. It must be _after_ the test
+      gear. Otherwise it will get loaded during test phase, but because this is
+      just an API, the tests will not be able to execute. -->
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+    </dependency>
+
+  </dependencies>
+
+</project>

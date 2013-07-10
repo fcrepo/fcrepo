@@ -75,7 +75,7 @@ public class RdfProviderTest {
 
     @Test
     public void testGetSize() {
-        assertEquals("Returned wrong size from HtmlProvider!", rdfProvider
+        assertEquals("Returned wrong size from RdfProvider!", rdfProvider
                 .getSize(null, null, null, null, null), -1);
 
     }
