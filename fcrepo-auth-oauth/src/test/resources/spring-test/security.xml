@@ -14,10 +14,7 @@
     <property name="realm" value="fedora"/>
     <property name="provider">
       <bean class="org.fcrepo.auth.oauth.DefaultOAuthResourceProvider">
-        <property name="sessionFactory">
           <!-- mints JCR Sessions : needs to reappear here because it can't be autowired from the enclosed contexts-->
-          <ref bean="org.fcrepo.session.SessionFactory"/>
-        </property>
       </bean>
     </property>
     <property name="parameterStyles">

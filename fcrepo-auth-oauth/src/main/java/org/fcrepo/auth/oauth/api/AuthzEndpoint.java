@@ -17,31 +17,41 @@ package org.fcrepo.auth.oauth.api;
 
 import static javax.servlet.http.HttpServletResponse.SC_FOUND;
 import static javax.ws.rs.core.Response.status;
-import static org.apache.oltu.oauth2.as.response.OAuthASResponse.authorizationResponse;
+import static org.apache.oltu.oauth2.as.response.OAuthASResponse
+    .authorizationResponse;
 import static org.apache.oltu.oauth2.common.OAuth.OAUTH_REDIRECT_URI;
 import static org.apache.oltu.oauth2.common.OAuth.OAUTH_RESPONSE_TYPE;
+import static org.apache.oltu.oauth2.common.OAuth.OAUTH_STATE;
+import static org.apache.oltu.oauth2.common.error.OAuthError.CodeResponse
+    .UNSUPPORTED_RESPONSE_TYPE;
+import static org.apache.oltu.oauth2.common.message.OAuthResponse.errorResponse;
 import static org.apache.oltu.oauth2.common.message.types.ResponseType.CODE;
-import static org.apache.oltu.oauth2.common.message.types.ResponseType.TOKEN;
 import static org.apache.oltu.oauth2.common.utils.OAuthUtils.isEmpty;
+import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
+import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
+import static org.fcrepo.auth.oauth.api.Util.createOauthWorkspace;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
 import javax.annotation.PostConstruct;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+
 import org.apache.oltu.oauth2.as.issuer.MD5Generator;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuerImpl;
 import org.apache.oltu.oauth2.as.request.OAuthAuthzRequest;
-import org.apache.oltu.oauth2.as.response.OAuthASResponse.OAuthAuthorizationResponseBuilder;
+import org.apache.oltu.oauth2.as.response.OAuthASResponse
+    .OAuthAuthorizationResponseBuilder;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.OAuthResponse;
@@ -49,13 +59,6 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.auth.oauth.Constants;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-
-import static org.apache.oltu.oauth2.common.message.OAuthResponse.errorResponse;
-import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
-import static org.fcrepo.auth.oauth.Constants.EXPIRATION_TIMEOUT;
-import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
-import static org.fcrepo.auth.oauth.api.Util.createOauthWorkspace;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author ajs6f
@@ -101,17 +104,35 @@ public class AuthzEndpoint extends AbstractResource {
                 final Set<String> scopes = oauthRequest.getScopes();
                 saveAuthCode(authCode, scopes, client);
                 builder.setCode(authCode);
-            }
-            if (responseType.equals(TOKEN.toString())) {
-                builder.setAccessToken(oauthIssuerImpl.accessToken());
-                builder.setExpiresIn(EXPIRATION_TIMEOUT);
+                /** as far as I can tell from spec and a number of docs,
+                 * "token" is not a valid response type for the authCode
+                 * endpoint
+                 */
+//            } else if (responseType.equals(TOKEN.toString())) {
+//                builder.setAccessToken(oauthIssuerImpl.accessToken());
+//                builder.setExpiresIn(EXPIRATION_TIMEOUT);
+            } else {
+                String errorDesc =
+                    "Invalid response_type parameter value \"" +
+                    responseType + "\"";
+                LOGGER.debug(errorDesc);
+                OAuthProblemException e =
+                    OAuthProblemException
+                    .error(UNSUPPORTED_RESPONSE_TYPE,errorDesc);
+
+                e.setRedirectUri(oauthRequest.getParam(OAUTH_REDIRECT_URI));
+                throw e;
             }
 
             final String redirectURI =
                     oauthRequest.getParam(OAUTH_REDIRECT_URI);
 
+            if (oauthRequest.getState() != null) {
+                builder.setParam(OAUTH_STATE, oauthRequest.getState());
+            }
+
             final OAuthResponse response =
-                    builder.location(redirectURI).buildQueryMessage();
+                    builder.location(redirectURI).buildQueryMessage() ;
             final URI url = new URI(response.getLocationUri());
 
             return status(response.getResponseStatus()).location(url).build();

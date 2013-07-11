@@ -20,8 +20,10 @@ import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.apache.oltu.oauth2.common.OAuth.OAUTH_CLIENT_ID;
 import static org.apache.oltu.oauth2.common.OAuth.HeaderType.WWW_AUTHENTICATE;
-import static org.apache.oltu.oauth2.common.error.OAuthError.CodeResponse.INVALID_REQUEST;
-import static org.apache.oltu.oauth2.common.error.OAuthError.ResourceResponse.INSUFFICIENT_SCOPE;
+import static org.apache.oltu.oauth2.common.error.OAuthError.CodeResponse
+    .INVALID_REQUEST;
+import static org.apache.oltu.oauth2.common.error.OAuthError.ResourceResponse
+    .INSUFFICIENT_SCOPE;
 import static org.apache.oltu.oauth2.common.message.OAuthResponse.errorResponse;
 import static org.apache.oltu.oauth2.rsfilter.OAuthUtils.isEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -41,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.oltu.oauth2.common.OAuth;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.OAuthResponse;
@@ -56,13 +59,16 @@ import org.slf4j.Logger;
  */
 public class OAuthFilter implements Filter {
 
+    private static final ParameterStyle[] DEFAULT_PARAMETER_STYLES =
+        new ParameterStyle[] {OAuth.DEFAULT_PARAMETER_STYLE};
+
     private static final Logger LOGGER = getLogger(OAuthFilter.class);
 
     private String realm;
 
     private OAuthRSProvider provider;
 
-    private Set<ParameterStyle> parameterStyles;
+    private ParameterStyle[] parameterStyles = DEFAULT_PARAMETER_STYLES;
 
     /**
      * no-op
@@ -90,39 +96,37 @@ public class OAuthFilter implements Filter {
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
 
-        LOGGER.debug("Filtering {}", ((HttpServletRequest) request)
+        LOGGER.trace("Filtering {}", ((HttpServletRequest) request)
                 .getRequestURI());
         try {
 
             // Make an OAuth Request out of this servlet request
             final OAuthAccessResourceRequest oauthRequest =
-                    new OAuthAccessResourceRequest(req, parameterStyles
-                            .toArray(new ParameterStyle[0]));
+                    new OAuthAccessResourceRequest(req, parameterStyles);
 
             // Get the access token
             final String accessToken = oauthRequest.getAccessToken();
 
-            LOGGER.debug("Validating {}", accessToken);
+            LOGGER.trace("Validating {} in {}", accessToken, realm);
             final OAuthDecision decision =
                     provider.validateRequest(realm, accessToken, req);
 
             final Principal principal = decision.getPrincipal();
 
             request =
-                    new HttpServletRequestWrapper((HttpServletRequest) request) {
+                new HttpServletRequestWrapper((HttpServletRequest) request) {
 
-                        @Override
-                        public String getRemoteUser() {
-                            return principal != null ? principal.getName()
-                                    : null;
-                        }
+                    @Override
+                    public String getRemoteUser() {
+                        return principal != null ? principal.getName() : null;
+                    }
 
-                        @Override
-                        public Principal getUserPrincipal() {
-                            return principal;
-                        }
+                    @Override
+                    public Principal getUserPrincipal() {
+                        return principal;
+                    }
 
-                    };
+                };
 
             request.setAttribute(OAUTH_CLIENT_ID, decision.getOAuthClient()
                     .getClientId());
@@ -158,7 +162,6 @@ public class OAuthFilter implements Filter {
     private void respondWithError(final HttpServletResponse resp,
             final OAuthProblemException error) throws IOException,
         ServletException {
-
         OAuthResponse oauthResponse = null;
 
         try {
@@ -205,10 +208,11 @@ public class OAuthFilter implements Filter {
     }
 
     /**
-     * @param parameterStylesSet
+     * @param parameterStyles
      */
-    public void setParameterStyles(final Set<ParameterStyle> parameterStylesSet) {
-        this.parameterStyles = parameterStylesSet;
+    public void setParameterStyles(final Set<ParameterStyle> parameterStyles) {
+        this.parameterStyles =
+            parameterStyles.toArray(new ParameterStyle[0]);
     }
 
 }

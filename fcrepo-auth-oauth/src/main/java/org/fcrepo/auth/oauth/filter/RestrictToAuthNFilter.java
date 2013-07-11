@@ -72,7 +72,7 @@ public class RestrictToAuthNFilter implements Filter {
         if (requestURI.contains(AUTHENTICATED_SECTION)) {
             // a protected resource
             LOGGER.debug("{} is a protected resource.", requestURI);
-            if (req.getUserPrincipal() != null) {
+            if (req.getUserPrincipal() == null) {
                 LOGGER.debug("Couldn't find authenticated user!");
                 res.sendError(SC_UNAUTHORIZED);
             } else {
