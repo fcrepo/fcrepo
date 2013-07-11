@@ -335,4 +335,49 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public boolean isNew() {
         return node.isNew();
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+    	final int prime = 5;
+    	int result = 1;
+    	result = prime * result
+    			+ ((listener == null) ? 0 : listener.hashCode());
+    	result = prime * result + ((node == null) ? 0 : node.hashCode());
+    	return result;
+    }
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+        	return true;
+        }
+        if (obj == null) {
+        	return false;
+        }
+        if (!(obj instanceof FedoraResource)) {
+        	return false;
+        }
+        FedoraResource other = (FedoraResource) obj;
+        if (listener == null) {
+        	if (other.listener != null) {
+        		return false;
+        	}
+        } else if (!listener.equals(other.listener)) {
+        	return false;
+        }
+        if (node == null) {
+        	if (other.node != null) {
+        		return false;
+        	}
+        } else if (!node.equals(other.node)) {
+        	return false;
+        }
+        return true;
+    }
 }

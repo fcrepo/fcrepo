@@ -70,4 +70,43 @@ public class TxAwareSession implements InvocationHandler {
             return method.invoke(session, args);
         }
     }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 5;
+        int result = 1;
+        result = prime * result
+        		+ ((txId == null) ? 0 : txId.hashCode());
+        result = prime * result + ((session == null) ? 0 : session.hashCode());
+        return result;
+    }
+    
+@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+        	return true;
+        }
+        if (obj == null) {
+        	return false;
+        }
+        if (!(obj instanceof TxAwareSession)) {
+        	return false;
+        }
+        TxAwareSession other = (TxAwareSession) obj;
+        if (txId == null) {
+        	if (other.txId != null) {
+        		return false;
+        	}
+        } else if (!txId.equals(other.txId)) {
+        	return false;
+        }
+        if (session == null) {
+        	if (other.session != null) {
+        		return false;
+        	}
+        } else if (!session.equals(other.session)) {
+        	return false;
+        }
+        return true;
+    }
 }
