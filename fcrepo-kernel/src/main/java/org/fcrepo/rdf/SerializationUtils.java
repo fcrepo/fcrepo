@@ -33,6 +33,19 @@ public class SerializationUtils {
 
     private static final Logger logger = getLogger(SerializationUtils.class);
 
+    public static final Symbol subjectKey = Symbol.create("uri");
+
+    /**
+     * Set the subject of the dataset by injecting a context "uri"
+     *
+     * @param rdf
+     * @return
+     */
+    public static void setDatasetSubject(final Dataset rdf, final String uri) {
+        Context context = rdf.getContext();
+        context.set(subjectKey, uri);
+    }
+
     /**
      * Get the subject of the dataset, given by the context's "uri"
      *
@@ -41,7 +54,7 @@ public class SerializationUtils {
      */
     public static Node getDatasetSubject(final Dataset rdf) {
         Context context = rdf.getContext();
-        String uri = context.getAsString(Symbol.create("uri"));
+        String uri = context.getAsString(subjectKey);
         logger.debug("uri from context: {}", uri);
         if (uri != null) {
             return createURI(uri);
