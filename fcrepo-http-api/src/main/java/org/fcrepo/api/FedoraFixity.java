@@ -91,7 +91,7 @@ public class FedoraFixity extends AbstractResource {
                     datastreamService.getDatastream(session, path);
 
             return datastreamService.getFixityResultsModel(
-                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session),
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo),
                     ds);
         } finally {
             session.logout();

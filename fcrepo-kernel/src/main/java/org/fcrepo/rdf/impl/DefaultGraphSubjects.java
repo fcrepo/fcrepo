@@ -39,7 +39,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
 
     @Override
-    public Resource getGraphSubject(String absPath) throws RepositoryException {
+    public Resource getGraphSubject(final Session session, final String absPath) throws RepositoryException {
         if (absPath.endsWith(JcrConstants.JCR_CONTENT)) {
             return ResourceFactory
                            .createResource("info:fedora" +
@@ -51,12 +51,12 @@ public class DefaultGraphSubjects implements GraphSubjects {
     }
 
     @Override
-    public Resource getGraphSubject(Node node) throws RepositoryException {
-        return getGraphSubject(node.getPath());
+    public Resource getGraphSubject(final Node node) throws RepositoryException {
+        return getGraphSubject(node.getSession(), node.getPath());
     }
 
     @Override
-    public Node getNodeFromGraphSubject(Session session, Resource subject)
+    public Node getNodeFromGraphSubject(final Session session, final Resource subject)
         throws RepositoryException {
         if (!isFedoraGraphSubject(subject)) {
             return null;
@@ -76,7 +76,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
     }
 
     @Override
-    public boolean isFedoraGraphSubject(Resource subject) {
+    public boolean isFedoraGraphSubject(final Resource subject) {
         checkArgument(subject != null, "null cannot be a Fedora object!");
         assert(subject != null);
 

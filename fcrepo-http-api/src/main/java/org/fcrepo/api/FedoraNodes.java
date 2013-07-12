@@ -147,7 +147,7 @@ public class FedoraNodes extends AbstractResource {
                         .lastModified(date).build());
             }
             final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo);
             final Dataset propertiesDataset =
                     resource.getPropertiesDataset(subjects, offset, limit);
             addResponseInformationToDataset(resource, propertiesDataset,
@@ -252,7 +252,7 @@ public class FedoraNodes extends AbstractResource {
                         nodeService.getObject(session, path);
 
                 Dataset properties = result.updatePropertiesDataset(new HttpGraphSubjects(
-                        FedoraNodes.class, uriInfo, session), IOUtils
+                        FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
                 Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
                 if (problems.size() > 0) {

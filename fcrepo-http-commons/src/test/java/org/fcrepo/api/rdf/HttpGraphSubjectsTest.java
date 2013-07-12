@@ -63,8 +63,7 @@ public class HttpGraphSubjectsTest {
         initMocks(this);
         final UriInfo uris = getUriInfoImpl(testPath);
         testObj =
-                new HttpGraphSubjects(MockNodeController.class, uris,
-                        mockSession);
+                new HttpGraphSubjects(MockNodeController.class, uris);
     }
 
     @Test

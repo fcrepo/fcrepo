@@ -132,7 +132,7 @@ public class FedoraDatastreams extends AbstractResource {
             session.save();
 
             final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo);
 
             return created(
                     new URI(subjects.getGraphSubject(session.getNode(path))

@@ -53,8 +53,6 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final int pathIx;
 
-    private final Session session;
-
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
      *
@@ -63,10 +61,8 @@ public class HttpGraphSubjects implements GraphSubjects {
      *
      * @param relativeTo
      * @param uris
-     * @param session
      */
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris,
-            final Session session) {
+    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String basePath = nodesBuilder.build("").toString();
         if (!basePath.endsWith("/")) {
@@ -76,21 +72,10 @@ public class HttpGraphSubjects implements GraphSubjects {
         this.pathIx = basePath.length() - 1;
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 basePath);
-        this.session = session;
-    }
-
-    /**
-     * Build HTTP graphs to resources relative to the given JAX-RS resource
-     * @param relativeTo
-     * @param uris
-     */
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
-        this(relativeTo, uris, null);
-
     }
 
     @Override
-    public Resource getGraphSubject(final String absPath)
+    public Resource getGraphSubject(final Session session, final String absPath)
         throws RepositoryException {
         final URI result =
                 nodesBuilder.buildFromMap(getPathMap(session, absPath));
@@ -100,7 +85,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
-        final URI result = nodesBuilder.buildFromMap(getPathMap(session, node));
+        final URI result = nodesBuilder.buildFromMap(getPathMap(node));
         LOGGER.debug("Translated node {} into RDF subject {}", node, result);
         return ResourceFactory.createResource(result.toString());
     }
@@ -176,12 +161,12 @@ public class HttpGraphSubjects implements GraphSubjects {
         return subject.isURIResource() && subject.getURI().startsWith(basePath);
     }
 
-    private static Map<String, String> getPathMap(final Session session,
-            final Node node) throws RepositoryException {
-        return getPathMap(session, node.getPath());
+    private Map<String, String> getPathMap(final Node node)
+        throws RepositoryException {
+        return getPathMap(node.getSession(), node.getPath());
     }
 
-    private static Map<String, String> getPathMap(final Session session,
+    private Map<String, String> getPathMap(final Session session,
             final String absPath) throws RepositoryException {
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
