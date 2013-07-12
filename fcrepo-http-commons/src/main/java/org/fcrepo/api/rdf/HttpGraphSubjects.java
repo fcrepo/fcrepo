@@ -28,8 +28,8 @@ import javax.jcr.Workspace;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.TxSession;
 import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.services.TransactionService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
@@ -124,9 +124,10 @@ public class HttpGraphSubjects implements GraphSubjects {
             if (segment.startsWith("tx:")) {
                 String tx = segment.substring("tx:".length());
 
-                if (session instanceof TxSession &&
-                        ((TxSession) session).getTxId().equals(tx)) {
+                final String currentTxId = TransactionService.getCurrentTransactionId(session);
 
+                if (currentTxId != null && tx.equals(currentTxId)) {
+                    // no-op
                 } else {
                     throw new RepositoryException(
                             "Subject is not in this transaction");
@@ -193,9 +194,10 @@ public class HttpGraphSubjects implements GraphSubjects {
         if (session != null) {
             final Workspace workspace = session.getWorkspace();
 
-            if (session instanceof TxSession) {
-                path = "tx:" + ((TxSession) session).getTxId() + "/" + path;
+            final String txId = TransactionService.getCurrentTransactionId(session);
 
+            if (txId != null) {
+                path = "tx:" + txId + "/" + path;
             } else if (workspace != null &&
                     !workspace.getName().equals("default")) {
                 path = "workspace:" + workspace.getName() + "/" + path;
