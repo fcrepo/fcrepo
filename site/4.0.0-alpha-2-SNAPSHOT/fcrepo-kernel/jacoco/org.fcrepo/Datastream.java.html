@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Datastream.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo</a> &gt; <span class="el_source">Datastream.java</span></div><h1>Datastream.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.fcrepo.services.ServiceHelpers.getNodePropertySize;
+import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.binary.PolicyDecisionPoint;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.utils.ContentDigest;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
+
+import com.codahale.metrics.Histogram;
+
+/**
+ * Abstraction for a Fedora datastream backed by a JCR node.
+ *
+ * @author ajs6f
+ * @date Feb 21, 2013
+ */
+public class Datastream extends FedoraResource implements FedoraJcrTypes {
+
+<span class="fc" id="L56">    private static final Logger LOGGER = getLogger(Datastream.class);</span>
+
+<span class="fc" id="L58">    static final Histogram contentSizeHistogram =</span>
+            getMetrics().histogram(name(Datastream.class, &quot;content-size&quot;));
+
+    /**
+     * The JCR node for this datastream
+     * @param n an existing {@link Node}
+     */
+    public Datastream(final Node n) {
+<span class="fc" id="L66">        super(n);</span>
+<span class="fc" id="L67">    }</span>
+
+    /**
+     * Create or find a FedoraDatastream at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public Datastream(final Session session, final String path,
+                      final String nodeType) throws RepositoryException {
+<span class="fc" id="L77">        super(session, path, nodeType);</span>
+<span class="fc" id="L78">        mixinTypeSpecificCrap();</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Create or find a FedoraDatastream at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public Datastream(final Session session, final String path)
+        throws RepositoryException {
+<span class="fc" id="L89">        this(session, path, JcrConstants.NT_FILE);</span>
+<span class="fc" id="L90">    }</span>
+
+    private void mixinTypeSpecificCrap() {
+        try {
+<span class="pc bpc" id="L94" title="1 of 4 branches missed.">            if (node.isNew() || !hasMixin(node)) {</span>
+<span class="fc" id="L95">                LOGGER.debug(&quot;Setting {} properties on a {} node...&quot;,</span>
+                             FEDORA_DATASTREAM, JcrConstants.NT_FILE);
+<span class="fc" id="L97">                node.addMixin(FEDORA_DATASTREAM);</span>
+
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">                if (node.hasNode(JCR_CONTENT)) {</span>
+<span class="nc" id="L100">                    Node contentNode = node.getNode(JCR_CONTENT);</span>
+<span class="nc" id="L101">                    decorateContentNode(contentNode);</span>
+                }
+            }
+<span class="nc" id="L104">        } catch (RepositoryException ex) {</span>
+<span class="nc" id="L105">            LOGGER.warn(&quot;Could not decorate {} with {} properties: {}&quot; ,</span>
+                        JCR_CONTENT, FEDORA_DATASTREAM, ex);
+<span class="fc" id="L107">        }</span>
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * @return The InputStream of content associated with this datastream.
+     * @throws RepositoryException
+     */
+    public InputStream getContent() throws RepositoryException {
+<span class="fc" id="L115">        final Node contentNode = node.getNode(JCR_CONTENT);</span>
+<span class="fc" id="L116">        LOGGER.trace(&quot;Retrieved datastream content node.&quot;);</span>
+<span class="fc" id="L117">        return contentNode.getProperty(JCR_DATA).getBinary().getStream();</span>
+    }
+
+    /**
+     * Sets the content of this Datastream.
+     *
+     * @param content
+     * @throws RepositoryException
+     */
+    public void setContent(final InputStream content, final String contentType,
+                           final URI checksum,
+                           PolicyDecisionPoint storagePolicyDecisionPoint)
+        throws RepositoryException, InvalidChecksumException {
+
+<span class="fc" id="L131">        final Node contentNode =</span>
+            findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (contentNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="fc" id="L135">            contentNode.addMixin(FEDORA_BINARY);</span>
+        }
+
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (contentType != null) {</span>
+<span class="fc" id="L139">            contentNode.setProperty(JCR_MIME_TYPE, contentType);</span>
+        }
+
+
+<span class="fc" id="L143">        LOGGER.debug(&quot;Created content node at path: {}&quot;, contentNode.getPath());</span>
+
+<span class="fc" id="L145">        String hint = null;</span>
+
+
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (storagePolicyDecisionPoint != null) {</span>
+<span class="fc" id="L149">            hint = storagePolicyDecisionPoint.evaluatePolicies(node);</span>
+        }
+
+<span class="fc" id="L152">        Binary binary = (Binary) getBinary(node, content, hint);</span>
+
+        /*
+         * This next line of code deserves explanation. If we chose for the
+         * simpler line:
+         * Property dataProperty = contentNode.setProperty(JCR_DATA,
+         * requestBodyStream);
+         * then the JCR would not block on the stream's completion, and we would
+         * return to the requester before the mutation to the repo had actually
+         * completed. So instead we use createBinary(requestBodyStream), because
+         * its contract specifies:
+         * &quot;The passed InputStream is closed before this method returns either
+         * normally or because of an exception.&quot;
+         * which lets us block and not return until the job is done! The simpler
+         * code may still be useful to us for an asynchronous method that we
+         * develop later.
+         */
+<span class="fc" id="L169">        final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);</span>
+
+<span class="fc" id="L171">        final String dsChecksum = binary.getHexHash();</span>
+<span class="pc bpc" id="L172" title="1 of 4 branches missed.">        if (checksum != null &amp;&amp;</span>
+                !checksum.equals(ContentDigest.asURI(&quot;SHA-1&quot;, dsChecksum))) {
+<span class="fc" id="L174">            LOGGER.debug(&quot;Failed checksum test&quot;);</span>
+<span class="fc" id="L175">            throw new InvalidChecksumException(&quot;Checksum Mismatch of &quot; +</span>
+                                               dsChecksum + &quot; and &quot; + checksum);
+        }
+
+<span class="fc" id="L179">        decorateContentNode(contentNode);</span>
+
+<span class="fc" id="L181">        LOGGER.debug(&quot;Created data property at path: {}&quot;,</span>
+                     dataProperty.getPath());
+
+<span class="fc" id="L184">    }</span>
+
+    /**
+     * Set the content of this datastream
+     * @param content
+     * @throws InvalidChecksumException
+     * @throws RepositoryException
+     */
+    public void setContent(InputStream content) throws InvalidChecksumException,
+                                                       RepositoryException {
+<span class="fc" id="L194">        setContent(content, null, null, null);</span>
+<span class="fc" id="L195">    }</span>
+
+    /**
+     * @return The size in bytes of content associated with this datastream.
+     * @throws RepositoryException
+     */
+    public long getContentSize() {
+        try {
+<span class="fc" id="L203">            return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)</span>
+                .getLong();
+<span class="nc" id="L205">        } catch (RepositoryException e) {</span>
+<span class="nc" id="L206">            LOGGER.error(&quot;Could not get contentSize() - &quot; + e.getMessage());</span>
+        }
+        // TODO Size is not stored, recalculate size?
+<span class="nc" id="L209">        return 0L;</span>
+    }
+
+    /**
+     * Get the pre-calculated content digest for the binary payload
+     * @return a URI with the format algorithm:value
+     * @throws RepositoryException
+     */
+    public URI getContentDigest() throws RepositoryException {
+<span class="fc" id="L218">        final Node contentNode = node.getNode(JCR_CONTENT);</span>
+        try {
+<span class="fc" id="L220">            return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());</span>
+<span class="nc" id="L221">        } catch (RepositoryException e) {</span>
+<span class="nc" id="L222">            LOGGER.error(&quot;Could not get content digest: &quot;, e);</span>
+<span class="nc" id="L223">        } catch (URISyntaxException e) {</span>
+<span class="nc" id="L224">            LOGGER.error(&quot;Could not get content digest: {}&quot;, e);</span>
+<span class="nc" id="L225">        }</span>
+        //TODO checksum not stored. recalculating checksum,
+        //however, this would defeat the purpose validating against the checksum
+<span class="nc" id="L228">        Binary binary = (Binary) contentNode.getProperty(JCR_DATA)</span>
+            .getBinary();
+<span class="nc" id="L230">        String dsChecksum = binary.getHexHash();</span>
+
+<span class="nc" id="L232">        return ContentDigest.asURI(&quot;SHA-1&quot;,dsChecksum);</span>
+    }
+
+    /**
+     * @return The ID of this datastream, unique within an object. Normally just
+     *         the name of the backing JCR node.
+     * @throws RepositoryException
+     */
+    public String getDsId() throws RepositoryException {
+<span class="fc" id="L241">        return node.getName();</span>
+    }
+
+    /**
+     * @return the FedoraObject to which this datastream belongs.
+     * @throws RepositoryException
+     */
+    public FedoraObject getObject() throws RepositoryException {
+<span class="fc" id="L249">        return new FedoraObject(node.getParent());</span>
+    }
+
+    /**
+     * @return The MimeType of content associated with this datastream.
+     * @throws RepositoryException
+     */
+    public String getMimeType() throws RepositoryException {
+<span class="fc bfc" id="L257" title="All 4 branches covered.">        return node.hasNode(JCR_CONTENT) &amp;&amp;</span>
+            node.getNode(JCR_CONTENT).hasProperty(JCR_MIME_TYPE) ?
+            node.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString() :
+            &quot;application/octet-stream&quot;;
+    }
+
+    /**
+     * Return the calculated size of the DS node
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public long getSize() throws RepositoryException {
+<span class="fc" id="L270">        return getNodePropertySize(node) + getContentSize();</span>
+
+    }
+
+    private void decorateContentNode(Node contentNode)
+        throws RepositoryException {
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">        if (contentNode == null) {</span>
+<span class="nc" id="L277">            LOGGER.warn(&quot;{}/{} appears to be null!&quot;, JCR_CONTENT);</span>
+<span class="nc" id="L278">            return;</span>
+        }
+<span class="fc bfc" id="L280" title="All 2 branches covered.">        if (contentNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="fc" id="L281">            contentNode.addMixin(FEDORA_BINARY);</span>
+        }
+
+<span class="fc" id="L284">        final Property dataProperty = contentNode.getProperty(JCR_DATA);</span>
+<span class="fc" id="L285">        Binary binary = (Binary) dataProperty.getBinary();</span>
+<span class="fc" id="L286">        final String dsChecksum = binary.getHexHash();</span>
+
+<span class="fc" id="L288">        contentSizeHistogram.update(dataProperty.getLength());</span>
+
+<span class="fc" id="L290">        contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());</span>
+<span class="fc" id="L291">        contentNode.setProperty(CONTENT_DIGEST, ContentDigest.</span>
+                                asURI(&quot;SHA-1&quot;, dsChecksum).toString());
+
+<span class="fc" id="L294">        LOGGER.debug(&quot;Decorated data property at path: &quot; +</span>
+                     dataProperty.getPath());
+<span class="fc" id="L296">    }</span>
+
+    /**
+     * Check if the node has a fedora:datastream mixin
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean hasMixin(final Node node) throws RepositoryException {
+<span class="fc" id="L305">        return isFedoraDatastream.apply(node);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NamespaceChangedStatementListener.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.utils</a> &gt; <span class="el_source">NamespaceChangedStatementListener.java</span></div><h1>NamespaceChangedStatementListener.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.utils;
+
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.RdfLexicon.HAS_NAMESPACE_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.RdfLexicon;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.rdf.listeners.StatementListener;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+/**
+ * Listener that maps changes to actions in the JCR namespace registry
+ */
+public class NamespaceChangedStatementListener extends StatementListener {
+
+<span class="fc" id="L38">    private static final Logger LOGGER =</span>
+            getLogger(NamespaceChangedStatementListener.class);
+
+    private final NamespaceRegistry namespaceRegistry;
+
+    /**
+     * Use the given session to perform namespace changes
+     * 
+     * @param session
+     * @throws RepositoryException
+     */
+    public NamespaceChangedStatementListener(final Session session)
+<span class="fc" id="L50">        throws RepositoryException {</span>
+<span class="fc" id="L51">        this.namespaceRegistry = session.getWorkspace().getNamespaceRegistry();</span>
+<span class="fc" id="L52">    }</span>
+
+    @Override
+    public void addedStatement(final Statement s) {
+
+<span class="fc" id="L57">        LOGGER.debug(&quot;&gt;&gt; added statement {}&quot;, s);</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (!s.getPredicate().equals(HAS_NAMESPACE_PREFIX)) {</span>
+<span class="fc" id="L59">            return;</span>
+        }
+
+        try {
+<span class="fc" id="L63">            final String prefix = s.getObject().asLiteral().getString();</span>
+<span class="fc" id="L64">            final String uri = s.getSubject().asResource().getURI();</span>
+<span class="fc" id="L65">            LOGGER.debug(&quot;Registering namespace prefix {} for uri {}&quot;, prefix,</span>
+                    uri);
+<span class="fc" id="L67">            namespaceRegistry.registerNamespace(prefix, uri);</span>
+<span class="nc" id="L68">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L69">            throw propagate(e);</span>
+<span class="fc" id="L70">        }</span>
+
+<span class="fc" id="L72">    }</span>
+
+    @Override
+    public void removedStatement(final Statement s) {
+
+<span class="fc" id="L77">        LOGGER.debug(&quot;&gt;&gt; removed statement {}&quot;, s);</span>
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (!s.getPredicate().equals(RdfLexicon.HAS_NAMESPACE_PREFIX)) {</span>
+<span class="fc" id="L80">            return;</span>
+        }
+
+        try {
+<span class="fc" id="L84">            final String prefix = s.getObject().asLiteral().getString();</span>
+<span class="fc" id="L85">            final String uri = s.getSubject().asResource().getURI();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            if (namespaceRegistry.getPrefix(uri).equals(prefix)) {</span>
+<span class="fc" id="L87">                LOGGER.debug(&quot;De-registering namespace prefix {} for uri {}&quot;,</span>
+                        prefix, uri);
+<span class="fc" id="L89">                namespaceRegistry.unregisterNamespace(prefix);</span>
+            }
+<span class="nc" id="L91">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L92">            throw propagate(e);</span>
+<span class="fc" id="L93">        }</span>
+<span class="fc" id="L94">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

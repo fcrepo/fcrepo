@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ChainingCacheStoreEntry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.utils.impl</a> &gt; <span class="el_source">ChainingCacheStoreEntry.java</span></div><h1>ChainingCacheStoreEntry.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.utils.impl;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.fcrepo.utils.LowLevelCacheEntry;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.CacheStoreConfiguration;
+import org.infinispan.configuration.cache.FileCacheStoreConfiguration;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.decorators.ChainingCacheStore;
+import org.modeshape.jcr.value.BinaryKey;
+import org.modeshape.jcr.value.binary.BinaryStoreException;
+
+/**
+ * A LowLevelCacheEntry that is aware of Infinispan ChainingCacheStores
+ */
+public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
+
+    private final ChainingCacheStore store;
+    private final String cacheName;
+
+    /**
+     * @param store the ChainingCacheStore
+     * @param cacheName the cache name to use by default
+     * @param key the binary key we're interested in
+     */
+    public ChainingCacheStoreEntry(final ChainingCacheStore store,
+            final String cacheName,
+            final BinaryKey key) {
+<span class="nc" id="L48">        super(key);</span>
+<span class="nc" id="L49">        this.store = store;</span>
+<span class="nc" id="L50">        this.cacheName = cacheName;</span>
+<span class="nc" id="L51">    }</span>
+
+    @Override
+    public InputStream getInputStream() throws BinaryStoreException {
+<span class="nc" id="L55">        throw new UnsupportedOperationException(&quot;getInputStream must be called on chained entries&quot;);</span>
+    }
+
+    @Override
+    public void storeValue(InputStream stream) throws BinaryStoreException,
+            IOException {
+<span class="nc" id="L61">        throw new UnsupportedOperationException(&quot;storeValue must be called on chained entries&quot;);</span>
+    }
+
+    @Override
+    public String getExternalIdentifier() {
+<span class="nc" id="L66">        return null;</span>
+    }
+
+    /**
+     * Get the set of LowLevelCacheEntries for each of the Chained cache stores
+     */
+    public Set&lt;LowLevelCacheEntry&gt; chainedEntries() {
+<span class="nc" id="L73">        Set&lt;CacheStore&gt; stores = this.store.getStores().keySet();</span>
+<span class="nc" id="L74">        HashSet&lt;LowLevelCacheEntry&gt; result = new HashSet&lt;LowLevelCacheEntry&gt;(stores.size());</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        for (CacheStore store: stores) {</span>
+<span class="nc" id="L76">            String cacheName = null;</span>
+<span class="nc" id="L77">            CacheStoreConfiguration config = this.store.getStores().get(store);</span>
+
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            if (config instanceof FileCacheStoreConfiguration) {</span>
+<span class="nc" id="L80">                cacheName = ((FileCacheStoreConfiguration)config).location();</span>
+            }
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            if (config instanceof AbstractStoreConfiguration) {</span>
+<span class="nc" id="L84">                Object name = ((AbstractStoreConfiguration)config).properties().get(&quot;id&quot;);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">                if (name != null) {</span>
+<span class="nc" id="L86">                    cacheName = name.toString();</span>
+                }
+            }
+
+<span class="nc bnc" id="L90" title="All 2 branches missed.">            if (cacheName == null) {</span>
+<span class="nc" id="L91">                cacheName = this.cacheName;</span>
+            }
+
+<span class="nc" id="L94">            result.add(new CacheStoreEntry(store, cacheName, key));</span>
+<span class="nc" id="L95">        }</span>
+<span class="nc" id="L96">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

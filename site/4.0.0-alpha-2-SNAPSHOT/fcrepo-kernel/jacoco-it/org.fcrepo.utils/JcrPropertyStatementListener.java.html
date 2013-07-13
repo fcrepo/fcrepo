@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>JcrPropertyStatementListener.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.utils</a> &gt; <span class="el_source">JcrPropertyStatementListener.java</span></div><h1>JcrPropertyStatementListener.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.utils;
+
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.utils.JcrRdfTools.createValue;
+import static org.fcrepo.utils.JcrRdfTools.getNodeFromGraphSubject;
+import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
+import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
+import static org.fcrepo.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
+import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
+import static org.fcrepo.utils.NodePropertiesTools.removeNodeProperty;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+
+import org.fcrepo.RdfLexicon;
+import org.fcrepo.rdf.GraphSubjects;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.rdf.listeners.StatementListener;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+/**
+ * Listen to Jena statement events, and when the statement is changed in the
+ * graph store, make the change within JCR as well.
+ */
+public class JcrPropertyStatementListener extends StatementListener {
+
+    private Model problems;
+
+<span class="fc" id="L51">    private static final Logger LOGGER =</span>
+            getLogger(JcrPropertyStatementListener.class);
+
+    private final GraphSubjects subjects;
+
+    private final Session session;
+
+    /**
+     * Return a Listener given the subject factory and JcrSession.
+     * @param subjects
+     * @param session
+     * @param problemModel
+     * @return
+     * @throws RepositoryException
+     */
+    public static JcrPropertyStatementListener getListener(
+            final GraphSubjects subjects, final Session session, Model problemModel)
+        throws RepositoryException {
+<span class="fc" id="L69">        return new JcrPropertyStatementListener(subjects, session, problemModel);</span>
+    }
+
+    /**
+     * Construct a statement listener within the given session
+     * 
+     * @param subjects
+     * @param session
+     * @throws RepositoryException
+     */
+    private JcrPropertyStatementListener(final GraphSubjects subjects,
+<span class="fc" id="L80">            final Session session, final Model problems) throws RepositoryException {</span>
+<span class="fc" id="L81">        this.session = session;</span>
+<span class="fc" id="L82">        this.subjects = subjects;</span>
+<span class="fc" id="L83">        this.problems = problems;</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * When a statement is added to the graph, serialize it to a JCR property
+     * 
+     * @param s
+     */
+    @Override
+    public void addedStatement(final Statement s) {
+<span class="fc" id="L93">        LOGGER.debug(&quot;&gt;&gt; added statement {}&quot;, s);</span>
+
+        try {
+<span class="fc" id="L96">            final Resource subject = s.getSubject();</span>
+
+            // if it's not about a node, ignore it.
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            if (!isFedoraGraphSubject(subjects, subject)) {</span>
+<span class="fc" id="L100">                return;</span>
+            }
+
+<span class="fc" id="L103">            final Node subjectNode =</span>
+                    getNodeFromGraphSubject(subjects, getSession(), subject);
+
+            // extract the JCR propertyName from the predicate
+<span class="fc" id="L107">            final String propertyName =</span>
+                    getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">            if (validateModificationsForPropertyName(</span>
+                    subject, propertyName)) {
+<span class="fc" id="L112">                final Value v =</span>
+                        createValue(subjectNode, s.getObject(),
+                                getPropertyType(subjectNode, propertyName));
+<span class="fc" id="L115">                appendOrReplaceNodeProperty(subjectNode, propertyName, v);</span>
+            }
+<span class="nc" id="L117">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L118">            throw propagate(e);</span>
+<span class="fc" id="L119">        }</span>
+
+<span class="fc" id="L121">    }</span>
+
+    /**
+     * When a statement is removed, remove it from the JCR properties
+     * 
+     * @param s
+     */
+    @Override
+    public void removedStatement(final Statement s) {
+<span class="fc" id="L130">        LOGGER.trace(&quot;&gt;&gt; removed statement {}&quot;, s);</span>
+
+        try {
+<span class="fc" id="L133">            final Resource subject = s.getSubject();</span>
+
+            // if it's not about a node, we don't care.
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">            if (!isFedoraGraphSubject(subjects, subject)) {</span>
+<span class="nc" id="L137">                return;</span>
+            }
+
+<span class="fc" id="L140">            final Node subjectNode =</span>
+                    getNodeFromGraphSubject(subjects, getSession(), subject);
+
+<span class="fc" id="L143">            final String propertyName =</span>
+                    getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+
+            // if the property doesn't exist, we don't need to worry about it.
+<span class="pc bpc" id="L147" title="2 of 4 branches missed.">            if (subjectNode.hasProperty(propertyName) &amp;&amp;</span>
+                    validateModificationsForPropertyName(subject,
+                            propertyName)) {
+<span class="fc" id="L150">                final Value v =</span>
+                        createValue(subjectNode, s.getObject(),
+                                getPropertyType(subjectNode, propertyName));
+<span class="fc" id="L153">                removeNodeProperty(subjectNode, propertyName, v);</span>
+            }
+
+<span class="nc" id="L156">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L157">            throw propagate(e);</span>
+<span class="fc" id="L158">        }</span>
+
+<span class="fc" id="L160">    }</span>
+
+    private boolean validateModificationsForPropertyName(
+            final Resource subject, final String propertyName) {
+<span class="pc bpc" id="L164" title="2 of 4 branches missed.">        if (propertyName.startsWith(&quot;jcr:&quot;) ||</span>
+                propertyName.startsWith(&quot;fedora:&quot;)) {
+<span class="nc" id="L166">            LOGGER.debug(&quot;problem with &lt;{}&gt; &lt;{}&gt; &lt;{}&gt;&quot;, subject.getURI(), RdfLexicon.COULD_NOT_STORE_PROPERTY, propertyName);</span>
+<span class="nc" id="L167">            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, propertyName);</span>
+<span class="nc" id="L168">            return false;</span>
+        }
+
+<span class="fc" id="L171">        return true;</span>
+    }
+
+    /**
+     * Get a list of any problems from trying to apply the statement changes to
+     * the node's properties
+     * 
+     * @return
+     */
+    public Model getProblems() {
+<span class="nc" id="L181">        return problems;</span>
+    }
+
+    private Session getSession() {
+<span class="fc" id="L185">        return this.session;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FixityResult.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.utils</a> &gt; <span class="el_source">FixityResult.java</span></div><h1>FixityResult.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.utils;
+
+import static java.util.Objects.hash;
+
+import java.net.URI;
+import java.util.EnumSet;
+
+/**
+ * Structure for presenting the results of a fixity check
+ * (and any repair operations that may have occurred)
+ */
+public class FixityResult {
+
+    /**
+     * The possible fixity states (which may be ORed together later)
+     */
+<span class="pc" id="L32">    public static enum FixityState {</span>
+<span class="fc" id="L33">        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE</span>
+    }
+
+    /**
+     * This is a little weird here, and is vestigal from when
+     * this was a JAX-B model as well.
+     *
+     * The &quot;state&quot; of the fixity object is one of:
+     * - SUCCESS: the fixity check was declared successful
+     * - BAD_CHECKSUM and/or BAD_SIZE: either the checksum or the size of the
+     *       bitstream didn't match the stored size
+     * - REPAIRED and BAD_*: the checksum or size failed to match, but it
+     *       was automatically recovered from a different copy
+     */
+<span class="pc" id="L47">    public EnumSet&lt;FixityState&gt; status = EnumSet.noneOf(FixityState.class);</span>
+
+
+    /**
+     * the size computed by the fixity check
+     * @todo make this private
+     */
+    public long computedSize;
+
+    /**
+     * the checksum computed by the fixity check
+     * @todo make this private
+     */
+    public URI computedChecksum;
+
+    private final LowLevelCacheEntry entry;
+
+    /**
+     * Initialize an empty fixity result
+     */
+    public FixityResult() {
+<span class="nc" id="L68">        this(null);</span>
+<span class="nc" id="L69">    }</span>
+
+    /**
+     * Prepare a fixity result for a Low-Level cache entry
+     * @param entry
+     */
+<span class="nc" id="L75">    public FixityResult(final LowLevelCacheEntry entry) {</span>
+<span class="nc" id="L76">        this.entry = entry;</span>
+<span class="nc" id="L77">    }</span>
+
+    /**
+     * Prepare a fixity result given the computed checksum and size
+     * @param size
+     * @param checksum
+     */
+    public FixityResult(final long size, final URI checksum) {
+<span class="nc" id="L85">        this(null, size, checksum);</span>
+<span class="nc" id="L86">    }</span>
+
+    /**
+     * Prepare a fixity result with the expected size and checksum
+     * @param entry
+     * @param size
+     * @param checksum
+     */
+    public FixityResult(final LowLevelCacheEntry entry, final long size,
+<span class="fc" id="L95">                        final URI checksum) {</span>
+<span class="fc" id="L96">        this.entry = entry;</span>
+<span class="fc" id="L97">        computedSize = size;</span>
+<span class="fc" id="L98">        computedChecksum = checksum;</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Get the identifier for the entry's store
+     * @return
+     */
+    public String getStoreIdentifier() {
+<span class="nc" id="L106">        return entry.getExternalIdentifier();</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+<span class="fc" id="L112">        boolean result = false;</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (obj instanceof FixityResult) {</span>
+<span class="fc" id="L114">            final FixityResult that = (FixityResult) obj;</span>
+<span class="pc bpc" id="L115" title="1 of 4 branches missed.">            result =</span>
+                computedSize == that.computedSize &amp;&amp;
+                computedChecksum.equals(that.computedChecksum);
+        }
+
+<span class="fc" id="L120">        return result;</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L125">        return hash(computedSize, computedChecksum);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L130">        return &quot;Fixity: checksum: &quot; + computedChecksum.toString() + &quot; / &quot; +</span>
+            Long.toString(computedSize);
+    }
+
+    /**
+     * Get the underlying Low-Level cache entry
+     * @return
+     */
+    public LowLevelCacheEntry getEntry() {
+<span class="fc" id="L139">        return entry;</span>
+    }
+
+    /**
+     * Check if the fixity result matches the given checksum URI
+     * @param checksum
+     * @return
+     */
+    public boolean matches(final URI checksum) {
+<span class="fc" id="L148">        return computedChecksum.equals(checksum);</span>
+    }
+
+    /**
+     * Check if the fixity result matches the given size
+     * @param size
+     * @return
+     */
+    public boolean matches(final long size) {
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        return computedSize == size;</span>
+    }
+
+    /**
+     * Does the fixity entry match the given size and checksum?
+     * @param size bitstream size in bytes
+     * @param checksum checksum URI in the form urn:DIGEST:RESULT
+     * @return true if both conditions matched
+     */
+    public boolean matches(final long size, final URI checksum) {
+<span class="pc bpc" id="L167" title="1 of 4 branches missed.">        return matches(size) &amp;&amp; matches(checksum);</span>
+    }
+
+    /**
+     * Was the fixity declared a success
+     * @return
+     */
+    public boolean isSuccess() {
+<span class="fc" id="L175">        return status.contains(FixityState.SUCCESS);</span>
+    }
+
+    /**
+     * Mark the fixity result as been automatically repaired
+     */
+    public void setRepaired() {
+<span class="fc" id="L182">        status.add(FixityState.REPAIRED);</span>
+<span class="fc" id="L183">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

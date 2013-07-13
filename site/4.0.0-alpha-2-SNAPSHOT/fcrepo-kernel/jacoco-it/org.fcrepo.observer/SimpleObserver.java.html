@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SimpleObserver.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.observer</a> &gt; <span class="el_source">SimpleObserver.java</span></div><h1>SimpleObserver.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.observer;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static com.google.common.collect.Iterables.filter;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_MOVED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.observation.Event;
+import javax.jcr.observation.EventListener;
+
+import org.fcrepo.utils.EventIterator;
+import org.modeshape.jcr.api.Repository;
+import org.slf4j.Logger;
+
+import com.codahale.metrics.Counter;
+import com.google.common.eventbus.EventBus;
+
+/**
+ * Simple JCR EventListener that filters JCR Events through a Fedora
+ * EventFilter and puts the resulting stream onto the internal
+ * Fedora EventBus as a stream of FedoraEvents.
+ *
+ * @author eddies
+ * @date Feb 7, 2013
+ */
+<span class="fc" id="L51">public class SimpleObserver implements EventListener {</span>
+
+<span class="fc" id="L53">    private static final Logger LOGGER = getLogger(SimpleObserver.class);</span>
+
+    /**
+     * A simple counter of events that pass through this observer
+     */
+<span class="fc" id="L58">    static final Counter EVENT_COUNTER = getMetrics().counter(</span>
+            name(
+            SimpleObserver.class, &quot;onEvent&quot;));
+
+<span class="fc" id="L62">    static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED +</span>
+            PROPERTY_ADDED + PROPERTY_CHANGED + PROPERTY_REMOVED;
+
+    @Inject
+    private Repository repository;
+
+    @Inject
+    private EventBus eventBus;
+
+    @Inject
+    private EventFilter eventFilter;
+
+    /**
+     * Register this observer with the JCR event listeners
+     * @throws RepositoryException
+     */
+    @PostConstruct
+    public void buildListener() throws RepositoryException {
+<span class="fc" id="L80">        final Session session = repository.login();</span>
+<span class="fc" id="L81">        session.getWorkspace().getObservationManager().addEventListener(this,</span>
+                EVENT_TYPES, &quot;/&quot;, true, null, null, false);
+<span class="fc" id="L83">        session.save();</span>
+<span class="fc" id="L84">        session.logout();</span>
+<span class="fc" id="L85">    }</span>
+
+    /**
+     * Filter JCR events and transform them into our own FedoraEvents.
+     *
+     * @param events
+     */
+    @Override
+    public void onEvent(final javax.jcr.observation.EventIterator events) {
+
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        for (final Event e : filter(new EventIterator(events), eventFilter)) {</span>
+
+<span class="fc" id="L97">            EVENT_COUNTER.inc();</span>
+
+<span class="fc" id="L99">            LOGGER.debug(&quot;Putting event: &quot; + e.toString() + &quot; on the bus.&quot;);</span>
+<span class="fc" id="L100">            eventBus.post(new FedoraEvent(e));</span>
+<span class="fc" id="L101">        }</span>
+<span class="fc" id="L102">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

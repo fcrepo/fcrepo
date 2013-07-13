@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodePropertiesTools.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.utils</a> &gt; <span class="el_source">NodePropertiesTools.java</span></div><h1>NodePropertiesTools.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.utils;
+
+import static org.fcrepo.utils.FedoraTypesUtils.getDefinitionForPropertyName;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+import javax.jcr.nodetype.PropertyDefinition;
+
+import org.slf4j.Logger;
+
+/**
+ * Tools for replacing, appending and deleting JCR node properties
+ * @author Chris Beer
+ * @date May 10, 2013
+ */
+<span class="nc" id="L38">public abstract class NodePropertiesTools {</span>
+
+<span class="fc" id="L40">    private static final Logger logger = getLogger(NodePropertiesTools.class);</span>
+
+    /**
+     * Given a JCR node, property and value, either:
+     *  - if the property is single-valued, replace the existing property with
+     *    the new value
+     *  - if the property is multivalued, append the new value to the property
+     * @param node the JCR node
+     * @param propertyName a name of a JCR property (either pre-existing or
+     *   otherwise)
+     * @param newValue the JCR value to insert
+     * @throws RepositoryException
+     */
+    public static void appendOrReplaceNodeProperty(final Node node,
+                                                   final String propertyName,
+                                                   final Value newValue)
+        throws RepositoryException {
+
+        // if it already exists, we can take some shortcuts
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (node.hasProperty(propertyName)) {</span>
+
+<span class="fc" id="L61">            final Property property = node.getProperty(propertyName);</span>
+
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">            if (property.isMultiple()) {</span>
+<span class="fc" id="L64">                logger.debug(&quot;Appending value {} to {} property {}&quot;, newValue,</span>
+                             PropertyType.nameFromValue(property.getType()),
+                             propertyName);
+
+                // if the property is multi-valued, go ahead and append to it.
+<span class="fc" id="L69">                ArrayList&lt;Value&gt; newValues = new ArrayList&lt;Value&gt;();</span>
+<span class="fc" id="L70">                Collections.addAll(newValues,</span>
+                                   node.getProperty(propertyName).getValues());
+
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">                if (!newValues.contains(newValue)) {</span>
+<span class="fc" id="L74">                    newValues.add(newValue);</span>
+<span class="fc" id="L75">                    property.setValue(newValues</span>
+                                      .toArray(new Value[newValues.size()]));
+                }
+<span class="fc" id="L78">            } else {</span>
+                // or we'll just overwrite it
+<span class="nc" id="L80">                logger.debug(&quot;Overwriting {} property {} with new value {}&quot;,</span>
+                             PropertyType.nameFromValue(property.getType()),
+                             propertyName, newValue);
+<span class="nc" id="L83">                property.setValue(newValue);</span>
+            }
+<span class="fc" id="L85">        } else {</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            if (isMultivaluedProperty(node, propertyName)) {</span>
+<span class="fc" id="L87">                logger.debug(&quot;Creating new multivalued {} property {} with &quot; +</span>
+                             &quot;initial value [{}]&quot;,
+                             PropertyType.nameFromValue(newValue.getType()),
+                             propertyName, newValue);
+<span class="fc" id="L91">                node.setProperty(propertyName, new Value[]{newValue});</span>
+            } else {
+<span class="nc" id="L93">                logger.debug(&quot;Creating new single-valued {} property {} with &quot; +</span>
+                             &quot;initial value {}&quot;,
+                             PropertyType.nameFromValue(newValue.getType()),
+                             propertyName, newValue);
+<span class="nc" id="L97">                node.setProperty(propertyName, newValue);</span>
+            }
+        }
+
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * Given a JCR node, property and value, remove the value (if it exists)
+     * from the property, and remove the
+     * property if no values remove
+     *
+     * @param node the JCR node
+     * @param propertyName a name of a JCR property (either pre-existing or
+     *   otherwise)
+     * @param valueToRemove the JCR value to remove
+     * @throws RepositoryException
+     */
+    public static void removeNodeProperty(final Node node,
+                                          final String propertyName,
+                                          final Value valueToRemove)
+        throws RepositoryException {
+        // if the property doesn't exist, we don't need to worry about it.
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">        if (node.hasProperty(propertyName)) {</span>
+
+<span class="fc" id="L121">            final Property property = node.getProperty(propertyName);</span>
+
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">            if (FedoraTypesUtils.isMultipleValuedProperty.apply(property)) {</span>
+
+<span class="fc" id="L125">                ArrayList&lt;Value&gt; newValues = new ArrayList&lt;Value&gt;();</span>
+
+<span class="fc" id="L127">                boolean remove = false;</span>
+
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                for ( Value v : node.getProperty(propertyName).getValues() ) {</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">                    if (v.equals(valueToRemove)) {</span>
+<span class="fc" id="L131">                        remove = true;</span>
+                    } else {
+<span class="nc" id="L133">                        newValues.add(v);</span>
+                    }
+                }
+
+                // we only need to update the property if we did anything.
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">                if (remove) {</span>
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">                    if (newValues.size() == 0) {</span>
+<span class="fc" id="L140">                        logger.debug(&quot;Removing property {}&quot;, propertyName);</span>
+<span class="fc" id="L141">                        property.setValue((Value[])null);</span>
+                    } else {
+<span class="nc" id="L143">                        logger.debug(&quot;Removing value {} from property {}&quot;,</span>
+                                     valueToRemove, propertyName);
+<span class="nc" id="L145">                        property</span>
+                            .setValue(newValues
+                                      .toArray(new Value[newValues.size()]));
+                    }
+                }
+
+<span class="fc" id="L151">            } else {</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                if (property.getValue().equals(valueToRemove)) {</span>
+<span class="nc" id="L153">                    logger.debug(&quot;Removing value {} property {}&quot;, propertyName);</span>
+<span class="nc" id="L154">                    property.setValue((Value)null);</span>
+                }
+            }
+        }
+<span class="fc" id="L158">    }</span>
+
+    /**
+     * Get the JCR property type ID for a given property name. If unsure, mark
+     * it as UNDEFINED.
+     *
+     * @param node the JCR node to add the property on
+     * @param propertyName the property name
+     * @return a PropertyType value
+     * @throws RepositoryException
+     */
+    public static int getPropertyType(final Node node,
+                                      final String propertyName)
+        throws RepositoryException {
+<span class="fc" id="L172">        final PropertyDefinition def =</span>
+            getDefinitionForPropertyName(node, propertyName);
+
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        if (def == null) {</span>
+<span class="fc" id="L176">            return PropertyType.UNDEFINED;</span>
+        }
+
+<span class="fc" id="L179">        return def.getRequiredType();</span>
+    }
+
+    /**
+     * Determine if a given JCR property name is single- or multi- valued.
+     * If unsure, choose the least restrictive
+     * option (multivalued)
+     *
+     * @param node the JCR node to check
+     * @param propertyName the property name
+     *   (which may or may not already exist)
+     * @return true if the property is (or could be) multivalued
+     * @throws RepositoryException
+     */
+    public static boolean isMultivaluedProperty(final Node node,
+                                                final String propertyName)
+        throws RepositoryException {
+<span class="fc" id="L196">        final PropertyDefinition def =</span>
+            getDefinitionForPropertyName(node, propertyName);
+
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        if (def == null) {</span>
+<span class="fc" id="L200">            return true;</span>
+        }
+
+<span class="fc" id="L203">        return def.isMultiple();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
