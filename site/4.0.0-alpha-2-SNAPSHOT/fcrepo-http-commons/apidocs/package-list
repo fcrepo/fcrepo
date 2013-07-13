@@ -1,0 +1,7 @@
+org.fcrepo
+org.fcrepo.api.rdf
+org.fcrepo.exceptionhandlers
+org.fcrepo.http
+org.fcrepo.jaxb.responses.sitemap
+org.fcrepo.responses
+org.fcrepo.session

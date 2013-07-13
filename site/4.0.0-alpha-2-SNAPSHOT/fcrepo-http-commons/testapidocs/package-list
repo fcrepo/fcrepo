@@ -1,0 +1,8 @@
+org.fcrepo
+org.fcrepo.api.rdf
+org.fcrepo.exceptionhandlers
+org.fcrepo.responses
+org.fcrepo.session
+org.fcrepo.test.util
+org.fcrepo.webxml
+org.fcrepo.webxml.bind
