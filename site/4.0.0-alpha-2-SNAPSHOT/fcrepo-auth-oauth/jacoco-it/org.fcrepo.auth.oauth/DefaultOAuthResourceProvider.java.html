@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultOAuthResourceProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-auth-oauth</a> &gt; <a href="index.html" class="el_package">org.fcrepo.auth.oauth</a> &gt; <span class="el_source">DefaultOAuthResourceProvider.java</span></div><h1>DefaultOAuthResourceProvider.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.oauth;
+
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
+import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
+import static org.fcrepo.auth.oauth.Constants.PRINCIPAL_PROPERTY;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthRuntimeException;
+import org.apache.oltu.oauth2.rsfilter.OAuthDecision;
+import org.apache.oltu.oauth2.rsfilter.OAuthRSProvider;
+import org.fcrepo.session.SessionFactory;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author ajs6f
+ * @date Jul 1, 2013
+ */
+@Component
+<span class="fc" id="L43">public class DefaultOAuthResourceProvider implements OAuthRSProvider {</span>
+
+    @Autowired
+    private SessionFactory sessionFactory;
+
+<span class="fc" id="L48">    private static final Logger LOGGER =</span>
+            getLogger(DefaultOAuthResourceProvider.class);
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.apache.oltu.oauth2.rsfilter.OAuthRSProvider#validateRequest(java.
+     * lang.String, java.lang.String, javax.servlet.http.HttpServletRequest)
+     */
+    @Override
+    public OAuthDecision validateRequest(final String rsId, final String token,
+            final HttpServletRequest req) throws OAuthProblemException {
+        // first check validity of token
+        try {
+<span class="fc" id="L62">            final Session session = sessionFactory.getSession(OAUTH_WORKSPACE);</span>
+            try {
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">                if (!session.itemExists(&quot;/tokens/&quot; + token)) {</span>
+<span class="nc" id="L65">                    throw new OAuthRuntimeException(&quot;Invalid token!&quot;);</span>
+                } else {
+<span class="fc" id="L67">                    final Node tokenNode = session.getNode(&quot;/tokens/&quot; + token);</span>
+<span class="fc" id="L68">                    LOGGER.debug(&quot;Retrieved token from: {}&quot;, tokenNode</span>
+                            .getPath());
+<span class="fc" id="L70">                    final String client =</span>
+                            tokenNode.getProperty(CLIENT_PROPERTY).getString();
+<span class="fc" id="L72">                    LOGGER.debug(&quot;Retrieved client: {}&quot;, client);</span>
+<span class="fc" id="L73">                    final String principal =</span>
+                            tokenNode.getProperty(PRINCIPAL_PROPERTY)
+                                    .getString();
+<span class="fc" id="L76">                    LOGGER.debug(&quot;Retrieved principal: {}&quot;, principal);</span>
+<span class="fc" id="L77">                    return new Decision(client, principal);</span>
+                }
+            } finally {
+<span class="pc" id="L80">                session.logout();</span>
+            }
+<span class="nc" id="L82">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L83">            propagate(e);</span>
+        }
+
+<span class="nc" id="L86">        return null;</span>
+    }
+
+    /**
+     * Test wiring, so w e can set the sessionFactory field without spring
+     * @param sessionFactory
+     */
+    public void setSessionFactory(final SessionFactory sessionFactory) {
+<span class="fc" id="L94">        this.sessionFactory = sessionFactory;</span>
+<span class="fc" id="L95">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RestrictToAuthNFilter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-auth-oauth</a> &gt; <a href="index.html" class="el_package">org.fcrepo.auth.oauth.filter</a> &gt; <span class="el_source">RestrictToAuthNFilter.java</span></div><h1>RestrictToAuthNFilter.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.oauth.filter;
+
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+
+/**
+ * @author ajs6f
+ * @date Jul 1, 2013
+ */
+<span class="fc" id="L39">public class RestrictToAuthNFilter implements Filter {</span>
+
+<span class="fc" id="L41">    private static final Logger LOGGER = getLogger(RestrictToAuthNFilter.class);</span>
+
+    private static final String AUTHENTICATED_SECTION = &quot;/authenticated/&quot;;
+
+    @Override
+    public void init(final FilterConfig filterConfig) throws ServletException {
+<span class="nc" id="L47">        init();</span>
+<span class="nc" id="L48">    }</span>
+
+    /**
+     * no-op
+     */
+    @PostConstruct
+    public void init() {
+<span class="fc" id="L55">        LOGGER.debug(&quot;Initialized {}&quot;, this.getClass().getName());</span>
+<span class="fc" id="L56">    }</span>
+
+    /*
+     * (non-Javadoc) Assumes that the filter chain contains {@link
+     * org.apache.oltu.oauth2.rsfilter.OAuthFilter} in a preceding position.
+     * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest,
+     * javax.servlet.ServletResponse, javax.servlet.FilterChain)
+     */
+    @Override
+    public void doFilter(final ServletRequest request,
+            final ServletResponse response, final FilterChain chain)
+        throws IOException, ServletException {
+<span class="fc" id="L68">        final HttpServletRequest req = (HttpServletRequest) request;</span>
+<span class="fc" id="L69">        final HttpServletResponse res = (HttpServletResponse) response;</span>
+<span class="fc" id="L70">        final String requestURI = req.getRequestURI();</span>
+<span class="fc" id="L71">        LOGGER.debug(&quot;Received request at URI: {}&quot;, requestURI);</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (requestURI.contains(AUTHENTICATED_SECTION)) {</span>
+            // a protected resource
+<span class="nc" id="L74">            LOGGER.debug(&quot;{} is a protected resource.&quot;, requestURI);</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            if (req.getUserPrincipal() != null) {</span>
+<span class="nc" id="L76">                LOGGER.debug(&quot;Couldn't find authenticated user!&quot;);</span>
+<span class="nc" id="L77">                res.sendError(SC_UNAUTHORIZED);</span>
+            } else {
+<span class="nc" id="L79">                LOGGER.debug(&quot;Found authenticated user.&quot;);</span>
+<span class="nc" id="L80">                chain.doFilter(request, response);</span>
+            }
+        } else {
+            // not a protected resource
+<span class="fc" id="L84">            LOGGER.debug(&quot;{} is not a protected resource.&quot;, requestURI);</span>
+<span class="fc" id="L85">            chain.doFilter(request, response);</span>
+        }
+
+<span class="fc" id="L88">    }</span>
+
+    @Override
+    public void destroy() {
+<span class="nc" id="L92">        LOGGER.debug(&quot;Destroyed {}&quot;, this.getClass().getName());</span>
+
+<span class="nc" id="L94">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
