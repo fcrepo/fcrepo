@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DublinCoreGenerator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-generator-dc</a> &gt; <a href="index.html" class="el_package">org.fcrepo.generator</a> &gt; <span class="el_source">DublinCoreGenerator.java</span></div><h1>DublinCoreGenerator.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.generator;
+
+import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static javax.ws.rs.core.Response.ok;
+
+import java.io.InputStream;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraResource;
+import org.fcrepo.generator.dublincore.DCGenerator;
+import org.fcrepo.session.InjectedSession;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+/**
+ * Dublin Core output controller
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/oai:dc&quot;)
+<span class="fc" id="L49">public class DublinCoreGenerator extends AbstractResource {</span>
+
+    @Resource
+    List&lt;DCGenerator&gt; dcgenerators;
+
+    @InjectedSession
+    protected Session session;
+
+    /**
+     * Get Dublin Core XML for a node
+     * @param pathList
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    @Produces(TEXT_XML)
+    public Response getObjectAsDublinCore(
+            @PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList) throws RepositoryException {
+
+        try {
+<span class="fc" id="L70">            final String path = toPath(pathList);</span>
+<span class="fc" id="L71">            final FedoraResource obj = nodeService.getObject(session, path);</span>
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            for (final DCGenerator indexer : dcgenerators) {</span>
+<span class="fc" id="L74">                final InputStream inputStream =</span>
+                        indexer.getStream(obj.getNode());
+
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">                if (inputStream != null) {</span>
+<span class="fc" id="L78">                    return ok(inputStream).build();</span>
+                }
+<span class="nc" id="L80">            }</span>
+            // no indexers = no path for DC
+<span class="fc" id="L82">            throw new PathNotFoundException();</span>
+        } finally {
+<span class="fc" id="L84">            session.logout();</span>
+        }
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

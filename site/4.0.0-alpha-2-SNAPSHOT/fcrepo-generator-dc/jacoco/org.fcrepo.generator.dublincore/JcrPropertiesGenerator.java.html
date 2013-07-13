@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>JcrPropertiesGenerator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-generator-dc</a> &gt; <a href="index.html" class="el_package">org.fcrepo.generator.dublincore</a> &gt; <span class="el_source">JcrPropertiesGenerator.java</span></div><h1>JcrPropertiesGenerator.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.generator.dublincore;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+
+import org.slf4j.Logger;
+
+/**
+ * Derive a Dublin Core document from the JCR properties within the DC
+ * namespace.
+ */
+<span class="fc" id="L36">public class JcrPropertiesGenerator implements DCGenerator {</span>
+
+<span class="fc" id="L38">    private static final Logger LOGGER =</span>
+            getLogger(JcrPropertiesGenerator.class);
+
+<span class="fc" id="L41">    public static final String[] SALIENT_DC_PROPERTY_NAMESPACES =</span>
+            new String[] {&quot;dc:*&quot;};
+
+    @Override
+    public InputStream getStream(final Node node) {
+
+<span class="fc" id="L47">        final StringBuilder str = new StringBuilder();</span>
+
+<span class="fc" id="L49">        str.append(&quot;&lt;oai_dc:dc &quot;</span>
+                + &quot;xmlns:oai_dc=\&quot;http://www.openarchives.org/OAI/2.0/oai_dc/\&quot; &quot;
+                + &quot;xmlns:dc=\&quot;http://purl.org/dc/elements/1.1/\&quot;&gt;\n&quot;);
+
+        try {
+<span class="fc" id="L54">            final PropertyIterator iter =</span>
+                    node.getProperties(SALIENT_DC_PROPERTY_NAMESPACES);
+
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            while (iter.hasNext()) {</span>
+<span class="fc" id="L58">                final Property property = iter.nextProperty();</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                if (property.isMultiple()) {</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">                    for (final Value v : property.getValues()) {</span>
+<span class="fc" id="L61">                        str.append(&quot;\t&lt;&quot; + property.getName() + &quot;&gt;&quot; +</span>
+                                v.getString() + &quot;&lt;/&quot; + property.getName() +
+                                &quot;&gt;\n&quot;);
+                    }
+                } else {
+<span class="fc" id="L66">                    str.append(&quot;\t&lt;&quot; + property.getName() + &quot;&gt;&quot; +</span>
+                            property.getValue().getString() + &quot;&lt;/&quot; +
+                            property.getName() + &quot;&gt;\n&quot;);
+
+                }
+<span class="fc" id="L71">            }</span>
+
+<span class="fc" id="L73">            str.append(&quot;&lt;/oai_dc:dc&gt;&quot;);</span>
+
+<span class="fc" id="L75">            return new ByteArrayInputStream(str.toString().getBytes(UTF_8));</span>
+<span class="nc" id="L76">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L77">            LOGGER.error(&quot;Repository exception: {}&quot;, e);</span>
+<span class="nc" id="L78">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
