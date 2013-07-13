@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LegacyMethod.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-jms</a> &gt; <a href="index.html" class="el_package">org.fcrepo.messaging.legacy</a> &gt; <span class="el_source">LegacyMethod.java</span></div><h1>LegacyMethod.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.messaging.legacy;
+
+import static com.google.common.base.Throwables.propagate;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.utils.FedoraTypesUtils.convertDateToXSDString;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.observation.Event;
+import javax.jms.JMSException;
+import javax.jms.Message;
+
+import org.apache.abdera.model.Category;
+import org.apache.abdera.model.Entry;
+import org.fcrepo.utils.FedoraTypesUtils;
+import org.slf4j.Logger;
+
+/**
+ * Serialize events as ATOM XML messages similar to
+ * Fedora 3.x
+ */
+public class LegacyMethod {
+
+    // TODO Figure out where to get the base url
+    private static final String BASE_URL = &quot;http://localhost:8080/rest&quot;;
+
+<span class="fc" id="L57">    private static final Properties FEDORA_TYPES = new Properties();</span>
+
+    public static final String FEDORA_ID_SCHEME = &quot;xsd:string&quot;;
+
+    public static final String DSID_CATEGORY_LABEL = &quot;fedora-types:dsID&quot;;
+
+    public static final String PID_CATEGORY_LABEL = &quot;fedora-types:pid&quot;;
+
+    private static final String INGEST_METHOD = &quot;ingest&quot;;
+
+    private static final String MODIFY_OBJ_METHOD = &quot;modifyObject&quot;;
+
+    private static final String PURGE_OBJ_METHOD = &quot;purgeObject&quot;;
+
+    private static final String ADD_DS_METHOD = &quot;addDatastream&quot;;
+
+    private static final String MODIFY_DS_METHOD = &quot;modifyDatastream&quot;;
+
+    private static final String PURGE_DS_METHOD = &quot;purgeDatastream&quot;;
+
+<span class="fc" id="L77">    private static final String[] METHODS = new String[] {INGEST_METHOD,</span>
+        MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD,
+        MODIFY_DS_METHOD, PURGE_DS_METHOD};
+
+<span class="fc" id="L81">    private static final List&lt;String&gt; METHOD_NAMES = Arrays.asList(METHODS);</span>
+
+<span class="fc" id="L83">    private static final Logger LOGGER = getLogger(LegacyMethod.class);</span>
+
+    private static final String MAP_PROPERTIES =
+            &quot;/org/fcrepo/messaging/legacy/map.properties&quot;;
+
+    static {
+<span class="pc" id="L89">        try (final InputStream is =</span>
+                LegacyMethod.class.getResourceAsStream(MAP_PROPERTIES)) {
+<span class="fc" id="L91">            FEDORA_TYPES.load(is);</span>
+<span class="pc bpc" id="L92" title="6 of 8 branches missed.">        } catch (final IOException e) {</span>
+            // it's in the jar.s
+<span class="nc" id="L94">            throw propagate(e);</span>
+<span class="fc" id="L95">        }</span>
+<span class="fc" id="L96">    }</span>
+
+    private final Entry delegate;
+
+    /**
+     * TODO
+     * 
+     * @param jcrEvent
+     * @param resource
+     * @throws RepositoryException
+     */
+    public LegacyMethod(final Event jcrEvent, final Node resource)
+        throws RepositoryException {
+<span class="fc" id="L109">        this(EntryFactory.newEntry());</span>
+
+<span class="fc" id="L111">        final boolean isDatastreamNode =</span>
+                FedoraTypesUtils.isFedoraDatastream.apply(resource);
+<span class="pc bpc" id="L113" title="1 of 4 branches missed.">        final boolean isObjectNode =</span>
+                FedoraTypesUtils.isFedoraObject.apply(resource) &amp;&amp;
+                        !isDatastreamNode;
+
+<span class="pc bpc" id="L117" title="1 of 4 branches missed.">        if (isDatastreamNode || isObjectNode) {</span>
+<span class="fc" id="L118">            setMethodName(mapMethodName(jcrEvent.getType(), isObjectNode));</span>
+<span class="fc" id="L119">            final String returnValue = getReturnValue(jcrEvent, resource);</span>
+<span class="fc" id="L120">            setContent(getEntryContent(getMethodName(), returnValue));</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">            if (isDatastreamNode) {</span>
+<span class="fc" id="L122">                setPid(resource.getParent().getName());</span>
+<span class="fc" id="L123">                setDsId(resource.getName());</span>
+            } else {
+<span class="fc" id="L125">                setPid(resource.getName());</span>
+            }
+<span class="fc" id="L127">        } else {</span>
+<span class="nc" id="L128">            setMethodName(null);</span>
+        }
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        final String userID =</span>
+                jcrEvent.getUserID() == null ? &quot;unknown&quot; : jcrEvent.getUserID();
+<span class="fc" id="L132">        setUserId(userID);</span>
+<span class="fc" id="L133">        setModified(new Date(jcrEvent.getDate()));</span>
+<span class="fc" id="L134">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @param atomEntry
+     */
+<span class="fc" id="L141">    public LegacyMethod(final Entry atomEntry) {</span>
+<span class="fc" id="L142">        delegate = atomEntry;</span>
+<span class="fc" id="L143">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @param atomEntry
+     */
+<span class="fc" id="L150">    public LegacyMethod(final String atomEntry) {</span>
+<span class="fc" id="L151">        delegate = EntryFactory.parse(new StringReader(atomEntry));</span>
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @return
+     */
+    public Entry getEntry() {
+<span class="fc" id="L160">        return delegate;</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param content
+     */
+    public void setContent(final String content) {
+<span class="fc" id="L169">        delegate.setContent(content);</span>
+<span class="fc" id="L170">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @param val
+     */
+    public void setUserId(String val) {
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">        if (val == null) {</span>
+<span class="nc" id="L179">            delegate.addAuthor(&quot;unknown&quot;, null, BASE_URL);</span>
+        } else {
+<span class="fc" id="L181">            delegate.addAuthor(val, null, BASE_URL);</span>
+        }
+<span class="fc" id="L183">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @return
+     */
+    public String getUserID() {
+<span class="nc" id="L191">        return delegate.getAuthor().getName();</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param date
+     */
+    public void setModified(final Date date) {
+<span class="fc" id="L200">        delegate.setUpdated(date);</span>
+<span class="fc" id="L201">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @return
+     */
+    public Date getModified() {
+<span class="nc" id="L209">        return delegate.getUpdated();</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param val
+     */
+    public void setMethodName(final String val) {
+<span class="fc" id="L218">        delegate.setTitle(val).setBaseUri(BASE_URL);</span>
+<span class="fc" id="L219">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @return
+     */
+    public String getMethodName() {
+<span class="fc" id="L227">        return delegate.getTitle();</span>
+    }
+
+    private void setLabelledCategory(String label, String val) {
+<span class="fc" id="L231">        final List&lt;Category&gt; vals = delegate.getCategories(FEDORA_ID_SCHEME);</span>
+<span class="fc" id="L232">        Category found = null;</span>
+<span class="pc bpc" id="L233" title="1 of 4 branches missed.">        if (vals != null &amp;&amp; !vals.isEmpty()) {</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">            for (Category c : vals) {</span>
+<span class="pc bpc" id="L235" title="1 of 2 branches missed.">                if (label.equals(c.getLabel())) {</span>
+<span class="nc" id="L236">                    found = c.setTerm(val);</span>
+                }
+<span class="fc" id="L238">            }</span>
+        }
+<span class="pc bpc" id="L240" title="1 of 2 branches missed.">        if (found == null) {</span>
+<span class="fc" id="L241">            delegate.addCategory(FEDORA_ID_SCHEME, val, label);</span>
+        }
+<span class="fc" id="L243">    }</span>
+
+    private String getLabelledCategory(String label) {
+<span class="fc" id="L246">        final List&lt;Category&gt; categories =</span>
+                delegate.getCategories(FEDORA_ID_SCHEME);
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">        for (final Category c : categories) {</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">            if (label.equals(c.getLabel())) {</span>
+<span class="fc" id="L250">                return c.getTerm();</span>
+            }
+<span class="nc" id="L252">        }</span>
+<span class="nc" id="L253">        return null;</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param val
+     */
+    public void setPid(final String val) {
+<span class="fc" id="L262">        setLabelledCategory(PID_CATEGORY_LABEL, val);</span>
+<span class="fc" id="L263">        delegate.setSummary(val);</span>
+<span class="fc" id="L264">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @return
+     */
+    public String getPid() {
+<span class="fc" id="L272">        return getLabelledCategory(PID_CATEGORY_LABEL);</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param val
+     */
+    public void setDsId(final String val) {
+<span class="fc" id="L281">        setLabelledCategory(DSID_CATEGORY_LABEL, val);</span>
+<span class="fc" id="L282">    }</span>
+
+    /**
+     * TODO
+     * 
+     * @return
+     */
+    public String getDsId() {
+<span class="nc" id="L290">        return getLabelledCategory(DSID_CATEGORY_LABEL);</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param writer
+     * @throws IOException
+     */
+    public void writeTo(final Writer writer) throws IOException {
+<span class="fc" id="L300">        delegate.writeTo(writer);</span>
+<span class="fc" id="L301">    }</span>
+
+    private static String getEntryContent(final String methodName,
+            final String returnVal) {
+<span class="fc" id="L305">        final String datatype =</span>
+                (String) FEDORA_TYPES.get(methodName + &quot;.datatype&quot;);
+<span class="fc" id="L307">        return objectToString(returnVal, datatype);</span>
+    }
+
+    protected static String objectToString(final String obj,
+            final String xsdType) {
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L313">            return &quot;null&quot;;</span>
+        }
+        String term;
+        // TODO Most of these types are not yet relevant to FCR4, but we can
+        // borrow their serializations as necessary
+        // several circumstances yield null canonical names
+<span class="pc bpc" id="L319" title="16 of 18 branches missed.">        switch (xsdType) {</span>
+            case &quot;fedora-types:ArrayOfString&quot;:
+<span class="nc" id="L321">                term = &quot;[UNSUPPORTED&quot; + xsdType + &quot;]&quot;;</span>
+<span class="nc" id="L322">                break;</span>
+            case &quot;xsd:boolean&quot;:
+<span class="nc" id="L324">                term = obj;</span>
+<span class="nc" id="L325">                break;</span>
+            case &quot;xsd:nonNegativeInteger&quot;:
+<span class="nc" id="L327">                term = obj;</span>
+<span class="nc" id="L328">                break;</span>
+            case &quot;fedora-types:RelationshipTuple&quot;:
+<span class="nc" id="L330">                term = &quot;[UNSUPPORTED&quot; + xsdType + &quot;]&quot;;</span>
+<span class="nc" id="L331">                break;</span>
+            default:
+<span class="fc" id="L333">                term = obj;</span>
+<span class="fc" id="L334">                term = term.replaceAll(&quot;\&quot;&quot;, &quot;'&quot;);</span>
+                break;
+        }
+
+<span class="fc" id="L338">        return term;</span>
+    }
+
+    protected static String getReturnValue(final Event jcrEvent,
+            final Node jcrNode) throws RepositoryException {
+<span class="pc bpc" id="L343" title="2 of 3 branches missed.">        switch (jcrEvent.getType()) {</span>
+            case NODE_ADDED:
+<span class="fc" id="L345">                return jcrNode.getName();</span>
+            case NODE_REMOVED:
+            case PROPERTY_ADDED:
+            case PROPERTY_CHANGED:
+            case PROPERTY_REMOVED:
+<span class="nc" id="L350">                return convertDateToXSDString(jcrEvent.getDate());</span>
+            default:
+<span class="nc" id="L352">                return null;</span>
+        }
+    }
+
+    protected static String mapMethodName(final int eventType,
+            final boolean isObjectNode) {
+<span class="pc bpc" id="L358" title="5 of 6 branches missed.">        switch (eventType) {</span>
+            case NODE_ADDED:
+<span class="fc bfc" id="L360" title="All 2 branches covered.">                return isObjectNode ? INGEST_METHOD : ADD_DS_METHOD;</span>
+            case NODE_REMOVED:
+<span class="nc bnc" id="L362" title="All 2 branches missed.">                return isObjectNode ? PURGE_OBJ_METHOD : PURGE_DS_METHOD;</span>
+            case PROPERTY_ADDED:
+<span class="nc bnc" id="L364" title="All 2 branches missed.">                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;</span>
+            case PROPERTY_CHANGED:
+<span class="nc bnc" id="L366" title="All 2 branches missed.">                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;</span>
+            case PROPERTY_REMOVED:
+<span class="nc bnc" id="L368" title="All 2 branches missed.">                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;</span>
+        }
+<span class="nc" id="L370">        return null;</span>
+    }
+
+    /**
+     * TODO
+     * 
+     * @param jmsMessage
+     * @return
+     */
+    public static boolean canParse(final Message jmsMessage) {
+        try {
+<span class="pc bpc" id="L381" title="2 of 4 branches missed.">            return EntryFactory.FORMAT.equals(jmsMessage.getJMSType()) &amp;&amp;</span>
+                    METHOD_NAMES.contains(jmsMessage
+                            .getStringProperty(&quot;methodName&quot;));
+<span class="nc" id="L384">        } catch (final JMSException e) {</span>
+<span class="nc" id="L385">            LOGGER.info(&quot;Could not parse message: {}&quot;, jmsMessage);</span>
+<span class="nc" id="L386">            throw propagate(e);</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
