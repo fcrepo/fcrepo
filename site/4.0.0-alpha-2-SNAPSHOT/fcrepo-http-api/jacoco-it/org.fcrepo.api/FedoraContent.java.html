@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraContent.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-api</a> &gt; <a href="index.html" class="el_package">org.fcrepo.api</a> &gt; <span class="el_source">FedoraContent.java</span></div><h1>FedoraContent.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.api;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
+import java.util.List;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+
+import org.fcrepo.AbstractResource;
+import org.fcrepo.Datastream;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.session.InjectedSession;
+import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+
+/**
+ * Content controller for adding, reading, and manipulating
+ * binary streams
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:content&quot;)
+<span class="fc" id="L70">public class FedoraContent extends AbstractResource {</span>
+
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L75">    private final Logger logger = getLogger(FedoraContent.class);</span>
+
+    /**
+     * Create an anonymous DS with a newly minted name and content from request
+     * body
+     * 
+     * @param pathList
+     * @throws RepositoryException
+     */
+    @POST
+    @Timed
+    public Response create(
+            @PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @QueryParam(&quot;checksum&quot;)
+            final String checksum,
+            @HeaderParam(&quot;Content-Type&quot;)
+            final MediaType requestContentType,
+            final InputStream requestBodyStream)
+        throws IOException, InvalidChecksumException, RepositoryException,
+        URISyntaxException {
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        final MediaType contentType =</span>
+                requestContentType != null ? requestContentType
+                        : APPLICATION_OCTET_STREAM_TYPE;
+
+<span class="fc" id="L100">        String path = toPath(pathList);</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if (path.endsWith(&quot;/fcr:new&quot;)) {</span>
+<span class="nc" id="L102">            logger.debug(&quot;Creating a new unnamed object&quot;);</span>
+<span class="nc" id="L103">            final String dsid = pidMinter.mintPid();</span>
+<span class="nc" id="L104">            path = path.replaceFirst(&quot;\\/fcr\\:new$&quot;, &quot;/&quot; + dsid);</span>
+        }
+
+<span class="fc" id="L107">        logger.debug(&quot;create Datastream {}&quot;, path);</span>
+        try {
+            final URI checksumURI;
+
+<span class="pc bpc" id="L111" title="3 of 4 branches missed.">            if (checksum != null &amp;&amp; !checksum.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L112">                checksumURI = new URI(checksum);</span>
+            } else {
+<span class="fc" id="L114">                checksumURI = null;</span>
+            }
+
+<span class="fc" id="L117">            final Node datastreamNode =</span>
+                    datastreamService.createDatastreamNode(session, path,
+                            contentType.toString(), requestBodyStream,
+                            checksumURI);
+
+<span class="fc" id="L122">            final HttpGraphSubjects subjects =</span>
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+
+<span class="fc" id="L125">            return created(</span>
+                    new URI(subjects.getGraphSubject(
+                            datastreamNode.getNode(JcrConstants.JCR_CONTENT))
+                            .getURI())).build();
+
+        } finally {
+<span class="pc" id="L131">            session.save();</span>
+<span class="pc" id="L132">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Modify an existing datastream's content
+     * 
+     * @param pathList
+     * @param requestContentType Content-Type header
+     * @param requestBodyStream Binary blob
+     * @return 201 Created
+     * @throws RepositoryException
+     * @throws IOException
+     * @throws InvalidChecksumException
+     */
+    @PUT
+    @Timed
+    public Response modifyContent(
+            @PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @HeaderParam(&quot;Content-Type&quot;)
+            final MediaType requestContentType,
+            final InputStream requestBodyStream,
+            @Context
+            final Request request) throws RepositoryException, IOException,
+        InvalidChecksumException, URISyntaxException {
+        try {
+<span class="fc" id="L159">            final String path = toPath(pathList);</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">            final MediaType contentType =</span>
+                    requestContentType != null ? requestContentType
+                            : APPLICATION_OCTET_STREAM_TYPE;
+
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            if (nodeService.exists(session, path)) {</span>
+
+<span class="fc" id="L166">                final Datastream ds =</span>
+                        datastreamService.getDatastream(session, path);
+
+<span class="fc" id="L169">                final EntityTag etag =</span>
+                        new EntityTag(ds.getContentDigest().toString());
+<span class="fc" id="L171">                final Date date = ds.getLastModifiedDate();</span>
+<span class="fc" id="L172">                final Date roundedDate = new Date();</span>
+<span class="fc" id="L173">                roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+<span class="fc" id="L174">                final ResponseBuilder builder =</span>
+                        request.evaluatePreconditions(roundedDate, etag);
+
+<span class="fc bfc" id="L177" title="All 2 branches covered.">                if (builder != null) {</span>
+<span class="fc" id="L178">                    throw new WebApplicationException(builder.build());</span>
+                }
+            }
+
+<span class="fc" id="L182">            logger.debug(&quot;create Datastream {}&quot;, path);</span>
+<span class="fc" id="L183">            final Node datastreamNode =</span>
+                    datastreamService.createDatastreamNode(session, path,
+                            contentType.toString(), requestBodyStream);
+<span class="fc" id="L186">            final boolean isNew = datastreamNode.isNew();</span>
+<span class="fc" id="L187">            session.save();</span>
+
+<span class="fc bfc" id="L189" title="All 2 branches covered.">            if (isNew) {</span>
+<span class="fc" id="L190">                final HttpGraphSubjects subjects =</span>
+                        new HttpGraphSubjects(FedoraNodes.class, uriInfo,
+                                session);
+
+<span class="fc" id="L194">                return created(</span>
+                        new URI(subjects.getGraphSubject(
+                                datastreamNode
+                                        .getNode(JcrConstants.JCR_CONTENT))
+                                .getURI())).build();
+            } else {
+<span class="fc" id="L200">                return noContent().build();</span>
+            }
+        } finally {
+<span class="fc" id="L203">            session.logout();</span>
+        }
+
+    }
+
+    /**
+     * Get the binary content of a datastream
+     * 
+     * @param pathList
+     * @return Binary blob
+     * @throws RepositoryException
+     */
+    @GET
+    @Timed
+    public Response getContent(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @Context
+            final Request request) throws RepositoryException {
+
+        try {
+<span class="fc" id="L223">            final String path = toPath(pathList);</span>
+<span class="fc" id="L224">            final Datastream ds =</span>
+                    datastreamService.getDatastream(session, path);
+
+<span class="fc" id="L227">            final EntityTag etag =</span>
+                    new EntityTag(ds.getContentDigest().toString());
+<span class="fc" id="L229">            final Date date = ds.getLastModifiedDate();</span>
+<span class="fc" id="L230">            final Date roundedDate = new Date();</span>
+<span class="fc" id="L231">            roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+<span class="fc" id="L232">            ResponseBuilder builder =</span>
+                    request.evaluatePreconditions(roundedDate, etag);
+
+<span class="fc" id="L235">            final CacheControl cc = new CacheControl();</span>
+<span class="fc" id="L236">            cc.setMaxAge(0);</span>
+<span class="fc" id="L237">            cc.setMustRevalidate(true);</span>
+
+<span class="fc bfc" id="L239" title="All 2 branches covered.">            if (builder == null) {</span>
+<span class="fc" id="L240">                builder = Response.ok(ds.getContent(), ds.getMimeType());</span>
+            }
+
+<span class="fc" id="L243">            return builder.cacheControl(cc).lastModified(date).tag(etag)</span>
+                    .build();
+        } finally {
+<span class="pc" id="L246">            session.logout();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

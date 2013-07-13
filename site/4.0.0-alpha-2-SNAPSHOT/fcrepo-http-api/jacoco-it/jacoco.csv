@@ -1,0 +1,24 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryUnnamedObjects,0,3,0,0,0,1,0,1,0,1
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoriesProperties,84,0,4,0,13,0,5,0,3,0
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryTransactions,0,3,0,0,0,1,0,1,0,1
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryExport,3,0,0,0,1,0,1,0,1,0
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryWorkspace,7,21,0,0,1,4,1,2,1,2
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryImport,0,3,0,0,0,1,0,1,0,1
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryNamespaces,12,38,0,0,0,9,0,3,0,3
+fcrepo-http-api,org.fcrepo.api.repository,FedoraRepositoryIdentifiers,0,3,0,0,0,1,0,1,0,1
+fcrepo-http-api,org.fcrepo.api,FedoraDatastreams,28,373,6,16,3,65,5,10,0,4
+fcrepo-http-api,org.fcrepo.api,FedoraIdentifiers,0,82,0,4,0,14,0,4,0,2
+fcrepo-http-api,org.fcrepo.api,FedoraFixity,6,30,0,0,0,5,0,2,0,2
+fcrepo-http-api,org.fcrepo.api,FedoraFieldSearch,49,84,2,4,5,12,2,6,0,5
+fcrepo-http-api,org.fcrepo.api,FedoraUnnamedObjects,34,84,4,2,2,14,3,3,0,3
+fcrepo-http-api,org.fcrepo.api,FedoraExport,0,45,0,0,0,6,0,2,0,2
+fcrepo-http-api,org.fcrepo.api,FedoraImport,6,55,0,0,0,9,0,2,0,2
+fcrepo-http-api,org.fcrepo.api,FedoraTransactions,40,113,8,8,10,23,8,5,0,5
+fcrepo-http-api,org.fcrepo.api,FedoraSitemap,22,156,2,6,2,30,2,8,0,6
+fcrepo-http-api,org.fcrepo.api,FedoraVersions,12,116,0,2,0,20,0,6,0,5
+fcrepo-http-api,org.fcrepo.api,FedoraExport.new StreamingOutput() {...},13,74,0,0,2,8,0,2,0,2
+fcrepo-http-api,org.fcrepo.api,FedoraContent,46,260,5,13,4,47,4,9,0,4
+fcrepo-http-api,org.fcrepo.api,FedoraNodes,156,232,11,9,23,43,8,9,1,6
+fcrepo-http-api,org.fcrepo.url,HttpApiResources,0,194,0,6,0,26,0,8,0,5
+fcrepo-http-api,org.fcrepo.responses,HtmlProvider,0,3,0,0,0,1,0,1,0,1
