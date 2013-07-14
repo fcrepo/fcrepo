@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraWebhooks.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-webhooks</a> &gt; <a href="index.html" class="el_package">org.fcrepo.webhooks</a> &gt; <span class="el_source">FedoraWebhooks.java</span></div><h1>FedoraWebhooks.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.webhooks;
+
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.fcrepo.AbstractResource;
+import org.fcrepo.messaging.legacy.LegacyMethod;
+import org.fcrepo.observer.FedoraEvent;
+import org.fcrepo.session.InjectedSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.google.common.eventbus.Subscribe;
+
+/**
+ * Webhooks callbacks
+ *
+ * @todo disentangle the JAX-RS and webhooks service
+ */
+@Path(&quot;/fcr:webhooks&quot;)
+@Scope(&quot;prototype&quot;)
+@Component
+<span class="fc" id="L65">public class FedoraWebhooks extends AbstractResource {</span>
+
+    /**
+     * Prefix to use to find webhooks callback-bearing nodes
+     */
+    public static final String WEBHOOK_SEARCH = &quot;webhook:*&quot;;
+
+    /**
+     * Property to look for Webhooks callback at
+     */
+    public static final String WEBHOOK_CALLBACK_PROPERTY =
+            &quot;webhook:callbackUrl&quot;;
+
+    /**
+     * JCR type to assign to newly created webhooks nodes
+     */
+    public static final String WEBHOOK_JCR_TYPE = &quot;webhook:callback&quot;;
+
+<span class="fc" id="L83">    private static final Logger LOGGER = LoggerFactory</span>
+            .getLogger(FedoraWebhooks.class);
+
+<span class="fc" id="L86">    protected static final PoolingClientConnectionManager connectionManager =</span>
+            new PoolingClientConnectionManager();
+
+    protected static HttpClient client;
+
+    @InjectedSession
+    protected Session session;
+
+    /**
+     * For use with non-mutating methods.
+     */
+    private Session readOnlySession;
+
+    static {
+<span class="fc" id="L100">        connectionManager.setMaxTotal(Integer.MAX_VALUE);</span>
+<span class="fc" id="L101">        connectionManager.setDefaultMaxPerRoute(5);</span>
+<span class="fc" id="L102">        connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);</span>
+<span class="fc" id="L103">        client = new DefaultHttpClient(connectionManager);</span>
+<span class="fc" id="L104">    }</span>
+
+    /**
+     * Register a listener on the eventbus to
+     * use for firing webhooks requests, and register our
+     * webhooks CND file.
+     *
+     * @throws RepositoryException
+     */
+    @Override
+    @PostConstruct
+    public void initialize() throws RepositoryException {
+
+<span class="fc" id="L117">        eventBus.register(this);</span>
+
+<span class="fc" id="L119">        final Session session = sessions.getSession();</span>
+<span class="fc" id="L120">        jcrTools.registerNodeTypes(session, &quot;webhooks.cnd&quot;);</span>
+<span class="fc" id="L121">        session.save();</span>
+<span class="fc" id="L122">        session.logout();</span>
+<span class="fc" id="L123">    }</span>
+
+    /**
+     * Trigger all the registered webhook callbacks for a resource when the
+     * event is received
+     * 
+     * @param resource
+     * @param event
+     * @throws RepositoryException
+     */
+    public void runHooks(final Node resource, final FedoraEvent event)
+        throws RepositoryException {
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        if (resource == null) {</span>
+<span class="nc" id="L136">            LOGGER.warn(&quot;resource node is null; event path is {}&quot;, event</span>
+                    .getPath());
+<span class="nc" id="L138">            return;</span>
+        }
+
+<span class="fc" id="L141">        final NodeIterator webhooksIterator =</span>
+                resource.getSession().getRootNode().getNodes(WEBHOOK_SEARCH);
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        while (webhooksIterator.hasNext()) {</span>
+<span class="fc" id="L145">            final Node hook = webhooksIterator.nextNode();</span>
+<span class="fc" id="L146">            final String callbackUrl =</span>
+                    hook.getProperty(WEBHOOK_CALLBACK_PROPERTY).getString();
+<span class="fc" id="L148">            final HttpPost method = new HttpPost(callbackUrl);</span>
+<span class="fc" id="L149">            final LegacyMethod eventSerialization =</span>
+                    new LegacyMethod(event, resource);
+<span class="fc" id="L151">            final StringWriter writer = new StringWriter();</span>
+
+            try {
+<span class="fc" id="L154">                eventSerialization.writeTo(writer);</span>
+<span class="fc" id="L155">                method.setEntity(new StringEntity(writer.toString()));</span>
+<span class="nc" id="L156">            } catch (final IOException e) {</span>
+<span class="nc" id="L157">                LOGGER.warn(&quot;Got exception generating webhook body: {}&quot;, e);</span>
+<span class="fc" id="L158">            }</span>
+
+            try {
+<span class="nc" id="L161">                LOGGER.debug(&quot;Firing callback for {}&quot;, hook.getName());</span>
+<span class="nc" id="L162">                client.execute(method);</span>
+<span class="nc" id="L163">                method.releaseConnection();</span>
+<span class="fc" id="L164">            } catch (final IOException e) {</span>
+<span class="fc" id="L165">                LOGGER.warn(</span>
+                        &quot;Got exception running webhook callback for {}: {}&quot;,
+                        hook.getName(), e);
+<span class="nc" id="L168">            }</span>
+
+
+
+<span class="fc" id="L172">        }</span>
+<span class="fc" id="L173">    }</span>
+
+    /**
+     * List all of the registered webhooks for the repository
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    public Response showWebhooks() throws RepositoryException {
+
+<span class="fc" id="L184">        final NodeIterator webhooksIterator =</span>
+                session.getRootNode().getNodes(&quot;webhook:*&quot;);
+<span class="fc" id="L186">        final StringBuilder str = new StringBuilder();</span>
+
+<span class="fc bfc" id="L188" title="All 2 branches covered.">        while (webhooksIterator.hasNext()) {</span>
+<span class="fc" id="L189">            final Node hook = webhooksIterator.nextNode();</span>
+<span class="fc" id="L190">            final String callbackUrl =</span>
+                    hook.getProperty(&quot;webhook:callbackUrl&quot;).getString();
+<span class="fc" id="L192">            str.append(hook.getIdentifier() + &quot;: &quot; + callbackUrl + &quot;, &quot;);</span>
+<span class="fc" id="L193">        }</span>
+
+<span class="fc" id="L195">        return ok(str.toString()).build();</span>
+    }
+
+    /**
+     * Register a new webhook to receive callbacks repository-wide
+     * @param id
+     * @param callbackUrl
+     * @return
+     * @throws RepositoryException
+     */
+    @POST
+    @Path(&quot;{id}&quot;)
+    public Response registerWebhook(
+            @PathParam(&quot;id&quot;)
+            final String id,
+            @FormParam(&quot;callbackUrl&quot;)
+            final String callbackUrl) throws RepositoryException {
+
+<span class="nc" id="L213">        final Node n =</span>
+                jcrTools.findOrCreateChild(session.getRootNode(), &quot;webhook:&quot; +
+                        id, &quot;webhook:callback&quot;);
+
+<span class="nc" id="L217">        n.setProperty(&quot;webhook:callbackUrl&quot;, callbackUrl);</span>
+
+<span class="nc" id="L219">        session.save();</span>
+<span class="nc" id="L220">        session.logout();</span>
+
+<span class="nc" id="L222">        return created(uriInfo.getAbsolutePath()).build();</span>
+    }
+
+    /**
+     * Remove a webhook callback
+     * @param id
+     * @return
+     * @throws RepositoryException
+     */
+    @DELETE
+    @Path(&quot;{id}&quot;)
+    public Response registerWebhook(@PathParam(&quot;id&quot;)
+        final String id) throws RepositoryException {
+<span class="fc" id="L235">        final Node n =</span>
+                jcrTools.findOrCreateChild(session.getRootNode(), &quot;webhook:&quot; +
+                        id, WEBHOOK_JCR_TYPE);
+<span class="fc" id="L238">        n.remove();</span>
+
+<span class="fc" id="L240">        session.save();</span>
+<span class="fc" id="L241">        session.logout();</span>
+
+<span class="fc" id="L243">        return noContent().build();</span>
+    }
+
+    /**
+     * Listen to the EventBus and trigger webhooks callbacks (see .runHooks)
+     * 
+     * @param event
+     */
+    @Subscribe
+    public void onEvent(final FedoraEvent event) {
+        try {
+<span class="fc" id="L254">            LOGGER.debug(&quot;Webhooks received event: {}&quot;, event);</span>
+<span class="fc" id="L255">            final Node resource =</span>
+                    jcrTools.findOrCreateNode(readOnlySession.getRepository()
+                            .login(), event.getPath());
+
+<span class="fc" id="L259">            runHooks(resource, event);</span>
+<span class="nc" id="L260">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L261">            LOGGER.error(&quot;Got a repository exception handling message: {}&quot;, e);</span>
+<span class="fc" id="L262">        }</span>
+<span class="fc" id="L263">    }</span>
+
+    /**
+     * Grab a read-only session to use for listening for events with
+     */
+    @PostConstruct
+    public final void setReadOnlySession() {
+        try {
+<span class="nc" id="L271">            readOnlySession = sessions.getSession();</span>
+<span class="nc" id="L272">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L273">            throw new IllegalStateException(e);</span>
+<span class="nc" id="L274">        }</span>
+<span class="nc" id="L275">    }</span>
+
+    /**
+     * Destroy the read-only session when we're done with it
+     */
+    @PreDestroy
+    public final void logoutSession() {
+<span class="fc" id="L282">        eventBus.unregister(this);</span>
+<span class="fc" id="L283">        readOnlySession.logout();</span>
+<span class="fc" id="L284">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
