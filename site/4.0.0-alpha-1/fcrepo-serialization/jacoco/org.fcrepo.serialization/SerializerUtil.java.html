@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SerializerUtil.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-serialization</a> &gt; <a href="index.html" class="el_package">org.fcrepo.serialization</a> &gt; <span class="el_source">SerializerUtil.java</span></div><h1>SerializerUtil.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.serialization;
+
+import org.slf4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Helper service that aggregates serializers and makes them accessible by key
+ */
+@Component
+<span class="fc" id="L36">public class SerializerUtil implements ApplicationContextAware {</span>
+
+<span class="fc" id="L38">    private static final Logger LOGGER = getLogger(SerializerUtil.class);</span>
+
+    private ApplicationContext applicationContext;
+
+    private Map&lt;String, FedoraObjectSerializer&gt; serializerMap;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext)
+        throws BeansException {
+<span class="fc" id="L47">        this.applicationContext = applicationContext;</span>
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * Get the list of Fedora serializer keys
+     * @return
+     */
+    public Set&lt;String&gt; keySet() {
+<span class="fc" id="L55">        return getFedoraObjectSerializers().keySet();</span>
+    }
+
+    /**
+     * Get a Fedora Object Serializer by its key
+     * @param format
+     * @return
+     */
+    public FedoraObjectSerializer getSerializer(final String format) {
+<span class="fc" id="L64">        return getFedoraObjectSerializers().get(format);</span>
+    }
+
+    /**
+     * Get the whole list of FedoraObjectSerializers
+     * @return
+     */
+    public Map&lt;String, FedoraObjectSerializer&gt; getFedoraObjectSerializers() {
+<span class="fc" id="L72">        return serializerMap;</span>
+    }
+
+    /**
+     * Hook into Spring to get the list of all FedoraObjectSerializers that
+     * were (supposedly) component scanned, and register them in our own
+     * map.
+     */
+    @PostConstruct
+    public void buildFedoraObjectSerializersMap() {
+<span class="fc" id="L82">        final Map&lt;String, FedoraObjectSerializer&gt; beans =</span>
+                applicationContext.getBeansOfType(FedoraObjectSerializer.class);
+
+<span class="fc" id="L85">        final Map&lt;String, FedoraObjectSerializer&gt; m = new HashMap&lt;&gt;();</span>
+
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        for (Map.Entry&lt;String, FedoraObjectSerializer&gt; e : beans.entrySet()) {</span>
+<span class="fc" id="L88">            final FedoraObjectSerializer serializer = e.getValue();</span>
+<span class="fc" id="L89">            LOGGER.info(&quot;Registering serializer {} for format {}&quot;, serializer,</span>
+                    serializer.getKey());
+<span class="fc" id="L91">            m.put(serializer.getKey(), serializer);</span>
+<span class="fc" id="L92">        }</span>
+
+<span class="fc" id="L94">        serializerMap = m;</span>
+
+<span class="fc" id="L96">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
