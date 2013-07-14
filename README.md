@@ -17,7 +17,6 @@ Technical goals:
 System Requirements
 * Java 7
 * Maven 3
-* A Servlet 3.0 container (e.g. Tomcat 7 or Jetty 8)
 
 ```bash
 $ git clone https://github.com/futures/fcrepo4.git
