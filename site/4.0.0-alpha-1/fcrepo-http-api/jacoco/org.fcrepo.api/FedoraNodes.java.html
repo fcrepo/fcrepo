@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraNodes.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-api</a> &gt; <a href="index.html" class="el_package">org.fcrepo.api</a> &gt; <span class="el_source">FedoraNodes.java</span></div><h1>FedoraNodes.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.api;
+
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.RDFMediaType.N3;
+import static org.fcrepo.http.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.RDFMediaType.TURTLE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.AbstractResource;
+import org.fcrepo.FedoraResource;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
+import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.session.InjectedSession;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.common.collection.Problems;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
+
+/**
+ * CRUD operations on Fedora Nodes
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}&quot;)
+<span class="fc" id="L88">public class FedoraNodes extends AbstractResource {</span>
+
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L93">    private static final Logger logger = getLogger(FedoraNodes.class);</span>
+
+    /**
+     * Retrieve the node profile
+     * 
+     * @param pathList
+     * @param offset with limit, control the pagination window of details for
+     *        child nodes
+     * @param limit with offset, control the pagination window of details for
+     *        child nodes
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @GET
+    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
+            TEXT_HTML})
+    public Dataset describe(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @QueryParam(&quot;offset&quot;)
+            @DefaultValue(&quot;0&quot;)
+            final long offset,
+            @QueryParam(&quot;limit&quot;)
+            @DefaultValue(&quot;-1&quot;)
+            final int limit,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException, IOException {
+<span class="fc" id="L124">        final String path = toPath(pathList);</span>
+<span class="fc" id="L125">        logger.trace(&quot;Getting profile for {}&quot;, path);</span>
+
+        try {
+<span class="fc" id="L128">            final FedoraResource resource =</span>
+                    nodeService.getObject(session, path);
+
+<span class="fc" id="L131">            final Date date = resource.getLastModifiedDate();</span>
+<span class="fc" id="L132">            final Date roundedDate = new Date();</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">            if (date != null) {</span>
+<span class="nc" id="L134">                roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+            }
+<span class="fc" id="L136">            final ResponseBuilder builder =</span>
+                    request.evaluatePreconditions(roundedDate);
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">            if (builder != null) {</span>
+<span class="nc" id="L139">                final CacheControl cc = new CacheControl();</span>
+<span class="nc" id="L140">                cc.setMaxAge(0);</span>
+<span class="nc" id="L141">                cc.setMustRevalidate(true);</span>
+                // here we are implicitly emitting a 304
+                // the exception is not an error, it's genuinely
+                // an exceptional condition
+<span class="nc" id="L145">                throw new WebApplicationException(builder.cacheControl(cc)</span>
+                        .lastModified(date).build());
+            }
+<span class="fc" id="L148">            final HttpGraphSubjects subjects =</span>
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+<span class="fc" id="L150">            final Dataset propertiesDataset =</span>
+                    resource.getPropertiesDataset(subjects, offset, limit);
+<span class="fc" id="L152">            addResponseInformationToDataset(resource, propertiesDataset,</span>
+                    uriInfo, subjects);
+
+<span class="fc" id="L155">            return propertiesDataset;</span>
+
+        } finally {
+<span class="pc" id="L158">            session.logout();</span>
+        }
+
+    }
+
+    /**
+     * Does nothing (good) yet -- just runs SPARQL-UPDATE statements
+     * 
+     * @param pathList
+     * @param requestBodyStream
+     * @return 201
+     * @throws RepositoryException
+     */
+    @PUT
+    @Consumes({contentTypeSPARQLUpdate})
+    @Timed
+    public Response modifyObject(
+            @PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @Context
+            final UriInfo uriInfo,
+            final InputStream requestBodyStream,
+            @HeaderParam(&quot;Content-Type&quot;)
+            final MediaType requestContentType,
+            @Context
+            final Request request) throws RepositoryException, IOException,
+        InvalidChecksumException {
+<span class="fc" id="L185">        final String path = toPath(pathList);</span>
+<span class="fc" id="L186">        logger.debug(&quot;Modifying object with path: {}&quot;, path);</span>
+
+        try {
+<span class="fc" id="L189">            final FedoraResource resource =</span>
+                    nodeService.findOrCreateObject(session, path);
+
+<span class="fc" id="L192">            final boolean isNew = resource.isNew();</span>
+
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">            if (!isNew) {</span>
+<span class="fc" id="L195">                final Date date = resource.getLastModifiedDate();</span>
+<span class="fc" id="L196">                final Date roundedDate = new Date();</span>
+<span class="fc" id="L197">                roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+<span class="fc" id="L198">                final ResponseBuilder builder =</span>
+                        request.evaluatePreconditions(roundedDate);
+
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">                if (builder != null) {</span>
+<span class="nc" id="L202">                    throw new WebApplicationException(builder.build());</span>
+                }
+            }
+
+<span class="fc" id="L206">            resource.updatePropertiesDataset(new HttpGraphSubjects(</span>
+                    FedoraNodes.class, uriInfo), IOUtils
+                    .toString(requestBodyStream));
+<span class="fc" id="L209">            session.save();</span>
+
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">            if (isNew) {</span>
+<span class="nc" id="L212">                return created(</span>
+                        uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
+                                .build(path.substring(1))).build();
+            } else {
+<span class="fc" id="L216">                return noContent().build();</span>
+            }
+
+        } finally {
+<span class="pc" id="L220">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Update an object using SPARQL-UPDATE
+     * 
+     * @param pathList
+     * @return 201
+     * @throws RepositoryException
+     * @throws org.fcrepo.exception.InvalidChecksumException
+     * @throws IOException
+     */
+    @POST
+    @Consumes({contentTypeSPARQLUpdate})
+    @Timed
+    public Response updateSparql(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @Context
+            final UriInfo uriInfo,
+            final InputStream requestBodyStream)
+        throws RepositoryException, IOException {
+
+<span class="fc" id="L243">        final String path = toPath(pathList);</span>
+<span class="fc" id="L244">        logger.debug(&quot;Attempting to ingest with path: {}&quot;, path);</span>
+
+        try {
+
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">            if (requestBodyStream != null) {</span>
+
+<span class="fc" id="L250">                final FedoraResource result =</span>
+                        nodeService.getObject(session, path);
+
+<span class="fc" id="L253">                result.updatePropertiesDataset(new HttpGraphSubjects(</span>
+                        FedoraNodes.class, uriInfo, session), IOUtils
+                        .toString(requestBodyStream));
+<span class="fc" id="L256">                final Problems problems = result.getDatasetProblems();</span>
+<span class="pc bpc" id="L257" title="3 of 4 branches missed.">                if (problems != null &amp;&amp; problems.hasProblems()) {</span>
+<span class="nc" id="L258">                    logger.info(</span>
+                            &quot;Found these problems updating the properties for {}: {}&quot;,
+                            path, problems.toString());
+<span class="nc" id="L261">                    return status(FORBIDDEN).entity(problems.toString())</span>
+                            .build();
+
+                }
+
+<span class="fc" id="L266">                session.save();</span>
+
+<span class="fc" id="L268">                return status(SC_NO_CONTENT).build();</span>
+            } else {
+<span class="nc" id="L270">                return status(SC_BAD_REQUEST).entity(</span>
+                        &quot;SPARQL-UPDATE requests must have content!&quot;).build();
+            }
+
+        } finally {
+<span class="pc" id="L275">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Creates a new object.
+     * 
+     * @param pathList
+     * @return 201
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     * @throws IOException
+     */
+    @POST
+    @Timed
+    public Response createObject(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @QueryParam(&quot;mixin&quot;)
+            @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
+            final String mixin,
+            @QueryParam(&quot;checksum&quot;)
+            final String checksum,
+            @HeaderParam(&quot;Content-Type&quot;)
+            final MediaType requestContentType,
+            @Context
+            final UriInfo uriInfo, final InputStream requestBodyStream)
+        throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
+
+<span class="fc" id="L303">        final String path = toPath(pathList);</span>
+<span class="fc" id="L304">        logger.debug(&quot;Attempting to ingest with path: {}&quot;, path);</span>
+
+        try {
+<span class="pc bpc" id="L307" title="1 of 2 branches missed.">            if (nodeService.exists(session, path)) {</span>
+<span class="nc" id="L308">                return status(SC_CONFLICT).entity(</span>
+                        path + &quot; is an existing resource!&quot;).build();
+            }
+
+
+            final URI checksumURI;
+
+<span class="pc bpc" id="L315" title="3 of 4 branches missed.">            if (checksum != null &amp;&amp; !checksum.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L316">                checksumURI = new URI(checksum);</span>
+            } else {
+<span class="fc" id="L318">                checksumURI = null;</span>
+            }
+
+<span class="fc" id="L321">            createObjectOrDatastreamFromRequestContent(FedoraNodes.class,</span>
+                    session, path, mixin, uriInfo, requestBodyStream,
+                    requestContentType, checksumURI);
+
+<span class="fc" id="L325">            session.save();</span>
+<span class="fc" id="L326">            logger.debug(&quot;Finished creating {} with path: {}&quot;, mixin, path);</span>
+<span class="fc" id="L327">            return created(uriInfo.getRequestUri()).entity(path.substring(1))</span>
+                    .build();
+
+        } finally {
+<span class="pc" id="L331">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Deletes an object.
+     * 
+     * @param path
+     * @return
+     * @throws RepositoryException
+     */
+    @DELETE
+    @Timed
+    public Response deleteObject(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; path) throws RepositoryException {
+
+        try {
+<span class="fc" id="L348">            nodeService.deleteObject(session, toPath(path));</span>
+<span class="fc" id="L349">            session.save();</span>
+<span class="fc" id="L350">            return noContent().build();</span>
+        } finally {
+<span class="pc" id="L352">            session.logout();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
