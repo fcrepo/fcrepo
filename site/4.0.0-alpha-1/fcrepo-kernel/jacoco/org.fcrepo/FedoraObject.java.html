@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraObject.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo</a> &gt; <span class="el_source">FedoraObject.java</span></div><h1>FedoraObject.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo;
+
+import static org.fcrepo.utils.FedoraTypesUtils.isFedoraObject;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
+
+/**
+ * An abstraction that represents a Fedora Object backed by
+ * a JCR node.
+ *
+ * @author ajs6f
+ * @date Feb 21, 2013
+ */
+public class FedoraObject extends FedoraResource {
+
+<span class="fc" id="L37">    static final Logger logger = getLogger(FedoraObject.class);</span>
+
+    /**
+     * Construct a FedoraObject from an existing JCR Node
+     * @param node an existing JCR node to treat as an fcrepo object
+     */
+    public FedoraObject(final Node node) {
+<span class="fc" id="L44">        super(node);</span>
+<span class="fc" id="L45">        mixinTypeSpecificCrap();</span>
+<span class="fc" id="L46">    }</span>
+
+    /**
+     * Create or find a FedoraObject at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public FedoraObject(final Session session, final String path,
+                        final String nodeType) throws RepositoryException {
+<span class="fc" id="L56">        super(session, path, nodeType);</span>
+<span class="fc" id="L57">        mixinTypeSpecificCrap();</span>
+<span class="fc" id="L58">    }</span>
+    /**
+     * Create or find a FedoraDatastream at the given path
+     * @param session the JCR session to use to retrieve the object
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public FedoraObject(final Session session, final String path)
+        throws RepositoryException {
+<span class="nc" id="L67">        this(session, path, JcrConstants.NT_FOLDER);</span>
+<span class="nc" id="L68">    }</span>
+
+
+    private void mixinTypeSpecificCrap() {
+        try {
+<span class="pc bpc" id="L73" title="1 of 4 branches missed.">            if (node.isNew() || !hasMixin(node)) {</span>
+<span class="fc" id="L74">                logger.debug(&quot;Setting {} properties on a {} node {}...&quot;,</span>
+                             FEDORA_OBJECT,
+                             JcrConstants.NT_FOLDER,
+                             node.getPath());
+<span class="fc" id="L78">                node.addMixin(FEDORA_OBJECT);</span>
+            }
+<span class="nc" id="L80">        } catch (RepositoryException e) {</span>
+<span class="nc" id="L81">            logger.warn(&quot;Could not decorate {} with {} properties: {} &quot;,</span>
+                        JcrConstants.JCR_CONTENT, FEDORA_OBJECT, e);
+<span class="fc" id="L83">        }</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * @return The JCR name of the node that backs this object.
+     * @throws RepositoryException
+     */
+    public String getName() throws RepositoryException {
+<span class="fc" id="L91">        return node.getName();</span>
+    }
+
+    /**
+     * Check if the node has a fedora:object mixin
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean hasMixin(final Node node) throws RepositoryException {
+<span class="fc" id="L101">        return isFedoraObject.apply(node);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

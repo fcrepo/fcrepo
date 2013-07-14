@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeService.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.services</a> &gt; <span class="el_source">NodeService.java</span></div><h1>NodeService.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.services;
+
+import static com.google.common.collect.ImmutableSet.builder;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+
+import org.fcrepo.FedoraResource;
+import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.google.common.collect.ImmutableSet;
+
+/**
+ * Service for managing access to Fedora 'nodes' (either datastreams or objects, we don't care.)
+ * @author Chris Beer
+ * @date May 9, 2013
+ */
+@Component
+<span class="fc" id="L44">public class NodeService extends RepositoryService implements FedoraJcrTypes {</span>
+
+<span class="fc" id="L46">    private static final Logger logger = getLogger(NodeService.class);</span>
+
+    /**
+     * Find or create a new Fedora resource at the given path
+     * @param session a JCR session
+     * @param path a JCR path
+     * @return
+     * @throws RepositoryException
+     */
+    public FedoraResource findOrCreateObject(final Session session,
+                                             final String path)
+        throws RepositoryException {
+<span class="nc" id="L58">        return new FedoraResource(findOrCreateNode(session, path));</span>
+    }
+
+    /**
+     * Retrieve an existing Fedora resource at the given path
+     * @param session a JCR session
+     * @param path a JCR path
+     * @return
+     * @throws RepositoryException
+     */
+    public FedoraResource getObject(final Session session,
+                                    final String path)
+        throws RepositoryException {
+<span class="nc" id="L71">        return new FedoraResource(session.getNode(path));</span>
+    }
+
+    /**
+     * Get an existing Fedora resource at the given path with the given version
+     * label
+     * @param session a JCR session
+     * @param path a JCR path
+     * @param versionId a JCR version label
+     * @return
+     * @throws RepositoryException
+     */
+    public FedoraResource getObject(Session session,
+                                    String path,
+                                    String versionId)
+        throws RepositoryException {
+<span class="nc" id="L87">        final VersionHistory versionHistory =</span>
+            FedoraTypesUtils.getVersionHistory(session, path);
+
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (versionHistory == null) {</span>
+<span class="nc" id="L91">            return null;</span>
+        }
+
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (!versionHistory.hasVersionLabel(versionId)) {</span>
+<span class="nc" id="L95">            return null;</span>
+        }
+
+<span class="nc" id="L98">        final Version version = versionHistory.getVersionByLabel(versionId);</span>
+<span class="nc" id="L99">        return new FedoraResource(version.getFrozenNode());</span>
+    }
+
+    /**
+     * @return A Set of object names (identifiers)
+     * @throws RepositoryException
+     */
+    public Set&lt;String&gt; getObjectNames(final Session session, String path)
+        throws RepositoryException {
+<span class="fc" id="L108">        return getObjectNames(session, path, null);</span>
+    }
+
+    /**
+     * Get the list of child nodes at the given path filtered by the given mixin
+     * @param session
+     * @param path
+     * @param mixin
+     * @return
+     * @throws RepositoryException
+     */
+    public Set&lt;String&gt; getObjectNames(final Session session,
+                                      String path,
+                                      String mixin) throws RepositoryException {
+
+<span class="fc" id="L123">        final Node objects = session.getNode(path);</span>
+<span class="fc" id="L124">        final ImmutableSet.Builder&lt;String&gt; b = builder();</span>
+<span class="fc" id="L125">        final NodeIterator i = objects.getNodes();</span>
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        while (i.hasNext()) {</span>
+<span class="fc" id="L128">            Node n = i.nextNode();</span>
+<span class="fc" id="L129">            logger.info(&quot;child of type {} is named {} at {}&quot;,</span>
+                        n.getPrimaryNodeType(), n.getName(), n.getPath());
+
+<span class="pc bpc" id="L132" title="3 of 4 branches missed.">            if (mixin == null || n.isNodeType(mixin)) {</span>
+<span class="fc" id="L133">                b.add(n.getName());</span>
+            }
+<span class="fc" id="L135">        }</span>
+
+<span class="fc" id="L137">        return b.build();</span>
+    }
+
+    /**
+     * Delete an existing object from the repository at the given path
+     * @param session
+     * @param path
+     * @throws RepositoryException
+     */
+    public void deleteObject(final Session session, final String path)
+        throws RepositoryException {
+<span class="fc" id="L148">        final Node obj = session.getNode(path);</span>
+<span class="fc" id="L149">        obj.remove();</span>
+<span class="fc" id="L150">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

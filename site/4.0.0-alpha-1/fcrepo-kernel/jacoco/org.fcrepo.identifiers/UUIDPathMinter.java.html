@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>UUIDPathMinter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.html" class="el_package">org.fcrepo.identifiers</a> &gt; <span class="el_source">UUIDPathMinter.java</span></div><h1>UUIDPathMinter.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.identifiers;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
+
+import com.codahale.metrics.Timer;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+
+/**
+ * PID minter that creates hierarchical IDs for a UUID
+ */
+public class UUIDPathMinter extends BasePidMinter {
+
+<span class="fc" id="L31">    static final Timer timer = getMetrics().timer(name(UUIDPathMinter.class, &quot;mint&quot;));</span>
+    private final int length;
+    private final int count;
+
+    /**
+     * Configure the path minter using some reasonable defaults for
+     * the length (2) and count (4) of the branch nodes
+     */
+    public UUIDPathMinter() {
+<span class="nc" id="L40">        this(2,4);</span>
+<span class="nc" id="L41">    }</span>
+
+    /**
+     * Configure the path minter for the length of the keys and depth of
+     * the branch node prefix
+     *
+     * @param length how long the branch node identifiers should be
+     * @param count how many branch nodes should be inserted
+     */
+<span class="fc" id="L50">    public UUIDPathMinter(final int length, final int count) {</span>
+<span class="fc" id="L51">        this.length = length;</span>
+<span class="fc" id="L52">        this.count = count;</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Mint a unique identifier as a UUID
+     * @return
+     */
+    @Override
+    public String mintPid() {
+
+<span class="fc" id="L62">        final Timer.Context context = timer.time();</span>
+
+        try {
+<span class="fc" id="L65">            final String s = randomUUID().toString();</span>
+<span class="fc" id="L66">            final Iterable&lt;String&gt; split = Splitter.fixedLength(length).split(s.substring(0, length * count));</span>
+
+<span class="fc" id="L68">            return Joiner.on(&quot;/&quot;).join(split) + &quot;/&quot; + s;</span>
+        } finally {
+<span class="pc" id="L70">            context.stop();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
