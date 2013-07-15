@@ -52,6 +52,8 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.http.Range;
+import org.fcrepo.responses.RangeRequestInputStream;
 import org.fcrepo.session.InjectedSession;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
@@ -69,6 +71,8 @@ import com.codahale.metrics.annotation.Timed;
 @Path("/{path: .*}/fcr:content")
 public class FedoraContent extends AbstractResource {
 
+    public static final int REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+    public static final int PARTIAL_CONTENT = 206;
     @InjectedSession
     protected Session session;
 
@@ -84,12 +88,9 @@ public class FedoraContent extends AbstractResource {
     @POST
     @Timed
     public Response create(
-            @PathParam("path")
-            final List<PathSegment> pathList,
-            @QueryParam("checksum")
-            final String checksum,
-            @HeaderParam("Content-Type")
-            final MediaType requestContentType,
+            @PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("checksum") final String checksum,
+            @HeaderParam("Content-Type") final MediaType requestContentType,
             final InputStream requestBodyStream)
         throws IOException, InvalidChecksumException, RepositoryException,
         URISyntaxException {
@@ -214,15 +215,17 @@ public class FedoraContent extends AbstractResource {
      */
     @GET
     @Timed
-    public Response getContent(@PathParam("path")
-            final List<PathSegment> pathList,
-            @Context
-            final Request request) throws RepositoryException {
+    public Response getContent(
+            @PathParam("path") final List<PathSegment> pathList,
+            @HeaderParam("Range") String rangeValue,
+            @Context final Request request)
+        throws RepositoryException, IOException {
 
         try {
             final String path = toPath(pathList);
             final Datastream ds =
                     datastreamService.getDatastream(session, path);
+
 
             final EntityTag etag =
                     new EntityTag(ds.getContentDigest().toString());
@@ -237,11 +240,54 @@ public class FedoraContent extends AbstractResource {
             cc.setMustRevalidate(true);
 
             if (builder == null) {
-                builder = Response.ok(ds.getContent(), ds.getMimeType());
+
+                final InputStream content = ds.getContent();
+
+                if (rangeValue != null && rangeValue.startsWith("bytes")) {
+
+                    final Range range = Range.convert(rangeValue);
+
+                    final long contentSize = ds.getContentSize();
+
+                    final String endAsString;
+
+                    if (range.end() == -1) {
+                        endAsString = Long.toString(contentSize - 1);
+                    }  else {
+                        endAsString = Long.toString(range.end());
+                    }
+
+                    final String contentRangeValue =
+                        String.format("bytes %s-%s/%s",
+                                         range.start(),
+                                         endAsString,
+                                         contentSize);
+
+                    if (range.end() > contentSize || (range.end() == -1 && range.start() > contentSize)) {
+                        builder = Response.status(REQUESTED_RANGE_NOT_SATISFIABLE)
+                                      .header("Content-Range", contentRangeValue);
+                    } else {
+                        final RangeRequestInputStream rangeInputStream =
+                            new RangeRequestInputStream(content,
+                                                           range.start(),
+                                                           range.size());
+
+                        builder = Response.status(PARTIAL_CONTENT)
+                                      .entity(rangeInputStream)
+                                      .header("Content-Range", contentRangeValue);
+                    }
+
+                } else {
+                    builder = Response.ok(content);
+                }
             }
 
-            return builder.cacheControl(cc).lastModified(date).tag(etag)
-                    .build();
+            return builder.type(ds.getMimeType())
+                       .header("Accept-Ranges", "bytes")
+                       .cacheControl(cc)
+                       .lastModified(date)
+                       .tag(etag)
+                           .build();
         } finally {
             session.logout();
         }

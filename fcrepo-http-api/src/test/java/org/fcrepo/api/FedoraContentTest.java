@@ -213,7 +213,7 @@ public class FedoraContentTest {
                 mockDs);
         final Request mockRequest = mock(Request.class);
         final Response actual =
-                testObj.getContent(createPathList(pid, dsId), mockRequest);
+                testObj.getContent(createPathList(pid, dsId), null, mockRequest);
         verify(mockDs).getContent();
         verify(mockSession, never()).save();
         final String actualContent =
