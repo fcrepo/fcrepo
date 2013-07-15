@@ -188,4 +188,26 @@ public class FedoraContentIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testRangeRequest() throws Exception {
+        final HttpPost createObjMethod =
+                postObjMethod("FedoraDatastreamsTest63");
+        assertEquals(201, getStatus(createObjMethod));
+
+        final HttpPost createDSMethod =
+                postDSMethod("FedoraDatastreamsTest63", "ds1",
+                                    "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpGet method_test_get =
+                new HttpGet(serverAddress +
+                                    "objects/FedoraDatastreamsTest63/ds1/fcr:content");
+        method_test_get.setHeader("Range", "bytes=1-3");
+        assertEquals(206, getStatus(method_test_get));
+        final HttpResponse response = client.execute(method_test_get);
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertEquals("Got the wrong content back!", "arb",EntityUtils.toString(response.getEntity()));
+
+    }
+
 }

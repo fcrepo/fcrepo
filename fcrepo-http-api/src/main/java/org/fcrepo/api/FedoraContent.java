@@ -27,6 +27,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -48,6 +50,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
@@ -215,14 +219,15 @@ public class FedoraContent extends AbstractResource {
     @GET
     @Timed
     public Response getContent(@PathParam("path")
-            final List<PathSegment> pathList,
+            final List<PathSegment> pathList, @javax.ws.rs.HeaderParam("Range") String rangeValue,
             @Context
-            final Request request) throws RepositoryException {
+            final Request request) throws RepositoryException, IOException {
 
         try {
             final String path = toPath(pathList);
             final Datastream ds =
                     datastreamService.getDatastream(session, path);
+
 
             final EntityTag etag =
                     new EntityTag(ds.getContentDigest().toString());
@@ -237,11 +242,50 @@ public class FedoraContent extends AbstractResource {
             cc.setMustRevalidate(true);
 
             if (builder == null) {
-                builder = Response.ok(ds.getContent(), ds.getMimeType());
+
+                if (rangeValue != null && rangeValue.startsWith("bytes")) {
+
+                    InputStream content = ds.getContent();
+
+                    Pattern rangePattern = Pattern.compile("^bytes\\s*=\\s*(\\d*)\\s*-\\s*(\\d*)");
+
+                    final Matcher matcher = rangePattern.matcher(rangeValue);
+
+                    matcher.matches();
+                    String from = matcher.group(1);
+                    String to = matcher.group(2);
+
+                    final long skipBytes;
+
+                    if (from.equals("")) {
+                        skipBytes = 0;
+                    } else {
+                        skipBytes = Long.parseLong(from);
+                    }
+
+                    IOUtils.skip(content, skipBytes);
+
+                    final InputStream slicedContentStream;
+
+                    if (to.equals("")) {
+                        slicedContentStream = content;
+                    } else {
+                        final long endBytes = Long.parseLong(to);
+                        assert(endBytes > skipBytes);
+                        final long length = endBytes - skipBytes + 1;
+                        slicedContentStream = new BoundedInputStream(content, length);
+                    }
+
+                    builder = Response.status(206)
+                                      .entity(slicedContentStream)
+                                      .type(ds.getMimeType());
+                } else {
+                    builder = Response.ok(ds.getContent(), ds.getMimeType());
+                }
             }
 
             return builder.cacheControl(cc).lastModified(date).tag(etag)
-                    .build();
+                           .build();
         } finally {
             session.logout();
         }
