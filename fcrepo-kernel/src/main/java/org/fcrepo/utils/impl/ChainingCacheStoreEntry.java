@@ -80,7 +80,7 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
                 cacheName = ((FileCacheStoreConfiguration)config).location();
             }
 
-            if (config instanceof AbstractStoreConfiguration) {
+            if (config instanceof AbstractStoreConfiguration && cacheName == null) {
                 Object name = ((AbstractStoreConfiguration)config).properties().get("id");
                 if (name != null) {
                     cacheName = name.toString();
