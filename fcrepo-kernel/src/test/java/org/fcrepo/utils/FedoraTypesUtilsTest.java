@@ -160,6 +160,11 @@ public class FedoraTypesUtilsTest {
         assertEquals(true, actual);
         actual = test.apply(mockNo);
         assertEquals(false, actual);
+        when(mockYes.isMultiple()).thenThrow(new RepositoryException());
+        try {
+            test.apply(mockYes);
+            fail("Unexpected completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
     }
 
     @Test
@@ -168,12 +173,22 @@ public class FedoraTypesUtilsTest {
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         final ValueFactory actual = getValueFactory.apply(mockNode);
         assertEquals(mockVF, actual);
+        when(mockSession.getValueFactory()).thenThrow(new RepositoryException());
+        try {
+            getValueFactory.apply(mockNode);
+            fail("Unexpected completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
     }
 
     @Test
-    public void testGetPredicateForProperty() {
+    public void testGetPredicateForProperty() throws RepositoryException {
         final PropertyMock mockProp = mock(PropertyMock.class);
         getPredicateForProperty.apply(mockProp);
+        when(mockProp.getNamespaceURI()).thenThrow(new RepositoryException());
+        try {
+            getPredicateForProperty.apply(mockProp);
+            fail("Unexpected completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
     }
 
     @Test
@@ -187,6 +202,16 @@ public class FedoraTypesUtilsTest {
         final String mockHint = "storage-hint";
         getBinary(mockNode, mockInput, mockHint);
         verify(mockJVF).createBinary(mockInput, mockHint);
+        
+        when(mockNode.getSession()).thenThrow(new RepositoryException());
+        try {
+            getBinary(mockNode, mockInput);
+            fail("Unexpected completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
+        try {
+            getBinary(mockNode, mockInput, mockHint);
+            fail("Unexpected completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
     }
 
     @Test
@@ -259,19 +284,23 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
-    public void testInternalNode() throws RepositoryException {
+    public void testIsInternalNode() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.isNodeType("mode:system")).thenReturn(true);
         assertTrue("mode:system nodes should be treated as internal nodes!",
                 isInternalNode.apply(mockNode));
-    }
 
-    @Test
-    public void testNonInternalNode() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
         assertFalse("Nodes that are not mode:system types should not be "
                 + "treated as internal nodes!", isInternalNode.apply(mockNode));
+
+        when(mockNode.getPrimaryNodeType()).thenThrow(new RepositoryException());
+        try {
+            isInternalNode.apply(mockNode);
+            fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
+                 " after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
     }
 
     @Test
@@ -316,5 +345,44 @@ public class FedoraTypesUtilsTest {
         assertTrue(count == 3L);
         verify(mockSession).logout();
         verify(mockSession, never()).save();
+    }
+    
+    @Test
+    public void testPredicateExceptionHandling() throws RepositoryException {
+        when(mockNode.getMixinNodeTypes()).thenThrow(new RepositoryException());
+        try {
+            FedoraTypesUtils.isFedoraResource.apply(mockNode);
+            fail("Unexpected FedoraTypesUtils.isFedoraResource" +
+                    " completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
+        try {
+            FedoraTypesUtils.isFedoraObject.apply(mockNode);
+            fail("Unexpected FedoraTypesUtils.isFedoraObject" +
+                    " completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
+        try {
+            FedoraTypesUtils.isFedoraDatastream.apply(mockNode);
+            fail("Unexpected FedoraTypesUtils.isFedoraDatastream" +
+                 " completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
+    }
+    
+    @Test
+    public void testValue2String() throws RepositoryException {
+        // test a valid Value
+        Value mockValue = mock(Value.class);
+        when(mockValue.getString()).thenReturn("foo");
+        assertEquals("foo", FedoraTypesUtils.value2string.apply(mockValue));
+        when(mockValue.getString()).thenThrow(new RepositoryException());
+        try {
+            FedoraTypesUtils.value2string.apply(mockValue);
+            fail("Unexpected FedoraTypesUtils.value2string" +
+                    " completion after RepositoryException!");
+        } catch (RuntimeException e) {} // expected
+        try {
+            FedoraTypesUtils.value2string.apply(null);
+            fail("Unexpected FedoraTypesUtils.value2string" +
+                    " completion with null argument!");
+        } catch (IllegalArgumentException e) {} // expected
     }
 }

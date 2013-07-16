@@ -82,7 +82,7 @@ public abstract class FedoraTypesUtils {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_RESOURCE);
             } catch (final RepositoryException e) {
-                throw new IllegalStateException(e);
+                throw propagate(e);
             }
         }
     };
@@ -99,7 +99,7 @@ public abstract class FedoraTypesUtils {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_OBJECT);
             } catch (final RepositoryException e) {
-                throw new IllegalStateException(e);
+                throw propagate(e);
             }
         }
     };
@@ -117,7 +117,7 @@ public abstract class FedoraTypesUtils {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_DATASTREAM);
             } catch (final RepositoryException e) {
-                throw new IllegalStateException(e);
+                throw propagate(e);
             }
         }
     };
@@ -148,7 +148,7 @@ public abstract class FedoraTypesUtils {
                                 + "String representation!");
                         return v.getString();
                     } catch (final RepositoryException e) {
-                        throw new IllegalStateException(e);
+                        throw propagate(e);
                     }
                 }
             };
@@ -204,7 +204,7 @@ public abstract class FedoraTypesUtils {
                                 "null has no ValueFactory associated with it!");
                         return n.getSession().getValueFactory();
                     } catch (final RepositoryException e) {
-                        throw new IllegalStateException(e);
+                        throw propagate(e);
                     }
                 }
             };
@@ -259,7 +259,7 @@ public abstract class FedoraTypesUtils {
                     "null cannot have a Binary created from it!");
             return n.getSession().getValueFactory().createBinary(i);
         } catch (final RepositoryException e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
     }
 
@@ -281,7 +281,7 @@ public abstract class FedoraTypesUtils {
                     ((JcrValueFactory) n.getSession().getValueFactory());
             return jcrValueFactory.createBinary(i, hint);
         } catch (final RepositoryException e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
     }
 
