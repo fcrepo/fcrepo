@@ -103,28 +103,7 @@ public class FedoraTransactions extends AbstractResource {
     public Response commit(@PathParam("path")
             final List<PathSegment> pathList) throws RepositoryException {
 
-        final String path = toPath(pathList);
-
-        final String txId;
-        if (session instanceof TxSession) {
-            txId = ((TxSession) session).getTxId();
-        } else {
-            txId = "";
-        }
-
-        LOGGER.debug("committing transaction {} at path {}", txId, path);
-
-        if (!path.equals("/")) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-
-        if (!txId.isEmpty()) {
-            txService.commit(txId);
-            return noContent().build();
-
-        } else {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
+        return finalizeTransaction(pathList, true);
 
     }
 
@@ -136,7 +115,17 @@ public class FedoraTransactions extends AbstractResource {
     public Response rollback(@PathParam("path")
             final List<PathSegment> pathList) throws RepositoryException {
 
+        return finalizeTransaction(pathList, false);
+    }
+
+    private Response finalizeTransaction(@PathParam("path")
+            final List<PathSegment> pathList, boolean commit)
+        throws RepositoryException {
+
         final String path = toPath(pathList);
+        if (!path.equals("/")) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
 
         final String txId;
         if (session instanceof TxSession) {
@@ -145,20 +134,21 @@ public class FedoraTransactions extends AbstractResource {
             txId = "";
         }
 
-        LOGGER.debug("committing transaction {} at path {}", txId, path);
 
-
-        if (!path.equals("/")) {
+        if (txId.isEmpty()) {
+            LOGGER.debug("cannot finalize an empty tx id {} at path {}", txId, path);
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        if (!txId.isEmpty()) {
-            txService.rollback(txId);
-            return noContent().build();
+
+        if (commit) {
+            LOGGER.debug("commiting transaction {} at path {}", txId, path);
+            txService.commit(txId);
 
         } else {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            LOGGER.debug("rolling back transaction {} at path {}", txId, path);
+            txService.rollback(txId);
         }
+        return noContent().build();
     }
-
 }
