@@ -47,7 +47,7 @@ public class Transaction {
 
     private final Date created;
 
-    private Calendar expires;
+    private final Calendar expires;
 
     private State state = State.NEW;
 
@@ -152,52 +152,62 @@ public class Transaction {
         }
         this.expires.setTimeInMillis(System.currentTimeMillis() + duration);
     }
-    
+
     @Override
     public int hashCode() {
-        final int prime = 5;
+        final int prime = 31;
         int result = 1;
-        result = prime * result
-        		+ ((session == null) ? 0 : session.hashCode());
+        result = prime * result + ((created == null) ? 0 : created.hashCode());
+        result = prime * result + ((expires == null) ? 0 : expires.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + ((session == null) ? 0 : session.hashCode());
         result = prime * result + ((state == null) ? 0 : state.hashCode());
-        
         return result;
     }
-    
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
-        	return true;
+            return true;
         }
         if (obj == null) {
-        	return false;
+            return false;
         }
         if (!(obj instanceof Transaction)) {
-        	return false;
+            return false;
         }
         Transaction other = (Transaction) obj;
-        if (session == null) {
-        	if (other.session != null) {
-        		return false;
-        	}
-        } else if (!session.equals(other.session)) {
-        	return false;
-        }
         if (id == null) {
-        	if (other.id != null) {
-        		return false;
-        	}
+            if (other.id != null) {
+                return false;
+            }
         } else if (!id.equals(other.id)) {
-        	return false;
+            return false;
         }
-        if (state == null) {
-        	if (other.state != null) {
-        		return false;
-        	}
-        } else if (!state.equals(other.state)) {
-        	return false;
+        if (session == null) {
+            if (other.session != null) {
+                return false;
+            }
+        } else if (!session.equals(other.session)) {
+            return false;
         }
-        
+        if (created == null) {
+            if (other.created != null) {
+                return false;
+            }
+        } else if (!created.equals(other.created)) {
+            return false;
+        }
+        if (expires == null) {
+            if (other.expires != null) {
+                return false;
+            }
+        } else if (!expires.equals(other.expires)) {
+            return false;
+        }
+        if (state != other.state) {
+            return false;
+        }
         return true;
     }
 }

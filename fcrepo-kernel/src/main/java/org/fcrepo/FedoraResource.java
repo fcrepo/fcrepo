@@ -63,7 +63,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     protected Node node;
 
-    private GraphProperties properties;
+    private final GraphProperties properties;
 
     /**
      * Construct a FedoraObject without a backing JCR Node
@@ -336,48 +336,47 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return node.isNew();
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode() {
-    	final int prime = 5;
-    	int result = 1;
-    	result = prime * result
-    			+ ((listener == null) ? 0 : listener.hashCode());
-    	result = prime * result + ((node == null) ? 0 : node.hashCode());
-    	return result;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((node == null) ? 0 : node.hashCode());
+        result =
+                prime * result +
+                        ((properties == null) ? 0 : properties.hashCode());
+        return result;
     }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
-        	return true;
+            return true;
         }
         if (obj == null) {
-        	return false;
+            return false;
         }
         if (!(obj instanceof FedoraResource)) {
-        	return false;
+            return false;
         }
+
+        /* check if node and properties are the same on the objects */
         FedoraResource other = (FedoraResource) obj;
-        if (listener == null) {
-        	if (other.listener != null) {
-        		return false;
-        	}
-        } else if (!listener.equals(other.listener)) {
-        	return false;
-        }
         if (node == null) {
-        	if (other.node != null) {
-        		return false;
-        	}
+            if (other.node != null) {
+                return false;
+            }
         } else if (!node.equals(other.node)) {
-        	return false;
+            return false;
+        }
+        if (properties == null) {
+            if (other.properties != null) {
+                return false;
+            }
+        } else if (!properties.equals(other.properties)) {
+            return false;
         }
         return true;
     }
+
+
 }
