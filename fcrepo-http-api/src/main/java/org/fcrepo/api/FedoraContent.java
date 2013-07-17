@@ -52,6 +52,8 @@ import org.fcrepo.AbstractResource;
 import org.fcrepo.Datastream;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.http.Range;
+import org.fcrepo.responses.RangeRequestInputStream;
 import org.fcrepo.session.InjectedSession;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
@@ -215,14 +217,15 @@ public class FedoraContent extends AbstractResource {
     @GET
     @Timed
     public Response getContent(@PathParam("path")
-            final List<PathSegment> pathList,
+            final List<PathSegment> pathList, @javax.ws.rs.HeaderParam("Range") String rangeValue,
             @Context
-            final Request request) throws RepositoryException {
+            final Request request) throws RepositoryException, IOException {
 
         try {
             final String path = toPath(pathList);
             final Datastream ds =
                     datastreamService.getDatastream(session, path);
+
 
             final EntityTag etag =
                     new EntityTag(ds.getContentDigest().toString());
@@ -237,11 +240,37 @@ public class FedoraContent extends AbstractResource {
             cc.setMustRevalidate(true);
 
             if (builder == null) {
-                builder = Response.ok(ds.getContent(), ds.getMimeType());
+
+                final InputStream content = ds.getContent();
+
+                if (rangeValue != null && rangeValue.startsWith("bytes")) {
+
+                    final Range range = Range.convert(rangeValue);
+
+                    final String endAsString;
+
+                    if (range.end() == -1) {
+                        endAsString = "";
+                    }  else {
+                        endAsString = Long.toString(range.end());
+                    }
+                    final long contentSize = ds.getContentSize();
+
+                    if (range.end() > contentSize || (range.end() == -1 && range.start() > contentSize)) {
+                        builder = Response.status(416).header("Content-Range", "bytes " + Long.toString(range.start()) + "-" + range.end() + "/" + Long.toString(contentSize));;
+                    } else {
+                        builder = Response.status(206)
+                                      .entity(new RangeRequestInputStream(content, range.start(), range.size()))
+                                      .type(ds.getMimeType())
+                                      .header("Content-Range", "bytes " + Long.toString(range.start()) + "-" + range.end() + "/" + Long.toString(contentSize));
+                    }
+                } else {
+                    builder = Response.ok(content, ds.getMimeType());
+                }
             }
 
             return builder.cacheControl(cc).lastModified(date).tag(etag)
-                    .build();
+                           .build();
         } finally {
             session.logout();
         }
