@@ -92,7 +92,7 @@ public class FedoraImport extends AbstractResource {
         logger.debug("Deserializing at {}", path);
 
         final HttpGraphSubjects subjects =
-                new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+                new HttpGraphSubjects(FedoraNodes.class, uriInfo);
 
         try {
             serializers.getSerializer(format)

@@ -28,8 +28,8 @@ import javax.jcr.Workspace;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.TxSession;
 import org.fcrepo.rdf.GraphSubjects;
+import org.fcrepo.services.TransactionService;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
@@ -53,8 +53,6 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final int pathIx;
 
-    private final Session session;
-
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
      *
@@ -63,10 +61,8 @@ public class HttpGraphSubjects implements GraphSubjects {
      *
      * @param relativeTo
      * @param uris
-     * @param session
      */
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris,
-            final Session session) {
+    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String basePath = nodesBuilder.build("").toString();
         if (!basePath.endsWith("/")) {
@@ -76,21 +72,10 @@ public class HttpGraphSubjects implements GraphSubjects {
         this.pathIx = basePath.length() - 1;
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 basePath);
-        this.session = session;
-    }
-
-    /**
-     * Build HTTP graphs to resources relative to the given JAX-RS resource
-     * @param relativeTo
-     * @param uris
-     */
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
-        this(relativeTo, uris, null);
-
     }
 
     @Override
-    public Resource getGraphSubject(final String absPath)
+    public Resource getGraphSubject(final Session session, final String absPath)
         throws RepositoryException {
         final URI result =
                 nodesBuilder.buildFromMap(getPathMap(session, absPath));
@@ -100,7 +85,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
-        final URI result = nodesBuilder.buildFromMap(getPathMap(session, node));
+        final URI result = nodesBuilder.buildFromMap(getPathMap(node));
         LOGGER.debug("Translated node {} into RDF subject {}", node, result);
         return ResourceFactory.createResource(result.toString());
     }
@@ -124,9 +109,10 @@ public class HttpGraphSubjects implements GraphSubjects {
             if (segment.startsWith("tx:")) {
                 String tx = segment.substring("tx:".length());
 
-                if (session instanceof TxSession &&
-                        ((TxSession) session).getTxId().equals(tx)) {
+                final String currentTxId = TransactionService.getCurrentTransactionId(session);
 
+                if (currentTxId != null && tx.equals(currentTxId)) {
+                    // no-op
                 } else {
                     throw new RepositoryException(
                             "Subject is not in this transaction");
@@ -175,12 +161,12 @@ public class HttpGraphSubjects implements GraphSubjects {
         return subject.isURIResource() && subject.getURI().startsWith(basePath);
     }
 
-    private static Map<String, String> getPathMap(final Session session,
-            final Node node) throws RepositoryException {
-        return getPathMap(session, node.getPath());
+    private Map<String, String> getPathMap(final Node node)
+        throws RepositoryException {
+        return getPathMap(node.getSession(), node.getPath());
     }
 
-    private static Map<String, String> getPathMap(final Session session,
+    private Map<String, String> getPathMap(final Session session,
             final String absPath) throws RepositoryException {
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
@@ -193,9 +179,10 @@ public class HttpGraphSubjects implements GraphSubjects {
         if (session != null) {
             final Workspace workspace = session.getWorkspace();
 
-            if (session instanceof TxSession) {
-                path = "tx:" + ((TxSession) session).getTxId() + "/" + path;
+            final String txId = TransactionService.getCurrentTransactionId(session);
 
+            if (txId != null) {
+                path = "tx:" + txId + "/" + path;
             } else if (workspace != null &&
                     !workspace.getName().equals("default")) {
                 path = "workspace:" + workspace.getName() + "/" + path;

@@ -41,6 +41,7 @@ import org.springframework.stereotype.Component;
  * service implements a simple {@link Transaction} service which is able to
  * create/commit/rollback {@link Transaction} objects A {@link Scheduled}
  * annotation is used for removing timed out Transactions
+ *
  * 
  * @author frank asseg
  */
@@ -48,6 +49,11 @@ import org.springframework.stereotype.Component;
 public class TransactionService {
 
     private static final Logger LOGGER = getLogger(TransactionService.class);
+
+    /**
+     * A key for looking up the transaction id in a session key-value pair
+     */
+    static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
 
     /*
      * TODO: since transactions have to be available on all nodes, they have to
@@ -90,9 +96,11 @@ public class TransactionService {
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
-    public Transaction beginTransaction(final Session sess) {
+    public Transaction beginTransaction(final Session sess) throws RepositoryException {
         final Transaction tx = new Transaction(sess);
-        transactions.put(tx.getId(), tx);
+        final String txId = tx.getId();
+        transactions.put(txId, tx);
+        sess.setNamespacePrefix(FCREPO4_TX_ID, txId);
         return tx;
     }
 
@@ -113,6 +121,37 @@ public class TransactionService {
         }
 
         return tx;
+    }
+
+    /**
+     * Get the current Transaction for a session
+     * @param session
+     * @return
+     * @throws TransactionMissingException
+     */
+    public Transaction getTransaction(final Session session)
+        throws TransactionMissingException {
+
+        final String txId = getCurrentTransactionId(session);
+
+        if (txId == null) {
+            throw new TransactionMissingException("Transaction is not available");
+        }
+
+        return getTransaction(txId);
+    }
+
+    /**
+     * Get the current Transaction ID for a session
+     * @param session
+     * @return
+     */
+    public static String getCurrentTransactionId(final Session session) {
+        try {
+            return session.getNamespaceURI(FCREPO4_TX_ID);
+        } catch (RepositoryException e) {
+            return null;
+        }
     }
 
     /**

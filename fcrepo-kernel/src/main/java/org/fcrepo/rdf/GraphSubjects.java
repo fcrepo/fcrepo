@@ -54,9 +54,11 @@ public interface GraphSubjects {
     /**
      * Get the RDF resource for an absolute path
      *
+     *
+     * @param session
      * @param absPath the absolute path to the JCR node
      * @return an RDF URI resource
      * @throws RepositoryException
      */
-    Resource getGraphSubject(String absPath) throws RepositoryException;
+    Resource getGraphSubject(final Session session, final String absPath) throws RepositoryException;
 }
