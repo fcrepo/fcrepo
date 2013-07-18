@@ -1,0 +1,11 @@
+/*
+ * Generic Fedora namespace
+ */
+<fedora = 'info:fedora/'>
+
+/*
+ * Any Fedora resource.
+ */
+[fedora:configuration] > nt:folder
+
+[fedora:node_type_configuration] > nt:folder

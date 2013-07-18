@@ -24,6 +24,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -140,5 +141,41 @@ public abstract class TestHelpers {
         final byte[] bytes = new byte[byteLength];
         GARBAGE_GENERATOR.nextBytes(bytes);
         return bytes;
+    }
+
+
+    /**
+     * Set a field via reflection
+     *
+     * @param parent the owner object of the field
+     * @param name the name of the field
+     * @param obj the value to set
+     * @throws NoSuchFieldException
+     */
+    public static void setField(final Object parent, final String name,
+                                final Object obj) throws NoSuchFieldException {
+        /* check the parent class too if the field could not be found */
+        try {
+            final Field f = findField(parent.getClass(), name);
+            f.setAccessible(true);
+            f.set(parent, obj);
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Field findField(final Class<?> clazz, final String name)
+            throws NoSuchFieldException {
+        for (final Field f : clazz.getDeclaredFields()) {
+            if (f.getName().equals(name)) {
+                return f;
+            }
+        }
+        if (clazz.getSuperclass() == null) {
+            throw new NoSuchFieldException("Field " + name +
+                                                   " could not be found");
+        } else {
+            return findField(clazz.getSuperclass(), name);
+        }
     }
 }
