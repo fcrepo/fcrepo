@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -31,6 +32,7 @@ import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Map;
 
+import javax.jcr.NamespaceException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -53,6 +55,9 @@ public class TransactionServiceTest {
 
     @Mock
     private Transaction mockTx;
+
+    @Mock
+    private Session mockSession;
 
     @Before
     public void setup() throws Exception {
@@ -87,7 +92,7 @@ public class TransactionServiceTest {
 
     @Test
     public void testCreateTx() throws Exception {
-        final Transaction tx = service.beginTransaction(null);
+        final Transaction tx = service.beginTransaction(mock(Session.class));
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
@@ -100,17 +105,28 @@ public class TransactionServiceTest {
         assertNotNull(tx);
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = TransactionMissingException.class)
     public void testGetNonTx() throws TransactionMissingException {
         service.getTransaction(NOT_A_TX);
+    }
 
+    @Test
+    public void testGetTxForSession() throws Exception {
+        when(mockSession.getNamespaceURI(TransactionService.FCREPO4_TX_ID)).thenReturn(IS_A_TX);
+        final Transaction tx = service.getTransaction(mockSession);
+        assertEquals(IS_A_TX, tx.getId());
+    }
+
+    @Test(expected = TransactionMissingException.class)
+    public void testGetTxForNonTxSession() throws RepositoryException {
+        when(mockSession.getNamespaceURI(TransactionService.FCREPO4_TX_ID)).thenThrow(new NamespaceException(""));
+        final Transaction tx = service.getTransaction(mockSession);
     }
 
     @Test
     public void testExists() throws Exception {
         assertTrue(service.exists(IS_A_TX));
         assertFalse(service.exists(NOT_A_TX));
-
     }
 
     @Test

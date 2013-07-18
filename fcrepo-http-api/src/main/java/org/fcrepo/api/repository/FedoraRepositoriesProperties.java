@@ -82,7 +82,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                         nodeService.getObject(session, "/");
 
                 Dataset dataset = result.updatePropertiesDataset(new HttpGraphSubjects(
-                        FedoraNodes.class, uriInfo, session), IOUtils
+                        FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
                 if (dataset.containsNamedModel(GraphProperties.PROBLEMS_MODEL_NAME)) {
                     Model problems = dataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME);

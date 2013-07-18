@@ -121,7 +121,7 @@ public class FedoraContent extends AbstractResource {
                             checksumURI);
 
             final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(FedoraNodes.class, uriInfo, session);
+                    new HttpGraphSubjects(FedoraNodes.class, uriInfo);
 
             return created(
                     new URI(subjects.getGraphSubject(
@@ -189,8 +189,7 @@ public class FedoraContent extends AbstractResource {
 
             if (isNew) {
                 final HttpGraphSubjects subjects =
-                        new HttpGraphSubjects(FedoraNodes.class, uriInfo,
-                                session);
+                        new HttpGraphSubjects(FedoraNodes.class, uriInfo);
 
                 return created(
                         new URI(subjects.getGraphSubject(
