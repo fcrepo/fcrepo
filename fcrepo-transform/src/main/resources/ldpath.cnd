@@ -1,11 +1,15 @@
+
 /*
  * Generic Fedora namespace
  */
 <fedora = 'info:fedora/'>
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+
 
 /*
  * Any Fedora resource.
  */
-[fedora:configuration] > nt:folder
+[fedora:configuration] > nt:folder 
 
-[fedora:node_type_configuration] > nt:folder
+[fedora:node_type_configuration] > nt:folder 
+
