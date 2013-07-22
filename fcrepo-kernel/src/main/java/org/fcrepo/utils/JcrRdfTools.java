@@ -234,6 +234,10 @@ public abstract class JcrRdfTools {
             model.add(ResourceFactory.createResource(entry.getValue()),
                     RdfLexicon.HAS_NAMESPACE_PREFIX, ResourceFactory
                             .createPlainLiteral(entry.getKey()));
+
+            model.add(ResourceFactory.createResource(entry.getValue()),
+                    RdfLexicon.HAS_NAMESPACE_URI, ResourceFactory
+                            .createPlainLiteral(entry.getValue()));
         }
 
         return model;

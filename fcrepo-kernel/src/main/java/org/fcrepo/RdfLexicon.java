@@ -88,7 +88,9 @@ public final class RdfLexicon {
 
     // NAMESPACES
     public static final Property HAS_NAMESPACE_PREFIX =
-            createProperty(INTERNAL_NAMESPACE + "hasNamespace");
+            createProperty("http://purl.org/vocab/vann/preferredNamespacePrefix");
+    public static final Property HAS_NAMESPACE_URI =
+            createProperty("http://purl.org/vocab/vann/preferredNamespaceUri");
 
 
     // OTHER SERVICES

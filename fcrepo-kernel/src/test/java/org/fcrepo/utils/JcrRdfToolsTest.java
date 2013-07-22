@@ -45,6 +45,7 @@ import static org.fcrepo.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.RdfLexicon.HAS_NAMESPACE_PREFIX;
+import static org.fcrepo.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.RdfLexicon.IS_FIXITY_RESULT_OF;
@@ -916,6 +917,10 @@ public class JcrRdfToolsTest {
         assertTrue(jcrNamespaceModel.contains(
                 createResource("registered-uri#"), HAS_NAMESPACE_PREFIX,
                 "some-prefix"));
+
+        assertTrue(jcrNamespaceModel.contains(
+                createResource("registered-uri#"), HAS_NAMESPACE_URI,
+                "registered-uri#"));
     }
 
     @Test
