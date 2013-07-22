@@ -91,6 +91,7 @@ public final class RdfLexicon {
             createProperty("http://purl.org/vocab/vann/preferredNamespacePrefix");
     public static final Property HAS_NAMESPACE_URI =
             createProperty("http://purl.org/vocab/vann/preferredNamespaceUri");
+    public static final Property VOAF_VOCABULARY = createProperty("http://purl.org/vocommons/voaf#Vocabulary");
 
 
     // OTHER SERVICES

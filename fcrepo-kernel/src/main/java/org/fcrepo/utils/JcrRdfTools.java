@@ -66,6 +66,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
@@ -231,11 +232,15 @@ public abstract class JcrRdfTools {
             if (entry.getKey().isEmpty()) {
                 continue;
             }
-            model.add(ResourceFactory.createResource(entry.getValue()),
+            final Resource nsSubject =
+                ResourceFactory.createResource(entry.getValue());
+
+            model.add(nsSubject, RDF.type, RdfLexicon.VOAF_VOCABULARY);
+            model.add(nsSubject,
                     RdfLexicon.HAS_NAMESPACE_PREFIX, ResourceFactory
                             .createPlainLiteral(entry.getKey()));
 
-            model.add(ResourceFactory.createResource(entry.getValue()),
+            model.add(nsSubject,
                     RdfLexicon.HAS_NAMESPACE_URI, ResourceFactory
                             .createPlainLiteral(entry.getValue()));
         }

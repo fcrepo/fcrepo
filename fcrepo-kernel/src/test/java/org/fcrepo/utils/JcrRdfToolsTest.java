@@ -116,6 +116,8 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import com.hp.hpl.jena.vocabulary.RDF;
+import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
@@ -914,13 +916,18 @@ public class JcrRdfToolsTest {
         assertTrue(jcrNamespaceModel.contains(
                 createResource("info:fedora/fedora-system:def/internal#"),
                 HAS_NAMESPACE_PREFIX, "fedora-internal"));
-        assertTrue(jcrNamespaceModel.contains(
-                createResource("registered-uri#"), HAS_NAMESPACE_PREFIX,
-                "some-prefix"));
 
-        assertTrue(jcrNamespaceModel.contains(
-                createResource("registered-uri#"), HAS_NAMESPACE_URI,
-                "registered-uri#"));
+        final Resource nsSubject = createResource("registered-uri#");
+        assertTrue(jcrNamespaceModel.contains(nsSubject,
+                                                RDF.type,
+                                                RdfLexicon.VOAF_VOCABULARY));
+        assertTrue(jcrNamespaceModel.contains(nsSubject,
+                                                 HAS_NAMESPACE_PREFIX,
+                                                 "some-prefix"));
+
+        assertTrue(jcrNamespaceModel.contains(nsSubject,
+                                                 HAS_NAMESPACE_URI,
+                                                 "registered-uri#"));
     }
 
     @Test
