@@ -233,9 +233,14 @@ public abstract class TestHelpers {
     }
 
     public static GraphStore parseTriples(final InputStream content) {
+        return parseTriples(content, "N3");
+    }
+
+    public static GraphStore parseTriples(final InputStream content,
+                                          final String contentType) {
         final Model model = ModelFactory.createDefaultModel();
 
-        model.read(content, "", "N3");
+        model.read(content, "", contentType);
 
         return GraphStoreFactory.create(model);
 

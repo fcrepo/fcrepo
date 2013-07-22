@@ -128,7 +128,7 @@ public class FedoraFieldSearch extends AbstractResource implements
      */
     @GET
     @Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset searchSubmitRdf(@QueryParam("q")
             final String terms,
             @QueryParam("offset")

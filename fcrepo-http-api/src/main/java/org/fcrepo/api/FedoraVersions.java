@@ -82,7 +82,7 @@ public class FedoraVersions extends AbstractResource {
      * @throws RepositoryException
      */
     @GET
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
     public Response getVersionList(@PathParam("path")
             final List<PathSegment> pathList,
             @Context
@@ -150,7 +150,7 @@ public class FedoraVersions extends AbstractResource {
      */
     @Path("/{versionLabel}")
     @GET
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES})
+    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
     public Dataset getVersion(@PathParam("path")
             final List<PathSegment> pathList,
             @PathParam("versionLabel")

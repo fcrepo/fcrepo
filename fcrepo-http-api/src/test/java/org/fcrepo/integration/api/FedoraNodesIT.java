@@ -30,6 +30,7 @@ import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.fcrepo.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.http.RDFMediaType.TURTLE;
 import static org.fcrepo.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.utils.FedoraJcrTypes.ROOT;
 import static org.junit.Assert.assertEquals;
@@ -124,6 +125,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         "objects/FedoraDatastreamsTest4/ds1"));
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
                 .getStatusLine().getStatusCode());
+        assertEquals(TURTLE, response.getFirstHeader("Content-Type").getValue() );
     }
 
     @Test

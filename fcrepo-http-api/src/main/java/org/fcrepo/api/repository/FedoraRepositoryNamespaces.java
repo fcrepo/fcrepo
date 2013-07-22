@@ -98,7 +98,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
      */
     @GET
     @Timed
-    @Produces({N3, N3_ALT1, N3_ALT2, TURTLE, RDF_XML, RDF_JSON, NTRIPLES,
+    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     @HtmlTemplate("jcr:namespaces")
     public Dataset getNamespaces() throws RepositoryException, IOException {

@@ -119,6 +119,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* fetch the created tx from the endpoint */
         final HttpGet getTx =
                 new HttpGet(txLocation + "/object-in-tx-rollback");
+        getTx.setHeader("Accept", "application/n3");
         resp = execute(getTx);
         assertEquals(
                 "Expected to find our object within the scope of the transaction",
@@ -168,6 +169,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* fetch the created tx from the endpoint */
         final HttpGet getTx = new HttpGet(txLocation + "/object-in-tx-commit");
+        getTx.setHeader("Accept", "application/n3");
         resp = execute(getTx);
         assertEquals(
                 "Expected to find our object within the scope of the transaction",

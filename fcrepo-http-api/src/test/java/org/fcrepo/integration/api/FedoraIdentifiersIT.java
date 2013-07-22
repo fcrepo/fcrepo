@@ -46,6 +46,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasAPid() throws IOException {
         final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
+        method.setHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
         final GraphStore graphStore =
@@ -61,6 +62,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     public void testGetNextHasTwoPids() throws IOException {
         final HttpPost method =
                 new HttpPost(serverAddress + "fcr:pid?numPids=2");
+        method.setHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");
         final GraphStore graphStore =
@@ -82,6 +84,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasAPidWithPath() throws IOException {
         final HttpPost method = new HttpPost(serverAddress + "objects/fcr:pid");
+        method.setHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPidWithPath()");
         final GraphStore graphStore =
@@ -97,6 +100,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     public void testGetNextHasTwoPidsWithPath() throws IOException {
         final HttpPost method =
                 new HttpPost(serverAddress + "objects/fcr:pid?numPids=2");
+        method.setHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPidsWithPath()");
         final GraphStore graphStore =

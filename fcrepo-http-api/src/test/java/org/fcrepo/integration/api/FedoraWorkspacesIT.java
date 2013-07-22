@@ -51,6 +51,7 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         final HttpGet httpGet =
                 new HttpGet(serverAddress +
                         "workspace:some-workspace/FedoraWorkspacesTest");
+        httpGet.setHeader("Accept", "application/n3");
         final HttpResponse profileResponse = execute(httpGet);
         assertEquals(200, profileResponse.getStatusLine().getStatusCode());
         final GraphStore graphStore =

@@ -43,6 +43,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         final HttpGet method2 =
                 new HttpGet(serverAddress +
                         "objects/FedoraDatastreamsTest11/zxc/fcr:fixity");
+        method2.setHeader("Accept", "application/n3");
         final HttpResponse response = execute(method2);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final HttpEntity entity = response.getEntity();
