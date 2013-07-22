@@ -58,18 +58,24 @@ public final class RdfLexicon {
 
 
     // SEARCH
+    public static final Property SEARCH_PAGE = createProperty("http://sindice.com/vocab/search#Page");
     public static final Property SEARCH_HAS_TOTAL_RESULTS =
-            createProperty("http://a9.com/-/spec/opensearch/1.1/totalResults");
+            createProperty("http://sindice.com/vocab/search#totalResults");
     public static final Property SEARCH_ITEMS_PER_PAGE =
-            createProperty("http://a9.com/-/spec/opensearch/1.1/itemsPerPage");
+            createProperty("http://sindice.com/vocab/search#itemsPerPage");
     public static final Property SEARCH_OFFSET =
-            createProperty("http://a9.com/-/spec/opensearch/1.1/startIndex");
+            createProperty("http://sindice.com/vocab/search#startIndex");
     public static final Property SEARCH_TERMS =
-            createProperty("http://a9.com/-/spec/opensearch/1.1/Query#searchTerms");
+            createProperty("http://sindice.com/vocab/search#searchTerms");
     public static final Property SEARCH_HAS_MORE =
             createProperty("info:fedora/search/hasMoreResults");
-    public static final Property SEARCH_NEXT_PAGE =
-            createProperty("info:fedora/search/next");
+
+    public static final Property PAGE =
+        createProperty("http://www.w3.org/ns/ldp#Page");
+    public static final Property PAGE_OF =
+        createProperty("http://www.w3.org/ns/ldp#pageOf");
+    public static final Property NEXT_PAGE =
+            createProperty("http://www.w3.org/ns/ldp#nextPage");
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =

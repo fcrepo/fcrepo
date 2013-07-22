@@ -16,12 +16,14 @@
 
 package org.fcrepo.integration.api;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -110,16 +112,31 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         assertTrue(graphStore
                 .contains(
                         Node.ANY,
-                        ResourceFactory
-                                .createResource(
-                                        serverAddress +
-                                                "fcr:search?q=testobj&offset=0&limit=1")
+                        createResource(serverAddress + "fcr:search?q=testobj")
                                 .asNode(),
-                        ResourceFactory
-                                .createResource(
-                                        "http://a9.com/-/spec/opensearch/1.1/totalResults")
-                                .asNode(), ResourceFactory
-                                .createTypedLiteral(1).asNode()));
+                        RdfLexicon.SEARCH_HAS_TOTAL_RESULTS.asNode(),
+                        ResourceFactory.createTypedLiteral(1).asNode()));
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
+                                          RdfLexicon.PAGE_OF.asNode(),
+                                          createResource(serverAddress + "fcr:search?q=testobj").asNode()));
+
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
+                                          RdfLexicon.SEARCH_OFFSET.asNode(),
+                                          ResourceFactory.createTypedLiteral(0).asNode()));
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
+                                          RdfLexicon.SEARCH_ITEMS_PER_PAGE.asNode(),
+                                          ResourceFactory.createTypedLiteral(1).asNode()));
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
+                                          RdfLexicon.NEXT_PAGE.asNode(),
+                                          RDF.nil.asNode()));
 
     }
 
@@ -145,10 +162,9 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         assertFalse(graphStore
                 .contains(
                         Node.ANY,
-                        ResourceFactory
-                                .createResource(
-                                        serverAddress +
-                                                "fcr:search?q=testobj&offset=1&limit=1")
+                        createResource(
+                                          serverAddress +
+                                              "fcr:search?q=testobj")
                                 .asNode(), RdfLexicon.HAS_MEMBER_OF_RESULT
                                 .asNode(), Node.ANY));
 

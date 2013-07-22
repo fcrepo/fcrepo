@@ -24,9 +24,6 @@ import static com.google.common.collect.Sets.newHashSet;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
-import static org.fcrepo.RdfLexicon.SEARCH_ITEMS_PER_PAGE;
-import static org.fcrepo.RdfLexicon.SEARCH_OFFSET;
-import static org.fcrepo.RdfLexicon.SEARCH_TERMS;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.utils.JcrRdfTools.getJcrNamespaceModel;
@@ -255,11 +252,6 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
             model.add(searchSubject, SEARCH_HAS_TOTAL_RESULTS, model
                     .createTypedLiteral(size));
-            model.add(searchSubject, SEARCH_ITEMS_PER_PAGE, model
-                    .createTypedLiteral(limit));
-            model.add(searchSubject, SEARCH_OFFSET, model
-                    .createTypedLiteral(offset));
-            model.add(searchSubject, SEARCH_TERMS, terms);
             model.add(searchSubject, SEARCH_HAS_MORE, model
                     .createTypedLiteral(nodeIterator.hasNext()));
         } else {

@@ -21,8 +21,14 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.RdfLexicon.NEXT_PAGE;
+import static org.fcrepo.RdfLexicon.PAGE;
+import static org.fcrepo.RdfLexicon.PAGE_OF;
 import static org.fcrepo.RdfLexicon.SEARCH_HAS_MORE;
-import static org.fcrepo.RdfLexicon.SEARCH_NEXT_PAGE;
+import static org.fcrepo.RdfLexicon.SEARCH_ITEMS_PER_PAGE;
+import static org.fcrepo.RdfLexicon.SEARCH_OFFSET;
+import static org.fcrepo.RdfLexicon.SEARCH_PAGE;
+import static org.fcrepo.RdfLexicon.SEARCH_TERMS;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
@@ -46,6 +52,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.HtmlTemplate;
@@ -159,8 +166,18 @@ public class FedoraFieldSearch extends AbstractResource implements
                     "Received search request with search terms {}, offset {}, and limit {}",
                     terms, offset, limit);
 
-            final Resource searchResult =
-                    createResource(uriInfo.getRequestUri().toASCIIString());
+            final Resource searchResult;
+
+            if (terms == null) {
+                searchResult = createResource(uriInfo.getBaseUriBuilder()
+                                                  .path(FedoraFieldSearch.class)
+                                                  .build().toString());
+            } else {
+                searchResult = createResource(uriInfo.getBaseUriBuilder()
+                                                  .path(FedoraFieldSearch.class)
+                                                  .queryParam("q", terms)
+                                                  .build().toString());
+            }
 
             final Dataset dataset =
                     nodeService.searchRepository(new HttpGraphSubjects(
@@ -168,17 +185,40 @@ public class FedoraFieldSearch extends AbstractResource implements
                             session, terms, limit, offset);
 
             final Model searchModel = createDefaultModel();
-            if (terms != null &&
-                    dataset.getDefaultModel().contains(searchResult,
-                            SEARCH_HAS_MORE,
-                            searchModel.createTypedLiteral(true))) {
-                final Map<String, ?> pathMap =
+            if (terms != null) {
+                final Resource pageResource = createResource(uriInfo.getRequestUri().toASCIIString());
+                searchModel.add(pageResource, RDF.type, SEARCH_PAGE);
+                searchModel.add(pageResource, RDF.type, PAGE);
+                searchModel.add(pageResource, PAGE_OF, searchResult);
+
+
+                searchModel.add(pageResource,
+                                   SEARCH_ITEMS_PER_PAGE,
+                                   searchModel.createTypedLiteral(limit));
+                searchModel.add(pageResource,
+                                   SEARCH_OFFSET,
+                                   searchModel.createTypedLiteral(offset));
+                searchModel.add(pageResource, SEARCH_TERMS, terms);
+
+                if (dataset.getDefaultModel()
+                        .contains(searchResult,
+                                     SEARCH_HAS_MORE,
+                                     searchModel.createTypedLiteral(true))) {
+
+                    final Map<String, ?> pathMap =
                         ImmutableBiMap.of("q", terms, "offset", offset + limit,
-                                "limit", limit);
-                searchModel.add(searchResult, SEARCH_NEXT_PAGE, searchModel
-                        .createResource(uriInfo.getBaseUriBuilder().path(
-                                FedoraFieldSearch.class).buildFromMap(pathMap)
-                                .toString()));
+                                             "limit", limit);
+
+                    final Resource nextPageResource =
+                        searchModel.createResource(uriInfo
+                                                       .getBaseUriBuilder()
+                                                       .path(FedoraFieldSearch.class)
+                                                       .buildFromMap(pathMap)
+                                                       .toString());
+                    searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
+                } else {
+                    searchModel.add(pageResource, NEXT_PAGE, RDF.nil);
+                }
                 dataset.addNamedModel("search-pagination", searchModel);
             }
 

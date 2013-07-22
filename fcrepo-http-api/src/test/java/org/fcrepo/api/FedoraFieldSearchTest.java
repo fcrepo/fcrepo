@@ -78,8 +78,6 @@ public class FedoraFieldSearchTest {
 
     @Test
     public void testFieldSearch() throws RepositoryException {
-        when(uriInfo.getRequestUri()).thenReturn(
-                URI.create("http://localhost/fcrepo/path/to/query/endpoint"));
         when(mockRequest.selectVariant(anyListOf(Variant.class))).thenReturn(
                 new Variant(MediaType.valueOf("application/n-triples"), null,
                         null));
@@ -87,14 +85,9 @@ public class FedoraFieldSearchTest {
                 mockNodeService
                         .searchRepository(
                                 any(GraphSubjects.class),
-                                eq(createResource("http://localhost/fcrepo/path/to/query/endpoint")),
+                                eq(createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
                                 eq(mockSession), eq("ZZZ"), eq(0), eq(0L)))
                 .thenReturn(createMem());
-        when(mockUriBuilder.path(FedoraFieldSearch.class)).thenReturn(
-                mockUriBuilder);
-        when(mockUriBuilder.buildFromMap(Matchers.<Map<String, Object>> any()))
-                .thenReturn(URI.create("path/to/object"));
-
         when(uriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder);
 
         testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, uriInfo);
@@ -103,7 +96,7 @@ public class FedoraFieldSearchTest {
                 .searchRepository(
                         any(GraphSubjects.class),
                         eq(ResourceFactory
-                                .createResource("http://localhost/fcrepo/path/to/query/endpoint")),
+                                .createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
                         eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
     }
 
