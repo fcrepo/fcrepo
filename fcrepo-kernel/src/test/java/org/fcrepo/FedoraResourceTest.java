@@ -24,7 +24,6 @@ import static org.fcrepo.utils.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.utils.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
-import static org.fcrepo.utils.JcrRdfTools.getGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getJcrPropertiesModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrTreeModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrVersionsModel;
@@ -204,7 +203,7 @@ public class FedoraResourceTest {
         mockStatic(JcrRdfTools.class);
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
         final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
         when(getJcrPropertiesModel(mockSubjects, mockNode)).thenReturn(
@@ -232,7 +231,7 @@ public class FedoraResourceTest {
         mockStatic(JcrRdfTools.class);
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
         final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
         when(getJcrPropertiesModel(mockSubjects, mockNode)).thenReturn(
@@ -256,10 +255,7 @@ public class FedoraResourceTest {
     public void testGetPropertiesDatasetDefaults() throws RepositoryException {
 
         mockStatic(JcrRdfTools.class);
-        final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(getGraphSubject(DEFAULT_SUBJECT_FACTORY, mockNode)).thenReturn(
-                mockResource);
-
+        when(mockNode.getPath()).thenReturn("/xyz");
         final Model propertiesModel = createDefaultModel();
         when(getJcrPropertiesModel(DEFAULT_SUBJECT_FACTORY, mockNode))
                 .thenReturn(propertiesModel);
@@ -284,7 +280,7 @@ public class FedoraResourceTest {
         mockStatic(JcrRdfTools.class);
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
         final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model versionsModel = createDefaultModel();
         when(getJcrVersionsModel(mockSubjects, mockNode)).thenReturn(
@@ -300,10 +296,8 @@ public class FedoraResourceTest {
     public void testGetVersionDatasetDefaultSubject()
             throws RepositoryException {
 
+        when(mockNode.getPath()).thenReturn("/xyz");
         mockStatic(JcrRdfTools.class);
-        final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(getGraphSubject(DEFAULT_SUBJECT_FACTORY, mockNode)).thenReturn(
-                mockResource);
 
         final Model versionsModel = createDefaultModel();
         when(getJcrVersionsModel(DEFAULT_SUBJECT_FACTORY, mockNode))

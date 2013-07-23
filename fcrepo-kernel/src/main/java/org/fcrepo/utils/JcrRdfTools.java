@@ -150,40 +150,6 @@ public abstract class JcrRdfTools {
     }
 
     /**
-     * Translate a JCR node into an RDF Resource
-     * 
-     * @param node
-     * @return an RDF URI resource
-     * @throws RepositoryException
-     */
-    public static Resource getGraphSubject(final GraphSubjects factory,
-            final Node node) throws RepositoryException {
-        return factory.getGraphSubject(node);
-    }
-
-    /**
-     * Translate an RDF resource into a JCR node
-     * 
-     * @param session
-     * @param subject an RDF URI resource
-     * @return a JCR node, or null if one couldn't be found
-     * @throws RepositoryException
-     */
-    public static Node getNodeFromGraphSubject(final GraphSubjects factory,
-            final Session session, final Resource subject)
-        throws RepositoryException {
-        return factory.getNodeFromGraphSubject(session, subject);
-    }
-
-    /**
-     * Predicate for determining whether this {@link Node} is a Fedora object.
-     */
-    public static boolean isFedoraGraphSubject(final GraphSubjects factory,
-            final Resource subject) {
-        return factory.isFedoraGraphSubject(subject);
-    }
-
-    /**
      * Create a default Jena Model populated with the registered JCR namespaces
      * 
      * @param session
@@ -275,7 +241,7 @@ public abstract class JcrRdfTools {
             addJcrPropertiesToModel(factory, node, model);
             if (iteratorSubject != null) {
                 model.add(iteratorSubject, RdfLexicon.HAS_MEMBER_OF_RESULT,
-                        getGraphSubject(factory, node));
+                        factory.getGraphSubject(node));
             }
         }
 
@@ -444,12 +410,12 @@ public abstract class JcrRdfTools {
 
         final Model model = createDefaultJcrModel(node.getSession());
 
-        final Resource subject = getGraphSubject(factory, node);
+        final Resource subject = factory.getGraphSubject(node);
 
         // don't do this if the node is the root node.
         if (node.getDepth() != 0) {
             final Node parentNode = node.getParent();
-            model.add(subject, RdfLexicon.HAS_PARENT, getGraphSubject(factory,
+            model.add(subject, RdfLexicon.HAS_PARENT, factory.getGraphSubject(
                     parentNode));
             addJcrPropertiesToModel(factory, parentNode, model);
         }
@@ -468,7 +434,7 @@ public abstract class JcrRdfTools {
                 excludedNodeCount++;
             } else {
                 final Resource childNodeSubject =
-                        getGraphSubject(factory, childNode);
+                        factory.getGraphSubject(childNode);
 
                 if (i >= offset && (limit == -1 || i < (offset + limit))) {
                     addJcrPropertiesToModel(factory, childNode, model);
@@ -498,7 +464,7 @@ public abstract class JcrRdfTools {
     private static void addJcrPropertiesToModel(final GraphSubjects factory,
             final Node node, final Model model) throws RepositoryException {
 
-        final Resource subject = getGraphSubject(factory, node);
+        final Resource subject = factory.getGraphSubject(node);
         final javax.jcr.PropertyIterator properties = node.getProperties();
 
         while (properties.hasNext()) {
@@ -511,7 +477,7 @@ public abstract class JcrRdfTools {
         if (node.hasNode(JcrConstants.JCR_CONTENT)) {
             final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
             final Resource contentSubject =
-                    getGraphSubject(factory, contentNode);
+                    factory.getGraphSubject(contentNode);
 
             model.add(subject, RdfLexicon.HAS_CONTENT, contentSubject);
             model.add(contentSubject, RdfLexicon.IS_CONTENT_OF, subject);
@@ -735,7 +701,7 @@ public abstract class JcrRdfTools {
     public static Model getJcrVersionsModel(final GraphSubjects factory,
             final Node node) throws RepositoryException {
 
-        final Resource subject = getGraphSubject(factory, node);
+        final Resource subject = factory.getGraphSubject(node);
 
         final Model model = createDefaultJcrModel(node.getSession());
 
@@ -748,7 +714,7 @@ public abstract class JcrRdfTools {
             final Version version = versionIterator.nextVersion();
             final Node frozenNode = version.getFrozenNode();
             final Resource versionSubject =
-                    getGraphSubject(factory, frozenNode);
+                    factory.getGraphSubject(frozenNode);
 
             model.add(subject, HAS_VERSION, versionSubject);
 

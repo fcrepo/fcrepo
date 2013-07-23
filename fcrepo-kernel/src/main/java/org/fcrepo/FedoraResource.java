@@ -299,7 +299,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         final Dataset dataset = DatasetFactory.create(model);
 
-        String uri = JcrRdfTools.getGraphSubject(subjects, node).getURI();
+        String uri = subjects.getGraphSubject(node).getURI();
         com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
         context.set(GraphProperties.URI_SYMBOL,uri);
 

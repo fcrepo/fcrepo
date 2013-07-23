@@ -17,11 +17,8 @@
 package org.fcrepo.utils;
 
 import static javax.jcr.PropertyType.STRING;
-import static org.fcrepo.utils.JcrRdfTools.getNodeFromGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
-import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -93,21 +90,17 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testAddedIrrelevantStatement() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(false);
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(false);
         testObj.addedStatement(mockStatement);
-        verifyStatic(never());
-        getNodeFromGraphSubject(any(GraphSubjects.class), any(Session.class),
-                any(Resource.class));
         // this was ignored, but not a problem
-        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
+        verify(mockProblems, never()).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test
     public void testAddedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(true);
-        when(getNodeFromGraphSubject(mockSubjects, mockSession, mockSubject))
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "jcr:property";
         when(getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -120,8 +113,8 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testAddedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(true);
-        when(getNodeFromGraphSubject(mockSubjects, mockSession, mockSubject))
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -138,8 +131,8 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedStatementRepositoryException()
             throws RepositoryException {
         mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(true);
-        when(getNodeFromGraphSubject(mockSubjects, mockSession, mockSubject))
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
         when(getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
                 .thenThrow(new RepositoryException());
@@ -151,8 +144,8 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testRemovedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(true);
-        when(getNodeFromGraphSubject(mockSubjects, mockSession, mockSubject))
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -169,8 +162,8 @@ public class JcrPropertyStatementListenerTest {
     public void testRemovedStatementRepositoryException()
             throws RepositoryException {
         mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(true);
-        when(getNodeFromGraphSubject(mockSubjects, mockSession, mockSubject))
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
         when(getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
                 .thenThrow(new RepositoryException());
@@ -182,8 +175,8 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testRemovedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(true);
-        when(getNodeFromGraphSubject(mockSubjects, mockSession, mockSubject))
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "jcr:property";
         when(getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -198,12 +191,8 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedIrrelevantStatement() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
-        when(isFedoraGraphSubject(mockSubjects, mockSubject)).thenReturn(false);
+        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(false);
         testObj.removedStatement(mockStatement);
-        verifyStatic(never());
-        getNodeFromGraphSubject(any(GraphSubjects.class), any(Session.class),
-                any(Resource.class));
         // this was ignored, but not a problem
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }

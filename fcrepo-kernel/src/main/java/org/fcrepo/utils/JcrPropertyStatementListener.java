@@ -18,9 +18,7 @@ package org.fcrepo.utils;
 
 import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.utils.JcrRdfTools.createValue;
-import static org.fcrepo.utils.JcrRdfTools.getNodeFromGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
-import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.utils.NodePropertiesTools.removeNodeProperty;
@@ -96,12 +94,12 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, ignore it.
-            if (!isFedoraGraphSubject(subjects, subject)) {
+            if (!subjects.isFedoraGraphSubject(subject)) {
                 return;
             }
 
             final Node subjectNode =
-                    getNodeFromGraphSubject(subjects, getSession(), subject);
+                    subjects.getNodeFromGraphSubject(getSession(), subject);
 
             // extract the JCR propertyName from the predicate
             final String propertyName =
@@ -133,12 +131,12 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, we don't care.
-            if (!isFedoraGraphSubject(subjects, subject)) {
+            if (!subjects.isFedoraGraphSubject(subject)) {
                 return;
             }
 
             final Node subjectNode =
-                    getNodeFromGraphSubject(subjects, getSession(), subject);
+                    subjects.getNodeFromGraphSubject(getSession(), subject);
 
             final String propertyName =
                     getPropertyNameFromPredicate(subjectNode, s.getPredicate());

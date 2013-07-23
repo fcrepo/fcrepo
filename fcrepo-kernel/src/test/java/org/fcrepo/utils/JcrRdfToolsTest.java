@@ -57,17 +57,14 @@ import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.utils.JcrRdfTools.addPropertyToModel;
 import static org.fcrepo.utils.JcrRdfTools.createValue;
 import static org.fcrepo.utils.JcrRdfTools.getFixityResultsModel;
-import static org.fcrepo.utils.JcrRdfTools.getGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.utils.JcrRdfTools.getJcrNamespaceModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrNodeIteratorModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrPropertiesModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrTreeModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrVersionsModel;
-import static org.fcrepo.utils.JcrRdfTools.getNodeFromGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
 import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.utils.JcrRdfTools.isFedoraGraphSubject;
 import static org.fcrepo.utils.JcrRdfTools.setGetClusterConfiguration;
 import static org.fcrepo.utils.JcrRdfTools.setLlstore;
 import static org.fcrepo.utils.NamespaceTools.getNamespaceRegistry;
@@ -326,59 +323,6 @@ public class JcrRdfToolsTest {
                 .thenReturn("ns001");
         final Property p = createProperty("not-registered-uri#", "uuid");
         assertEquals("ns001:uuid", getPropertyNameFromPredicate(mockNode, p));
-    }
-
-    @Test
-    public void shouldMapJcrNodeNamestoRDFResources()
-            throws RepositoryException {
-        when(mockNode.getPath()).thenReturn("/abc");
-        assertEquals("info:fedora/abc", getGraphSubject(testSubjects, mockNode)
-                .toString());
-    }
-
-    @Test
-    public void shouldMapJcrContentNodeNamestoRDFResourcesIntheFcrNamespace()
-            throws RepositoryException {
-        when(mockNode.getPath()).thenReturn("/abc/jcr:content");
-        assertEquals("info:fedora/abc/fcr:content", getGraphSubject(
-                testSubjects, mockNode).toString());
-    }
-
-    @Test
-    public void shouldMapRDFResourcesToJcrNodes() throws RepositoryException {
-        when(mockSession.nodeExists("/abc")).thenReturn(true);
-        when(mockSession.getNode("/abc")).thenReturn(mockNode);
-        assertEquals(mockNode, getNodeFromGraphSubject(testSubjects,
-                mockSession, createResource("info:fedora/abc")));
-    }
-
-    @Test
-    public void shouldMapRDFContentResourcesToJcrContentNodes()
-            throws RepositoryException {
-        when(mockSession.nodeExists("/abc/jcr:content")).thenReturn(true);
-        when(mockSession.getNode("/abc/jcr:content")).thenReturn(mockNode);
-        assertEquals(mockNode, getNodeFromGraphSubject(testSubjects,
-                mockSession, createResource("info:fedora/abc/fcr:content")));
-    }
-
-    @Test
-    public void shouldReturnNullIfItFailstoMapRDFResourcesToJcrNodes()
-            throws RepositoryException {
-        when(mockSession.nodeExists("/does-not-exist")).thenReturn(false);
-        assertNull("should receive null for a non-JCR resource",
-                getNodeFromGraphSubject(testSubjects, mockSession,
-                        createResource("this-is-not-a-fedora-node/abc")));
-        assertNull("should receive null a JCR node that isn't found",
-                getNodeFromGraphSubject(testSubjects, mockSession,
-                        createResource("info:fedora/does-not-exist")));
-    }
-
-    @Test
-    public void shouldDetermineIfAGraphResourceIsAJcrNode()
-            throws RepositoryException {
-        when(mockFactory.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        assertTrue(isFedoraGraphSubject(mockFactory, mockSubject));
-        verify(mockFactory).isFedoraGraphSubject(mockSubject);
     }
 
     @Test

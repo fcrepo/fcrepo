@@ -22,7 +22,6 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.services.ServiceHelpers.getCheckCacheFixityFunction;
-import static org.fcrepo.utils.JcrRdfTools.getGraphSubject;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -190,7 +189,7 @@ public class DatastreamService extends RepositoryService {
         final Dataset dataset = GraphStoreFactory.create(model).toDataset();
 
         final String uri =
-                getGraphSubject(subjects, datastream.getNode()).getURI();
+                subjects.getGraphSubject(datastream.getNode()).getURI();
         final Context context = dataset.getContext();
         context.set(GraphProperties.URI_SYMBOL, uri);
 

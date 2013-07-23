@@ -73,7 +73,7 @@ public class JcrGraphPropertiesTest {
 
         mockStatic(JcrRdfTools.class);
         final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
         when(JcrRdfTools.getJcrPropertiesModel(mockSubjects, mockNode)).thenReturn(
@@ -101,7 +101,7 @@ public class JcrGraphPropertiesTest {
 
         mockStatic(JcrRdfTools.class);
         final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
         when(JcrRdfTools.getJcrPropertiesModel(mockSubjects, mockNode)).thenReturn(
@@ -132,7 +132,7 @@ public class JcrGraphPropertiesTest {
         mockStatic(JcrRdfTools.class);
 
         final Resource mockResource = new DummyURIResource("info:fedora/xyz");
-        when(JcrRdfTools.getGraphSubject(mockSubjects, mockNode)).thenReturn(
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 mockResource);
 
         final Model propertiesModel = createDefaultModel();

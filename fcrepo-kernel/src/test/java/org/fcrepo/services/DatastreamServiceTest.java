@@ -21,7 +21,6 @@ import static java.util.Arrays.asList;
 import static org.fcrepo.services.ServiceHelpers.getCheckCacheFixityFunction;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.utils.JcrRdfTools.getFixityResultsModel;
-import static org.fcrepo.utils.JcrRdfTools.getGraphSubject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentCaptor.forClass;
@@ -199,7 +198,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                 getFixityResultsModel(eq(mockSubjects), eq(mockNode),
                         any(Collection.class))).thenReturn(mockModel);
 
-        when(getGraphSubject(mockSubjects, mockNode)).thenReturn(
+        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));
         final Dataset fixityResultsModel =
                 testObj.getFixityResultsModel(mockSubjects, mockDatastream);
