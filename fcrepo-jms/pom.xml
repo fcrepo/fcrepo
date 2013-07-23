@@ -12,10 +12,10 @@
 
   <dependencies>
     <dependency>
-<groupId>com.thoughtworks.xstream</groupId>
-<artifactId>xstream</artifactId>
-<version>1.4.4</version>
-</dependency>
+      <groupId>com.thoughtworks.xstream</groupId>
+      <artifactId>xstream</artifactId>
+      <version>1.4.4</version>
+    </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel</artifactId>
