@@ -64,7 +64,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     protected Node node;
 
-    private GraphProperties properties;
+    private final GraphProperties properties;
 
     /**
      * Construct a FedoraObject without a backing JCR Node
@@ -336,4 +336,48 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public boolean isNew() {
         return node.isNew();
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((node == null) ? 0 : node.hashCode());
+        result =
+                prime * result +
+                        ((properties == null) ? 0 : properties.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof FedoraResource)) {
+            return false;
+        }
+
+        /* check if node and properties are the same on the objects */
+        FedoraResource other = (FedoraResource) obj;
+        if (node == null) {
+            if (other.node != null) {
+                return false;
+            }
+        } else if (!node.equals(other.node)) {
+            return false;
+        }
+        if (properties == null) {
+            if (other.properties != null) {
+                return false;
+            }
+        } else if (!properties.equals(other.properties)) {
+            return false;
+        }
+        return true;
+    }
+
+
 }
