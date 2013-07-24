@@ -744,14 +744,16 @@ public class JcrRdfTools {
                 return;
             case REFERENCE:
             case WEAKREFERENCE:
-                model.add(subject, predicate, model
-                                                  .createResource("info:fedora" +
-                                                                      property.getSession().getNodeByIdentifier(
-                                                                                                                   v.getString()).getPath()));
+                final Node refNode = session.getNodeByIdentifier(v.getString());
+                model.add(subject,
+                             predicate,
+                             graphSubjects.getGraphSubject(refNode));
                 break;
             case PATH:
-                model.add(subject, predicate, model
-                                                  .createResource("info:fedora" + v.getString()));
+                model.add(subject,
+                             predicate,
+                             graphSubjects.getGraphSubject(session,
+                                                              v.getString()));
                 break;
 
             default:
