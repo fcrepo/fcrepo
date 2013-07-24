@@ -183,8 +183,8 @@ public class DatastreamService extends RepositoryService {
                 runFixityAndFixProblems(datastream);
 
         final Model model =
-                JcrRdfTools.getFixityResultsModel(subjects, datastream
-                        .getNode(), blobs);
+                 JcrRdfTools.withContext(subjects, datastream.getNode().getSession()).getJcrPropertiesModel(datastream
+                                                                                                         .getNode(), blobs);
 
         final Dataset dataset = GraphStoreFactory.create(model).toDataset();
 

@@ -26,8 +26,6 @@ import static org.fcrepo.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.utils.FedoraTypesUtils.getRepositoryCount;
-import static org.fcrepo.utils.JcrRdfTools.getJcrNamespaceModel;
-import static org.fcrepo.utils.JcrRdfTools.getJcrNodeIteratorModel;
 import static org.fcrepo.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -53,6 +51,7 @@ import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
+import org.fcrepo.utils.JcrRdfTools;
 import org.fcrepo.utils.NamespaceChangedStatementListener;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -181,7 +180,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     public Dataset getNamespaceRegistryGraph(final Session session)
         throws RepositoryException {
 
-        final Model model = getJcrNamespaceModel(session);
+        final Model model = JcrRdfTools.withContext(null, session).getJcrNamespaceModel();
 
         model.register(new NamespaceChangedStatementListener(session));
 
@@ -244,9 +243,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
                     limit(new org.fcrepo.utils.NodeIterator(nodeIterator),
                             limit);
 
-            model =
-                    getJcrNodeIteratorModel(subjectFactory, limitedIterator,
-                            searchSubject);
+            model = JcrRdfTools.withContext(subjectFactory, session).getJcrPropertiesModel(limitedIterator,
+                                                                                       searchSubject);
 
             /* add the result description to the RDF model */
 

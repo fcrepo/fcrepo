@@ -43,9 +43,9 @@ public class JcrGraphProperties implements GraphProperties {
     public Dataset getProperties(final Node node, final GraphSubjects subjects,
             final long offset, final int limit)
         throws RepositoryException {
-        final Model model = JcrRdfTools.getJcrPropertiesModel(subjects, node);
-        final Model treeModel = JcrRdfTools.getJcrTreeModel(
-                subjects, node, offset, limit);
+        final JcrRdfTools jcrRdfTools = JcrRdfTools.withContext(subjects, node.getSession());
+        final Model model = jcrRdfTools.getJcrPropertiesModel(node);
+        final Model treeModel = jcrRdfTools.getJcrTreeModel(node, offset, limit);
         final Model problemModel = JcrRdfTools.getProblemsModel();
 
         JcrPropertyStatementListener listener =

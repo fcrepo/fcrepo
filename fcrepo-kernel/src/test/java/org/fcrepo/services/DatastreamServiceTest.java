@@ -20,7 +20,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
 import static org.fcrepo.services.ServiceHelpers.getCheckCacheFixityFunction;
 import static org.fcrepo.utils.FedoraTypesUtils.getBinary;
-import static org.fcrepo.utils.JcrRdfTools.getFixityResultsModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentCaptor.forClass;
@@ -104,6 +103,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         initMocks(this);
         testObj = new DatastreamService();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
+        when(mockNode.getSession()).thenReturn(mockSession);
         llStore = mock(LowLevelStorageService.class);
         testObj.setLlStoreService(llStore);
     }
@@ -171,9 +171,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testGetFixityResultsModel() throws RepositoryException,
-            URISyntaxException {
+    public void testGetFixityResultsModel() throws Exception {
         mockStatic(JcrRdfTools.class);
+        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         final FixityResult fixityResult = mock(FixityResult.class);
         when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(
@@ -192,11 +194,10 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                 llStore.transformLowLevelCacheEntries(eq(mockContent),
                         any(Function.class))).thenReturn(mockCollection);
 
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
         final Model mockModel = mock(Model.class);
         when(
-                getFixityResultsModel(eq(mockSubjects), eq(mockNode),
-                        any(Collection.class))).thenReturn(mockModel);
+                mockJcrRdfTools.getJcrPropertiesModel(eq(mockNode),
+                                                         any(Collection.class))).thenReturn(mockModel);
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));

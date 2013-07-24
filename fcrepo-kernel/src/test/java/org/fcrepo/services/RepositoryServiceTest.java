@@ -19,12 +19,12 @@ package org.fcrepo.services;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.services.RepositoryService.getRepositoryNamespaces;
-import static org.fcrepo.utils.JcrRdfTools.getJcrNodeIteratorModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -230,9 +230,11 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testSearchRepository() throws RepositoryException {
+    public void testSearchRepository() throws Exception {
 
         mockStatic(JcrRdfTools.class);
+        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        when(JcrRdfTools.withContext(mockSubjectFactory, mockSession)).thenReturn(mockJcrRdfTools);
 
         final Resource subject = createResource("info:fedora/search/request");
 
@@ -247,8 +249,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockNI.getSize()).thenReturn(500L);
         when(mockNI.next()).thenReturn("");
         when(
-                getJcrNodeIteratorModel(eq(mockSubjectFactory),
-                        any(org.fcrepo.utils.NodeIterator.class), eq(subject)))
+                mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.utils.NodeIterator.class), eq(subject)))
                 .thenReturn(createDefaultModel());
 
         testObj.searchRepository(mockSubjectFactory, subject, mockSession,

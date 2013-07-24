@@ -37,6 +37,7 @@ import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.rdf.impl.JcrGraphProperties;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.JcrRdfTools;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
@@ -295,7 +296,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      */
     public Dataset getVersionDataset(final GraphSubjects subjects)
         throws RepositoryException {
-        final Model model = JcrRdfTools.getJcrVersionsModel(subjects, node);
+        final Model model = JcrRdfTools.withContext(subjects, node.getSession()).getJcrPropertiesModel(FedoraTypesUtils.getVersionHistory(node), subjects.getGraphSubject(node));
 
         final Dataset dataset = DatasetFactory.create(model);
 

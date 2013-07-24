@@ -17,8 +17,6 @@
 package org.fcrepo.utils;
 
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.utils.JcrRdfTools.createValue;
-import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
 import static org.fcrepo.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.utils.NodePropertiesTools.removeNodeProperty;
@@ -44,6 +42,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  */
 public class JcrPropertyStatementListener extends StatementListener {
 
+    private final JcrRdfTools jcrRdfTools;
     private Model problems;
 
     private static final Logger LOGGER =
@@ -79,6 +78,7 @@ public class JcrPropertyStatementListener extends StatementListener {
         this.session = session;
         this.subjects = subjects;
         this.problems = problems;
+        this.jcrRdfTools = JcrRdfTools.withContext(subjects, session);
     }
 
     /**
@@ -103,12 +103,12 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // extract the JCR propertyName from the predicate
             final String propertyName =
-                    getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
             if (validateModificationsForPropertyName(
                     subject, propertyName)) {
                 final Value v =
-                        createValue(subjectNode, s.getObject(),
+                    jcrRdfTools.createValue(subjectNode, s.getObject(),
                                 getPropertyType(subjectNode, propertyName));
                 appendOrReplaceNodeProperty(subjectNode, propertyName, v);
             }
@@ -139,14 +139,14 @@ public class JcrPropertyStatementListener extends StatementListener {
                     subjects.getNodeFromGraphSubject(getSession(), subject);
 
             final String propertyName =
-                    getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+                jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
             // if the property doesn't exist, we don't need to worry about it.
             if (subjectNode.hasProperty(propertyName) &&
                     validateModificationsForPropertyName(subject,
                             propertyName)) {
                 final Value v =
-                        createValue(subjectNode, s.getObject(),
+                    jcrRdfTools.createValue(subjectNode, s.getObject(),
                                 getPropertyType(subjectNode, propertyName));
                 removeNodeProperty(subjectNode, propertyName, v);
             }

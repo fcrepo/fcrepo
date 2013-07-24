@@ -54,22 +54,12 @@ import static org.fcrepo.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.utils.FixityResult.FixityState.BAD_SIZE;
-import static org.fcrepo.utils.JcrRdfTools.addPropertyToModel;
-import static org.fcrepo.utils.JcrRdfTools.createValue;
-import static org.fcrepo.utils.JcrRdfTools.getFixityResultsModel;
 import static org.fcrepo.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
-import static org.fcrepo.utils.JcrRdfTools.getJcrNamespaceModel;
-import static org.fcrepo.utils.JcrRdfTools.getJcrNodeIteratorModel;
-import static org.fcrepo.utils.JcrRdfTools.getJcrPropertiesModel;
-import static org.fcrepo.utils.JcrRdfTools.getJcrTreeModel;
-import static org.fcrepo.utils.JcrRdfTools.getJcrVersionsModel;
-import static org.fcrepo.utils.JcrRdfTools.getPropertyNameFromPredicate;
 import static org.fcrepo.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.utils.JcrRdfTools.setGetClusterConfiguration;
 import static org.fcrepo.utils.JcrRdfTools.setLlstore;
 import static org.fcrepo.utils.NamespaceTools.getNamespaceRegistry;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -265,11 +255,13 @@ public class JcrRdfToolsTest {
 
     @Mock
     private NodeTypeIterator mockNodeTypeIterator;
+    private JcrRdfTools testObj;
 
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         testSubjects = new DefaultGraphSubjects();
+        testObj = new JcrRdfTools(testSubjects, mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -306,14 +298,14 @@ public class JcrRdfToolsTest {
         final Property p =
                 createProperty("info:fedora/fedora-system:def/internal#",
                         "uuid");
-        assertEquals("jcr:uuid", getPropertyNameFromPredicate(mockNode, p));
+        assertEquals("jcr:uuid", testObj.getPropertyNameFromPredicate(mockNode, p));
 
     }
 
     @Test
     public void shouldReuseRegisteredNamespaces() throws RepositoryException {
         final Property p = createProperty("registered-uri#", "uuid");
-        assertEquals("some-prefix:uuid", getPropertyNameFromPredicate(mockNode,
+        assertEquals("some-prefix:uuid", testObj.getPropertyNameFromPredicate(mockNode,
                 p));
     }
 
@@ -322,7 +314,7 @@ public class JcrRdfToolsTest {
         when(mockNsRegistry.registerNamespace("not-registered-uri#"))
                 .thenReturn("ns001");
         final Property p = createProperty("not-registered-uri#", "uuid");
-        assertEquals("ns001:uuid", getPropertyNameFromPredicate(mockNode, p));
+        assertEquals("ns001:uuid", testObj.getPropertyNameFromPredicate(mockNode, p));
     }
 
     @Test
@@ -346,7 +338,7 @@ public class JcrRdfToolsTest {
         when(mockProperties.nextProperty()).thenReturn(mockProperty);
         when(mockParentProperties.nextProperty()).thenReturn(mockProperty);
 
-        final Model actual = getJcrPropertiesModel(testSubjects, mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockNode);
         assertEquals("info:fedora/fedora-system:def/internal#", actual
                 .getNsPrefixURI("fedora-internal"));
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
@@ -380,7 +372,7 @@ public class JcrRdfToolsTest {
         when(mockNodeContent.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(false);
 
-        final Model actual = getJcrPropertiesModel(testSubjects, mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockNode);
         assertEquals("info:fedora/fedora-system:def/internal#", actual
                 .getNsPrefixURI("fedora-internal"));
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
@@ -433,7 +425,7 @@ public class JcrRdfToolsTest {
         when(mockWorkspace.getNodeTypeManager())
                 .thenReturn(mockNodeTypeManager);
 
-        final Model actual = getJcrPropertiesModel(testSubjects, mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockNode);
         assertEquals("info:fedora/fedora-system:def/internal#", actual
                 .getNsPrefixURI("fedora-internal"));
 
@@ -473,7 +465,7 @@ public class JcrRdfToolsTest {
         when(mockValue.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperties.nextProperty()).thenReturn(mockProperty);
 
-        final Model actual = getJcrPropertiesModel(testSubjects, mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockNode);
         assertEquals(0, actual.size());
     }
 
@@ -485,7 +477,7 @@ public class JcrRdfToolsTest {
 
         when(mockNodes.hasNext()).thenReturn(false);
         when(mockNode.getNodes()).thenReturn(mockNodes);
-        final Model actual = getJcrTreeModel(testSubjects, mockNode, 0, -1);
+        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
         assertEquals(1, actual.size());
     }
 
@@ -502,7 +494,7 @@ public class JcrRdfToolsTest {
         when(mockNodes.nextNode()).thenReturn(mockChildNode);
 
         when(mockNode.getNodes()).thenReturn(mockNodes);
-        final Model actual = getJcrTreeModel(testSubjects, mockNode, 0, 0);
+        final Model actual = testObj.getJcrTreeModel(mockNode, 0, 0);
         assertEquals(5 * 2 + 1, actual.size());
     }
 
@@ -525,7 +517,7 @@ public class JcrRdfToolsTest {
         when(mockNodes.nextNode()).thenReturn(mockChildNode, mockFullChildNode,
                 mockFullChildNode, mockChildNode, mockChildNode);
         when(mockNode.getNodes()).thenReturn(mockNodes);
-        final Model actual = getJcrTreeModel(testSubjects, mockNode, 1, 2);
+        final Model actual = testObj.getJcrTreeModel(mockNode, 1, 2);
         assertEquals(5 * 2 + 1, actual.size());
         verify(mockChildNode, never()).getProperties();
     }
@@ -542,61 +534,63 @@ public class JcrRdfToolsTest {
 
             // node references
             when(mockSession.getNode("/abc")).thenReturn(mockNode);
-            createValue(mockNode, n, REFERENCE);
-            createValue(mockNode, n, WEAKREFERENCE);
-            verify(mockValueFactory, times(2)).createValue(mockNode);
+            when(mockSession.nodeExists("/abc")).thenReturn(true);
+            testObj.createValue(mockNode, n, REFERENCE);
+            verify(mockValueFactory).createValue(mockNode, false);
+            testObj.createValue(mockNode, n, WEAKREFERENCE);
+            verify(mockValueFactory).createValue(mockNode, true);
 
             // uris
-            createValue(mockNode, n, UNDEFINED);
+            testObj.createValue(mockNode, n, UNDEFINED);
             verify(mockValueFactory).createValue("info:fedora/abc",
                     PropertyType.URI);
 
             // other random resources
             n = createResource();
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(n.toString(), UNDEFINED);
 
             // undeclared types, but infer them from rdf types
 
             n = createTypedLiteral(true);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(true);
 
             n = createTypedLiteral("1", XSDbyte);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue((byte) 1);
 
             n = createTypedLiteral((double) 2);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue((double) 2);
 
             n = createTypedLiteral((float) 3);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue((float) 3);
 
             n = createTypedLiteral(4);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(4);
 
             n = createTypedLiteral("5", XSDlong);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(5);
 
             n = createTypedLiteral("6", XSDshort);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue((short) 6);
 
             final Calendar calendar = Calendar.getInstance();
             n = createTypedLiteral(calendar);
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue(any(Calendar.class));
 
             n = createTypedLiteral("string");
-            createValue(mockNode, n, 0);
+            testObj.createValue(mockNode, n, 0);
             verify(mockValueFactory).createValue("string", STRING);
 
             n = createTypedLiteral("string");
-            createValue(mockNode, n, NAME);
+            testObj.createValue(mockNode, n, NAME);
             verify(mockValueFactory).createValue("string", NAME);
 
         } finally {
@@ -623,7 +617,7 @@ public class JcrRdfToolsTest {
             when(mockProperty.isMultiple()).thenReturn(false);
             when(mockProperty.getValue()).thenReturn(mockValue);
 
-            addPropertyToModel(mockSubject, mockModel, mockProperty);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty);
             verify(mockModel).add(mockSubject, mockPredicate, "");
 
         } finally {
@@ -655,7 +649,7 @@ public class JcrRdfToolsTest {
             when(mockProperty.getValues()).thenReturn(
                     asList(mockValue, mockValue2).toArray(new Value[2]));
 
-            addPropertyToModel(mockSubject, mockModel, mockProperty);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty);
             verify(mockModel).add(mockSubject, mockPredicate, "1");
             verify(mockModel).add(mockSubject, mockPredicate, "2");
 
@@ -681,7 +675,7 @@ public class JcrRdfToolsTest {
         try {
             when(mockValue.getType()).thenReturn(BOOLEAN);
             when(mockValue.getBoolean()).thenReturn(true);
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(true)));
 
@@ -689,35 +683,35 @@ public class JcrRdfToolsTest {
             final Calendar mockCalendar = Calendar.getInstance();
             when(mockValue.getType()).thenReturn(DATE);
             when(mockValue.getDate()).thenReturn(mockCalendar);
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(mockCalendar)));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(DECIMAL);
             when(mockValue.getDecimal()).thenReturn(BigDecimal.valueOf(0.0));
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(BigDecimal.valueOf(0.0))));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(DOUBLE);
             when(mockValue.getDouble()).thenReturn((double) 0);
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral((double) 0)));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(LONG);
             when(mockValue.getLong()).thenReturn(0L);
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(0L)));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(STRING);
             when(mockValue.getString()).thenReturn("XYZ");
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral("XYZ")));
 
@@ -725,7 +719,7 @@ public class JcrRdfToolsTest {
             when(mockValue.getType()).thenReturn(URI);
             when(mockValue.getString()).thenReturn("info:fedora");
 
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource("info:fedora")));
@@ -737,7 +731,7 @@ public class JcrRdfToolsTest {
 
             when(mockValue.getType()).thenReturn(REFERENCE);
             when(mockValue.getString()).thenReturn("uuid");
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource("info:fedora/abc")));
@@ -746,7 +740,7 @@ public class JcrRdfToolsTest {
             when(mockValue.getType()).thenReturn(WEAKREFERENCE);
             when(mockValue.getString()).thenReturn("uuid");
             when(mockNode.getPath()).thenReturn("/def");
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource("info:fedora/def")));
@@ -754,7 +748,7 @@ public class JcrRdfToolsTest {
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(PATH);
             when(mockValue.getString()).thenReturn("/ghi");
-            addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource("info:fedora/ghi")));
@@ -782,7 +776,7 @@ public class JcrRdfToolsTest {
         when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
 
-        final Model model = getJcrPropertiesModel(testSubjects, mockNode);
+        final Model model = testObj.getJcrPropertiesModel(mockNode);
 
         assertTrue(model != null);
     }
@@ -791,9 +785,9 @@ public class JcrRdfToolsTest {
     public void testJcrNodeIteratorModel() throws RepositoryException {
         when(mockNodes.hasNext()).thenReturn(false);
         final Model model =
-                getJcrNodeIteratorModel(testSubjects,
-                        new org.fcrepo.utils.NodeIterator(mockNodes),
-                        mockResource);
+                testObj.getJcrPropertiesModel(
+                                                 new org.fcrepo.utils.NodeIterator(mockNodes),
+                                                 mockResource);
         assertTrue(model != null);
     }
 
@@ -819,8 +813,8 @@ public class JcrRdfToolsTest {
         final Iterator<Node> mockIterator =
                 asList(mockNode1, mockNode2, mockNode3).iterator();
         final Model model =
-                getJcrNodeIteratorModel(testSubjects, mockIterator,
-                        mockResource);
+                testObj.getJcrPropertiesModel(mockIterator,
+                                                 mockResource);
         assertEquals(3, model.listObjectsOfProperty(HAS_MEMBER_OF_RESULT)
                 .toSet().size());
     }
@@ -840,7 +834,7 @@ public class JcrRdfToolsTest {
         when(mockNode.getProperties()).thenReturn(mockProperties);
 
         final Model fixityResultsModel =
-                getFixityResultsModel(testSubjects, mockNode, mockBlobs);
+                testObj.getJcrPropertiesModel(mockNode, mockBlobs);
 
         LOGGER.debug("Got graph {}", fixityResultsModel);
 
@@ -856,7 +850,7 @@ public class JcrRdfToolsTest {
 
     @Test
     public void testGetJcrNamespaceModel() throws Exception {
-        final Model jcrNamespaceModel = getJcrNamespaceModel(mockSession);
+        final Model jcrNamespaceModel = testObj.getJcrNamespaceModel();
         assertTrue(jcrNamespaceModel.contains(
                 createResource("info:fedora/fedora-system:def/internal#"),
                 HAS_NAMESPACE_PREFIX, "fedora-internal"));
@@ -894,7 +888,7 @@ public class JcrRdfToolsTest {
 
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockFrozenNode.getProperties()).thenReturn(mockProperties);
-        final Model actual = getJcrVersionsModel(testSubjects, mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockVersionHistory, testSubjects.getGraphSubject(mockNode));
 
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
                 HAS_VERSION, testSubjects.getGraphSubject(mockFrozenNode)));
