@@ -25,6 +25,9 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.RdfLexicon.HAS_CHILD_COUNT;
+import static org.fcrepo.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.http.RDFMediaType.N3;
 import static org.fcrepo.http.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.RDFMediaType.N3_ALT2;
@@ -65,6 +68,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
@@ -118,6 +123,8 @@ public class FedoraNodes extends AbstractResource {
             @QueryParam("limit")
             @DefaultValue("-1")
             final int limit,
+            @QueryParam("non-member-properties")
+            final String nonMemberProperties,
             @Context
             final Request request,
             @Context
@@ -148,8 +155,50 @@ public class FedoraNodes extends AbstractResource {
             }
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+
+            final int realLimit;
+            if (nonMemberProperties != null && limit == -1) {
+                realLimit = -2;
+            } else {
+                realLimit = limit;
+            }
+
             final Dataset propertiesDataset =
-                    resource.getPropertiesDataset(subjects, offset, limit);
+                    resource.getPropertiesDataset(subjects, offset, realLimit);
+
+            if (limit > 0 && propertiesDataset.getDefaultModel()
+                    .contains(subjects.getGraphSubject(resource.getNode()),
+                                 HAS_CHILD_COUNT)) {
+
+                Model requestModel = ModelFactory.createDefaultModel();
+
+                final long childCount = propertiesDataset.getDefaultModel()
+                                            .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()), HAS_CHILD_COUNT)
+                                            .nextNode().asLiteral().getLong();
+
+                if (childCount > (offset + limit)) {
+
+                    final Resource nextPageResource =
+                        requestModel.createResource(uriInfo
+                                                       .getRequestUriBuilder()
+                                                       .queryParam("offset", offset + limit)
+                                                       .queryParam("limit", limit)
+                                                       .toString());
+                    requestModel.add(subjects.getContext(), NEXT_PAGE, nextPageResource);
+                }
+
+                final Resource firstPageResource =
+                    requestModel.createResource(uriInfo
+                                                    .getRequestUriBuilder()
+                                                    .queryParam("offset", 0)
+                                                    .queryParam("limit", limit)
+                                                    .toString());
+                requestModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
+
+                propertiesDataset.addNamedModel("requestModel", requestModel);
+
+            }
+
             addResponseInformationToDataset(resource, propertiesDataset,
                     uriInfo, subjects);
 

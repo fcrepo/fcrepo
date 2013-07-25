@@ -37,6 +37,14 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  */
 public class DefaultGraphSubjects implements GraphSubjects {
 
+    private final Resource context;
+
+    /**
+     * Construct the graph with a placeholder context resource
+     */
+    public DefaultGraphSubjects() {
+        this.context = ResourceFactory.createResource();
+    }
 
     @Override
     public Resource getGraphSubject(final Session session, final String absPath) throws RepositoryException {
@@ -48,6 +56,11 @@ public class DefaultGraphSubjects implements GraphSubjects {
         } else {
             return ResourceFactory.createResource("info:fedora" + absPath);
         }
+    }
+
+    @Override
+    public Resource getContext() {
+        return context;
     }
 
     @Override

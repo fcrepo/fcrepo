@@ -38,6 +38,8 @@ import static org.fcrepo.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.RdfLexicon.IS_FIXITY_RESULT_OF;
+import static org.fcrepo.RdfLexicon.PAGE;
+import static org.fcrepo.RdfLexicon.PAGE_OF;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.utils.FedoraTypesUtils.getNodeTypeManager;
 import static org.fcrepo.utils.FedoraTypesUtils.getPredicateForProperty;
@@ -421,14 +423,28 @@ public class JcrRdfTools {
 
         final Model model = getJcrPropertiesModel();
 
+        if (limit < -1) {
+            return model;
+        }
+
         final Resource subject = graphSubjects.getGraphSubject(node);
 
+
+        model.add(graphSubjects.getContext(), RDF.type, model.createResource("http://www.w3.org/ns/ldp#Page"));
+        model.add(graphSubjects.getContext(), PAGE_OF, subject);
+
         // don't do this if the node is the root node.
-        if (node.getDepth() != 0) {
+        if (node.getDepth() > 0) {
+
             final Node parentNode = node.getParent();
-            model.add(subject, RdfLexicon.HAS_PARENT, graphSubjects.getGraphSubject(
-                                                                                 parentNode));
+            final Resource parentNodeSubject =
+                graphSubjects.getGraphSubject(parentNode);
+            model.add(subject, RdfLexicon.HAS_PARENT, parentNodeSubject);
+            model.add(parentNodeSubject, RdfLexicon.HAS_CHILD, subject);
             addJcrPropertiesToModel(parentNode, model);
+            model.add(graphSubjects.getContext(),
+                         model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"),
+                         parentNodeSubject);
         }
 
         final javax.jcr.NodeIterator nodeIterator = node.getNodes();
@@ -436,31 +452,38 @@ public class JcrRdfTools {
         int i = 0;
         long excludedNodeCount = 0;
 
-        while (nodeIterator.hasNext()) {
-            final Node childNode = nodeIterator.nextNode();
-
-            // exclude jcr system nodes or jcr:content nodes
-            if (FedoraTypesUtils.isInternalNode.apply(childNode) ||
-                    childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
-                excludedNodeCount++;
-            } else {
-                final Resource childNodeSubject =
-                        graphSubjects.getGraphSubject(childNode);
-
-                if (i >= offset && (limit == -1 || i < (offset + limit))) {
-                    addJcrPropertiesToModel(childNode, model);
-                }
-
-                i++;
-
-                model.add(subject, RdfLexicon.HAS_CHILD, childNodeSubject);
-                model.add(childNodeSubject, RdfLexicon.HAS_PARENT, subject);
+        if (nodeIterator.hasNext()) {
+            if (limit == -1) {
+                model.add(graphSubjects.getContext(), PAGE, RDF.nil);
             }
 
-        }
+            while (nodeIterator.hasNext()) {
+                final Node childNode = nodeIterator.nextNode();
 
-        model.add(subject, RdfLexicon.HAS_CHILD_COUNT, ResourceFactory
-                .createTypedLiteral(nodeIterator.getSize() - excludedNodeCount));
+                // exclude jcr system nodes or jcr:content nodes
+                if (FedoraTypesUtils.isInternalNode.apply(childNode) ||
+                        childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
+                    excludedNodeCount++;
+                } else {
+                    final Resource childNodeSubject =
+                            graphSubjects.getGraphSubject(childNode);
+
+                    if (i >= offset && (limit == -1 || i < (offset + limit))) {
+                        addJcrPropertiesToModel(childNode, model);
+                        model.add(graphSubjects.getContext(), model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"), childNodeSubject);
+                        model.add(childNodeSubject, RdfLexicon.HAS_PARENT, subject);
+                    }
+
+                    i++;
+
+                    model.add(subject, RdfLexicon.HAS_CHILD, childNodeSubject);
+                }
+
+            }
+
+            model.add(subject, RdfLexicon.HAS_CHILD_COUNT, ResourceFactory
+                    .createTypedLiteral(nodeIterator.getSize() - excludedNodeCount));
+        }
 
         return model;
     }

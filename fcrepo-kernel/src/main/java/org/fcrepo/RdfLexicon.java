@@ -74,6 +74,9 @@ public final class RdfLexicon {
         createProperty("http://www.w3.org/ns/ldp#Page");
     public static final Property PAGE_OF =
         createProperty("http://www.w3.org/ns/ldp#pageOf");
+
+    public static final Property FIRST_PAGE =
+        createProperty("http://www.w3.org/ns/ldp#firstPage");
     public static final Property NEXT_PAGE =
             createProperty("http://www.w3.org/ns/ldp#nextPage");
 

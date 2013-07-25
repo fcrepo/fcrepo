@@ -61,4 +61,10 @@ public interface GraphSubjects {
      * @throws RepositoryException
      */
     Resource getGraphSubject(final Session session, final String absPath) throws RepositoryException;
+
+    /**
+     * Get a context resource
+     * @return
+     */
+    Resource getContext();
 }

@@ -52,6 +52,7 @@ public class HttpGraphSubjects implements GraphSubjects {
     private final String basePath;
 
     private final int pathIx;
+    private final URI context;
 
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
@@ -63,6 +64,7 @@ public class HttpGraphSubjects implements GraphSubjects {
      * @param uris
      */
     public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
+        this.context = uris.getRequestUri();
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String basePath = nodesBuilder.build("").toString();
         if (!basePath.endsWith("/")) {
@@ -81,6 +83,11 @@ public class HttpGraphSubjects implements GraphSubjects {
                 nodesBuilder.buildFromMap(getPathMap(session, absPath));
         LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
         return ResourceFactory.createResource(result.toString());
+    }
+
+    @Override
+    public Resource getContext() {
+        return ResourceFactory.createResource(context.toString());
     }
 
     @Override

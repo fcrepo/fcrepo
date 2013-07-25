@@ -25,6 +25,7 @@ import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.utils.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -52,6 +53,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.graph.Node_ANY;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
@@ -221,8 +224,29 @@ public class FedoraNodesTest {
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Dataset dataset =
-                testObj.describe(createPathList(path), 0, -1, mockRequest,
+                testObj.describe(createPathList(path), 0, -1, null, mockRequest,
                         uriInfo);
+        assertNotNull(dataset.getDefaultModel());
+
+    }
+
+    @Test
+    public void testDescribeObjectNoInlining() throws RepositoryException, IOException {
+        final String pid = "FedoraObjectsRdfTest1";
+        final String path = "/" + pid;
+
+        when(mockDataset.getDefaultModel()).thenReturn(mockModel);
+
+        when(mockObject.getLastModifiedDate()).thenReturn(null);
+        when(
+                mockObject.getPropertiesDataset(any(GraphSubjects.class),
+                                                   anyLong(), eq(-2))).thenReturn(mockDataset);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+            .thenReturn(mockObject);
+        final Request mockRequest = mock(Request.class);
+        final Dataset dataset =
+            testObj.describe(createPathList(path), 0, -1, "", mockRequest,
+                                uriInfo);
         assertNotNull(dataset.getDefaultModel());
 
     }

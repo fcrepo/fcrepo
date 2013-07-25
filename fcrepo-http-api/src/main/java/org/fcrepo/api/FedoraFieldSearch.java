@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.RdfLexicon.PAGE;
 import static org.fcrepo.RdfLexicon.PAGE_OF;
@@ -37,8 +38,6 @@ import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -62,7 +61,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -179,9 +177,10 @@ public class FedoraFieldSearch extends AbstractResource implements
                                                   .build().toString());
             }
 
+            final HttpGraphSubjects subjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+
             final Dataset dataset =
-                    nodeService.searchRepository(new HttpGraphSubjects(
-                            FedoraNodes.class, uriInfo), searchResult,
+                    nodeService.searchRepository(subjects, searchResult,
                             session, terms, limit, offset);
 
             final Model searchModel = createDefaultModel();
@@ -205,20 +204,30 @@ public class FedoraFieldSearch extends AbstractResource implements
                                      SEARCH_HAS_MORE,
                                      searchModel.createTypedLiteral(true))) {
 
-                    final Map<String, ?> pathMap =
-                        ImmutableBiMap.of("q", terms, "offset", offset + limit,
-                                             "limit", limit);
-
                     final Resource nextPageResource =
                         searchModel.createResource(uriInfo
                                                        .getBaseUriBuilder()
                                                        .path(FedoraFieldSearch.class)
-                                                       .buildFromMap(pathMap)
+                                                       .queryParam("q", terms)
+                                                       .queryParam("offset", offset + limit)
+                                                       .queryParam("limit", limit)
                                                        .toString());
                     searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
                 } else {
                     searchModel.add(pageResource, NEXT_PAGE, RDF.nil);
                 }
+
+                final Resource firstPageResource =
+                    searchModel.createResource(uriInfo
+                                                    .getBaseUriBuilder()
+                                                    .path(FedoraFieldSearch.class)
+                                                    .queryParam("q", terms)
+                                                    .queryParam("offset", 0)
+                                                    .queryParam("limit", limit)
+                                                    .toString());
+                searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
+
+
                 dataset.addNamedModel("search-pagination", searchModel);
             }
 

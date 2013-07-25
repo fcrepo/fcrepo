@@ -121,6 +121,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -469,15 +470,29 @@ public class JcrRdfToolsTest {
     }
 
     @Test
+    public void shouldBeAbleToDisableResourceInlining() throws RepositoryException {
+        when(mockNode.getPath()).thenReturn("/test/jcr");
+
+        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -2);
+        assertEquals(0, Iterators.size(actual.listObjectsOfProperty(actual.createProperty("http://www.w3.org/ns/ldp#inlinedResource"))));
+        verify(mockParent, never()).getProperties();
+        verify(mockNode, never()).getNodes();
+    }
+
+    @Test
     public void shouldIncludeParentNodeInformation() throws RepositoryException {
         when(mockParent.getPath()).thenReturn("/test");
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getParent()).thenReturn(mockParent);
 
+        when(mockParent.getProperties()).thenReturn(mockProperties);
+        when(mockProperties.hasNext()).thenReturn(false);
+
+        when(mockNode.getDepth()).thenReturn(2);
         when(mockNodes.hasNext()).thenReturn(false);
         when(mockNode.getNodes()).thenReturn(mockNodes);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertEquals(1, actual.size());
+        assertEquals(1, Iterators.size(actual.listObjectsOfProperty(RdfLexicon.HAS_CHILD)));
     }
 
     @Test
@@ -485,16 +500,21 @@ public class JcrRdfToolsTest {
         when(mockParent.getPath()).thenReturn("/test");
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getParent()).thenReturn(mockParent);
+
+        when(mockParent.getProperties()).thenReturn(mockProperties);
+        when(mockProperties.hasNext()).thenReturn(false);
+
+        when(mockNode.getDepth()).thenReturn(0);
         when(mockChildNode.getName()).thenReturn("some-name");
         when(mockChildNode.getPath()).thenReturn("/test/jcr/1", "/test/jcr/2",
                 "/test/jcr/3", "/test/jcr/4", "/test/jcr/5");
-        when(mockNodes.hasNext()).thenReturn(true, true, true, true, true,
+        when(mockNodes.hasNext()).thenReturn(true, true, true, true, true, true,
                 false);
         when(mockNodes.nextNode()).thenReturn(mockChildNode);
 
         when(mockNode.getNodes()).thenReturn(mockNodes);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, 0);
-        assertEquals(5 * 2 + 1, actual.size());
+        assertEquals(5, Iterators.size(actual.listObjectsOfProperty(RdfLexicon.HAS_CHILD)));
     }
 
     @Test
@@ -503,6 +523,7 @@ public class JcrRdfToolsTest {
         when(mockParent.getPath()).thenReturn("/test");
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockNode.getDepth()).thenReturn(0);
         when(mockChildNode.getName()).thenReturn("some-name");
         when(mockChildNode.getPath()).thenReturn("/test/jcr/1", "/test/jcr/4",
                 "/test/jcr/5");
@@ -517,7 +538,7 @@ public class JcrRdfToolsTest {
                 mockFullChildNode, mockChildNode, mockChildNode);
         when(mockNode.getNodes()).thenReturn(mockNodes);
         final Model actual = testObj.getJcrTreeModel(mockNode, 1, 2);
-        assertEquals(5 * 2 + 1, actual.size());
+        assertEquals(2, Iterators.size(actual.listSubjectsWithProperty(RdfLexicon.HAS_PARENT)));
         verify(mockChildNode, never()).getProperties();
     }
 

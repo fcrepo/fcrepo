@@ -195,6 +195,15 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         logger.debug("Retrieved object graph:\n" + content);
 
+
+        assertTrue(
+                       "Expect inlined resources",
+                       compile(
+                                  "<" +
+                                      serverAddress +
+                                      "objects/FedoraDescribeTestGraph> <http://www.w3.org/ns/ldp#inlinedResource>",
+                                  DOTALL).matcher(content).find());
+
         assertTrue(
                 "Didn't find an expected ntriple",
                 compile(
@@ -210,6 +219,29 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                 serverAddress +
                                 "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
+
+    }
+
+    @Test
+    public void testGetObjectGraphNonMemberProperties() throws Exception {
+        client.execute(postObjMethod("FedoraDescribeTestGraph"));
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + "objects/FedoraDescribeTestGraph?non-member-properties");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertFalse(
+                      "Didn't expect inlined resources",
+                      compile(
+                                 "<" +
+                                     serverAddress +
+                                     "objects/FedoraDescribeTestGraph> <http://www.w3.org/ns/ldp#inlinedResource>",
+                                 DOTALL).matcher(content).find());
 
     }
 

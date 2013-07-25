@@ -60,6 +60,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) mediaType.toString()));
+        httpHeaders.putSingle("Link", ";rel=\"first\"");
         setCachingHeaders(httpHeaders, rdf);
 
         new GraphStoreStreamingOutput(rdf, mediaType).write(entityStream);

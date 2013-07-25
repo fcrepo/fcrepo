@@ -58,12 +58,14 @@ public class HttpGraphSubjectsTest {
     @Mock
     private Node mockNode;
 
+    private UriInfo uriInfo;
+
     @Before
     public void setUp() {
         initMocks(this);
-        final UriInfo uris = getUriInfoImpl(testPath);
+        uriInfo = getUriInfoImpl(testPath);
         testObj =
-                new HttpGraphSubjects(MockNodeController.class, uris);
+                new HttpGraphSubjects(MockNodeController.class, uriInfo);
     }
 
     @Test
@@ -124,6 +126,11 @@ public class HttpGraphSubjectsTest {
         when(mockSubject.getURI()).thenReturn("http://fedora/foo");
         actual = testObj.isFedoraGraphSubject(mockSubject);
         assertEquals(false, actual);
+    }
+
+    @Test
+    public void testGetContext() {
+        assertEquals(uriInfo.getRequestUri().toString(), testObj.getContext().getURI());
     }
 
     private static UriInfo getUriInfoImpl(final String path) {
