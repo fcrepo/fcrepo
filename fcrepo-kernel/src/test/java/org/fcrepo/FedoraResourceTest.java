@@ -32,6 +32,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -49,6 +50,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.utils.FedoraTypesUtils;
 import org.fcrepo.utils.JcrRdfTools;
@@ -353,6 +355,55 @@ public class FedoraResourceTest {
         when(mockNode.isNew()).thenReturn(false);
         assertFalse("resource state should be the same as the node state",
                 testObj.isNew());
+    }
+
+    @Test
+    public void testReplacePropertiesDataset() throws RepositoryException {
+
+        mockStatic(JcrRdfTools.class);
+        when(JcrRdfTools.withContext(DEFAULT_SUBJECT_FACTORY, mockSession)).thenReturn(mockJcrRdfTools);
+
+        when(mockNode.getPath()).thenReturn("/xyz");
+
+        final Model propertiesModel = ModelFactory.createDefaultModel();
+        propertiesModel.add(propertiesModel.createResource("a"),
+                               propertiesModel.createProperty("b"),
+                               "c");
+
+
+        propertiesModel.add(propertiesModel.createResource("i"),
+                               propertiesModel.createProperty("j"),
+                               "k");
+
+        propertiesModel.add(propertiesModel.createResource("x"),
+                               propertiesModel.createProperty("y"),
+                               "z");
+        when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(propertiesModel);
+
+        final Model treeModel = createDefaultModel();
+        when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -2)).thenReturn(
+                                                                             treeModel);
+        final Model problemsModel = createDefaultModel();
+        when(getProblemsModel()).thenReturn(problemsModel);
+
+        final Model replacementModel = ModelFactory.createDefaultModel();
+
+        replacementModel.add(replacementModel.createResource("a"),
+                                replacementModel.createProperty("b"),
+                               "n");
+
+
+        replacementModel.add(replacementModel.createResource("i"),
+                                replacementModel.createProperty("j"),
+                               "k");
+
+        testObj.replacePropertiesDataset(DEFAULT_SUBJECT_FACTORY, replacementModel);
+
+        assertTrue(propertiesModel.containsAll(replacementModel));
+
+        assertFalse(problemsModel.contains(propertiesModel.createResource("x"),
+                                              propertiesModel.createProperty("y"),
+                                              "z"));
     }
 
 }

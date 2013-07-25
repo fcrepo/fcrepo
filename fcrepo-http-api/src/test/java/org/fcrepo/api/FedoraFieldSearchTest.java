@@ -30,6 +30,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriBuilder;
@@ -61,6 +62,9 @@ public class FedoraFieldSearchTest {
     @Mock
     private UriBuilder mockUriBuilder;
 
+    @Mock
+    private HttpServletResponse mockResponse;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -86,7 +90,7 @@ public class FedoraFieldSearchTest {
                 .thenReturn(createMem());
         when(uriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder);
 
-        testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, uriInfo);
+        testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, mockResponse, uriInfo);
 
         verify(mockNodeService)
                 .searchRepository(

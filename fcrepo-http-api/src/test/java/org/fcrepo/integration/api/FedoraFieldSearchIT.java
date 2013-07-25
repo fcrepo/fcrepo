@@ -26,6 +26,7 @@ import java.net.URI;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
@@ -82,7 +83,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         assertEquals(201, postResp.getStatusLine().getStatusCode());
 
         /* and add a dc title to the object so the query returns a result */
-        HttpPost postDc = new HttpPost(serverAddress + "objects/testobj");
+        HttpPatch postDc = new HttpPatch(serverAddress + "objects/testobj");
         postDc.setHeader("Content-Type", "application/sparql-update");
         String updateString =
                 "INSERT { <" + serverAddress +

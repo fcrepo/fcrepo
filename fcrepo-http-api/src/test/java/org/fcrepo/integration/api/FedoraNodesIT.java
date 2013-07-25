@@ -51,7 +51,9 @@ import nu.validator.saxtree.TreeBuilder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -195,13 +197,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         logger.debug("Retrieved object graph:\n" + content);
 
+
+        assertEquals("application/sparql-update", response.getFirstHeader("Accept-Patch").getValue());
+
         assertTrue(
-                       "Expect inlined resources",
-                       compile(
-                                  "<" +
-                                      serverAddress +
-                                      "objects/FedoraDescribeTestGraph> <http://www.w3.org/ns/ldp#inlinedResource>",
-                                  DOTALL).matcher(content).find());
+                      "Expect inlined resources",
+                      compile(
+                                 "<" +
+                                     serverAddress +
+                                     "objects/FedoraDescribeTestGraph> <http://www.w3.org/ns/ldp#inlinedResource>",
+                                 DOTALL).matcher(content).find());
 
         assertTrue(
                 "Didn't find an expected ntriple",
@@ -296,8 +301,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testUpdateObjectGraph() throws Exception {
         client.execute(postObjMethod("FedoraDescribeTestGraphUpdate"));
-        final HttpPost updateObjectGraphMethod =
-                new HttpPost(serverAddress +
+        final HttpPatch updateObjectGraphMethod =
+                new HttpPatch(serverAddress +
                         "objects/FedoraDescribeTestGraphUpdate");
         updateObjectGraphMethod.addHeader("Content-Type",
                 "application/sparql-update");
@@ -317,11 +322,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         client.execute(postObjMethod("FedoraDescribeTestGraphReplace"));
         final String subjectURI =
                 serverAddress + "objects/FedoraDescribeTestGraphReplace";
-        final HttpPost updateObjectGraphMethod =
-
-        new HttpPost(subjectURI);
-
-        new HttpPost(serverAddress + "objects/FedoraDescribeTestGraphReplace");
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
 
         updateObjectGraphMethod.addHeader("Content-Type",
                 "application/sparql-update");
@@ -371,7 +372,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         client.execute(postObjMethod("FedoraDescribeTestGraphUpdateBad"));
         final String subjectURI =
                 serverAddress + "objects/FedoraDescribeTestGraphUpdateBad";
-        final HttpPost getObjMethod = new HttpPost(subjectURI);
+        final HttpPatch getObjMethod = new HttpPatch(subjectURI);
         getObjMethod.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
@@ -384,6 +385,38 @@ public class FedoraNodesIT extends AbstractResourceIT {
             logger.error("Got unexpected update response:\n" + content);
         }
         assertEquals(403, response.getStatusLine().getStatusCode());
+
+    }
+
+    @Test
+    public void testReplaceGraph() throws Exception {
+        client.execute(postObjMethod("FedoraReplaceGraph"));
+        final String subjectURI =
+            serverAddress + "objects/FedoraReplaceGraph";
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                                                 ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
+                                                     .getBytes()));
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals(204, response.getStatusLine().getStatusCode());
+
+
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), getResponse.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(getResponse.getEntity());
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertTrue("Didn't find a triple we tried to create.", compile(
+                                                                        "<" + subjectURI + "> <info:rubydora#label> \"asdfg\" \\.",
+                                                                        DOTALL).matcher(content).find());
+
 
     }
 
@@ -505,6 +538,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     }
 
+    @Test
     public void testDescribeRdfCached() throws RepositoryException, IOException {
         final CachingHttpClient specialClient = new CachingHttpClient(client);
 

@@ -41,6 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -51,7 +52,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.HtmlTemplate;
@@ -106,17 +106,17 @@ public class FedoraFieldSearch extends AbstractResource implements
     @Produces({TEXT_HTML})
     public Dataset searchSubmitHtml(@QueryParam("q")
             final String terms,
-            @QueryParam("offset")
-            @DefaultValue("0")
+            @QueryParam("offset") @DefaultValue("0")
             final long offset,
             @QueryParam("limit")
             @DefaultValue("25")
             final int limit,
             @Context
             final Request request,
+            @Context HttpServletResponse servletResponse,
             @Context
             final UriInfo uriInfo) throws RepositoryException {
-        return getSearchDataset(terms, offset, limit, uriInfo);
+        return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);
     }
 
     /**
@@ -135,18 +135,12 @@ public class FedoraFieldSearch extends AbstractResource implements
     @GET
     @Timed
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
-    public Dataset searchSubmitRdf(@QueryParam("q")
-            final String terms,
-            @QueryParam("offset")
-            @DefaultValue("0")
-            final long offset,
-            @QueryParam("limit")
-            @DefaultValue("25")
-            final int limit,
-            @Context
-            final Request request,
-            @Context
-            final UriInfo uriInfo) throws RepositoryException {
+    public Dataset searchSubmitRdf(@QueryParam("q") final String terms,
+            @QueryParam("offset") @DefaultValue("0") final long offset,
+            @QueryParam("limit") @DefaultValue("25") final int limit,
+            @Context final Request request,
+            @Context HttpServletResponse servletResponse,
+            @Context final UriInfo uriInfo) throws RepositoryException {
 
         if (terms == null) {
             LOGGER.trace("Received search request, but terms was empty. Aborting.");
@@ -154,11 +148,15 @@ public class FedoraFieldSearch extends AbstractResource implements
                     "q parameter is mandatory").build());
         }
 
-        return getSearchDataset(terms, offset, limit, uriInfo);
+        return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);
     }
 
-    private Dataset getSearchDataset(final String terms, final long offset,
-            final int limit, final UriInfo uriInfo) throws RepositoryException {
+    private Dataset getSearchDataset(final String terms,
+                                     final long offset,
+                                     final int limit,
+                                     final HttpServletResponse servletResponse,
+                                     final UriInfo uriInfo)
+        throws RepositoryException {
 
         try {
             LOGGER.debug(
@@ -231,8 +229,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                     searchModel.createResource(firstPage);
                 searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
 
-                dataset.getContext().put(Symbol.create("firstPage"), firstPage);
-
+                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
 
                 dataset.addNamedModel("search-pagination", searchModel);
             }

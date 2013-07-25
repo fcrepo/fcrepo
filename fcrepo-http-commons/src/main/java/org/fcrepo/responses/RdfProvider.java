@@ -32,7 +32,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.hp.hpl.jena.sparql.util.Symbol;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -61,10 +60,6 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) mediaType.toString()));
-
-        if (rdf.getContext().isDefined(Symbol.create("firstPage"))) {
-            httpHeaders.putSingle("Link", rdf.getContext().getAsString(Symbol.create("firstPage")) + ";rel=\"first\"");
-        }
 
         setCachingHeaders(httpHeaders, rdf);
 

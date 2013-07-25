@@ -44,11 +44,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -109,6 +112,9 @@ public class FedoraNodesTest {
 
     @Mock
     private Context mockContext;
+
+    @Mock
+    private HttpServletResponse mockResponse;
     
     private UriInfo uriInfo;
 
@@ -137,36 +143,13 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testModify() throws RepositoryException, IOException,
-            InvalidChecksumException {
-        final String pid = "testObject";
-        when(mockResource.isNew()).thenReturn(false);
-        when(mockResource.getLastModifiedDate()).thenReturn(new Date());
-        when(mockNodes.findOrCreateObject(mockSession, "/testObject"))
-                .thenReturn(mockResource);
-        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(
-                null);
-        try (final InputStream emptyInputStream =
-                new ByteArrayInputStream("".getBytes())) {
-            final Response actual =
-                    testObj.modifyObject(createPathList(pid), getUriInfoImpl(),
-                            emptyInputStream, null, mockRequest);
-            assertNotNull(actual);
-            assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-            // this verify will fail when modify is actually implemented, thus
-            // encouraging the unit test to be updated appropriately.
-            // HA!
-            // verifyNoMoreInteractions(mockObjects);
-            verify(mockSession).save();
-        }
-
-    }
-
-    @Test
     public void testCreateObject() throws RepositoryException, IOException,
             InvalidChecksumException, URISyntaxException {
         final String pid = "testObject";
         final String path = "/" + pid;
+        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
         final Response actual =
                 testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
                         null, getUriInfoImpl(), null);
@@ -187,10 +170,13 @@ public class FedoraNodesTest {
         final String dsPath = "/" + pid + "/" + dsId;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNode.getSession()).thenReturn(mockSession);
+
+
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
                         eq(dsPath), anyString(), eq(dsContentStream),
                         any(URI.class))).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
                         FEDORA_DATASTREAM, null, null, getUriInfoImpl(),
@@ -229,9 +215,10 @@ public class FedoraNodesTest {
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Dataset dataset =
-                testObj.describe(createPathList(path), 0, -1, null, mockRequest,
+                testObj.describe(createPathList(path), 0, -1, null, mockRequest, mockResponse,
                         uriInfo);
         assertNotNull(dataset.getDefaultModel());
+        verify(mockResponse).addHeader("Accept-Patch", "application/sparql-update");
 
     }
 
@@ -251,7 +238,7 @@ public class FedoraNodesTest {
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Dataset dataset =
-            testObj.describe(createPathList(path), 0, -1, "", mockRequest,
+            testObj.describe(createPathList(path), 0, -1, "", mockRequest, mockResponse,
                                 uriInfo);
         assertNotNull(dataset.getDefaultModel());
 
@@ -266,14 +253,30 @@ public class FedoraNodesTest {
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
         .thenReturn(mockDataset);
+
+        when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
         when(mockDataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME))
         .thenReturn(mockModel);
-        testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream);
+        testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest);
 
         verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
                 eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
+    }
+
+    @Test
+    public void testReplaceRdf() throws RepositoryException, IOException, URISyntaxException {
+        final String pid = "FedoraObjectsRdfTest1";
+        final String path = "/" + pid;
+        when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
+
+        final InputStream mockStream =
+            new ByteArrayInputStream("<a> <b> <c>".getBytes());
+        when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
+
+        testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest);
+        verify(mockObject).replacePropertiesDataset(any(GraphSubjects.class), any(Model.class));
     }
 
 }

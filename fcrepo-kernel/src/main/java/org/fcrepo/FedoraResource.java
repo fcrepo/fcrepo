@@ -336,4 +336,26 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public boolean isNew() {
         return node.isNew();
     }
+
+    /**
+     * Replace the properties of this object with the properties from the given
+     * model
+     *
+     * @param subjects
+     * @param inputModel
+     * @return
+     * @throws RepositoryException
+     */
+    public Dataset replacePropertiesDataset(final GraphSubjects subjects, final Model inputModel) throws RepositoryException {
+        final Dataset propertiesDataset = getPropertiesDataset(subjects, 0, -2);
+        final Model model = propertiesDataset.getDefaultModel();
+
+        final Model removed = model.difference(inputModel);
+        model.remove(removed.listStatements());
+
+        final Model created = inputModel.difference(model);
+        model.add(created.listStatements());
+
+        return propertiesDataset;
+    }
 }
