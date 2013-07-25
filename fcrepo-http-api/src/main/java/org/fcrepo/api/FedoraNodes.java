@@ -202,6 +202,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             servletResponse.addHeader("Accept-Patch", WebContent.contentTypeSPARQLUpdate);
+            servletResponse.addHeader("Link", "http://www.w3.org/ns/ldp/Resource;rel=\"type\"");
 
             addResponseInformationToDataset(resource, propertiesDataset,
                                                uriInfo, subjects);

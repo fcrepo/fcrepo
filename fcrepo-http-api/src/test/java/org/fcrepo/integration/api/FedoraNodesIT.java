@@ -199,6 +199,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
 
         assertEquals("application/sparql-update", response.getFirstHeader("Accept-Patch").getValue());
+        assertEquals("http://www.w3.org/ns/ldp/Resource;rel=\"type\"", response.getFirstHeader("Link").getValue());
 
         assertTrue(
                       "Expect inlined resources",
