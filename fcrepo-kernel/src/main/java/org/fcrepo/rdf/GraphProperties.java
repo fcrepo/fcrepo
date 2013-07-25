@@ -26,6 +26,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 public interface GraphProperties {
 
     public static final Symbol URI_SYMBOL = Symbol.create("uri");
+    public static final Symbol INLINED_RESOURCES_MODEL = Symbol.create("inlined-resources-model");
 
     public static final String PROBLEMS_MODEL_NAME = "problems";
 

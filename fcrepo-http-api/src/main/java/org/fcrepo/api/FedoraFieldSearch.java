@@ -51,6 +51,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.sparql.util.Symbol;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.HtmlTemplate;
@@ -211,21 +212,26 @@ public class FedoraFieldSearch extends AbstractResource implements
                                                        .queryParam("q", terms)
                                                        .queryParam("offset", offset + limit)
                                                        .queryParam("limit", limit)
+                                                       .build()
                                                        .toString());
                     searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
                 } else {
                     searchModel.add(pageResource, NEXT_PAGE, RDF.nil);
                 }
 
+                final String firstPage = uriInfo
+                                       .getBaseUriBuilder()
+                                       .path(FedoraFieldSearch.class)
+                                       .queryParam("q", terms)
+                                       .queryParam("offset", 0)
+                                       .queryParam("limit", limit)
+                                       .build()
+                                       .toString();
                 final Resource firstPageResource =
-                    searchModel.createResource(uriInfo
-                                                    .getBaseUriBuilder()
-                                                    .path(FedoraFieldSearch.class)
-                                                    .queryParam("q", terms)
-                                                    .queryParam("offset", 0)
-                                                    .queryParam("limit", limit)
-                                                    .toString());
+                    searchModel.createResource(firstPage);
                 searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
+
+                dataset.getContext().put(Symbol.create("firstPage"), firstPage);
 
 
                 dataset.addNamedModel("search-pagination", searchModel);

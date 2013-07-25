@@ -55,6 +55,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.graph.Node_ANY;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.sparql.util.Context;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
@@ -105,6 +106,9 @@ public class FedoraNodesTest {
 
     @Mock
     private Model mockModel;
+
+    @Mock
+    private Context mockContext;
     
     private UriInfo uriInfo;
 
@@ -215,6 +219,7 @@ public class FedoraNodesTest {
         final String path = "/" + pid;
 
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
+        when(mockDataset.getContext()).thenReturn(mockContext);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
         when(
@@ -236,6 +241,7 @@ public class FedoraNodesTest {
         final String path = "/" + pid;
 
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
+        when(mockDataset.getContext()).thenReturn(mockContext);
 
         when(mockObject.getLastModifiedDate()).thenReturn(null);
         when(

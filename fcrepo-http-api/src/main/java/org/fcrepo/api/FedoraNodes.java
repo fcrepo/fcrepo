@@ -35,6 +35,7 @@ import static org.fcrepo.http.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.RDFMediaType.TURTLE;
+import static org.fcrepo.rdf.GraphProperties.INLINED_RESOURCES_MODEL;
 import static org.fcrepo.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -70,6 +71,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.sparql.util.Symbol;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
@@ -166,13 +168,14 @@ public class FedoraNodes extends AbstractResource {
             final Dataset propertiesDataset =
                     resource.getPropertiesDataset(subjects, offset, realLimit);
 
-            if (limit > 0 && propertiesDataset.getDefaultModel()
+            final Model treeModel = propertiesDataset.getNamedModel(propertiesDataset.getContext().getAsString(INLINED_RESOURCES_MODEL, "NO SUCH MODEL"));
+            if (limit > 0 && treeModel != null && treeModel
                     .contains(subjects.getGraphSubject(resource.getNode()),
                                  HAS_CHILD_COUNT)) {
 
                 Model requestModel = ModelFactory.createDefaultModel();
 
-                final long childCount = propertiesDataset.getDefaultModel()
+                final long childCount = treeModel
                                             .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()), HAS_CHILD_COUNT)
                                             .nextNode().asLiteral().getLong();
 
@@ -181,20 +184,23 @@ public class FedoraNodes extends AbstractResource {
                     final Resource nextPageResource =
                         requestModel.createResource(uriInfo
                                                        .getRequestUriBuilder()
-                                                       .queryParam("offset", offset + limit)
-                                                       .queryParam("limit", limit)
+                                                       .replaceQueryParam("offset", offset + limit)
+                                                       .replaceQueryParam("limit", limit)
+                                                       .build()
                                                        .toString());
                     requestModel.add(subjects.getContext(), NEXT_PAGE, nextPageResource);
                 }
 
+                final String firstPage = uriInfo
+                                       .getRequestUriBuilder()
+                                       .replaceQueryParam("offset", 0)
+                                       .replaceQueryParam("limit", limit)
+                                       .build().toString();
                 final Resource firstPageResource =
-                    requestModel.createResource(uriInfo
-                                                    .getRequestUriBuilder()
-                                                    .queryParam("offset", 0)
-                                                    .queryParam("limit", limit)
-                                                    .toString());
+                    requestModel.createResource(firstPage);
                 requestModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
 
+                propertiesDataset.getContext().put(Symbol.create("firstPage"), firstPage);
                 propertiesDataset.addNamedModel("requestModel", requestModel);
 
             }

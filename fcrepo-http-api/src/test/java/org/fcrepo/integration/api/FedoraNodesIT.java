@@ -195,7 +195,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         logger.debug("Retrieved object graph:\n" + content);
 
-
         assertTrue(
                        "Expect inlined resources",
                        compile(
@@ -220,6 +219,25 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                 "objects/FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
+    }
+
+    @Test
+    public void testGetObjectGraphWithChildren() throws Exception {
+        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph"));
+        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/a"));
+        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/b"));
+        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/c"));
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + "objects/FedoraDescribeWithChildrenTestGraph?limit=1&offset=1");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertEquals(serverAddress + "objects/FedoraDescribeWithChildrenTestGraph?limit=1&offset=0;rel=\"first\"", response.getFirstHeader("Link").getValue());
     }
 
     @Test
