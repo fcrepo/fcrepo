@@ -16,15 +16,17 @@
 
 package org.fcrepo.responses;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.ws.rs.core.MediaType;
+
+import org.apache.jena.riot.WebContent;
+
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
-import org.apache.jena.riot.WebContent;
-
-import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.io.OutputStream;
 
 /**
  * Stream the results of a SPARQL Query

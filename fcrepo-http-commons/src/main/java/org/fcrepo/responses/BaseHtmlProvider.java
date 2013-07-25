@@ -21,10 +21,10 @@ import static com.google.common.collect.ImmutableMap.builder;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.rdf.SerializationUtils.getDatasetSubject;
+import static org.fcrepo.rdf.SerializationUtils.unifyDatasetModel;
 import static org.fcrepo.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.fcrepo.responses.RdfSerializationUtils.setCachingHeaders;
-import static org.fcrepo.rdf.SerializationUtils.unifyDatasetModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;

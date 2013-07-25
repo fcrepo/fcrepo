@@ -17,6 +17,10 @@
 package org.fcrepo;
 
 import static java.lang.System.currentTimeMillis;
+import static org.fcrepo.Transaction.State.COMMITED;
+import static org.fcrepo.Transaction.State.DIRTY;
+import static org.fcrepo.Transaction.State.NEW;
+import static org.fcrepo.Transaction.State.ROLLED_BACK;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.never;
@@ -26,11 +30,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import static org.fcrepo.Transaction.State.ROLLED_BACK;
 
-import static org.fcrepo.Transaction.State.DIRTY;
-import static org.fcrepo.Transaction.State.NEW;
-import static org.fcrepo.Transaction.State.COMMITED;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

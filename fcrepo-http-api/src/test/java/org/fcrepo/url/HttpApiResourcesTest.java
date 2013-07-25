@@ -49,6 +49,7 @@ import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 

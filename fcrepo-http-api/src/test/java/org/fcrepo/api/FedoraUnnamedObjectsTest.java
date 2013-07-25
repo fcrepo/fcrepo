@@ -16,6 +16,7 @@
 
 package org.fcrepo.api;
 
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
@@ -27,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static javax.ws.rs.core.Response.Status.CREATED;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 

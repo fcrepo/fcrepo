@@ -16,18 +16,19 @@
 
 package org.fcrepo.rdf;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+
+import org.slf4j.Logger;
+
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
-import org.slf4j.Logger;
-
-import java.util.Iterator;
-
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class SerializationUtils {
 

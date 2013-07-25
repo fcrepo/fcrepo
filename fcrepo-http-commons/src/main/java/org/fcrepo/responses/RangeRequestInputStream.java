@@ -16,13 +16,13 @@
 
 package org.fcrepo.responses;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.BoundedInputStream;
-import org.apache.commons.io.input.ProxyInputStream;
-
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
+import org.apache.commons.io.input.ProxyInputStream;
 
 /**
  * An InputStream wrapper that skips N bytes and only returns

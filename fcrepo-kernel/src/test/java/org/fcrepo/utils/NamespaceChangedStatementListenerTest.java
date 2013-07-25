@@ -33,6 +33,7 @@ import javax.jcr.Workspace;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
 import com.hp.hpl.jena.rdf.model.Statement;
 
 public class NamespaceChangedStatementListenerTest {

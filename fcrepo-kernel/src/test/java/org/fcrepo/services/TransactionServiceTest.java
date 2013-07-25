@@ -120,7 +120,7 @@ public class TransactionServiceTest {
     @Test(expected = TransactionMissingException.class)
     public void testGetTxForNonTxSession() throws RepositoryException {
         when(mockSession.getNamespaceURI(TransactionService.FCREPO4_TX_ID)).thenThrow(new NamespaceException(""));
-        final Transaction tx = service.getTransaction(mockSession);
+        service.getTransaction(mockSession);
     }
 
     @Test

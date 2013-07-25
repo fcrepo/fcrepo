@@ -27,8 +27,8 @@ import java.util.Iterator;
 
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.fcrepo.rdf.SerializationUtils;
 import org.fcrepo.rdf.GraphProperties;
+import org.fcrepo.rdf.SerializationUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;

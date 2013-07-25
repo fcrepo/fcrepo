@@ -28,9 +28,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.net.URI;
-import java.util.Map;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
@@ -43,7 +40,6 @@ import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;

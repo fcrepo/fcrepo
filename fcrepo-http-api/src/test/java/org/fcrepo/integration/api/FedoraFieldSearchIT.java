@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 
-import com.hp.hpl.jena.vocabulary.RDF;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -37,6 +36,7 @@ import org.junit.Test;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 

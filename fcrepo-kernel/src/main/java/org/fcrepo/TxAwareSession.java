@@ -17,6 +17,7 @@
 package org.fcrepo;
 
 import static java.lang.reflect.Proxy.newProxyInstance;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 

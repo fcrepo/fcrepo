@@ -52,7 +52,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.responses.HtmlTemplate;
@@ -67,6 +66,7 @@ import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * Basic administrative search across the repository

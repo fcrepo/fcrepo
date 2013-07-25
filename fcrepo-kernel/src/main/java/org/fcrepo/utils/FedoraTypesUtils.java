@@ -56,6 +56,7 @@ import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 

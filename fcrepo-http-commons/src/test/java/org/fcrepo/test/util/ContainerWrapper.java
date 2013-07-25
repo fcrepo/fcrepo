@@ -20,6 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.util.Collection;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.xml.bind.JAXBContext;

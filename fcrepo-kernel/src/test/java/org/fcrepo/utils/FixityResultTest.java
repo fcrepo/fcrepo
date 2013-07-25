@@ -16,11 +16,12 @@
 
 package org.fcrepo.utils;
 
+import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.fcrepo.utils.FixityResult.FixityState.SUCCESS;
+
 import java.net.URI;
 
 import org.junit.Test;

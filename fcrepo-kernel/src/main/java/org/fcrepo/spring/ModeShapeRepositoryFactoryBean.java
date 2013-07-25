@@ -21,6 +21,7 @@ import static org.modeshape.jcr.api.RepositoryFactory.URL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
