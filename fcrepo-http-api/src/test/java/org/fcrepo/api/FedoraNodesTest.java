@@ -270,6 +270,8 @@ public class FedoraNodesTest {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
 
         final InputStream mockStream =
             new ByteArrayInputStream("<a> <b> <c>".getBytes());

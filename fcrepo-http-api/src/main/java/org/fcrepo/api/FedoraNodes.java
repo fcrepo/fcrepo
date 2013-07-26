@@ -348,7 +348,7 @@ public class FedoraNodes extends AbstractResource {
 
                 final Model inputModel = ModelFactory.createDefaultModel()
                                              .read(requestBodyStream,
-                                                      uriInfo.getRequestUri().toString(),
+                                                      subjects.getGraphSubject(resource.getNode()).toString(),
                                                       format);
 
                 resource.replacePropertiesDataset(subjects, inputModel);

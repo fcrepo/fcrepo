@@ -32,6 +32,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 
+import com.hp.hpl.jena.update.UpdateFactory;
 import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
@@ -224,7 +225,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
                                         final String sparqlUpdateStatement)
         throws RepositoryException {
         final Dataset dataset = getPropertiesDataset(subjects, 0, 0);
-        UpdateAction.parseExecute(sparqlUpdateStatement, dataset);
+        UpdateAction.execute(UpdateFactory.create(sparqlUpdateStatement, dataset.getContext().getAsString(GraphProperties.URI_SYMBOL)), dataset);
         return dataset;
     }
 
