@@ -422,6 +422,27 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testRoundTripReplaceGraph() throws Exception {
+        client.execute(postObjMethod("FedoraRoundTripGraph"));
+
+        final String subjectURI =
+            serverAddress + "objects/FedoraRoundTripGraph";
+
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+        getObjMethod.addHeader("Accept", "application/n3");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(getResponse.getEntity().getContent());
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals(204, response.getStatusLine().getStatusCode());
+
+    }
+
+    @Test
     public void testDescribeSize() throws Exception {
         final HttpGet describeMethod = new HttpGet(serverAddress + "");
         describeMethod.addHeader("Accept", "text/n3");

@@ -124,6 +124,15 @@ public class HttpGraphSubjectsTest {
     }
 
     @Test
+    public void testGetNodeFromGraphSubjectForNonJcrUrl() throws RepositoryException {
+
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+
+        assertNull(testObj.getNodeFromGraphSubject(ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc/fcr:export?format=jcr/xml")));
+    }
+
+    @Test
     public void testIsFedoraGraphSubject() {
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest/foo");

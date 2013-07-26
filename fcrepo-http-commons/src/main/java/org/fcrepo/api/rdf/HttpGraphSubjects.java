@@ -22,8 +22,10 @@ import java.net.URI;
 import java.util.Map;
 
 import javax.jcr.Node;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFormatException;
 import javax.jcr.Workspace;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -140,7 +142,11 @@ public class HttpGraphSubjects implements GraphSubjects {
             }
         }
 
-        absPath = pathBuilder.toString();
+        if (pathBuilder.length() == 0) {
+            absPath = "/";
+        } else {
+            absPath = pathBuilder.toString();
+        }
 
         final Node node;
 
@@ -150,25 +156,36 @@ public class HttpGraphSubjects implements GraphSubjects {
                                    JcrConstants.JCR_CONTENT);
             node = session.getNode(contentPath);
             LOGGER.trace(
-                    "RDF resource {} is a fcr:content node, retrieving the corresponding JCR content node {}",
-                    subject, node);
-        } else if (session.nodeExists(absPath)) {
+                            "RDF resource {} is a fcr:content node, retrieving the corresponding JCR content node {}",
+                            subject, node);
+        } else if (isValidJcrPath(absPath) && session.nodeExists(absPath)) {
             node = session.getNode(absPath);
             LOGGER.trace("RDF resource {} maps to JCR node {}", subject, node);
         } else {
             node = null;
             LOGGER.debug(
-                    "RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
-                    subject);
+                            "RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
+                            subject);
         }
 
         return node;
 
     }
 
+    private boolean isValidJcrPath(final String absPath) {
+        try {
+            session.getValueFactory().createValue(absPath, PropertyType.PATH);
+            return true;
+        } catch (ValueFormatException e) {
+            return false;
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public boolean isFedoraGraphSubject(final Resource subject) {
-        return subject.isURIResource() && subject.getURI().startsWith(basePath);
+        return subject.isURIResource() && subject.getURI().startsWith(basePath) && isValidJcrPath(subject.getURI().substring(pathIx));
     }
 
     private Map<String, String> getPathMap(final Node node)
