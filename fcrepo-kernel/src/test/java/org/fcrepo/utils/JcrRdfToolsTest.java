@@ -262,7 +262,7 @@ public class JcrRdfToolsTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        testSubjects = new DefaultGraphSubjects();
+        testSubjects = new DefaultGraphSubjects(mockSession);
         testObj = new JcrRdfTools(testSubjects, mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);

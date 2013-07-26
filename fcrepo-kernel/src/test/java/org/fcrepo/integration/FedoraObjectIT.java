@@ -30,6 +30,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.FedoraObject;
+import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -80,7 +81,7 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final Dataset graphStore = object.getPropertiesDataset();
+        final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
 
         final String graphSubject = "info:fedora/graphObject";
 

@@ -35,7 +35,6 @@ import javax.jcr.version.VersionHistory;
 import com.hp.hpl.jena.update.UpdateFactory;
 import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.rdf.impl.JcrGraphProperties;
 import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -59,9 +58,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private static final GraphProperties DEFAULT_PROPERTY_FACTORY =
             new JcrGraphProperties();
-
-    public static final GraphSubjects DEFAULT_SUBJECT_FACTORY =
-        new DefaultGraphSubjects();
 
     protected Node node;
 
@@ -230,23 +226,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * Update the properties Dataset with a SPARQL Update query. The updated
-     * properties may be serialized to the JCR store.
-     *
-     * After applying the statement, clients SHOULD check the result
-     * of #getDatasetProblems, which may include problems when attempting to
-     * serialize the data to JCR.
-     *
-     * @param sparqlUpdateStatement
-     * @throws RepositoryException
-     */
-    public Dataset updatePropertiesDataset(final String sparqlUpdateStatement)
-        throws RepositoryException {
-        return updatePropertiesDataset(DEFAULT_SUBJECT_FACTORY,
-                sparqlUpdateStatement);
-    }
-
-    /**
      * Serialize the JCR properties as an RDF Dataset
      *
      *
@@ -278,17 +257,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return getPropertiesDataset(subjects, 0, -1);
     }
 
-
-    /**
-     * Serialize the JCR properties of this object as an RDF Dataset
-     * @return
-     * @throws RepositoryException
-     */
-    public Dataset getPropertiesDataset()
-        throws RepositoryException {
-        return getPropertiesDataset(DEFAULT_SUBJECT_FACTORY);
-    }
-
     /**
      * Serialize the JCR versions information as an RDF dataset
      * @param subjects
@@ -306,15 +274,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         context.set(GraphProperties.URI_SYMBOL,uri);
 
         return dataset;
-    }
-
-    /**
-     * Serialize the JCR versions information as an RDF dataset
-     * @return
-     * @throws RepositoryException
-     */
-    public Dataset getVersionDataset() throws RepositoryException {
-        return getVersionDataset(DEFAULT_SUBJECT_FACTORY);
     }
 
     /**

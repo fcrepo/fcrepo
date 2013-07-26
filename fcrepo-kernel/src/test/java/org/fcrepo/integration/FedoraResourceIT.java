@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -35,9 +36,12 @@ import javax.jcr.Session;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -65,6 +69,19 @@ public class FedoraResourceIT extends AbstractIT {
 
     @Inject
     DatastreamService datastreamService;
+    private Session session;
+    private DefaultGraphSubjects subjects;
+
+    @Before
+    public void setUp() throws RepositoryException {
+        session = repo.login();
+        subjects = new DefaultGraphSubjects(session);
+    }
+
+    @After
+    public void tearDown() {
+        session.logout();
+    }
 
     @Test
     public void testGetRootNode() throws IOException, RepositoryException {
@@ -76,88 +93,80 @@ public class FedoraResourceIT extends AbstractIT {
 
     @Test
     public void testRandomNodeGraph() throws IOException, RepositoryException {
-        Session session = repo.login();
-
         final FedoraResource object =
                 nodeService.findOrCreateObject(session, "/testNodeGraph");
 
-        logger.warn(object.getPropertiesDataset().toString());
+        logger.warn(object.getPropertiesDataset(new DefaultGraphSubjects(session)).toString());
         Node s = createURI("info:fedora/testNodeGraph");
         Node p =
                 createURI("info:fedora/fedora-system:def/internal"
                         + "#primaryType");
         Node o = createLiteral("nt:unstructured");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
-        session.logout();
     }
 
     @Test
     public void testRepositoryRootGraph() throws IOException,
             RepositoryException {
-        Session session = repo.login();
 
         final FedoraResource object = nodeService.getObject(session, "/");
 
-        logger.warn(object.getPropertiesDataset().toString());
+        logger.warn(object.getPropertiesDataset(subjects).toString());
         Node s = createURI("info:fedora/");
         Node p =
                 createURI("info:fedora/fedora-system:def/internal"
                         + "#primaryType");
         Node o = createLiteral("mode:root");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
         p =
                 createURI("info:fedora/fedora-system:def/internal"
                         + "#repository/jcr.repository.vendor.url");
         o = createLiteral("http://www.modeshape.org");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
         p =
                 createURI("info:fedora/fedora-system:def/internal"
                         + "#hasNodeType");
         o = createLiteral("fedora:resource");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
-        session.logout();
     }
 
     @Test
     public void testObjectGraph() throws IOException, RepositoryException {
-        Session session = repo.login();
 
         final FedoraResource object =
                 objectService.createObject(session, "/testObjectGraph");
 
-        logger.warn(object.getPropertiesDataset().toString());
+        logger.warn(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
         Node s = createURI("info:fedora/testObjectGraph");
         Node p = createURI("info:fedora/fedora-system:def/internal#uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
         // multivalued property
         p = createURI("info:fedora/fedora-system:def/internal#mixinTypes");
         o = createLiteral("fedora:resource");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
         o = createLiteral("fedora:object");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
-        session.logout();
     }
 
     @Test
     public void testDatastreamGraph() throws IOException, RepositoryException,
             InvalidChecksumException {
-        Session session = repo.login();
 
         objectService.createObject(session, "/testDatastreamGraphParent");
 
@@ -171,7 +180,7 @@ public class FedoraResourceIT extends AbstractIT {
         object.getNode().setProperty("fedorarelsext:isPartOf",
                 session.getNode("/testDatastreamGraphParent"));
 
-        final Dataset propertiesDataset = object.getPropertiesDataset();
+        final Dataset propertiesDataset = object.getPropertiesDataset(subjects);
 
         assertTrue(propertiesDataset.getContext().isDefined(
                 Symbol.create("uri")));
@@ -235,12 +244,10 @@ public class FedoraResourceIT extends AbstractIT {
 
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-        session.logout();
     }
 
     @Test
     public void testObjectGraphWindow() throws IOException, RepositoryException {
-        Session session = repo.login();
 
         final FedoraResource object =
                 objectService.createObject(session, "/testObjectGraphWindow");
@@ -250,8 +257,7 @@ public class FedoraResourceIT extends AbstractIT {
         objectService.createObject(session, "/testObjectGraphWindow/c");
 
         final Dataset propertiesDataset =
-                object.getPropertiesDataset(
-                        FedoraResource.DEFAULT_SUBJECT_FACTORY, 1, 1);
+                object.getPropertiesDataset(subjects, 1, 1);
 
         logger.warn(propertiesDataset.toString());
 
@@ -280,18 +286,15 @@ public class FedoraResourceIT extends AbstractIT {
         s = createURI("info:fedora/testObjectGraphWindow/c");
         assertFalse(datasetGraph.contains(Node.ANY, s, p, Node.ANY));
 
-        session.logout();
     }
 
     @Test
     public void testUpdatingObjectGraph() throws RepositoryException {
 
-        Session session = repo.login();
-
         final FedoraResource object =
                 objectService.createObject(session, "/testObjectGraphUpdates");
 
-        object.updatePropertiesDataset("INSERT { "
+        object.updatePropertiesDataset(subjects, "INSERT { "
                 + "<info:fedora/testObjectGraphUpdates> "
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
@@ -299,10 +302,10 @@ public class FedoraResourceIT extends AbstractIT {
         Node s = createURI("info:fedora/testObjectGraphUpdates");
         Node p = createURI("info:fcrepo/zyx");
         Node o = createLiteral("a");
-        assertTrue(object.getPropertiesDataset().asDatasetGraph().contains(
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
-        object.updatePropertiesDataset("DELETE { "
+        object.updatePropertiesDataset(subjects, "DELETE { "
                 + "<info:fedora/testObjectGraphUpdates> "
                 + "<info:fcrepo/zyx> ?o }\n" + "INSERT { "
                 + "<info:fedora/testObjectGraphUpdates> "
@@ -311,19 +314,17 @@ public class FedoraResourceIT extends AbstractIT {
                 + "<info:fcrepo/zyx> ?o } ");
 
         assertFalse("found value we should have removed", object
-                .getPropertiesDataset().asDatasetGraph().contains(Node.ANY, s,
+                .getPropertiesDataset(subjects).asDatasetGraph().contains(Node.ANY, s,
                         p, o));
         o = createLiteral("b");
-        assertTrue("could not find new value", object.getPropertiesDataset()
+        assertTrue("could not find new value", object.getPropertiesDataset(subjects)
                 .asDatasetGraph().contains(Node.ANY, s, p, o));
 
-        session.logout();
     }
 
     @Test
     public void testAddVersionLabel() throws RepositoryException {
 
-        Session session = repo.login();
 
         final FedoraResource object =
                 objectService.createObject(session, "/testObjectVersionLabel");
@@ -338,13 +339,10 @@ public class FedoraResourceIT extends AbstractIT {
                 getVersionHistory(object.getNode()).getVersionLabels())
                 .contains("v0.0.1"));
 
-        session.logout();
     }
 
     @Test
     public void testGetObjectVersionGraph() throws RepositoryException {
-
-        Session session = repo.login();
 
         final FedoraResource object =
                 objectService.createObject(session, "/testObjectVersionGraph");
@@ -355,7 +353,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         session.save();
 
-        final Dataset graphStore = object.getVersionDataset();
+        final Dataset graphStore = object.getVersionDataset(subjects);
 
         logger.info(graphStore.toString());
 
@@ -380,6 +378,5 @@ public class FedoraResourceIT extends AbstractIT {
 
         assertTrue(graphStore.asDatasetGraph().contains(Node.ANY, s, p, o));
 
-        session.logout();
     }
 }

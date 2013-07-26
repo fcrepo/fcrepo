@@ -69,7 +69,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
 
         JsonNode rootNode = mapper.readTree(jsonParser);
 
-        assertEquals("info:fedora/ldpathConfigTestObject", rootNode.get(0).get("id").getElements().next().asText());
+        assertEquals(serverAddress + "/ldpathConfigTestObject", rootNode.get(0).get("id").getElements().next().asText());
 
     }
 
@@ -102,7 +102,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
 
         JsonNode rootNode = mapper.readTree(jsonParser);
 
-        assertEquals("info:fedora/ldpathTestObject", rootNode.get(0).get("id").getElements().next().asText());
+        assertEquals(serverAddress + "/ldpathTestObject", rootNode.get(0).get("id").getElements().next().asText());
 
     }
 }

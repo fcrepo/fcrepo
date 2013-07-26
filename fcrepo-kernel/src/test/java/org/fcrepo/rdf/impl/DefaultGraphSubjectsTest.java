@@ -48,7 +48,7 @@ public class DefaultGraphSubjectsTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new DefaultGraphSubjects();
+        testObj = new DefaultGraphSubjects(mockSession);
     }
 
     @Test

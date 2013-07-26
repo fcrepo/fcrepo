@@ -22,6 +22,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.WebContent;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.test.util.TestHelpers;
 import org.fcrepo.transform.Transformation;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.test.util.TestHelpers.mockSession;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -92,7 +94,7 @@ public class FedoraTransformTest {
                      model.createProperty("http://purl.org/dc/elements/1.1/title"),
                      model.createLiteral("some-title"));
         final Dataset dataset = DatasetFactory.create(model);
-        when(mockResource.getPropertiesDataset()).thenReturn(dataset);
+        when(mockResource.getPropertiesDataset(any(GraphSubjects.class))).thenReturn(dataset);
 
         InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
                                                           "{\n" +

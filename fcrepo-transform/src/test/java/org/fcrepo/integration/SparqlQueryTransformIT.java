@@ -20,6 +20,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.services.ObjectService;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class SparqlQueryTransformIT {
 
         testObj = new SparqlQueryTransform(stringReader);
 
-        final QueryExecution qexec = testObj.apply(object.getPropertiesDataset());
+        final QueryExecution qexec = testObj.apply(object.getPropertiesDataset(new DefaultGraphSubjects(session)));
 
         assert(qexec != null);
 

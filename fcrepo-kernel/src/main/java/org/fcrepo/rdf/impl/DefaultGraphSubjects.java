@@ -38,11 +38,13 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 public class DefaultGraphSubjects implements GraphSubjects {
 
     private final Resource context;
+    private final Session session;
 
     /**
      * Construct the graph with a placeholder context resource
      */
-    public DefaultGraphSubjects() {
+    public DefaultGraphSubjects(final Session session) {
+        this.session = session;
         this.context = ResourceFactory.createResource();
     }
 

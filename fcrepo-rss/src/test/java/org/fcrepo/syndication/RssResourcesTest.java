@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
@@ -49,7 +50,7 @@ public class RssResourcesTest {
         mockResource = new FedoraResource(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
-        mockSubjects = new DefaultGraphSubjects();
+        mockSubjects = new DefaultGraphSubjects(mock(Session.class));
     }
 
     @Test

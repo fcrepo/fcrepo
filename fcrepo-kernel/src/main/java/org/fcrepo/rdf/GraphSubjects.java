@@ -17,7 +17,6 @@ package org.fcrepo.rdf;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 

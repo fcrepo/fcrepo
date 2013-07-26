@@ -22,6 +22,8 @@ import org.apache.jena.riot.WebContent;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.AbstractResource;
 import org.fcrepo.FedoraResource;
+import org.fcrepo.api.FedoraNodes;
+import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.transform.Transformation;
 import org.fcrepo.transform.TransformationFactory;
 import org.fcrepo.session.InjectedSession;
@@ -123,7 +125,7 @@ public class FedoraTransform extends AbstractResource {
 
             final Transformation t = getNodeTypeTransform(object.getNode(), program);
 
-            final Dataset propertiesDataset = object.getPropertiesDataset();
+            final Dataset propertiesDataset = object.getPropertiesDataset(new HttpGraphSubjects(session, FedoraNodes.class, uriInfo));
 
             return t.apply(propertiesDataset);
 
@@ -165,7 +167,7 @@ public class FedoraTransform extends AbstractResource {
         try {
             final String path = toPath(pathList);
             final FedoraResource object = nodeService.getObject(session, path);
-            final Dataset propertiesDataset = object.getPropertiesDataset();
+            final Dataset propertiesDataset = object.getPropertiesDataset(new HttpGraphSubjects(session, FedoraNodes.class, uriInfo));
 
             Transformation t =
                 transformationFactory.getTransform(contentType, requestBodyStream);

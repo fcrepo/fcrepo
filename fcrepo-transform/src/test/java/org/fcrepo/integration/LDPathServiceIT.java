@@ -18,6 +18,7 @@ package org.fcrepo.integration;
 
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.FedoraObject;
+import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.services.ObjectService;
 import org.junit.Before;
@@ -72,7 +73,7 @@ public class LDPathServiceIT {
 
         testObj = new LDPathTransform(stringReader);
 
-        final List<Map<String, Collection<Object>>> list = testObj.apply(object.getPropertiesDataset());
+        final List<Map<String, Collection<Object>>> list = testObj.apply(object.getPropertiesDataset(new DefaultGraphSubjects(session)));
 
         assert(list != null);
         assertEquals(1, list.size());
