@@ -60,6 +60,7 @@ import static org.fcrepo.utils.JcrRdfTools.setGetClusterConfiguration;
 import static org.fcrepo.utils.JcrRdfTools.setLlstore;
 import static org.fcrepo.utils.NamespaceTools.getNamespaceRegistry;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -102,6 +103,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
@@ -915,6 +917,14 @@ public class JcrRdfToolsTest {
         assertTrue(actual.contains(
                 testSubjects.getGraphSubject(mockFrozenNode),
                 HAS_VERSION_LABEL, actual.createLiteral("abc")));
+    }
+
+    @Test
+    public void testIsInternalProperty() throws Exception {
+        assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty(RdfLexicon.INTERNAL_NAMESPACE, "some-property")));
+        assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.jcp.org/jcr/1.0", "some-property")));
+        assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.w3.org/ns/ldp#some-property")));
+        assertFalse(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("my-own-ns", "some-property")));
     }
 
     private void mockNamespaceRegistry() throws RepositoryException {

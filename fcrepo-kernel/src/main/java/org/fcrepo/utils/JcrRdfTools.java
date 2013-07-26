@@ -489,6 +489,24 @@ public class JcrRdfTools {
     }
 
     /**
+     * Determine if a predicate is an internal property of a node (and
+     * should not be modified from external sources)
+     * @param subjectNode
+     * @param predicate
+     * @return
+     */
+    public boolean isInternalProperty(final Node subjectNode, final Resource predicate) {
+        switch (predicate.getNameSpace()) {
+            case RdfLexicon.INTERNAL_NAMESPACE:
+            case "http://www.jcp.org/jcr/1.0":
+            case "http://www.w3.org/ns/ldp#":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Add all of a node's properties to the given model
      *
      * @param node

@@ -31,6 +31,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.junit.Before;
@@ -106,12 +107,11 @@ public class JcrPropertyStatementListenerTest {
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
-        final String mockPropertyName = "jcr:property";
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
-                .thenReturn(mockPropertyName);
+        when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
 
+        when(mockPredicate.getURI()).thenReturn("x");
         testObj.addedStatement(mockStatement);
-        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq(mockPropertyName));
+        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq("x"));
     }
 
     @Test
@@ -184,15 +184,17 @@ public class JcrPropertyStatementListenerTest {
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
                 .thenReturn(mockSubjectNode);
+        when(mockPredicate.getURI()).thenReturn("x");
         final String mockPropertyName = "jcr:property";
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
                 .thenReturn(mockPropertyName);
+        when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
         when(mockSubjectNode.hasProperty(mockPropertyName)).thenReturn(true);
         mockStatic(NodePropertiesTools.class);
         when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.removedStatement(mockStatement);
-        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq(mockPropertyName));
+        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq("x"));
     }
 
     @Test

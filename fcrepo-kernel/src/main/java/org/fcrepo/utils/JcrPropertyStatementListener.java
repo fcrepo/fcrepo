@@ -106,7 +106,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
 
             if (validateModificationsForPropertyName(
-                    subject, propertyName)) {
+                    subject, subjectNode, s.getPredicate())) {
                 final Value v =
                     jcrRdfTools.createValue(subjectNode, s.getObject(),
                                 getPropertyType(subjectNode, propertyName));
@@ -143,8 +143,8 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // if the property doesn't exist, we don't need to worry about it.
             if (subjectNode.hasProperty(propertyName) &&
-                    validateModificationsForPropertyName(subject,
-                            propertyName)) {
+                    validateModificationsForPropertyName(subject, subjectNode,
+                                                            s.getPredicate())) {
                 final Value v =
                     jcrRdfTools.createValue(subjectNode, s.getObject(),
                                 getPropertyType(subjectNode, propertyName));
@@ -158,11 +158,10 @@ public class JcrPropertyStatementListener extends StatementListener {
     }
 
     private boolean validateModificationsForPropertyName(
-            final Resource subject, final String propertyName) {
-        if (propertyName.startsWith("jcr:") ||
-                propertyName.startsWith("fedora:")) {
-            LOGGER.debug("problem with <{}> <{}> <{}>", subject.getURI(), RdfLexicon.COULD_NOT_STORE_PROPERTY, propertyName);
-            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, propertyName);
+            final Resource subject, final Node subjectNode, final Resource predicate) {
+        if (jcrRdfTools.isInternalProperty(subjectNode, predicate)) {
+            LOGGER.debug("problem with <{}> <{}> <{}>", subject.getURI(), RdfLexicon.COULD_NOT_STORE_PROPERTY, predicate.getURI());
+            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, predicate.getURI());
             return false;
         }
 
