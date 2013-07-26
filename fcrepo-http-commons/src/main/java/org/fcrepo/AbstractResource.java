@@ -186,7 +186,7 @@ public abstract class AbstractResource {
                         requestContentType.toString().equals(
                                 WebContent.contentTypeSPARQLUpdate)) {
                     result.updatePropertiesDataset(new HttpGraphSubjects(
-                            pathsRelativeTo, uriInfo), IOUtils
+                            session, pathsRelativeTo, uriInfo), IOUtils
                             .toString(requestBodyStream));
                 }
 

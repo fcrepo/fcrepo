@@ -105,7 +105,7 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
+        when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
         when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
 
@@ -118,7 +118,7 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
+        when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -136,7 +136,7 @@ public class JcrPropertyStatementListenerTest {
             throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
+        when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
 
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -150,7 +150,7 @@ public class JcrPropertyStatementListenerTest {
     public void testRemovedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
+        when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -168,7 +168,7 @@ public class JcrPropertyStatementListenerTest {
             throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
+        when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
 
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -182,7 +182,7 @@ public class JcrPropertyStatementListenerTest {
     public void testRemovedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getNodeFromGraphSubject(mockSession, mockSubject))
+        when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
         when(mockPredicate.getURI()).thenReturn("x");
         final String mockPropertyName = "jcr:property";

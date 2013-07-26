@@ -150,7 +150,7 @@ public class FedoraResourceTest {
         when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate()
-                .getTime());
+                                                     .getTime());
     }
 
     @Test
@@ -242,7 +242,7 @@ public class FedoraResourceTest {
 
         final Model propertiesModel = createDefaultModel();
         when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(
-                propertiesModel);
+                                                                            propertiesModel);
         final Model treeModel = createDefaultModel();
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(
                                                                              treeModel);

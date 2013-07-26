@@ -72,22 +72,22 @@ public class DefaultGraphSubjectsTest {
         // test a good subject
         when(mockSubject.getURI()).thenReturn("info:fedora" + expected);
         when(mockSubject.isURIResource()).thenReturn(true);
-        Node actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
+        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(mockNode, actual);
         // test a bad subject
         when(mockSubject.getURI()).thenReturn(
                 "info:fedora2" + expected + "/bad");
-        actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
+        actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(null, actual);
         // test a non-existent path
         when(mockSubject.getURI())
                 .thenReturn("info:fedora" + expected + "/bad");
-        actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
+        actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(null, actual);
         // test a fcr:content path
         when(mockSubject.getURI()).thenReturn(
                 "info:fedora" + expected + "/fcr:content");
-        actual = testObj.getNodeFromGraphSubject(mockSession, mockSubject);
+        actual = testObj.getNodeFromGraphSubject(mockSubject);
         verify(mockSession).getNode(expected + "/jcr:content");
     }
 

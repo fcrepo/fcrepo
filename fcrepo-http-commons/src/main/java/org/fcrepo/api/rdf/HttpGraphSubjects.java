@@ -53,6 +53,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final int pathIx;
     private final URI context;
+    private final Session session;
 
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
@@ -63,7 +64,7 @@ public class HttpGraphSubjects implements GraphSubjects {
      * @param relativeTo
      * @param uris
      */
-    public HttpGraphSubjects(final Class<?> relativeTo, final UriInfo uris) {
+    public HttpGraphSubjects(final Session session, final Class<?> relativeTo, final UriInfo uris) {
         this.context = uris.getRequestUri();
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String basePath = nodesBuilder.build("").toString();
@@ -72,15 +73,16 @@ public class HttpGraphSubjects implements GraphSubjects {
         }
         this.basePath = basePath;
         this.pathIx = basePath.length() - 1;
+        this.session = session;
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 basePath);
     }
 
     @Override
-    public Resource getGraphSubject(final Session session, final String absPath)
+    public Resource getGraphSubject(final String absPath)
         throws RepositoryException {
         final URI result =
-                nodesBuilder.buildFromMap(getPathMap(session, absPath));
+                nodesBuilder.buildFromMap(getPathMap(absPath));
         LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
         return ResourceFactory.createResource(result.toString());
     }
@@ -98,8 +100,7 @@ public class HttpGraphSubjects implements GraphSubjects {
     }
 
     @Override
-    public Node getNodeFromGraphSubject(final Session session,
-            final Resource subject) throws RepositoryException {
+    public Node getNodeFromGraphSubject(final Resource subject) throws RepositoryException {
         if (!isFedoraGraphSubject(subject)) {
             LOGGER.debug(
                     "RDF resource {} was not a URI resource with our expected basePath {}, aborting.",
@@ -142,10 +143,12 @@ public class HttpGraphSubjects implements GraphSubjects {
         absPath = pathBuilder.toString();
 
         final Node node;
+
         if (absPath.endsWith(FCR_CONTENT)) {
-            node =
-                    session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT,
-                            JcrConstants.JCR_CONTENT));
+            final String contentPath =
+                absPath.replace(FedoraJcrTypes.FCR_CONTENT,
+                                   JcrConstants.JCR_CONTENT);
+            node = session.getNode(contentPath);
             LOGGER.trace(
                     "RDF resource {} is a fcr:content node, retrieving the corresponding JCR content node {}",
                     subject, node);
@@ -170,11 +173,10 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private Map<String, String> getPathMap(final Node node)
         throws RepositoryException {
-        return getPathMap(node.getSession(), node.getPath());
+        return getPathMap(node.getPath());
     }
 
-    private Map<String, String> getPathMap(final Session session,
-            final String absPath) throws RepositoryException {
+    private Map<String, String> getPathMap(final String absPath) throws RepositoryException {
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
         if (path.endsWith(JcrConstants.JCR_CONTENT)) {

@@ -176,7 +176,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                                   .build().toString());
             }
 
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             final Dataset dataset =
                     nodeService.searchRepository(subjects, searchResult,

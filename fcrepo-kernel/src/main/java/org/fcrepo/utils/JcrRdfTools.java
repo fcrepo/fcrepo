@@ -671,7 +671,7 @@ public class JcrRdfTools {
         if (data.isURIResource() &&
                 (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
-            final Node nodeFromGraphSubject = graphSubjects.getNodeFromGraphSubject(node.getSession(), data.asResource());
+            final Node nodeFromGraphSubject = graphSubjects.getNodeFromGraphSubject(data.asResource());
             return valueFactory.createValue(nodeFromGraphSubject, type == WEAKREFERENCE);
         } else if (data.isURIResource() || type == URI) {
             // some random opaque URI
@@ -793,8 +793,7 @@ public class JcrRdfTools {
             case PATH:
                 model.add(subject,
                              predicate,
-                             graphSubjects.getGraphSubject(session,
-                                                              v.getString()));
+                             graphSubjects.getGraphSubject(v.getString()));
                 break;
 
             default:

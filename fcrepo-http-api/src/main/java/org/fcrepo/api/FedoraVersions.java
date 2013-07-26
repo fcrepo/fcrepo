@@ -102,8 +102,9 @@ public class FedoraVersions extends AbstractResource {
 
             return Response.ok(
                     new GraphStoreStreamingOutput(resource
-                            .getVersionDataset(new HttpGraphSubjects(
-                                    FedoraNodes.class, uriInfo)),
+                            .getVersionDataset(new HttpGraphSubjects(session,
+                                                                        FedoraNodes.class,
+                                                                        uriInfo)),
                             bestPossibleResponse.getMediaType())).build();
 
         } finally {
@@ -170,7 +171,7 @@ public class FedoraVersions extends AbstractResource {
             } else {
 
                 return resource.getPropertiesDataset(new HttpGraphSubjects(
-                        FedoraNodes.class, uriInfo), 0, -1);
+                        session, FedoraNodes.class, uriInfo), 0, -1);
             }
 
         } finally {

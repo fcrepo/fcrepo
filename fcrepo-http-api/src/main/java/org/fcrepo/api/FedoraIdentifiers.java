@@ -105,7 +105,7 @@ public class FedoraIdentifiers extends AbstractResource {
                                                                           .makePid());
 
         final HttpGraphSubjects subjects =
-                new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
         for (final String identifier : identifiers) {
 
@@ -116,7 +116,7 @@ public class FedoraIdentifiers extends AbstractResource {
                 absPath = path + "/" + identifier;
             }
 
-            final Resource s = subjects.getGraphSubject(session, absPath);
+            final Resource s = subjects.getGraphSubject(absPath);
 
             model.add(pidsResult, HAS_MEMBER_OF_RESULT, s);
         }

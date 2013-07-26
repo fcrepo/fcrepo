@@ -119,7 +119,7 @@ public class FedoraUnnamedObjects extends AbstractResource {
             logger.debug("Finished creating {} with path: {}", mixin, path);
 
             final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+                    new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             return created(
                     new URI(subjects.getGraphSubject(resource.getNode())

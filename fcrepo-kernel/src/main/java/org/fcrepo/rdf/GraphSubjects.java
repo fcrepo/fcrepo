@@ -37,12 +37,11 @@ public interface GraphSubjects {
 
     /**
      * Translate an RDF resource into a JCR node
-     * @param session
      * @param subject an RDF URI resource
      * @return a JCR node, or null if one couldn't be found
      * @throws RepositoryException
      */
-    Node getNodeFromGraphSubject(final Session session, final Resource subject)
+    Node getNodeFromGraphSubject(final Resource subject)
         throws RepositoryException;
 
     /**
@@ -54,12 +53,11 @@ public interface GraphSubjects {
      * Get the RDF resource for an absolute path
      *
      *
-     * @param session
      * @param absPath the absolute path to the JCR node
      * @return an RDF URI resource
      * @throws RepositoryException
      */
-    Resource getGraphSubject(final Session session, final String absPath) throws RepositoryException;
+    Resource getGraphSubject(final String absPath) throws RepositoryException;
 
     /**
      * Get a context resource

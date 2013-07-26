@@ -25,6 +25,7 @@ import static org.fcrepo.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.test.util.TestHelpers.mockSession;
 import static org.fcrepo.test.util.TestHelpers.setField;
 import static org.fcrepo.utils.FedoraJcrTypes.ROOT;
 import static org.junit.Assert.assertEquals;
@@ -38,6 +39,7 @@ import java.util.HashSet;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
@@ -78,7 +80,7 @@ public class HttpApiResourcesTest {
         testObj = new HttpApiResources();
         mockResource = new FedoraResource(mockNode);
         uriInfo = getUriInfoImpl();
-        mockSubjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+        mockSubjects = new HttpGraphSubjects(mock(Session.class), FedoraNodes.class, uriInfo);
         setField(testObj, "serializers", mockSerializers);
     }
 

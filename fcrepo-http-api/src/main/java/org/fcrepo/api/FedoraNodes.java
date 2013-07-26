@@ -152,7 +152,7 @@ public class FedoraNodes extends AbstractResource {
                         .lastModified(date).build());
             }
             final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+                    new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             final int realLimit;
             if (nonMemberProperties != null && limit == -1) {
@@ -278,7 +278,7 @@ public class FedoraNodes extends AbstractResource {
                 }
 
                 Dataset properties = resource.updatePropertiesDataset(new HttpGraphSubjects(
-                        FedoraNodes.class, uriInfo), IOUtils
+                        session, FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
                 Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
                 if (problems.size() > 0) {
@@ -338,7 +338,7 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.build());
             }
 
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             if (requestContentType != null && requestBodyStream != null)  {
                 final String contentType = requestContentType.toString();
@@ -405,7 +405,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
 
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(FedoraNodes.class, uriInfo);
+            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
             final FedoraResource resource = createObjectOrDatastreamFromRequestContent(FedoraNodes.class,
                                                                                                                       session, path, mixin, uriInfo, requestBodyStream,
                                                                                                                       requestContentType, checksumURI);

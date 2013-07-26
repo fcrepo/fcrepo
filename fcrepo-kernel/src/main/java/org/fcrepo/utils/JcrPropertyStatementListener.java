@@ -99,7 +99,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             final Node subjectNode =
-                    subjects.getNodeFromGraphSubject(getSession(), subject);
+                    subjects.getNodeFromGraphSubject(subject);
 
             // extract the JCR propertyName from the predicate
             final String propertyName =
@@ -136,7 +136,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             final Node subjectNode =
-                    subjects.getNodeFromGraphSubject(getSession(), subject);
+                    subjects.getNodeFromGraphSubject(subject);
 
             final String propertyName =
                 jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
