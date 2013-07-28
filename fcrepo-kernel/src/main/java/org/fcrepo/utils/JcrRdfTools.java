@@ -68,6 +68,9 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.services.LowLevelStorageService;
@@ -428,10 +431,19 @@ public class JcrRdfTools {
         }
 
         final Resource subject = graphSubjects.getGraphSubject(node);
+        final Resource pageContext = graphSubjects.getContext();
 
+        model.add(pageContext, RDF.type, model.createResource("http://www.w3.org/ns/ldp#Page"));
+        model.add(pageContext, PAGE_OF, subject);
 
-        model.add(graphSubjects.getContext(), RDF.type, model.createResource("http://www.w3.org/ns/ldp#Page"));
-        model.add(graphSubjects.getContext(), PAGE_OF, subject);
+        if (isContainer(node)) {
+            model.add(pageContext, model.createProperty("http://www.w3.org/ns/ldp#membersInlined"), model.createTypedLiteral(true));
+
+            model.add(subject, RDF.type, model.createResource("http://www.w3.org/ns/ldp#Container"));
+            model.add(subject, model.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), subject);
+            model.add(subject, model.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), RdfLexicon.HAS_CHILD);
+            model.add(subject, model.createProperty("http://www.w3.org/ns/ldp#membershipObject"), model.createResource("http://www.w3.org/ns/ldp#MemberSubject"));
+        }
 
         // don't do this if the node is the root node.
         if (node.getDepth() > 0) {
@@ -442,20 +454,21 @@ public class JcrRdfTools {
             model.add(subject, RdfLexicon.HAS_PARENT, parentNodeSubject);
             model.add(parentNodeSubject, RdfLexicon.HAS_CHILD, subject);
             addJcrPropertiesToModel(parentNode, model);
-            model.add(graphSubjects.getContext(),
+            model.add(pageContext,
                          model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"),
                          parentNodeSubject);
         }
 
-        final javax.jcr.NodeIterator nodeIterator = node.getNodes();
+        if (node.hasNodes()) {
 
-        int i = 0;
-        long excludedNodeCount = 0;
-
-        if (nodeIterator.hasNext()) {
             if (limit == -1) {
-                model.add(graphSubjects.getContext(), PAGE, RDF.nil);
+                model.add(pageContext, PAGE, RDF.nil);
             }
+
+            final javax.jcr.NodeIterator nodeIterator = node.getNodes();
+
+            int i = 0;
+            long excludedNodeCount = 0;
 
             while (nodeIterator.hasNext()) {
                 final Node childNode = nodeIterator.nextNode();
@@ -470,7 +483,7 @@ public class JcrRdfTools {
 
                     if (i >= offset && (limit == -1 || i < (offset + limit))) {
                         addJcrPropertiesToModel(childNode, model);
-                        model.add(graphSubjects.getContext(), model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"), childNodeSubject);
+                        model.add(pageContext, model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"), childNodeSubject);
                         model.add(childNodeSubject, RdfLexicon.HAS_PARENT, subject);
                     }
 
@@ -487,6 +500,19 @@ public class JcrRdfTools {
 
         return model;
     }
+
+    private boolean isContainer(final Node node) throws RepositoryException {
+        return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())
+                   || Iterables.any(ImmutableList.copyOf(node.getMixinNodeTypes()),
+                                       HAS_CHILD_NODE_DEFINITIONS);
+    }
+
+    Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS = new Predicate<NodeType>() {
+        @Override
+        public boolean apply(NodeType input) {
+            return input.getChildNodeDefinitions().length > 0;
+        }
+    };
 
     /**
      * Determine if a predicate is an internal property of a node (and
