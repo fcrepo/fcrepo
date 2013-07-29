@@ -35,6 +35,7 @@ import static org.fcrepo.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.utils.FedoraJcrTypes.ROOT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -90,7 +91,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testIngestWithNew() throws Exception {
-        final HttpPost method = postObjMethod("fcr:new");
+        final HttpPost method = postObjMethod("");
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());
         final int status = response.getStatusLine().getStatusCode();
@@ -100,9 +101,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 .find());
         assertTrue("new object did not mint a PID", !content
                 .endsWith("/fcr:new"));
+        final String location = response.getFirstHeader("Location").getValue();
+        assertNotEquals(serverAddress + "/objects", location);
 
         assertEquals("Object wasn't created!", OK.getStatusCode(),
-                getStatus(new HttpGet(serverAddress + content)));
+                getStatus(new HttpGet(location)));
     }
 
     @Test
