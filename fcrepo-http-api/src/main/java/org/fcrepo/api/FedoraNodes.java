@@ -269,7 +269,11 @@ public class FedoraNodes extends AbstractResource {
 
                 final Date date = resource.getLastModifiedDate();
                 final Date roundedDate = new Date();
-                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+                if (date != null) {
+                    roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+                }
+
                 final ResponseBuilder builder =
                     request.evaluatePreconditions(roundedDate);
 
@@ -330,7 +334,11 @@ public class FedoraNodes extends AbstractResource {
 
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
-            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+            if (date != null) {
+                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+            }
+
             final ResponseBuilder builder =
                 request.evaluatePreconditions(roundedDate);
 
