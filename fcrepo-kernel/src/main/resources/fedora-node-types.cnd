@@ -58,9 +58,8 @@
  */
 [fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable mixin
 
-	- * (STRING) multiple COPY
-	- * (STRING) COPY
-
+  - * (undefined) multiple
+  - * (undefined)
 
 /*
  * A Fedora object.
