@@ -59,6 +59,7 @@ import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.test.util.TestHelpers;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -422,6 +423,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("waiting on MODE-1998")
     public void testRoundTripReplaceGraph() throws Exception {
         client.execute(postObjMethod("FedoraRoundTripGraph"));
 

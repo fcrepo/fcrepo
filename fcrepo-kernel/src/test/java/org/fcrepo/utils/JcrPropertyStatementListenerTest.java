@@ -17,6 +17,7 @@
 package org.fcrepo.utils;
 
 import static javax.jcr.PropertyType.STRING;
+import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.utils.NodePropertiesTools.getPropertyType;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -31,7 +32,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.rdf.GraphSubjects;
 import org.junit.Before;
@@ -205,4 +208,89 @@ public class JcrPropertyStatementListenerTest {
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
+    @Test
+    public void testAddRdfType() throws RepositoryException {
+
+        final Resource resource = ResourceFactory.createResource();
+        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(resource))
+            .thenReturn(mockSubjectNode);
+
+        when(mockSubjectNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
+
+        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        Model model = ModelFactory.createDefaultModel();
+        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
+        testObj.addedStatements(model);
+        verify(mockSubjectNode).addMixin("fedora:object");
+    }
+
+    @Test
+    public void testRemoveRdfType() throws RepositoryException {
+
+        final Resource resource = ResourceFactory.createResource();
+        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(resource))
+            .thenReturn(mockSubjectNode);
+
+        when(mockSubjectNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
+        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        Model model = ModelFactory.createDefaultModel();
+        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        testObj.removedStatements(model);
+        verify(mockSubjectNode).removeMixin("fedora:object");
+    }
+
+    @Test
+    public void testAddRdfTypeForNonMixin() throws RepositoryException {
+
+        final Resource resource = ResourceFactory.createResource();
+        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(resource))
+            .thenReturn(mockSubjectNode);
+
+        when(mockSubjectNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
+
+
+        mockStatic(NodePropertiesTools.class);
+        when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(URI);
+
+        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        Model model = ModelFactory.createDefaultModel();
+        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
+        testObj.addedStatements(model);
+        verify(mockSubjectNode, never()).addMixin("fedora:object");
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
+    }
+
+    @Test
+    public void testRemoveRdfTypeForNonMixin() throws RepositoryException {
+
+        final Resource resource = ResourceFactory.createResource();
+        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
+        when(mockSubjects.getNodeFromGraphSubject(resource))
+            .thenReturn(mockSubjectNode);
+
+        when(mockSubjectNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
+        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        Model model = ModelFactory.createDefaultModel();
+        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        testObj.removedStatements(model);
+        verify(mockSubjectNode, never()).removeMixin("fedora:object");
+        verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
+    }
 }

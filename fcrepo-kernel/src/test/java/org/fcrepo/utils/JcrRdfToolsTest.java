@@ -1051,6 +1051,7 @@ public class JcrRdfToolsTest {
         assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty(RdfLexicon.INTERNAL_NAMESPACE, "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.jcp.org/jcr/1.0", "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.w3.org/ns/ldp#some-property")));
+        assertFalse(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#label")));
         assertFalse(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("my-own-ns", "some-property")));
     }
 
