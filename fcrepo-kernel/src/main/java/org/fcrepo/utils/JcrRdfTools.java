@@ -48,6 +48,7 @@ import static org.fcrepo.utils.FedoraTypesUtils.getRepositorySize;
 import static org.fcrepo.utils.FedoraTypesUtils.getValueFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -829,17 +830,36 @@ public class JcrRdfTools {
 
     }
 
+
     /**
      * Given an RDF predicate value (namespace URI + local name), figure out
      * what JCR property to use
      *
      * @param node the JCR node we want a property for
      * @param predicate the predicate to map to a property name
+     * @return
+     * @throws RepositoryException
+     */
+    String getPropertyNameFromPredicate(final Node node,
+                                        final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+        Map<String, String> s = Collections.emptyMap();
+        return getPropertyNameFromPredicate(node, predicate, s);
+
+    }
+
+    /**
+     * Given an RDF predicate value (namespace URI + local name), figure out
+     * what JCR property to use
+     *
+     * @param node the JCR node we want a property for
+     * @param predicate the predicate to map to a property name
+     * @param namespaceMapping prefix => uri namespace mapping
      * @return the JCR property name
      * @throws RepositoryException
      */
     String getPropertyNameFromPredicate(final Node node,
-                                        final com.hp.hpl.jena.rdf.model.Property predicate)
+                                        final com.hp.hpl.jena.rdf.model.Property predicate,
+                                        final Map<String, String> namespaceMapping)
         throws RepositoryException {
 
         final String prefix;
@@ -855,7 +875,14 @@ public class JcrRdfTools {
         if (namespaceRegistry.isRegisteredUri(namespace)) {
             prefix = namespaceRegistry.getPrefix(namespace);
         } else {
-            prefix = namespaceRegistry.registerNamespace(namespace);
+            final ImmutableBiMap<String, String> nsMap = ImmutableBiMap.copyOf(namespaceMapping);
+            if (nsMap.containsValue(namespace)
+                    && !namespaceRegistry.isRegisteredPrefix(nsMap.inverse().get(namespace))) {
+                prefix = nsMap.inverse().get(namespace);
+                namespaceRegistry.registerNamespace(prefix, namespace);
+            } else {
+                prefix = namespaceRegistry.registerNamespace(namespace);
+            }
         }
 
         final String localName = predicate.getLocalName();

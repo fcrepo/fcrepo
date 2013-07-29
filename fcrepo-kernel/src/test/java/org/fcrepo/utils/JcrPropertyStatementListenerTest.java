@@ -31,6 +31,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeTypeManager;
 
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -49,6 +51,9 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+
+import java.util.Collections;
+import java.util.Map;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
@@ -84,6 +89,17 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private JcrRdfTools mockJcrRdfTools;
 
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NodeTypeManager mockNodeTypeManager;
+
+    @Mock
+    private Model mockModel;
+
+    Map<String, String> mockNsMapping = Collections.emptyMap();
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -94,6 +110,9 @@ public class JcrPropertyStatementListenerTest {
         testObj = JcrPropertyStatementListener.getListener(mockSubjects, mockSession, mockProblems);
         when(mockStatement.getSubject()).thenReturn(mockSubject);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
+
+        when(mockStatement.getModel()).thenReturn(mockModel);
+        when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
     }
 
     @Test
@@ -124,7 +143,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
+        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
             .thenReturn(mockPropertyName);
 
         mockStatic(NodePropertiesTools.class);
@@ -142,7 +161,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
 
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
+        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
                .thenThrow(new RepositoryException());
 
         testObj.addedStatement(mockStatement);

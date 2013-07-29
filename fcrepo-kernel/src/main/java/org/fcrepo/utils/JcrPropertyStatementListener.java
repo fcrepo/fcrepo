@@ -137,7 +137,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // extract the JCR propertyName from the predicate
             final String propertyName =
-                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate(), s.getModel().getNsPrefixMap());
 
             if (validateModificationsForPropertyName(
                     subject, subjectNode, s.getPredicate())) {
