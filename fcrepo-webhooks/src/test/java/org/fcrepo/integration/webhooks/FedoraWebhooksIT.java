@@ -110,7 +110,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         assertEquals(201, getStatus(method));
 
         final HttpPost create_method =
-                new HttpPost(serverAddress + "/rest/fcr:new");
+                new HttpPost(serverAddress + "/rest/");
         assertEquals(201, getStatus(create_method));
 
         try {

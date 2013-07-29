@@ -405,15 +405,24 @@ public class FedoraNodes extends AbstractResource {
             final UriInfo uriInfo, final InputStream requestBodyStream)
         throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
 
+        final String newObjectPath;
         final String path = toPath(pathList);
-        logger.debug("Attempting to ingest with path: {}", path);
+
+
+        if (nodeService.exists(session, path)) {
+            final String pid = pidMinter.mintPid();
+            newObjectPath = path + "/" + pid;
+        } else {
+            newObjectPath = path;
+        }
+
+        logger.debug("Attempting to ingest with path: {}", newObjectPath);
 
         try {
-            if (nodeService.exists(session, path)) {
+            if (nodeService.exists(session, newObjectPath)) {
                 return status(SC_CONFLICT).entity(
                         path + " is an existing resource!").build();
             }
-
 
             final URI checksumURI;
 
@@ -423,17 +432,16 @@ public class FedoraNodes extends AbstractResource {
                 checksumURI = null;
             }
 
-
             final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
             final FedoraResource resource = createObjectOrDatastreamFromRequestContent(FedoraNodes.class,
-                                                                                                                      session, path, mixin, uriInfo, requestBodyStream,
+                                                                                                                      session, newObjectPath, mixin, uriInfo, requestBodyStream,
                                                                                                                       requestContentType, checksumURI);
 
             session.save();
-            logger.debug("Finished creating {} with path: {}", mixin, path);
+            logger.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
             return created(new URI(subjects.getGraphSubject(resource.getNode())
-                                       .getURI())).entity(path).build();
+                                       .getURI())).entity(newObjectPath).build();
 
         } finally {
             session.logout();
