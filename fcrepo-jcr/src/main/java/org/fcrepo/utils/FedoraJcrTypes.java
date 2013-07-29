@@ -35,7 +35,7 @@ public interface FedoraJcrTypes {
 
     String JCR_CREATED = "jcr:created";
 
-    String JCR_CREATEDBY = "jcr:createdby";
+    String JCR_CREATEDBY = "jcr:createdBy";
 
     String CONTENT_SIZE = "fedora:size";
 

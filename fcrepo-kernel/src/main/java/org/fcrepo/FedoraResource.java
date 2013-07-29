@@ -99,10 +99,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         }
 
         if (node.isNew()) {
-            if (node.getSession() != null) {
-                node.setProperty(JCR_CREATEDBY, node.getSession().getUserID());
-            }
-
             node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
         }
         this.properties = DEFAULT_PROPERTY_FACTORY;
