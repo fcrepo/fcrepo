@@ -88,13 +88,13 @@ public abstract class NodePropertiesTools {
                              "initial value [{}]",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
-                node.setProperty(propertyName, new Value[]{newValue});
+                node.setProperty(propertyName, new Value[]{newValue}, newValue.getType());
             } else {
                 logger.debug("Creating new single-valued {} property {} with " +
                              "initial value {}",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
-                node.setProperty(propertyName, newValue);
+                node.setProperty(propertyName, newValue, newValue.getType());
             }
         }
 

@@ -82,7 +82,7 @@ public class NodePropertiesToolsTest {
         when(mockDefinition.isMultiple()).thenReturn(false);
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(false);
         appendOrReplaceNodeProperty(mockNode, "mockPropertyName", mockValue);
-        verify(mockNode).setProperty("mockPropertyName", mockValue);
+        verify(mockNode).setProperty("mockPropertyName", mockValue, 0);
     }
 
     @Test
@@ -91,7 +91,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty("mockPropertyName")).thenReturn(false);
         appendOrReplaceNodeProperty(mockNode, "mockPropertyName", mockValue);
         verify(mockNode).setProperty("mockPropertyName",
-                asList(mockValue).toArray(new Value[0]));
+                asList(mockValue).toArray(new Value[0]), 0);
     }
 
     @Test

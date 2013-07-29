@@ -29,10 +29,13 @@ import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.LoginException;
+import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.RdfLexicon;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -40,6 +43,7 @@ import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.JcrRdfTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -378,5 +382,39 @@ public class FedoraResourceIT extends AbstractIT {
 
         assertTrue(graphStore.asDatasetGraph().contains(Node.ANY, s, p, o));
 
+    }
+
+    @Test
+    public void testUpdatingRdfTypedValues() throws RepositoryException {
+        final FedoraResource object =
+            objectService.createObject(session, "/testObjectRdfType");
+
+
+        final Dataset propertiesDataset =
+            object.getPropertiesDataset(subjects, 0, -2);
+
+        logger.warn(propertiesDataset.toString());
+
+        object.updatePropertiesDataset(subjects, "PREFIX example: <http://example.org/>\n" +
+                                                 "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                                          "INSERT { <info:fedora/testObjectRdfType> example:int-property \"0\"^^xsd:long } WHERE { }");
+        assertEquals(PropertyType.LONG,  object.getNode().getProperty("example:int-property").getType());
+        assertEquals(0L, object.getNode().getProperty("example:int-property").getValues()[0].getLong());
+    }
+
+    @Test
+    public void testUpdatingRdfType() throws RepositoryException {
+        final FedoraResource object =
+            objectService.createObject(session, "/testObjectRdfType");
+
+
+        final Dataset propertiesDataset =
+            object.getPropertiesDataset(subjects, 0, -2);
+
+        logger.warn(propertiesDataset.toString());
+
+        object.updatePropertiesDataset(subjects, "INSERT { <info:fedora/testObjectRdfType> <" + RDF.type + "> <http://some/uri> } WHERE { }");
+        assertEquals(PropertyType.URI,  object.getNode().getProperty("rdf:type").getType());
+        assertEquals("http://some/uri", object.getNode().getProperty("rdf:type").getValues()[0].getString());
     }
 }
