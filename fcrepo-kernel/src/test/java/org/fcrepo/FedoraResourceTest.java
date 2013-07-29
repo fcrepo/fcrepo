@@ -49,6 +49,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.utils.FedoraTypesUtils;
@@ -357,6 +358,18 @@ public class FedoraResourceTest {
         assertFalse(problemsModel.contains(propertiesModel.createResource("x"),
                                               propertiesModel.createProperty("y"),
                                               "z"));
+    }
+    @Test
+    public void shouldGetEtagForAnObject() throws RepositoryException {
+        final Property mockMod = mock(Property.class);
+        final Calendar modDate = Calendar.getInstance();
+        modDate.set(2013, Calendar.JULY, 30, 0, 0, 0);
+        when(mockNode.getPath()).thenReturn("some-path");
+        when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
+        when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
+        when(mockMod.getDate()).thenReturn(modDate);
+
+        assertEquals(DigestUtils.shaHex("some-path" + testObj.getLastModifiedDate().toString()), testObj.getEtagValue());
     }
 
 }

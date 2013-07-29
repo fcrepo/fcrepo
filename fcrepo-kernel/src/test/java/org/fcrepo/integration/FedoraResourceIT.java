@@ -17,9 +17,11 @@ package org.fcrepo.integration;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static junit.framework.Assert.assertNotNull;
 import static org.fcrepo.utils.FedoraTypesUtils.getVersionHistory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -43,6 +45,7 @@ import org.fcrepo.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.services.DatastreamService;
 import org.fcrepo.services.NodeService;
 import org.fcrepo.services.ObjectService;
+import org.fcrepo.utils.FedoraJcrTypes;
 import org.fcrepo.utils.JcrRdfTools;
 import org.junit.After;
 import org.junit.Before;
@@ -396,9 +399,9 @@ public class FedoraResourceIT extends AbstractIT {
         logger.warn(propertiesDataset.toString());
 
         object.updatePropertiesDataset(subjects, "PREFIX example: <http://example.org/>\n" +
-                                                 "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-                                          "INSERT { <info:fedora/testObjectRdfType> example:int-property \"0\"^^xsd:long } WHERE { }");
-        assertEquals(PropertyType.LONG,  object.getNode().getProperty("example:int-property").getType());
+                                                     "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                                                     "INSERT { <info:fedora/testObjectRdfType> example:int-property \"0\"^^xsd:long } WHERE { }");
+        assertEquals(PropertyType.LONG, object.getNode().getProperty("example:int-property").getType());
         assertEquals(0L, object.getNode().getProperty("example:int-property").getValues()[0].getLong());
     }
 
@@ -416,5 +419,17 @@ public class FedoraResourceIT extends AbstractIT {
         object.updatePropertiesDataset(subjects, "INSERT { <info:fedora/testObjectRdfType> <" + RDF.type + "> <http://some/uri> } WHERE { }");
         assertEquals(PropertyType.URI,  object.getNode().getProperty("rdf:type").getType());
         assertEquals("http://some/uri", object.getNode().getProperty("rdf:type").getValues()[0].getString());
+    }
+
+    @Test
+    public void testEtagValue() throws RepositoryException {
+        final FedoraResource object =
+            objectService.createObject(session, "/testEtagObject");
+
+        session.save();
+
+        final String actual = object.getEtagValue();
+        assertNotNull(actual);
+        assertNotEquals("", actual);
     }
 }

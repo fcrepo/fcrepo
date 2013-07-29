@@ -575,8 +575,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 .getStatusLine().getStatusCode());
         final String lastModed =
                 response.getFirstHeader("Last-Modified").getValue();
+        final String etag = response.getFirstHeader("ETag").getValue();
         final HttpGet getObjMethod2 = new HttpGet(serverAddress + path);
         getObjMethod2.setHeader("If-Modified-Since", lastModed);
+        getObjMethod2.setHeader("If-None-Match", etag);
         response = specialClient.execute(getObjMethod2);
 
         assertEquals("Client didn't return a NOT_MODIFIED!", NOT_MODIFIED

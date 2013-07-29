@@ -207,7 +207,7 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
         when(mockDataset.getContext()).thenReturn(mockContext);
 
-        when(mockObject.getLastModifiedDate()).thenReturn(null);
+        when(mockObject.getEtagValue()).thenReturn("");
         when(
                 mockObject.getPropertiesDataset(any(GraphSubjects.class),
                         anyLong(), anyInt())).thenReturn(mockDataset);
@@ -230,7 +230,7 @@ public class FedoraNodesTest {
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
         when(mockDataset.getContext()).thenReturn(mockContext);
 
-        when(mockObject.getLastModifiedDate()).thenReturn(null);
+        when(mockObject.getEtagValue()).thenReturn("");
         when(
                 mockObject.getPropertiesDataset(any(GraphSubjects.class),
                                                    anyLong(), eq(-2))).thenReturn(mockDataset);
@@ -252,7 +252,8 @@ public class FedoraNodesTest {
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
-        .thenReturn(mockDataset);
+            .thenReturn(mockDataset);
+        when(mockObject.getEtagValue()).thenReturn("");
 
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
         when(mockDataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME))
@@ -271,6 +272,7 @@ public class FedoraNodesTest {
         final String path = "/" + pid;
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
         when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockObject.getEtagValue()).thenReturn("");
         when(mockNode.getPath()).thenReturn(path);
 
         final InputStream mockStream =

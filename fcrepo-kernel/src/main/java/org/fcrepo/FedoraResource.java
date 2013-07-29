@@ -34,6 +34,7 @@ import javax.jcr.version.VersionHistory;
 
 import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.rdf.impl.JcrGraphProperties;
@@ -316,5 +317,26 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         model.add(created.listStatements());
 
         return propertiesDataset;
+    }
+
+    /**
+     * Construct an ETag value from the last modified date and path.
+     *
+     * JCR has a mix:etag type, but it only takes into account binary
+     * properties. We actually want whole-object etag data.
+     *
+     * TODO : construct and store an ETag value on object modify
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    public String getEtagValue() throws RepositoryException {
+        final Date lastModifiedDate = getLastModifiedDate();
+
+        if (lastModifiedDate != null) {
+            return DigestUtils.shaHex(node.getPath() + lastModifiedDate.toString());
+        } else {
+            return "";
+        }
     }
 }

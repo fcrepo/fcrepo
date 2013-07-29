@@ -64,6 +64,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
@@ -134,13 +135,15 @@ public class FedoraNodes extends AbstractResource {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
 
+
+            final EntityTag etag = new EntityTag(resource.getEtagValue());
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
             if (date != null) {
                 roundedDate.setTime(date.getTime() - date.getTime() % 1000);
             }
             final ResponseBuilder builder =
-                    request.evaluatePreconditions(roundedDate);
+                    request.evaluatePreconditions(roundedDate, etag);
             if (builder != null) {
                 final CacheControl cc = new CacheControl();
                 cc.setMaxAge(0);
@@ -149,7 +152,7 @@ public class FedoraNodes extends AbstractResource {
                 // the exception is not an error, it's genuinely
                 // an exceptional condition
                 throw new WebApplicationException(builder.cacheControl(cc)
-                        .lastModified(date).build());
+                        .lastModified(date).tag(etag).build());
             }
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
@@ -199,6 +202,10 @@ public class FedoraNodes extends AbstractResource {
 
                 propertiesDataset.addNamedModel("requestModel", requestModel);
 
+            }
+
+            if (!etag.getValue().isEmpty()) {
+                servletResponse.addHeader("ETag", etag.toString());
             }
 
             servletResponse.addHeader("Accept-Patch", WebContent.contentTypeSPARQLUpdate);
@@ -267,6 +274,7 @@ public class FedoraNodes extends AbstractResource {
                         nodeService.getObject(session, path);
 
 
+                final EntityTag etag = new EntityTag(resource.getEtagValue());
                 final Date date = resource.getLastModifiedDate();
                 final Date roundedDate = new Date();
 
@@ -275,7 +283,7 @@ public class FedoraNodes extends AbstractResource {
                 }
 
                 final ResponseBuilder builder =
-                    request.evaluatePreconditions(roundedDate);
+                    request.evaluatePreconditions(roundedDate, etag);
 
                 if (builder != null) {
                     throw new WebApplicationException(builder.build());
@@ -335,12 +343,15 @@ public class FedoraNodes extends AbstractResource {
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
 
+
+            final EntityTag etag = new EntityTag(resource.getEtagValue());
+
             if (date != null) {
                 roundedDate.setTime(date.getTime() - date.getTime() % 1000);
             }
 
             final ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate);
+                request.evaluatePreconditions(roundedDate, etag);
 
             if (builder != null) {
                 throw new WebApplicationException(builder.build());
