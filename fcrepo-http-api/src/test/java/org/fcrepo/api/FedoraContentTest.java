@@ -212,6 +212,8 @@ public class FedoraContentTest {
         final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
                 mockDs);
+        when(mockDs.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
         final Request mockRequest = mock(Request.class);
         final Response actual =
                 testObj.getContent(createPathList(pid, dsId), null, mockRequest);
@@ -219,6 +221,7 @@ public class FedoraContentTest {
         verify(mockSession, never()).save();
         final String actualContent =
                 IOUtils.toString((InputStream) actual.getEntity());
+        assertEquals("http://localhost/fcrepo" + path + ";rel=\"meta\"", actual.getMetadata().getFirst("Link"));
         assertEquals("asdf", actualContent);
     }
 

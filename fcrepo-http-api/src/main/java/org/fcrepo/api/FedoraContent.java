@@ -281,7 +281,11 @@ public class FedoraContent extends AbstractResource {
                 }
             }
 
+            final HttpGraphSubjects subjects =
+                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+
             return builder.type(ds.getMimeType())
+                       .header("Link", subjects.getGraphSubject(ds.getNode()) + ";rel=\"meta\"")
                        .header("Accept-Ranges", "bytes")
                        .cacheControl(cc)
                        .lastModified(date)
