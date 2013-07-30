@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -39,7 +40,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
     public void testJcrPropertiesBasedOaiDc() throws Exception {
         final int status = getStatus(postObjMethod("DublinCoreTest1"));
         assertEquals(201, status);
-        final HttpPost post = postObjMethod("DublinCoreTest1");
+        final HttpPatch post = new HttpPatch(serverAddress + "DublinCoreTest1");
         post.setHeader("Content-Type", "application/sparql-update");
         BasicHttpEntity entity = new BasicHttpEntity();
         String subjectURI = serverAddress + "DublinCoreTest1";
