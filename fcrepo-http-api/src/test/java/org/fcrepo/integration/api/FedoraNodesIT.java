@@ -109,6 +109,24 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testIngestWithSlug() throws Exception {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Slug", "xyz");
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                        CREATED.getStatusCode(), status);
+        assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
+                                                .find());
+        final String location = response.getFirstHeader("Location").getValue();
+        assertNotEquals(serverAddress + "/objects", location);
+
+        assertEquals("Object wasn't created!", OK.getStatusCode(),
+                        getStatus(new HttpGet(location)));
+    }
+
+    @Test
     public void testDeleteObject() throws Exception {
         assertEquals(CREATED.getStatusCode(),
                 getStatus(postObjMethod("FedoraObjectsTest3")));

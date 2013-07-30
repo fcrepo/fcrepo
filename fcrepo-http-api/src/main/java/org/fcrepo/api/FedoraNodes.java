@@ -401,6 +401,8 @@ public class FedoraNodes extends AbstractResource {
             final String checksum,
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
+            @HeaderParam("Slug")
+            final String slug,
             @Context
             final UriInfo uriInfo, final InputStream requestBodyStream)
         throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
@@ -410,7 +412,14 @@ public class FedoraNodes extends AbstractResource {
 
 
         if (nodeService.exists(session, path)) {
-            final String pid = pidMinter.mintPid();
+            final String pid;
+
+            if (slug != null) {
+                pid = slug;
+            }  else {
+                pid = pidMinter.mintPid();
+            }
+
             newObjectPath = path + "/" + pid;
         } else {
             newObjectPath = path;

@@ -63,6 +63,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
+import org.fcrepo.identifiers.PidMinter;
 import org.fcrepo.identifiers.UUIDPidMinter;
 import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.GraphSubjects;
@@ -115,6 +116,9 @@ public class FedoraNodesTest {
 
     @Mock
     private HttpServletResponse mockResponse;
+
+    @Mock
+    private PidMinter mockPidMinter;
     
     private UriInfo uriInfo;
 
@@ -126,7 +130,7 @@ public class FedoraNodesTest {
         setField(testObj, "nodeService", mockNodes);
         this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
-        setField(testObj, "pidMinter", new UUIDPidMinter());
+        setField(testObj, "pidMinter", mockPidMinter);
         setField(testObj, "objectService", mockObjects);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
@@ -152,10 +156,53 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
                 testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
-                        null, getUriInfoImpl(), null);
+                        null, null, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
+        verify(mockObjects).createObject(mockSession, path);
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateChildObject() throws RepositoryException, IOException,
+                                                       InvalidChecksumException, URISyntaxException, NoSuchFieldException {
+
+        setField(testObj, "pidMinter", mockPidMinter);
+        final String pid = "testObject";
+        final String path = "/" + pid + "/a";
+        when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
+        when(mockPidMinter.mintPid()).thenReturn("a");
+        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        final Response actual =
+            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
+                                    null, null, getUriInfoImpl(), null);
+        assertNotNull(actual);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        assertTrue(actual.getEntity().toString().endsWith("a"));
+        verify(mockObjects).createObject(mockSession, path);
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateChildObjectWithSlug() throws RepositoryException, IOException,
+                                                               InvalidChecksumException, URISyntaxException, NoSuchFieldException {
+        setField(testObj, "pidMinter", mockPidMinter);
+
+        final String pid = "testObject";
+        final String path = "/" + pid + "/some-slug";
+        when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
+        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        final Response actual =
+            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
+                                    null, "some-slug", getUriInfoImpl(), null);
+        assertNotNull(actual);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        assertTrue(actual.getEntity().toString().endsWith("some-slug"));
         verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();
     }
@@ -178,7 +225,7 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
-                        FEDORA_DATASTREAM, null, null, getUriInfoImpl(),
+                        FEDORA_DATASTREAM, null, null, null, getUriInfoImpl(),
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
