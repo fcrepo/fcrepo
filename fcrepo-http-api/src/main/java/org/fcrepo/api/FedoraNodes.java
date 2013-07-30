@@ -16,6 +16,9 @@
 
 package org.fcrepo.api;
 
+import static com.sun.jersey.api.Responses.clientError;
+import static com.sun.jersey.api.Responses.notAcceptable;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
@@ -47,6 +50,7 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -75,14 +79,17 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.WebContent;
 import org.fcrepo.AbstractResource;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.http.PATCH;
 import org.fcrepo.session.InjectedSession;
 import org.fcrepo.utils.FedoraJcrTypes;
+import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -374,7 +381,6 @@ public class FedoraNodes extends AbstractResource {
     public Response createObject(@PathParam("path")
             final List<PathSegment> pathList,
             @QueryParam("mixin")
-            @DefaultValue(FedoraJcrTypes.FEDORA_OBJECT)
             final String mixin,
             @QueryParam("checksum")
             final String checksum,
@@ -422,20 +428,87 @@ public class FedoraNodes extends AbstractResource {
 
             final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
-            final FedoraResource resource =
-                createObjectOrDatastreamFromRequestContent(session,
-                                                              newObjectPath,
-                                                              mixin,
-                                                              subjects,
-                                                              requestBodyStream,
-                                                              requestContentType,
-                                                              checksumURI);
+            final String objectType;
+
+            if (mixin != null) {
+                objectType = mixin;
+            } else {
+                if (requestContentType != null) {
+                    final String s = requestContentType.toString();
+                    if (s.equals(WebContent.contentTypeSPARQLUpdate) || contentTypeToLang(s) != null) {
+                        objectType = FedoraJcrTypes.FEDORA_OBJECT;
+                    } else {
+                        objectType = FedoraJcrTypes.FEDORA_DATASTREAM;
+                    }
+                } else {
+                    objectType = FedoraJcrTypes.FEDORA_OBJECT;
+                }
+            }
+
+            final FedoraResource result;
+
+            switch (objectType) {
+                case FedoraJcrTypes.FEDORA_OBJECT:
+                    result = objectService.createObject(session, newObjectPath);
+                    break;
+                case FedoraJcrTypes.FEDORA_DATASTREAM:
+                    result = datastreamService.createDatastream(session, newObjectPath);
+                    break;
+                default:
+                    throw new WebApplicationException(clientError().entity("Unknown object type " + objectType).build());
+            }
+
+            if (requestBodyStream != null) {
+
+                final MediaType contentType =
+                    requestContentType != null ? requestContentType
+                        : APPLICATION_OCTET_STREAM_TYPE;
+
+                final String contentTypeString = contentType.toString();
+
+                if (contentTypeString.equals(WebContent.contentTypeSPARQLUpdate)) {
+                    result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
+                } else if (contentTypeToLang(contentTypeString) != null) {
+
+                    final Lang lang = contentTypeToLang(contentTypeString);
+
+                    if (lang == null) {
+                        throw new WebApplicationException(notAcceptable().entity("Invalid Content type " + contentType).build());
+                    }
+
+                    final String format = lang.getName()
+                                              .toUpperCase();
+
+                    final Model inputModel = ModelFactory.createDefaultModel()
+                                                 .read(requestBodyStream,
+                                                          subjects.getGraphSubject(result.getNode()).toString(),
+                                                          format);
+
+                    result.replacePropertiesDataset(subjects, inputModel);
+                } else if (result instanceof Datastream) {
+
+                    final Node node =
+                        datastreamService.createDatastreamNode(session, newObjectPath,
+                                                                  contentTypeString, requestBodyStream,
+                                                                  checksumURI);
+
+
+                }
+            }
 
             session.save();
+
             logger.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
-            final URI location = new URI(subjects.getGraphSubject(resource.getNode())
-                                             .getURI());
+            final URI location;
+            if (result.hasContent()) {
+                location = new URI(subjects.getGraphSubject(result.getNode().getNode(JcrConstants.JCR_CONTENT))
+                                                 .getURI());
+            } else {
+                location = new URI(subjects.getGraphSubject(result.getNode())
+                                                 .getURI());
+            }
+
             return created(location).entity(newObjectPath).build();
 
         } finally {

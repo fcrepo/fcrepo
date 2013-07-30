@@ -86,6 +86,16 @@ public class DatastreamService extends RepositoryService {
     private static final Logger logger = getLogger(DatastreamService.class);
 
     /**
+     * Create a stub datastream without content
+     * @param session
+     * @param dsPath
+     * @return
+     * @throws RepositoryException
+     */
+    public Datastream createDatastream(final Session session, final String dsPath) throws RepositoryException {
+        return new Datastream(session, dsPath);
+    }
+    /**
      * Create a new Datastream node in the JCR store
      * 
      * @param session the jcr session to use
@@ -124,7 +134,7 @@ public class DatastreamService extends RepositoryService {
         final InputStream requestBodyStream, final URI checksum)
         throws RepositoryException, IOException, InvalidChecksumException {
 
-        final Datastream ds = new Datastream(session, dsPath);
+        final Datastream ds = createDatastream(session, dsPath);
         ds.setContent(requestBodyStream, contentType, checksum,
                 getStoragePolicyDecisionPoint());
         return ds.getNode();
