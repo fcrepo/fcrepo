@@ -46,9 +46,11 @@ import java.util.Iterator;
 
 import javax.jcr.RepositoryException;
 
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -106,6 +108,62 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertEquals("Object wasn't created!", OK.getStatusCode(),
                 getStatus(new HttpGet(location)));
+    }
+
+    @Test
+    public void testIngestWithNewAndSparqlQuery() throws Exception {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "application/sparql-update");
+        BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream(
+                                                 ("INSERT { <> <http://purl.org/dc/terms/title> \"this is a title\" } WHERE {}")
+                                                     .getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                        CREATED.getStatusCode(), status);
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpGet httpGet = new HttpGet(location);
+
+        final HttpResponse result = client.execute(httpGet);
+
+        final GraphStore graphStore = TestHelpers.parseTriples(result.getEntity().getContent());
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          ResourceFactory.createResource(location).asNode(),
+                                          RdfLexicon.DC_TITLE.asNode(),
+                                          ResourceFactory.createPlainLiteral("this is a title").asNode()));
+    }
+
+    @Test
+    public void testIngestWithNewAndGraph() throws Exception {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "application/n3");
+        BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream("<> <http://purl.org/dc/terms/title> \"this is a title\"".getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                        CREATED.getStatusCode(), status);
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpGet httpGet = new HttpGet(location);
+
+        final HttpResponse result = client.execute(httpGet);
+
+        final GraphStore graphStore = TestHelpers.parseTriples(result.getEntity().getContent());
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          ResourceFactory.createResource(location).asNode(),
+                                          RdfLexicon.DC_TITLE.asNode(),
+                                          ResourceFactory.createPlainLiteral("this is a title").asNode()));
+
     }
 
     @Test
@@ -552,7 +610,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     /**
-     * Given a directory at: test-objects/FileSystem1/ /ds1 /ds2 /TestSubdir/
+     * Given a directory at: test-FileSystem1/ /ds1 /ds2 /TestSubdir/
      * and a projection of test-objects as fedora:/files, then I should be able
      * to retrieve an object from fedora:/files/FileSystem1 that lists a child
      * object at fedora:/files/FileSystem1/TestSubdir and lists datastreams ds1

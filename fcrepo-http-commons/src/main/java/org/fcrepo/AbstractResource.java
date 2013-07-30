@@ -16,7 +16,9 @@
 
 package org.fcrepo;
 
+import static com.sun.jersey.api.Responses.notAcceptable;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -29,15 +31,18 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.WebContent;
-import org.fcrepo.api.rdf.HttpGraphSubjects;
 import org.fcrepo.api.rdf.HttpTripleUtil;
 import org.fcrepo.exception.InvalidChecksumException;
 import org.fcrepo.identifiers.PidMinter;
@@ -168,8 +173,8 @@ public abstract class AbstractResource {
     }
 
     protected FedoraResource createObjectOrDatastreamFromRequestContent(
-            final Class<?> pathsRelativeTo, final Session session,
-            final String path, final String mixin, final UriInfo uriInfo,
+            final Session session,
+            final String path, final String mixin, final GraphSubjects subjects,
             final InputStream requestBodyStream,
             final MediaType requestContentType,
             final URI checksum) throws RepositoryException,
@@ -182,12 +187,30 @@ public abstract class AbstractResource {
                 result = objectService.createObject(session, path);
 
                 if (requestBodyStream != null &&
-                        requestContentType != null &&
-                        requestContentType.toString().equals(
-                                WebContent.contentTypeSPARQLUpdate)) {
-                    result.updatePropertiesDataset(new HttpGraphSubjects(
-                            session, pathsRelativeTo, uriInfo), IOUtils
-                            .toString(requestBodyStream));
+                        requestContentType != null) {
+                    switch(requestContentType.toString()) {
+                        case WebContent.contentTypeSPARQLUpdate:
+                            result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
+                            break;
+                        default:
+                            final String contentType = requestContentType.toString();
+
+                            final Lang lang = contentTypeToLang(contentType);
+
+                            if (lang == null) {
+                                throw new WebApplicationException(notAcceptable().entity("Invalid Content type " + contentType).build());
+                            }
+
+                            final String format = lang.getName()
+                                                      .toUpperCase();
+
+                            final Model inputModel = ModelFactory.createDefaultModel()
+                                                         .read(requestBodyStream,
+                                                                  subjects.getGraphSubject(result.getNode()).toString(),
+                                                                  format);
+
+                            result.replacePropertiesDataset(subjects, inputModel);
+                    }
                 }
 
                 break;

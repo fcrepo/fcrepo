@@ -222,27 +222,6 @@ public class FedoraNodes extends AbstractResource {
 
     }
 
-
-    /**
-     * Update an object using SPARQL-UPDATE via POST
-     *
-     * @param pathList
-     * @return 201
-     * @throws RepositoryException
-     * @throws org.fcrepo.exception.InvalidChecksumException
-     * @throws IOException
-     */
-    @POST
-    @Consumes({contentTypeSPARQLUpdate})
-    @Timed
-    public Response updateSparqlPost(
-            @PathParam("path") final List<PathSegment> pathList,
-            @Context final UriInfo uriInfo,
-            final InputStream requestBodyStream,
-            @Context final Request request)
-        throws RepositoryException, IOException {
-        return updateSparql(pathList, uriInfo, requestBodyStream, request);
-    }
     /**
      * Update an object using SPARQL-UPDATE
      * 
@@ -442,15 +421,22 @@ public class FedoraNodes extends AbstractResource {
             }
 
             final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
-            final FedoraResource resource = createObjectOrDatastreamFromRequestContent(FedoraNodes.class,
-                                                                                                                      session, newObjectPath, mixin, uriInfo, requestBodyStream,
-                                                                                                                      requestContentType, checksumURI);
+
+            final FedoraResource resource =
+                createObjectOrDatastreamFromRequestContent(session,
+                                                              newObjectPath,
+                                                              mixin,
+                                                              subjects,
+                                                              requestBodyStream,
+                                                              requestContentType,
+                                                              checksumURI);
 
             session.save();
             logger.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
-            return created(new URI(subjects.getGraphSubject(resource.getNode())
-                                       .getURI())).entity(newObjectPath).build();
+            final URI location = new URI(subjects.getGraphSubject(resource.getNode())
+                                             .getURI());
+            return created(location).entity(newObjectPath).build();
 
         } finally {
             session.logout();
