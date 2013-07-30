@@ -154,7 +154,7 @@ function sendSparqlUpdate() {
     var postURI = $('#main').attr('resource');
 
 
-    $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: $("#sparql_update_query").val(), success: function(data, textStatus, request) {
+    $.ajax({url: postURI, type: "PATCH", contentType: "application/sparql-update", data: $("#sparql_update_query").val(), success: function(data, textStatus, request) {
         window.location.reload(true);
     }});
 
