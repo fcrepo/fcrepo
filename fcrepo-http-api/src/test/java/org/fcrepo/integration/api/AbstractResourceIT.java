@@ -43,8 +43,6 @@ public abstract class AbstractResourceIT {
 
     protected Logger logger;
 
-    protected String OBJECT_PATH = "objects";
-
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
@@ -71,22 +69,22 @@ public abstract class AbstractResourceIT {
     }
 
     protected static HttpPost postObjMethod(final String pid) {
-        return new HttpPost(serverAddress + "objects/" + pid);
+        return new HttpPost(serverAddress + pid);
     }
 
     protected static HttpPost
             postObjMethod(final String pid, final String query) {
         if (query.equals("")) {
-            return new HttpPost(serverAddress + "objects/" + pid);
+            return new HttpPost(serverAddress + pid);
         } else {
-            return new HttpPost(serverAddress + "objects/" + pid + "?" + query);
+            return new HttpPost(serverAddress + pid + "?" + query);
         }
     }
 
     protected static HttpPost postDSMethod(final String pid, final String ds,
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
-                new HttpPost(serverAddress + "objects/" + pid + "/" + ds +
+                new HttpPost(serverAddress + pid + "/" + ds +
                         "/fcr:content");
         post.setEntity(new StringEntity(content));
         return post;
@@ -95,7 +93,7 @@ public abstract class AbstractResourceIT {
     protected static HttpPut putDSMethod(final String pid, final String ds,
             final String content) throws UnsupportedEncodingException {
         final HttpPut put =
-                new HttpPut(serverAddress + "objects/" + pid + "/" + ds +
+                new HttpPut(serverAddress + pid + "/" + ds +
                         "/fcr:content");
 
         put.setEntity(new StringEntity(content));

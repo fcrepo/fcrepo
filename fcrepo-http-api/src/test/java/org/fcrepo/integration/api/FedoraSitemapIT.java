@@ -51,7 +51,7 @@ public class FedoraSitemapIT extends AbstractResourceIT {
                 IOUtils.toString(execute(httpGet).getEntity().getContent());
 
         logger.info("Got sitemap response: {}", s);
-        assertTrue(s.contains("/objects/test:1</loc>"));
+        assertTrue(s.contains("/test:1</loc>"));
 
     }
 

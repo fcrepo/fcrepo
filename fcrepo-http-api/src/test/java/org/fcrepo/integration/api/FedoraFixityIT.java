@@ -42,7 +42,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         assertEquals(201, getStatus(method1));
         final HttpGet method2 =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest11/zxc/fcr:fixity");
+                        "FedoraDatastreamsTest11/zxc/fcr:fixity");
         method2.setHeader("Accept", "application/n3");
         final HttpResponse response = execute(method2);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -56,7 +56,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
                 RdfLexicon.IS_FIXITY_RESULT_OF.asNode(), ResourceFactory
                         .createResource(
                                 serverAddress +
-                                        "objects/FedoraDatastreamsTest11/zxc")
+                                        "FedoraDatastreamsTest11/zxc")
                         .asNode()));
         assertTrue(graphStore.contains(Node.ANY, Node.ANY,
                 RdfLexicon.HAS_FIXITY_STATE.asNode(), ResourceFactory

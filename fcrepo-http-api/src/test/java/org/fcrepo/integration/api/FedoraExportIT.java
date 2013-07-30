@@ -41,7 +41,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT1" +
+                new HttpGet(serverAddress + "JcrXmlSerializerIT1" +
                         "/fcr:export");
         HttpResponse response = client.execute(getObjMethod);
         assertEquals("application/xml", response.getEntity().getContentType()
@@ -53,22 +53,22 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // delete it
         client.execute(new HttpDelete(serverAddress +
-                "objects/JcrXmlSerializerIT1"));
+                "JcrXmlSerializerIT1"));
         response =
                 client.execute(new HttpGet(serverAddress +
-                        "objects/JcrXmlSerializerIT1"));
+                        "JcrXmlSerializerIT1"));
         assertEquals(404, response.getStatusLine().getStatusCode());
 
         // try to import it
         HttpPost importMethod =
-                new HttpPost(serverAddress + "objects/fcr:import");
+                new HttpPost(serverAddress + "fcr:import");
         importMethod.setEntity(new StringEntity(content));
         assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
         // check that we made it
         response =
                 client.execute(new HttpGet(serverAddress +
-                        "objects/JcrXmlSerializerIT1"));
+                        "JcrXmlSerializerIT1"));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
     }
@@ -85,7 +85,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" +
+                new HttpGet(serverAddress + "JcrXmlSerializerIT2" +
                         "/fcr:export");
         HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -95,10 +95,10 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // delete it
         client.execute(new HttpDelete(serverAddress +
-                "objects/JcrXmlSerializerIT2"));
+                "JcrXmlSerializerIT2"));
         response =
                 client.execute(new HttpGet(serverAddress +
-                        "objects/JcrXmlSerializerIT2"));
+                        "JcrXmlSerializerIT2"));
         assertEquals(404, response.getStatusLine().getStatusCode());
 
         // try to import it
@@ -125,7 +125,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "objects/JcrXmlSerializerIT2" +
+                new HttpGet(serverAddress + "JcrXmlSerializerIT2" +
                         "/fcr:export");
         HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());

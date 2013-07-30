@@ -46,8 +46,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
-                serverAddress + OBJECT_PATH.replace("/", "") +
-                        "/FedoraDatastreamsTest2/zxc/fcr:content", location);
+                serverAddress + "FedoraDatastreamsTest2/zxc/fcr:content", location);
     }
 
     @Test
@@ -60,8 +59,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
-                serverAddress + OBJECT_PATH.replace("/", "") +
-                        "/FedoraDatastreamsTest2/does/not/exist/yet/zxc/fcr:content",
+                serverAddress + "FedoraDatastreamsTest2/does/not/exist/yet/zxc/fcr:content",
                 location);
     }
 
@@ -76,8 +74,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
-                serverAddress + OBJECT_PATH.replace("/", "") +
-                        "/FedoraDatastreamsTestPut/zxc/fcr:content", location);
+                serverAddress + "FedoraDatastreamsTestPut/zxc/fcr:content", location);
     }
 
     @Test
@@ -104,7 +101,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet retrieveMutatedDataStreamMethod =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest3/ds1/fcr:content");
+                        "FedoraDatastreamsTest3/ds1/fcr:content");
         assertTrue("Datastream didn't accept mutation!", faulkner1
                 .equals(EntityUtils.toString(client.execute(
                         retrieveMutatedDataStreamMethod).getEntity())));
@@ -122,7 +119,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(201, getStatus(createDSMethod));
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest6/ds1/fcr:content");
+                        "FedoraDatastreamsTest6/ds1/fcr:content");
         assertEquals(200, getStatus(method_test_get));
         final HttpResponse response = client.execute(method_test_get);
         logger.debug("Returned from HTTP GET, now checking content...");
@@ -152,7 +149,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest61/ds1/fcr:content");
+                        "FedoraDatastreamsTest61/ds1/fcr:content");
         method_test_get.setHeader("If-None-Match",
                 "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
         method_test_get.setHeader("If-Modified-Since", format
@@ -176,7 +173,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpPut method_test_put =
                 new HttpPut(serverAddress +
-                        "objects/FedoraDatastreamsTest62/ds1/fcr:content");
+                        "FedoraDatastreamsTest62/ds1/fcr:content");
         method_test_put.setHeader("If-Match",
                 "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
         method_test_put.setHeader("If-Unmodified-Since",
@@ -201,7 +198,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
-                                    "objects/FedoraDatastreamsTest63/ds1/fcr:content");
+                                    "FedoraDatastreamsTest63/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=1-3");
         assertEquals(206, getStatus(method_test_get));
         final HttpResponse response = client.execute(method_test_get);
@@ -224,7 +221,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get =
             new HttpGet(serverAddress +
-                            "objects/FedoraDatastreamsTest64/ds1/fcr:content");
+                            "FedoraDatastreamsTest64/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=50-100");
         assertEquals(416, getStatus(method_test_get));
         final HttpResponse response = client.execute(method_test_get);

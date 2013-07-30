@@ -31,7 +31,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         execute(postObjMethod("FedoraDatastreamsTest1"));
         final HttpGet method =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest1/fcr:versions");
+                        "FedoraDatastreamsTest1/fcr:versions");
         HttpResponse resp = execute(method);
         assertEquals(200, resp.getStatusLine().getStatusCode());
     }
@@ -47,7 +47,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress +
-                        "objects/FedoraVersioningTest2/fcr:versions/v0.0.1");
+                        "FedoraVersioningTest2/fcr:versions/v0.0.1");
         HttpResponse resp = execute(getVersion);
         assertEquals(200, resp.getStatusLine().getStatusCode());
         logger.info("Got version profile: {}", IOUtils.toString(resp
@@ -64,7 +64,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress +
-                        "objects/FedoraDatastreamsTest1/ds1/fcr:versions/lastVersion");
+                        "FedoraDatastreamsTest1/ds1/fcr:versions/lastVersion");
         HttpResponse resp = execute(getVersion);
         assertEquals(404, resp.getStatusLine().getStatusCode());
     }

@@ -42,14 +42,14 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         final HttpPost post = postObjMethod("DublinCoreTest1");
         post.setHeader("Content-Type", "application/sparql-update");
         BasicHttpEntity entity = new BasicHttpEntity();
-        String subjectURI = serverAddress + "objects/DublinCoreTest1";
+        String subjectURI = serverAddress + "DublinCoreTest1";
         entity.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + subjectURI + "> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
                         .getBytes()));
         post.setEntity(entity);
         assertEquals(204, getStatus(post));
         final HttpGet getWorstCaseOaiMethod =
-                new HttpGet(serverOAIAddress + "objects/DublinCoreTest1/oai:dc");
+                new HttpGet(serverOAIAddress + "DublinCoreTest1/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getWorstCaseOaiMethod);
 
@@ -79,7 +79,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         assertEquals(201, status);
 
         final HttpGet getWorstCaseOaiMethod =
-                new HttpGet(serverOAIAddress + "objects/DublinCoreTest2/oai:dc");
+                new HttpGet(serverOAIAddress + "DublinCoreTest2/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());

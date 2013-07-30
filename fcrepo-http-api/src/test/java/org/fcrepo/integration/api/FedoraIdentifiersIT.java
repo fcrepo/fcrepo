@@ -76,14 +76,14 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test
     public void testGetNextPidRespondsWithPath() throws Exception {
-        final HttpPost method = new HttpPost(serverAddress + "objects/fcr:pid");
+        final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
         logger.debug("Executed testGetNextPidRespondsWithPath()");
         assertEquals(HttpServletResponse.SC_OK, getStatus(method));
     }
 
     @Test
     public void testGetNextHasAPidWithPath() throws IOException {
-        final HttpPost method = new HttpPost(serverAddress + "objects/fcr:pid");
+        final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
         method.setHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPidWithPath()");
@@ -91,7 +91,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
                 TestHelpers.parseTriples(response.getEntity().getContent());
         assertTrue("Didn't find a single dang PID!", graphStore.contains(
                 Node.ANY, ResourceFactory.createResource(
-                        serverAddress + "objects/fcr:pid").asNode(),
+                        serverAddress + "fcr:pid").asNode(),
                 RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY));
 
     }
@@ -99,7 +99,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasTwoPidsWithPath() throws IOException {
         final HttpPost method =
-                new HttpPost(serverAddress + "objects/fcr:pid?numPids=2");
+                new HttpPost(serverAddress + "fcr:pid?numPids=2");
         method.setHeader("Accept", "application/n3");
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPidsWithPath()");
@@ -107,7 +107,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
                 TestHelpers.parseTriples(response.getEntity().getContent());
         assertEquals("Didn't find two dang PIDs!", 2, Iterators.size(graphStore
                 .find(Node.ANY, ResourceFactory.createResource(
-                        serverAddress + "objects/fcr:pid").asNode(),
+                        serverAddress + "fcr:pid").asNode(),
                         RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY)));
 
     }
