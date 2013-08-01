@@ -1,4 +1,3 @@
-
 /*
  * JCR node types for use with Fedora
  */
@@ -28,6 +27,13 @@
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 
 <test = 'info:fedora/test/'>
+
+/*
+ * The following relationship properties are made available in support of legacy graph constructions from the
+ * Fedora 3 era that use direct resource-to-resource relationships. New work would be best accomplished by 
+ * using literal-valued properties with defined semantics and associated vocabularies, or by directly using
+ * JCR technical idioms like hierarchy.
+ */
 
 [fedora:relations] mixin
 
