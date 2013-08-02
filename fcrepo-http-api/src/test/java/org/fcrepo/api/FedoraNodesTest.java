@@ -60,6 +60,7 @@ import com.hp.hpl.jena.graph.Node_ANY;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.util.Context;
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.Datastream;
 import org.fcrepo.FedoraObject;
 import org.fcrepo.FedoraResource;
 import org.fcrepo.exception.InvalidChecksumException;
@@ -222,10 +223,13 @@ public class FedoraNodesTest {
                 mockDatastreams.createDatastreamNode(any(Session.class),
                         eq(dsPath), anyString(), eq(dsContentStream),
                         any(URI.class))).thenReturn(mockNode);
+        Datastream mockDatastream = mock(Datastream.class);
+        when(mockDatastream.getNode()).thenReturn(mockNode);
+        when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
-                        FEDORA_DATASTREAM, null, null, null, getUriInfoImpl(),
+                        FEDORA_DATASTREAM, null, MediaType.APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
