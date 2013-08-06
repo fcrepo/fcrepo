@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -145,7 +147,8 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(201, getStatus(createDSMethod));
 
         final SimpleDateFormat format =
-                new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
