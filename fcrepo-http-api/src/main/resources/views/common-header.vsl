@@ -7,6 +7,7 @@
         <ul class="nav">
             <li><a href="$uriInfo.baseUriBuilder.build()">Home</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:namespaces">Namespaces</a></li>
+            <li><a href="$uriInfo.baseUriBuilder.build()fcr:workspaces">Workspaces</a></li>
 
         </ul>
 

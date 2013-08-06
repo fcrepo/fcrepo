@@ -89,6 +89,8 @@ public final class RdfLexicon {
             createProperty("info:fedora/hasTransactionProvider");
     public static final Property HAS_NAMESPACE_SERVICE =
             createProperty("info:fedora/hasNamespaces");
+    public static final Property HAS_WORKSPACE_SERVICE =
+            createProperty("info:fedora/hasWorkspaces");
     public static final Property HAS_SEARCH_SERVICE =
             createProperty("http://www.whatwg.org/specs/web-apps/current-work/"
                                    + "#link-type-search");
@@ -116,6 +118,8 @@ public final class RdfLexicon {
                     "feed0");
     public static final Property HAS_SUBSCRIPTION_SERVICE =
             createProperty("http://microformats.org/wiki/rel-subscription");
+    public static final Property NOT_IMPLEMENTED =
+            createProperty(INTERNAL_NAMESPACE + "notImplemented");
 
     // CONTENT
     public static final Property HAS_CONTENT =

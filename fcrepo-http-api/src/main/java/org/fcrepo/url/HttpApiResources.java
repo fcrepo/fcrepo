@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableBiMap.of;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_NAMESPACE_SERVICE;
+import static org.fcrepo.RdfLexicon.HAS_WORKSPACE_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_SEARCH_SERVICE;
 import static org.fcrepo.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.RdfLexicon.HAS_SITEMAP;
@@ -41,6 +42,7 @@ import org.fcrepo.api.FedoraVersions;
 import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.api.repository.FedoraRepositoryTransactions;
+import org.fcrepo.api.repository.FedoraRepositoryWorkspaces;
 import org.fcrepo.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
 import org.fcrepo.utils.FedoraJcrTypes;
@@ -135,6 +137,11 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         // fcr:namespaces
         model.add(s, HAS_NAMESPACE_SERVICE, model.createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryNamespaces.class)
+                .build().toASCIIString()));
+
+        // fcr:workspaces
+        model.add(s, HAS_WORKSPACE_SERVICE, model.createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraRepositoryWorkspaces.class)
                 .build().toASCIIString()));
     }
 

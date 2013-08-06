@@ -1,0 +1,31 @@
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
+#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+<!DOCTYPE html>
+#parse("views/common.vsl")
+<html>
+<head>
+    <title>registered workspaces</title>
+    #parse("views/common-head.vsl")
+</head>
+<body>
+<div id="main" class="container" resource="$uriInfo.baseUriBuilder.build()fcr:workspaces">
+    #parse("views/common-header.vsl")
+
+    <div class="row">
+<div class="span9">
+<h1>Workspaces</h1>
+
+## output other nodes
+    #foreach($subject in $subjects)
+        <div class="well" resource="$subject.getURI()">
+            <h3>$subject.getURI()</h3>
+            #triples($subject.asNode())
+        </div>
+    #end
+</div>
+
+</div>
+</body>
+</html>

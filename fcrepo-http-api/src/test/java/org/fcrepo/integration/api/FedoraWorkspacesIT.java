@@ -17,11 +17,17 @@
 package org.fcrepo.integration.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
 
 import javax.jcr.RepositoryException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -31,6 +37,25 @@ import org.junit.Test;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraWorkspacesIT extends AbstractResourceIT {
+
+    @Test
+    public void testGetWorkspaces() throws Exception {
+        final HttpGet httpGet = new HttpGet(serverAddress + "fcr:workspaces");
+        httpGet.setHeader("Accept", "text/html");
+        final HttpResponse response = execute(httpGet);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        InputStream in = response.getEntity().getContent();
+        List<String> lines = IOUtils.readLines(in);
+        boolean found = false;
+        for (String line : lines) {
+            if (line.contains(serverAddress + "workspace:default")) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(serverAddress + "workspace:default, not found", found);
+    }
 
     @Test
     public void shouldDemonstratePathsAndWorkspaces() throws IOException,
