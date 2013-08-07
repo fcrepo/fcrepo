@@ -70,18 +70,18 @@
 /*
  * A Fedora object.
  */
-[fedora:object] > fedora:resource, nt:folder mixin
+[fedora:object] > fedora:resource mixin
 
 
 /*
  * A Fedora datastream.
  */
-[fedora:datastream] > fedora:resource, nt:file mixin
+[fedora:datastream] > fedora:resource mixin
    + image:metadata (nt:unstructured) multiple
 
 /*
  * Some content that can have a checksum
  */
-[fedora:binary] > nt:resource mixin
+[fedora:binary] mixin
   - fedora:size (LONG) COPY
   - fedora:digest (URI) COPY
