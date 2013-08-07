@@ -67,8 +67,8 @@ public class RdfSerializationUtils {
      *    Mon, 01 Jul 2013 07:51:23Z
      */
     protected static DateTimeFormatter RFC2822DATEFORMAT =
-    forPattern("EEE, dd MMM yyyy HH:mm:ss Z").withLocale(Locale.US).withZone(
-            DateTimeZone.forID("GMT"));
+            forPattern("EEE, dd MMM yyyy HH:mm:ss Z").withLocale(Locale.US)
+                    .withZone(DateTimeZone.forID("GMT"));
 
     /**
      * Get the very first value for a predicate as a string, or null if the
