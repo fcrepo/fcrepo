@@ -24,12 +24,14 @@ import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
+import java.util.Locale;
 
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.fcrepo.rdf.GraphProperties;
 import org.fcrepo.rdf.SerializationUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
@@ -64,8 +66,9 @@ public class RdfSerializationUtils {
      * DateTimeFormatter for RFC2822 (used in HTTP headers), e.g.:
      *    Mon, 01 Jul 2013 07:51:23Z
      */
-    public static DateTimeFormatter RFC2822DATEFORMAT =
-            forPattern("EEE, dd MMM yyyy HH:mm:ss Z");
+    protected static DateTimeFormatter RFC2822DATEFORMAT =
+    forPattern("EEE, dd MMM yyyy HH:mm:ss Z").withLocale(Locale.US).withZone(
+            DateTimeZone.forID("GMT"));
 
     /**
      * Get the very first value for a predicate as a string, or null if the
