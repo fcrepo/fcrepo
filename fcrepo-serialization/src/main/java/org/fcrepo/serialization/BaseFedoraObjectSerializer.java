@@ -24,10 +24,10 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.FedoraObject;
-import org.fcrepo.exception.InvalidChecksumException;
-import org.fcrepo.services.DatastreamService;
-import org.fcrepo.services.ObjectService;
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**

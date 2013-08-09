@@ -6,14 +6,14 @@
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-  <bean class="org.fcrepo.session.SessionFactory"/>
+  <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
 
   <!-- Mints PIDs-->
-  <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+  <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
 
   <context:annotation-config/>
 
   <context:component-scan
-    base-package="org.fcrepo.api, org.fcrepo.services, org.fcrepo.serialization, org.fcrepo.responses, org.fcrepo.auth.oauth.api, org.fcrepo.url"
+    base-package="org.fcrepo.http, org.fcrepo.kernel.services, org.fcrepo.serialization, org.fcrepo.auth.oauth.api"
   />
 </beans>

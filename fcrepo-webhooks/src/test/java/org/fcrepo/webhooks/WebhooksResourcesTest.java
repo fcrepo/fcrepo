@@ -16,7 +16,7 @@
 
 package org.fcrepo.webhooks;
 
-import static org.fcrepo.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,11 +27,11 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.FedoraResource;
-import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.rdf.impl.DefaultGraphSubjects;
-import org.fcrepo.test.util.TestHelpers;
-import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.Test;
 

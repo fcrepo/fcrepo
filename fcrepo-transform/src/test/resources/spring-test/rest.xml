@@ -15,11 +15,12 @@
 
   <context:annotation-config/>
 
-  <context:component-scan base-package="org.fcrepo.services, org.fcrepo.session, org.fcrepo.api, org.fcrepo.transform.http, org.fcrepo.serialization, org.fcrepo.exceptionhandlers"/>
+  <context:component-scan base-package="org.fcrepo.http, org.fcrepo.kernel.services,
+    org.fcrepo.transform.http, org.fcrepo.serialization"/>
 
-  <bean class="org.fcrepo.session.SessionFactory" />
+  <bean class="org.fcrepo.http.commons.session.SessionFactory" />
 
   <!-- Mints PIDs-->
-  <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+  <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
 
 </beans>

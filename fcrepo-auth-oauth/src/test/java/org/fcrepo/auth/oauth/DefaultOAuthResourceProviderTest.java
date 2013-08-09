@@ -15,7 +15,7 @@
  */
 package org.fcrepo.auth.oauth;
 
-import static org.fcrepo.test.util.TestHelpers.setField;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthRuntimeException;
 import org.apache.oltu.oauth2.rsfilter.OAuthDecision;
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

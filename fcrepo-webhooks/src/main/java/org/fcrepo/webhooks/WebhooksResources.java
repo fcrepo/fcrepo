@@ -19,11 +19,11 @@ package org.fcrepo.webhooks;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.FedoraResource;
-import org.fcrepo.RdfLexicon;
-import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.springframework.stereotype.Component;
 
 import javax.jcr.RepositoryException;

@@ -29,7 +29,7 @@ import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
-import org.fcrepo.FedoraObject;
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.serialization.JcrXmlSerializer;
 import org.junit.Test;
 

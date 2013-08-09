@@ -28,7 +28,7 @@ import org.fcrepo.transform.Transformation;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.fcrepo.rdf.SerializationUtils.unifyDatasetModel;
+import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 
 /**
  * SPARQL Query-based transforms

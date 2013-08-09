@@ -17,10 +17,10 @@
 package org.fcrepo.integration;
 
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
-import org.fcrepo.FedoraObject;
-import org.fcrepo.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.transformations.LDPathTransform;
-import org.fcrepo.services.ObjectService;
+import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

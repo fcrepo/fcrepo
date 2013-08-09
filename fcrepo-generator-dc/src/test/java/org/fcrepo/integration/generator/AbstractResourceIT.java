@@ -28,7 +28,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;

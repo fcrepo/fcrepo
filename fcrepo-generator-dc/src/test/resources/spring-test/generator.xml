@@ -9,13 +9,15 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
     <context:annotation-config />
+
+    <context:component-scan base-package="org.fcrepo.http,
+      org.fcrepo.kernel.services, org.fcrepo.serialization, 
+      org.fcrepo.generator"/>
     
-    <context:component-scan base-package="org.fcrepo.services, org.fcrepo.generator, org.fcrepo.serialization, org.fcrepo.api, org.fcrepo.exceptionhandlers"/>
-    
-    <bean class="org.fcrepo.session.SessionFactory" />
+    <bean class="org.fcrepo.http.commons.session.SessionFactory" />
     
     <!-- Mints PIDs-->
-    <bean class="org.fcrepo.identifiers.UUIDPidMinter"/>
+    <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
     
     <util:list id="dcgenerators" value-type="org.fcrepo.generator.dublincore.DCGenerator">
         <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator">

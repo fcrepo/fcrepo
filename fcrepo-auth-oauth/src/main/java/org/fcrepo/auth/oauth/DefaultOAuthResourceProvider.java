@@ -30,7 +30,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthRuntimeException;
 import org.apache.oltu.oauth2.rsfilter.OAuthDecision;
 import org.apache.oltu.oauth2.rsfilter.OAuthRSProvider;
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

@@ -12,10 +12,10 @@
     <context:annotation-config/>
 
     <!-- listener that moves JCR Events to the Fedora internal event bus -->
-    <bean class="org.fcrepo.observer.SimpleObserver"/>
+    <bean class="org.fcrepo.kernel.observer.SimpleObserver"/>
 
     <!-- used by bean above to filter which events get put on the bus -->
-    <bean name="fedoraEventFilter" class="org.fcrepo.observer.DefaultFilter"/>
+    <bean name="fedoraEventFilter" class="org.fcrepo.kernel.observer.DefaultFilter"/>
 
     <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
     <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>

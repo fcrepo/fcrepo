@@ -40,8 +40,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.fcrepo.rdf.SerializationUtils.getDatasetSubject;
-import static org.fcrepo.rdf.SerializationUtils.unifyDatasetModel;
+import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
+import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 
 /**
  * Utilities for working with LDPath

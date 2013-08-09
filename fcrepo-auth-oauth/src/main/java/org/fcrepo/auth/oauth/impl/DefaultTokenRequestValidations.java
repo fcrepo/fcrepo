@@ -20,8 +20,8 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
 import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
 import static org.fcrepo.auth.oauth.Constants.SCOPES_PROPERTY;
-import static org.fcrepo.utils.FedoraTypesUtils.map;
-import static org.fcrepo.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.AccessControlException;
@@ -34,7 +34,7 @@ import javax.jcr.Session;
 
 import org.apache.oltu.oauth2.as.request.OAuthTokenRequest;
 import org.fcrepo.auth.oauth.TokenRequestValidations;
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
 import org.slf4j.Logger;
 
 

@@ -21,7 +21,7 @@ import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
 
 /**
  * @author ajs6f

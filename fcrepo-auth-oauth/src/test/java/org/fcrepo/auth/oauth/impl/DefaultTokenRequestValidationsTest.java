@@ -18,11 +18,8 @@ package org.fcrepo.auth.oauth.impl;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.matches;
-import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.security.AccessControlException;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -32,7 +29,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.apache.oltu.oauth2.as.request.OAuthTokenRequest;
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

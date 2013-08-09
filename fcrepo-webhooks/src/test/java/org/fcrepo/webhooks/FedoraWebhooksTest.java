@@ -27,9 +27,9 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.observer.FedoraEvent;
-import org.fcrepo.session.SessionFactory;
-import org.fcrepo.test.util.TestHelpers;
+import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Repository;

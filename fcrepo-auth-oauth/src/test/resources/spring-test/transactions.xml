@@ -7,7 +7,7 @@
   http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
 
   <context:annotation-config />
-  <context:component-scan base-package="org.fcrepo.services" />
+  <context:component-scan base-package="org.fcrepo.kernel.services" />
 
   <task:scheduler id="taskScheduler" />
   <task:executor id="taskExecutor" pool-size="1" />

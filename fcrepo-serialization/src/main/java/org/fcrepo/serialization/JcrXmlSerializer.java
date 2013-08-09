@@ -25,7 +25,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.FedoraObject;
+import org.fcrepo.kernel.FedoraObject;
 import org.springframework.stereotype.Component;
 
 /**

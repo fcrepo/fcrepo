@@ -16,7 +16,7 @@
 
 package org.fcrepo.audit;
 
-import static org.fcrepo.utils.EventType.getEventName;
+import static org.fcrepo.kernel.utils.EventType.getEventName;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;

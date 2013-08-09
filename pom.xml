@@ -569,7 +569,7 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.1</version>
           <configuration>
-            <debug>false</debug>
+            <debug>true</debug>
             <source>1.7</source>
             <target>1.7</target>
           </configuration>

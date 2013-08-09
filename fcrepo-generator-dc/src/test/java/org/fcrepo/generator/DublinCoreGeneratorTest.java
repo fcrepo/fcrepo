@@ -17,9 +17,9 @@
 package org.fcrepo.generator;
 
 import static java.util.Arrays.asList;
-import static org.fcrepo.test.util.PathSegmentImpl.createPathList;
-import static org.fcrepo.test.util.TestHelpers.mockSession;
-import static org.fcrepo.test.util.TestHelpers.setField;
+import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -31,9 +31,9 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.FedoraResource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
-import org.fcrepo.services.NodeService;
+import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
 

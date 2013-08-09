@@ -24,7 +24,7 @@ import java.net.URI;
 import javax.jcr.observation.Event;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.test.util.TestHelpers;
+import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 

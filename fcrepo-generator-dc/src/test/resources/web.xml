@@ -21,7 +21,7 @@
 		<servlet-class>com.sun.jersey.spi.spring.container.servlet.SpringServlet</servlet-class>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>org.fcrepo.api, org.fcrepo.generator, org.fcrepo.exceptionhandlers, org.fcrepo.session</param-value>
+      <param-value>org.fcrepo.kernel.services, org.fcrepo.http,org.fcrepo.generator</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>

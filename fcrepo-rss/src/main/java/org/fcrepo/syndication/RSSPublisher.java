@@ -19,7 +19,7 @@ package org.fcrepo.syndication;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
-import static org.fcrepo.utils.EventType.getEventType;
+import static org.fcrepo.kernel.utils.EventType.getEventType;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +35,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.xml.transform.stream.StreamSource;
 
-import org.fcrepo.AbstractResource;
+import org.fcrepo.http.commons.AbstractResource;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 

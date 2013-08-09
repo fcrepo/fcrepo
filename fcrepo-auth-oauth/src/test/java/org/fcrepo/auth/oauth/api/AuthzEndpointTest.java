@@ -25,15 +25,12 @@ import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
-import static org.fcrepo.auth.oauth.Constants.PRINCIPAL_PROPERTY;
-import static org.fcrepo.test.util.TestHelpers.setField;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -42,7 +39,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.oltu.oauth2.common.OAuth;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.fcrepo.session.SessionFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
 
 import org.junit.Before;
 import org.junit.Test;

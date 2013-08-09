@@ -33,10 +33,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.AbstractResource;
-import org.fcrepo.FedoraResource;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
-import org.fcrepo.session.InjectedSession;
+import org.fcrepo.http.commons.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 

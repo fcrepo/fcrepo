@@ -19,11 +19,11 @@ package org.fcrepo.syndication;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.FedoraResource;
-import org.fcrepo.RdfLexicon;
-import org.fcrepo.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.rdf.GraphSubjects;
-import org.fcrepo.utils.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.rdf.model.Model;

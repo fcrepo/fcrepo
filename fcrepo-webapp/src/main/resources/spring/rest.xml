@@ -16,13 +16,13 @@
     <context:annotation-config/>
 
     <!-- Mints PIDs-->
-    <bean class="org.fcrepo.identifiers.UUIDPathMinter">
+    <bean class="org.fcrepo.kernel.identifiers.UUIDPathMinter">
       <constructor-arg type="int" index="0" value="${fcrepo.uuid.path.length:2}" />
       <constructor-arg type="int" index="1" value="${fcrepo.uuid.path.count:4}" />
     </bean>
 
-    <bean class="org.fcrepo.session.SessionFactory"/>
+    <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
 
-    <context:component-scan base-package="org.fcrepo.services, org.modeshape.web.jcr.rest, org.fcrepo.api, org.fcrepo.serialization, org.fcrepo.responses, org.fcrepo.exceptionhandlers, org.fcrepo.audit, org.fcrepo.url, org.fcrepo.auth.oauth.api"/>
+    <context:component-scan base-package="org.fcrepo.kernel.services, org.modeshape.web.jcr.rest, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.audit, org.fcrepo.auth.oauth.api"/>
 
 </beans>

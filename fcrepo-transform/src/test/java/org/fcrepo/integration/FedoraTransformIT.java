@@ -24,7 +24,7 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.fcrepo.services.ObjectService;
+import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
