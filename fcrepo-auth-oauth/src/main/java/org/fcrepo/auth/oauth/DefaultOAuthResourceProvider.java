@@ -70,9 +70,11 @@ public class DefaultOAuthResourceProvider implements OAuthRSProvider {
                     final String client =
                             tokenNode.getProperty(CLIENT_PROPERTY).getString();
                     LOGGER.debug("Retrieved client: {}", client);
-                    final String principal =
-                            tokenNode.getProperty(PRINCIPAL_PROPERTY)
-                                    .getString();
+                    String principal = null;
+                    if (tokenNode.hasProperty(PRINCIPAL_PROPERTY)) {
+                        principal = tokenNode.getProperty(PRINCIPAL_PROPERTY)
+                                .getString();
+                    }
                     LOGGER.debug("Retrieved principal: {}", principal);
                     return new Decision(client, principal);
                 }

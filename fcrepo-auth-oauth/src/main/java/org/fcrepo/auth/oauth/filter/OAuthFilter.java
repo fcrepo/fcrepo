@@ -29,7 +29,6 @@ import static org.apache.oltu.oauth2.rsfilter.OAuthUtils.isEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -40,7 +39,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.oltu.oauth2.common.OAuth;
@@ -110,23 +108,6 @@ public class OAuthFilter implements Filter {
             LOGGER.trace("Validating {} in {}", accessToken, realm);
             final OAuthDecision decision =
                     provider.validateRequest(realm, accessToken, req);
-
-            final Principal principal = decision.getPrincipal();
-
-            request =
-                new HttpServletRequestWrapper((HttpServletRequest) request) {
-
-                    @Override
-                    public String getRemoteUser() {
-                        return principal != null ? principal.getName() : null;
-                    }
-
-                    @Override
-                    public Principal getUserPrincipal() {
-                        return principal;
-                    }
-
-                };
 
             request.setAttribute(OAUTH_CLIENT_ID, decision.getOAuthClient()
                     .getClientId());

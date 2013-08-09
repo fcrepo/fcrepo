@@ -62,8 +62,9 @@ public class AuthzEndpointIT extends AbstractOAuthResourceIT {
         logger.debug("Retrieved authorization endpoint response.");
         final String redirectHeader =
                 response.getFirstHeader("Location").getValue();
+        logger.debug("Redirect header '{}'", redirectHeader);
         final String authCode =
-                URI.create(redirectHeader).getQuery().split("&")[0].split("=")[1];
+                URI.create(redirectHeader).getQuery().split("&")[4].split("=")[1];
         assertNotNull("Didn't find authorization code!", authCode);
         logger.debug("with authorization code: {}", authCode);
         final HttpPost post =

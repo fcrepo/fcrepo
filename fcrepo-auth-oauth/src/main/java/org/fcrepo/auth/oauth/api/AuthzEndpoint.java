@@ -104,6 +104,20 @@ public class AuthzEndpoint extends AbstractResource {
                 final Set<String> scopes = oauthRequest.getScopes();
                 saveAuthCode(authCode, scopes, client);
                 builder.setCode(authCode);
+
+                builder.setParam("grant_type", "authorization_code");
+
+                if (null != client) {
+                    builder.setParam("client_id", client);
+                }
+
+                String clientSecret = oauthRequest.getClientSecret();
+                if (null != clientSecret) {
+                    builder.setParam("client_secret", clientSecret);
+                } else {
+                    builder.setParam("client_secret", "YOUR_SECRET");
+                }
+
                 /** as far as I can tell from spec and a number of docs,
                  * "token" is not a valid response type for the authCode
                  * endpoint
@@ -126,6 +140,9 @@ public class AuthzEndpoint extends AbstractResource {
 
             final String redirectURI =
                     oauthRequest.getParam(OAUTH_REDIRECT_URI);
+            if (null != redirectURI) {
+                builder.setParam(OAUTH_REDIRECT_URI, redirectURI);
+            }
 
             if (oauthRequest.getState() != null) {
                 builder.setParam(OAUTH_STATE, oauthRequest.getState());
