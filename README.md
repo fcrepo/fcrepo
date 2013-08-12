@@ -21,7 +21,7 @@ System Requirements
 ```bash
 $ git clone https://github.com/futures/fcrepo4.git
 $ cd fcrepo4
-$ mvn install
+$ MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=1024m" mvn install
 $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
