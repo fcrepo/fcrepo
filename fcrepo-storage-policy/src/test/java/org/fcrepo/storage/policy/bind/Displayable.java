@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.storage.policy;
+package org.fcrepo.storage.policy.bind;
 
-import javax.jcr.Node;
+import javax.xml.bind.annotation.XmlElement;
 
-/**
- * A binary storage policy definition and evaluation machinery
- * @author cbeer
- * @date Apr 25, 2013
- */
-public interface Policy {
+public abstract class Displayable extends Describable {
 
-    /**
-     * Evaluate the policy; if the policy matches, return the
-     * binary storage hint. If not, return null.
-     */
-    String evaluatePolicy(Node n);
+    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+            name = "display-name")
+    String displayName;
+
+    public String displayName() {
+        return this.displayName;
+    }
 }

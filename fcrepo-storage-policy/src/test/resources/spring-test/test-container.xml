@@ -8,14 +8,13 @@
   <context:property-placeholder/>
 
   <!-- show stack traces for easier debugging -->
-  <bean id="wildcardExceptionmapper" class="WildcardExceptionMapper" >
+  <bean id="wildcardExceptionmapper" class="org.fcrepo.http.commons.exceptionhandlers.WildcardExceptionMapper" >
   	<property name="showStackTrace" value="true" />
   </bean>
   
-  <bean id="containerWrapper" class="ContainerWrapper" init-method="start" destroy-method="stop" >
+  <bean id="containerWrapper" class="org.fcrepo.storage.policy.ContainerWrapper" init-method="start" destroy-method="stop" >
     <property name="port" value="${test.port:8080}"/>
-    <property name="contextConfigLocations" value="classpath:spring-test/store.xml,classpath:spring-test/repo.xml" />
-    <property name="packagesToScan" value="org.fcrepo.http" />
+    <property name="configLocation" value="classpath:web.xml" />
   </bean>
   
 </beans>

@@ -42,20 +42,12 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-metrics</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-storage-policy</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
+    </dependency>	
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>apache-jena-libs</artifactId>
       <type>pom</type>
     </dependency>
-
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>

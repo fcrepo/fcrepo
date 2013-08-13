@@ -16,14 +16,15 @@
 
 package org.fcrepo.storage.policy;
 
-import org.fcrepo.storage.policy.MimeTypePolicy;
-import org.fcrepo.storage.policy.Policy;
+import org.fcrepo.kernel.services.policy.Policy;
 import org.junit.Test;
+
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -91,4 +92,13 @@ public class MimeTypePolicyTest {
 
         assertNull("Received hint was not null!", receivedHint);
     }
+    
+    // Test using equals. As impl. of <Policy> involves, this may change
+    @Test
+    public void testEquals() {
+        MimeTypePolicy obj1 = new MimeTypePolicy("image/tiff", "tiff-store");
+        MimeTypePolicy obj2 = new MimeTypePolicy("image/tiff", "tiff-store");
+        assertEquals(obj1,obj2);
+    }   
+    
 }

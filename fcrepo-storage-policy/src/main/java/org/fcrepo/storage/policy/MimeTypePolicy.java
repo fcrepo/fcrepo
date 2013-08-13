@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.storage.policy;
-
-import org.slf4j.Logger;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.fcrepo.kernel.services.policy.Policy;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
 /**
  * A binary storage policy based on the mime type of the node
+ * 
  * @author cbeer
  * @date Apr 25, 2013
  */
@@ -45,31 +48,81 @@ public class MimeTypePolicy implements Policy {
         this.hint = hint;
     }
 
+    @Override
+    public String toString() {
+        return "MimeTypePolicy [mimeType=" + mimeType + ", hint=" + hint + "]";
+    }
+
     /**
      * Evaluate the mime type policy. If the content node's mime type matches
      * this policy's mime type, return the hint.
      */
     @Override
     public String evaluatePolicy(final Node n) {
-        LOGGER.debug("Evaluating MimeTypePolicy ({} -> {}) for {} ",
-                            mimeType, hint, n);
+        LOGGER.debug("Evaluating MimeTypePolicy ({} -> {}) for {} ", mimeType,
+            hint, n);
         try {
-            final String nodeMimeType = n.getNode(JCR_CONTENT)
-                                                .getProperty(JCR_MIME_TYPE)
-                                                .getString();
+            final String nodeMimeType =
+                n.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString();
 
             LOGGER.trace("Found mime type {}", nodeMimeType);
 
             if (nodeMimeType.equals(mimeType)) {
-                LOGGER.trace("{} matched this mime type." +
-                                     "Returning hint {} ", mimeType, hint);
+                LOGGER.trace("{} matched this mime type."
+                    + "Returning hint {} ", mimeType, hint);
                 return hint;
             }
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             LOGGER.warn("Got Exception evaluating policy: {}", e);
             return null;
         }
 
         return null;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (hint == null ? 0 : hint.hashCode());
+        result = prime * result + (mimeType == null ? 0 : mimeType.hashCode());
+        return result;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        MimeTypePolicy other = (MimeTypePolicy) obj;
+        if (hint == null) {
+            if (other.hint != null) {
+                return false;
+            }
+        } else if (!hint.equals(other.hint)) {
+            return false;
+        }
+        if (mimeType == null) {
+            if (other.mimeType != null) {
+                return false;
+            }
+        } else if (!mimeType.equals(other.mimeType)) {
+            return false;
+        }
+        return true;
     }
 }

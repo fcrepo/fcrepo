@@ -28,15 +28,14 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Session;
 
-import org.fcrepo.storage.policy.MimeTypePolicy;
-import org.fcrepo.storage.policy.Policy;
-import org.fcrepo.storage.policy.PolicyDecisionPoint;
+import org.fcrepo.kernel.services.policy.Policy;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class PolicyDecisionPointTest {
 
-    static PolicyDecisionPoint pt;
+    static StoragePolicyDecisionPoint pt;
 
     static private String dummyHint;
 

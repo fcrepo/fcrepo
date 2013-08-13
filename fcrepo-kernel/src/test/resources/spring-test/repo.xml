@@ -19,10 +19,9 @@
     </bean>
 
     <context:component-scan
-          base-package="org.fcrepo.kernel.services"/>
+          base-package="org.fcrepo.kernel.services, org.fcrepo.storage.policy"/>
 
 
   <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
-    <bean class="org.fcrepo.storage.policy.PolicyDecisionPoint" />
 
 </beans>
