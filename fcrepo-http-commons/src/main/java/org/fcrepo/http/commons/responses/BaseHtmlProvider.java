@@ -54,7 +54,6 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
-import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
 import org.fcrepo.kernel.RdfLexicon;
@@ -72,7 +71,7 @@ import com.hp.hpl.jena.rdf.model.Model;
  * A simple JAX-RS Entity Provider that can accept RDF datasets that represent
  * Fedora resources and merge them into templates chosen based on the primary
  * node type of the backing JCR node for that Fedora resource.
- * 
+ *
  * @author ajs6f
  * @date May 19, 2013
  */
@@ -136,25 +135,19 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
                         templatesLocation + "/" +
                                 primaryNodeTypeName.replace(':', '-') +
                                 templateFilenameExtension;
-                try {
+                if (velocity.resourceExists(templateLocation)) {
                     final Template template =
-                            velocity.getTemplate(templateLocation);
+                        velocity.getTemplate(templateLocation);
                     template.setName(templateLocation);
                     LOGGER.debug("Found template: {}", templateLocation);
                     templatesMapBuilder.put(primaryNodeTypeName, template);
-                    LOGGER.debug(
-                            "which we will use for nodes with primary type: {}",
-                            primaryNodeTypeName);
-                } catch (final ResourceNotFoundException e) {
-                    LOGGER.debug(
-                            "Didn't find template for nodes with primary type: {} in location: {}",
-                            primaryNodeTypeName, templateLocation);
-                    /*
-                     * we don't care-- just means we don't have an HTML
-                     * representation available for that kind of node
-                     */
+                    LOGGER.debug("which we will use for nodes with primary type: {}",
+                                 primaryNodeTypeName);
+                } else {
+                    // No HTML representation available for that kind of node
+                    LOGGER.debug("Didn't find template for nodes with primary type: {} in location: {}",
+                                 primaryNodeTypeName, templateLocation);
                 }
-
             }
 
             List<String> otherTemplates =
