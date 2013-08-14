@@ -2,7 +2,7 @@
 /*
  * Generic Fedora namespace
  */
-<fedora = 'info:fedora/'>
+<fedora = 'http://fcrepo.org/repository/rest-api#'>
 <nt = 'http://www.jcp.org/jcr/nt/1.0'>
 
 

@@ -105,7 +105,7 @@ public class JcrRdfTools {
      */
     public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
             ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
-                    "info:fedora/fedora-system:def/internal#");
+                    RdfLexicon.REPOSITORY_NAMESPACE);
     /**
      * A map of Fedora's RDF namespaces to the JCR equivalent
      */
@@ -225,7 +225,7 @@ public class JcrRdfTools {
             if (nsURI != null && !nsURI.equals("") && !prefix.equals("xmlns")) {
 
                 if (prefix.equals("jcr")) {
-                    model.setNsPrefix("fedora-internal",
+                    model.setNsPrefix("fcrepo",
                             getRDFNamespaceForJcrNamespace(nsURI));
                 } else {
                     model.setNsPrefix(prefix,
@@ -520,7 +520,7 @@ public class JcrRdfTools {
      */
     public boolean isInternalProperty(final Node subjectNode, final Resource predicate) {
         switch (predicate.getNameSpace()) {
-            case RdfLexicon.INTERNAL_NAMESPACE:
+            case RdfLexicon.REPOSITORY_NAMESPACE:
             case "http://www.jcp.org/jcr/1.0":
             case "http://www.w3.org/ns/ldp#":
                 return true;
@@ -582,8 +582,7 @@ public class JcrRdfTools {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
                 final String uri =
-                    "info:fedora/fedora-system:def/internal#repository/" +
-                        key;
+                    RdfLexicon.REPOSITORY_NAMESPACE + "repository/" + key;
                 model.add(subject, model.createProperty(uri), descriptor);
             }
         }
@@ -598,15 +597,15 @@ public class JcrRdfTools {
             model.add(subject, RdfLexicon.HAS_NODE_TYPE, nodeType.getName());
         }
         model.add(subject, RdfLexicon.HAS_OBJECT_COUNT, ResourceFactory
-                                                            .createTypedLiteral(
-                                                                    FedoraTypesUtils
-                                                                            .getRepositoryCount(
-                                                                                    repository)));
+                 .createTypedLiteral(
+                         FedoraTypesUtils
+                                 .getRepositoryCount(
+                                         repository)));
         model.add(subject, RdfLexicon.HAS_OBJECT_SIZE, ResourceFactory
-                                                           .createTypedLiteral(
-                                                                   FedoraTypesUtils
-                                                                           .getRepositorySize(
-                                                                                   repository)));
+                .createTypedLiteral(
+                        FedoraTypesUtils
+                                .getRepositorySize(
+                                        repository)));
 
         /* TODO: Get and add the Storage policy to the RDF response */
 
@@ -620,8 +619,8 @@ public class JcrRdfTools {
 
         for (final Map.Entry<String, String> entry : config.entrySet()) {
             model.add(subject, model
-                                   .createProperty("info:fedora/fedora-system:def/internal#" +
-                                                       entry.getKey()), entry.getValue());
+                    .createProperty(RdfLexicon.REPOSITORY_NAMESPACE +
+                            entry.getKey()), entry.getValue());
         }
 
         /* and add the repository metrics to the RDF model */

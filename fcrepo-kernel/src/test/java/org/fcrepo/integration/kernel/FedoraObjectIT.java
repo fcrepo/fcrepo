@@ -30,6 +30,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -83,12 +84,13 @@ public class FedoraObjectIT extends AbstractIT {
             objectService.createObject(session, "/graphObject");
         final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
 
-        final String graphSubject = "info:fedora/graphObject";
+        final String graphSubject =
+                RdfLexicon.RESTAPI_NAMESPACE + "/graphObject";
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
-        assertFalse("Graph store should contain our fedora-internal prefix",
-                    compile("fedora-internal")
+        assertFalse("Graph store should contain our fcrepo prefix",
+                    compile("fcrepo")
                     .matcher(graphStore.toString()).find());
 
         UpdateAction
@@ -126,11 +128,10 @@ public class FedoraObjectIT extends AbstractIT {
 
 
         UpdateAction
-            .parseExecute("PREFIX fedora-rels-ext: <info:fedora/fedora-system" +
-                          ":def/relations-external#>\n" +
-                          "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
-                          "isPartOf <" + graphSubject + "> } WHERE {}",
-                          graphStore);
+            .parseExecute("PREFIX fedora-rels-ext: <"
+                    + RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
+                    "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
+                    "isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
         assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
                    .getValues()[0].getString(),
                    object.getNode().getProperty("fedorarelsext:isPartOf")
@@ -148,12 +149,11 @@ public class FedoraObjectIT extends AbstractIT {
                     object.getNode().hasProperty("dc:title"));
 
         UpdateAction
-            .parseExecute("PREFIX fedora-rels-ext: <info:fedora/" +
-                          "fedora-system:def/relations-external#>\n" +
-                          "DELETE { <" + graphSubject + "> " +
-                          "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
-                          "} WHERE {}",
-                          graphStore);
+            .parseExecute("PREFIX fedora-rels-ext: <" +
+                    RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
+                    "DELETE { <" + graphSubject + "> " +
+                    "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
+                    "} WHERE {}", graphStore);
         assertFalse("found unexpected reference",
                     object.getNode().hasProperty("fedorarelsext:isPartOf"));
 

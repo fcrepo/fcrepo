@@ -1,4 +1,4 @@
-@prefix fedora-internal : <info:fedora/fedora-system:def/internal#>
+@prefix fcrepo : <http://fcrepo.org/repository#>
 id      = . :: xsd:string ;
 title = dc:title :: xsd:string;
-uuid = fedora-internal:uuid :: xsd:string ;
+uuid = fcrepo:uuid :: xsd:string ;

@@ -24,37 +24,55 @@ import com.hp.hpl.jena.rdf.model.Property;
  */
 public final class RdfLexicon {
 
-    public static final String INTERNAL_NAMESPACE =
-            "info:fedora/fedora-system:def/internal#";
+    /**
+     * Repository namespace, used for JCR properties exposed pubicly.
+     * Was "info:fedora/fedora-system:def/internal#".
+    **/
+    public static final String REPOSITORY_NAMESPACE =
+            "http://fcrepo.org/repository#";           // fcrepo:
+
+    /**
+     * REST API namespace, used for internal API links and node paths.
+     * Was "info:fedora/".
+    **/
+    public static final String RESTAPI_NAMESPACE =
+            "http://fcrepo.org/repository/rest-api#";  // fedora:
+
+    /**
+     * Relations (RELS-EXT) namespace, used for linking between Fedora objects.
+     * Was "info:fedora/fedora-system:def/relations-external#".
+    **/
+    public static final String RELATIONS_NAMESPACE =
+            "http://fcrepo.org/repository/relations#"; // fedorarelsext:
 
     // MEMBERSHIP
     public static final Property HAS_MEMBER_OF_RESULT =
-            createProperty(INTERNAL_NAMESPACE + "hasMember");
+            createProperty(REPOSITORY_NAMESPACE + "hasMember");
     public static final Property HAS_PARENT =
-            createProperty(INTERNAL_NAMESPACE + "hasParent");
+            createProperty(REPOSITORY_NAMESPACE + "hasParent");
     public static final Property HAS_CHILD =
-            createProperty(INTERNAL_NAMESPACE + "hasChild");
+            createProperty(REPOSITORY_NAMESPACE + "hasChild");
     public static final Property HAS_CHILD_COUNT =
-            createProperty(INTERNAL_NAMESPACE + "numberOfChildren");
+            createProperty(REPOSITORY_NAMESPACE + "numberOfChildren");
 
     // FIXITY
     public static final Property IS_FIXITY_RESULT_OF =
-            createProperty(INTERNAL_NAMESPACE + "isFixityResultOf");
+            createProperty(REPOSITORY_NAMESPACE + "isFixityResultOf");
     public static final Property HAS_FIXITY_RESULT =
-            createProperty(INTERNAL_NAMESPACE + "hasFixityResult");
+            createProperty(REPOSITORY_NAMESPACE + "hasFixityResult");
     public static final Property HAS_FIXITY_STATE =
-            createProperty(INTERNAL_NAMESPACE + "status");
+            createProperty(REPOSITORY_NAMESPACE + "status");
     public static final Property HAS_COMPUTED_CHECKSUM =
-            createProperty(INTERNAL_NAMESPACE + "computedChecksum");
+            createProperty(REPOSITORY_NAMESPACE + "computedChecksum");
     public static final Property HAS_COMPUTED_SIZE =
-            createProperty(INTERNAL_NAMESPACE + "computedSize");
+            createProperty(REPOSITORY_NAMESPACE + "computedSize");
 
     public static final Property HAS_FIXITY_CHECK_COUNT =
-            createProperty(INTERNAL_NAMESPACE + "numFixityChecks");
+            createProperty(REPOSITORY_NAMESPACE + "numFixityChecks");
     public static final Property HAS_FIXITY_ERROR_COUNT =
-            createProperty(INTERNAL_NAMESPACE + "numFixityErrors");
+            createProperty(REPOSITORY_NAMESPACE + "numFixityErrors");
     public static final Property HAS_FIXITY_REPAIRED_COUNT =
-            createProperty(INTERNAL_NAMESPACE + "numFixityRepaired");
+            createProperty(REPOSITORY_NAMESPACE + "numFixityRepaired");
 
 
     // SEARCH
@@ -68,7 +86,7 @@ public final class RdfLexicon {
     public static final Property SEARCH_TERMS =
             createProperty("http://sindice.com/vocab/search#searchTerms");
     public static final Property SEARCH_HAS_MORE =
-            createProperty("info:fedora/search/hasMoreResults");
+            createProperty(RESTAPI_NAMESPACE + "hasMoreResults");
 
     public static final Property PAGE =
         createProperty("http://www.w3.org/ns/ldp#Page");
@@ -82,15 +100,15 @@ public final class RdfLexicon {
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
-            createProperty(INTERNAL_NAMESPACE + "objectCount");
+            createProperty(REPOSITORY_NAMESPACE + "objectCount");
     public static final Property HAS_OBJECT_SIZE =
-            createProperty(INTERNAL_NAMESPACE + "objectSize");
+            createProperty(REPOSITORY_NAMESPACE + "objectSize");
     public static final Property HAS_TRANSACTION_SERVICE =
-            createProperty("info:fedora/hasTransactionProvider");
+            createProperty(RESTAPI_NAMESPACE + "hasTransactionProvider");
     public static final Property HAS_NAMESPACE_SERVICE =
-            createProperty("info:fedora/hasNamespaces");
+            createProperty(RESTAPI_NAMESPACE + "hasNamespaces");
     public static final Property HAS_WORKSPACE_SERVICE =
-            createProperty("info:fedora/hasWorkspaces");
+            createProperty(RESTAPI_NAMESPACE + "hasWorkspaces");
     public static final Property HAS_SEARCH_SERVICE =
             createProperty("http://www.whatwg.org/specs/web-apps/current-work/"
                                    + "#link-type-search");
@@ -107,11 +125,11 @@ public final class RdfLexicon {
 
     // OTHER SERVICES
     public static final Property HAS_SERIALIZATION =
-            createProperty("info:fedora/exportsAs");
+            createProperty(RESTAPI_NAMESPACE + "exportsAs");
     public static final Property HAS_VERSION_HISTORY =
-            createProperty("info:fedora/hasVersions");
+            createProperty(RESTAPI_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
-            createProperty("info:fedora/hasFixity");
+            createProperty(RESTAPI_NAMESPACE + "hasFixity");
     public static final Property HAS_FEED =
             createProperty(
                     "http://www.whatwg.org/specs/web-apps/current-work/#",
@@ -119,50 +137,50 @@ public final class RdfLexicon {
     public static final Property HAS_SUBSCRIPTION_SERVICE =
             createProperty("http://microformats.org/wiki/rel-subscription");
     public static final Property NOT_IMPLEMENTED =
-            createProperty(INTERNAL_NAMESPACE + "notImplemented");
+            createProperty(REPOSITORY_NAMESPACE + "notImplemented");
 
     // CONTENT
     public static final Property HAS_CONTENT =
-            createProperty(INTERNAL_NAMESPACE + "hasContent");
+            createProperty(REPOSITORY_NAMESPACE + "hasContent");
     public static final Property IS_CONTENT_OF =
-            createProperty(INTERNAL_NAMESPACE + "isContentOf");
+            createProperty(REPOSITORY_NAMESPACE + "isContentOf");
     public static final Property HAS_LOCATION =
-            createProperty(INTERNAL_NAMESPACE + "hasLocation");
+            createProperty(REPOSITORY_NAMESPACE + "hasLocation");
     public static final Property HAS_MIME_TYPE =
-            createProperty(INTERNAL_NAMESPACE + "mimeType");
+            createProperty(REPOSITORY_NAMESPACE + "mimeType");
     public static final Property HAS_SIZE =
-            createProperty(INTERNAL_NAMESPACE + "hasSize");
+            createProperty(REPOSITORY_NAMESPACE + "hasSize");
 
     // VERSIONING
     public static final Property HAS_VERSION =
-            createProperty(INTERNAL_NAMESPACE + "hasVersion");
+            createProperty(REPOSITORY_NAMESPACE + "hasVersion");
     public static final Property HAS_VERSION_LABEL =
-            createProperty(INTERNAL_NAMESPACE + "hasVersionLabel");
+            createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
 
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
-            createProperty(INTERNAL_NAMESPACE + "couldNotStoreProperty");
+            createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
 
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =
-            createProperty(INTERNAL_NAMESPACE + "uuid");
+            createProperty(REPOSITORY_NAMESPACE + "uuid");
     public static final Property HAS_PRIMARY_TYPE =
-            createProperty(INTERNAL_NAMESPACE + "primaryType");
+            createProperty(REPOSITORY_NAMESPACE + "primaryType");
     public static final Property HAS_NODE_TYPE =
-            createProperty(INTERNAL_NAMESPACE + "hasNodeType");
+            createProperty(REPOSITORY_NAMESPACE + "hasNodeType");
     public static final Property HAS_MIXIN_TYPE =
-            createProperty(INTERNAL_NAMESPACE + "mixinTypes");
+            createProperty(REPOSITORY_NAMESPACE + "mixinTypes");
 
     public static final Property CREATED_DATE =
-            createProperty(INTERNAL_NAMESPACE + "created");
+            createProperty(REPOSITORY_NAMESPACE + "created");
     public static final Property CREATED_BY =
-            createProperty(INTERNAL_NAMESPACE + "createdBy");
+            createProperty(REPOSITORY_NAMESPACE + "createdBy");
 
 
     public static final Property LAST_MODIFIED_DATE =
-            createProperty(INTERNAL_NAMESPACE + "lastModified");
+            createProperty(REPOSITORY_NAMESPACE + "lastModified");
     public static final Property LAST_MODIFIED_BY =
-            createProperty(INTERNAL_NAMESPACE + "lastModifiedBy");
+            createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
 
 
     public static final Property RDFS_LABEL =

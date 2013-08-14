@@ -39,6 +39,7 @@ import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
@@ -49,6 +50,8 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
@@ -275,7 +278,7 @@ public class JcrRdfToolsTest {
 
     @Test
     public void shouldMapInternalJcrNamespaceToFcrepoNamespace() {
-        assertEquals("info:fedora/fedora-system:def/internal#",
+        assertEquals(REPOSITORY_NAMESPACE,
                 getRDFNamespaceForJcrNamespace("http://www.jcp.org/jcr/1.0"));
     }
 
@@ -283,7 +286,7 @@ public class JcrRdfToolsTest {
     public void shouldMapFcrepoNamespaceToJcrNamespace() {
         assertEquals(
                 "http://www.jcp.org/jcr/1.0",
-                getJcrNamespaceForRDFNamespace("info:fedora/fedora-system:def/internal#"));
+                getJcrNamespaceForRDFNamespace(REPOSITORY_NAMESPACE));
     }
 
     @Test
@@ -299,8 +302,7 @@ public class JcrRdfToolsTest {
             throws RepositoryException {
 
         final Property p =
-                createProperty("info:fedora/fedora-system:def/internal#",
-                        "uuid");
+                createProperty(REPOSITORY_NAMESPACE, "uuid");
         assertEquals("jcr:uuid", testObj.getPropertyNameFromPredicate(mockNode, p));
 
     }
@@ -342,8 +344,7 @@ public class JcrRdfToolsTest {
         when(mockParentProperties.nextProperty()).thenReturn(mockProperty);
 
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
-        assertEquals("info:fedora/fedora-system:def/internal#", actual
-                .getNsPrefixURI("fedora-internal"));
+        assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
                 actual.getProperty("xyz"), actual.createLiteral("abc")));
 
@@ -376,8 +377,7 @@ public class JcrRdfToolsTest {
         when(mockProperties.hasNext()).thenReturn(false);
 
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
-        assertEquals("info:fedora/fedora-system:def/internal#", actual
-                .getNsPrefixURI("fedora-internal"));
+        assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
                 HAS_CONTENT, testSubjects.getGraphSubject(mockNodeContent)));
         assertTrue(actual.contains(testSubjects
@@ -429,18 +429,18 @@ public class JcrRdfToolsTest {
                 .thenReturn(mockNodeTypeManager);
 
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
-        assertEquals("info:fedora/fedora-system:def/internal#", actual
-                .getNsPrefixURI("fedora-internal"));
+        assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
 
         assertTrue(actual
                 .contains(
                         testSubjects.getGraphSubject(mockNode),
-                        actual.createProperty("info:fedora/fedora-system:def/internal#repository/some-descriptor-key"),
+                        actual.createProperty(REPOSITORY_NAMESPACE +
+                                "repository/some-descriptor-key"),
                         actual.createLiteral("some-descriptor-value")));
         assertTrue(actual
                 .contains(
                         testSubjects.getGraphSubject(mockNode),
-                        actual.createProperty("info:fedora/fedora-system:def/internal#a"),
+                        actual.createProperty(REPOSITORY_NAMESPACE + "a"),
                         actual.createLiteral("b")));
 
         // assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
@@ -508,7 +508,7 @@ public class JcrRdfToolsTest {
         assertTrue(actual.contains(graphSubject, RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Container")));
 
         assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), graphSubject));
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), RdfLexicon.HAS_CHILD));
+        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), HAS_CHILD));
         assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"), actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
 
     }
@@ -545,7 +545,7 @@ public class JcrRdfToolsTest {
         assertTrue(actual.contains(graphSubject, RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Container")));
 
         assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), graphSubject));
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), RdfLexicon.HAS_CHILD));
+        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), HAS_CHILD));
         assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"), actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
     }
 
@@ -581,7 +581,7 @@ public class JcrRdfToolsTest {
         assertFalse(actual.contains(graphSubject, RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Container")));
 
         assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), graphSubject));
-        assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), RdfLexicon.HAS_CHILD));
+        assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), HAS_CHILD));
         assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"), actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
 
     }
@@ -605,7 +605,7 @@ public class JcrRdfToolsTest {
         when(mockNodes.hasNext()).thenReturn(false);
         when(mockNode.getNodes()).thenReturn(mockNodes);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertEquals(1, Iterators.size(actual.listObjectsOfProperty(RdfLexicon.HAS_CHILD)));
+        assertEquals(1, Iterators.size(actual.listObjectsOfProperty(HAS_CHILD)));
     }
 
     @Test
@@ -634,7 +634,7 @@ public class JcrRdfToolsTest {
 
         when(mockNode.getNodes()).thenReturn(mockNodes);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, 0);
-        assertEquals(5, Iterators.size(actual.listObjectsOfProperty(RdfLexicon.HAS_CHILD)));
+        assertEquals(5, Iterators.size(actual.listObjectsOfProperty(HAS_CHILD)));
     }
 
     @Test
@@ -679,7 +679,7 @@ public class JcrRdfToolsTest {
         FedoraTypesUtils.getValueFactory = mockValueFactoryFunc;
 
         try {
-            RDFNode n = createResource("info:fedora/abc");
+            RDFNode n = createResource(RESTAPI_NAMESPACE+"/abc");
 
             // node references
             when(mockSession.getNode("/abc")).thenReturn(mockNode);
@@ -691,8 +691,8 @@ public class JcrRdfToolsTest {
 
             // uris
             testObj.createValue(mockNode, n, UNDEFINED);
-            verify(mockValueFactory).createValue("info:fedora/abc",
-                    PropertyType.URI);
+            verify(mockValueFactory).createValue(
+                    RESTAPI_NAMESPACE + "/abc", PropertyType.URI);
 
             // other random resources
             n = createResource();
@@ -883,7 +883,7 @@ public class JcrRdfToolsTest {
             testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource("info:fedora/abc")));
+                    createResource(RESTAPI_NAMESPACE + "/abc")));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(WEAKREFERENCE);
@@ -892,7 +892,7 @@ public class JcrRdfToolsTest {
             testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource("info:fedora/def")));
+                    createResource(RESTAPI_NAMESPACE + "/def")));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(PATH);
@@ -900,7 +900,7 @@ public class JcrRdfToolsTest {
             testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource("info:fedora/ghi")));
+                    createResource(RESTAPI_NAMESPACE + "/ghi")));
 
         } finally {
             getPredicateForProperty = holdPredicate;
@@ -943,8 +943,8 @@ public class JcrRdfToolsTest {
     @Test
     public void testJcrNodeIteratorAddsPredicatesForEachNode()
             throws RepositoryException {
-        final Resource mockResource =
-                createResource("info:fedora/search/resource");
+        final Resource mockResource = createResource(
+                RESTAPI_NAMESPACE + "/search/resource");
         final Node mockNode1 = mock(Node.class);
         final Node mockNode2 = mock(Node.class);
         final Node mockNode3 = mock(Node.class);
@@ -989,7 +989,8 @@ public class JcrRdfToolsTest {
 
         final GraphStore gs = GraphStoreFactory.create(fixityResultsModel);
         assertTrue(gs.contains(ANY, ANY, IS_FIXITY_RESULT_OF.asNode(),
-                createResource("info:fedora/path/to/node").asNode()));
+                createResource(RESTAPI_NAMESPACE+"/path/to/node")
+                .asNode()));
         assertTrue(gs.contains(ANY, ANY, HAS_COMPUTED_CHECKSUM.asNode(),
                 createResource("abc").asNode()));
         assertTrue(gs.contains(ANY, ANY, HAS_COMPUTED_SIZE.asNode(),
@@ -1001,8 +1002,8 @@ public class JcrRdfToolsTest {
     public void testGetJcrNamespaceModel() throws Exception {
         final Model jcrNamespaceModel = testObj.getJcrNamespaceModel();
         assertTrue(jcrNamespaceModel.contains(
-                createResource("info:fedora/fedora-system:def/internal#"),
-                HAS_NAMESPACE_PREFIX, "fedora-internal"));
+                createResource(REPOSITORY_NAMESPACE),
+                HAS_NAMESPACE_PREFIX, "fcrepo"));
 
         final Resource nsSubject = createResource("registered-uri#");
         assertTrue(jcrNamespaceModel.contains(nsSubject,
@@ -1048,7 +1049,7 @@ public class JcrRdfToolsTest {
 
     @Test
     public void testIsInternalProperty() throws Exception {
-        assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty(RdfLexicon.INTERNAL_NAMESPACE, "some-property")));
+        assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty(REPOSITORY_NAMESPACE, "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.jcp.org/jcr/1.0", "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.w3.org/ns/ldp#some-property")));
         assertFalse(testObj.isInternalProperty(mockNode, ResourceFactory.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#label")));

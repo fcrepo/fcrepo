@@ -19,6 +19,7 @@ package org.fcrepo.integration.webhooks;
 import static java.lang.Thread.sleep;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.integration.webhooks.TestEndpoint.lastBody;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -52,7 +53,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
 
         formparams.add(new BasicNameValuePair("callbackUrl",
-                "info:fedora/fake:url"));
+                RESTAPI_NAMESPACE + "/fake:url"));
         final UrlEncodedFormEntity entity =
                 new UrlEncodedFormEntity(formparams, "UTF-8");
         method.setEntity(entity);
@@ -69,7 +70,8 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         logger.info("Got content: ");
         logger.info(content);
         assertTrue("Our webhook wasn't registered!", compile(
-                "info:fedora/fake:url", DOTALL).matcher(content).find());
+                RESTAPI_NAMESPACE + "/fake:url", DOTALL)
+                .matcher(content).find());
 
     }
 
@@ -80,7 +82,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
 
         formparams.add(new BasicNameValuePair("callbackUrl",
-                "info:fedora/fake:url"));
+                RESTAPI_NAMESPACE + "/fake:url"));
         final UrlEncodedFormEntity entity =
                 new UrlEncodedFormEntity(formparams, "UTF-8");
         method.setEntity(entity);
