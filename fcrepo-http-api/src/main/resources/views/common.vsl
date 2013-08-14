@@ -14,7 +14,7 @@
                         #else
                             <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
                         #end
-                        #if( $quad.getPredicate().toString().equals("info:fedora/digest") )
+                        #if( $quad.getPredicate().toString().equals("http://fcrepo.org/repository/rest-api#digest") )
                             <a href="$topic/fcr:fixity">check fixity</a>
                         #end
                     </dd>
@@ -23,7 +23,7 @@
 #end
 
 #macro( isObject $sub )
-#set($type = $anynode.createURI("info:fedora/fedora-system:def/internal#mixinTypes"))
+#set($type = $anynode.createURI("http://fcrepo.org/repository#mixinTypes"))
 #set($object = $anynode.createLiteral("fedora:object"))
 $rdf.find($nodeany, $sub, $type, $object).hasNext()
 #end

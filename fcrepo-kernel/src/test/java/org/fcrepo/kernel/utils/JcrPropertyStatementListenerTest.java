@@ -243,9 +243,11 @@ public class JcrPropertyStatementListenerTest {
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
 
-        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        when(mockSession.getNamespacePrefix(RdfLexicon.RESTAPI_NAMESPACE))
+                .thenReturn("fedora");
         Model model = ModelFactory.createDefaultModel();
-        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        model.add(resource, RDF.type,
+                model.createResource(RdfLexicon.RESTAPI_NAMESPACE+"object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         testObj.addedStatements(model);
         verify(mockSubjectNode).addMixin("fedora:object");
@@ -263,9 +265,11 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
-        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        when(mockSession.getNamespacePrefix(RdfLexicon.RESTAPI_NAMESPACE))
+                .thenReturn("fedora");
         Model model = ModelFactory.createDefaultModel();
-        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        model.add(resource, RDF.type,
+                model.createResource(RdfLexicon.RESTAPI_NAMESPACE+"object"));
         testObj.removedStatements(model);
         verify(mockSubjectNode).removeMixin("fedora:object");
     }
@@ -287,9 +291,11 @@ public class JcrPropertyStatementListenerTest {
         mockStatic(NodePropertiesTools.class);
         when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(URI);
 
-        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        when(mockSession.getNamespacePrefix(RdfLexicon.RESTAPI_NAMESPACE))
+                .thenReturn("fedora");
         Model model = ModelFactory.createDefaultModel();
-        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        model.add(resource, RDF.type,
+                model.createResource(RdfLexicon.RESTAPI_NAMESPACE+"object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         testObj.addedStatements(model);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
@@ -308,9 +314,11 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
-        when(mockSession.getNamespacePrefix("info:fedora/")).thenReturn("fedora");
+        when(mockSession.getNamespacePrefix(RdfLexicon.RESTAPI_NAMESPACE))
+                .thenReturn("fedora");
         Model model = ModelFactory.createDefaultModel();
-        model.add(resource, RDF.type, model.createResource("info:fedora/object"));
+        model.add(resource, RDF.type,
+                model.createResource(RdfLexicon.RESTAPI_NAMESPACE+"object"));
         testObj.removedStatements(model);
         verify(mockSubjectNode, never()).removeMixin("fedora:object");
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));

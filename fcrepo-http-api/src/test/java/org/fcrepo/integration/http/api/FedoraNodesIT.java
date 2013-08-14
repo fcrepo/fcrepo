@@ -27,9 +27,12 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
+import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
@@ -133,7 +136,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(Node.ANY,
                                           ResourceFactory.createResource(location).asNode(),
-                                          RdfLexicon.DC_TITLE.asNode(),
+                                          DC_TITLE.asNode(),
                                           ResourceFactory.createPlainLiteral("this is a title").asNode()));
     }
 
@@ -160,7 +163,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(Node.ANY,
                                           ResourceFactory.createResource(location).asNode(),
-                                          RdfLexicon.DC_TITLE.asNode(),
+                                          DC_TITLE.asNode(),
                                           ResourceFactory.createPlainLiteral("this is a title").asNode()));
 
     }
@@ -314,7 +317,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 compile(
                         "<" +
                                 serverAddress +
-                                "FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
+                                "FedoraDescribeTestGraph> <" + REPOSITORY_NAMESPACE + "mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
         assertTrue(
@@ -322,7 +325,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 compile(
                         "<" +
                                 serverAddress +
-                                "FedoraDescribeTestGraph> <info:fedora/fedora-system:def/internal#mixinTypes> \"fedora:object\" \\.",
+                                "FedoraDescribeTestGraph> <" + REPOSITORY_NAMESPACE + "mixinTypes> \"fedora:object\" \\.",
                         DOTALL).matcher(content).find());
 
     }
@@ -477,7 +480,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         getObjMethod.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + subjectURI + "> <info:fedora/fedora-system:def/internal#uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
+                ("INSERT { <" + subjectURI + "> <" + REPOSITORY_NAMESPACE + "uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
                         .getBytes()));
         getObjMethod.setEntity(e);
         final HttpResponse response = client.execute(getObjMethod);
@@ -556,7 +559,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         Iterator<Triple> iterator =
                 graphStore.getDefaultGraph().find(Node.ANY,
-                        RdfLexicon.HAS_OBJECT_SIZE.asNode(), Node.ANY);
+                        HAS_OBJECT_SIZE.asNode(), Node.ANY);
 
         final Integer oldSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -599,7 +602,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         Iterator<Triple> iterator =
                 graphStore.getDefaultGraph().find(Node.ANY,
-                        RdfLexicon.HAS_OBJECT_COUNT.asNode(), Node.ANY);
+                        HAS_OBJECT_COUNT.asNode(), Node.ANY);
 
         final Integer oldSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
@@ -618,7 +621,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         iterator =
                 graphStore.getDefaultGraph().find(Node.ANY,
-                        RdfLexicon.HAS_OBJECT_COUNT.asNode(), Node.ANY);
+                        HAS_OBJECT_COUNT.asNode(), Node.ANY);
 
         final Integer newSize =
                 (Integer) iterator.next().getObject().getLiteralValue();

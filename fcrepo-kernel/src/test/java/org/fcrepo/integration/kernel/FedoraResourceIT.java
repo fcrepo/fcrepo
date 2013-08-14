@@ -99,14 +99,13 @@ public class FedoraResourceIT extends AbstractIT {
         final FedoraResource object =
                 nodeService.findOrCreateObject(session, "/testNodeGraph");
 
-        logger.warn(object.getPropertiesDataset(new DefaultGraphSubjects(session)).toString());
-        Node s = createURI("info:fedora/testNodeGraph");
-        Node p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#primaryType");
+        logger.warn(object.getPropertiesDataset(
+                new DefaultGraphSubjects(session)).toString());
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE + "/testNodeGraph");
+        Node p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "primaryType");
         Node o = createLiteral("nt:unstructured");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
     }
 
     @Test
@@ -116,27 +115,22 @@ public class FedoraResourceIT extends AbstractIT {
         final FedoraResource object = nodeService.getObject(session, "/");
 
         logger.warn(object.getPropertiesDataset(subjects).toString());
-        Node s = createURI("info:fedora/");
-        Node p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#primaryType");
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE + "/");
+        Node p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "primaryType");
         Node o = createLiteral("mode:root");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
 
-        p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#repository/jcr.repository.vendor.url");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE
+                + "repository/jcr.repository.vendor.url");
         o = createLiteral("http://www.modeshape.org");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
 
-        p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#hasNodeType");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "hasNodeType");
         o = createLiteral("fedora:resource");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
 
     }
 
@@ -149,21 +143,21 @@ public class FedoraResourceIT extends AbstractIT {
         logger.warn(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
-        Node s = createURI("info:fedora/testObjectGraph");
-        Node p = createURI("info:fedora/fedora-system:def/internal#uuid");
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE + "/testObjectGraph");
+        Node p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
 
         // multivalued property
-        p = createURI("info:fedora/fedora-system:def/internal#mixinTypes");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "mixinTypes");
         o = createLiteral("fedora:resource");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
 
         o = createLiteral("fedora:object");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
-                Node.ANY, s, p, o));
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                .contains(Node.ANY, s, p, o));
 
     }
 
@@ -191,15 +185,16 @@ public class FedoraResourceIT extends AbstractIT {
         logger.warn(propertiesDataset.toString());
 
         // jcr property
-        Node s = createURI("info:fedora/testDatastreamGraph");
-        Node p = createURI("info:fedora/fedora-system:def/internal#uuid");
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE
+                + "/testDatastreamGraph");
+        Node p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
 
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
         // multivalued property
-        p = createURI("info:fedora/fedora-system:def/internal#mixinTypes");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "mixinTypes");
         o = createLiteral("fedora:resource");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
@@ -207,32 +202,31 @@ public class FedoraResourceIT extends AbstractIT {
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
         // structure
-        p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#numberOfChildren");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "numberOfChildren");
         RDFDatatype long_datatype =
                 ResourceFactory.createTypedLiteral(0L).getDatatype();
         o = createLiteral("0", long_datatype);
 
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
         // relations
-        p =
-                createURI("info:fedora/fedora-system:def/relations-external"
-                        + "#isPartOf");
-        o = createURI("info:fedora/testDatastreamGraphParent");
+        p = createURI(RdfLexicon.RELATIONS_NAMESPACE + "isPartOf");
+        o = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testDatastreamGraphParent");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-        p = createURI("info:fedora/fedora-system:def/internal#hasContent");
-        o = createURI("info:fedora/testDatastreamGraph/fcr:content");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "hasContent");
+        o = createURI(RdfLexicon.RESTAPI_NAMESPACE
+                + "/testDatastreamGraph/fcr:content");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
         // content properties
-        s = createURI("info:fedora/testDatastreamGraph/fcr:content");
-        p = createURI("info:fedora/fedora-system:def/internal#mimeType");
+        s = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+               "/testDatastreamGraph/fcr:content");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "mimeType");
         o = createLiteral("text/plain");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-        p = createURI("info:fedora/size");
+        p = createURI(RdfLexicon.RESTAPI_NAMESPACE + "size");
         o =
                 createLiteral("22", ModelFactory.createDefaultModel()
                         .createTypedLiteral(22L).getDatatype());
@@ -240,9 +234,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         // location
 
-        p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#hasLocation");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "hasLocation");
         o = Node.ANY;
 
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
@@ -267,26 +259,32 @@ public class FedoraResourceIT extends AbstractIT {
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
 
         // jcr property
-        Node s = createURI("info:fedora/testObjectGraphWindow");
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE
+                + "/testObjectGraphWindow");
         Node p = RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode();
         Node o = createLiteral(object.getNode().getIdentifier());
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
         p = RdfLexicon.HAS_CHILD.asNode();
-        o = createURI("info:fedora/testObjectGraphWindow/a");
+        o = createURI(RdfLexicon.RESTAPI_NAMESPACE + 
+                "/testObjectGraphWindow/a");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-        o = createURI("info:fedora/testObjectGraphWindow/b");
+        o = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectGraphWindow/b");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-        o = createURI("info:fedora/testObjectGraphWindow/c");
+        o = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectGraphWindow/c");
         assertTrue(datasetGraph.contains(Node.ANY, s, p, o));
 
-        s = createURI("info:fedora/testObjectGraphWindow/b");
+        s = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectGraphWindow/b");
         p = RdfLexicon.HAS_PRIMARY_IDENTIFIER.asNode();
         assertTrue(datasetGraph.contains(Node.ANY, s, p, Node.ANY));
 
-        s = createURI("info:fedora/testObjectGraphWindow/c");
+        s = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectGraphWindow/c");
         assertFalse(datasetGraph.contains(Node.ANY, s, p, Node.ANY));
 
     }
@@ -297,24 +295,25 @@ public class FedoraResourceIT extends AbstractIT {
         final FedoraResource object =
                 objectService.createObject(session, "/testObjectGraphUpdates");
 
-        object.updatePropertiesDataset(subjects, "INSERT { "
-                + "<info:fedora/testObjectGraphUpdates> "
+        object.updatePropertiesDataset(subjects, "INSERT { " + "<" +
+                RdfLexicon.RESTAPI_NAMESPACE + "/testObjectGraphUpdates> "
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
         // jcr property
-        Node s = createURI("info:fedora/testObjectGraphUpdates");
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectGraphUpdates");
         Node p = createURI("info:fcrepo/zyx");
         Node o = createLiteral("a");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph().contains(
                 Node.ANY, s, p, o));
 
-        object.updatePropertiesDataset(subjects, "DELETE { "
-                + "<info:fedora/testObjectGraphUpdates> "
-                + "<info:fcrepo/zyx> ?o }\n" + "INSERT { "
-                + "<info:fedora/testObjectGraphUpdates> "
-                + "<info:fcrepo/zyx> \"b\" } " + "WHERE { "
-                + "<info:fedora/testObjectGraphUpdates> "
-                + "<info:fcrepo/zyx> ?o } ");
+        object.updatePropertiesDataset(subjects, "DELETE { " + "<" +
+                RdfLexicon.RESTAPI_NAMESPACE + "/testObjectGraphUpdates> " +
+                "<info:fcrepo/zyx> ?o }\n" + "INSERT { " + "<" +
+                RdfLexicon.RESTAPI_NAMESPACE + "/testObjectGraphUpdates> " +
+                "<info:fcrepo/zyx> \"b\" } " + "WHERE { " + "<" +
+                RdfLexicon.RESTAPI_NAMESPACE + "/testObjectGraphUpdates> " +
+                "<info:fcrepo/zyx> ?o } ");
 
         assertFalse("found value we should have removed", object
                 .getPropertiesDataset(subjects).asDatasetGraph().contains(Node.ANY, s,
@@ -361,10 +360,9 @@ public class FedoraResourceIT extends AbstractIT {
         logger.info(graphStore.toString());
 
         // go querying for the version URI
-        Node s = createURI("info:fedora/testObjectVersionGraph");
-        Node p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#hasVersion");
+        Node s = createURI(RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectVersionGraph");
+        Node p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "hasVersion");
         final ExtendedIterator<Triple> triples =
                 graphStore.asDatasetGraph().getDefaultGraph().find(
                         Triple.createMatch(s, p, Node.ANY));
@@ -374,9 +372,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         // make sure it matches the label
         s = list.get(0).getMatchObject();
-        p =
-                createURI("info:fedora/fedora-system:def/internal"
-                        + "#hasVersionLabel");
+        p = createURI(RdfLexicon.REPOSITORY_NAMESPACE + "hasVersionLabel");
         Node o = createLiteral("v0.0.1");
 
         assertTrue(graphStore.asDatasetGraph().contains(Node.ANY, s, p, o));
@@ -394,11 +390,16 @@ public class FedoraResourceIT extends AbstractIT {
 
         logger.warn(propertiesDataset.toString());
 
-        object.updatePropertiesDataset(subjects, "PREFIX example: <http://example.org/>\n" +
-                                                     "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
-                                                     "INSERT { <info:fedora/testObjectRdfType> example:int-property \"0\"^^xsd:long } WHERE { }");
-        assertEquals(PropertyType.LONG, object.getNode().getProperty("example:int-property").getType());
-        assertEquals(0L, object.getNode().getProperty("example:int-property").getValues()[0].getLong());
+        object.updatePropertiesDataset(subjects,
+                "PREFIX example: <http://example.org/>\n" +
+                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                "INSERT { <" + RdfLexicon.RESTAPI_NAMESPACE +
+                "/testObjectRdfType> example:int-property \"0\"^^xsd:long } " +
+                "WHERE { }");
+        assertEquals(PropertyType.LONG, object.getNode()
+                .getProperty("example:int-property").getType());
+        assertEquals(0L, object.getNode()
+                .getProperty("example:int-property").getValues()[0].getLong());
     }
 
     @Test
@@ -412,9 +413,13 @@ public class FedoraResourceIT extends AbstractIT {
 
         logger.warn(propertiesDataset.toString());
 
-        object.updatePropertiesDataset(subjects, "INSERT { <info:fedora/testObjectRdfType> <" + RDF.type + "> <http://some/uri> } WHERE { }");
-        assertEquals(PropertyType.URI,  object.getNode().getProperty("rdf:type").getType());
-        assertEquals("http://some/uri", object.getNode().getProperty("rdf:type").getValues()[0].getString());
+        object.updatePropertiesDataset(subjects, "INSERT { <" +
+                RdfLexicon.RESTAPI_NAMESPACE + "/testObjectRdfType> <" +
+                RDF.type + "> <http://some/uri> } WHERE { }");
+        assertEquals(PropertyType.URI,
+                object.getNode().getProperty("rdf:type").getType());
+        assertEquals("http://some/uri", object.getNode()
+                .getProperty("rdf:type").getValues()[0].getString());
     }
 
     @Test
