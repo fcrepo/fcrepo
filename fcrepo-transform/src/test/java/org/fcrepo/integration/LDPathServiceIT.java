@@ -16,6 +16,8 @@
 
 package org.fcrepo.integration;
 
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
@@ -65,10 +67,10 @@ public class LDPathServiceIT {
         object.getNode().setProperty("dc:title", "some-title");
 
         String s = "@prefix dc : <http://purl.org/dc/terms/>\n" +
-                       "@prefix fedora-internal : <info:fedora/fedora-system:def/internal#>\n" +
+                       "@prefix fcrepo : <" + REPOSITORY_NAMESPACE + ">\n" +
                            "id      = . :: xsd:string ;\n" +
                            "title = dc:title :: xsd:string ;\n" +
-                           "uuid = fedora-internal:uuid :: xsd:string ;";
+                           "uuid = fcrepo:uuid :: xsd:string ;";
         final InputStream stringReader = new ByteArrayInputStream(s.getBytes());
 
         testObj = new LDPathTransform(stringReader);
@@ -83,7 +85,8 @@ public class LDPathServiceIT {
         assertTrue(stuff.containsKey("title"));
 
         assertEquals(1, stuff.get("id").size());
-        assertEquals("info:fedora/testObject", stuff.get("id").iterator().next());
+        assertEquals(RESTAPI_NAMESPACE + "/testObject",
+                stuff.get("id").iterator().next());
         assertEquals("some-title", stuff.get("title").iterator().next());
         assertEquals(object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());
     }

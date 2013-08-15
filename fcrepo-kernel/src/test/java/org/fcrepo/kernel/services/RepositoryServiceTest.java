@@ -51,6 +51,7 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.services.RepositoryService;
@@ -237,7 +238,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjectFactory, mockSession)).thenReturn(mockJcrRdfTools);
 
-        final Resource subject = createResource("info:fedora/search/request");
+        final Resource subject = createResource(
+                RdfLexicon.RESTAPI_NAMESPACE + "search/request");
 
         when(mockSession.getValueFactory()).thenReturn(mockFactory);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);

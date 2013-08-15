@@ -21,9 +21,8 @@
 /*
  * Generic Fedora namespace
  */
-<fedora = 'info:fedora/'>
-
-<fedorarelsext = 'info:fedora/fedora-system:def/relations-external#'>
+<fedora = 'http://fcrepo.org/repository/rest-api#'>
+<fedorarelsext = 'http://fcrepo.org/repository/relations#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 
 <test = 'info:fedora/test/'>

@@ -22,6 +22,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrConstants;
@@ -52,11 +53,12 @@ public class DefaultGraphSubjects implements GraphSubjects {
     public Resource getGraphSubject(final String absPath) throws RepositoryException {
         if (absPath.endsWith(JcrConstants.JCR_CONTENT)) {
             return ResourceFactory
-                           .createResource("info:fedora" +
-                                                   absPath.replace(JcrConstants.JCR_CONTENT,
-                                                                          FedoraJcrTypes.FCR_CONTENT));
+                    .createResource(RdfLexicon.RESTAPI_NAMESPACE +
+                            absPath.replace(JcrConstants.JCR_CONTENT,
+                                    FedoraJcrTypes.FCR_CONTENT));
         } else {
-            return ResourceFactory.createResource("info:fedora" + absPath);
+            return ResourceFactory
+                    .createResource(RdfLexicon.RESTAPI_NAMESPACE + absPath);
         }
     }
 
@@ -77,8 +79,8 @@ public class DefaultGraphSubjects implements GraphSubjects {
             return null;
         }
 
-        final String absPath =
-            subject.getURI().substring("info:fedora".length());
+        final String absPath = subject.getURI()
+                .substring(RdfLexicon.RESTAPI_NAMESPACE.length());
 
         if (absPath.endsWith(FCR_CONTENT)) {
             return session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT,
@@ -96,7 +98,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
         assert(subject != null);
 
         return subject.isURIResource() &&
-            subject.getURI().startsWith("info:fedora/");
+            subject.getURI().startsWith(RdfLexicon.RESTAPI_NAMESPACE);
     }
 
 }

@@ -16,6 +16,8 @@
 
 package org.fcrepo.integration;
 
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
@@ -62,7 +64,7 @@ public class SparqlQueryTransformIT {
         final FedoraObject object = objectService.createObject(session, "/testObject");
 
         String s = "SELECT ?x ?uuid\n" +
-                           "WHERE { ?x  <info:fedora/fedora-system:def/internal#uuid> ?uuid }";
+                "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "uuid> ?uuid }";
         final InputStream stringReader = new ByteArrayInputStream(s.getBytes());
 
         testObj = new SparqlQueryTransform(stringReader);

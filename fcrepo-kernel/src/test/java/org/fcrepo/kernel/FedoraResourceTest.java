@@ -209,7 +209,8 @@ public class FedoraResourceTest {
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
-        final Resource mockResource = new DummyURIResource("info:fedora/xyz");
+        final Resource mockResource =
+                new DummyURIResource(RdfLexicon.RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
@@ -227,8 +228,8 @@ public class FedoraResourceTest {
         assertEquals(treeModel, dataset.getNamedModel("tree"));
 
         assertEquals(propertiesModel, dataset.getDefaultModel());
-        assertEquals("info:fedora/xyz", dataset.getContext().get(
-                Symbol.create("uri")));
+        assertEquals(RdfLexicon.RESTAPI_NAMESPACE + "xyz",
+                dataset.getContext().get(Symbol.create("uri")));
     }
 
     @Test
@@ -238,7 +239,8 @@ public class FedoraResourceTest {
         mockStatic(JcrRdfTools.class);
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        final Resource mockResource = new DummyURIResource("info:fedora/xyz");
+        final Resource mockResource =
+                new DummyURIResource(RdfLexicon.RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
@@ -255,8 +257,8 @@ public class FedoraResourceTest {
         assertEquals(treeModel, dataset.getNamedModel("tree"));
 
         assertEquals(propertiesModel, dataset.getDefaultModel());
-        assertEquals("info:fedora/xyz", dataset.getContext().get(
-                Symbol.create("uri")));
+        assertEquals(RdfLexicon.RESTAPI_NAMESPACE + "xyz",
+                dataset.getContext().get(Symbol.create("uri")));
     }
 
     @Test
@@ -269,7 +271,8 @@ public class FedoraResourceTest {
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        final Resource mockResource = new DummyURIResource("info:fedora/xyz");
+        final Resource mockResource =
+                new DummyURIResource(RdfLexicon.RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model versionsModel = createDefaultModel();
@@ -278,7 +281,8 @@ public class FedoraResourceTest {
         final Dataset dataset = testObj.getVersionDataset(mockSubjects);
 
         assertEquals(versionsModel, dataset.getDefaultModel());
-        assertEquals("info:fedora/xyz", dataset.getContext().get(
+        assertEquals(RdfLexicon.RESTAPI_NAMESPACE + "xyz",
+                dataset.getContext().get(
                 Symbol.create("uri")));
     }
 

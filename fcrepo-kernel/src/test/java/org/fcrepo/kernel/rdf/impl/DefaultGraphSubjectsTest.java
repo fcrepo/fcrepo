@@ -26,6 +26,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +56,7 @@ public class DefaultGraphSubjectsTest {
     @Test
     public void testGetGraphSubject() throws RepositoryException {
         final String testPath = "/foo/bar";
-        final String expected = "info:fedora" + testPath;
+        final String expected = RdfLexicon.RESTAPI_NAMESPACE + testPath;
         when(mockNode.getPath()).thenReturn(testPath);
         Resource actual = testObj.getGraphSubject(mockNode);
         assertEquals(expected, actual.getURI());
@@ -71,7 +72,8 @@ public class DefaultGraphSubjectsTest {
         when(mockSession.nodeExists(expected)).thenReturn(true);
         when(mockSession.getNode(expected)).thenReturn(mockNode);
         // test a good subject
-        when(mockSubject.getURI()).thenReturn("info:fedora" + expected);
+        when(mockSubject.getURI())
+                .thenReturn(RdfLexicon.RESTAPI_NAMESPACE + expected);
         when(mockSubject.isURIResource()).thenReturn(true);
         Node actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(mockNode, actual);
@@ -87,14 +89,15 @@ public class DefaultGraphSubjectsTest {
         assertEquals(null, actual);
         // test a fcr:content path
         when(mockSubject.getURI()).thenReturn(
-                "info:fedora" + expected + "/fcr:content");
+                RdfLexicon.RESTAPI_NAMESPACE + expected + "/fcr:content");
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         verify(mockSession).getNode(expected + "/jcr:content");
     }
 
     @Test
     public void testIsFedoraGraphSubject() {
-        when(mockSubject.getURI()).thenReturn("info:fedora/foo");
+        when(mockSubject.getURI()).thenReturn(
+                RdfLexicon.RESTAPI_NAMESPACE + "foo");
         when(mockSubject.isURIResource()).thenReturn(true);
         boolean actual = testObj.isFedoraGraphSubject(mockSubject);
         assertEquals(true, actual);
