@@ -26,7 +26,9 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.Node;
@@ -82,10 +84,11 @@ public class SelfHealingIT {
 
         final URL config =
             this.getClass().getClassLoader().getResource(
-                                                         "test_selfhealing_repository.json");
-        repo =
-            new JcrRepositoryFactory().getRepository(config.toString(),
-                                                     null);
+                    "test_selfhealing_repository.json");
+
+        Map params = Collections.singletonMap(JcrRepositoryFactory.URL,
+                                              config.toString());
+        repo = new JcrRepositoryFactory().getRepository(params);
 
         datastreamService = new DatastreamService();
         datastreamService.setRepository(repo);

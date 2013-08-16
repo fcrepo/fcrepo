@@ -21,7 +21,9 @@ import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.Node;
@@ -72,9 +74,10 @@ public class TiffPolicyStorageIT {
         final URL config =
                 this.getClass().getClassLoader().getResource(
                     "repository.json");
-        repo =
-                new JcrRepositoryFactory().getRepository(config.toString(),
-                        null);
+
+        Map params = Collections.singletonMap(JcrRepositoryFactory.URL,
+                                              config.toString());
+        repo = new JcrRepositoryFactory().getRepository(params);
 
         pdp = new PolicyDecisionPoint();
         pdp.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
