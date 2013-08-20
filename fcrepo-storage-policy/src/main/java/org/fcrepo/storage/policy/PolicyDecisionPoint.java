@@ -93,7 +93,7 @@ public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
     /**
      * For now: simple contains implementation
      * 
-     * @param propertyType
+     * @param p
      */
     @Override
     public boolean contains(Policy p) {
@@ -115,7 +115,7 @@ public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
      */
     @Override
     public String toString() {
-        return "PolicyDecisionPoint [policies=" + policies + "]";
+        return "policies=" + policies;
     }
 
     /**

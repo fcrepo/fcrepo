@@ -19,7 +19,6 @@ package org.fcrepo.storage.policy;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -43,8 +42,6 @@ public abstract class AbstractResourceIT {
 
     protected Logger logger;
 
-    protected String OBJECT_PATH = "storagepolicy";
-
     @Before
     public void setLogger() {
         logger = getLogger(this.getClass());
@@ -55,10 +52,10 @@ public abstract class AbstractResourceIT {
 
     protected static final String HOSTNAME = "localhost";
     
-    protected static final String WEBAPP = "storagepolicy";
+    protected static final String SUFFIX = "fcr:storagepolicy";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
-        SERVER_PORT + "/rest/" + WEBAPP;
+        SERVER_PORT + "/rest/";
 
     protected final PoolingClientConnectionManager connectionManager =
         new PoolingClientConnectionManager();
@@ -72,27 +69,33 @@ public abstract class AbstractResourceIT {
         client = new DefaultHttpClient(connectionManager);
     }
 
-    protected static HttpGet HttpGetObjMethod(final String param) {
-        return new HttpGet(serverAddress);
+    protected HttpGet HttpGetObjMethod(final String param) {
+        HttpGet get = new HttpGet(serverAddress + param + "/" + SUFFIX);
+        logger.debug("GET: {}", get.getURI());
+        return get;
     }
     
-    protected static HttpPost HttpPostObjMethod() {       
-        return new HttpPost(serverAddress);
+    protected HttpPost HttpPostObjMethod(String param) {
+        HttpPost post = new HttpPost(serverAddress + param + "/" + SUFFIX);
+        logger.debug("POST: {}", post.getURI());
+        return post;
     }
     
-    protected static HttpDelete HttpDeleteObjMethod(final String param) {
-        return new HttpDelete(serverAddress + "/" + param);
+    protected HttpDelete HttpDeleteObjMethod(final String param) {
+        HttpDelete delete = new HttpDelete(serverAddress + param + "/" + SUFFIX);
+        logger.debug("DELETE: {}", delete.getURI());
+        return delete;
     }
     
     protected HttpResponse execute(final HttpUriRequest method)
-        throws ClientProtocolException, IOException {
+        throws IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
             method.getURI());
         return client.execute(method);
     }
 
     protected int getStatus(final HttpUriRequest method)
-        throws ClientProtocolException, IOException {
+        throws IOException {
         HttpResponse response = execute(method);
         int result = response.getStatusLine().getStatusCode();
         if (!(result > 199) || !(result < 400)) {

@@ -20,6 +20,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.services.policy.Policy;
@@ -30,14 +31,14 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-//import org.springframework.validation.annotation.Validated;
-
-
 
 import javax.annotation.PostConstruct;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.nodetype.NodeType;
 import javax.servlet.http.HttpServletRequest;
@@ -50,6 +51,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 
@@ -63,19 +65,23 @@ import java.io.IOException;
 
 @Component
 @Scope("prototype")
-@Path("/storagepolicy")
-public class PolicyGenerator extends AbstractResource {
+@Path("/{path: .*}/fcr:storagepolicy")
+public class StoragePolicy extends AbstractResource {
 
     @InjectedSession
     protected Session session;
 
     @Context
-    private HttpServletRequest request;
+    protected HttpServletRequest request;
 
     @Autowired(required = true)
-    StoragePolicyDecisionPoint storagePolicyDecisionPoint;
+    protected StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
-    private static final Logger LOGGER = getLogger(PolicyGenerator.class);
+    private JcrTools jcrTools;
+
+    public static final String POLICY_RESOURCE = "policies";
+
+    private static final Logger LOGGER = getLogger(StoragePolicy.class);
 
     /**
      * Initialize
@@ -86,7 +92,7 @@ public class PolicyGenerator extends AbstractResource {
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException,
         IOException {
-        final JcrTools jcrTools = new JcrTools(true);
+        final JcrTools jcrTools = getJcrTools();
         Session session = null;
         try {
             session = sessions.getSession();
@@ -113,9 +119,21 @@ public class PolicyGenerator extends AbstractResource {
 
     @POST
     @Consumes(APPLICATION_FORM_URLENCODED)
-    public Response post(final String request) throws Exception {
+    @Timed
+    public Response post(final @PathParam("path") String path,
+                         final String request) throws Exception {
         LOGGER.debug("POST Received request param: {}", request);
-        final JcrTools jcrTools = new JcrTools(true);
+        Response.ResponseBuilder response;
+
+        if (!path.equalsIgnoreCase(POLICY_RESOURCE)) {
+            response = Response.status(405);
+            return response.entity(
+                    "POST method not allowed on " + getUriInfo().getAbsolutePath() +
+                            ", try /policies/fcr:storagepolicy")
+                    .build();
+        }
+
+        final JcrTools jcrTools = getJcrTools();
         final String[] str = StringUtils.split(request); // simple split for now
         validateArgs(str.length);
         try {
@@ -135,16 +153,22 @@ public class PolicyGenerator extends AbstractResource {
                 storagePolicyDecisionPoint.addPolicy(policy);
                 session.save();
                 LOGGER.debug("Saved PDS hint {}", request);
-                return Response.ok().build();
+
+                response = Response.created(getUriInfo().getBaseUriBuilder()
+                                                    .path(str[0])
+                                                    .path("fcr:storagepolicy")
+                                                    .build());
             } else {
                 throw new PolicyTypeException(
-                    "Invalid property type specified.");
+                        "Invalid property type specified: " + str[0]);
             }
         } catch (final Exception e) {
-            throw e;
+            response = Response.serverError().entity(e.getMessage());
         } finally {
             session.logout();
         }
+
+        return response.build();
     }
 
     /**
@@ -152,13 +176,13 @@ public class PolicyGenerator extends AbstractResource {
      * implementation. Note: Signature might need to change, or a more
      * sophisticated method used, as implementation evolves.
      * 
-     * @param nodeType
+     * @param propertyType
      * @param itemType
      * @param value
      * @return
      * @throws PolicyTypeException
      */
-    public Policy newPolicyInstance(final String propertyType,
+    protected Policy newPolicyInstance(final String propertyType,
         final String itemType, final String value) throws PolicyTypeException {
 
         switch (propertyType) {
@@ -175,9 +199,9 @@ public class PolicyGenerator extends AbstractResource {
      * the design of how things are stored will need to change.
      */
     @DELETE
-    @Path("/{id}")
-    public Response deleteNodeType(@PathParam("id")
-        final String nodeType) throws RepositoryException {
+    @Timed
+    public Response deleteNodeType(@PathParam("path") final String nodeType)
+        throws RepositoryException {
         try {
             // final String[] str = StringUtils.split(request);
             // validateArgs(str.length);
@@ -194,7 +218,7 @@ public class PolicyGenerator extends AbstractResource {
                 // TODO Once Policy is updated to display Policy type, this
                 // would change
                 storagePolicyDecisionPoint.removeAll();
-                return Response.ok().build();
+                return Response.noContent().build();
             } else {
                 throw new RepositoryException(
                     "Invalid property type specified.");
@@ -206,19 +230,59 @@ public class PolicyGenerator extends AbstractResource {
 
     /**
      * TODO (for now) prints org.fcrepo.binary.PolicyDecisionPoint
-     * 
-     * @param policyType
+     *
      * @return
      * @throws RepositoryException
      */
     @GET
     @Produces(APPLICATION_JSON)
-    public Response printActiveStoragePolicies() throws Exception {
+    @Timed
+    public Response get(final @PathParam("path") String path) throws Exception {
+        if (POLICY_RESOURCE.equalsIgnoreCase(path)) {
+            return getAllStoragePolicies();
+        } else {
+            return getStoragePolicy(path);
+        }
+    }
+
+    private Response getAllStoragePolicies() throws Exception {
         if (storagePolicyDecisionPoint == null ||
             storagePolicyDecisionPoint.size() == 0) {
             return Response.ok("No Policies Found").build();
         }
         return Response.ok(storagePolicyDecisionPoint.toString()).build();
+    }
+
+    private Response getStoragePolicy(final String nodeType) {
+        LOGGER.debug("Get storage policy for: {}", nodeType);
+        Response.ResponseBuilder response;
+        try {
+            final Node node =
+                    jcrTools.findOrCreateNode(session,
+                                              "/fedora:system/fedora:storage_policy",
+                                              "test");
+
+            Property prop = node.getProperty(nodeType);
+            if (null == prop) {
+                throw new PathNotFoundException("Policy not found: " + nodeType);
+            }
+
+            Value[] values = prop.getValues();
+            if (values != null && values.length > 0) {
+                response = Response.ok(values[0].getString());
+            } else {
+                throw new PathNotFoundException("Policy not found: " + nodeType);
+            }
+
+        } catch (PathNotFoundException e) {
+            response = Response.status(404).entity(e.getMessage());
+        } catch (Exception e) {
+            response = Response.serverError().entity(e.getMessage());
+
+        } finally {
+            session.logout();
+        }
+        return response.build();
     }
 
     /**
@@ -275,5 +339,32 @@ public class PolicyGenerator extends AbstractResource {
         private InputPattern(int l) {
             requiredLength = l;
         }
+    }
+
+    private JcrTools getJcrTools() {
+        if (null == jcrTools) {
+            this.jcrTools = new JcrTools(true);
+        }
+        return jcrTools;
+    }
+
+    /**
+     * Only for UNIT TESTING
+     * @param jcrTools
+     */
+    public void setJcrTools(JcrTools jcrTools) {
+        this.jcrTools = jcrTools;
+    }
+
+    private UriInfo getUriInfo() {
+        return this.uriInfo;
+    }
+
+    /**
+     * Only for UNIT TESTING
+     * @param uriInfo
+     */
+    public void setUriInfo(UriInfo uriInfo) {
+        this.uriInfo = uriInfo;
     }
 }
