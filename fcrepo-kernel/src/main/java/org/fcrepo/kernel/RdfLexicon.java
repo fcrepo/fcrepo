@@ -29,21 +29,21 @@ public final class RdfLexicon {
      * Was "info:fedora/fedora-system:def/internal#".
     **/
     public static final String REPOSITORY_NAMESPACE =
-            "http://fcrepo.org/repository#";           // fcrepo:
+            "http://fedora.info/definitions/v4/repository#"; // fcrepo:
 
     /**
      * REST API namespace, used for internal API links and node paths.
      * Was "info:fedora/".
     **/
     public static final String RESTAPI_NAMESPACE =
-            "http://fcrepo.org/repository/rest-api#";  // fedora:
+            "http://fedora.info/definitions/v4/rest-api#";   // fedora:
 
     /**
      * Relations (RELS-EXT) namespace, used for linking between Fedora objects.
      * Was "info:fedora/fedora-system:def/relations-external#".
     **/
     public static final String RELATIONS_NAMESPACE =
-            "http://fcrepo.org/repository/relations#"; // fedorarelsext:
+            "http://fedora.info/definitions/v4/rels-ext#";   // fedorarelsext:
 
     // MEMBERSHIP
     public static final Property HAS_MEMBER_OF_RESULT =
