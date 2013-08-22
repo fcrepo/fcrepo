@@ -58,7 +58,7 @@ import com.hp.hpl.jena.update.GraphStoreFactory;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
- * 
+ *
  * @author cbeer
  * @date Feb 11, 2013
  */
@@ -97,7 +97,7 @@ public class DatastreamService extends RepositoryService {
     }
     /**
      * Create a new Datastream node in the JCR store
-     * 
+     *
      * @param session the jcr session to use
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
@@ -118,7 +118,7 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Create a new Datastream node in the JCR store
-     * 
+     *
      * @param session the jcr session to use
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
@@ -142,7 +142,7 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Retrieve the JCR node for a Datastream by pid and dsid
-     * 
+     *
      * @param path
      * @return
      * @throws RepositoryException
@@ -157,7 +157,7 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Retrieve a Datastream instance by pid and dsid
-     * 
+     *
      * @param path jcr path to the datastream
      * @return
      * @throws RepositoryException
@@ -169,7 +169,7 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Retrieve a Datastream instance by pid and dsid
-     * 
+     *
      * @param node datastream node
      * @return
      * @throws RepositoryException
@@ -180,7 +180,7 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Get the fixity results for the datastream as a RDF Dataset
-     * 
+     *
      * @param subjects
      * @param datastream
      * @return
@@ -209,7 +209,7 @@ public class DatastreamService extends RepositoryService {
     /**
      * Run the fixity check on the datastream and attempt to automatically
      * correct failures if additional copies of the bitstream are available
-     * 
+     *
      * @param datastream
      * @return
      * @throws RepositoryException
@@ -280,7 +280,7 @@ public class DatastreamService extends RepositoryService {
     /**
      * Get the fixity results for this datastream's bitstream, and compare it
      * against the given checksum and size.
-     * 
+     *
      * @param resource
      * @param dsChecksum -the checksum and algorithm represented as a URI
      * @param dsSize
@@ -298,7 +298,7 @@ public class DatastreamService extends RepositoryService {
 
     /**
      * Set the low-level storage service (if Spring didn't wire it in)
-     * 
+     *
      * @param llStoreService
      */
     public void setLlStoreService(final LowLevelStorageService llStoreService) {
@@ -308,7 +308,7 @@ public class DatastreamService extends RepositoryService {
     /**
      * Set the storage policy decision point (if Spring didn't wire it in for
      * us)
-     * 
+     *
      * @param pdp
      */
     public void setStoragePolicyDecisionPoint(final StoragePolicyDecisionPoint pdp) {
@@ -318,11 +318,12 @@ public class DatastreamService extends RepositoryService {
     /**
      * Get the Policy Decision Point for this service. Initialize it if Spring
      * didn't wire it in for us.
-     * 
+     *
      * @return a PolicyDecisionPoint
      */
     private StoragePolicyDecisionPoint getStoragePolicyDecisionPoint() {
         if (storagePolicyDecisionPoint == null) {
+            logger.debug("Using new PolicyDecisionPoint.");
           //  storagePolicyDecisionPoint = new PolicyDecisionPoint();
         }
 
