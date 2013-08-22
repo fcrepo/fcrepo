@@ -42,6 +42,8 @@ public class StoreChunkOutputStream extends OutputStream {
     // 1 MB
     public static final int CHUNKSIZE = 1024 * 1024 * 1;
 
+    private static final int CHUNK_BUFFER_SIZE = 1024;
+
     protected final CacheStore blobCache;
 
     protected final String keyPrefix;
@@ -66,7 +68,7 @@ public class StoreChunkOutputStream extends OutputStream {
         logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.keyPrefix = keyPrefix;
-        chunkBuffer = new ByteArrayOutputStream(1024);
+        chunkBuffer = new ByteArrayOutputStream(CHUNK_BUFFER_SIZE);
     }
 
     /**

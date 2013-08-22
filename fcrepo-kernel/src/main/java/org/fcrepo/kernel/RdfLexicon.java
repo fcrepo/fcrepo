@@ -25,25 +25,28 @@ import com.hp.hpl.jena.rdf.model.Property;
 public final class RdfLexicon {
 
     /**
-     * Repository namespace, used for JCR properties exposed pubicly.
+     * Repository namespace "fcrepo", used for JCR properties exposed
+     * publicly.
      * Was "info:fedora/fedora-system:def/internal#".
     **/
     public static final String REPOSITORY_NAMESPACE =
-            "http://fedora.info/definitions/v4/repository#"; // fcrepo:
+            "http://fedora.info/definitions/v4/repository#";
 
     /**
-     * REST API namespace, used for internal API links and node paths.
+     * REST API namespace "fedora", used for internal API links and node
+     * paths.
      * Was "info:fedora/".
     **/
     public static final String RESTAPI_NAMESPACE =
-            "http://fedora.info/definitions/v4/rest-api#";   // fedora:
+            "http://fedora.info/definitions/v4/rest-api#";
 
     /**
-     * Relations (RELS-EXT) namespace, used for linking between Fedora objects.
+     * Relations (RELS-EXT) namespace "fedorarelsext", used for linking
+     * between Fedora objects.
      * Was "info:fedora/fedora-system:def/relations-external#".
     **/
     public static final String RELATIONS_NAMESPACE =
-            "http://fedora.info/definitions/v4/rels-ext#";   // fedorarelsext:
+            "http://fedora.info/definitions/v4/rels-ext#";
 
     // MEMBERSHIP
     public static final Property HAS_MEMBER_OF_RESULT =
