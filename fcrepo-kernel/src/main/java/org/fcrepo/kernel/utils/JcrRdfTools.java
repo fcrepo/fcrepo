@@ -93,7 +93,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * A set of helpful tools for converting JCR properties to RDF
- * 
+ *
  * @author Chris Beer
  * @date May 10, 2013
  */
@@ -506,7 +506,7 @@ public class JcrRdfTools {
 
     Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS = new Predicate<NodeType>() {
         @Override
-        public boolean apply(NodeType input) {
+        public boolean apply(final NodeType input) {
             return input.getChildNodeDefinitions().length > 0;
         }
     };
@@ -607,7 +607,7 @@ public class JcrRdfTools {
                                 .getRepositorySize(
                                         repository)));
 
-        /* TODO: Get and add the Storage policy to the RDF response */
+        /* TODO Get and add the Storage policy to the RDF response */
 
         /* add the configuration information */
 
@@ -658,14 +658,14 @@ public class JcrRdfTools {
      * @param model
      * @throws RepositoryException
      */
-    private void addJcrContentLocationInformationToModel(
-                                                            final Node node, final Model model)
+    private void addJcrContentLocationInformationToModel(final Node node,
+        final Model model)
         throws RepositoryException {
         final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
         final Resource contentNodeSubject =
             graphSubjects.getGraphSubject(contentNode);
 
-        // TODO: get this from somewhere else.
+        // TODO get this from somewhere else.
 
         if (llstore == null) {
             llstore = new LowLevelStorageService();
@@ -844,7 +844,7 @@ public class JcrRdfTools {
      */
     String getPropertyNameFromPredicate(final Node node,
                                         final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
-        Map<String, String> s = Collections.emptyMap();
+        final Map<String, String> s = Collections.emptyMap();
         return getPropertyNameFromPredicate(node, predicate, s);
 
     }

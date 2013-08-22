@@ -22,11 +22,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-
 import org.fcrepo.kernel.services.functions.GetBinaryKey;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +58,7 @@ public class GetBinaryKeyTest {
     }
 
     @Test
-    public void testApply() throws LoginException, RepositoryException {
+    public void testApply() {
         final GetBinaryKey testObj = new GetBinaryKey();
         assertEquals(binaryKey, testObj.apply(mockProp));
     }

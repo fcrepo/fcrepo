@@ -66,7 +66,7 @@ public abstract class NodePropertiesTools {
                              propertyName);
 
                 // if the property is multi-valued, go ahead and append to it.
-                ArrayList<Value> newValues = new ArrayList<Value>();
+                final ArrayList<Value> newValues = new ArrayList<Value>();
                 Collections.addAll(newValues,
                                    node.getProperty(propertyName).getValues());
 
@@ -122,11 +122,11 @@ public abstract class NodePropertiesTools {
 
             if (FedoraTypesUtils.isMultipleValuedProperty.apply(property)) {
 
-                ArrayList<Value> newValues = new ArrayList<Value>();
+                final ArrayList<Value> newValues = new ArrayList<Value>();
 
                 boolean remove = false;
 
-                for ( Value v : node.getProperty(propertyName).getValues() ) {
+                for (final Value v : node.getProperty(propertyName).getValues()) {
                     if (v.equals(valueToRemove)) {
                         remove = true;
                     } else {

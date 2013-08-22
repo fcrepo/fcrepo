@@ -138,7 +138,7 @@ public class FedoraTypesUtilsTest {
 
     // unfortunately, we need to be able to cast to two interfaces to perform
     // some tests this testing interface allows mocks to do that
-    static interface PropertyMock extends Property, Namespaced {
+    interface PropertyMock extends Property, Namespaced {
     }
 
     @Before
@@ -165,7 +165,7 @@ public class FedoraTypesUtilsTest {
         try {
             test.apply(mockYes);
             fail("Unexpected completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
     }
 
     @Test
@@ -178,7 +178,7 @@ public class FedoraTypesUtilsTest {
         try {
             getValueFactory.apply(mockNode);
             fail("Unexpected completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
     }
 
     @Test
@@ -189,7 +189,7 @@ public class FedoraTypesUtilsTest {
         try {
             getPredicateForProperty.apply(mockProp);
             fail("Unexpected completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
     }
 
     @Test
@@ -203,16 +203,16 @@ public class FedoraTypesUtilsTest {
         final String mockHint = "storage-hint";
         getBinary(mockNode, mockInput, mockHint);
         verify(mockJVF).createBinary(mockInput, mockHint);
-        
+
         when(mockNode.getSession()).thenThrow(new RepositoryException());
         try {
             getBinary(mockNode, mockInput);
             fail("Unexpected completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
         try {
             getBinary(mockNode, mockInput, mockHint);
             fail("Unexpected completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
     }
 
     @Test
@@ -301,7 +301,7 @@ public class FedoraTypesUtilsTest {
             isInternalNode.apply(mockNode);
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
                  " after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
     }
 
     @Test
@@ -347,7 +347,7 @@ public class FedoraTypesUtilsTest {
         verify(mockSession).logout();
         verify(mockSession, never()).save();
     }
-    
+
     @Test
     public void testPredicateExceptionHandling() throws RepositoryException {
         when(mockNode.getMixinNodeTypes()).thenThrow(new RepositoryException());
@@ -355,23 +355,23 @@ public class FedoraTypesUtilsTest {
             FedoraTypesUtils.isFedoraResource.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraResource" +
                     " completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
         try {
             FedoraTypesUtils.isFedoraObject.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraObject" +
                     " completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
         try {
             FedoraTypesUtils.isFedoraDatastream.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraDatastream" +
                  " completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
     }
-    
+
     @Test
     public void testValue2String() throws RepositoryException {
         // test a valid Value
-        Value mockValue = mock(Value.class);
+        final Value mockValue = mock(Value.class);
         when(mockValue.getString()).thenReturn("foo");
         assertEquals("foo", FedoraTypesUtils.value2string.apply(mockValue));
         when(mockValue.getString()).thenThrow(new RepositoryException());
@@ -379,11 +379,11 @@ public class FedoraTypesUtilsTest {
             FedoraTypesUtils.value2string.apply(mockValue);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion after RepositoryException!");
-        } catch (RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {} // expected
         try {
             FedoraTypesUtils.value2string.apply(null);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion with null argument!");
-        } catch (IllegalArgumentException e) {} // expected
+        } catch (final IllegalArgumentException e) {} // expected
     }
 }

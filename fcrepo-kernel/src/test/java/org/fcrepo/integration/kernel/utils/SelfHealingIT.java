@@ -64,7 +64,7 @@ public class SelfHealingIT {
 
     protected Logger logger;
 
-    static private Repository repo;
+    private static Repository repo;
 
     private DatastreamService datastreamService;
 

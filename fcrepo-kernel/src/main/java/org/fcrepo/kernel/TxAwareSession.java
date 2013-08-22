@@ -45,7 +45,7 @@ public class TxAwareSession implements InvocationHandler {
 
     /**
      * Wrap a JCR session with this dynamic proxy
-     * 
+     *
      * @param session a JCR session
      * @param txId the transaction identifier
      * @return a wrapped JCR session
@@ -58,8 +58,7 @@ public class TxAwareSession implements InvocationHandler {
 
     @Override
     public Object invoke(final Object proxy, final Method method,
-            final Object[] args) throws ReflectiveOperationException,
-            IllegalArgumentException {
+        final Object[] args) throws ReflectiveOperationException {
         if (method.getName().equals("logout") ||
                 method.getName().equals("save")) {
             return null;

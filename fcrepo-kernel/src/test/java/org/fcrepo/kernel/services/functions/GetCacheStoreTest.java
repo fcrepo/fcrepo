@@ -22,8 +22,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.LoginException;
-import javax.jcr.RepositoryException;
-
 import org.fcrepo.kernel.services.functions.GetCacheStore;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -68,7 +66,7 @@ public class GetCacheStoreTest {
     }
 
     @Test
-    public void testApply() throws LoginException, RepositoryException {
+    public void testApply() throws LoginException {
         final GetCacheStore testObj = new GetCacheStore();
         testObj.apply(mockCache);
         verify(mockCR).getComponent((Class<?>) any(Class.class));

@@ -41,8 +41,8 @@ public class CheckCacheEntryFixityTest {
     }
 
     @Test
-    public void testApply() throws BinaryStoreException, BinaryStoreException,
-            NoSuchAlgorithmException {
+    public void testApply() throws BinaryStoreException,
+        NoSuchAlgorithmException {
         final URI testUri = URI.create("sha1:foo:bar");
         final long testSize = new SecureRandom().nextLong();
         final CheckCacheEntryFixity testObj =

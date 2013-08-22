@@ -42,7 +42,7 @@ import org.springframework.stereotype.Component;
  * create/commit/rollback {@link Transaction} objects A {@link Scheduled}
  * annotation is used for removing timed out Transactions
  *
- * 
+ *
  * @author frank asseg
  */
 @Component
@@ -56,7 +56,7 @@ public class TransactionService {
     static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
 
     /*
-     * TODO: since transactions have to be available on all nodes, they have to
+     * TODO since transactions have to be available on all nodes, they have to
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
      */
@@ -92,7 +92,7 @@ public class TransactionService {
 
     /**
      * Create a new Transaction and add it to the currently open ones
-     * 
+     *
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
@@ -106,7 +106,7 @@ public class TransactionService {
 
     /**
      * Retrieve an open {@link Transaction}
-     * 
+     *
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
@@ -149,14 +149,14 @@ public class TransactionService {
     public static String getCurrentTransactionId(final Session session) {
         try {
             return session.getNamespaceURI(FCREPO4_TX_ID);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             return null;
         }
     }
 
     /**
      * Check if a Transaction exists
-     * 
+     *
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
@@ -166,7 +166,7 @@ public class TransactionService {
 
     /**
      * Commit a {@link Transaction} with the given id
-     * 
+     *
      * @param txid the id of the {@link Transaction}
      * @throws RepositoryException
      */
@@ -182,7 +182,7 @@ public class TransactionService {
 
     /**
      * Roll a {@link Transaction} back
-     * 
+     *
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
      * @throws RepositoryException if the {@link Transaction} could not be found

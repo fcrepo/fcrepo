@@ -29,7 +29,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import java.util.Calendar;
 import java.util.Collection;
 
-import javax.jcr.LoginException;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -79,7 +78,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
     private NodeType[] mockNodetypes;
 
     @Before
-    public void setUp() throws LoginException, RepositoryException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         final String relPath = "/" + testPid;
         final NodeType[] types = new NodeType[0];

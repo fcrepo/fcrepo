@@ -64,7 +64,7 @@ import com.google.common.base.Predicate;
 /**
  * Convenience class with static methods for manipulating Fedora types in the
  * JCR.
- * 
+ *
  * @author ajs6f
  * @date Feb 14, 2013
  */
@@ -248,7 +248,7 @@ public abstract class FedoraTypesUtils {
 
     /**
      * Creates a JCR {@link Binary}
-     * 
+     *
      * @param n a {@link Node}
      * @param i an {@link InputStream}
      * @return a JCR {@link Binary}
@@ -267,7 +267,7 @@ public abstract class FedoraTypesUtils {
 
     /**
      * Creates a JCR {@link Binary}
-     * 
+     *
      * @param n a {@link Node}
      * @param i an {@link InputStream}
      * @return a JCR {@link Binary}
@@ -289,7 +289,7 @@ public abstract class FedoraTypesUtils {
 
     /**
      * Get the JCR Node Type manager
-     * 
+     *
      * @param node
      * @return
      * @throws RepositoryException
@@ -302,7 +302,7 @@ public abstract class FedoraTypesUtils {
     /**
      * Get the property definition information (containing type and multi-value
      * information)
-     * 
+     *
      * @param node the node to use for inferring the property definition
      * @param propertyName the property name to retrieve a definition for
      * @return a JCR PropertyDefinition, if available, or null
@@ -326,7 +326,7 @@ public abstract class FedoraTypesUtils {
     /**
      * Convenience method for transforming arrays into {@link Collection}s
      * through a mapping {@link Function}.
-     * 
+     *
      * @param input A Collection<F>.
      * @param f A Function<F,T>.
      * @return An ImmutableSet copy of input after transformation by f
@@ -348,7 +348,7 @@ public abstract class FedoraTypesUtils {
 
     /**
      * Get the JCR Base version for a node
-     * 
+     *
      * @param node
      * @return
      * @throws RepositoryException
@@ -360,13 +360,12 @@ public abstract class FedoraTypesUtils {
     }
 
     /**
-     * Get the JCR VersionHistory for an existing node
-     * 
+     * Get the JCR VersionHistory for an existing node.
+     *
      * @param node
      * @return
      * @throws RepositoryException
      */
-
     public static VersionHistory getVersionHistory(final Node node)
         throws RepositoryException {
         return getVersionHistory(node.getSession(), node.getPath());
@@ -374,7 +373,7 @@ public abstract class FedoraTypesUtils {
 
     /**
      * Get the JCR VersionHistory for a node at a given JCR path
-     * 
+     *
      * @param session
      * @param path
      * @return

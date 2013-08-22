@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -66,8 +65,7 @@ public class DefaultGraphSubjectsTest {
     }
 
     @Test
-    public void testGetNodeFromGraphSubject() throws PathNotFoundException,
-            RepositoryException {
+    public void testGetNodeFromGraphSubject() throws RepositoryException {
         final String expected = "/foo/bar";
         when(mockSession.nodeExists(expected)).thenReturn(true);
         when(mockSession.getNode(expected)).thenReturn(mockNode);

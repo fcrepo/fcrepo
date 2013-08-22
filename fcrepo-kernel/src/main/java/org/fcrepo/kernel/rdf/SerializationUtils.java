@@ -30,11 +30,22 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
-public class SerializationUtils {
+/**
+ * Utilities for serializing RDF.
+ *
+ * @author ajs6f
+ * @date Aug 22, 2013
+ */
+public final class SerializationUtils {
 
     private static final Logger logger = getLogger(SerializationUtils.class);
 
     public static final Symbol subjectKey = Symbol.create("uri");
+
+    private SerializationUtils() {
+        throw new AssertionError(this.getClass().getName()
+                + " is a helper class which should never be instantiated!");
+    }
 
     /**
      * Set the subject of the dataset by injecting a context "uri"
@@ -43,7 +54,7 @@ public class SerializationUtils {
      * @return
      */
     public static void setDatasetSubject(final Dataset rdf, final String uri) {
-        Context context = rdf.getContext();
+        final Context context = rdf.getContext();
         context.set(subjectKey, uri);
     }
 
@@ -54,8 +65,8 @@ public class SerializationUtils {
      * @return
      */
     public static Node getDatasetSubject(final Dataset rdf) {
-        Context context = rdf.getContext();
-        String uri = context.getAsString(subjectKey);
+        final Context context = rdf.getContext();
+        final String uri = context.getAsString(subjectKey);
         logger.debug("uri from context: {}", uri);
         if (uri != null) {
             return createURI(uri);

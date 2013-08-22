@@ -18,7 +18,7 @@ package org.fcrepo.kernel.utils;
 
 /**
  * A convenient abstraction over JCR's integer-typed events.
- * 
+ *
  * @author ajs6f
  * @date Feb 7, 2013
  */
@@ -28,7 +28,7 @@ public enum EventType {
 
     /**
      * Get the Fedora event type for a JCR type
-     * 
+     *
      * @param i
      * @return
      */
@@ -50,8 +50,8 @@ public enum EventType {
                 return PERSIST;
                 // no default
             default:
-                throw new IllegalArgumentException("Invalid JCR event type: " +
-                        i);
+                throw new IllegalArgumentException("Invalid JCR event type: "
+                        + i);
         }
     }
 
@@ -78,8 +78,8 @@ public enum EventType {
                 return "persist";
                 // no default
             default:
-                throw new IllegalArgumentException("Invalid JCR event type: " +
-                        jcrEvent);
+                throw new IllegalArgumentException("Invalid JCR event type: "
+                        + jcrEvent);
         }
     }
 }

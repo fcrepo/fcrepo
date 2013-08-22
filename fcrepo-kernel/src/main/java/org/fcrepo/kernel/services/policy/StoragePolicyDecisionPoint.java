@@ -30,46 +30,46 @@ public interface StoragePolicyDecisionPoint {
 
     /**
      * Add a new storage policy
-     * 
+     *
      * @param p org.fcrepo.kernel.services.policy object
      */
-    public abstract void addPolicy(Policy p);
+    void addPolicy(final Policy p);
 
     /**
      * Given a JCR node (likely a jcr:content node), determine which storage
      * policy should apply
-     * 
+     *
      * @param n
      * @return
      */
-    public abstract String evaluatePolicies(Node n);
+    String evaluatePolicies(final Node n);
 
     /**
      * Remove a storage policy
-     * 
+     *
      * @param p org.fcrepo.kernel.services.policy object
      */
-    public abstract void removePolicy(Policy p);
+    void removePolicy(final Policy p);
 
     /**
      * Explicitly set the policies this PDP should use
-     * 
+     *
      * @param policies
      */
-    public abstract void setPolicies(List<Policy> policies);
+    void setPolicies(final List<Policy> policies);
 
     /**
      * @param policy
      */
-    public abstract boolean contains(Policy policy);
+    boolean contains(final Policy policy);
 
     /**
      * clear all policies
      */
-    public void  removeAll();
+    void removeAll();
 
     /**
      * @return policies size
      */
-    public abstract int size();
+    int size();
 }

@@ -16,6 +16,8 @@
 
 package org.fcrepo.kernel.rdf;
 
+import static com.hp.hpl.jena.sparql.util.Symbol.create;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -25,10 +27,11 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 
 public interface GraphProperties {
 
-    public static final Symbol URI_SYMBOL = Symbol.create("uri");
-    public static final Symbol INLINED_RESOURCES_MODEL = Symbol.create("inlined-resources-model");
+    Symbol URI_SYMBOL = create("uri");
 
-    public static final String PROBLEMS_MODEL_NAME = "problems";
+    Symbol INLINED_RESOURCES_MODEL = create("inlined-resources-model");
+
+    String PROBLEMS_MODEL_NAME = "problems";
 
     /**
      * Return the name of the model this property factory will insert

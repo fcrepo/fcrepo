@@ -55,6 +55,7 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
      * @return the content for this entry
      * @throws BinaryStoreException
      */
+    @Override
     public InputStream getInputStream() throws BinaryStoreException {
         return store.getInputStream(key);
     }
@@ -67,9 +68,10 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
      * @throws BinaryStoreException
      * @throws IOException
      */
+    @Override
     public void storeValue(final InputStream stream)
         throws BinaryStoreException, IOException {
-        // TODO: this is probably an auditable action.
+        // TODO this is probably an auditable action.
         LOGGER.info("Doing a low-level write to store {} for key {}",
                     getExternalIdentifier(), key);
 
@@ -81,6 +83,7 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
      *
      * @return
      */
+    @Override
     public String getExternalIdentifier() {
 
         // TODO : I wonder if this could/should be a JSON blob or something

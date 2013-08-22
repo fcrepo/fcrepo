@@ -30,7 +30,7 @@ import javax.jcr.Session;
 public class Transaction {
 
     // the default timeout is 3 minutes
-    public static final long DEFAULT_TIMEOUT = 3l * 60l * 1000l;
+    public static final long DEFAULT_TIMEOUT = 3L * 60L * 1000L;
 
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo4.tx.timeout";
 
@@ -55,7 +55,7 @@ public class Transaction {
      * Create a transaction for the given Session
      * @param session
      */
-    public Transaction(Session session) {
+    public Transaction(final Session session) {
         super();
         this.session = session;
         this.created = new Date();

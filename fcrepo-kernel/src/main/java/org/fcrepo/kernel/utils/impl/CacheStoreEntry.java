@@ -69,6 +69,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
      * @return the content for this entry
      * @throws BinaryStoreException
      */
+    @Override
     public InputStream getInputStream() throws BinaryStoreException {
         return new StoreChunkInputStream(store, key.toString() +
                                              DATA_SUFFIX);
@@ -82,9 +83,10 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
      * @throws BinaryStoreException
      * @throws IOException
      */
+    @Override
     public void storeValue(final InputStream stream)
         throws BinaryStoreException, IOException {
-        // TODO: this is probably an auditable action.
+        // TODO this is probably an auditable action.
         LOGGER.info("Doing a low-level write to store {} for key {}",
                     getExternalIdentifier(), key);
 
@@ -100,6 +102,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
      *
      * @return
      */
+    @Override
     public String getExternalIdentifier() {
 
         final CacheStoreConfig config = store.getCacheStoreConfig();
@@ -135,7 +138,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
             ":" + ispnExternalId;
     }
 
-    private static String getStoreIdentifier(AbstractCacheStoreConfig config) {
+    private static String getStoreIdentifier(final AbstractCacheStoreConfig config) {
         final Properties properties =
                 config.getProperties();
         if (properties.containsKey("id")) {
@@ -144,7 +147,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         return null;
     }
 
-    private static String getStoreIdentifier(FileCacheStoreConfig config) {
+    private static String getStoreIdentifier(final FileCacheStoreConfig config) {
         return config.getLocation();
     }
 
