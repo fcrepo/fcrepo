@@ -12,7 +12,7 @@
   	<property name="showStackTrace" value="true" />
   </bean>
   
-  <bean id="containerWrapper" class="org.fcrepo.storage.policy.ContainerWrapper" init-method="start" destroy-method="stop" >
+  <bean id="containerWrapper" class="org.fcrepo.http.commons.test.util.ContainerWrapper" init-method="start" destroy-method="stop" >
     <property name="port" value="${test.port:8080}"/>
     <property name="configLocation" value="classpath:web.xml" />
   </bean>
