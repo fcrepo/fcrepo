@@ -15,9 +15,11 @@
  */
 package org.fcrepo.integration.kernel.utils;
 
+import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.modeshape.jcr.api.RepositoryFactory.URL;
 
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
@@ -26,7 +28,6 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +71,7 @@ public class SelfHealingIT {
     private ObjectService objectService;
 
     private LowLevelStorageService lowLevelService;
-    
+
     @Autowired(required = false)
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
@@ -86,8 +87,7 @@ public class SelfHealingIT {
             this.getClass().getClassLoader().getResource(
                     "test_selfhealing_repository.json");
 
-        Map params = Collections.singletonMap(JcrRepositoryFactory.URL,
-                                              config.toString());
+        final Map<?, ?> params = singletonMap(URL, config.toString());
         repo = new JcrRepositoryFactory().getRepository(params);
 
         datastreamService = new DatastreamService();
@@ -114,7 +114,7 @@ public class SelfHealingIT {
         CacheStore store = ((CacheStoreEntry)entryToTamper).getLowLevelStore();
         if (store instanceof ChainingCacheStore) {
             store = ((ChainingCacheStore)store).getStores().keySet().iterator().next();
-            OutputStream outputStream =
+            final OutputStream outputStream =
                     new StoreChunkOutputStream(store, entryToTamper.getKey().toString() +
                             "-data");
             IOUtils.copy(new ByteArrayInputStream("qwerty".getBytes()), outputStream);

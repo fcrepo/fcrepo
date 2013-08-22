@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.utils;
 
 import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.NamespaceException;
@@ -60,14 +61,14 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @throws RepositoryException
      */
     public static JcrPropertyStatementListener getListener(
-            final GraphSubjects subjects, final Session session, Model problemModel)
+            final GraphSubjects subjects, final Session session, final Model problemModel)
         throws RepositoryException {
         return new JcrPropertyStatementListener(subjects, session, problemModel);
     }
 
     /**
      * Construct a statement listener within the given session
-     * 
+     *
      * @param subjects
      * @param session
      * @throws RepositoryException
@@ -82,7 +83,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * When a statement is added to the graph, serialize it to a JCR property
-     * 
+     *
      * @param s
      */
     @Override
@@ -121,7 +122,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                         if (subjectNode.canAddMixin(mixinName)) {
                             subjectNode.addMixin(mixinName);
                         } else {
-                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());
+                            problems.add(subject, COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());
                         }
 
                         return;
@@ -154,7 +155,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * When a statement is removed, remove it from the JCR properties
-     * 
+     *
      * @param s
      */
     @Override
@@ -236,14 +237,11 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * Get a list of any problems from trying to apply the statement changes to
      * the node's properties
-     * 
+     *
      * @return
      */
     public Model getProblems() {
         return problems;
     }
 
-    private Session getSession() {
-        return this.session;
-    }
 }
