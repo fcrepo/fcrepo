@@ -51,9 +51,6 @@ import org.slf4j.Logger;
  */
 public class LegacyMethod {
 
-    // TODO Figure out where to get the base url
-    private static final String BASE_URL = "http://localhost:8080/rest";
-
     private static final Properties FEDORA_TYPES = new Properties();
 
     public static final String FEDORA_ID_SCHEME = "xsd:string";
@@ -176,9 +173,9 @@ public class LegacyMethod {
      */
     public void setUserId(String val) {
         if (val == null) {
-            delegate.addAuthor("unknown", null, BASE_URL);
+            delegate.addAuthor("unknown", null, getBaseURL());
         } else {
-            delegate.addAuthor(val, null, BASE_URL);
+            delegate.addAuthor(val, null, getBaseURL());
         }
     }
 
@@ -215,7 +212,7 @@ public class LegacyMethod {
      * @param val
      */
     public void setMethodName(final String val) {
-        delegate.setTitle(val).setBaseUri(BASE_URL);
+        delegate.setTitle(val).setBaseUri(getBaseURL());
     }
 
     /**
@@ -288,6 +285,21 @@ public class LegacyMethod {
      */
     public String getDsId() {
         return getLabelledCategory(DSID_CATEGORY_LABEL);
+    }
+
+    protected String getBaseURL() {
+        StringBuilder url = new StringBuilder();
+        String host = System.getProperty("fcrepo.host", "localhost");
+        String port = System.getProperty("fcrepo.port", "8080");
+        String ctxt = System.getProperty("fcrepo.ctxt", "rest");
+
+        url.append(port.equalsIgnoreCase("443") ? "https://" : "http://");
+        url.append(host);
+        url.append(":");
+        url.append(port);
+        url.append("/");
+        url.append(ctxt);
+        return url.toString();
     }
 
     /**

@@ -17,6 +17,7 @@
 package org.fcrepo.jms.legacy;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -41,8 +42,6 @@ import org.apache.abdera.model.Entry;
 import org.apache.abdera.model.Person;
 import org.apache.abdera.model.Text;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.jms.legacy.EntryFactory;
-import org.fcrepo.jms.legacy.LegacyMethod;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -180,4 +179,37 @@ public class LegacyMethodTest {
         testObj.writeTo(mockWriter);
         verify(mockDelegate).writeTo(mockWriter);
     }
+
+    @Test
+    public void testGetBaseURL() {
+        String url = testObj.getBaseURL();
+        assertNotNull(url);
+        assertEquals("http://localhost:8080/rest", url);
+
+        final String host = "my-host";
+        System.setProperty("fcrepo.host", host);
+
+        url = testObj.getBaseURL();
+        assertNotNull(url);
+        assertEquals("http://" + host + ":8080/rest", url);
+
+        final String port = "443";
+        System.setProperty("fcrepo.port", port);
+
+        url = testObj.getBaseURL();
+        assertNotNull(url);
+        assertEquals("https://" + host + ":" + port + "/rest", url);
+
+        final String ctxt = "sleep";
+        System.setProperty("fcrepo.ctxt", ctxt);
+
+        url = testObj.getBaseURL();
+        assertNotNull(url);
+        assertEquals("https://" + host + ":" + port + "/" + ctxt, url);
+
+        System.clearProperty("fcrepo.host");
+        System.clearProperty("fcrepo.port");
+        System.clearProperty("fcrepo.ctxt");
+    }
+
 }
