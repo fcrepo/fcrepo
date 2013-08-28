@@ -128,6 +128,7 @@ public class LegacyMethod {
                 jcrEvent.getUserID() == null ? "unknown" : jcrEvent.getUserID();
         setUserId(userID);
         setModified(new Date(jcrEvent.getDate()));
+        setPath(resource.getPath());
     }
 
     /**
@@ -285,6 +286,14 @@ public class LegacyMethod {
      */
     public String getDsId() {
         return getLabelledCategory(DSID_CATEGORY_LABEL);
+    }
+
+    /**
+     * Adds node path as a category
+     * @param path
+     */
+    private void setPath(String path) {
+        setLabelledCategory("path", path);
     }
 
     protected String getBaseURL() {
