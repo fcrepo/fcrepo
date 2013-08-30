@@ -94,7 +94,7 @@ public class SessionFactory {
      * @throws RepositoryException
      */
     public Session getSession(final String workspace)
-        throws RepositoryException {
+            throws RepositoryException {
         return repo.login(workspace);
     }
 
@@ -107,10 +107,11 @@ public class SessionFactory {
      * @throws RepositoryException
      */
     public Session getSession(final HttpServletRequest servletRequest)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final String workspace = getEmbeddedWorkspace(servletRequest);
-        final Transaction transaction = getEmbeddedTransaction(servletRequest);
+        final Transaction transaction =
+                getEmbeddedTransaction(servletRequest);
 
         final Session session;
 
@@ -119,7 +120,8 @@ public class SessionFactory {
                     transaction);
             session = transaction.getSession();
         } else if (workspace != null) {
-            logger.debug("Returning a session in the workspace {}", workspace);
+            logger.debug("Returning a session in the workspace {}",
+                    workspace);
             session = repo.login(workspace);
         } else {
             logger.debug("Returning a session in the default workspace");
@@ -156,7 +158,8 @@ public class SessionFactory {
                 session = transaction.getSession().impersonate(creds);
             } else if (creds != null) {
 
-                final String workspace = getEmbeddedWorkspace(servletRequest);
+                final String workspace =
+                        getEmbeddedWorkspace(servletRequest);
 
                 if (workspace != null) {
                     logger.debug(
@@ -226,7 +229,7 @@ public class SessionFactory {
      */
     private Transaction getEmbeddedTransaction(
             final HttpServletRequest servletRequest)
-        throws TransactionMissingException {
+            throws TransactionMissingException {
         final String requestPath = servletRequest.getPathInfo();
 
         if (requestPath == null) {
@@ -236,7 +239,7 @@ public class SessionFactory {
         final String[] part = requestPath.split("/");
 
         if (part.length > 1 && part[1].startsWith("tx:")) {
-            String txid = part[1].substring("tx:".length());
+            final String txid = part[1].substring("tx:".length());
             return transactionService.getTransaction(txid);
         } else {
             return null;
@@ -256,11 +259,10 @@ public class SessionFactory {
         if (securityContext.getUserPrincipal() != null) {
             logger.debug("Authenticated user: " +
                     securityContext.getUserPrincipal().getName());
-            return new ServletCredentials(servletRequest);
         } else {
             logger.debug("No authenticated user found!");
-            return null;
         }
+        return new ServletCredentials(servletRequest);
     }
 
 }

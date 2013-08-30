@@ -39,7 +39,8 @@ public class AccessControlExceptionMapper implements
 
     @Override
     public Response toResponse(final AccessControlException e) {
-        logger.error("AccessControlExceptionMapper intercepted exception: \n",
+        logger.debug(
+                "AccessControlExceptionMapper intercepted exception: \n",
                 e);
 
         return status(FORBIDDEN).build();
