@@ -91,7 +91,7 @@ public class StoragePolicyTest {
     @Before
     public void setup() throws RepositoryException {
         initMocks(this);
-        when(mockSessions.getSession()).thenReturn(mockSession);
+        when(mockSessions.getInternalSession()).thenReturn(mockSession);
         when(
             mockNodeService.findOrCreateNode(mockSession,
                 "/fedora:system/fedora:storage_policy", null)).thenReturn(
@@ -103,7 +103,7 @@ public class StoragePolicyTest {
 
     @Test
     public void nodeCreated() throws Exception {
-        mockSession = mockSessions.getSession();
+        mockSession = mockSessions.getInternalSession();
         mockNodeService.findOrCreateNode(mockSession,
             "/fedora:system/fedora:storage_policy", null);
         assertEquals(mockCodeNode.getProperty("image/tiff").getString(),

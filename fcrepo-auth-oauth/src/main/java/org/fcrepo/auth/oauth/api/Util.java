@@ -37,7 +37,7 @@ public class Util {
      */
     public static void createOauthWorkspace(final SessionFactory sessionFactory)
         throws RepositoryException {
-        final Session session = sessionFactory.getSession();
+        final Session session = sessionFactory.getInternalSession();
         try {
             if (!copyOf(session.getWorkspace().getAccessibleWorkspaceNames())
                     .contains(OAUTH_WORKSPACE)) {

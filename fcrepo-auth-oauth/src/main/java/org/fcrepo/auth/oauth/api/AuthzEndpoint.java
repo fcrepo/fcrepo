@@ -183,7 +183,7 @@ public class AuthzEndpoint extends AbstractResource {
      */
     private void saveAuthCode(final String authCode, final Set<String> scopes,
             final String client) throws RepositoryException {
-        final Session session = sessions.getSession(OAUTH_WORKSPACE);
+        final Session session = sessions.getInternalSession(OAUTH_WORKSPACE);
         try {
             final Node codeNode =
                     jcrTools.findOrCreateNode(session, "/authorization-codes/" +

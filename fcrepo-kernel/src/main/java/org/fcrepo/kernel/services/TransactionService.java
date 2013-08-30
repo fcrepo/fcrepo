@@ -31,6 +31,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,8 +42,7 @@ import org.springframework.stereotype.Component;
  * service implements a simple {@link Transaction} service which is able to
  * create/commit/rollback {@link Transaction} objects A {@link Scheduled}
  * annotation is used for removing timed out Transactions
- *
- *
+ * 
  * @author frank asseg
  */
 @Component
@@ -55,7 +55,7 @@ public class TransactionService {
      */
     static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
 
-    /*
+    /**
      * TODO since transactions have to be available on all nodes, they have to
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
@@ -81,8 +81,9 @@ public class TransactionService {
                         tx.rollback();
                     } catch (final RepositoryException e) {
                         LOGGER.error(
-                                "Got exception rolling back expired transaction {}: {}",
-                                tx, e);
+                                "Got exception rolling back expired" +
+                                        " transaction {}: {}",
+                                        tx, e);
                     }
                     txs.remove();
                 }
@@ -92,11 +93,12 @@ public class TransactionService {
 
     /**
      * Create a new Transaction and add it to the currently open ones
-     *
+     * 
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
-    public Transaction beginTransaction(final Session sess) throws RepositoryException {
+    public Transaction beginTransaction(final Session sess)
+        throws RepositoryException {
         final Transaction tx = new Transaction(sess);
         final String txId = tx.getId();
         transactions.put(txId, tx);
@@ -106,7 +108,7 @@ public class TransactionService {
 
     /**
      * Retrieve an open {@link Transaction}
-     *
+     * 
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
@@ -125,6 +127,7 @@ public class TransactionService {
 
     /**
      * Get the current Transaction for a session
+     * 
      * @param session
      * @return
      * @throws TransactionMissingException
@@ -135,7 +138,8 @@ public class TransactionService {
         final String txId = getCurrentTransactionId(session);
 
         if (txId == null) {
-            throw new TransactionMissingException("Transaction is not available");
+            throw new TransactionMissingException(
+                    "Transaction is not available");
         }
 
         return getTransaction(txId);
@@ -143,12 +147,17 @@ public class TransactionService {
 
     /**
      * Get the current Transaction ID for a session
+     * 
      * @param session
      * @return
      */
     public static String getCurrentTransactionId(final Session session) {
         try {
-            return session.getNamespaceURI(FCREPO4_TX_ID);
+            if (session instanceof TxSession) {
+                return ((TxSession) session).getTxId();
+            } else {
+                return session.getNamespaceURI(FCREPO4_TX_ID);
+            }
         } catch (final RepositoryException e) {
             return null;
         }
@@ -156,7 +165,7 @@ public class TransactionService {
 
     /**
      * Check if a Transaction exists
-     *
+     * 
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
@@ -166,7 +175,7 @@ public class TransactionService {
 
     /**
      * Commit a {@link Transaction} with the given id
-     *
+     * 
      * @param txid the id of the {@link Transaction}
      * @throws RepositoryException
      */
@@ -182,7 +191,7 @@ public class TransactionService {
 
     /**
      * Roll a {@link Transaction} back
-     *
+     * 
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
      * @throws RepositoryException if the {@link Transaction} could not be found

@@ -17,10 +17,8 @@
 package org.fcrepo.http.commons.session;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
@@ -40,16 +38,20 @@ public class InjectableSession implements Injectable<Session> {
 
     private HttpServletRequest request;
 
-    private static final Logger logger = getLogger(InjectableSession.class);
+    private static final Logger logger =
+            getLogger(InjectableSession.class);
 
     /**
-     * Construct our request-context and authorization-context aware session factory
+     * Construct our request-context and authorization-context aware session
+     * factory
+     * 
      * @param sessionFactory
      * @param reqContext
      * @param request
      */
     public InjectableSession(final SessionFactory sessionFactory,
-            final SecurityContext reqContext, final HttpServletRequest request) {
+            final SecurityContext reqContext,
+            final HttpServletRequest request) {
         checkNotNull(sessionFactory, "SessionFactory cannot be null!");
         checkNotNull(reqContext, "HttpRequestContext cannot be null!");
         checkNotNull(request, "HttpServletRequest cannot be null!");
@@ -64,20 +66,7 @@ public class InjectableSession implements Injectable<Session> {
 
     @Override
     public Session getValue() {
-        if (secContext.getUserPrincipal() != null) {
-            logger.debug("Returning authenticated Session.");
-            return sessionFactory.getSession(secContext, request);
-        } else {
-            logger.debug("Returning unauthenticated Session.");
-            try {
-                return sessionFactory.getSession(request);
-            } catch (final RepositoryException e) {
-                propagate(e);
-            }
-        }
-        throw new RuntimeException(
-                "Couldn't generate an appropriate session from HTTP Request: " +
-                        request);
+        return sessionFactory.getSession(secContext, request);
     }
 
 }

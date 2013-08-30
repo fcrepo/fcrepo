@@ -71,7 +71,7 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
             return false;
         }
         final Set<String> scopes = oauthRequest.getScopes();
-        final Session session = sessions.getSession(OAUTH_WORKSPACE);
+        final Session session = sessions.getInternalSession(OAUTH_WORKSPACE);
         try {
             final Node authCodeNode =
                     session.getNode("/authorization-codes/" + code);

@@ -49,7 +49,7 @@ public class UtilTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockSessions.getSession()).thenReturn(mockSession);
+        when(mockSessions.getInternalSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
     }
 

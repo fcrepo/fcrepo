@@ -73,7 +73,7 @@ public class AuthzEndpointTest {
         initMocks(this);
         when(mockRootNode.getNode(startsWith("authorization-codes/")))
         .thenReturn(mockCodeNode);
-        when(mockSessions.getSession("oauth")).thenReturn(mockSession);
+        when(mockSessions.getInternalSession("oauth")).thenReturn(mockSession);
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockSession.getNode(startsWith("/authorization-codes/")))
         .thenReturn(mockCodeNode);
