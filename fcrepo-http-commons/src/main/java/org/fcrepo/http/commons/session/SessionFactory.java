@@ -260,7 +260,7 @@ public class SessionFactory {
             logger.debug("Authenticated user: " +
                     securityContext.getUserPrincipal().getName());
         } else {
-            logger.debug("No authenticated user found!");
+            logger.debug("No authenticated user found.");
         }
         return new ServletCredentials(servletRequest);
     }

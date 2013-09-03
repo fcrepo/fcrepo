@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.http.commons.session.InjectableSession;
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

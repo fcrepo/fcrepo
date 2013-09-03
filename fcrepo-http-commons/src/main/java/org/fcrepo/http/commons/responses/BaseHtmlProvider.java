@@ -56,8 +56,8 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.RdfLexicon;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 

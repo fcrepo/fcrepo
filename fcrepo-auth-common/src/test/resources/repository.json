@@ -1,8 +1,8 @@
 {
-    "name" : "repo",
+    "name" : "fcrepo-secured-repo",
     "jndiName" : "",
     "workspaces" : {
-        "predefined" : [],
+        "predefined" : ["default"],
         "default" : "default",
         "allowCreation" : true
     },
@@ -15,23 +15,13 @@
             "metadataCacheName" : "FedoraRepository"
         }
     },
-    "externalSources" : {
-      "fileSystem" : {
-        "classname" : "org.modeshape.connector.filesystem.FileSystemConnector",
-        "directoryPath" : "target/test-classes/test-objects",
-        "readonly" : false,
-        "extraPropertiesStorage": "json",
-        "cacheTtlSeconds" : 5,
-        "projections" : [ "default:/files => /" ]
-      }
-    },
     "security" : {
         "anonymous" : {
             "roles" : ["readonly","readwrite","admin"],
             "useOnFailedLogin" : false
         },
         "providers" : [
-            { "classname" : "org.fcrepo.http.commons.session.BypassSecurityServletAuthenticationProvider" }
+            { "classname" : "org.fcrepo.auth.ServletContainerAuthenticationProvider" }
         ]
     },
 	"node-types" : ["fedora-node-types.cnd"]
