@@ -32,9 +32,6 @@ import org.junit.Test;
 
 public class FedoraResponseCodesIT extends AbstractResourceIT {
 
-    private static final String faulkner1 =
-            "The past is never dead. It's not even past.";
-
     @Before
     public void setup() throws ClientProtocolException, IOException {
         final HttpPost objMethod = postObjMethod("Permit");
@@ -109,7 +106,7 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
                 putDSMethod("FedoraDatastreamsTestPut_permit",
                         "zxc_permit", "foo");
         final HttpResponse response = client.execute(method);
-        assertEquals(204, response.getStatusLine().getStatusCode());
+        assertEquals(201, response.getStatusLine().getStatusCode());
     }
 
     @Test

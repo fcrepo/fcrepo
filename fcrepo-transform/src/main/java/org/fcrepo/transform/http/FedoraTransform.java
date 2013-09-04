@@ -16,23 +16,14 @@
 
 package org.fcrepo.transform.http;
 
-import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.query.Dataset;
-import org.apache.jena.riot.WebContent;
-import org.apache.marmotta.ldpath.exception.LDPathParseException;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.transform.Transformation;
-import org.fcrepo.transform.TransformationFactory;
-import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.transform.transformations.LDPathTransform;
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
+import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
+import static org.fcrepo.transform.transformations.LDPathTransform.getNodeTypeTransform;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.jcr.Node;
@@ -49,14 +40,24 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import org.apache.jena.riot.WebContent;
+import org.apache.marmotta.ldpath.exception.LDPathParseException;
+import org.fcrepo.http.api.FedoraNodes;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.transform.Transformation;
+import org.fcrepo.transform.TransformationFactory;
+import org.fcrepo.transform.transformations.LDPathTransform;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
-import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
-import static org.fcrepo.transform.transformations.LDPathTransform.getNodeTypeTransform;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
 
 @Component
 @Scope("prototype")
@@ -73,31 +74,40 @@ public class FedoraTransform extends AbstractResource {
 
     /**
      * Register the LDPath configuration tree in JCR
+     * 
      * @throws RepositoryException
      * @throws java.io.IOException
      */
     @PostConstruct
-    public void setUpRepositoryConfiguration()
-        throws RepositoryException, IOException {
+    public void setUpRepositoryConfiguration() throws RepositoryException,
+            IOException {
 
         if (transformationFactory == null) {
             transformationFactory = new TransformationFactory();
         }
 
-        final Session session = sessions.getSession();
+        final Session session = sessions.getInternalSession();
         final JcrTools jcrTools = new JcrTools(true);
 
         // register our CND
         jcrTools.registerNodeTypes(session, "ldpath.cnd");
 
         // create the configuration base path
-        jcrTools.findOrCreateNode(session, "/fedora:system/fedora:transform", "fedora:configuration", "fedora:node_type_configuration");
-        final Node node = jcrTools.findOrCreateNode(session, LDPathTransform.CONFIGURATION_FOLDER + "default", NodeType.NT_FOLDER, NodeType.NT_FOLDER);
+        jcrTools.findOrCreateNode(session,
+                "/fedora:system/fedora:transform", "fedora:configuration",
+                "fedora:node_type_configuration");
+        final Node node =
+                jcrTools.findOrCreateNode(session,
+                        LDPathTransform.CONFIGURATION_FOLDER + "default",
+                        NodeType.NT_FOLDER, NodeType.NT_FOLDER);
 
         // register an initial demo program
         if (!node.hasNode(NodeType.NT_BASE)) {
-            final Node base_config = node.addNode(NodeType.NT_BASE, NodeType.NT_FILE);
-            jcrTools.uploadFile(session, base_config.getPath(), getClass().getResourceAsStream("/ldpath/default/nt_base_ldpath_program.txt"));
+            final Node base_config =
+                    node.addNode(NodeType.NT_BASE, NodeType.NT_FILE);
+            jcrTools.uploadFile(session, base_config.getPath(), getClass()
+                    .getResourceAsStream(
+                            "/ldpath/default/nt_base_ldpath_program.txt"));
         }
 
         session.save();
@@ -106,6 +116,7 @@ public class FedoraTransform extends AbstractResource {
 
     /**
      * Execute an LDpath program transform
+     * 
      * @param pathList
      * @return Binary blob
      * @throws RepositoryException
@@ -114,18 +125,21 @@ public class FedoraTransform extends AbstractResource {
     @Path("{program}")
     @Produces({MediaType.APPLICATION_JSON})
     @Timed
-    public Object evaluateLdpathProgram(
-        @PathParam("path") final List<PathSegment> pathList,
-        @PathParam("program") final String program)
-        throws RepositoryException, LDPathParseException {
+    public Object evaluateLdpathProgram(@PathParam("path")
+    final List<PathSegment> pathList, @PathParam("program")
+    final String program) throws RepositoryException, LDPathParseException {
 
         try {
             final String path = toPath(pathList);
-            final FedoraResource object = nodeService.getObject(session, path);
+            final FedoraResource object =
+                    nodeService.getObject(session, path);
 
-            final Transformation t = getNodeTypeTransform(object.getNode(), program);
+            final Transformation t =
+                    getNodeTypeTransform(object.getNode(), program);
 
-            final Dataset propertiesDataset = object.getPropertiesDataset(new HttpGraphSubjects(session, FedoraNodes.class, uriInfo));
+            final Dataset propertiesDataset =
+                    object.getPropertiesDataset(new HttpGraphSubjects(
+                            session, FedoraNodes.class, uriInfo));
 
             return t.apply(propertiesDataset);
 
@@ -136,7 +150,7 @@ public class FedoraTransform extends AbstractResource {
 
     /**
      * Get the LDPath output as a JSON stream appropriate for e.g. Solr
-     *
+     * 
      * @param pathList
      * @param requestBodyStream
      * @return
@@ -145,38 +159,36 @@ public class FedoraTransform extends AbstractResource {
      */
     @POST
     @Consumes({APPLICATION_RDF_LDPATH, contentTypeSPARQLQuery})
-    @Produces({MediaType.APPLICATION_JSON,
-                  WebContent.contentTypeTextTSV,
-                  WebContent.contentTypeTextCSV,
-                  WebContent.contentTypeSSE,
-                  WebContent.contentTypeTextPlain,
-                  WebContent.contentTypeResultsJSON,
-                  WebContent.contentTypeResultsXML,
-                  WebContent.contentTypeResultsBIO,
-                  WebContent.contentTypeTurtle,
-                  WebContent.contentTypeN3,
-                  WebContent.contentTypeNTriples,
-                  WebContent.contentTypeRDFXML})
+    @Produces({MediaType.APPLICATION_JSON, WebContent.contentTypeTextTSV,
+            WebContent.contentTypeTextCSV, WebContent.contentTypeSSE,
+            WebContent.contentTypeTextPlain,
+            WebContent.contentTypeResultsJSON,
+            WebContent.contentTypeResultsXML,
+            WebContent.contentTypeResultsBIO,
+            WebContent.contentTypeTurtle, WebContent.contentTypeN3,
+            WebContent.contentTypeNTriples, WebContent.contentTypeRDFXML})
     @Timed
-    public Object evaluateTransform(
-        @PathParam("path") final List<PathSegment> pathList,
-        @HeaderParam("Content-Type") MediaType contentType,
-        final InputStream requestBodyStream)
-        throws RepositoryException, LDPathParseException {
+    public Object evaluateTransform(@PathParam("path")
+    final List<PathSegment> pathList, @HeaderParam("Content-Type")
+    final MediaType contentType, final InputStream requestBodyStream)
+            throws RepositoryException, LDPathParseException {
 
         try {
             final String path = toPath(pathList);
-            final FedoraResource object = nodeService.getObject(session, path);
-            final Dataset propertiesDataset = object.getPropertiesDataset(new HttpGraphSubjects(session, FedoraNodes.class, uriInfo));
+            final FedoraResource object =
+                    nodeService.getObject(session, path);
+            final Dataset propertiesDataset =
+                    object.getPropertiesDataset(new HttpGraphSubjects(
+                            session, FedoraNodes.class, uriInfo));
 
-            Transformation t =
-                transformationFactory.getTransform(contentType, requestBodyStream);
+            final Transformation t =
+                    transformationFactory.getTransform(contentType,
+                            requestBodyStream);
             return t.apply(propertiesDataset);
         } finally {
             session.logout();
         }
 
     }
-
 
 }
