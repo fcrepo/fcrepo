@@ -127,6 +127,31 @@ public class AtomJMSIT implements MessageListener {
         assertEquals("Got wrong pid!", "test1", path);
         assertEquals("Got wrong method!", "ingest", title);
     }
+    
+
+    @Test
+    public void testAtomStreamNodePath() throws LoginException, RepositoryException,
+        InterruptedException {
+        Session session = repository.login();
+        session.getRootNode().addNode("test1/sigma").addMixin(FEDORA_OBJECT);
+        session.save();
+
+        waitForEntry();
+
+        session.logout();
+
+        if (entry == null) fail("Waited a second, got no messages");
+        List<Category> categories = copyOf(entry.getCategories("xsd:string"));     
+        entry = null;
+        String path = null;
+        for (Category cat : categories) {
+            if (cat.getLabel().equals("path")) {
+                logger.debug("Found Category with term: " + cat.getTerm());
+                path = cat.getTerm();
+            }
+        }
+        assertEquals("Got wrong path!", "/test1/sigma", path);        
+    }
 
     @Test
     public void testDatastreamTerm() throws NoSuchNodeTypeException,
