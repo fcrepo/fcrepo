@@ -27,9 +27,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.api.FedoraTransactions;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.TxAwareSession;
 import org.fcrepo.kernel.services.TransactionService;
@@ -50,13 +50,17 @@ public class FedoraTransactionsTest {
     private Transaction mockTx;
 
     @Mock
+    private HttpServletRequest mockRequest;
+
+    @Mock
     private TransactionService mockTxService;
 
     @Before
     public void setUp() throws RepositoryException, NoSuchFieldException {
         initMocks(this);
         testObj = new FedoraTransactions();
-        mockSession = TxAwareSession.newInstance(mockSession(testObj), "123");
+        mockSession =
+                TxAwareSession.newInstance(mockSession(testObj), "123");
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
         setField(testObj, "txService", mockTxService);
@@ -67,8 +71,9 @@ public class FedoraTransactionsTest {
     public void shouldStartANewTransaction() throws RepositoryException,
             NoSuchFieldException {
         setField(testObj, "session", regularSession);
-        when(mockTxService.beginTransaction(regularSession)).thenReturn(mockTx);
-        testObj.createTransaction(createPathList());
+        when(mockTxService.beginTransaction(regularSession)).thenReturn(
+                mockTx);
+        testObj.createTransaction(createPathList(), mockRequest);
         verify(mockTxService).beginTransaction(regularSession);
     }
 
@@ -76,7 +81,7 @@ public class FedoraTransactionsTest {
     public void shouldUpdateExpiryOnExistingTransaction()
             throws RepositoryException {
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
-        testObj.createTransaction(createPathList());
+        testObj.createTransaction(createPathList(), mockRequest);
         verify(mockTx).updateExpiryDate();
     }
 
@@ -109,8 +114,9 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback()
-            throws RepositoryException, NoSuchFieldException {
+    public void
+            shouldErrorIfTheContextSessionIsNotATransactionAtRollback()
+                    throws RepositoryException, NoSuchFieldException {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback(createPathList());
         assertEquals(400, commit.getStatus());

@@ -61,7 +61,7 @@ public class FedoraWebhooksTest {
         TestHelpers.setField(testObj, "session", mockSession);
         TestHelpers.setField(testObj, "readOnlySession", mockSession);
         SessionFactory mockSessions = mock(SessionFactory.class);
-        when(mockSessions.getSession()).thenReturn(mockSession);
+        when(mockSessions.getInternalSession()).thenReturn(mockSession);
         TestHelpers.setField(testObj, "sessions", mockSessions);
     }
 

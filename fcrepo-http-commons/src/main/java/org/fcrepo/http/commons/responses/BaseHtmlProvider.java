@@ -122,7 +122,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
         LOGGER.trace("Assembling a map of node primary types -> templates...");
         final Builder<String, Template> templatesMapBuilder = builder();
-        final Session session = sessionFactory.getSession();
+        final Session session = sessionFactory.getInternalSession();
         try {
             // we search all of the possible node primary types
             for (final NodeTypeIterator primaryNodeTypes =

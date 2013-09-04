@@ -21,6 +21,7 @@ import java.util.Map;
 import javax.jcr.Credentials;
 
 import org.modeshape.jcr.ExecutionContext;
+import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.security.AuthenticationProvider;
 import org.modeshape.jcr.security.SecurityContext;
 
@@ -45,7 +46,13 @@ public class BypassSecurityServletAuthenticationProvider implements
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
-        return repositoryContext.with(new AnonymousAdminSecurityContext());
+        if (credentials instanceof ServletCredentials) {
+            return repositoryContext
+                    .with(new AnonymousAdminSecurityContext());
+        } else {
+            return null;
+        }
+
     }
 
     public static class AnonymousAdminSecurityContext implements

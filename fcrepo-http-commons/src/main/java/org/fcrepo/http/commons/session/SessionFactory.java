@@ -23,6 +23,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.kernel.Transaction;
@@ -82,7 +83,7 @@ public class SessionFactory {
      * @return
      * @throws RepositoryException
      */
-    public Session getSession() throws RepositoryException {
+    public Session getInternalSession() throws RepositoryException {
         return repo.login();
     }
 
@@ -93,7 +94,7 @@ public class SessionFactory {
      * @return
      * @throws RepositoryException
      */
-    public Session getSession(final String workspace)
+    public Session getInternalSession(final String workspace)
             throws RepositoryException {
         return repo.login(workspace);
     }
@@ -155,7 +156,17 @@ public class SessionFactory {
                 logger.debug(
                         "Returning a session in the transaction {} impersonating {}",
                         transaction, creds);
-                session = transaction.getSession().impersonate(creds);
+                // No need to impersonate if we have a servlet session tied to
+                // the Tx.
+                final HttpSession httpSession =
+                        servletRequest.getSession(true);
+                if (httpSession != null &&
+                        transaction.getId().equals(
+                                httpSession.getAttribute("currentTx"))) {
+                    session = transaction.getSession();
+                } else {
+                    session = transaction.getSession().impersonate(creds);
+                }
             } else if (creds != null) {
 
                 final String workspace =

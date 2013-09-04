@@ -24,17 +24,20 @@ import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.services.TransactionService;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -50,8 +53,8 @@ import com.google.common.collect.ImmutableMap;
 @Path("/{path: .*}/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
 
-    private static final Logger LOGGER = getLogger(FedoraTransactions.class);
-
+    private static final Logger LOGGER =
+            getLogger(FedoraTransactions.class);
 
     @Autowired
     private TransactionService txService;
@@ -61,14 +64,15 @@ public class FedoraTransactions extends AbstractResource {
 
     /**
      * Create a new transaction resource and add it to the registry
-     *
+     * 
      * @param pathList
      * @return
      * @throws RepositoryException
      */
     @POST
     public Response createTransaction(@PathParam("path")
-            final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList, @Context
+    final HttpServletRequest req) throws RepositoryException {
 
         LOGGER.debug("creating transaction at path {}", pathList);
 
@@ -77,23 +81,30 @@ public class FedoraTransactions extends AbstractResource {
         }
 
         if (session instanceof TxSession) {
-            Transaction t =
-                    txService.getTransaction(((TxSession) session).getTxId());
+            final Transaction t =
+                    txService.getTransaction(((TxSession) session)
+                            .getTxId());
             t.updateExpiryDate();
             return noContent().expires(t.getExpires()).build();
 
         } else {
-            Transaction t = txService.beginTransaction(session);
+            final Transaction t = txService.beginTransaction(session);
+            final HttpSession httpSession = req.getSession(true);
+            if (httpSession != null) {
+                httpSession.setAttribute("currentTx", t.getId());
+            }
             return created(
                     uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
                             .buildFromMap(
-                                    ImmutableMap.of("path", "tx:" + t.getId())))
-                    .expires(t.getExpires()).build();
+                                    ImmutableMap.of("path", "tx:" +
+                                            t.getId()))).expires(
+                    t.getExpires()).build();
         }
     }
 
     /**
      * Commit a transaction resource
+     * 
      * @param pathList
      * @return
      * @throws RepositoryException
@@ -101,7 +112,7 @@ public class FedoraTransactions extends AbstractResource {
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path")
-            final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList) throws RepositoryException {
 
         return finalizeTransaction(pathList, true);
 
@@ -113,14 +124,14 @@ public class FedoraTransactions extends AbstractResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path")
-            final List<PathSegment> pathList) throws RepositoryException {
+    final List<PathSegment> pathList) throws RepositoryException {
 
         return finalizeTransaction(pathList, false);
     }
 
     private Response finalizeTransaction(@PathParam("path")
-            final List<PathSegment> pathList, boolean commit)
-        throws RepositoryException {
+    final List<PathSegment> pathList, final boolean commit)
+            throws RepositoryException {
 
         final String path = toPath(pathList);
         if (!path.equals("/")) {
@@ -134,19 +145,19 @@ public class FedoraTransactions extends AbstractResource {
             txId = "";
         }
 
-
         if (txId.isEmpty()) {
-            LOGGER.debug("cannot finalize an empty tx id {} at path {}", txId, path);
+            LOGGER.debug("cannot finalize an empty tx id {} at path {}",
+                    txId, path);
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-
 
         if (commit) {
             LOGGER.debug("commiting transaction {} at path {}", txId, path);
             txService.commit(txId);
 
         } else {
-            LOGGER.debug("rolling back transaction {} at path {}", txId, path);
+            LOGGER.debug("rolling back transaction {} at path {}", txId,
+                    path);
             txService.rollback(txId);
         }
         return noContent().build();

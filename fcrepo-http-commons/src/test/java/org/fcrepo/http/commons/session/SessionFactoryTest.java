@@ -96,7 +96,7 @@ public class SessionFactoryTest {
     @Test
     public void testGetSessionUnauthenticated() throws LoginException,
             RepositoryException {
-        testObj.getSession();
+        testObj.getInternalSession();
         verify(mockRepo).login();
     }
 
