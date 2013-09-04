@@ -22,9 +22,9 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * These factories extract Group Principals from HTTP requests, usually from
- * request headers. Principals that you wish to assign roles to must implement
- * Serializable.
+ * These factories extract security principals from HTTP requests, often from
+ * request headers. Principals that will be assigned roles or privileges
+ * must have a unique name string.
  * 
  * @author Gregory Jansen
  */
@@ -32,9 +32,9 @@ public interface HTTPPrincipalFactory {
 
     /**
      * Extract extra security principals from an HTTP request.
+     * 
      * @param request the request
      * @return a set of security principals
      */
-    public Set<Principal>
-    getGroupPrincipals(HttpServletRequest request);
+    public Set<Principal> getGroupPrincipals(HttpServletRequest request);
 }

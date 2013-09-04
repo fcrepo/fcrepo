@@ -32,6 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Authenticates ModeShape logins where servlet credentials are supplied.
+ * Capable of authenticating whether or not container has performed user
+ * authentication.
+ * This is a singleton with an injected policy enforcement point. The singleton
+ * pattern allows ModeShape to obtain this instance via classname configuration.
+ * 
  * @author Gregory Jansen
  */
 public class ServletContainerAuthenticationProvider implements
@@ -45,6 +51,9 @@ public class ServletContainerAuthenticationProvider implements
 
     public static final String EVERYONE_NAME = "EVERYONE";
 
+    /**
+     * The security principal for every request.
+     */
     public static final Principal EVERYONE = new Principal() {
 
         @Override
@@ -72,8 +81,8 @@ public class ServletContainerAuthenticationProvider implements
     private FedoraPolicyEnforcementPoint pep;
 
     /**
-     * Get Fedora's Spring-configured AuthenticationProvider implementation for
-     * ModeShape.
+     * Provides the singleton bean to ModeShape via reflection based on class
+     * name.
      * 
      * @return a AuthenticationProvider
      */

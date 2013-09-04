@@ -29,6 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * The security context for Fedora servlet users. These users are not
+ * necessarily authenticated by the container, i.e. users may include the
+ * general public. This security context delegates all access decisions to the
+ * configured Fedora policy enforcement point.
+ * 
  * @author Gregory Jansen
  */
 public class FedoraUserSecurityContext implements SecurityContext,
@@ -43,6 +48,13 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     private FedoraPolicyEnforcementPoint pep = null;
 
+    /**
+     * Constructs a new security context.
+     * 
+     * @param request the servlet request
+     * @param principals security principals associated with this request
+     * @param pep the policy enforcement point
+     */
     protected FedoraUserSecurityContext(final HttpServletRequest request,
             final Set<Principal> principals,
             final FedoraPolicyEnforcementPoint pep) {

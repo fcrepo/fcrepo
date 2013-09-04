@@ -40,6 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * This is a servlet filter that makes requests appear to be authenticated and
+ * adds headers for tests.
+ * 
  * @author Gregory Jansen
  */
 public class MockHeadersFilter implements Filter {
@@ -65,7 +68,7 @@ public class MockHeadersFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest req,
             final ServletResponse res, final FilterChain chain)
-        throws IOException, ServletException {
+            throws IOException, ServletException {
         logger.debug("in filter");
         if (req instanceof HttpServletRequest) {
             final HttpServletRequest hreq = (HttpServletRequest) req;

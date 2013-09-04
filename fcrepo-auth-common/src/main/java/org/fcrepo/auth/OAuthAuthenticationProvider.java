@@ -24,10 +24,12 @@ import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.security.AuthenticationProvider;
 
 /**
+ * Authenticates OAuth requests to ModeShape, creating a security context and
+ * principals appropriate to the OAuth token.
+ * 
  * @author Gregory Jansen
  */
-public class OAuthAuthenticationProvider implements
-        AuthenticationProvider {
+public class OAuthAuthenticationProvider implements AuthenticationProvider {
 
     /*
      * (non-Javadoc)
@@ -37,14 +39,14 @@ public class OAuthAuthenticationProvider implements
      * org.modeshape.jcr.ExecutionContext, java.util.Map)
      */
     @Override
-    public ExecutionContext authenticate(Credentials credentials,
-            String repositoryName, String workspaceName,
-            ExecutionContext repositoryContext,
-            Map<String, Object> sessionAttributes) {
+    public ExecutionContext authenticate(final Credentials credentials,
+            final String repositoryName, final String workspaceName,
+            final ExecutionContext repositoryContext,
+            final Map<String, Object> sessionAttributes) {
         // TODO verify OAuth token credentials
         // TODO create an OAuth SecurityContext with OAuth authorization
         // TODO return new ExecutionContext with OAuth SecurityContext
-        return null;
+        throw new UnsupportedOperationException(
+                "OAuth Auth Provider not yet implemented.");
     }
-
 }

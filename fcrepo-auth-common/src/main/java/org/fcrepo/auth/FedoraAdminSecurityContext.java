@@ -24,6 +24,9 @@ import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
 
 /**
+ * This is a pass-through security context for authenticated Fedora
+ * administrators.
+ * 
  * @author Gregory Jansen
  */
 public class FedoraAdminSecurityContext implements AuthorizationProvider,
@@ -63,7 +66,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
      */
     @Override
     public boolean hasRole(final String roleName) {
-        return request.isUserInRole(roleName);
+        return true;
     }
 
     /*
@@ -72,7 +75,6 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
      */
     @Override
     public void logout() {
-        // more to do?
         request = null;
     }
 
