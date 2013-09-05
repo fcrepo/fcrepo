@@ -116,7 +116,7 @@ public class FedoraWebhooks extends AbstractResource {
 
         eventBus.register(this);
 
-        final Session session = sessions.getSession();
+        final Session session = sessions.getInternalSession();
         jcrTools.registerNodeTypes(session, "webhooks.cnd");
         session.save();
         session.logout();
@@ -268,7 +268,7 @@ public class FedoraWebhooks extends AbstractResource {
     @PostConstruct
     public final void setReadOnlySession() {
         try {
-            readOnlySession = sessions.getSession();
+            readOnlySession = sessions.getInternalSession();
         } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }

@@ -34,7 +34,6 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
@@ -97,7 +96,7 @@ public class SessionFactoryTest {
     @Test
     public void testGetSessionUnauthenticated() throws LoginException,
             RepositoryException {
-        testObj.getSession();
+        testObj.getInternalSession();
         verify(mockRepo).login();
     }
 

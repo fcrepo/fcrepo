@@ -49,12 +49,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.Datastream;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -72,7 +72,9 @@ import com.codahale.metrics.annotation.Timed;
 public class FedoraContent extends AbstractResource {
 
     public static final int REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+
     public static final int PARTIAL_CONTENT = 206;
+
     @InjectedSession
     protected Session session;
 
@@ -87,13 +89,13 @@ public class FedoraContent extends AbstractResource {
      */
     @POST
     @Timed
-    public Response create(
-            @PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            final InputStream requestBodyStream)
-        throws IOException, InvalidChecksumException, RepositoryException,
-        URISyntaxException {
+    public Response create(@PathParam("path")
+            final List<PathSegment> pathList, @QueryParam("checksum")
+            final String checksum, @HeaderParam("Content-Type")
+            final MediaType requestContentType,
+                    final InputStream requestBodyStream)
+        throws IOException, InvalidChecksumException,
+                    RepositoryException, URISyntaxException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -106,6 +108,7 @@ public class FedoraContent extends AbstractResource {
         }
 
         logger.debug("create Datastream {}", path);
+        final Throwable exception = null;
         try {
             final URI checksumURI;
 
@@ -121,15 +124,17 @@ public class FedoraContent extends AbstractResource {
                             checksumURI);
 
             final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(session,  FedoraNodes.class, uriInfo);
+                    new HttpGraphSubjects(session, FedoraNodes.class,
+                            uriInfo);
 
+            session.save();
             return created(
                     new URI(subjects.getGraphSubject(
-                            datastreamNode.getNode(JcrConstants.JCR_CONTENT))
+                            datastreamNode
+                                    .getNode(JcrConstants.JCR_CONTENT))
                             .getURI())).build();
 
         } finally {
-            session.save();
             session.logout();
         }
     }
@@ -147,15 +152,12 @@ public class FedoraContent extends AbstractResource {
      */
     @PUT
     @Timed
-    public Response modifyContent(
-            @PathParam("path")
-            final List<PathSegment> pathList,
-            @HeaderParam("Content-Type")
-            final MediaType requestContentType,
-            final InputStream requestBodyStream,
-            @Context
-            final Request request) throws RepositoryException, IOException,
-        InvalidChecksumException, URISyntaxException {
+    public Response modifyContent(@PathParam("path")
+        final List<PathSegment> pathList, @HeaderParam("Content-Type")
+        final MediaType requestContentType,
+        final InputStream requestBodyStream, @Context
+        final Request request) throws RepositoryException,
+            IOException, InvalidChecksumException, URISyntaxException {
         try {
             final String path = toPath(pathList);
             final MediaType contentType =
@@ -171,7 +173,8 @@ public class FedoraContent extends AbstractResource {
                         new EntityTag(ds.getContentDigest().toString());
                 final Date date = ds.getLastModifiedDate();
                 final Date roundedDate = new Date();
-                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+                roundedDate
+                        .setTime(date.getTime() - date.getTime() % 1000);
                 final ResponseBuilder builder =
                         request.evaluatePreconditions(roundedDate, etag);
 
@@ -189,13 +192,15 @@ public class FedoraContent extends AbstractResource {
 
             if (isNew) {
                 final HttpGraphSubjects subjects =
-                        new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+                        new HttpGraphSubjects(session, FedoraNodes.class,
+                                uriInfo);
 
                 return created(
-                        new URI(subjects.getGraphSubject(
-                                datastreamNode
-                                        .getNode(JcrConstants.JCR_CONTENT))
-                                .getURI())).build();
+                        new URI(
+                                subjects.getGraphSubject(
+                                        datastreamNode
+                                                .getNode(JcrConstants.JCR_CONTENT))
+                                        .getURI())).build();
             } else {
                 return noContent().build();
             }
@@ -214,17 +219,15 @@ public class FedoraContent extends AbstractResource {
      */
     @GET
     @Timed
-    public Response getContent(
-            @PathParam("path") final List<PathSegment> pathList,
-            @HeaderParam("Range") String rangeValue,
-            @Context final Request request)
-        throws RepositoryException, IOException {
+    public Response getContent(@PathParam("path")
+        final List<PathSegment> pathList, @HeaderParam("Range")
+        final String rangeValue, @Context
+        final Request request) throws RepositoryException, IOException {
 
         try {
             final String path = toPath(pathList);
             final Datastream ds =
                     datastreamService.getDatastream(session, path);
-
 
             final EntityTag etag =
                     new EntityTag(ds.getContentDigest().toString());
@@ -252,28 +255,31 @@ public class FedoraContent extends AbstractResource {
 
                     if (range.end() == -1) {
                         endAsString = Long.toString(contentSize - 1);
-                    }  else {
+                    } else {
                         endAsString = Long.toString(range.end());
                     }
 
                     final String contentRangeValue =
-                        String.format("bytes %s-%s/%s",
-                                         range.start(),
-                                         endAsString,
-                                         contentSize);
+                            String.format("bytes %s-%s/%s", range.start(),
+                                    endAsString, contentSize);
 
-                    if (range.end() > contentSize || (range.end() == -1 && range.start() > contentSize)) {
-                        builder = Response.status(REQUESTED_RANGE_NOT_SATISFIABLE)
-                                      .header("Content-Range", contentRangeValue);
+                    if (range.end() > contentSize ||
+                            (range.end() == -1 && range.start() > contentSize)) {
+                        builder =
+                                Response.status(
+                                        REQUESTED_RANGE_NOT_SATISFIABLE)
+                                        .header("Content-Range",
+                                                contentRangeValue);
                     } else {
                         final RangeRequestInputStream rangeInputStream =
-                            new RangeRequestInputStream(content,
-                                                           range.start(),
-                                                           range.size());
+                                new RangeRequestInputStream(content, range
+                                        .start(), range.size());
 
-                        builder = Response.status(PARTIAL_CONTENT)
-                                      .entity(rangeInputStream)
-                                      .header("Content-Range", contentRangeValue);
+                        builder =
+                                Response.status(PARTIAL_CONTENT).entity(
+                                        rangeInputStream)
+                                        .header("Content-Range",
+                                                contentRangeValue);
                     }
 
                 } else {
@@ -282,15 +288,15 @@ public class FedoraContent extends AbstractResource {
             }
 
             final HttpGraphSubjects subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+                    new HttpGraphSubjects(session, FedoraNodes.class,
+                            uriInfo);
 
-            return builder.type(ds.getMimeType())
-                       .header("Link", subjects.getGraphSubject(ds.getNode()) + ";rel=\"meta\"")
-                       .header("Accept-Ranges", "bytes")
-                       .cacheControl(cc)
-                       .lastModified(date)
-                       .tag(etag)
-                           .build();
+            return builder.type(ds.getMimeType()).header(
+                    "Link",
+                    subjects.getGraphSubject(ds.getNode()) +
+                            ";rel=\"meta\"").header("Accept-Ranges",
+                    "bytes").cacheControl(cc).lastModified(date).tag(etag)
+                    .build();
         } finally {
             session.logout();
         }

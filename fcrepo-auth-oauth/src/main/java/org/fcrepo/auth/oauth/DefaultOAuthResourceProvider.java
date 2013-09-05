@@ -59,7 +59,7 @@ public class DefaultOAuthResourceProvider implements OAuthRSProvider {
             final HttpServletRequest req) throws OAuthProblemException {
         // first check validity of token
         try {
-            final Session session = sessionFactory.getSession(OAUTH_WORKSPACE);
+            final Session session = sessionFactory.getInternalSession(OAUTH_WORKSPACE);
             try {
                 if (!session.itemExists("/tokens/" + token)) {
                     throw new OAuthRuntimeException("Invalid token!");

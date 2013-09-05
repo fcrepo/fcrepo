@@ -81,7 +81,7 @@ public class TokenEndpointTest {
         testObj = new TokenEndpoint();
         setField(testObj, "requestValidator", mockValidations);
         setField(testObj, "sessions", mockSessions);
-        when(mockSessions.getSession("oauth")).thenReturn(mockSession);
+        when(mockSessions.getInternalSession("oauth")).thenReturn(mockSession);
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockRequest.getMethod()).thenReturn("POST");
         when(mockRequest.getContentType())

@@ -195,7 +195,7 @@ public class TokenEndpoint extends AbstractResource {
      */
     private void saveToken(final String token, final String client,
             final String username) throws RepositoryException {
-        final Session session = sessions.getSession(OAUTH_WORKSPACE);
+        final Session session = sessions.getInternalSession(OAUTH_WORKSPACE);
         try {
             final Node tokenNode =
                     jcrTools.findOrCreateNode(session, "/tokens/" + token);

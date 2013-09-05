@@ -72,7 +72,7 @@ public class DefaultTokenRequestValidationsTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockSessions.getSession("oauth")).thenReturn(mockSession);
+        when(mockSessions.getInternalSession("oauth")).thenReturn(mockSession);
         when(mockNode.getProperty("oauth-client"))
         .thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn(VALID_CLIENT);

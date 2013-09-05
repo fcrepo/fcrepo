@@ -64,7 +64,7 @@ public class DefaultOAuthResourceProviderTest {
     @Before
     public void setUp() throws RepositoryException, NoSuchFieldException {
         initMocks(this);
-        when(mockSessions.getSession("oauth")).thenReturn(mockSession);
+        when(mockSessions.getInternalSession("oauth")).thenReturn(mockSession);
         when(mockSession.itemExists("/tokens/" + INVALID_TOKEN))
         .thenReturn(false);
         when(mockSession.itemExists("/tokens/" + VALID_TOKEN))

@@ -95,7 +95,7 @@ public class StoragePolicy extends AbstractResource {
         final JcrTools jcrTools = getJcrTools();
         Session session = null;
         try {
-            session = sessions.getSession();
+            session = sessions.getInternalSession();
             jcrTools.findOrCreateNode(session,
                 "/fedora:system/fedora:storage_policy", null);
             session.save();
