@@ -71,8 +71,8 @@ public class FedoraTransactions extends AbstractResource {
      */
     @POST
     public Response createTransaction(@PathParam("path")
-    final List<PathSegment> pathList, @Context
-    final HttpServletRequest req) throws RepositoryException {
+        final List<PathSegment> pathList, @Context
+        final HttpServletRequest req) throws RepositoryException {
 
         LOGGER.debug("creating transaction at path {}", pathList);
 
@@ -112,7 +112,7 @@ public class FedoraTransactions extends AbstractResource {
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException {
+        final List<PathSegment> pathList) throws RepositoryException {
 
         return finalizeTransaction(pathList, true);
 
@@ -124,14 +124,14 @@ public class FedoraTransactions extends AbstractResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path")
-    final List<PathSegment> pathList) throws RepositoryException {
+        final List<PathSegment> pathList) throws RepositoryException {
 
         return finalizeTransaction(pathList, false);
     }
 
     private Response finalizeTransaction(@PathParam("path")
-    final List<PathSegment> pathList, final boolean commit)
-            throws RepositoryException {
+        final List<PathSegment> pathList, final boolean commit)
+        throws RepositoryException {
 
         final String path = toPath(pathList);
         if (!path.equals("/")) {

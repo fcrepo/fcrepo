@@ -95,7 +95,7 @@ public class SessionFactory {
      * @throws RepositoryException
      */
     public Session getInternalSession(final String workspace)
-            throws RepositoryException {
+        throws RepositoryException {
         return repo.login(workspace);
     }
 
@@ -108,7 +108,7 @@ public class SessionFactory {
      * @throws RepositoryException
      */
     public Session getSession(final HttpServletRequest servletRequest)
-            throws RepositoryException {
+        throws RepositoryException {
 
         final String workspace = getEmbeddedWorkspace(servletRequest);
         final Transaction transaction =
@@ -240,7 +240,7 @@ public class SessionFactory {
      */
     private Transaction getEmbeddedTransaction(
             final HttpServletRequest servletRequest)
-            throws TransactionMissingException {
+        throws TransactionMissingException {
         final String requestPath = servletRequest.getPathInfo();
 
         if (requestPath == null) {

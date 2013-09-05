@@ -48,15 +48,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class TransactionService {
 
-    private static final Logger LOGGER =
-            getLogger(TransactionService.class);
+    private static final Logger LOGGER = getLogger(TransactionService.class);
 
     /**
      * A key for looking up the transaction id in a session key-value pair
      */
     static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
 
-    /*
+    /**
      * TODO since transactions have to be available on all nodes, they have to
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
@@ -82,8 +81,9 @@ public class TransactionService {
                         tx.rollback();
                     } catch (final RepositoryException e) {
                         LOGGER.error(
-                                "Got exception rolling back expired transaction {}: {}",
-                                tx, e);
+                                "Got exception rolling back expired" +
+                                        " transaction {}: {}",
+                                        tx, e);
                     }
                     txs.remove();
                 }
@@ -98,7 +98,7 @@ public class TransactionService {
      * @return the {@link Transaction}
      */
     public Transaction beginTransaction(final Session sess)
-            throws RepositoryException {
+        throws RepositoryException {
         final Transaction tx = new Transaction(sess);
         final String txId = tx.getId();
         transactions.put(txId, tx);
@@ -113,7 +113,7 @@ public class TransactionService {
      * @return the {@link Transaction}
      */
     public Transaction getTransaction(final String txid)
-            throws TransactionMissingException {
+        throws TransactionMissingException {
 
         final Transaction tx = transactions.get(txid);
 
@@ -133,7 +133,7 @@ public class TransactionService {
      * @throws TransactionMissingException
      */
     public Transaction getTransaction(final Session session)
-            throws TransactionMissingException {
+        throws TransactionMissingException {
 
         final String txId = getCurrentTransactionId(session);
 
@@ -179,8 +179,7 @@ public class TransactionService {
      * @param txid the id of the {@link Transaction}
      * @throws RepositoryException
      */
-    public Transaction commit(final String txid)
-            throws RepositoryException {
+    public Transaction commit(final String txid) throws RepositoryException {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +
@@ -197,8 +196,7 @@ public class TransactionService {
      * @return the {@link Transaction} object
      * @throws RepositoryException if the {@link Transaction} could not be found
      */
-    public Transaction rollback(final String txid)
-            throws RepositoryException {
+    public Transaction rollback(final String txid) throws RepositoryException {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
             throw new RepositoryException("Transaction with id " + txid +

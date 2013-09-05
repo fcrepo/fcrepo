@@ -126,8 +126,8 @@ public class FedoraTransform extends AbstractResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Timed
     public Object evaluateLdpathProgram(@PathParam("path")
-    final List<PathSegment> pathList, @PathParam("program")
-    final String program) throws RepositoryException, LDPathParseException {
+        final List<PathSegment> pathList, @PathParam("program")
+        final String program) throws RepositoryException, LDPathParseException {
 
         try {
             final String path = toPath(pathList);
@@ -169,9 +169,9 @@ public class FedoraTransform extends AbstractResource {
             WebContent.contentTypeNTriples, WebContent.contentTypeRDFXML})
     @Timed
     public Object evaluateTransform(@PathParam("path")
-    final List<PathSegment> pathList, @HeaderParam("Content-Type")
-    final MediaType contentType, final InputStream requestBodyStream)
-            throws RepositoryException, LDPathParseException {
+        final List<PathSegment> pathList, @HeaderParam("Content-Type")
+        final MediaType contentType, final InputStream requestBodyStream)
+        throws RepositoryException, LDPathParseException {
 
         try {
             final String path = toPath(pathList);

@@ -67,8 +67,8 @@ public class MockHeadersFilter implements Filter {
      */
     @Override
     public void doFilter(final ServletRequest req,
-            final ServletResponse res, final FilterChain chain)
-            throws IOException, ServletException {
+        final ServletResponse res, final FilterChain chain)
+        throws IOException, ServletException {
         logger.debug("in filter");
         if (req instanceof HttpServletRequest) {
             final HttpServletRequest hreq = (HttpServletRequest) req;

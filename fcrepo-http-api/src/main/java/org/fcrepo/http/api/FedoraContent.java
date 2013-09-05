@@ -89,13 +89,12 @@ public class FedoraContent extends AbstractResource {
      */
     @POST
     @Timed
-    public Response
-            create(@PathParam("path")
+    public Response create(@PathParam("path")
             final List<PathSegment> pathList, @QueryParam("checksum")
             final String checksum, @HeaderParam("Content-Type")
             final MediaType requestContentType,
                     final InputStream requestBodyStream)
-                    throws IOException, InvalidChecksumException,
+        throws IOException, InvalidChecksumException,
                     RepositoryException, URISyntaxException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
@@ -154,10 +153,10 @@ public class FedoraContent extends AbstractResource {
     @PUT
     @Timed
     public Response modifyContent(@PathParam("path")
-    final List<PathSegment> pathList, @HeaderParam("Content-Type")
-    final MediaType requestContentType,
-            final InputStream requestBodyStream, @Context
-            final Request request) throws RepositoryException,
+        final List<PathSegment> pathList, @HeaderParam("Content-Type")
+        final MediaType requestContentType,
+        final InputStream requestBodyStream, @Context
+        final Request request) throws RepositoryException,
             IOException, InvalidChecksumException, URISyntaxException {
         try {
             final String path = toPath(pathList);
@@ -221,9 +220,9 @@ public class FedoraContent extends AbstractResource {
     @GET
     @Timed
     public Response getContent(@PathParam("path")
-    final List<PathSegment> pathList, @HeaderParam("Range")
-    final String rangeValue, @Context
-    final Request request) throws RepositoryException, IOException {
+        final List<PathSegment> pathList, @HeaderParam("Range")
+        final String rangeValue, @Context
+        final Request request) throws RepositoryException, IOException {
 
         try {
             final String path = toPath(pathList);
