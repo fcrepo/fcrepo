@@ -59,22 +59,27 @@ public class FedoraRepositoryBackup extends AbstractResource {
 
         File backupDirectory = null;
         if (null != bodyStream) {
-            String body = IOUtils.toString(bodyStream);
+            String body = IOUtils.toString(bodyStream).trim();
 
             backupDirectory = new File(body.trim());
-            if (!backupDirectory.exists() || !backupDirectory.canWrite()) {
+            if (body.isEmpty()) {
+                // Backup to a temp directory
+                backupDirectory = Files.createTempDir();
+
+            } else if (!backupDirectory.exists() || !backupDirectory.canWrite()) {
                 throw new WebApplicationException(
                         Response.serverError().entity(
                                 "Backup directory does not exist or is not writable: " +
                                         backupDirectory.getAbsolutePath())
                                 .build());
             }
-        }
 
-        if (null == backupDirectory) {
+        } else {
+            // Backup to a temp directory
             backupDirectory = Files.createTempDir();
         }
 
+        LOGGER.debug("Backing up to: {}", backupDirectory.getAbsolutePath());
         try {
             Problems problems = nodeService.backupRepository(session, backupDirectory);
 
