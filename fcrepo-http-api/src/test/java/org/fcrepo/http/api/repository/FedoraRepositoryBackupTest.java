@@ -82,11 +82,12 @@ public class FedoraRepositoryBackupTest {
                 mockProblems);
 
         String tmpDir = System.getProperty("java.io.tmpdir");
+        String tmpDirPath = new File(tmpDir).getCanonicalPath();
         InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
 
         String backupPath = repoBackup.runBackup(inputStream);
         assertNotNull(backupPath);
-        assertEquals(tmpDir, backupPath);
+        assertEquals(tmpDirPath, backupPath);
     }
 
 }
