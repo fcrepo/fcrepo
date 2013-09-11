@@ -22,7 +22,7 @@
     </bean>
 
     <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
-    <bean class="org.fcrepo.storage.policy.PolicyDecisionPoint"/>
+    <bean class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
     
 
     <context:component-scan base-package="org.fcrepo.kernel.services, org.modeshape.web.jcr.rest, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.audit, org.fcrepo.auth.oauth.api, org.fcrepo.storage.policy"/>

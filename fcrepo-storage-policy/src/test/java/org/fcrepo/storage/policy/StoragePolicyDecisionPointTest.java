@@ -28,12 +28,12 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.services.policy.Policy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class PolicyDecisionPointTest {
+public class StoragePolicyDecisionPointTest {
 
     static StoragePolicyDecisionPoint pt;
 
@@ -43,16 +43,16 @@ public class PolicyDecisionPointTest {
 
     @BeforeClass
     public static void setupPdp() {
-        pt = new PolicyDecisionPoint();
+        pt = new StoragePolicyDecisionPointImpl();
 
         dummyHint = "dummy-store-id";
-        final Policy policy =
-                new MimeTypePolicy("image/x-dummy-type", dummyHint);
+        final StoragePolicy policy =
+                new MimeTypeStoragePolicy("image/x-dummy-type", dummyHint);
 
         pt.addPolicy(policy);
 
         tiffHint = "tiff-store-id";
-        final Policy tiffPolicy = new MimeTypePolicy("image/tiff", tiffHint);
+        final StoragePolicy tiffPolicy = new MimeTypeStoragePolicy("image/tiff", tiffHint);
 
         pt.addPolicy(tiffPolicy);
     }

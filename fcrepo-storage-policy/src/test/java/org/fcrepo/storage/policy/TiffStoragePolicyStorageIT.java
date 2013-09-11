@@ -31,8 +31,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.storage.policy.MimeTypePolicy;
-import org.fcrepo.storage.policy.PolicyDecisionPoint;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -47,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class TiffPolicyStorageIT {
+public class TiffStoragePolicyStorageIT {
 
     protected Logger logger;
 
@@ -59,7 +57,7 @@ public class TiffPolicyStorageIT {
 
     private LowLevelStorageService lowLevelService;
 
-    private PolicyDecisionPoint pdp;
+    private StoragePolicyDecisionPointImpl pdp;
 
     GetBinaryKey getBinaryKey = new GetBinaryKey();
 
@@ -79,8 +77,8 @@ public class TiffPolicyStorageIT {
                                               config.toString());
         repo = new JcrRepositoryFactory().getRepository(params);
 
-        pdp = new PolicyDecisionPoint();
-        pdp.addPolicy(new MimeTypePolicy("image/tiff", "tiff-store"));
+        pdp = new StoragePolicyDecisionPointImpl();
+        pdp.addPolicy(new MimeTypeStoragePolicy("image/tiff", "tiff-store"));
 
         datastreamService = new DatastreamService();
         datastreamService.setRepository(repo);

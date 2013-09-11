@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.fcrepo.kernel.services.policy;
 
-package org.fcrepo.storage.policy;
+import javax.jcr.Node;
 
-/*
- * Note: Mainly for reporting conversion errors & future use
- * (where other exceptions are not adequate).
+/**
+ * A binary storage policy definition and evaluation machinery
+ * @author cbeer
+ * @date Apr 25, 2013
  */
+public interface StoragePolicy {
 
-public class PolicyTypeException extends RuntimeException {
     /**
-     * @param arg0
+     * Evaluate the policy; if the policy matches, return the
+     * binary storage hint. If not, return null.
      */
-    public PolicyTypeException(final String arg0) {
-        super(arg0);
-    }
-
+    public String evaluatePolicy(Node n);
 }

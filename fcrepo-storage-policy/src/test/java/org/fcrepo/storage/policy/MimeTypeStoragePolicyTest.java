@@ -16,7 +16,7 @@
 
 package org.fcrepo.storage.policy;
 
-import org.fcrepo.kernel.services.policy.Policy;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.junit.Test;
 
 import javax.jcr.Node;
@@ -33,12 +33,12 @@ import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
-public class MimeTypePolicyTest {
+public class MimeTypeStoragePolicyTest {
 
     @Test
     public void shouldEvaluatePolicyAndReturnHint() throws Exception {
         final String hint = "store-id";
-        final Policy policy = new MimeTypePolicy("image/x-dummy", hint);
+        final StoragePolicy policy = new MimeTypeStoragePolicy("image/x-dummy", hint);
 
         final Session mockSession = mock(Session.class);
         final Node mockDsNode = mock(Node.class);
@@ -59,7 +59,7 @@ public class MimeTypePolicyTest {
     @Test
     public void shouldEvaluatePolicyAndReturnNoHint() throws Exception {
         final String hint = "store-id";
-        final Policy policy = new MimeTypePolicy("image/x-dummy", hint);
+        final StoragePolicy policy = new MimeTypeStoragePolicy("image/x-dummy", hint);
 
         final Session mockSession = mock(Session.class);
         final Node mockDsNode = mock(Node.class);
@@ -81,7 +81,7 @@ public class MimeTypePolicyTest {
     public void shouldEvaluatePolicyAndReturnNoHintOnException()
             throws Exception {
         final String hint = "store-id";
-        final Policy policy = new MimeTypePolicy("image/x-dummy", hint);
+        final StoragePolicy policy = new MimeTypeStoragePolicy("image/x-dummy", hint);
 
         final Node mockDsNode = mock(Node.class);
 
@@ -93,11 +93,11 @@ public class MimeTypePolicyTest {
         assertNull("Received hint was not null!", receivedHint);
     }
     
-    // Test using equals. As impl. of <Policy> involves, this may change
+    // Test using equals. As impl. of <StoragePolicy> involves, this may change
     @Test
     public void testEquals() {
-        MimeTypePolicy obj1 = new MimeTypePolicy("image/tiff", "tiff-store");
-        MimeTypePolicy obj2 = new MimeTypePolicy("image/tiff", "tiff-store");
+        MimeTypeStoragePolicy obj1 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        MimeTypeStoragePolicy obj2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
         assertEquals(obj1,obj2);
     }   
     

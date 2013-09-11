@@ -21,7 +21,7 @@ import javax.jcr.Node;
 import java.util.List;
 
 /**
- * Service Interface implementation for managing and using org.fcrepo.kernel.services.policy.Policy
+ * Service Interface implementation for managing and using StoragePolicy
  * @author osmandin
  * @date Aug 14, 2013
  *
@@ -33,7 +33,7 @@ public interface StoragePolicyDecisionPoint {
      *
      * @param p org.fcrepo.kernel.services.policy object
      */
-    void addPolicy(final Policy p);
+    void addPolicy(final StoragePolicy p);
 
     /**
      * Given a JCR node (likely a jcr:content node), determine which storage
@@ -49,19 +49,19 @@ public interface StoragePolicyDecisionPoint {
      *
      * @param p org.fcrepo.kernel.services.policy object
      */
-    void removePolicy(final Policy p);
+    void removePolicy(final StoragePolicy p);
 
     /**
      * Explicitly set the policies this PDP should use
      *
      * @param policies
      */
-    void setPolicies(final List<Policy> policies);
+    void setPolicies(final List<StoragePolicy> policies);
 
     /**
      * @param policy
      */
-    boolean contains(final Policy policy);
+    boolean contains(final StoragePolicy policy);
 
     /**
      * clear all policies

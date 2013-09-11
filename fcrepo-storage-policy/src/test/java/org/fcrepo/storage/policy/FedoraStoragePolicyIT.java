@@ -16,7 +16,7 @@
 
 package org.fcrepo.storage.policy;
 
-import static org.fcrepo.storage.policy.StoragePolicy.POLICY_RESOURCE;
+import static org.fcrepo.storage.policy.FedoraStoragePolicy.POLICY_RESOURCE;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.http.Header;
@@ -26,7 +26,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.tika.io.IOUtils;
-import org.fcrepo.kernel.services.policy.Policy;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +40,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 // Runs integration test for restful interface for storage policies
-public class StoragePolicyIT extends AbstractResourceIT {
+public class FedoraStoragePolicyIT extends AbstractResourceIT {
 
     private static final String MIME_KEY = "mix:mimeType";
     private static final String MIME = "image/tiff";
@@ -119,7 +119,7 @@ public class StoragePolicyIT extends AbstractResourceIT {
         String body = IOUtils.toString(response1.getEntity().getContent());
         assertEquals(body, 200, response1.getStatusLine().getStatusCode());
 
-        Policy policy = new MimeTypePolicy(MIME, STORE);
+        StoragePolicy policy = new MimeTypeStoragePolicy(MIME, STORE);
         assertEquals("policies=[" + policy.toString() + "]", body);
     }
 

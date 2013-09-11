@@ -18,8 +18,8 @@ package org.fcrepo.storage.policy;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.fcrepo.kernel.services.policy.Policy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -34,26 +34,26 @@ import java.util.List;
  * @author cbeer
  * @date Apr 25, 2013
  */
-public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
+public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoint {
 
-    private static final Logger LOGGER = getLogger(PolicyDecisionPoint.class);
+    private static final Logger LOGGER = getLogger(StoragePolicyDecisionPointImpl.class);
 
-    private List<Policy> policies;
+    private List<StoragePolicy> policies;
 
     /**
      * Initialize the policy storage machinery
      */
-    public PolicyDecisionPoint() {
-        LOGGER.debug("Initializing binary PolicyDecisionPoint");
-        policies = new ArrayList<Policy>();
+    public StoragePolicyDecisionPointImpl() {
+        LOGGER.debug("Initializing binary StoragePolicyDecisionPointImpl");
+        policies = new ArrayList<StoragePolicy>();
     }
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.Policy)
+     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.StoragePolicy)
      */
     @Override
-    public void addPolicy(final Policy p) {
+    public void addPolicy(final org.fcrepo.kernel.services.policy.StoragePolicy p) {
         policies.add(p);
     }
 
@@ -63,7 +63,7 @@ public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
      */
     @Override
     public String evaluatePolicies(final Node n) {
-        for (final Policy p : policies) {
+        for (final StoragePolicy p : policies) {
             final String h = p.evaluatePolicy(n);
             if (h != null) {
                 return h;
@@ -74,16 +74,16 @@ public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.Policy)
+     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.StoragePolicy)
      */
     @Override
-    public void removePolicy(final Policy p) {
+    public void removePolicy(final StoragePolicy p) {
         policies.remove(p);
     }
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.Policy)
+     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.StoragePolicy)
      */
     @Override
     public void removeAll() {
@@ -96,7 +96,7 @@ public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
      * @param p
      */
     @Override
-    public boolean contains(Policy p) {
+    public boolean contains(StoragePolicy p) {
         return policies.contains(p);
     }
 
@@ -105,7 +105,7 @@ public class PolicyDecisionPoint implements StoragePolicyDecisionPoint {
      * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#setPolicies(java.util.List)
      */
     @Override
-    public void setPolicies(final List<Policy> policies) {
+    public void setPolicies(final List<StoragePolicy> policies) {
         this.policies = policies;
     }
 

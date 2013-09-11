@@ -23,7 +23,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.services.policy.Policy;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.modeshape.jcr.api.JcrTools;
@@ -66,7 +66,7 @@ import java.io.IOException;
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:storagepolicy")
-public class StoragePolicy extends AbstractResource {
+public class FedoraStoragePolicy extends AbstractResource {
 
     @InjectedSession
     protected Session session;
@@ -81,7 +81,7 @@ public class StoragePolicy extends AbstractResource {
 
     public static final String POLICY_RESOURCE = "policies";
 
-    private static final Logger LOGGER = getLogger(StoragePolicy.class);
+    private static final Logger LOGGER = getLogger(FedoraStoragePolicy.class);
 
     /**
      * Initialize
@@ -145,10 +145,10 @@ public class StoragePolicy extends AbstractResource {
                 node.setProperty(str[0], new String[] {str[1] + ":" + str[2]});
 
                 // TODO (for now) instantiate PolicyType based on mix:mimeType
-                Policy policy = newPolicyInstance(str[0], str[1], str[2]);
+                StoragePolicy policy = newPolicyInstance(str[0], str[1], str[2]);
                 // TODO (for now) based on object comparison using equals()
                 if (storagePolicyDecisionPoint.contains(policy)) {
-                    throw new PolicyTypeException("Property already exists!");
+                    throw new StoragePolicyTypeException("Property already exists!");
                 }
                 storagePolicyDecisionPoint.addPolicy(policy);
                 session.save();
@@ -159,7 +159,7 @@ public class StoragePolicy extends AbstractResource {
                                                     .path("fcr:storagepolicy")
                                                     .build());
             } else {
-                throw new PolicyTypeException(
+                throw new StoragePolicyTypeException(
                         "Invalid property type specified: " + str[0]);
             }
         } catch (final Exception e) {
@@ -172,7 +172,7 @@ public class StoragePolicy extends AbstractResource {
     }
 
     /**
-     * For nodeType n or runtime property p get org.fcrepo.binary.Policy
+     * For nodeType n or runtime property p get org.fcrepo.binary.StoragePolicy
      * implementation. Note: Signature might need to change, or a more
      * sophisticated method used, as implementation evolves.
      * 
@@ -180,17 +180,17 @@ public class StoragePolicy extends AbstractResource {
      * @param itemType
      * @param value
      * @return
-     * @throws PolicyTypeException
+     * @throws StoragePolicyTypeException
      */
-    protected Policy newPolicyInstance(final String propertyType,
-        final String itemType, final String value) throws PolicyTypeException {
+    protected StoragePolicy newPolicyInstance(final String propertyType,
+        final String itemType, final String value) throws StoragePolicyTypeException {
 
         switch (propertyType) {
             case NodeType.MIX_MIMETYPE:
             case "mix:mimeType":
-                return new MimeTypePolicy(itemType, value);
+                return new MimeTypeStoragePolicy(itemType, value);
             default:
-                throw new PolicyTypeException("Mapping not found");
+                throw new StoragePolicyTypeException("Mapping not found");
         }
     }
 
@@ -214,8 +214,8 @@ public class StoragePolicy extends AbstractResource {
                 session.save();
 
                 // remove all MimeType intances (since thats only the stored
-                // Policy for now.
-                // TODO Once Policy is updated to display Policy type, this
+                // StoragePolicy for now.
+                // TODO Once StoragePolicy is updated to display StoragePolicy type, this
                 // would change
                 storagePolicyDecisionPoint.removeAll();
                 return Response.noContent().build();
@@ -229,7 +229,7 @@ public class StoragePolicy extends AbstractResource {
     }
 
     /**
-     * TODO (for now) prints org.fcrepo.binary.PolicyDecisionPoint
+     * TODO (for now) prints org.fcrepo.binary.StoragePolicyDecisionPointImpl
      *
      * @return
      * @throws RepositoryException
@@ -264,14 +264,14 @@ public class StoragePolicy extends AbstractResource {
 
             Property prop = node.getProperty(nodeType);
             if (null == prop) {
-                throw new PathNotFoundException("Policy not found: " + nodeType);
+                throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
             }
 
             Value[] values = prop.getValues();
             if (values != null && values.length > 0) {
                 response = Response.ok(values[0].getString());
             } else {
-                throw new PathNotFoundException("Policy not found: " + nodeType);
+                throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
             }
 
         } catch (PathNotFoundException e) {
@@ -309,10 +309,10 @@ public class StoragePolicy extends AbstractResource {
      * applicable runtime configurations)
      * 
      * @return
-     * @throws PolicyTypeException
+     * @throws StoragePolicyTypeException
      */
     private boolean isValidConfigurationProperty(String property)
-        throws PolicyTypeException {
+        throws StoragePolicyTypeException {
         // TODO (for now) returns false. For future, need to represent & eval.
         // non node type props
         return false;

@@ -24,10 +24,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import org.apache.poi.hwpf.model.NoteType;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.policy.Policy;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +46,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-public class StoragePolicyTest {
+public class FedoraStoragePolicyTest {
 
     @Mock
     private HttpServletRequest mockRequest;
@@ -111,21 +110,21 @@ public class StoragePolicyTest {
     }
    
     @Test
-    public void getPolicyType() throws PolicyTypeException {
-        StoragePolicy obj = new StoragePolicy();
-        Policy type = obj.newPolicyInstance("mix:mimeType", "image/tiff", null);
-        assertEquals(type.getClass(), MimeTypePolicy.class);
+    public void getPolicyType() throws StoragePolicyTypeException {
+        FedoraStoragePolicy obj = new FedoraStoragePolicy();
+        StoragePolicy type = obj.newPolicyInstance("mix:mimeType", "image/tiff", null);
+        assertEquals(type.getClass(), MimeTypeStoragePolicy.class);
     }
 
     @Test
     public void ensureUniquePolicy() {
-        /* List<Policy> can have MimeType("image/tiff", "tiff-store") and MimeType("image/tiff", "cloud-tiffs").
-        List<Policy> can NOT have two MimeType("image/tiff", "tiff-store"); */
+        /* List<StoragePolicy> can have MimeType("image/tiff", "tiff-store") and MimeType("image/tiff", "cloud-tiffs").
+        List<StoragePolicy> can NOT have two MimeType("image/tiff", "tiff-store"); */
 
-        PolicyDecisionPoint obj = new PolicyDecisionPoint();
-        Policy p1 = new MimeTypePolicy("image/tiff", "tiff-store");
-        Policy p2 = new MimeTypePolicy("image/tiff", "tiff-store");
-        Policy p3 = new MimeTypePolicy("image/tiff", "tiff-store");
+        StoragePolicyDecisionPointImpl obj = new StoragePolicyDecisionPointImpl();
+        StoragePolicy p1 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        StoragePolicy p2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        StoragePolicy p3 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
         if (!obj.contains(p3)) {
             obj.addPolicy(p1);
         }
@@ -156,14 +155,14 @@ public class StoragePolicyTest {
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri(
                 "http://localhost/rest/policies/jcr:storagepolicy"));
 
-        StoragePolicy storagePolicy = new StoragePolicy();
+        FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
         storagePolicy.setJcrTools(mockJcrTools);
         storagePolicy.setUriInfo(mockUriInfo);
         storagePolicy.request = mockRequest;
         storagePolicy.session = mockSession;
         storagePolicy.storagePolicyDecisionPoint = mockPolicyDecisionPoint;
 
-        Response response = storagePolicy.post(StoragePolicy.POLICY_RESOURCE,
+        Response response = storagePolicy.post(FedoraStoragePolicy.POLICY_RESOURCE,
                                                "mix:mimeType image/tiff cloud");
         assertNotNull(response);
         assertEquals(201, response.getStatus());
@@ -171,7 +170,7 @@ public class StoragePolicyTest {
 
     @Test
     public void testGetAllPolicies() throws Exception {
-        StoragePolicy storagePolicy = new StoragePolicy();
+        FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
         Response response = storagePolicy.get("policies");
         assertNotNull(response);
         assertEquals(200, response.getStatus());
@@ -188,7 +187,7 @@ public class StoragePolicyTest {
                                            anyString())).thenReturn(
                 mockCodeNode);
 
-        StoragePolicy storagePolicy = new StoragePolicy();
+        FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
         storagePolicy.setJcrTools(mockJcrTools);
         storagePolicy.session = mockSession;
 

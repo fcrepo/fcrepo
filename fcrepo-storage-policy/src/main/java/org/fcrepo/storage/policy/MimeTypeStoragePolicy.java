@@ -20,7 +20,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.fcrepo.kernel.services.policy.Policy;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -32,9 +32,9 @@ import javax.jcr.RepositoryException;
  * @author cbeer
  * @date Apr 25, 2013
  */
-public class MimeTypePolicy implements Policy {
+public class MimeTypeStoragePolicy implements StoragePolicy {
 
-    private static final Logger LOGGER = getLogger(MimeTypePolicy.class);
+    private static final Logger LOGGER = getLogger(MimeTypeStoragePolicy.class);
 
     private final String mimeType;
 
@@ -43,14 +43,14 @@ public class MimeTypePolicy implements Policy {
     /**
      * Register a mime type => binary storage hint mapping
      */
-    public MimeTypePolicy(final String mimeType, final String hint) {
+    public MimeTypeStoragePolicy(final String mimeType, final String hint) {
         this.mimeType = mimeType;
         this.hint = hint;
     }
 
     @Override
     public String toString() {
-        return "MimeTypePolicy [mimeType=" + mimeType + ", hint=" + hint + "]";
+        return "MimeTypeStoragePolicy [mimeType=" + mimeType + ", hint=" + hint + "]";
     }
 
     /**
@@ -59,7 +59,7 @@ public class MimeTypePolicy implements Policy {
      */
     @Override
     public String evaluatePolicy(final Node n) {
-        LOGGER.debug("Evaluating MimeTypePolicy ({} -> {}) for {} ", mimeType,
+        LOGGER.debug("Evaluating MimeTypeStoragePolicy ({} -> {}) for {} ", mimeType,
             hint, n);
         try {
             final String nodeMimeType =
@@ -108,7 +108,7 @@ public class MimeTypePolicy implements Policy {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        MimeTypePolicy other = (MimeTypePolicy) obj;
+        MimeTypeStoragePolicy other = (MimeTypeStoragePolicy) obj;
         if (hint == null) {
             if (other.hint != null) {
                 return false;
