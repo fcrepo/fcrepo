@@ -1,4 +1,4 @@
-org.fcrepo.api
-org.fcrepo.api.repository
-org.fcrepo.responses
-org.fcrepo.url
+org.fcrepo.http.api
+org.fcrepo.http.api.repository
+org.fcrepo.http.api.responses
+org.fcrepo.http.api.url
