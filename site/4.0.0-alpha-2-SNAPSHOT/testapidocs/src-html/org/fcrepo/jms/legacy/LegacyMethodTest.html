@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/**<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright 2013 DuraSpace, Inc.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * You may obtain a copy of the License at<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * See the License for the specific language governing permissions and<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * limitations under the License.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> */<a name="line.15"></a>
+<span class="sourceLineNo">016</span><a name="line.16"></a>
+<span class="sourceLineNo">017</span>package org.fcrepo.jms.legacy;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import static org.junit.Assert.assertEquals;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import static org.junit.Assert.assertNotNull;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import static org.mockito.Matchers.any;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import static org.mockito.Matchers.anyString;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import static org.mockito.Matchers.eq;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import static org.mockito.Mockito.mock;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import static org.mockito.Mockito.times;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import static org.mockito.Mockito.verify;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import static org.mockito.Mockito.when;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.IOException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.Writer;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Arrays;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Date;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.List;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.jcr.Node;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.jcr.RepositoryException;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import javax.jcr.nodetype.NodeType;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import javax.jcr.observation.Event;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>import org.apache.abdera.model.Category;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import org.apache.abdera.model.Entry;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import org.apache.abdera.model.Person;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import org.apache.abdera.model.Text;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import org.fcrepo.jcr.FedoraJcrTypes;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import org.junit.Before;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import org.junit.Test;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import org.junit.runner.RunWith;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import org.powermock.api.mockito.PowerMockito;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import org.powermock.core.classloader.annotations.PowerMockIgnore;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import org.powermock.core.classloader.annotations.PrepareForTest;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import org.powermock.modules.junit4.PowerMockRunner;<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>@RunWith(PowerMockRunner.class)<a name="line.53"></a>
+<span class="sourceLineNo">054</span>@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})<a name="line.54"></a>
+<span class="sourceLineNo">055</span>@PrepareForTest({EntryFactory.class})<a name="line.55"></a>
+<span class="sourceLineNo">056</span>public class LegacyMethodTest {<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private LegacyMethod testObj;<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>    private Entry mockDelegate;<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private Event mockEvent;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    private Node mockSource;<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private Category mockPidCategory;<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    private Category mockDsidCategory;<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>    private static final String SOURCE_DSID = "sourceDsid";<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    private static final String SOURCE_PID = "sourcePid";<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    @Before<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    public void setUp() throws RepositoryException {<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        // set up the supporting mocks for the constructor<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        mockEvent = mock(Event.class);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        Node mockParent = mock(Node.class);<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        when(mockParent.getName()).thenReturn(SOURCE_PID);<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        mockSource = mock(Node.class);<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        when(mockSource.getName()).thenReturn(SOURCE_DSID);<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        when(mockSource.getParent()).thenReturn(mockParent);<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        NodeType mockDSType = mock(NodeType.class);<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        when(mockDSType.getName()).thenReturn(FedoraJcrTypes.FEDORA_DATASTREAM);<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        NodeType[] mockTypes = new NodeType[] {mockDSType};<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        mockDelegate = mock(Entry.class);<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        Text mockText = mock(Text.class);<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        when(mockDelegate.setTitle(anyString())).thenReturn(mockText);<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        // make sure the delegate Entry can be instrumented for tests<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        PowerMockito.mockStatic(EntryFactory.class);<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        when(EntryFactory.newEntry()).thenReturn(mockDelegate);<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        mockPidCategory = mock(Category.class);<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        when(mockPidCategory.getLabel()).thenReturn(<a name="line.94"></a>
+<span class="sourceLineNo">095</span>                LegacyMethod.PID_CATEGORY_LABEL);<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        when(mockPidCategory.getTerm()).thenReturn(SOURCE_PID);<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        mockDsidCategory = mock(Category.class);<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        when(mockDsidCategory.getLabel()).thenReturn(<a name="line.98"></a>
+<span class="sourceLineNo">099</span>                LegacyMethod.DSID_CATEGORY_LABEL);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        when(mockDsidCategory.getTerm()).thenReturn(SOURCE_DSID);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        List&lt;Category&gt; categories =<a name="line.101"></a>
+<span class="sourceLineNo">102</span>                Arrays.asList(new Category[] {mockPidCategory, mockDsidCategory});<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        when(mockDelegate.getCategories(LegacyMethod.FEDORA_ID_SCHEME))<a name="line.103"></a>
+<span class="sourceLineNo">104</span>                .thenReturn(categories);<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        // construct the test object<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        testObj = new LegacyMethod(mockEvent, mockSource);<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    }<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>    @Test<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    public void testPidAccessors() {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        String newPid = "newPid";<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        assertEquals(SOURCE_PID, testObj.getPid());<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        testObj.setPid(newPid);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        verify(mockPidCategory).setTerm(SOURCE_PID);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        verify(mockPidCategory).setTerm(newPid);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>    @Test<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public void testDsidAccessors() {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        String newDsid = "newDsid";<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        assertEquals(SOURCE_DSID, testObj.getDsId());<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        testObj.setDsId(newDsid);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        verify(mockDsidCategory).setTerm(SOURCE_DSID);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        verify(mockDsidCategory).setTerm(newDsid);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    }<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    @Test<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public void textGetEntry() {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        Entry mockEntry = mock(Entry.class);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        LegacyMethod to = new LegacyMethod(mockEntry);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        assertEquals(mockEntry, to.getEntry());<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    }<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>    @Test<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    public void testMethodNameAccessors() {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        when(mockDelegate.getTitle()).thenReturn("foo");<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        testObj.getMethodName();<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        // called once in the constructor, once in the accessor<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        verify(mockDelegate, times(2)).getTitle();<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        testObj.setMethodName("foo");<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        Text mockText = mock(Text.class);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        when(mockDelegate.setTitle(anyString())).thenReturn(mockText);<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        String newTitle = "bar";<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        testObj.setMethodName(newTitle);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        verify(mockDelegate.setTitle(newTitle));<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    @Test<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public void testModifiedAccesors() {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        testObj.getModified();<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        verify(mockDelegate).getUpdated();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        testObj.setModified(new Date());<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        // called once in the constructor, once in the accessor<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        verify(mockDelegate, times(2)).setUpdated(any(Date.class));<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    @Test<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    public void testUserIdAccessors() {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        Person mockPerson = mock(Person.class);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        when(mockDelegate.getAuthor()).thenReturn(mockPerson);<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        testObj.getUserID();<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        testObj.setUserId("foo");<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        verify(mockDelegate).addAuthor(eq("foo"), anyString(), anyString());<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        testObj.setUserId(null);<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        // called once in the constructor, once in the accessor<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        verify(mockDelegate, times(2)).addAuthor(eq("unknown"), anyString(),<a name="line.166"></a>
+<span class="sourceLineNo">167</span>                anyString());<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    @Test<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public void testSetContent() {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        testObj.setContent("foo");<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        verify(mockDelegate).setContent("foo");<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    }<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    @Test<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    public void testWriteTo() throws IOException {<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        Writer mockWriter = mock(Writer.class);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        testObj.writeTo(mockWriter);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        verify(mockDelegate).writeTo(mockWriter);<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    @Test<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    public void testGetBaseURL() {<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        String url = testObj.getBaseURL();<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        assertNotNull(url);<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        assertEquals("http://localhost:8080/rest", url);<a name="line.187"></a>
+<span class="sourceLineNo">188</span><a name="line.188"></a>
+<span class="sourceLineNo">189</span>        final String host = "my-host";<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        System.setProperty("fcrepo.host", host);<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>        url = testObj.getBaseURL();<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        assertNotNull(url);<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        assertEquals("http://" + host + ":8080/rest", url);<a name="line.194"></a>
+<span class="sourceLineNo">195</span><a name="line.195"></a>
+<span class="sourceLineNo">196</span>        final String port = "443";<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        System.setProperty("fcrepo.port", port);<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>        url = testObj.getBaseURL();<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        assertNotNull(url);<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        assertEquals("https://" + host + ":" + port + "/rest", url);<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>        final String ctxt = "sleep";<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        System.setProperty("fcrepo.ctxt", ctxt);<a name="line.204"></a>
+<span class="sourceLineNo">205</span><a name="line.205"></a>
+<span class="sourceLineNo">206</span>        url = testObj.getBaseURL();<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        assertNotNull(url);<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        assertEquals("https://" + host + ":" + port + "/" + ctxt, url);<a name="line.208"></a>
+<span class="sourceLineNo">209</span><a name="line.209"></a>
+<span class="sourceLineNo">210</span>        System.clearProperty("fcrepo.host");<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        System.clearProperty("fcrepo.port");<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        System.clearProperty("fcrepo.ctxt");<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    }<a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>}<a name="line.215"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

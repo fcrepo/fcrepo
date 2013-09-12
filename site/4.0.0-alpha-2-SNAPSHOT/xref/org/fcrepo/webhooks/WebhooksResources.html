@@ -29,11 +29,11 @@
 <a class="jxr_linenumber" name="19" href="#19">19</a>  <strong class="jxr_keyword">import</strong> com.hp.hpl.jena.rdf.model.Model;
 <a class="jxr_linenumber" name="20" href="#20">20</a>  <strong class="jxr_keyword">import</strong> com.hp.hpl.jena.rdf.model.ModelFactory;
 <a class="jxr_linenumber" name="21" href="#21">21</a>  <strong class="jxr_keyword">import</strong> com.hp.hpl.jena.rdf.model.Resource;
-<a class="jxr_linenumber" name="22" href="#22">22</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.FedoraResource;
-<a class="jxr_linenumber" name="23" href="#23">23</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.RdfLexicon;
-<a class="jxr_linenumber" name="24" href="#24">24</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.api.rdf.UriAwareResourceModelFactory;
-<a class="jxr_linenumber" name="25" href="#25">25</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.rdf.GraphSubjects;
-<a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.utils.FedoraJcrTypes;
+<a class="jxr_linenumber" name="22" href="#22">22</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.FedoraResource;
+<a class="jxr_linenumber" name="23" href="#23">23</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.RdfLexicon;
+<a class="jxr_linenumber" name="24" href="#24">24</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+<a class="jxr_linenumber" name="25" href="#25">25</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.rdf.GraphSubjects;
+<a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.jcr.FedoraJcrTypes;
 <a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> org.springframework.stereotype.Component;
 <a class="jxr_linenumber" name="28" href="#28">28</a>  
 <a class="jxr_linenumber" name="29" href="#29">29</a>  <strong class="jxr_keyword">import</strong> javax.jcr.RepositoryException;
@@ -43,11 +43,11 @@
 <a class="jxr_linenumber" name="33" href="#33">33</a>  <em class="jxr_javadoccomment"> * Register webhooks resource URIs for the root object</em>
 <a class="jxr_linenumber" name="34" href="#34">34</a>  <em class="jxr_javadoccomment"> */</em>
 <a class="jxr_linenumber" name="35" href="#35">35</a>  @Component
-<a class="jxr_linenumber" name="36" href="#36">36</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../org/fcrepo/webhooks/WebhooksResources.html">WebhooksResources</a> <strong class="jxr_keyword">implements</strong> <a href="../../../org/fcrepo/api/rdf/UriAwareResourceModelFactory.html">UriAwareResourceModelFactory</a> {
+<a class="jxr_linenumber" name="36" href="#36">36</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../org/fcrepo/webhooks/WebhooksResources.html">WebhooksResources</a> <strong class="jxr_keyword">implements</strong> <a href="../../../org/fcrepo/http/commons/api/rdf/UriAwareResourceModelFactory.html">UriAwareResourceModelFactory</a> {
 <a class="jxr_linenumber" name="37" href="#37">37</a>  
 <a class="jxr_linenumber" name="38" href="#38">38</a>      @Override
-<a class="jxr_linenumber" name="39" href="#39">39</a>      <strong class="jxr_keyword">public</strong> Model createModelForResource(<a href="../../../org/fcrepo/FedoraResource.html">FedoraResource</a> resource,
-<a class="jxr_linenumber" name="40" href="#40">40</a>              UriInfo uriInfo, <a href="../../../org/fcrepo/rdf/GraphSubjects.html">GraphSubjects</a> graphSubjects)
+<a class="jxr_linenumber" name="39" href="#39">39</a>      <strong class="jxr_keyword">public</strong> Model createModelForResource(<a href="../../../org/fcrepo/kernel/FedoraResource.html">FedoraResource</a> resource,
+<a class="jxr_linenumber" name="40" href="#40">40</a>              UriInfo uriInfo, <a href="../../../org/fcrepo/kernel/rdf/GraphSubjects.html">GraphSubjects</a> graphSubjects)
 <a class="jxr_linenumber" name="41" href="#41">41</a>          <strong class="jxr_keyword">throws</strong> RepositoryException {
 <a class="jxr_linenumber" name="42" href="#42">42</a>          <strong class="jxr_keyword">final</strong> Model model = ModelFactory.createDefaultModel();
 <a class="jxr_linenumber" name="43" href="#43">43</a>          <strong class="jxr_keyword">final</strong> Resource s = graphSubjects.getGraphSubject(resource.getNode());

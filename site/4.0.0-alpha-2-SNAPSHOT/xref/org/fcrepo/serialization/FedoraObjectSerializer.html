@@ -33,8 +33,8 @@
 <a class="jxr_linenumber" name="23" href="#23">23</a>  <strong class="jxr_keyword">import</strong> javax.jcr.RepositoryException;
 <a class="jxr_linenumber" name="24" href="#24">24</a>  <strong class="jxr_keyword">import</strong> javax.jcr.Session;
 <a class="jxr_linenumber" name="25" href="#25">25</a>  
-<a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.FedoraObject;
-<a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.exception.InvalidChecksumException;
+<a class="jxr_linenumber" name="26" href="#26">26</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.FedoraObject;
+<a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.exception.InvalidChecksumException;
 <a class="jxr_linenumber" name="28" href="#28">28</a>  <strong class="jxr_keyword">import</strong> org.springframework.stereotype.Component;
 <a class="jxr_linenumber" name="29" href="#29">29</a>  
 <a class="jxr_linenumber" name="30" href="#30">30</a>  <em class="jxr_javadoccomment">/**</em>
@@ -67,7 +67,7 @@
 <a class="jxr_linenumber" name="57" href="#57">57</a>  <em class="jxr_javadoccomment">     * @throws RepositoryException</em>
 <a class="jxr_linenumber" name="58" href="#58">58</a>  <em class="jxr_javadoccomment">     * @throws IOException</em>
 <a class="jxr_linenumber" name="59" href="#59">59</a>  <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="60" href="#60">60</a>      <strong class="jxr_keyword">void</strong> serialize(<strong class="jxr_keyword">final</strong> <a href="../../../org/fcrepo/FedoraObject.html">FedoraObject</a> obj, <strong class="jxr_keyword">final</strong> OutputStream out)
+<a class="jxr_linenumber" name="60" href="#60">60</a>      <strong class="jxr_keyword">void</strong> serialize(<strong class="jxr_keyword">final</strong> <a href="../../../org/fcrepo/kernel/FedoraObject.html">FedoraObject</a> obj, <strong class="jxr_keyword">final</strong> OutputStream out)
 <a class="jxr_linenumber" name="61" href="#61">61</a>          <strong class="jxr_keyword">throws</strong> RepositoryException, IOException;
 <a class="jxr_linenumber" name="62" href="#62">62</a>  
 <a class="jxr_linenumber" name="63" href="#63">63</a>      <em class="jxr_javadoccomment">/**</em>
