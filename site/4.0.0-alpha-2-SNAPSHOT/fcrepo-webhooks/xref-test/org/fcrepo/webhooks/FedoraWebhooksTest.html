@@ -37,9 +37,9 @@
 <a class="jxr_linenumber" name="27" href="#27">27</a>  <strong class="jxr_keyword">import</strong> javax.jcr.Workspace;
 <a class="jxr_linenumber" name="28" href="#28">28</a>  <strong class="jxr_keyword">import</strong> javax.jcr.nodetype.NodeType;
 <a class="jxr_linenumber" name="29" href="#29">29</a>  
-<a class="jxr_linenumber" name="30" href="#30">30</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.observer.FedoraEvent;
-<a class="jxr_linenumber" name="31" href="#31">31</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.session.SessionFactory;
-<a class="jxr_linenumber" name="32" href="#32">32</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.test.util.TestHelpers;
+<a class="jxr_linenumber" name="30" href="#30">30</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.observer.FedoraEvent;
+<a class="jxr_linenumber" name="31" href="#31">31</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.http.commons.session.SessionFactory;
+<a class="jxr_linenumber" name="32" href="#32">32</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.http.commons.test.util.TestHelpers;
 <a class="jxr_linenumber" name="33" href="#33">33</a>  <strong class="jxr_keyword">import</strong> org.junit.Before;
 <a class="jxr_linenumber" name="34" href="#34">34</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
 <a class="jxr_linenumber" name="35" href="#35">35</a>  <strong class="jxr_keyword">import</strong> org.modeshape.jcr.api.Repository;
@@ -71,7 +71,7 @@
 <a class="jxr_linenumber" name="61" href="#61">61</a>          TestHelpers.setField(testObj, <span class="jxr_string">"session"</span>, mockSession);
 <a class="jxr_linenumber" name="62" href="#62">62</a>          TestHelpers.setField(testObj, <span class="jxr_string">"readOnlySession"</span>, mockSession);
 <a class="jxr_linenumber" name="63" href="#63">63</a>          SessionFactory mockSessions = mock(SessionFactory.<strong class="jxr_keyword">class</strong>);
-<a class="jxr_linenumber" name="64" href="#64">64</a>          when(mockSessions.getSession()).thenReturn(mockSession);
+<a class="jxr_linenumber" name="64" href="#64">64</a>          when(mockSessions.getInternalSession()).thenReturn(mockSession);
 <a class="jxr_linenumber" name="65" href="#65">65</a>          TestHelpers.setField(testObj, <span class="jxr_string">"sessions"</span>, mockSessions);
 <a class="jxr_linenumber" name="66" href="#66">66</a>      }
 <a class="jxr_linenumber" name="67" href="#67">67</a>  
