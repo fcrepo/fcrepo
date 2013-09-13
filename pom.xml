@@ -1198,6 +1198,17 @@
       </roles>
       <timezone>-5</timezone>
     </developer>
+    <developer>
+      <id>awoods</id>
+      <name>Andrew Woods</name>
+      <email>awoods @ (domain of organization url)</email>
+      <organization>DuraSpace</organization>
+      <organizationUrl>http://www.duraspace.org/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-7</timezone>
+    </developer>
   </developers>
   <organization>
     <name>DuraSpace, Inc.</name>
