@@ -10,6 +10,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>fcrepo-transform</artifactId>
+  <name>${project.artifactId}</name>
+  <description>Fedora Transform</description>
+  <packaging>bundle</packaging>
 
   <dependencies>
 
