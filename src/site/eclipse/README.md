@@ -12,6 +12,7 @@ this project's coding conventions to your workspace.
 ### Under Java -> Editor -> Save Actions:
 
 1. Check "Perform the selected actions on save".
+2. If you check "Format source code", also choose to "Format edited lines" only.
 2. Check "Additional actions".
 3. Click "Configure...".
    + Under the "Code Organizing" tab, check "Remove trailing whitespace" and "All lines", as well as "Correct indentation".
