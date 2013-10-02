@@ -155,8 +155,7 @@ public class LDPathTransform implements Transformation  {
                                     WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
     }
 
-    private static final Function<Collection<?>,Collection<Object>>
-            WILDCARD_COLLECTION_TO_OBJECT_COLLECTION =
+    private static final Function<Collection<?>, Collection<Object>> WILDCARD_COLLECTION_TO_OBJECT_COLLECTION =
             new Function<Collection<?>, Collection<Object>>() {
 
                 @Override
