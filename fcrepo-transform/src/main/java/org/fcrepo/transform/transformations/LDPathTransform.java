@@ -152,22 +152,22 @@ public class LDPathTransform implements Transformation  {
     transformLdpathOutputToSomethingSerializable(Map<String, Collection<?>> collectionMap) {
 
         return Maps.transformValues(collectionMap,
-                                       WILDCARD_COLLECTION_TO_STRING_COLLECTION);
+                                    WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
     }
 
     private static final Function<Collection<?>,Collection<Object>>
-    WILDCARD_COLLECTION_TO_STRING_COLLECTION =
+            WILDCARD_COLLECTION_TO_OBJECT_COLLECTION =
             new Function<Collection<?>, Collection<Object>>() {
 
                 @Override
                 public Collection<Object> apply(Collection<?> input) {
                     return Collections2.transform(input,
-                                                     ANYTHING_TO_STRING_FUNCTION);
+                                                  ANYTHING_TO_OBJECT_FUNCTION);
                 }
             };
 
 
-    private static final Function<Object,Object> ANYTHING_TO_STRING_FUNCTION =
+    private static final Function<Object,Object> ANYTHING_TO_OBJECT_FUNCTION =
             new Function<Object, Object>() {
                 @Override
                 public Object apply(Object input) {
