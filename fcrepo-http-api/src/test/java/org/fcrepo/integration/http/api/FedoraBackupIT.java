@@ -55,15 +55,15 @@ public class FedoraBackupIT extends AbstractResourceIT {
 
 		// back it up
         File dir = Files.createTempDir();
-        logger.debug("Backing up repository to {}", dir.getAbsolutePath());
+        logger.debug("Backing up repository to {}", dir.getCanonicalPath());
 		final HttpPost backupMethod =
 				new HttpPost(serverAddress + "fcr:backup");
-        backupMethod.setEntity(new StringEntity(dir.getAbsolutePath()));
+        backupMethod.setEntity(new StringEntity(dir.getCanonicalPath()));
 		response = client.execute(backupMethod);
 		assertEquals(200, response.getStatusLine().getStatusCode());
 
 		final String content = EntityUtils.toString(response.getEntity());
-        assertEquals(dir.getAbsolutePath(), content);
+        assertEquals(dir.getCanonicalPath(), content);
 		logger.debug("Back up directory was {}", content);
 
         // delete it
