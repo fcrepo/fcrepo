@@ -28,7 +28,7 @@ import org.modeshape.jcr.security.SecurityContext;
 /**
  * This authentication provider will always authenticate, giving
  * complete access privileges to the session.
- * 
+ *
  * @author Gregory Jansen
  */
 public class BypassSecurityServletAuthenticationProvider implements

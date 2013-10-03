@@ -30,6 +30,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 
 public class AuthenticatedRequestWrappingFilter implements Filter {
@@ -72,9 +73,14 @@ public class AuthenticatedRequestWrappingFilter implements Filter {
                                             throws Throwable {
                                     if (method.getName().equals("isUserInRole")) {
                                         return true;
+                                    } else if (method.getName().equals(
+                                            "getUserPrincipal")) {
+                                        return null;
+                                    } else if (method.getName().equals(
+                                            "getRemoteUser")) {
+                                        return null;
                                     }
                                     return method.invoke(request, args);
-
                                 }
                             });
         }

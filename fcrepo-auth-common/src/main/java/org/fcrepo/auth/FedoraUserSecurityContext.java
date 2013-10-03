@@ -17,11 +17,9 @@
 package org.fcrepo.auth;
 
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-
+import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
@@ -33,59 +31,71 @@ import org.slf4j.LoggerFactory;
  * necessarily authenticated by the container, i.e. users may include the
  * general public. This security context delegates all access decisions to the
  * configured Fedora policy enforcement point.
- * 
+ *
  * @author Gregory Jansen
  */
 public class FedoraUserSecurityContext implements SecurityContext,
         AdvancedAuthorizationProvider {
 
-    private static Logger logger = LoggerFactory
+    private static Logger log = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
 
     private Set<Principal> principals = null;
 
-    private HttpServletRequest request = null;
+    private Principal userPrincipal = null;
+
+    private ServletCredentials credentials = null;
 
     private FedoraPolicyEnforcementPoint pep = null;
 
+    private boolean loggedIn = true;
+
     /**
      * Constructs a new security context.
-     * 
+     *
      * @param request the servlet request
      * @param principals security principals associated with this request
      * @param pep the policy enforcement point
      */
-    protected FedoraUserSecurityContext(final HttpServletRequest request,
+    protected FedoraUserSecurityContext(
+            final ServletCredentials credentials,
             final Set<Principal> principals,
             final FedoraPolicyEnforcementPoint pep) {
-        this.request = request;
+        this.credentials = credentials;
         this.principals = principals;
         this.pep = pep;
+        if (credentials.getRequest() != null) {
+            this.userPrincipal = credentials.getRequest().getUserPrincipal();
+        }
+        if (this.pep == null) {
+            log.warn("This security context must have a PEP injected");
+            throw new Error("This security context must have a PEP injected");
+        }
     }
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.modeshape.jcr.security.SecurityContext#isAnonymous()
      */
     @Override
     public boolean isAnonymous() {
-        return false;
+        return this.userPrincipal == null;
     }
 
     /**
      * {@inheritDoc SecurityContext#getUserName()}
-     * 
+     *
      * @see SecurityContext#getUserName()
      */
     @Override
     public final String getUserName() {
-        return request.getRemoteUser();
+        return getEffectiveUserPrincipal().getName();
     }
 
     /**
      * {@inheritDoc SecurityContext#hasRole(String)}
-     * 
+     *
      * @see SecurityContext#hasRole(String)
      */
     @Override
@@ -100,26 +110,29 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return true;
         }
         return false;
-        // return request != null && request.isUserInRole(roleName);
     }
 
     /**
      * Get the user principal associated with this context.
-     * 
+     *
      * @return
      */
-    public Principal getUserPrincipal() {
-        return this.request.getUserPrincipal();
+    public Principal getEffectiveUserPrincipal() {
+        if (this.loggedIn && this.userPrincipal != null) {
+            return this.userPrincipal;
+        } else {
+            return ServletContainerAuthenticationProvider.EVERYONE;
+        }
     }
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @see org.modeshape.jcr.security.SecurityContext#logout()
      */
     @Override
     public void logout() {
-        request = null;
+        this.loggedIn = false;
     }
 
     /*
@@ -134,21 +147,11 @@ public class FedoraUserSecurityContext implements SecurityContext,
      * attributes: ??
      */
     @Override
-    public boolean hasPermission(final Context context,
-            final Path absPath, final String... actions) {
-        logger.debug("in hasPermission");
-        // what roles do these principals have in repo (MODE-1920)
-        // final Privilege[] privs =
-        // context.getSession().getAccessControlManager()
-        // .getPrivileges(absPath.toString());
-        // final AccessControlPolicy[] policies =
-        // context.getSession().getAccessControlManager()
-        // .getEffectivePolicies(absPath.toString());
-        // policies[0].getClass();
-
-        logger.debug("hasPermission(" + context + "," +
-                (absPath == null ? absPath : absPath.getString()) + "," +
-                Arrays.toString(actions) + ")");
+    public boolean hasPermission(final Context context, final Path absPath,
+            final String... actions) {
+        if (!this.loggedIn) {
+            return false;
+        }
 
         // this permission is required for login
         if (absPath == null) {
@@ -158,9 +161,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
         // delegate to Fedora PDP
         if (pep != null) {
             return pep.hasModeShapePermission(absPath, actions,
-                    this.principals, getUserPrincipal());
+                    this.principals, getEffectiveUserPrincipal());
         } else {
-            return true;
+            return false;
         }
     }
 }

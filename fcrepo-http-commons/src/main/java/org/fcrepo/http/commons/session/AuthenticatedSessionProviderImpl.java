@@ -16,11 +16,10 @@
 
 package org.fcrepo.http.commons.session;
 
+import javax.jcr.Credentials;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
-import org.modeshape.jcr.api.ServletCredentials;
 
 /**
  * Retrieve a JCR session by just passing along the HTTP
@@ -31,16 +30,16 @@ public class AuthenticatedSessionProviderImpl implements
 
     private final Repository repository;
 
-    private final ServletCredentials credentials;
+    private final Credentials credentials;
 
     /**
      * Get a new session provider for the JCR repository
-     * 
+     *
      * @param repo
      * @param creds
      */
     public AuthenticatedSessionProviderImpl(final Repository repo,
-            final ServletCredentials creds) {
+            final Credentials creds) {
         repository = repo;
         credentials = creds;
     }
@@ -50,7 +49,7 @@ public class AuthenticatedSessionProviderImpl implements
         try {
             return (credentials != null) ? repository.login(credentials)
                     : repository.login();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new IllegalStateException(e);
         }
     }

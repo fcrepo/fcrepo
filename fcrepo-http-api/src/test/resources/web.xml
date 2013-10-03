@@ -34,5 +34,16 @@
 		<servlet-name>jersey-servlet</servlet-name>
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
+  
+    <!-- filter to add test auth to grizzly -->
+    <filter>
+      <filter-name>TestAuth</filter-name>
+      <filter-class>org.fcrepo.http.commons.test.util.TestAuthenticationRequestFilter</filter-class>
+    </filter>
+    
+    <filter-mapping>
+      <filter-name>TestAuth</filter-name>
+      <url-pattern>/*</url-pattern>
+    </filter-mapping>
 	
 </web-app>

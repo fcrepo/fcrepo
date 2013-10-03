@@ -93,7 +93,7 @@ public class ModeShapeHonorsPEPResponseIT {
                 new BasicUserPrincipal("fred"));
         when(
                 request.isUserInRole(Mockito
-                        .eq(ServletContainerAuthenticationProvider.FEDORA_USER)))
+                        .eq(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)))
                 .thenReturn(true);
         Mockito.reset(pep);
         when(
@@ -124,7 +124,7 @@ public class ModeShapeHonorsPEPResponseIT {
                 new BasicUserPrincipal("fred"));
         when(
                 request.isUserInRole(Mockito
-                        .eq(ServletContainerAuthenticationProvider.FEDORA_USER)))
+                        .eq(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)))
                 .thenReturn(true);
 
         // first permission check is for login
@@ -135,8 +135,7 @@ public class ModeShapeHonorsPEPResponseIT {
                                 .<Set<Principal>> any(),
                         any(Principal.class))).thenReturn(true, false);
 
-        final ServletCredentials credentials =
-                new ServletCredentials(request);
+        final ServletCredentials credentials = new ServletCredentials(request);
         final Session session = repo.login(credentials);
         final ObjectService os = new ObjectService();
         final FedoraObject fo = os.createObject(session, "/myobject");

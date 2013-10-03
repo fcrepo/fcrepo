@@ -145,7 +145,7 @@ public class SessionFactory {
 
         try {
             final ServletCredentials creds =
-                    getCredentials(securityContext, servletRequest);
+                    new ServletCredentials(servletRequest);
 
             final Transaction transaction =
                     getEmbeddedTransaction(servletRequest);
@@ -202,9 +202,7 @@ public class SessionFactory {
     public AuthenticatedSessionProvider getSessionProvider(
             final SecurityContext securityContext,
             final HttpServletRequest servletRequest) {
-
-        final ServletCredentials creds =
-                getCredentials(securityContext, servletRequest);
+        final ServletCredentials creds = new ServletCredentials(servletRequest);
         return new AuthenticatedSessionProviderImpl(repo, creds);
     }
 
@@ -255,25 +253,6 @@ public class SessionFactory {
         } else {
             return null;
         }
-    }
-
-    /**
-     * Get the credentials for an authenticated session
-     * 
-     * @param securityContext
-     * @param servletRequest
-     * @return
-     */
-    private static ServletCredentials getCredentials(
-            final SecurityContext securityContext,
-            final HttpServletRequest servletRequest) {
-        if (securityContext.getUserPrincipal() != null) {
-            logger.debug("Authenticated user: " +
-                    securityContext.getUserPrincipal().getName());
-        } else {
-            logger.debug("No authenticated user found.");
-        }
-        return new ServletCredentials(servletRequest);
     }
 
 }

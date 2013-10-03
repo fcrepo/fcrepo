@@ -16,8 +16,6 @@
 
 package org.fcrepo.auth;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.security.AuthorizationProvider;
 import org.modeshape.jcr.security.SecurityContext;
@@ -26,20 +24,22 @@ import org.modeshape.jcr.value.Path;
 /**
  * This is a pass-through security context for authenticated Fedora
  * administrators.
- * 
+ *
  * @author Gregory Jansen
  */
 public class FedoraAdminSecurityContext implements AuthorizationProvider,
         SecurityContext {
 
-    private HttpServletRequest request = null;
+    private String username = null;
+
+    private boolean loggedIn = true;
 
     /**
      * @param request
      */
-    public FedoraAdminSecurityContext(final HttpServletRequest request) {
+    public FedoraAdminSecurityContext(final String username) {
         super();
-        this.request = request;
+        this.username = username;
     }
 
     /*
@@ -48,7 +48,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
      */
     @Override
     public boolean isAnonymous() {
-        return false;
+        return username != null;
     }
 
     /*
@@ -57,7 +57,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
      */
     @Override
     public String getUserName() {
-        return request.getRemoteUser();
+        return username;
     }
 
     /*
@@ -75,7 +75,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
      */
     @Override
     public void logout() {
-        request = null;
+        this.loggedIn = false;
     }
 
     /*
@@ -91,7 +91,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
             final String repositoryName,
             final String repositorySourceName, final String workspaceName,
             final Path absPath, final String... actions) {
-        return request != null;
+        return this.loggedIn;
     }
 
 }
