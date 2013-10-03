@@ -17,7 +17,7 @@
 package org.fcrepo.auth;
 
 import java.security.Principal;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.modeshape.jcr.value.Path;
@@ -26,7 +26,7 @@ import org.modeshape.jcr.value.Path;
  * Policy Enforcement Points implement the various authorization decisions
  * needed by Fedora. Implementations will translate enforcement calls into
  * their given policy framework.
- * 
+ *
  * @author Gregory Jansen
  */
 public interface FedoraPolicyEnforcementPoint {
@@ -34,7 +34,7 @@ public interface FedoraPolicyEnforcementPoint {
     /**
      * Is the action permitted to the user or other any other principal on the
      * given node path?
-     * 
+     *
      * @param context
      * @param absPath
      * @param actions
@@ -49,12 +49,12 @@ public interface FedoraPolicyEnforcementPoint {
      * Filter the collection of JCR paths, selecting those the user has
      * permission to read.
      * 
-     * @param paths the collection of paths
+     * @param paths an iterator of paths
      * @param allPrincipals all the authenticated principals
      * @param userPrincipal the user principal
-     * @return set of permitted paths
+     * @return an iterator of permitted paths
      */
-    public Set<Path> filterPathsForReading(Collection<Path> paths,
+    public Iterator<Path> filterPathsForReading(Iterator<Path> paths,
             Set<Principal> allPrincipals, Principal userPrincipal);
 
 }

@@ -17,7 +17,7 @@
 package org.fcrepo.auth.integration;
 
 import java.security.Principal;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.fcrepo.auth.FedoraPolicyEnforcementPoint;
@@ -71,10 +71,46 @@ public class PermitRootAndPathEndsWithPermitSuffixPEP implements
      * .util.Collection, java.util.Set, java.security.Principal)
      */
     @Override
-    public Set<Path> filterPathsForReading(final Collection<Path> paths,
+    public Iterator<Path> filterPathsForReading(final Iterator<Path> paths,
             final Set<Principal> allPrincipals,
             final Principal userPrincipal) {
-        return null;
+        return new Iterator<Path>() {
+
+            Path next = null;
+
+            @Override
+            public boolean hasNext() {
+                if (next == null) {
+                    findNext();
+                }
+                return next != null;
+            }
+
+            @Override
+            public Path next() {
+                if (next == null) {
+                    findNext();
+                }
+                return next;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException(
+                        "This API is for reads only");
+            }
+
+            void findNext() {
+                while (paths.hasNext()) {
+                    final Path p = paths.next();
+                    if (p.getLastSegment().getName().getLocalName()
+                            .toLowerCase().endsWith("permit")) {
+                        next = p;
+                        break;
+                    }
+                }
+            }
+        };
     }
 
 }

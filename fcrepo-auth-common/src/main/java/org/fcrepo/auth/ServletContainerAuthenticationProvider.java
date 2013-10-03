@@ -32,12 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Authenticates ModeShape logins where servlet credentials are supplied.
- * Capable of authenticating whether or not container has performed user
- * authentication.
+ * Authenticates ModeShape logins where JAX-RS credentials are supplied. Capable
+ * of authenticating whether or not container has performed user authentication.
  * This is a singleton with an injected policy enforcement point. The singleton
  * pattern allows ModeShape to obtain this instance via classname configuration.
- * 
+ *
  * @author Gregory Jansen
  */
 public class ServletContainerAuthenticationProvider implements
@@ -66,24 +65,25 @@ public class ServletContainerAuthenticationProvider implements
     /**
      * User role for Fedora's admin users
      */
-    public static final String FEDORA_ADMIN = "fedoraAdmin";
+    public static final String FEDORA_ADMIN_ROLE = "fedoraAdmin";
 
     /**
      * User role for Fedora's ordinary users
      */
-    public static final String FEDORA_USER = "fedoraUser";
+    public static final String FEDORA_USER_ROLE = "fedoraUser";
 
     private static final Logger logger = LoggerFactory
             .getLogger(ServletContainerAuthenticationProvider.class);
 
-    private Set<HTTPPrincipalFactory> principalFactories = Collections.EMPTY_SET;
+    private Set<HTTPPrincipalFactory> principalFactories = Collections
+            .emptySet();
 
     private FedoraPolicyEnforcementPoint pep;
 
     /**
      * Provides the singleton bean to ModeShape via reflection based on class
      * name.
-     * 
+     *
      * @return a AuthenticationProvider
      */
     public static synchronized AuthenticationProvider getInstance() {
@@ -121,33 +121,31 @@ public class ServletContainerAuthenticationProvider implements
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
-        logger.debug("in authenticate: " + credentials);
-        logger.debug("PEP: " + pep);
-        if (credentials instanceof ServletCredentials) {
-            // enforce fedora roles
-            final ServletCredentials creds =
-                    (ServletCredentials) credentials;
-            logger.debug("Authenticating a request with Servlet Credentials");
-            final HttpServletRequest request = creds.getRequest();
-            if (request != null) {
-                if (request.getUserPrincipal() != null &&
-                        request.isUserInRole(FEDORA_ADMIN)) {
-                    return repositoryContext
-                            .with(new FedoraAdminSecurityContext(request));
-                }
-                final Set<Principal> principals = new HashSet<Principal>();
-                principals.add(EVERYONE); // all sessions have this principal
-                if (request.getUserPrincipal() != null) {
-                    principals.add(request.getUserPrincipal());
-                }
-                // get user details/principals
-                addUserPrincipals(request, principals);
-                return repositoryContext
-                        .with(new FedoraUserSecurityContext(request,
-                                principals, pep));
-            }
+        if (credentials == null || !(credentials instanceof ServletCredentials)) {
+            return null;
         }
-        return null;
+        final ServletCredentials creds = (ServletCredentials) credentials;
+
+        // does this request have the fedoraAdmin role in the container?
+        if (creds.getRequest().getUserPrincipal() != null &&
+                creds.getRequest().isUserInRole(FEDORA_ADMIN_ROLE)) {
+            return repositoryContext.with(new FedoraAdminSecurityContext(creds
+                    .getRequest().getUserPrincipal().getName()));
+        }
+
+        // add base public principals
+        final Set<Principal> principals = new HashSet<Principal>();
+        principals.add(EVERYONE); // all sessions have this principal
+
+        // request fedora user role to add user principal
+        if (creds.getRequest().getUserPrincipal() != null &&
+                creds.getRequest().isUserInRole(FEDORA_USER_ROLE)) {
+            principals.add(creds.getRequest().getUserPrincipal());
+            // get user details/principals
+            addUserPrincipals(creds.getRequest(), principals);
+        }
+        return repositoryContext.with(new FedoraUserSecurityContext(creds,
+                principals, pep));
     }
 
     /**
@@ -166,6 +164,7 @@ public class ServletContainerAuthenticationProvider implements
 
     private void addUserPrincipals(final HttpServletRequest request,
             final Set<Principal> principals) {
+        // TODO add exception handling for principal factories
         for (final HTTPPrincipalFactory pf : this.getPrincipalFactories()) {
             principals.addAll(pf.getGroupPrincipals(request));
         }

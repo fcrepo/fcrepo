@@ -170,7 +170,7 @@ public class MockHeadersFilter implements Filter {
          */
         @Override
         public boolean isUserInRole(final String role) {
-            return ServletContainerAuthenticationProvider.FEDORA_USER
+            return ServletContainerAuthenticationProvider.FEDORA_USER_ROLE
                     .equals(role);
         }
 
