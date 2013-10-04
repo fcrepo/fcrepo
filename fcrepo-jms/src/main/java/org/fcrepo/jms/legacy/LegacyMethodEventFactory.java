@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
@@ -52,7 +53,8 @@ public class LegacyMethodEventFactory implements JMSEventMessageFactory {
         LOGGER.trace("Received an event to transform.");
         final String path = jcrEvent.getPath();
         LOGGER.trace("Retrieved path from event.");
-        final Node resource = jcrSession.getNode(path);
+        final Item item = jcrSession.getItem(path);
+        final Node resource = item.isNode() ? (Node)item : item.getParent();
         LOGGER.trace("Retrieved node from event.");
         final LegacyMethod legacy = new LegacyMethod(jcrEvent, resource);
         final StringWriter writer = new StringWriter();

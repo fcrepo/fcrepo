@@ -31,6 +31,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.observation.Event;
@@ -98,7 +99,12 @@ public class SimpleObserverTest {
     public void testOnEvent() throws Exception {
         setField("eventBus", testObj, mockBus);
         setField("eventFilter", testObj, mockFilter);
+        setField("session", testObj, mockSession);
         final Event mockEvent = mock(Event.class);
+        when(mockEvent.getPath()).thenReturn("/foo/bar");
+        final Node mockNode = mock(Node.class);
+        when(mockNode.isNode()).thenReturn(true);
+        when(mockSession.getItem(any(String.class))).thenReturn(mockNode);
         final EventIterator mockEvents = mock(EventIterator.class);
         final List<Event> iterable = asList(new Event[] {mockEvent});
         mockStatic(Iterables.class);

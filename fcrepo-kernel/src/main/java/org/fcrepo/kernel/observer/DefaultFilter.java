@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -32,10 +33,13 @@ import org.modeshape.jcr.api.Repository;
 
 /**
  * EventFilter that passes only events emitted from nodes with
- * a Fedora JCR type.
+ * a Fedora JCR type, or properties attached to them.
  *
  * @author eddies
  * @date Feb 7, 2013
+ *
+ * @author escowles
+ * @date Oct 3, 2013
  */
 public class DefaultFilter implements EventFilter {
 
@@ -48,19 +52,17 @@ public class DefaultFilter implements EventFilter {
 
     /**
      * Filter observer events to only include events on a FedoraObject or
-     * Datastream
+     * Datastream, or properties of an FedoraObject or Datastream.
      *
      * @param event the original event
      * @return
      */
     @Override
     public boolean apply(final Event event) {
-
         try {
-            final Node resource = session.getNode(event.getPath());
-            return isFedoraObject.apply(resource) ||
-                isFedoraDatastream.apply(resource);
-
+            final Item item = session.getItem(event.getPath());
+            final Node n = item.isNode() ? (Node)item : item.getParent();
+            return isFedoraObject.apply(n) || isFedoraDatastream.apply(n);
         } catch (final PathNotFoundException e) {
             // not a node in the fedora workspace
             return false;
