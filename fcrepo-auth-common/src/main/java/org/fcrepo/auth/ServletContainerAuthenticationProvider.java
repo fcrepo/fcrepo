@@ -121,6 +121,8 @@ public class ServletContainerAuthenticationProvider implements
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
+        logger.debug("in authenticate: " + credentials);
+        logger.debug("PEP: " + pep);
         if (credentials == null || !(credentials instanceof ServletCredentials)) {
             return null;
         }

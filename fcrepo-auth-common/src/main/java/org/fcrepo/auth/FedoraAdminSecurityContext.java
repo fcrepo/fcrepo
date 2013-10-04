@@ -32,7 +32,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
 
     private String username = null;
 
-    boolean loggedIn = true;
+    private boolean loggedIn = true;
 
     /**
      * @param request

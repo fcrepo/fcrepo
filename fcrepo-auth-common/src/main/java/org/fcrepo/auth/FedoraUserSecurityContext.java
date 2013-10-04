@@ -42,6 +42,8 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     private Set<Principal> principals = null;
 
+    private Principal userPrincipal = null;
+
     private ServletCredentials credentials = null;
 
     private FedoraPolicyEnforcementPoint pep = null;
@@ -62,6 +64,13 @@ public class FedoraUserSecurityContext implements SecurityContext,
         this.credentials = credentials;
         this.principals = principals;
         this.pep = pep;
+        if (credentials.getRequest() != null) {
+            this.userPrincipal = credentials.getRequest().getUserPrincipal();
+        }
+        if (this.pep == null) {
+            log.warn("This security context must have a PEP injected");
+            throw new Error("This security context must have a PEP injected");
+        }
     }
 
     /**
@@ -71,7 +80,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
      */
     @Override
     public boolean isAnonymous() {
-        return null != this.credentials.getRequest().getUserPrincipal();
+        return this.userPrincipal == null;
     }
 
     /**
@@ -81,10 +90,8 @@ public class FedoraUserSecurityContext implements SecurityContext,
      */
     @Override
     public final String getUserName() {
-        if (this.loggedIn && this.credentials != null &&
-                this.credentials.getRequest().getUserPrincipal() != null) {
-            return this.credentials.getRequest().getUserPrincipal()
-                    .getName();
+        if (this.loggedIn && this.userPrincipal != null) {
+            return this.userPrincipal.getName();
         } else {
             return ServletContainerAuthenticationProvider.EVERYONE.getName();
         }
@@ -107,7 +114,6 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return true;
         }
         return false;
-        // return request != null && request.isUserInRole(roleName);
     }
 
     /**
@@ -115,9 +121,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
      *
      * @return
      */
-    public Principal getUserPrincipal() {
-        if (this.loggedIn && this.credentials != null) {
-            return this.credentials.getRequest().getUserPrincipal();
+    public Principal getEffectiveUserPrincipal() {
+        if (this.loggedIn && this.userPrincipal != null) {
+            return this.userPrincipal;
         } else {
             return ServletContainerAuthenticationProvider.EVERYONE;
         }
@@ -159,9 +165,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
         // delegate to Fedora PDP
         if (pep != null) {
             return pep.hasModeShapePermission(absPath, actions,
-                    this.principals, getUserPrincipal());
+                    this.principals, getEffectiveUserPrincipal());
         } else {
-            return true;
+            return false;
         }
     }
 }

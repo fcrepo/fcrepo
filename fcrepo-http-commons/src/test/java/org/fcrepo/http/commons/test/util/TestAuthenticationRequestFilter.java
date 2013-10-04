@@ -46,7 +46,8 @@ import com.sun.jersey.spi.container.ContainerRequest;
  */
 public class TestAuthenticationRequestFilter implements Filter {
 
-    Logger log = LoggerFactory.getLogger(TestAuthenticationRequestFilter.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(TestAuthenticationRequestFilter.class);
 
     // @Context
     // UriInfo uriInfo;

@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Factory for generating sessions for HTTP requests, taking into account
- * transactions, workspaces, and authentication.
+ * Factory for generating sessions for HTTP requests, taking
+ * into account transactions, workspaces, and authentication.
  */
 public class SessionFactory {
 
@@ -56,7 +56,7 @@ public class SessionFactory {
 
     /**
      * Initialize a session factory for the given Repository
-     *
+     * 
      * @param repo
      * @param transactionService
      */
@@ -79,7 +79,7 @@ public class SessionFactory {
 
     /**
      * Get a new JCR Session
-     *
+     * 
      * @return
      * @throws RepositoryException
      */
@@ -89,7 +89,7 @@ public class SessionFactory {
 
     /**
      * Get a new JCR session in the given workspace
-     *
+     * 
      * @param workspace
      * @return
      * @throws RepositoryException
@@ -102,7 +102,7 @@ public class SessionFactory {
     /**
      * Get a JCR session for the given HTTP servlet request (within the right
      * transaction or workspace)
-     *
+     * 
      * @param servletRequest
      * @return
      * @throws RepositoryException
@@ -111,7 +111,8 @@ public class SessionFactory {
         throws RepositoryException {
 
         final String workspace = getEmbeddedWorkspace(servletRequest);
-        final Transaction transaction = getEmbeddedTransaction(servletRequest);
+        final Transaction transaction =
+                getEmbeddedTransaction(servletRequest);
 
         final Session session;
 
@@ -120,7 +121,8 @@ public class SessionFactory {
                     transaction);
             session = transaction.getSession();
         } else if (workspace != null) {
-            logger.debug("Returning a session in the workspace {}", workspace);
+            logger.debug("Returning a session in the workspace {}",
+                    workspace);
             session = repo.login(workspace);
         } else {
             logger.debug("Returning a session in the default workspace");
@@ -133,13 +135,14 @@ public class SessionFactory {
     /**
      * Get a JCR session for the given HTTP servlet request with a
      * SecurityContext attached
-     *
+     * 
      * @param securityContext
      * @param servletRequest
      * @return
      */
     public Session getSession(final SecurityContext securityContext,
             final HttpServletRequest servletRequest) {
+
         try {
             final ServletCredentials creds =
                     new ServletCredentials(servletRequest);
@@ -155,7 +158,8 @@ public class SessionFactory {
                         transaction, creds);
                 // No need to impersonate if we have a servlet session tied to
                 // the Tx.
-                final HttpSession httpSession = servletRequest.getSession(true);
+                final HttpSession httpSession =
+                        servletRequest.getSession(true);
                 if (httpSession != null &&
                         transaction.getId().equals(
                                 httpSession.getAttribute("currentTx"))) {
@@ -165,7 +169,8 @@ public class SessionFactory {
                 }
             } else if (creds != null) {
 
-                final String workspace = getEmbeddedWorkspace(servletRequest);
+                final String workspace =
+                        getEmbeddedWorkspace(servletRequest);
 
                 if (workspace != null) {
                     logger.debug(
@@ -183,14 +188,13 @@ public class SessionFactory {
 
             return session;
         } catch (final RepositoryException e) {
-            e.printStackTrace();
             throw new IllegalStateException(e);
         }
     }
 
     /**
      * Get the configured Session Provider
-     *
+     * 
      * @param securityContext
      * @param servletRequest
      * @return
@@ -204,7 +208,7 @@ public class SessionFactory {
 
     /**
      * Extract the workspace id embedded at the beginning of a request
-     *
+     * 
      * @param request
      * @return
      */
@@ -227,7 +231,7 @@ public class SessionFactory {
 
     /**
      * Extract the transaction id embedded at the beginning of a request
-     *
+     * 
      * @param servletRequest
      * @return
      * @throws TransactionMissingException
