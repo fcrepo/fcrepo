@@ -123,6 +123,7 @@ public class SimpleObserver implements EventListener {
                 }
             } catch (final PathNotFoundException ex) {
                 // we can ignore these
+                LOGGER.trace("Not a node in the Fedora workspace: " + e);
             } catch ( RepositoryException ex ) {
                 throw propagate(ex);
             }

@@ -80,7 +80,7 @@ public class DefaultFilterTest {
             final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
             final Node mockNode = mock(Node.class);
-            when(mockSession.getNode(testPath)).thenReturn(mockNode);
+            when(mockSession.getItem(testPath)).thenReturn(mockNode);
             assertTrue(testObj.apply(mockEvent));
         } finally {
             isFedoraDatastream = holdDS;
@@ -105,7 +105,7 @@ public class DefaultFilterTest {
             final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
             final Node mockNode = mock(Node.class);
-            when(mockSession.getNode(testPath)).thenReturn(mockNode);
+            when(mockSession.getItem(testPath)).thenReturn(mockNode);
             assertTrue(testObj.apply(mockEvent));
         } finally {
             isFedoraDatastream = holdDS;
@@ -120,10 +120,10 @@ public class DefaultFilterTest {
         final String testPath = "/foo/bar";
         final Event mockEvent = mock(Event.class);
         when(mockEvent.getPath()).thenReturn(testPath);
-        when(mockSession.getNode(testPath)).thenThrow(
+        when(mockSession.getItem(testPath)).thenThrow(
                 PathNotFoundException.class);
         assertEquals(false, testObj.apply(mockEvent));
-        verify(mockSession).getNode(testPath);
+        verify(mockSession).getItem(testPath);
     }
 
     @Test
@@ -140,7 +140,7 @@ public class DefaultFilterTest {
             final Event mockEvent = mock(Event.class);
             when(mockEvent.getPath()).thenReturn(testPath);
             final Node mockNode = mock(Node.class);
-            when(mockSession.getNode(testPath)).thenReturn(mockNode);
+            when(mockSession.getItem(testPath)).thenReturn(mockNode);
             assertEquals(false, testObj.apply(mockEvent));
         } finally {
             isFedoraDatastream = holdDS;
