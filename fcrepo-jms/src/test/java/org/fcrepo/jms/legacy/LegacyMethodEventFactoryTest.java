@@ -58,7 +58,8 @@ public class LegacyMethodEventFactoryTest {
         when(mockType.getName()).thenReturn(FedoraJcrTypes.FEDORA_OBJECT);
         NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);
-        when(mockJCR.getNode(testPath)).thenReturn(mockSource);
+        when(mockSource.isNode()).thenReturn(true);
+        when(mockJCR.getItem(testPath)).thenReturn(mockSource);
         testObj.getMessage(mockEvent, mockJCR, mockJMS);
         verify(mockText).setStringProperty("methodName", "ingest");
     }
