@@ -90,11 +90,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
      */
     @Override
     public final String getUserName() {
-        if (this.loggedIn && this.userPrincipal != null) {
-            return this.userPrincipal.getName();
-        } else {
-            return ServletContainerAuthenticationProvider.EVERYONE.getName();
-        }
+        return getEffectiveUserPrincipal().getName();
     }
 
     /**
