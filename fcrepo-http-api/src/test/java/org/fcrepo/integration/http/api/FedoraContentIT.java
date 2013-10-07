@@ -16,6 +16,7 @@
 
 package org.fcrepo.integration.http.api;
 
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -23,7 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -67,16 +67,19 @@ public class FedoraContentIT extends AbstractResourceIT {
 
     @Test
     public void testPutDatastream() throws Exception {
-        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTestPut");
+
+        final String pid = randomUUID().toString();
+
+        final HttpPost objMethod = postObjMethod(pid);
         assertEquals(201, getStatus(objMethod));
         final HttpPut method =
-                putDSMethod("FedoraDatastreamsTestPut", "zxc", "foo");
+                putDSMethod(pid, "zxc", "foo");
         final HttpResponse response = client.execute(method);
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
-                serverAddress + "FedoraDatastreamsTestPut/zxc/fcr:content", location);
+                serverAddress + pid + "/zxc/fcr:content", location);
     }
 
     @Test
@@ -95,7 +98,7 @@ public class FedoraContentIT extends AbstractResourceIT {
                 putDSMethod("FedoraDatastreamsTest3", "ds1", "bar");
         mutateDataStreamMethod.setEntity(new StringEntity(faulkner1, "UTF-8"));
         final HttpResponse response = client.execute(mutateDataStreamMethod);
-        int status = response.getStatusLine().getStatusCode();
+        final int status = response.getStatusLine().getStatusCode();
         if (status != 204) {
             logger.error(EntityUtils.toString(response.getEntity()));
         }

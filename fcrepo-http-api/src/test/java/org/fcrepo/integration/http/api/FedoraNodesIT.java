@@ -19,6 +19,7 @@ package org.fcrepo.integration.http.api;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -46,6 +47,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.UUID;
 
 import javax.jcr.RepositoryException;
 
@@ -62,7 +64,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -81,7 +82,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testIngest() throws Exception {
-        final HttpPost method = postObjMethod("FedoraObjectsTest1");
+
+        final String pid = randomUUID().toString();
+
+        final HttpPost method = postObjMethod(pid);
         final HttpResponse response = client.execute(method);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
@@ -89,8 +93,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
         final String location = response.getFirstHeader("Location").getValue();
-        assertEquals("Got wrong Location header for ingest!", serverAddress +
-                "FedoraObjectsTest1", location);
+        assertEquals("Got wrong Location header for ingest!", serverAddress
+                + pid, location);
     }
 
     @Test
@@ -116,7 +120,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testIngestWithNewAndSparqlQuery() throws Exception {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/sparql-update");
-        BasicHttpEntity entity = new BasicHttpEntity();
+        final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(
                                                  ("INSERT { <> <http://purl.org/dc/terms/title> \"this is a title\" } WHERE {}")
                                                      .getBytes()));
@@ -144,7 +148,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testIngestWithNewAndGraph() throws Exception {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/n3");
-        BasicHttpEntity entity = new BasicHttpEntity();
+        final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream("<> <http://purl.org/dc/terms/title> \"this is a title\"".getBytes()));
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
@@ -171,7 +175,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testIngestWithSlug() throws Exception {
         final HttpPost method = postObjMethod("");
-        method.addHeader("Slug", "xyz");
+        method.addHeader("Slug", randomUUID().toString());
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());
         final int status = response.getStatusLine().getStatusCode();
@@ -190,7 +194,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testIngestWithBinary() throws Exception {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/octet-stream");
-        BasicHttpEntity entity = new BasicHttpEntity();
+        final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream("xyz".getBytes()));
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
@@ -220,18 +224,19 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastream() throws Exception {
-        execute(postObjMethod("FedoraDatastreamsTest4"));
 
-        assertEquals(404, getStatus(new HttpGet(serverAddress +
-                "FedoraDatastreamsTest4/ds1")));
-        assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(
-                "FedoraDatastreamsTest4", "ds1", "foo")));
+        final String pid = UUID.randomUUID().toString();
+
+        execute(postObjMethod(pid));
+
+        assertEquals(404, getStatus(new HttpGet(serverAddress + pid + "/ds1")));
+        assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(pid,
+                "ds1", "foo")));
         final HttpResponse response =
-                execute(new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest4/ds1"));
+            execute(new HttpGet(serverAddress + pid + "/ds1"));
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
                 .getStatusLine().getStatusCode());
-        assertEquals(TURTLE, response.getFirstHeader("Content-Type").getValue() );
+        assertEquals(TURTLE, response.getFirstHeader("Content-Type").getValue());
     }
 
     @Test
@@ -548,6 +553,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeSize() throws Exception {
+
+        final String sizeNode = randomUUID().toString();
+
         final HttpGet describeMethod = new HttpGet(serverAddress + "");
         describeMethod.addHeader("Accept", "text/n3");
         HttpResponse response = client.execute(describeMethod);
@@ -558,16 +566,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         Iterator<Triple> iterator =
-                graphStore.getDefaultGraph().find(Node.ANY,
-                        HAS_OBJECT_SIZE.asNode(), Node.ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_SIZE.asNode(),
+                    ANY);
 
         final Integer oldSize =
                 (Integer) iterator.next().getObject().getLiteralValue();
 
         assertEquals(CREATED.getStatusCode(),
-                getStatus(postObjMethod("sizeNode")));
-        assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(
-                "sizeNode", "asdf", "1234")));
+                getStatus(postObjMethod(sizeNode)));
+        assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(sizeNode,
+                "asdf", "1234")));
 
         response = client.execute(describeMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()

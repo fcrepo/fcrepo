@@ -16,7 +16,11 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -39,7 +43,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     public void testCreateTransaction() throws Exception {
         /* create a tx */
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        HttpResponse response = execute(createTx);
+        final HttpResponse response = execute(createTx);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final String location = response.getFirstHeader("Location").getValue();
@@ -56,7 +60,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* create a tx */
         final HttpPost createTx =
                 new HttpPost(serverAddress + "tx:123/objects");
-        HttpResponse response = execute(createTx);
+        final HttpResponse response = execute(createTx);
         assertEquals(410, response.getStatusLine().getStatusCode());
 
     }
@@ -72,7 +76,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* create a tx */
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        HttpResponse response = execute(createTx);
+        final HttpResponse response = execute(createTx);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final String location = response.getFirstHeader("Location").getValue();
@@ -104,7 +108,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* create a tx */
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
 
-        HttpResponse response = execute(createTx);
+        final HttpResponse response = execute(createTx);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final String txLocation =
@@ -153,9 +157,12 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     @Test
     public void testCreateDoStuffAndCommitTransaction() throws Exception {
         /* create a tx */
+
+        final String objectInTxCommit = randomUUID().toString();
+
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
 
-        HttpResponse response = execute(createTx);
+        final HttpResponse response = execute(createTx);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final String txLocation =
@@ -163,12 +170,12 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* create a new object inside the tx */
         final HttpPost postNew =
-                new HttpPost(txLocation + "/object-in-tx-commit");
+                new HttpPost(txLocation + "/" + objectInTxCommit);
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
 
         /* fetch the created tx from the endpoint */
-        final HttpGet getTx = new HttpGet(txLocation + "/object-in-tx-commit");
+        final HttpGet getTx = new HttpGet(txLocation + "/" + objectInTxCommit);
         getTx.setHeader("Accept", "application/n3");
         resp = execute(getTx);
         assertEquals(
@@ -176,16 +183,15 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 200, resp.getStatusLine().getStatusCode());
 
         final GraphStore graphStore =
-                TestHelpers.parseTriples(resp.getEntity().getContent());
+            parseTriples(resp.getEntity().getContent());
         logger.debug(graphStore.toString());
 
-        assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
-                NodeFactory.createURI(txLocation + "/object-in-tx-commit"),
-                Node.ANY, Node.ANY));
+        assertTrue(graphStore.toDataset().asDatasetGraph().contains(ANY,
+                createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
 
         /* fetch the object-in-tx outside of the tx */
         final HttpGet getObj =
-                new HttpGet(serverAddress + "/object-in-tx-commit");
+                new HttpGet(serverAddress + "/" + objectInTxCommit);
         resp = execute(getObj);
         assertEquals(
                 "Expected to not find our object within the scope of the transaction",
@@ -200,7 +206,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
         final HttpGet getObjCommitted =
-                new HttpGet(serverAddress + "/object-in-tx-commit");
+                new HttpGet(serverAddress + "/" + objectInTxCommit);
         resp = execute(getObjCommitted);
         assertEquals(
                 "Expected to  find our object after the transaction was committed",
