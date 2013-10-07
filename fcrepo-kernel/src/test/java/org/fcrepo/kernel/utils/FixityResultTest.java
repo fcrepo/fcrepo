@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 
-import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.Test;
 
 public class FixityResultTest {

@@ -17,6 +17,9 @@
 package org.fcrepo.http.api.url;
 
 import static com.google.common.collect.ImmutableSet.of;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SEARCH_SERVICE;
@@ -25,9 +28,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -43,10 +43,9 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.api.url.HttpApiResources;
-import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;

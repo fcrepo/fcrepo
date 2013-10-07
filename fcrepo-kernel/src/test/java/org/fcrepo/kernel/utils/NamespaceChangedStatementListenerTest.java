@@ -30,7 +30,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
-import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

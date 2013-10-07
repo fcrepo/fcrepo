@@ -20,12 +20,12 @@ import static com.google.common.collect.ImmutableBiMap.of;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_SERVICE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SEARCH_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
+import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 
 import java.util.Map;
@@ -33,19 +33,19 @@ import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFieldSearch;
 import org.fcrepo.http.api.FedoraFixity;
 import org.fcrepo.http.api.FedoraSitemap;
 import org.fcrepo.http.api.FedoraVersions;
-import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

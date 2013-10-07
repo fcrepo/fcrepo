@@ -27,8 +27,6 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.services.ServiceHelpers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

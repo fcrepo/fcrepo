@@ -31,7 +31,6 @@ import java.io.InputStream;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.http.api.repository.FedoraRepositoriesProperties;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;

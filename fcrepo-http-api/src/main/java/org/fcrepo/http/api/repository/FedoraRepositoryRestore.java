@@ -15,6 +15,22 @@
  */
 package org.fcrepo.http.api.repository;
 
+import static javax.ws.rs.core.Response.noContent;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.session.InjectedSession;
@@ -23,21 +39,6 @@ import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import static javax.ws.rs.core.Response.noContent;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Component
 @Scope("prototype")

@@ -17,7 +17,6 @@ package org.fcrepo.kernel.observer;
 
 import static org.junit.Assert.assertTrue;
 
-import org.fcrepo.kernel.observer.NOOPFilter;
 import org.junit.Test;
 
 public class NOOPFilterTest {

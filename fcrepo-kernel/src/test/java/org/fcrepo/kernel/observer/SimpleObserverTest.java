@@ -38,8 +38,6 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.ObservationManager;
 
-import org.fcrepo.kernel.observer.EventFilter;
-import org.fcrepo.kernel.observer.SimpleObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

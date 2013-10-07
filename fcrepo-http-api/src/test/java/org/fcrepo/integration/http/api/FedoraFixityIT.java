@@ -23,8 +23,8 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;

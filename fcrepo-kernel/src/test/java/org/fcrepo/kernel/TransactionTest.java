@@ -31,7 +31,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.Transaction;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

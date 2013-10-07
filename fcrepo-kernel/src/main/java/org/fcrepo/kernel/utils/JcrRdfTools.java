@@ -64,11 +64,8 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
@@ -77,8 +74,11 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
+import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.hp.hpl.jena.datatypes.RDFDatatype;

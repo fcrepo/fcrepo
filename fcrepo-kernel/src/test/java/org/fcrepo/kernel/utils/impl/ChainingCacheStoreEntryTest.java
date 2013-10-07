@@ -30,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
-import org.fcrepo.kernel.utils.impl.ChainingCacheStoreEntry;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.configuration.cache.FileCacheStoreConfiguration;

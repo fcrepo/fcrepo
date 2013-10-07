@@ -51,10 +51,8 @@ import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 
 import org.apache.tika.io.IOUtils;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.junit.After;
 import org.junit.Before;

@@ -33,7 +33,6 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.observer.DefaultFilter;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;

@@ -16,6 +16,18 @@
 
 package org.fcrepo.http.api.repository;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.net.MalformedURLException;
 
 import javax.jcr.RepositoryException;
@@ -30,13 +42,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.RDF;
-import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.api.FedoraNodes;
+import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.utils.JcrRdfTools;
@@ -45,18 +52,11 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableMap;
-
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * This class exposes the JCR workspace functionality. It may be
@@ -84,19 +84,19 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @HtmlTemplate("jcr:workspaces")
     public Dataset getWorkspaces() throws RepositoryException {
 
-        Model workspaceModel =
+        final Model workspaceModel =
                 JcrRdfTools.withContext(null, session).getJcrPropertiesModel();
 
-        String[] workspaces =
+        final String[] workspaces =
                 session.getWorkspace().getAccessibleWorkspaceNames();
 
-        for (String workspace : workspaces) {
+        for (final String workspace : workspaces) {
             final Resource resource =
                     createResource(uriInfo.getBaseUriBuilder()
                                            .path("/workspace:" + workspace)
                                            .build()
                                            .toString());
-
+            logger.debug("Discovered workspace: {}", resource);
             workspaceModel.add(resource, RDF.type, NOT_IMPLEMENTED);
         }
 

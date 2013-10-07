@@ -74,7 +74,7 @@ public class FedoraTransform extends AbstractResource {
 
     /**
      * Register the LDPath configuration tree in JCR
-     * 
+     *
      * @throws RepositoryException
      * @throws java.io.IOException
      */
@@ -100,7 +100,7 @@ public class FedoraTransform extends AbstractResource {
                 jcrTools.findOrCreateNode(session,
                         LDPathTransform.CONFIGURATION_FOLDER + "default",
                         NodeType.NT_FOLDER, NodeType.NT_FOLDER);
-
+        logger.debug("Transforming node: {}", node.getPath());
         // register an initial demo program
         if (!node.hasNode(NodeType.NT_BASE)) {
             final Node base_config =
@@ -116,7 +116,7 @@ public class FedoraTransform extends AbstractResource {
 
     /**
      * Execute an LDpath program transform
-     * 
+     *
      * @param pathList
      * @return Binary blob
      * @throws RepositoryException
@@ -150,7 +150,7 @@ public class FedoraTransform extends AbstractResource {
 
     /**
      * Get the LDPath output as a JSON stream appropriate for e.g. Solr
-     * 
+     *
      * @param pathList
      * @param requestBodyStream
      * @return

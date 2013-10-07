@@ -33,12 +33,12 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.WebContent;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.http.api.FedoraNodes;
+import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.rdf.GraphProperties;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

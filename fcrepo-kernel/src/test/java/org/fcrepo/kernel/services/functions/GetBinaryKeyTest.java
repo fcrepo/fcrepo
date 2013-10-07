@@ -24,7 +24,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import org.fcrepo.kernel.services.functions.GetBinaryKey;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

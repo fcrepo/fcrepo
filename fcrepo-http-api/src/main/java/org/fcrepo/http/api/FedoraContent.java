@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class FedoraContent extends AbstractResource {
     /**
      * Create an anonymous DS with a newly minted name and content from request
      * body
-     * 
+     *
      * @param pathList
      * @throws RepositoryException
      */
@@ -108,7 +109,7 @@ public class FedoraContent extends AbstractResource {
         }
 
         logger.debug("create Datastream {}", path);
-        final Throwable exception = null;
+
         try {
             final URI checksumURI;
 
@@ -130,9 +131,8 @@ public class FedoraContent extends AbstractResource {
             session.save();
             return created(
                     new URI(subjects.getGraphSubject(
-                            datastreamNode
-                                    .getNode(JcrConstants.JCR_CONTENT))
-                            .getURI())).build();
+                            datastreamNode.getNode(JCR_CONTENT)).getURI()))
+                    .build();
 
         } finally {
             session.logout();
@@ -141,7 +141,7 @@ public class FedoraContent extends AbstractResource {
 
     /**
      * Modify an existing datastream's content
-     * 
+     *
      * @param pathList
      * @param requestContentType Content-Type header
      * @param requestBodyStream Binary blob
@@ -212,7 +212,7 @@ public class FedoraContent extends AbstractResource {
 
     /**
      * Get the binary content of a datastream
-     * 
+     *
      * @param pathList
      * @return Binary blob
      * @throws RepositoryException

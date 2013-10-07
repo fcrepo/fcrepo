@@ -30,8 +30,6 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ServiceHelpers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

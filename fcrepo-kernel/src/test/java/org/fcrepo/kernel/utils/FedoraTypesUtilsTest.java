@@ -68,7 +68,6 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

@@ -24,8 +24,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
 
-import org.fcrepo.kernel.services.functions.CacheLocalTransform;
-import org.fcrepo.kernel.services.functions.GetCacheStore;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.fcrepo.kernel.utils.impl.CacheStoreEntry;
 import org.infinispan.Cache;

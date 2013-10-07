@@ -30,8 +30,8 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;

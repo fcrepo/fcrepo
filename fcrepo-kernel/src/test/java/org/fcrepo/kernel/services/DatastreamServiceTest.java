@@ -44,14 +44,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.services.ServiceHelpers;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.JcrRdfTools;

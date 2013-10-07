@@ -22,9 +22,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrConstants;
 
 import com.hp.hpl.jena.rdf.model.Resource;

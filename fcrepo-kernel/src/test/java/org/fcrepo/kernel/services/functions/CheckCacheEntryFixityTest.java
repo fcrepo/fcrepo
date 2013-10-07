@@ -23,7 +23,6 @@ import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
 import org.junit.Test;

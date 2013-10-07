@@ -16,8 +16,9 @@
 
 package org.fcrepo.integration.http.api;
 
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -30,7 +31,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
@@ -44,10 +44,10 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         final HttpResponse response = execute(httpGet);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        InputStream in = response.getEntity().getContent();
-        List<String> lines = IOUtils.readLines(in);
+        final InputStream in = response.getEntity().getContent();
+        final List<String> lines = IOUtils.readLines(in);
         boolean found = false;
-        for (String line : lines) {
+        for (final String line : lines) {
             if (line.contains(serverAddress + "workspace:default")) {
                 found = true;
                 break;
@@ -59,28 +59,29 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
     @Test
     public void shouldDemonstratePathsAndWorkspaces() throws IOException,
         RepositoryException {
+
+        final String workspace = randomUUID().toString();
+        final String pid = randomUUID().toString();
+
         final HttpPost httpCreateWorkspace =
-                new HttpPost(serverAddress + "fcr:workspaces/some-workspace");
+                new HttpPost(serverAddress + "fcr:workspaces/" + workspace);
         final HttpResponse createWorkspaceResponse =
                 execute(httpCreateWorkspace);
         assertEquals(201, createWorkspaceResponse.getStatusLine()
                 .getStatusCode());
 
         final HttpPost httpPost =
-                new HttpPost(serverAddress +
-                        "workspace:some-workspace/FedoraWorkspacesTest");
+            new HttpPost(serverAddress + "workspace:" + workspace + "/" + pid);
         final HttpResponse response = execute(httpPost);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final HttpGet httpGet =
-                new HttpGet(serverAddress +
-                        "workspace:some-workspace/FedoraWorkspacesTest");
+            new HttpGet(serverAddress + "workspace:" + workspace + "/" + pid);
         httpGet.setHeader("Accept", "application/n3");
         final HttpResponse profileResponse = execute(httpGet);
         assertEquals(200, profileResponse.getStatusLine().getStatusCode());
         final GraphStore graphStore =
-                TestHelpers.parseTriples(profileResponse.getEntity()
-                        .getContent());
+            parseTriples(profileResponse.getEntity().getContent());
         logger.info(graphStore.toString());
     }
 }

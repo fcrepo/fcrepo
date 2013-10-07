@@ -16,9 +16,9 @@
 
 package org.fcrepo.kernel.services.policy;
 
-import javax.jcr.Node;
-
 import java.util.List;
+
+import javax.jcr.Node;
 
 /**
  * Service Interface implementation for managing and using StoragePolicy

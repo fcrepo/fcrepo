@@ -31,12 +31,11 @@ import java.io.OutputStream;
 import javax.jcr.Session;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.fcrepo.http.api.FedoraExport;
+import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

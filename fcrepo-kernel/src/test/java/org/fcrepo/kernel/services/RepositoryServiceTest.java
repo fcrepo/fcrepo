@@ -51,10 +51,9 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceTools;
