@@ -16,6 +16,8 @@
 
 package org.fcrepo.integration.generator;
 
+import static java.lang.System.err;
+import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
@@ -25,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
@@ -42,8 +43,8 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         assertEquals(201, status);
         final HttpPatch post = new HttpPatch(serverAddress + "DublinCoreTest1");
         post.setHeader("Content-Type", "application/sparql-update");
-        BasicHttpEntity entity = new BasicHttpEntity();
-        String subjectURI = serverAddress + "DublinCoreTest1";
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String subjectURI = serverAddress + "DublinCoreTest1";
         entity.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + subjectURI + "> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
                         .getBytes()));
@@ -67,20 +68,21 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testWellKnownPathOaiDc() throws Exception {
-        HttpResponse response =
-                client.execute(postObjMethod("DublinCoreTest2"));
+
+        final String pid = randomUUID().toString();
+
+        HttpResponse response = client.execute(postObjMethod(pid));
         assertEquals(201, response.getStatusLine().getStatusCode());
         response =
-                client.execute(postDSMethod("DublinCoreTest2", "DC",
-                        "marbles for everyone"));
-        int status = response.getStatusLine().getStatusCode();
+            client.execute(postDSMethod(pid, "DC", "marbles for everyone"));
+        final int status = response.getStatusLine().getStatusCode();
         if (status != 201) {
-            System.err.println(EntityUtils.toString(response.getEntity()));
+            err.println(EntityUtils.toString(response.getEntity()));
         }
         assertEquals(201, status);
 
         final HttpGet getWorstCaseOaiMethod =
-                new HttpGet(serverOAIAddress + "DublinCoreTest2/oai:dc");
+            new HttpGet(serverOAIAddress + pid + "/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
