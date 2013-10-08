@@ -33,7 +33,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -124,11 +123,11 @@ public class FedoraObjectIT extends AbstractIT {
         assertEquals("This is some example data", values[0].getString());
         assertEquals("And so it this", values[1].getString());
 
-
         parseExecute("PREFIX fedora-rels-ext: <"
-                + RELATIONS_NAMESPACE + ">\n" + "INSERT { <" + graphSubject
-                + "> fedora-rels-ext:" + "isPartOf <" + graphSubject
-                + "> } WHERE {}", graphStore);
+                + RELATIONS_NAMESPACE + ">\n" +
+                "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
+                "isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
+
         assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
                    .getValues()[0].getString(),
                    object.getNode().getProperty("fedorarelsext:isPartOf")
@@ -145,7 +144,7 @@ public class FedoraObjectIT extends AbstractIT {
                     object.getNode().hasProperty("dc:title"));
 
         parseExecute("PREFIX fedora-rels-ext: <" +
-                    RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
+                    RELATIONS_NAMESPACE + ">\n" +
                     "DELETE { <" + graphSubject + "> " +
                     "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
                     "} WHERE {}", graphStore);

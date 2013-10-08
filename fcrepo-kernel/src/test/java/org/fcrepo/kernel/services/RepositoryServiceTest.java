@@ -252,7 +252,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockNI.getSize()).thenReturn(500L);
         when(mockNI.next()).thenReturn("");
         when(
-                mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.kernel.utils.NodeIterator.class), eq(subject)))
+                mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.kernel.utils.iterators.NodeIterator.class), eq(subject)))
                 .thenReturn(createDefaultModel());
 
         testObj.searchRepository(mockSubjectFactory, subject, mockSession,

@@ -236,7 +236,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Dataset getPropertiesDataset(final GraphSubjects subjects,
-            final long offset, final int limit)
+        final long offset, final int limit)
         throws RepositoryException {
 
         if (this.properties != null) {
@@ -267,8 +267,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         throws RepositoryException {
         final Model model =
             JcrRdfTools.withContext(subjects, node.getSession())
-                    .getJcrPropertiesModel(getVersionHistory(node),
-                            subjects.getGraphSubject(node));
+                    .getJcrVersionPropertiesModel(node);
 
         final Dataset dataset = DatasetFactory.create(model);
 

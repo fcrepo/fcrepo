@@ -14,50 +14,42 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import java.util.Iterator;
 
-import javax.jcr.observation.Event;
+import javax.jcr.Property;
+
+import com.google.common.collect.ForwardingIterator;
 
 /**
- * Encapsulates JCR's pre-generics {@link EventIterator} with a fully-typed
- * {@link Iterator}<Event>
- * 
+ * A type-aware iterator that wraps the generic JCR PropertyIterator
+ *
  * @author ajs6f
- * @date Apr 20, 2013
+ * @date Apr 25, 2013
  */
-public class EventIterator implements Iterator<Event>, Iterable<Event> {
+public class PropertyIterator extends ForwardingIterator<Property> implements
+        Iterable<Property> {
 
-    private javax.jcr.observation.EventIterator i;
+    private javax.jcr.PropertyIterator i;
 
     /**
-     * Wrap the given EventIterator with the generic Iterator<Event>
-     * 
+     * Wrap the JCR PropertyIterator with our generic iterator
+     *
      * @param i
      */
-    public EventIterator(final javax.jcr.observation.EventIterator i) {
+    public PropertyIterator(final javax.jcr.PropertyIterator i) {
         this.i = i;
     }
 
     @Override
-    public boolean hasNext() {
-        return i.hasNext();
-    }
-
-    @Override
-    public Event next() {
-        return i.nextEvent();
-    }
-
-    @Override
-    public void remove() {
-        i.remove();
-    }
-
-    @Override
-    public Iterator<Event> iterator() {
+    public Iterator<Property> iterator() {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Iterator<Property> delegate() {
+        return i;
+    }
 }

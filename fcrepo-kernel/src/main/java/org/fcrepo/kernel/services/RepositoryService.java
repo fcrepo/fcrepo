@@ -243,7 +243,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
             // remove that extra document from the nodes we'll iterate over
             final Iterator<Node> limitedIterator =
-                    limit(new org.fcrepo.kernel.utils.NodeIterator(nodeIterator),
+                    limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
                             limit);
 
             model = JcrRdfTools.withContext(subjectFactory, session).getJcrPropertiesModel(limitedIterator,

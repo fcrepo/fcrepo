@@ -147,7 +147,7 @@ public class DatastreamTest implements FedoraJcrTypes {
 
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch()
-            throws RepositoryException, InvalidChecksumException,
+        throws RepositoryException, InvalidChecksumException,
             URISyntaxException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);

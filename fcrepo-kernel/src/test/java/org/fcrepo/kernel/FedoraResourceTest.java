@@ -31,7 +31,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -275,8 +274,8 @@ public class FedoraResourceTest {
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model versionsModel = createDefaultModel();
-        when(mockJcrRdfTools.getJcrPropertiesModel(any(VersionHistory.class), eq(mockResource))).thenReturn(
-                                                                                                               versionsModel);
+        when(mockJcrRdfTools.getJcrVersionPropertiesModel(any(Node.class)))
+                .thenReturn(versionsModel);
         final Dataset dataset = testObj.getVersionDataset(mockSubjects);
 
         assertEquals(versionsModel, dataset.getDefaultModel());

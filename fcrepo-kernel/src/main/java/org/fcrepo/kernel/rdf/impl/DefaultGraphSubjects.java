@@ -15,17 +15,20 @@
  */
 package org.fcrepo.kernel.rdf.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.slf4j.Logger;
+
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -38,6 +41,9 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     private final Resource context;
     private final Session session;
+
+    private final static Logger LOGGER = getLogger(DefaultGraphSubjects.class);
+
 
     /**
      * Construct the graph with a placeholder context resource
@@ -64,6 +70,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
+        LOGGER.debug("Returning RDF subject for: {}", node);
         return getGraphSubject(node.getPath());
     }
 
@@ -74,8 +81,8 @@ public class DefaultGraphSubjects implements GraphSubjects {
             return null;
         }
 
-        final String absPath = subject.getURI()
-                .substring(RESTAPI_NAMESPACE.length());
+        final String absPath =
+            subject.getURI().substring(RESTAPI_NAMESPACE.length());
 
         if (absPath.endsWith(FCR_CONTENT)) {
             return session.getNode(absPath.replace(FCR_CONTENT, JCR_CONTENT));
@@ -88,9 +95,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     @Override
     public boolean isFedoraGraphSubject(final Resource subject) {
-        checkArgument(subject != null, "null cannot be a Fedora object!");
-        assert(subject != null);
-
+        checkNotNull(subject, "null cannot be a Fedora object!");
         return subject.isURIResource() &&
             subject.getURI().startsWith(RESTAPI_NAMESPACE);
     }

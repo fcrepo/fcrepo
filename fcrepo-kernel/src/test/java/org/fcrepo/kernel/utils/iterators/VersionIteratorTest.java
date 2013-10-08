@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,26 +23,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.observation.Event;
+import javax.jcr.version.Version;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-public class EventIteratorTest {
+public class VersionIteratorTest {
 
     @Mock
-    javax.jcr.observation.EventIterator i;
+    javax.jcr.version.VersionIterator i;
 
     @Mock
-    Event event1, event2;
+    Version v1, v2;
 
-    EventIterator testIterator;
+    VersionIterator testIterator;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testIterator = new EventIterator(i);
+        testIterator = new VersionIterator(i);
     }
 
     @Test
@@ -54,9 +54,9 @@ public class EventIteratorTest {
 
     @Test
     public void testNext() {
-        when(i.nextEvent()).thenReturn(event1, event2);
-        assertEquals(event1, testIterator.next());
-        assertEquals(event2, testIterator.next());
+        when(i.next()).thenReturn(v1, v2);
+        assertEquals(v1, testIterator.next());
+        assertEquals(v2, testIterator.next());
     }
 
     @Test

@@ -50,6 +50,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 
 import java.io.InputStream;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.TimeZone;
 
 import javax.jcr.Node;
@@ -137,7 +138,11 @@ public class FedoraTypesUtilsTest {
     private Row mockRow;
 
     @Mock
-    private Value mockValue;
+    private Value mockValue, mockValue2;
+
+    @Mock
+    private Property mockProperty;
+
 
     // unfortunately, we need to be able to cast to two interfaces to perform
     // some tests this testing interface allows mocks to do that
@@ -275,8 +280,7 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
-    public void testGetVersionHistoryForSessionAndPath()
-            throws RepositoryException {
+    public void testGetVersionHistoryForSessionAndPath() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockWS.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/my/path")).thenReturn(
@@ -374,7 +378,6 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testValue2String() throws RepositoryException {
         // test a valid Value
-        final Value mockValue = mock(Value.class);
         when(mockValue.getString()).thenReturn("foo");
         assertEquals("foo", value2string.apply(mockValue));
         when(mockValue.getString()).thenThrow(new RepositoryException());
@@ -388,5 +391,22 @@ public class FedoraTypesUtilsTest {
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion with null argument!");
         } catch (final IllegalArgumentException e) {} // expected
+    }
+
+    @Test
+    public void testProperty2values() throws RepositoryException {
+        // single-valued
+        when(mockProperty.isMultiple()).thenReturn(false);
+        when(mockProperty.getValue()).thenReturn(mockValue);
+        assertEquals("Found wrong Value!", FedoraTypesUtils.property2values
+                .apply(mockProperty).next(), mockValue);
+        // multi-valued
+        when(mockProperty.isMultiple()).thenReturn(true);
+        when(mockProperty.getValues()).thenReturn(
+                new Value[] {mockValue, mockValue2});
+        final Iterator<Value> testIterator = FedoraTypesUtils.property2values.apply(mockProperty);
+        assertEquals("Found wrong Value!", testIterator.next(), mockValue);
+        assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
+
     }
 }

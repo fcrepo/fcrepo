@@ -14,48 +14,43 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import java.util.Iterator;
 
-import javax.jcr.Property;
+import javax.jcr.version.Version;
+
+import com.google.common.collect.ForwardingIterator;
 
 /**
- * A type-aware iterator that wraps the generic JCR PropertyIterator
- * 
+ * Type-aware iterator to wrap the JCR NodeIterator
+ *
  * @author ajs6f
- * @date Apr 25, 2013
+ * @date Apr 20, 2013
  */
-public class PropertyIterator implements Iterator<Property>, Iterable<Property> {
+public class VersionIterator extends ForwardingIterator<Version> implements
+        Iterable<Version> {
 
-    private javax.jcr.PropertyIterator i;
+    private javax.jcr.version.VersionIterator i;
 
     /**
-     * Wrap the JCR PropertyIterator with our generic iterator
-     * 
+     * Wrap the NodeIterator with our generic version
+     *
      * @param i
      */
-    public PropertyIterator(final javax.jcr.PropertyIterator i) {
+    public VersionIterator(final javax.jcr.version.VersionIterator i) {
         this.i = i;
     }
 
     @Override
-    public boolean hasNext() {
-        return i.hasNext();
-    }
-
-    @Override
-    public Property next() {
-        return i.nextProperty();
-    }
-
-    @Override
-    public void remove() {
-        i.remove();
-    }
-
-    @Override
-    public Iterator<Property> iterator() {
+    public Iterator<Version> iterator() {
         return this;
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Iterator<Version> delegate() {
+        return i;
+    }
+
 }

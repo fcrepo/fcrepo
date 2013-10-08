@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,26 +23,27 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.Property;
+import javax.jcr.observation.Event;
 
+import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-public class PropertyIteratorTest {
+public class EventIteratorTest {
 
     @Mock
-    javax.jcr.PropertyIterator i;
+    javax.jcr.observation.EventIterator i;
 
     @Mock
-    Property property1, property2;
+    Event event1, event2;
 
-    PropertyIterator testIterator;
+    EventIterator testIterator;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testIterator = new PropertyIterator(i);
+        testIterator = new EventIterator(i);
     }
 
     @Test
@@ -54,9 +55,9 @@ public class PropertyIteratorTest {
 
     @Test
     public void testNext() {
-        when(i.nextProperty()).thenReturn(property1, property2);
-        assertEquals(property1, testIterator.next());
-        assertEquals(property2, testIterator.next());
+        when(i.next()).thenReturn(event1, event2);
+        assertEquals(event1, testIterator.next());
+        assertEquals(event2, testIterator.next());
     }
 
     @Test

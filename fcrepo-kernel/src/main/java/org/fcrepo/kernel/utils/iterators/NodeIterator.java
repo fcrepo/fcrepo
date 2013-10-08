@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import java.util.Iterator;
 
 import javax.jcr.Node;
 
+import com.google.common.collect.ForwardingIterator;
+
 /**
  * Type-aware iterator to wrap the JCR NodeIterator
- * 
+ *
  * @author ajs6f
  * @date Apr 20, 2013
  */
-public class NodeIterator implements Iterator<Node>, Iterable<Node> {
+public class NodeIterator extends ForwardingIterator<Node> implements
+        Iterable<Node> {
 
     private javax.jcr.NodeIterator i;
 
     /**
      * Wrap the NodeIterator with our generic version
-     * 
+     *
      * @param i
      */
     public NodeIterator(final javax.jcr.NodeIterator i) {
@@ -40,23 +43,14 @@ public class NodeIterator implements Iterator<Node>, Iterable<Node> {
     }
 
     @Override
-    public boolean hasNext() {
-        return i.hasNext();
-    }
-
-    @Override
-    public Node next() {
-        return (Node) i.next();
-    }
-
-    @Override
-    public void remove() {
-        i.remove();
-    }
-
-    @Override
     public Iterator<Node> iterator() {
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Iterator<Node> delegate() {
+        return i;
     }
 
 }
