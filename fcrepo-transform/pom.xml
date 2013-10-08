@@ -53,13 +53,11 @@
     <dependency>
       <groupId>org.apache.marmotta</groupId>
       <artifactId>ldpath-core</artifactId>
-      <version>3.1.0-incubating-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.marmotta</groupId>
       <artifactId>ldpath-backend-jena</artifactId>
-      <version>3.1.0-incubating-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>org.apache.jena</groupId>
@@ -180,4 +178,18 @@
 
   </build>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.marmotta</groupId>
+        <artifactId>ldpath-core</artifactId>
+        <version>3.1.0-incubating</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.marmotta</groupId>
+        <artifactId>ldpath-backend-jena</artifactId>
+        <version>3.1.0-incubating</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 </project>
