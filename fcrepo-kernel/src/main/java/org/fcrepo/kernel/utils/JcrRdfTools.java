@@ -16,8 +16,15 @@
 
 package org.fcrepo.kernel.utils;
 
+import static com.google.common.collect.Iterables.any;
+import static com.google.common.collect.Iterators.peekingIterator;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
@@ -30,20 +37,51 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
+import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
+import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.INLINED_RESOURCE;
+import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_OBJECT;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_PREDICATE;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_SUBJECT;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
+import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.VOAF_VOCABULARY;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.getNodeTypeManager;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -64,12 +102,10 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
-import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
@@ -78,18 +114,13 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * A set of helpful tools for converting JCR properties to RDF
@@ -193,7 +224,7 @@ public class JcrRdfTools {
      * @return
      */
     public static Model getProblemsModel() {
-        return ModelFactory.createDefaultModel();
+        return createDefaultModel();
     }
 
     /**
@@ -214,10 +245,10 @@ public class JcrRdfTools {
      */
     public Model getJcrPropertiesModel()
         throws RepositoryException {
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
 
         final javax.jcr.NamespaceRegistry namespaceRegistry =
-                NamespaceTools.getNamespaceRegistry(session);
+            getNamespaceRegistry(session);
         assert (namespaceRegistry != null);
 
         for (final String prefix : namespaceRegistry.getPrefixes()) {
@@ -250,11 +281,10 @@ public class JcrRdfTools {
         throws RepositoryException {
 
         if (!nodeIterator.hasNext()) {
-            return ModelFactory.createDefaultModel();
+            return createDefaultModel();
         }
 
-        final PeekingIterator<Node> iterator =
-                Iterators.peekingIterator(nodeIterator);
+        final PeekingIterator<Node> iterator = peekingIterator(nodeIterator);
         final Model model =
                 getJcrPropertiesModel();
 
@@ -262,8 +292,8 @@ public class JcrRdfTools {
             final Node node = iterator.next();
             addJcrPropertiesToModel(node, model);
             if (iteratorSubject != null) {
-                model.add(iteratorSubject, RdfLexicon.HAS_MEMBER_OF_RESULT,
-                             graphSubjects.getGraphSubject(node));
+                model.add(iteratorSubject, HAS_MEMBER_OF_RESULT, graphSubjects
+                        .getGraphSubject(node));
             }
         }
 
@@ -283,7 +313,7 @@ public class JcrRdfTools {
 
         final Model model = getJcrPropertiesModel();
 
-        if (node.getPrimaryNodeType().getName().equals(FedoraJcrTypes.ROOT)) {
+        if (node.getPrimaryNodeType().getName().equals(ROOT)) {
             /* a rdf description of the root node */
             LOGGER.debug("Creating RDF response for repository description");
             addRepositoryMetricsToModel(node, model);
@@ -345,7 +375,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Model getJcrPropertiesModel(final Node node,
-                                       final Iterable<FixityResult> blobs)
+        final Iterable<FixityResult> blobs)
         throws RepositoryException {
 
         final Model model = getJcrPropertiesModel();
@@ -357,23 +387,23 @@ public class JcrRdfTools {
             final Resource resultSubject = createResource();
 
             model.add(resultSubject, IS_FIXITY_RESULT_OF, graphSubjects
-                                                              .getGraphSubject(node));
+                    .getGraphSubject(node));
             model.add(graphSubjects.getGraphSubject(node), HAS_FIXITY_RESULT,
                          resultSubject);
 
             model.add(resultSubject, HAS_LOCATION, createResource(result
-                                                                      .getStoreIdentifier()));
+                .getStoreIdentifier()));
 
             for (final FixityResult.FixityState state : result.status) {
                 model.add(resultSubject, HAS_FIXITY_STATE,
-                             createTypedLiteral(state.toString()));
+                        createTypedLiteral(state.toString()));
             }
 
             final String checksum = result.computedChecksum.toString();
             model.add(resultSubject, HAS_COMPUTED_CHECKSUM,
-                         createResource(checksum));
+                    createResource(checksum));
             model.add(resultSubject, HAS_COMPUTED_SIZE,
-                         createTypedLiteral(result.computedSize));
+                    createTypedLiteral(result.computedSize));
         }
         return model;
     }
@@ -394,17 +424,14 @@ public class JcrRdfTools {
             if (entry.getKey().isEmpty()) {
                 continue;
             }
-            final Resource nsSubject =
-                ResourceFactory.createResource(entry.getValue());
+            final Resource nsSubject = createResource(entry.getValue());
 
-            model.add(nsSubject, RDF.type, RdfLexicon.VOAF_VOCABULARY);
-            model.add(nsSubject,
-                         RdfLexicon.HAS_NAMESPACE_PREFIX, ResourceFactory
-                                                              .createPlainLiteral(entry.getKey()));
+            model.add(nsSubject, type, VOAF_VOCABULARY);
+            model.add(nsSubject, HAS_NAMESPACE_PREFIX, createPlainLiteral(entry
+                    .getKey()));
 
-            model.add(nsSubject,
-                         RdfLexicon.HAS_NAMESPACE_URI, ResourceFactory
-                                                           .createPlainLiteral(entry.getValue()));
+            model.add(nsSubject, HAS_NAMESPACE_URI, createPlainLiteral(entry
+                    .getValue()));
         }
 
         return model;
@@ -430,16 +457,16 @@ public class JcrRdfTools {
         final Resource subject = graphSubjects.getGraphSubject(node);
         final Resource pageContext = graphSubjects.getContext();
 
-        model.add(pageContext, RDF.type, model.createResource("http://www.w3.org/ns/ldp#Page"));
+        model.add(pageContext, type, PAGE);
         model.add(pageContext, PAGE_OF, subject);
 
         if (isContainer(node)) {
-            model.add(pageContext, model.createProperty("http://www.w3.org/ns/ldp#membersInlined"), model.createTypedLiteral(true));
+            model.add(pageContext, MEMBERS_INLINED, model.createTypedLiteral(true));
 
-            model.add(subject, RDF.type, model.createResource("http://www.w3.org/ns/ldp#Container"));
-            model.add(subject, model.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), subject);
-            model.add(subject, model.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), RdfLexicon.HAS_CHILD);
-            model.add(subject, model.createProperty("http://www.w3.org/ns/ldp#membershipObject"), model.createResource("http://www.w3.org/ns/ldp#MemberSubject"));
+            model.add(subject, type, CONTAINER);
+            model.add(subject, MEMBERSHIP_SUBJECT, subject);
+            model.add(subject, MEMBERSHIP_PREDICATE, HAS_CHILD);
+            model.add(subject, MEMBERSHIP_OBJECT, MEMBER_SUBJECT);
         }
 
         // don't do this if the node is the root node.
@@ -448,18 +475,16 @@ public class JcrRdfTools {
             final Node parentNode = node.getParent();
             final Resource parentNodeSubject =
                 graphSubjects.getGraphSubject(parentNode);
-            model.add(subject, RdfLexicon.HAS_PARENT, parentNodeSubject);
-            model.add(parentNodeSubject, RdfLexicon.HAS_CHILD, subject);
+            model.add(subject, HAS_PARENT, parentNodeSubject);
+            model.add(parentNodeSubject, HAS_CHILD, subject);
             addJcrPropertiesToModel(parentNode, model);
-            model.add(pageContext,
-                         model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"),
-                         parentNodeSubject);
+            model.add(pageContext, INLINED_RESOURCE, parentNodeSubject);
         }
 
         if (node.hasNodes()) {
 
             if (limit == -1) {
-                model.add(pageContext, PAGE, RDF.nil);
+                model.add(pageContext, PAGE, nil);
             }
 
             final javax.jcr.NodeIterator nodeIterator = node.getNodes();
@@ -471,8 +496,8 @@ public class JcrRdfTools {
                 final Node childNode = nodeIterator.nextNode();
 
                 // exclude jcr system nodes or jcr:content nodes
-                if (FedoraTypesUtils.isInternalNode.apply(childNode) ||
-                        childNode.getName().equals(JcrConstants.JCR_CONTENT)) {
+                if (isInternalNode.apply(childNode) ||
+                        childNode.getName().equals(JCR_CONTENT)) {
                     excludedNodeCount++;
                 } else {
                     final Resource childNodeSubject =
@@ -480,19 +505,18 @@ public class JcrRdfTools {
 
                     if (i >= offset && (limit == -1 || i < (offset + limit))) {
                         addJcrPropertiesToModel(childNode, model);
-                        model.add(pageContext, model.createProperty("http://www.w3.org/ns/ldp#inlinedResource"), childNodeSubject);
-                        model.add(childNodeSubject, RdfLexicon.HAS_PARENT, subject);
+                        model.add(pageContext, INLINED_RESOURCE, childNodeSubject);
+                        model.add(childNodeSubject, HAS_PARENT, subject);
                     }
 
                     i++;
 
-                    model.add(subject, RdfLexicon.HAS_CHILD, childNodeSubject);
+                    model.add(subject, HAS_CHILD, childNodeSubject);
                 }
 
             }
 
-            model.add(subject, RdfLexicon.HAS_CHILD_COUNT, ResourceFactory
-                    .createTypedLiteral(nodeIterator.getSize() - excludedNodeCount));
+            model.add(subject, HAS_CHILD_COUNT, createTypedLiteral(nodeIterator.getSize() - excludedNodeCount));
         }
 
         return model;
@@ -500,11 +524,11 @@ public class JcrRdfTools {
 
     private boolean isContainer(final Node node) throws RepositoryException {
         return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())
-                   || Iterables.any(ImmutableList.copyOf(node.getMixinNodeTypes()),
+                   || any(ImmutableList.copyOf(node.getMixinNodeTypes()),
                                        HAS_CHILD_NODE_DEFINITIONS);
     }
 
-    Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS = new Predicate<NodeType>() {
+    static Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS = new Predicate<NodeType>() {
         @Override
         public boolean apply(final NodeType input) {
             return input.getChildNodeDefinitions().length > 0;
@@ -520,7 +544,7 @@ public class JcrRdfTools {
      */
     public boolean isInternalProperty(final Node subjectNode, final Resource predicate) {
         switch (predicate.getNameSpace()) {
-            case RdfLexicon.REPOSITORY_NAMESPACE:
+            case REPOSITORY_NAMESPACE:
             case "http://www.jcp.org/jcr/1.0":
             case "http://www.w3.org/ns/ldp#":
                 return true;
@@ -544,18 +568,17 @@ public class JcrRdfTools {
 
         while (properties.hasNext()) {
             final Property property = properties.nextProperty();
-
             addPropertyToModel(subject, model, property);
         }
 
         // always include the jcr:content node information
-        if (node.hasNode(JcrConstants.JCR_CONTENT)) {
-            final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
+        if (node.hasNode(JCR_CONTENT)) {
+            final Node contentNode = node.getNode(JCR_CONTENT);
             final Resource contentSubject =
                     graphSubjects.getGraphSubject(contentNode);
 
-            model.add(subject, RdfLexicon.HAS_CONTENT, contentSubject);
-            model.add(contentSubject, RdfLexicon.IS_CONTENT_OF, subject);
+            model.add(subject, HAS_CONTENT, contentSubject);
+            model.add(contentSubject, IS_CONTENT_OF, subject);
 
             addJcrPropertiesToModel(contentNode, model);
             addJcrContentLocationInformationToModel(node, model);
@@ -569,8 +592,7 @@ public class JcrRdfTools {
      * @param model
      * @throws RepositoryException
      */
-    private void addRepositoryMetricsToModel(
-                                                final Node node, final Model model)
+    private void addRepositoryMetricsToModel(final Node node, final Model model)
         throws RepositoryException {
 
         final Repository repository = node.getSession().getRepository();
@@ -581,31 +603,23 @@ public class JcrRdfTools {
         for (final String key : repository.getDescriptorKeys()) {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
-                final String uri =
-                    RdfLexicon.REPOSITORY_NAMESPACE + "repository/" + key;
+                final String uri = REPOSITORY_NAMESPACE + "repository/" + key;
                 model.add(subject, model.createProperty(uri), descriptor);
             }
         }
 
-        final NodeTypeManager nodeTypeManager = FedoraTypesUtils.getNodeTypeManager(
-                node);
+        final NodeTypeManager nodeTypeManager = getNodeTypeManager(node);
 
         final NodeTypeIterator nodeTypes = nodeTypeManager.getAllNodeTypes();
 
         while (nodeTypes.hasNext()) {
             final NodeType nodeType = nodeTypes.nextNodeType();
-            model.add(subject, RdfLexicon.HAS_NODE_TYPE, nodeType.getName());
+            model.add(subject, HAS_NODE_TYPE, nodeType.getName());
         }
-        model.add(subject, RdfLexicon.HAS_OBJECT_COUNT, ResourceFactory
-                 .createTypedLiteral(
-                         FedoraTypesUtils
-                                 .getRepositoryCount(
-                                         repository)));
-        model.add(subject, RdfLexicon.HAS_OBJECT_SIZE, ResourceFactory
-                .createTypedLiteral(
-                        FedoraTypesUtils
-                                .getRepositorySize(
-                                        repository)));
+        model.add(subject, HAS_OBJECT_COUNT,
+                createTypedLiteral(getRepositoryCount(repository)));
+        model.add(subject, HAS_OBJECT_SIZE,
+                createTypedLiteral(getRepositorySize(repository)));
 
         /* TODO Get and add the Storage policy to the RDF response */
 
@@ -618,35 +632,30 @@ public class JcrRdfTools {
         assert (config != null);
 
         for (final Map.Entry<String, String> entry : config.entrySet()) {
-            model.add(subject, model
-                    .createProperty(RdfLexicon.REPOSITORY_NAMESPACE +
-                            entry.getKey()), entry.getValue());
+            model.add(subject, model.createProperty(REPOSITORY_NAMESPACE
+                    + entry.getKey()), entry.getValue());
         }
 
         /* and add the repository metrics to the RDF model */
-        if (counters
-                .containsKey("LowLevelStorageService.fixity-check-counter")) {
-            model.add(subject, RdfLexicon.HAS_FIXITY_CHECK_COUNT,
-                         ResourceFactory.createTypedLiteral(counters.get(
-                                                                            "org.fcrepo.services." + "LowLevelStorageService."
-                                                                                + "fixity-check-counter").getCount()));
+        if (counters.containsKey("LowLevelStorageService.fixity-check-counter")) {
+            model.add(subject, HAS_FIXITY_CHECK_COUNT,
+                    createTypedLiteral(counters.get(
+                            "org.fcrepo.services." + "LowLevelStorageService."
+                                    + "fixity-check-counter").getCount()));
         }
 
-        if (counters
-                .containsKey("LowLevelStorageService.fixity-error-counter")) {
-            model.add(subject, RdfLexicon.HAS_FIXITY_ERROR_COUNT,
-                         ResourceFactory.createTypedLiteral(counters.get(
-                                                                            "org.fcrepo.services." + "LowLevelStorageService."
-                                                                                + "fixity-error-counter").getCount()));
+        if (counters.containsKey("LowLevelStorageService.fixity-error-counter")) {
+            model.add(subject, HAS_FIXITY_ERROR_COUNT,
+                    createTypedLiteral(counters.get(
+                            "org.fcrepo.services." + "LowLevelStorageService."
+                                    + "fixity-error-counter").getCount()));
         }
 
-        if (counters
-                .containsKey("LowLevelStorageService.fixity-repaired-counter")) {
-
-            model.add(subject, RdfLexicon.HAS_FIXITY_REPAIRED_COUNT,
-                         ResourceFactory.createTypedLiteral(counters.get(
-                                                                            "org.fcrepo.services." + "LowLevelStorageService."
-                                                                                + "fixity-repaired-counter").getCount()));
+        if (counters.containsKey("LowLevelStorageService.fixity-repaired-counter")) {
+            model.add(subject, HAS_FIXITY_REPAIRED_COUNT,
+                    createTypedLiteral(counters.get(
+                            "org.fcrepo.services." + "LowLevelStorageService."
+                                    + "fixity-repaired-counter").getCount()));
         }
 
     }
@@ -659,9 +668,8 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     private void addJcrContentLocationInformationToModel(final Node node,
-        final Model model)
-        throws RepositoryException {
-        final Node contentNode = node.getNode(JcrConstants.JCR_CONTENT);
+        final Model model) throws RepositoryException {
+        final Node contentNode = node.getNode(JCR_CONTENT);
         final Resource contentNodeSubject =
             graphSubjects.getGraphSubject(contentNode);
 
@@ -676,8 +684,8 @@ public class JcrRdfTools {
             llstore.getLowLevelCacheEntries(contentNode);
 
         for (final LowLevelCacheEntry e : cacheEntries) {
-            model.add(contentNodeSubject, RdfLexicon.HAS_LOCATION, e
-                                                                       .getExternalIdentifier());
+            model.add(contentNodeSubject, HAS_LOCATION, e
+                    .getExternalIdentifier());
         }
 
     }
@@ -694,7 +702,7 @@ public class JcrRdfTools {
      */
     Value createValue(final Node node, final RDFNode data,
                       final int type) throws RepositoryException {
-        final ValueFactory valueFactory = FedoraTypesUtils.getValueFactory.apply(node);
+        final ValueFactory valueFactory = getValueFactory.apply(node);
         assert (valueFactory != null);
 
         if (data.isURIResource() &&
@@ -788,19 +796,17 @@ public class JcrRdfTools {
         }
 
         final com.hp.hpl.jena.rdf.model.Property predicate =
-            FedoraTypesUtils.getPredicateForProperty.apply(property);
+            getPredicateForProperty.apply(property);
 
         switch (v.getType()) {
             case BOOLEAN:
                 model.addLiteral(subject, predicate, v.getBoolean());
                 break;
             case DATE:
-                model.add(subject, predicate, ResourceFactory
-                                                  .createTypedLiteral(v.getDate()));
+                model.add(subject, predicate, createTypedLiteral(v.getDate()));
                 break;
             case DECIMAL:
-                model.add(subject, predicate, ResourceFactory
-                                                  .createTypedLiteral(v.getDecimal()));
+                model.add(subject, predicate, createTypedLiteral(v.getDecimal()));
                 break;
             case DOUBLE:
                 model.addLiteral(subject, predicate, v.getDouble());
@@ -809,20 +815,16 @@ public class JcrRdfTools {
                 model.addLiteral(subject, predicate, v.getLong());
                 break;
             case URI:
-                model.add(subject, predicate, model.createResource(v
-                                                                       .getString()));
+                model.add(subject, predicate, model.createResource(v.getString()));
                 return;
             case REFERENCE:
             case WEAKREFERENCE:
                 final Node refNode = session.getNodeByIdentifier(v.getString());
-                model.add(subject,
-                             predicate,
-                             graphSubjects.getGraphSubject(refNode));
+                model.add(subject, predicate, graphSubjects
+                        .getGraphSubject(refNode));
                 break;
             case PATH:
-                model.add(subject,
-                             predicate,
-                             graphSubjects.getGraphSubject(v.getString()));
+                model.add(subject, predicate, graphSubjects.getGraphSubject(v.getString()));
                 break;
 
             default:
@@ -843,8 +845,8 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     String getPropertyNameFromPredicate(final Node node,
-                                        final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
-        final Map<String, String> s = Collections.emptyMap();
+        final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+        final Map<String, String> s = emptyMap();
         return getPropertyNameFromPredicate(node, predicate, s);
 
     }
@@ -860,8 +862,8 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     String getPropertyNameFromPredicate(final Node node,
-                                        final com.hp.hpl.jena.rdf.model.Property predicate,
-                                        final Map<String, String> namespaceMapping)
+        final com.hp.hpl.jena.rdf.model.Property predicate,
+        final Map<String, String> namespaceMapping)
         throws RepositoryException {
 
         final String prefix;
@@ -869,8 +871,7 @@ public class JcrRdfTools {
         final String namespace =
             getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
 
-        final NamespaceRegistry namespaceRegistry =
-            NamespaceTools.getNamespaceRegistry(node);
+        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(node);
 
         assert (namespaceRegistry != null);
 
@@ -902,7 +903,7 @@ public class JcrRdfTools {
      * Set the function used to get the cluster configuration for Infinispan
      */
     public static void setGetClusterConfiguration(
-                                                     final GetClusterConfiguration newClusterConfiguration) {
+        final GetClusterConfiguration newClusterConfiguration) {
         getClusterConfiguration = newClusterConfiguration;
     }
 
@@ -910,7 +911,7 @@ public class JcrRdfTools {
      * Set the Low-level storage server implementation
      */
     public static void setLlstore(
-                                     final LowLevelStorageService lowLevelStorageService) {
+        final LowLevelStorageService lowLevelStorageService) {
         llstore = lowLevelStorageService;
     }
 
