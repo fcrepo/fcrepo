@@ -15,20 +15,6 @@
  */
 package org.fcrepo.http.api.repository;
 
-import org.fcrepo.kernel.services.NodeService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.modeshape.jcr.api.Problems;
-
-import javax.jcr.Session;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
@@ -36,6 +22,19 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.services.NodeService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.modeshape.jcr.api.Problems;
 
 /**
  * @author Andrew Woods

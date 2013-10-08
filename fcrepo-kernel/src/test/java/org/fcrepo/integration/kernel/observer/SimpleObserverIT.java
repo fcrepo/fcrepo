@@ -23,8 +23,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.AbstractIT;
-import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

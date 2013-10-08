@@ -20,8 +20,8 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Sets.difference;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 

@@ -39,7 +39,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

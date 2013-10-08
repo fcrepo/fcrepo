@@ -26,7 +26,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

@@ -29,8 +29,8 @@ import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 

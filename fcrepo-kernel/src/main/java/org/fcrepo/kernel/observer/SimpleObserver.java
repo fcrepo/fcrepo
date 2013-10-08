@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.observer;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.filter;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
@@ -25,10 +26,10 @@ import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
-import static com.google.common.base.Throwables.propagate;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.Item;

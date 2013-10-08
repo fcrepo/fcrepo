@@ -23,8 +23,8 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraObject;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 

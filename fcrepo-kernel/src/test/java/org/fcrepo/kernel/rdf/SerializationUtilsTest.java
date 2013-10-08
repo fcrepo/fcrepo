@@ -19,7 +19,6 @@ package org.fcrepo.kernel.rdf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.fcrepo.kernel.rdf.SerializationUtils;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.NodeFactory;

@@ -45,8 +45,6 @@ import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.services.ServiceHelpers;
 import org.fcrepo.kernel.services.functions.CacheLocalTransform;
 import org.fcrepo.kernel.services.functions.GetBinaryKey;
 import org.fcrepo.kernel.services.functions.GetCacheStore;

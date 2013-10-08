@@ -25,8 +25,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
 import com.google.common.collect.Iterators;

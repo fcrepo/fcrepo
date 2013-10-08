@@ -16,10 +16,10 @@
 package org.fcrepo.kernel;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.kernel.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
@@ -35,10 +35,10 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;

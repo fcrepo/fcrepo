@@ -35,9 +35,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.services.ServiceHelpers;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.services.ServiceHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

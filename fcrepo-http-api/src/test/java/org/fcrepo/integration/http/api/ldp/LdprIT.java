@@ -16,6 +16,22 @@
 
 package org.fcrepo.integration.http.api.ldp;
 
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.jena.riot.WebContent;
+import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.integration.http.api.AbstractResourceIT;
+import org.junit.Test;
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -23,21 +39,6 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.vocabulary.RDF;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.jena.riot.WebContent;
-import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.junit.Test;
-
-import java.io.IOException;
-
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class LdprIT extends AbstractResourceIT {
 
@@ -94,8 +95,8 @@ public class LdprIT extends AbstractResourceIT {
                 final HttpGet testMethod = new HttpGet(serverAddress + "");
                 testMethod.setHeader("Accept", input);
                 try {
-                    final HttpResponse response = client.execute(testMethod);
-                } catch (IOException e) {
+                    client.execute(testMethod);
+                } catch (final IOException e) {
                     throw new RuntimeException("Failed on format " + input);
                 } finally {
                     testMethod.releaseConnection();

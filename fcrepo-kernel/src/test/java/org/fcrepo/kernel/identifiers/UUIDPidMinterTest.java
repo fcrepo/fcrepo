@@ -19,7 +19,6 @@ package org.fcrepo.kernel.identifiers;
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertTrue;
 
-import org.fcrepo.kernel.identifiers.UUIDPidMinter;
 import org.junit.Test;
 
 public class UUIDPidMinterTest {

@@ -28,7 +28,6 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 
-import com.google.common.io.Files;
 import org.fcrepo.integration.kernel.AbstractIT;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -37,6 +36,7 @@ import org.junit.Test;
 import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
 
+import com.google.common.io.Files;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;

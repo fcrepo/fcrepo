@@ -28,9 +28,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;

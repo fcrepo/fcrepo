@@ -33,13 +33,13 @@ import static com.google.common.base.Throwables.propagate;
  */
 public class TransformationFactory {
 
-    private Map<String, Class> mimeToTransform;
+    private Map<String, Class<?>> mimeToTransform;
 
     /**
      * Get a new TransformationFactory with the default classes
      */
     public TransformationFactory() {
-        mimeToTransform = new HashMap<String, Class>();
+        mimeToTransform = new HashMap<String, Class<?>>();
         mimeToTransform.put(WebContent.contentTypeSPARQLQuery, SparqlQueryTransform.class);
         mimeToTransform.put(LDPathTransform.APPLICATION_RDF_LDPATH, LDPathTransform.class);
 
@@ -49,8 +49,8 @@ public class TransformationFactory {
      * Get a new TransformationFactory using the provided mapping
      * @param mimeToTransform
      */
-    public TransformationFactory(Map<String, Class> mimeToTransform) {
-        mimeToTransform = mimeToTransform;
+    public TransformationFactory(final Map<String, Class<?>> mimeToTransform) {
+        this.mimeToTransform = mimeToTransform;
     }
 
     /**
@@ -64,7 +64,7 @@ public class TransformationFactory {
                                               final InputStream inputStream) {
 
         if (mimeToTransform.containsKey(contentType.toString())) {
-            Class transform = mimeToTransform.get(contentType.toString());
+            final Class<?> transform = mimeToTransform.get(contentType.toString());
 
             if (Transformation.class.isAssignableFrom(transform)) {
                 try {

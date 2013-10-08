@@ -29,7 +29,6 @@ import java.io.InputStream;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
-import org.fcrepo.http.api.FedoraImport;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;

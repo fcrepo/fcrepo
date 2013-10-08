@@ -25,7 +25,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Session;
 
-import org.fcrepo.http.api.FedoraSitemap;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Before;

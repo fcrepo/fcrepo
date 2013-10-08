@@ -16,7 +16,10 @@
 package org.fcrepo.integration.http.api;
 
 
-import com.google.common.io.Files;
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -25,9 +28,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import java.io.File;
-
-import static org.junit.Assert.assertEquals;
+import com.google.common.io.Files;
 
 public class FedoraBackupIT extends AbstractResourceIT {
 

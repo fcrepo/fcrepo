@@ -23,7 +23,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.codec.binary.Hex;
-import org.fcrepo.kernel.utils.FixityInputStream;
 import org.junit.Test;
 
 public class FixityInputStreamTest {

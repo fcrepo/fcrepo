@@ -29,9 +29,6 @@ import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
-import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -39,6 +36,9 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.INLINED_RESOURCES_MODEL;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -50,7 +50,6 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -76,19 +75,17 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.WebContent;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -97,6 +94,8 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * CRUD operations on Fedora Nodes
@@ -113,7 +112,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Retrieve the node profile
-     * 
+     *
      * @param pathList
      * @param offset with limit, control the pagination window of details for
      *        child nodes
@@ -133,7 +132,7 @@ public class FedoraNodes extends AbstractResource {
             @QueryParam("limit") @DefaultValue("-1") final int limit,
             @QueryParam("non-member-properties") final String nonMemberProperties,
             @Context final Request request,
-            @Context HttpServletResponse servletResponse,
+            @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         logger.trace("Getting profile for {}", path);
@@ -179,7 +178,7 @@ public class FedoraNodes extends AbstractResource {
                     .contains(subjects.getGraphSubject(resource.getNode()),
                                  HAS_CHILD_COUNT)) {
 
-                Model requestModel = ModelFactory.createDefaultModel();
+                final Model requestModel = ModelFactory.createDefaultModel();
 
                 final long childCount = treeModel
                                             .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()), HAS_CHILD_COUNT)
@@ -231,7 +230,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Update an object using SPARQL-UPDATE
-     * 
+     *
      * @param pathList
      * @return 201
      * @throws RepositoryException
@@ -275,10 +274,10 @@ public class FedoraNodes extends AbstractResource {
                     throw new WebApplicationException(builder.build());
                 }
 
-                Dataset properties = resource.updatePropertiesDataset(new HttpGraphSubjects(
+                final Dataset properties = resource.updatePropertiesDataset(new HttpGraphSubjects(
                         session, FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
-                Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
+                final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
                 if (problems.size() > 0) {
                     logger.info(
                             "Found these problems updating the properties for {}: {}",
@@ -369,7 +368,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Creates a new object.
-     * 
+     *
      * @param pathList
      * @return 201
      * @throws RepositoryException
@@ -487,11 +486,9 @@ public class FedoraNodes extends AbstractResource {
                     result.replacePropertiesDataset(subjects, inputModel);
                 } else if (result instanceof Datastream) {
 
-                    final Node node =
-                        datastreamService.createDatastreamNode(session, newObjectPath,
-                                                                  contentTypeString, requestBodyStream,
-                                                                  checksumURI);
-
+                    datastreamService.createDatastreamNode(session,
+                            newObjectPath, contentTypeString,
+                            requestBodyStream, checksumURI);
 
                 }
             }
@@ -518,7 +515,7 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Deletes an object.
-     * 
+     *
      * @param path
      * @return
      * @throws RepositoryException

@@ -37,9 +37,9 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.serialization.SerializerUtil;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;

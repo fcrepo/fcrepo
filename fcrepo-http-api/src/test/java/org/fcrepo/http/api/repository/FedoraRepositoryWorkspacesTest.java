@@ -16,24 +16,25 @@
 
 package org.fcrepo.http.api.repository;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.modeshape.jcr.api.NamespaceRegistry;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import java.net.URI;
 
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.modeshape.jcr.api.NamespaceRegistry;
+
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author Andrew Woods

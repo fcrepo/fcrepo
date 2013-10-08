@@ -29,7 +29,6 @@ import javax.jcr.Credentials;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.TxSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

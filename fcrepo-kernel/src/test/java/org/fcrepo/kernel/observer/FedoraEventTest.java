@@ -22,7 +22,6 @@ import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;

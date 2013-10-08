@@ -25,7 +25,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.utils.EventIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

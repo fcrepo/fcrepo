@@ -24,9 +24,9 @@ import static com.google.common.collect.Sets.newHashSet;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -48,9 +48,9 @@ import javax.jcr.query.qom.Constraint;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
