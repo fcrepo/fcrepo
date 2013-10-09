@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
