@@ -25,6 +25,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 
+import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

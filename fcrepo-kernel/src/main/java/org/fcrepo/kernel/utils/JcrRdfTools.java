@@ -19,7 +19,6 @@ package org.fcrepo.kernel.utils;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterators.peekingIterator;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
@@ -51,8 +50,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
-import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
@@ -70,7 +67,6 @@ import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.VOAF_VOCABULARY;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getNodeTypeManager;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
@@ -104,6 +100,7 @@ import javax.jcr.version.VersionIterator;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.NamespaceContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -414,27 +411,8 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrNamespaceModel()
-        throws RepositoryException {
-        final Model model = getJcrPropertiesModel();
-
-        final Map<String, String> prefixMap = model.getNsPrefixMap();
-
-        for (final Map.Entry<String, String> entry : prefixMap.entrySet()) {
-            if (entry.getKey().isEmpty()) {
-                continue;
-            }
-            final Resource nsSubject = createResource(entry.getValue());
-
-            model.add(nsSubject, type, VOAF_VOCABULARY);
-            model.add(nsSubject, HAS_NAMESPACE_PREFIX, createPlainLiteral(entry
-                    .getKey()));
-
-            model.add(nsSubject, HAS_NAMESPACE_URI, createPlainLiteral(entry
-                    .getValue()));
-        }
-
-        return model;
+    public Model getJcrNamespaceModel() throws RepositoryException {
+        return new NamespaceContext(session).context().asModel();
     }
 
     /**

@@ -25,6 +25,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Property;
 
+import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

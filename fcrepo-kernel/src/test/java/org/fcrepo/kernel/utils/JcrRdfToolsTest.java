@@ -935,7 +935,7 @@ public class JcrRdfToolsTest {
         when(mockNodes.hasNext()).thenReturn(false);
         final Model model =
                 testObj.getJcrPropertiesModel(
-                                                 new org.fcrepo.kernel.utils.NodeIterator(mockNodes),
+                                                 new org.fcrepo.kernel.utils.iterators.NodeIterator(mockNodes),
                                                  mockResource);
         assertTrue(model != null);
     }

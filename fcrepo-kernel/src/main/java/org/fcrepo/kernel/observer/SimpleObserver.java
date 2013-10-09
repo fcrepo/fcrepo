@@ -40,7 +40,7 @@ import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
-import org.fcrepo.kernel.utils.EventIterator;
+import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
