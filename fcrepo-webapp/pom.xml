@@ -24,6 +24,9 @@
   
     <!-- sonar -->
     <sonar.artifact.path>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.war</sonar.artifact.path>
+
+    <build.timestamp>${maven.build.timestamp}</build.timestamp>
+    <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
   </properties>
 
   <dependencies>
@@ -209,14 +212,10 @@
           </execution>
         </executions>
         <configuration>
-          <format>Build: ${project.version} on {0,date,yyyy-MM-dd}</format>
-          <items>
-            <item>timestamp</item>
-          </items>
           <doCheck>false</doCheck>
           <doUpdate>false</doUpdate>
           <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-          <shortRevisionLength>5</shortRevisionLength>
+          <shortRevisionLength>8</shortRevisionLength>
         </configuration>
       </plugin>
 
