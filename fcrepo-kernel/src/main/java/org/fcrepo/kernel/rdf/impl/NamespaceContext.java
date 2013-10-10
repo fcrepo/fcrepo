@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.rdf;
+package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -30,6 +30,7 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.rdf.RdfContext;
 import org.fcrepo.kernel.utils.NamespaceTools;
 import org.slf4j.Logger;
 import com.google.common.collect.ImmutableCollection;

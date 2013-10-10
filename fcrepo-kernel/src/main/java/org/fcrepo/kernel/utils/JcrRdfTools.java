@@ -100,7 +100,7 @@ import javax.jcr.version.VersionIterator;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.NamespaceContext;
+import org.fcrepo.kernel.rdf.impl.NamespaceContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.api.NamespaceRegistry;

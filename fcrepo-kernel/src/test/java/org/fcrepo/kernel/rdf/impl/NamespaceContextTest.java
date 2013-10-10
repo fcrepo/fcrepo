@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.rdf;
+package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.collect.Iterators.any;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -26,6 +26,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.rdf.impl.NamespaceContext;
 import org.fcrepo.kernel.utils.NamespaceTools;
 import org.junit.Test;
 import org.junit.runner.RunWith;
