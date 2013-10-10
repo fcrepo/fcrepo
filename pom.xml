@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.0.0-alpha-2-SNAPSHOT</version>
+  <version>4.0.0-alpha-3-SNAPSHOT</version>
   <name>fcrepo4</name>
   <description>Parent project for fcrepo4</description>
   <packaging>pom</packaging>
