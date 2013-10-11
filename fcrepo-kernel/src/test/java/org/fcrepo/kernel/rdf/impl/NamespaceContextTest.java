@@ -18,30 +18,20 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.collect.Iterators.any;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
-import org.fcrepo.kernel.utils.NamespaceTools;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 import com.google.common.base.Predicate;
 import com.hp.hpl.jena.graph.Triple;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({NamespaceTools.class})
 public class NamespaceContextTest {
 
     @Mock
@@ -50,6 +40,9 @@ public class NamespaceContextTest {
     @Mock
     private Session mockSession;
 
+    @Mock
+    Workspace mockWorkspace;
+
     private final static String testUri = "http://example.com";
 
     private final static String prefix = "jcr";
@@ -57,12 +50,12 @@ public class NamespaceContextTest {
     @Test
     public void testConstructor() throws RepositoryException {
         initMocks(this);
-        mockStatic(NamespaceTools.class);
-        Mockito.when(mockNamespaceRegistry.getPrefixes()).thenReturn(
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(
                 new String[] {prefix});
-        Mockito.when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
-        PowerMockito.when(getNamespaceRegistry(mockSession))
-                .thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
+                mockNamespaceRegistry);
         assertTrue(any(new NamespaceContext(mockSession).context(),
                 hasTestUriAsObject));
     }

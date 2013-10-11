@@ -17,7 +17,6 @@
 package org.fcrepo.kernel.utils.iterators;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.impl.IteratorFactory.asStmtIterator;
 import static java.util.Collections.emptySet;
 
 import java.util.Collection;
@@ -30,7 +29,6 @@ import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.impl.ModelCom;
 
 /**
  * @author ajs6f
@@ -133,7 +131,10 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     public Model asModel() {
         final Model model = createDefaultModel();
         model.setNsPrefixes(namespaces());
-        return model.add(asStmtIterator(this, (ModelCom) model));
+        for (final Triple t : this) {
+            model.add(model.asStatement(t));
+        }
+        return model;
     }
 
 }

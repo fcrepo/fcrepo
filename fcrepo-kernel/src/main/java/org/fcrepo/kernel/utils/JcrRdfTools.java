@@ -101,6 +101,7 @@ import javax.jcr.version.VersionIterator;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
+import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -319,6 +320,20 @@ public class JcrRdfTools {
         addJcrPropertiesToModel(node, model);
 
         return model;
+    }
+
+    /**
+     * Get an {@link Model} for a node that includes all its own JCR properties, as
+     * well as the properties of its immediate children.
+     *
+     * TODO add triples for root node, ala addRepositoryMetricsToModel()
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public Model getJcrPropertiesModel(final Node node, final int tag) throws RepositoryException {
+        return new PropertiesRdfContext(node, graphSubjects, llstore).context().asModel();
     }
 
 

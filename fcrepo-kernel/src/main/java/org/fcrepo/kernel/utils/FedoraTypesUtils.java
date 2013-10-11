@@ -21,6 +21,7 @@ import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
@@ -30,6 +31,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
@@ -60,6 +62,7 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the
@@ -128,50 +131,91 @@ public abstract class FedoraTypesUtils {
      * Translates a {@link NodeType} to its {@link String} name.
      */
     public static Function<NodeType, String> nodetype2name =
-            new Function<NodeType, String>() {
+        new Function<NodeType, String>() {
 
-                @Override
-                public String apply(final NodeType t) {
-                    checkArgument(t != null, "null has no name!");
-                    return t.getName();
-                }
-            };
+            @Override
+            public String apply(final NodeType t) {
+                checkArgument(t != null, "null has no name!");
+                return t.getName();
+            }
+        };
 
     /**
      * Translates a JCR {@link Value} to its {@link String} expression.
      */
     public static Function<Value, String> value2string =
-            new Function<Value, String>() {
+        new Function<Value, String>() {
 
-                @Override
-                public String apply(final Value v) {
-                    try {
-                        checkArgument(v != null, "null has no appropriate "
-                                + "String representation!");
-                        return v.getString();
-                    } catch (final RepositoryException e) {
-                        throw propagate(e);
-                    }
+            @Override
+            public String apply(final Value v) {
+                try {
+                    checkArgument(v != null, "null has no appropriate "
+                            + "String representation!");
+                    return v.getString();
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
                 }
-            };
+            }
+        };
+
+    /**
+     * Constructs an {@link Iterator} of {@link Value}s from any
+     * {@link Property}, multi-valued or not.
+     */
+    public static Function<Property, Iterator<Value>> property2values =
+        new Function<Property, Iterator<Value>>() {
+
+            @Override
+            public Iterator<Value> apply(final Property p) {
+                try {
+                    if (p.isMultiple()) {
+                        LOGGER.debug("Found multi-valued property: {}", p);
+                        return Iterators.forArray(p.getValues());
+                    } else {
+                        LOGGER.debug("Found single-valued property: {}", p);
+                        return Iterators.forArray(new Value[] {p.getValue()});
+                    }
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
+                }
+            }
+        };
 
     /**
      * Check if a JCR property is a multivalued property or not
      */
     public static Predicate<Property> isMultipleValuedProperty =
-            new Predicate<Property>() {
+        new Predicate<Property>() {
 
-                @Override
-                public boolean apply(final Property p) {
-                    checkArgument(p != null,
-                            "null is neither multiple or not multiple!");
-                    try {
-                        return p.isMultiple();
-                    } catch (final RepositoryException e) {
-                        throw propagate(e);
-                    }
+            @Override
+            public boolean apply(final Property p) {
+                checkArgument(p != null,
+                        "null is neither multiple nor not multiple!");
+                try {
+                    return p.isMultiple();
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
                 }
-            };
+            }
+        };
+
+    /**
+     * Check if a JCR property is a binary property or not
+     */
+    public static Predicate<Property> isBinaryProperty =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                checkArgument(p != null,
+                        "null is neither binary nor not binary!");
+                try {
+                    return p.getType() == BINARY;
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
+                }
+            }
+        };
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST
@@ -185,8 +229,8 @@ public abstract class FedoraTypesUtils {
                     "null is neither multiple or not multiple!");
             try {
                 final NodeType primaryNodeType = n.getPrimaryNodeType();
-                return primaryNodeType != null &&
-                        primaryNodeType.isNodeType("mode:system");
+                return primaryNodeType != null
+                        && primaryNodeType.isNodeType("mode:system");
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
@@ -197,48 +241,47 @@ public abstract class FedoraTypesUtils {
      * Retrieves a JCR {@link ValueFactory} for use with a @ link Node}
      */
     public static Function<Node, ValueFactory> getValueFactory =
-            new Function<Node, ValueFactory>() {
+        new Function<Node, ValueFactory>() {
 
-                @Override
-                public ValueFactory apply(final Node n) {
-                    try {
-                        checkArgument(n != null,
-                                "null has no ValueFactory associated with it!");
-                        return n.getSession().getValueFactory();
-                    } catch (final RepositoryException e) {
-                        throw propagate(e);
-                    }
+            @Override
+            public ValueFactory apply(final Node n) {
+                try {
+                    checkArgument(n != null,
+                            "null has no ValueFactory associated with it!");
+                    return n.getSession().getValueFactory();
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
                 }
-            };
+            }
+        };
 
     /**
      * Map a JCR property to an RDF property with the right namespace URI and
      * local name
      */
     public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty =
-            new Function<Property, com.hp.hpl.jena.rdf.model.Property>() {
+        new Function<Property, com.hp.hpl.jena.rdf.model.Property>() {
 
-                @Override
-                public com.hp.hpl.jena.rdf.model.Property apply(
-                        final Property property) {
-                    LOGGER.trace("Creating predicate for property: {}",
-                            property);
-                    try {
-                        if (property instanceof Namespaced) {
-                            final Namespaced nsProperty = (Namespaced) property;
-                            final String uri = nsProperty.getNamespaceURI();
-                            return createProperty(
-                                    getRDFNamespaceForJcrNamespace(uri),
-                                    nsProperty.getLocalName());
-                        } else {
-                            return createProperty(property.getName());
-                        }
-                    } catch (final RepositoryException e) {
-                        throw propagate(e);
+            @Override
+            public com.hp.hpl.jena.rdf.model.Property apply(
+                    final Property property) {
+                LOGGER.trace("Creating predicate for property: {}", property);
+                try {
+                    if (property instanceof Namespaced) {
+                        final Namespaced nsProperty = (Namespaced) property;
+                        final String uri = nsProperty.getNamespaceURI();
+                        return createProperty(
+                                getRDFNamespaceForJcrNamespace(uri), nsProperty
+                                        .getLocalName());
+                    } else {
+                        return createProperty(property.getName());
                     }
-
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
                 }
-            };
+
+            }
+        };
 
     /**
      * ISODateTimeFormat is thread-safe and immutable, and the formatters it
@@ -280,7 +323,7 @@ public abstract class FedoraTypesUtils {
             checkArgument(i != null,
                     "null cannot have a Binary created from it!");
             final JcrValueFactory jcrValueFactory =
-                    ((JcrValueFactory) n.getSession().getValueFactory());
+                ((JcrValueFactory) n.getSession().getValueFactory());
             return jcrValueFactory.createBinary(i, hint);
         } catch (final RepositoryException e) {
             throw propagate(e);
@@ -294,8 +337,8 @@ public abstract class FedoraTypesUtils {
      * @return
      * @throws RepositoryException
      */
-    public static NodeTypeManager getNodeTypeManager(final Node node)
-        throws RepositoryException {
+    public static NodeTypeManager
+            getNodeTypeManager(final Node node) throws RepositoryException {
         return node.getSession().getWorkspace().getNodeTypeManager();
     }
 
@@ -308,12 +351,12 @@ public abstract class FedoraTypesUtils {
      * @return a JCR PropertyDefinition, if available, or null
      * @throws javax.jcr.RepositoryException
      */
-    public static PropertyDefinition getDefinitionForPropertyName(
-            final Node node, final String propertyName)
-        throws RepositoryException {
+    public static PropertyDefinition
+            getDefinitionForPropertyName(final Node node,
+                    final String propertyName) throws RepositoryException {
         final PropertyDefinition[] propertyDefinitions =
-                getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE)
-                        .getPropertyDefinitions();
+            getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE)
+                    .getPropertyDefinitions();
 
         for (final PropertyDefinition p : propertyDefinitions) {
             if (p.getName().equals(propertyName)) {
@@ -353,8 +396,8 @@ public abstract class FedoraTypesUtils {
      * @return
      * @throws RepositoryException
      */
-    public static Version getBaseVersion(final Node node)
-        throws RepositoryException {
+    public static Version
+            getBaseVersion(final Node node) throws RepositoryException {
         return node.getSession().getWorkspace().getVersionManager()
                 .getBaseVersion(node.getPath());
     }
@@ -366,8 +409,8 @@ public abstract class FedoraTypesUtils {
      * @return
      * @throws RepositoryException
      */
-    public static VersionHistory getVersionHistory(final Node node)
-        throws RepositoryException {
+    public static VersionHistory
+            getVersionHistory(final Node node) throws RepositoryException {
         return getVersionHistory(node.getSession(), node.getPath());
     }
 
@@ -389,19 +432,21 @@ public abstract class FedoraTypesUtils {
      * @return a double of the size of the fedora:datastream binary content
      * @throws RepositoryException
      */
-    public static long getRepositoryCount(final Repository repository)
-        throws RepositoryException {
+    public static
+            long
+            getRepositoryCount(final Repository repository)
+                                                           throws RepositoryException {
         final Session session = repository.login();
         try {
             final QueryManager queryManager =
-                    session.getWorkspace().getQueryManager();
+                session.getWorkspace().getQueryManager();
 
             final String querystring =
-                    "SELECT [" + JcrConstants.JCR_PATH + "] FROM [" +
-                            FedoraJcrTypes.FEDORA_OBJECT + "]";
+                "SELECT [" + JcrConstants.JCR_PATH + "] FROM ["
+                        + FedoraJcrTypes.FEDORA_OBJECT + "]";
 
             final QueryResult queryResults =
-                    queryManager.createQuery(querystring, JCR_SQL2).execute();
+                queryManager.createQuery(querystring, JCR_SQL2).execute();
 
             return queryResults.getRows().getSize();
         } finally {
@@ -414,23 +459,25 @@ public abstract class FedoraTypesUtils {
      * @return a double of the size of the fedora:datastream binary content
      * @throws RepositoryException
      */
-    public static long getRepositorySize(final Repository repository)
-        throws RepositoryException {
+    public static
+            long
+            getRepositorySize(final Repository repository)
+                                                          throws RepositoryException {
         final Session session = repository.login();
         long sum = 0;
         final QueryManager queryManager =
-                session.getWorkspace().getQueryManager();
+            session.getWorkspace().getQueryManager();
 
         final String querystring =
-                "SELECT [" + FedoraJcrTypes.CONTENT_SIZE + "] FROM [" +
-                        FedoraJcrTypes.FEDORA_BINARY + "]";
+            "SELECT [" + FedoraJcrTypes.CONTENT_SIZE + "] FROM ["
+                    + FedoraJcrTypes.FEDORA_BINARY + "]";
 
         final QueryResult queryResults =
-                queryManager.createQuery(querystring, JCR_SQL2).execute();
+            queryManager.createQuery(querystring, JCR_SQL2).execute();
 
         for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
             final Value value =
-                    rows.nextRow().getValue(FedoraJcrTypes.CONTENT_SIZE);
+                rows.nextRow().getValue(FedoraJcrTypes.CONTENT_SIZE);
             sum += value.getLong();
         }
 

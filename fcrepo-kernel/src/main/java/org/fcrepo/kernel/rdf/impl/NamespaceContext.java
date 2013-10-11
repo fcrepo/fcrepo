@@ -31,7 +31,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.rdf.RdfContext;
-import org.fcrepo.kernel.utils.NamespaceTools;
 import org.slf4j.Logger;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
@@ -59,7 +58,7 @@ public class NamespaceContext extends RdfContext {
     public NamespaceContext(final Session session) throws RepositoryException {
         super();
         final NamespaceRegistry namespaceRegistry =
-            NamespaceTools.getNamespaceRegistry(session);
+            session.getWorkspace().getNamespaceRegistry();
         assert (namespaceRegistry != null) : new RepositoryException(
                 "Couldn't find namespace registry in repository!");
         final ImmutableMap.Builder<String, String> namespaces =
@@ -74,10 +73,12 @@ public class NamespaceContext extends RdfContext {
             LOGGER.debug("Discovered namespace prefix \"{}\" with URI \"{}\"",
                     prefix, nsURI);
             final String rdfNsUri = getRDFNamespaceForJcrNamespace(nsURI);
+            // first, let's put the namespace in context
             namespaces.put(prefix, rdfNsUri);
             LOGGER.debug("Added namespace prefix \"{}\" with URI \"{}\"",
                     prefix, rdfNsUri);
             final Node nsSubject = createURI(rdfNsUri);
+            // now, some triples describing this namespace
             nsTriples.add(create(nsSubject, type.asNode(), VOAF_VOCABULARY
                     .asNode()));
             nsTriples.add(create(nsSubject, HAS_NAMESPACE_PREFIX.asNode(),
