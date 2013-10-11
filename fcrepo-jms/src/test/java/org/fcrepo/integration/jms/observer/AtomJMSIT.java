@@ -92,6 +92,7 @@ public class AtomJMSIT implements MessageListener {
         session = connection.createSession(false, AUTO_ACKNOWLEDGE);
         consumer = session.createConsumer(session.createTopic("fedora"));
         consumer.setMessageListener(this);
+        entry = null;
     }
 
     @After
@@ -116,7 +117,6 @@ public class AtomJMSIT implements MessageListener {
         if (entry == null) fail("Waited a second, got no messages");
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         final String title = entry.getTitle();
-        entry = null;
         String path = null;
         for (Category cat : categories) {
             if (cat.getLabel().equals("fedora-types:pid")) {
@@ -141,8 +141,7 @@ public class AtomJMSIT implements MessageListener {
         session.logout();
 
         if (entry == null) fail("Waited a second, got no messages");
-        List<Category> categories = copyOf(entry.getCategories("xsd:string"));     
-        entry = null;
+        List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         String path = null;
         for (Category cat : categories) {
             if (cat.getLabel().equals("path")) {
@@ -169,7 +168,6 @@ public class AtomJMSIT implements MessageListener {
         if (entry == null) fail("Waited a second, got no messages");
         List<Category> categories = copyOf(entry.getCategories("xsd:string"));
         entry = null;
-
         String path = null;
 
         logger.trace("Matched {} categories with scheme xsd:string", categories
