@@ -290,11 +290,6 @@ public class JcrRdfToolsTest {
                         actual.createProperty(REPOSITORY_NAMESPACE +
                                 "repository/some-descriptor-key"),
                         actual.createLiteral("some-descriptor-value")));
-        assertTrue(actual
-                .contains(
-                        testSubjects.getGraphSubject(mockNode),
-                        actual.createProperty(REPOSITORY_NAMESPACE + "a"),
-                        actual.createLiteral("b")));
     }
 
     @Test
