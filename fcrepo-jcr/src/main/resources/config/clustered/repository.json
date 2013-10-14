@@ -33,7 +33,7 @@
             "useOnFailedLogin" : false
         },
         "providers" : [
-            { "classname" : "servlet" }
+            { "classname" : "org.fcrepo.http.commons.session.BypassSecurityServletAuthenticationProvider" }
         ]
     },
     "node-types" : ["fedora-node-types.cnd"]
