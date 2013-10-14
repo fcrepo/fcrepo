@@ -16,19 +16,20 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.modeshape.jcr.api.JcrConstants;
+import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
  * Translates JCR names into "fedora" subjects (by replacing jcr-specific names
@@ -41,24 +42,24 @@ public class DefaultGraphSubjects implements GraphSubjects {
     private final Resource context;
     private final Session session;
 
+    private final static Logger LOGGER = getLogger(DefaultGraphSubjects.class);
+
+
     /**
      * Construct the graph with a placeholder context resource
      */
     public DefaultGraphSubjects(final Session session) {
         this.session = session;
-        this.context = ResourceFactory.createResource();
+        this.context = createResource();
     }
 
     @Override
     public Resource getGraphSubject(final String absPath) throws RepositoryException {
-        if (absPath.endsWith(JcrConstants.JCR_CONTENT)) {
-            return ResourceFactory
-                    .createResource(RdfLexicon.RESTAPI_NAMESPACE +
-                            absPath.replace(JcrConstants.JCR_CONTENT,
-                                    FedoraJcrTypes.FCR_CONTENT));
+        if (absPath.endsWith(JCR_CONTENT)) {
+            return createResource(RESTAPI_NAMESPACE
+                    + absPath.replace(JCR_CONTENT, FCR_CONTENT));
         } else {
-            return ResourceFactory
-                    .createResource(RdfLexicon.RESTAPI_NAMESPACE + absPath);
+            return createResource(RESTAPI_NAMESPACE + absPath);
         }
     }
 
@@ -69,6 +70,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
+        LOGGER.debug("Returning RDF subject for: {}", node);
         return getGraphSubject(node.getPath());
     }
 
@@ -79,12 +81,11 @@ public class DefaultGraphSubjects implements GraphSubjects {
             return null;
         }
 
-        final String absPath = subject.getURI()
-                .substring(RdfLexicon.RESTAPI_NAMESPACE.length());
+        final String absPath =
+            subject.getURI().substring(RESTAPI_NAMESPACE.length());
 
         if (absPath.endsWith(FCR_CONTENT)) {
-            return session.getNode(absPath.replace(FedoraJcrTypes.FCR_CONTENT,
-                                                   JcrConstants.JCR_CONTENT));
+            return session.getNode(absPath.replace(FCR_CONTENT, JCR_CONTENT));
         } else if (session.nodeExists(absPath)) {
             return session.getNode(absPath);
         } else {
@@ -98,7 +99,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
         assert(subject != null);
 
         return subject.isURIResource() &&
-            subject.getURI().startsWith(RdfLexicon.RESTAPI_NAMESPACE);
+            subject.getURI().startsWith(RESTAPI_NAMESPACE);
     }
 
 }

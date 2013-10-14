@@ -104,6 +104,7 @@ import org.fcrepo.kernel.rdf.impl.NamespaceContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
@@ -306,7 +307,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel(final Node node)
+    public Model getJcrPropertiesModel(final Node node, final int tag)
         throws RepositoryException {
 
         final Model model = getJcrPropertiesModel();
@@ -332,8 +333,13 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel(final Node node, final int tag) throws RepositoryException {
-        return new PropertiesRdfContext(node, graphSubjects, llstore).context().asModel();
+    public Model
+            getJcrPropertiesModel(final Node node) throws RepositoryException {
+        final RdfStream namespaceContext =
+            new NamespaceContext(session).context();
+        return namespaceContext.concat(
+                new PropertiesRdfContext(node, graphSubjects, llstore)
+                        .context()).asModel();
     }
 
 
