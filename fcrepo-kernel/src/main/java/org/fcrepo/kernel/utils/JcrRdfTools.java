@@ -248,7 +248,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Model getJcrPropertiesModel() throws RepositoryException {
-        return new NamespaceContext(session).context().asModel();
+        return new NamespaceContext(session).asModel();
     }
 
     /**
@@ -267,7 +267,7 @@ public class JcrRdfTools {
         while (nodeIterator.hasNext()) {
             final Node node = nodeIterator.next();
             results.concat(new PropertiesRdfContext(node, graphSubjects,
-                    llstore).context());
+                    llstore));
             if (iteratorSubject != null) {
                 results.concat(singleton(create(iteratorSubject.asNode(),
                         HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
@@ -288,11 +288,10 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Model getJcrPropertiesModel(final Node node) throws RepositoryException {
-        final RdfStream namespaceContext =
-            new NamespaceContext(session).context();
+        final RdfStream namespaceContext = new NamespaceContext(session);
         return namespaceContext.concat(
-                new PropertiesRdfContext(node, graphSubjects, llstore)
-                        .context()).asModel();
+                new PropertiesRdfContext(node, graphSubjects, llstore))
+                .asModel();
     }
     /**
      * Get a Jena RDF model for the JCR version history information for a node
@@ -304,8 +303,7 @@ public class JcrRdfTools {
      */
     public Model getJcrVersionPropertiesModel(final Node node)
         throws RepositoryException {
-        return new VersionsRdfContext(node, graphSubjects, llstore).context()
-                .asModel();
+        return new VersionsRdfContext(node, graphSubjects, llstore).asModel();
     }
 
     /**
@@ -357,7 +355,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Model getJcrNamespaceModel() throws RepositoryException {
-        return new NamespaceContext(session).context().asModel();
+        return new NamespaceContext(session).asModel();
     }
 
     /**

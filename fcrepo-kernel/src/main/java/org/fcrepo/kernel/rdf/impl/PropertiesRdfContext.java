@@ -18,7 +18,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.ImmutableSet.builder;
-import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -110,7 +109,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
                 node());
 
         // this node's own properties
-        context().concat(triplesFromProperties(node()));
+        concat(triplesFromProperties(node()));
 
         // if there's a jcr:content node, include information about it
         if (node().hasNode(JCR_CONTENT)) {
@@ -120,20 +119,19 @@ public class PropertiesRdfContext extends NodeRdfContext {
             final Node subject =
                 graphSubjects().getGraphSubject(node()).asNode();
             // add triples representing parent-to-content-child relationship
-            context().concat(
+            concat(
                     Iterators.forArray(new Triple[] {
                             create(subject, HAS_CONTENT.asNode(),
                                     contentSubject),
                             create(contentSubject, IS_CONTENT_OF.asNode(),
                                     subject)}));
             // add properties from content child
-            context()
-                    .concat(triplesFromProperties(node().getNode(JCR_CONTENT)));
+            concat(triplesFromProperties(node().getNode(JCR_CONTENT)));
 
             // add triples describing storage of content child
             lowLevelStorageService().setRepository(
                     node().getSession().getRepository());
-            context().concat(
+            concat(
                     transform(lowLevelStorageService().getLowLevelCacheEntries(
                             contentNode).iterator(),
                             new Function<LowLevelCacheEntry, Triple>() {
@@ -150,7 +148,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
         }
 
         if (node().getPrimaryNodeType().getName().equals(ROOT)) {
-            context().concat(triplesForRootNode());
+            concat(triplesForRootNode());
         }
 
     }
@@ -234,9 +232,11 @@ public class PropertiesRdfContext extends NodeRdfContext {
             filter(new PropertyIterator(n.getProperties()),
                     not(isBinaryProperty));
 
-        return concat(new ZippingIterator<>(transform(nonBinaryProperties,
-            property2values), transform(nonBinaryPropertiesCopy,
-                property2triple)));
+        return Iterators.concat(new ZippingIterator<>(
+                transform(
+                nonBinaryProperties, property2values),
+                transform(
+                nonBinaryPropertiesCopy, property2triple)));
 
     }
 

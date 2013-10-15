@@ -16,11 +16,11 @@
 
 package org.fcrepo.kernel.rdf.impl.mappings;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.Iterator;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.collect.AbstractIterator;
 import com.google.common.base.Function;
 
@@ -37,30 +37,29 @@ public class ZippingIterator<F, T> extends AbstractIterator<T> {
 
     Iterator<F> from;
 
-    Iterator<Function<F, T>> to;
+    Iterator<Function<F, T>> through;
 
-    private static Logger LOGGER = LoggerFactory
-            .getLogger(ZippingIterator.class);
+    private static Logger LOGGER = getLogger(ZippingIterator.class);
 
     /**
      * Default constructor.
      *
      * @param from
-     * @param to
+     * @param through
      */
     public ZippingIterator(final Iterator<F> from,
-            final Iterator<Function<F, T>> to) {
+            final Iterator<Function<F, T>> through) {
         this.from = from;
-        this.to = to;
+        this.through = through;
     }
 
     @Override
     protected T computeNext() {
-        final boolean hasNext = (from.hasNext() && to.hasNext());
+        final boolean hasNext = (from.hasNext() && through.hasNext());
         if (hasNext) {
             LOGGER.debug("Found next element.");
             final F f = from.next();
-            final Function<F, T> t = to.next();
+            final Function<F, T> t = through.next();
             LOGGER.debug("Supplying from next element {} through function {}",
                     f, t);
             return t.apply(f);

@@ -20,14 +20,15 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.services.LowLevelStorageService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 /**
- * {@link RdfContext} that holds contexts related to a specific {@link Node}.
+ * {@link RdfStream} that holds contexts related to a specific {@link Node}.
  *
  * @author ajs6f
  * @date Oct 10, 2013
  */
-public abstract class NodeRdfContext extends RdfContext {
+public abstract class NodeRdfContext extends RdfStream {
 
     private final Node node;
 

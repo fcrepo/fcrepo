@@ -30,7 +30,7 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.RdfContext;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
@@ -39,12 +39,13 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * An {@link RdfContext} that holds the namespace mappings for serializations.
+ * An {@link RdfStream} that holds the namespace mappings for serializations,
+ * as well as {@link Triple}s describing those namespaces.
  *
  * @author ajs6f
  * @date Oct 9, 2013
  */
-public class NamespaceContext extends RdfContext {
+public class NamespaceContext extends RdfStream {
 
     private static Logger LOGGER = getLogger(NamespaceContext.class);
 
@@ -89,6 +90,6 @@ public class NamespaceContext extends RdfContext {
                         createLiteral(nsURI)));
             }
         }
-        context.concat(nsTriples.build()).addNamespaces(namespaces.build());
+        concat(nsTriples.build()).addNamespaces(namespaces.build());
     }
 }

@@ -58,7 +58,7 @@ public class VersionsRdfContext extends NodeRdfContext {
         final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
-        context().concat(versionTriples());
+        concat(versionTriples());
     }
 
     private Iterator<Triple> versionTriples() throws RepositoryException {
@@ -81,9 +81,8 @@ public class VersionsRdfContext extends NodeRdfContext {
             for (final String label : versionLabels) {
                 b.add(create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
             }
-            context().concat(
-                    new PropertiesRdfContext(frozenNode, graphSubjects(),
-                            lowLevelStorageService()).context());
+            concat(new PropertiesRdfContext(frozenNode, graphSubjects(),
+                    lowLevelStorageService()));
 
         }
         return b.build().iterator();

@@ -57,11 +57,11 @@ public class HierarchyRdfContext extends NodeRdfContext {
             final GraphSubjects graphSubjects, final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         if (node.getDepth() > 0) {
-            context().concat(parentContext());
+            concat(parentContext());
 
         }
         if (node.hasNodes()) {
-            context().concat(childrenContext());
+            concat(childrenContext());
         }
     }
 
@@ -69,7 +69,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
         final javax.jcr.Node parentNode = node().getParent();
         final Node parentNodeSubject =
             graphSubjects().getGraphSubject(parentNode).asNode();
-        return new PropertiesRdfContext(parentNode, graphSubjects(), lowLevelStorageService()).context()
+        return new PropertiesRdfContext(parentNode, graphSubjects(), lowLevelStorageService())
                 .concat(Iterators
                         .forArray(new Triple[] {
                                 create(subject(), HAS_PARENT.asNode(),

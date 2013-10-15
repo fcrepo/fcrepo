@@ -56,8 +56,7 @@ public class NamespaceContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);
-        assertTrue(any(new NamespaceContext(mockSession).context(),
-                hasTestUriAsObject));
+        assertTrue(any(new NamespaceContext(mockSession), hasTestUriAsObject));
     }
 
     private static Predicate<Triple> hasTestUriAsObject =
