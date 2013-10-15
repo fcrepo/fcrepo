@@ -19,7 +19,6 @@ package org.fcrepo.kernel.utils;
 import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -40,17 +39,12 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.RdfLexicon.INLINED_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
-import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_PREDICATE;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_SUBJECT;
@@ -79,6 +73,7 @@ import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
@@ -108,26 +103,33 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class JcrRdfTools {
 
     private static final Logger LOGGER = getLogger(JcrRdfTools.class);
+
     /**
      * A map of JCR namespaces to Fedora's RDF namespaces
      */
     public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
-            ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
-                    RdfLexicon.REPOSITORY_NAMESPACE);
+        ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
+                RdfLexicon.REPOSITORY_NAMESPACE);
+
     /**
      * A map of Fedora's RDF namespaces to the JCR equivalent
      */
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
-            jcrNamespacesToRDFNamespaces.inverse();
+        jcrNamespacesToRDFNamespaces.inverse();
+
     private static GetClusterConfiguration getClusterConfiguration =
-            new GetClusterConfiguration();
+        new GetClusterConfiguration();
+
     private LowLevelStorageService llstore;
+
     private final GraphSubjects graphSubjects;
+
     private Session session;
 
     /**
-     * Factory method to create a new JcrRdfTools utility
-     * with a graph subjects converter
+     * Factory method to create a new JcrRdfTools utility with a graph subjects
+     * converter
+     *
      * @param graphSubjects
      */
     public JcrRdfTools(final GraphSubjects graphSubjects) {
@@ -135,8 +137,9 @@ public class JcrRdfTools {
     }
 
     /**
-     * Factory method to create a new JcrRdfTools utility
-     * with a graph subjects converter
+     * Factory method to create a new JcrRdfTools utility with a graph subjects
+     * converter
+     *
      * @param graphSubjects
      * @param session
      */
@@ -153,14 +156,15 @@ public class JcrRdfTools {
      * @param lls
      */
     public JcrRdfTools(final GraphSubjects graphSubjects,
-        final Session session, final LowLevelStorageService lls) {
+            final Session session, final LowLevelStorageService lls) {
         this.graphSubjects = graphSubjects;
         this.session = session;
         this.llstore = lls;
     }
 
     /**
-     * Factory method to create a new JcrRdfTools  instance
+     * Factory method to create a new JcrRdfTools instance
+     *
      * @param graphSubjects
      * @return
      */
@@ -170,11 +174,13 @@ public class JcrRdfTools {
 
     /**
      * Factory method to create a new JcrRdfTools instance
+     *
      * @param graphSubjects
      * @param session
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects, final Session session) {
+    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+            final Session session) {
         return new JcrRdfTools(graphSubjects, session);
     }
 
@@ -187,7 +193,7 @@ public class JcrRdfTools {
      * @return
      */
     public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
-        final Session session, final LowLevelStorageService lls) {
+            final Session session, final LowLevelStorageService lls) {
         return new JcrRdfTools(graphSubjects, session, lls);
     }
 
@@ -225,6 +231,7 @@ public class JcrRdfTools {
 
     /**
      * Get a model in which to collect statements of RDF extraction problems
+     *
      * @return
      */
     public static Model getProblemsModel() {
@@ -234,6 +241,7 @@ public class JcrRdfTools {
     /**
      * Using the same graph subjects, create a new JcrRdfTools with the given
      * session
+     *
      * @param session
      * @return
      */
@@ -260,8 +268,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Model getJcrPropertiesModel(final Iterator<Node> nodeIterator,
-                                       final Resource iteratorSubject)
-        throws RepositoryException {
+            final Resource iteratorSubject) throws RepositoryException {
 
         final RdfStream results = new RdfStream();
         while (nodeIterator.hasNext()) {
@@ -278,10 +285,9 @@ public class JcrRdfTools {
     }
 
     /**
-     * Get an {@link Model} for a node that includes all its own JCR properties, as
-     * well as the properties of its immediate children.
-     *
-     * TODO add triples for root node, ala addRepositoryMetricsToModel()
+     * Get an {@link Model} for a node that includes all its own JCR properties,
+     * as well as the properties of its immediate children. TODO add triples for
+     * root node, ala addRepositoryMetricsToModel()
      *
      * @param node
      * @return
@@ -293,9 +299,9 @@ public class JcrRdfTools {
                 new PropertiesRdfContext(node, graphSubjects, llstore))
                 .asModel();
     }
+
     /**
      * Get a Jena RDF model for the JCR version history information for a node
-     *
      *
      * @param node
      * @return
@@ -315,37 +321,12 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Model getJcrPropertiesModel(final Node node,
-        final Iterable<FixityResult> blobs)
-        throws RepositoryException {
+            final Iterable<FixityResult> blobs) throws RepositoryException {
+        return new NamespaceContext(session).concat(
+                new FixityRdfContext(node, graphSubjects, llstore, blobs))
+                .concat(new PropertiesRdfContext(node, graphSubjects, llstore))
+                .asModel();
 
-        final Model model = getJcrPropertiesModel();
-
-        addJcrPropertiesToModel(node, model);
-
-        for (final FixityResult result : blobs) {
-            // fixity results are just blank nodes
-            final Resource resultSubject = createResource();
-
-            model.add(resultSubject, IS_FIXITY_RESULT_OF, graphSubjects
-                    .getGraphSubject(node));
-            model.add(graphSubjects.getGraphSubject(node), HAS_FIXITY_RESULT,
-                         resultSubject);
-
-            model.add(resultSubject, HAS_LOCATION, createResource(result
-                .getStoreIdentifier()));
-
-            for (final FixityResult.FixityState state : result.status) {
-                model.add(resultSubject, HAS_FIXITY_STATE,
-                        createTypedLiteral(state.toString()));
-            }
-
-            final String checksum = result.computedChecksum.toString();
-            model.add(resultSubject, HAS_COMPUTED_CHECKSUM,
-                    createResource(checksum));
-            model.add(resultSubject, HAS_COMPUTED_SIZE,
-                    createTypedLiteral(result.computedSize));
-        }
-        return model;
     }
 
     /**
@@ -366,8 +347,8 @@ public class JcrRdfTools {
      * @param offset
      * @param limit @throws RepositoryException
      */
-    public Model getJcrTreeModel(final Node node, final long offset, final int limit)
-        throws RepositoryException {
+    public Model getJcrTreeModel(final Node node, final long offset,
+            final int limit) throws RepositoryException {
 
         final Model model = getJcrPropertiesModel();
 
@@ -382,7 +363,8 @@ public class JcrRdfTools {
         model.add(pageContext, PAGE_OF, subject);
 
         if (isContainer(node)) {
-            model.add(pageContext, MEMBERS_INLINED, model.createTypedLiteral(true));
+            model.add(pageContext, MEMBERS_INLINED, model
+                    .createTypedLiteral(true));
 
             model.add(subject, type, CONTAINER);
             model.add(subject, MEMBERSHIP_SUBJECT, subject);
@@ -417,16 +399,17 @@ public class JcrRdfTools {
                 final Node childNode = nodeIterator.nextNode();
 
                 // exclude jcr system nodes or jcr:content nodes
-                if (isInternalNode.apply(childNode) ||
-                        childNode.getName().equals(JCR_CONTENT)) {
+                if (isInternalNode.apply(childNode)
+                        || childNode.getName().equals(JCR_CONTENT)) {
                     excludedNodeCount++;
                 } else {
                     final Resource childNodeSubject =
-                            graphSubjects.getGraphSubject(childNode);
+                        graphSubjects.getGraphSubject(childNode);
 
                     if (i >= offset && (limit == -1 || i < (offset + limit))) {
                         addJcrPropertiesToModel(childNode, model);
-                        model.add(pageContext, INLINED_RESOURCE, childNodeSubject);
+                        model.add(pageContext, INLINED_RESOURCE,
+                                childNodeSubject);
                         model.add(childNodeSubject, HAS_PARENT, subject);
                     }
 
@@ -437,7 +420,9 @@ public class JcrRdfTools {
 
             }
 
-            model.add(subject, HAS_CHILD_COUNT, createTypedLiteral(nodeIterator.getSize() - excludedNodeCount));
+            model.add(subject, HAS_CHILD_COUNT, createTypedLiteral(nodeIterator
+                    .getSize()
+                    - excludedNodeCount));
         }
 
         return model;
@@ -445,25 +430,29 @@ public class JcrRdfTools {
 
     private boolean isContainer(final Node node) throws RepositoryException {
         return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())
-                   || any(ImmutableList.copyOf(node.getMixinNodeTypes()),
-                                       HAS_CHILD_NODE_DEFINITIONS);
+                || any(ImmutableList.copyOf(node.getMixinNodeTypes()),
+                        HAS_CHILD_NODE_DEFINITIONS);
     }
 
-    static Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS = new Predicate<NodeType>() {
-        @Override
-        public boolean apply(final NodeType input) {
-            return input.getChildNodeDefinitions().length > 0;
-        }
-    };
+    static Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS =
+        new Predicate<NodeType>() {
+
+            @Override
+            public boolean apply(final NodeType input) {
+                return input.getChildNodeDefinitions().length > 0;
+            }
+        };
 
     /**
-     * Determine if a predicate is an internal property of a node (and
-     * should not be modified from external sources)
+     * Determine if a predicate is an internal property of a node (and should
+     * not be modified from external sources)
+     *
      * @param subjectNode
      * @param predicate
      * @return
      */
-    public boolean isInternalProperty(final Node subjectNode, final Resource predicate) {
+    public boolean isInternalProperty(final Node subjectNode,
+            final Resource predicate) {
         switch (predicate.getNameSpace()) {
             case REPOSITORY_NAMESPACE:
             case "http://www.jcp.org/jcr/1.0":
@@ -496,7 +485,7 @@ public class JcrRdfTools {
         if (node.hasNode(JCR_CONTENT)) {
             final Node contentNode = node.getNode(JCR_CONTENT);
             final Resource contentSubject =
-                    graphSubjects.getGraphSubject(contentNode);
+                graphSubjects.getGraphSubject(contentNode);
 
             model.add(subject, HAS_CONTENT, contentSubject);
             model.add(contentSubject, IS_CONTENT_OF, subject);
@@ -514,7 +503,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     private void addJcrContentLocationInformationToModel(final Node node,
-        final Model model) throws RepositoryException {
+            final Model model) throws RepositoryException {
         final Node contentNode = node.getNode(JCR_CONTENT);
         final Resource contentNodeSubject =
             graphSubjects.getGraphSubject(contentNode);
@@ -536,7 +525,6 @@ public class JcrRdfTools {
 
     }
 
-
     /**
      * Create a JCR value from an RDFNode, either by using the given JCR
      * PropertyType or by looking at the RDFNode Datatype
@@ -546,16 +534,18 @@ public class JcrRdfTools {
      * @return a JCR Value
      * @throws javax.jcr.RepositoryException
      */
-    Value createValue(final Node node, final RDFNode data,
-                      final int type) throws RepositoryException {
+    Value createValue(final Node node, final RDFNode data, final int type)
+        throws RepositoryException {
         final ValueFactory valueFactory = getValueFactory.apply(node);
         assert (valueFactory != null);
 
-        if (data.isURIResource() &&
-                (type == REFERENCE || type == WEAKREFERENCE)) {
+        if (data.isURIResource()
+                && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
-            final Node nodeFromGraphSubject = graphSubjects.getNodeFromGraphSubject(data.asResource());
-            return valueFactory.createValue(nodeFromGraphSubject, type == WEAKREFERENCE);
+            final Node nodeFromGraphSubject =
+                graphSubjects.getNodeFromGraphSubject(data.asResource());
+            return valueFactory.createValue(nodeFromGraphSubject,
+                    type == WEAKREFERENCE);
         } else if (data.isURIResource() || type == URI) {
             // some random opaque URI
             return valueFactory.createValue(data.toString(), PropertyType.URI);
@@ -571,24 +561,24 @@ public class JcrRdfTools {
 
             if (rdfValue instanceof Boolean) {
                 return valueFactory.createValue((Boolean) rdfValue);
-            } else if (rdfValue instanceof Byte ||
-                           (dataType != null && dataType.getJavaClass() == Byte.class)) {
+            } else if (rdfValue instanceof Byte
+                    || (dataType != null && dataType.getJavaClass() == Byte.class)) {
                 return valueFactory.createValue(literal.getByte());
             } else if (rdfValue instanceof Double) {
                 return valueFactory.createValue((Double) rdfValue);
             } else if (rdfValue instanceof Float) {
                 return valueFactory.createValue((Float) rdfValue);
-            } else if (rdfValue instanceof Long ||
-                           (dataType != null && dataType.getJavaClass() == Long.class)) {
+            } else if (rdfValue instanceof Long
+                    || (dataType != null && dataType.getJavaClass() == Long.class)) {
                 return valueFactory.createValue(literal.getLong());
-            } else if (rdfValue instanceof Short ||
-                           (dataType != null && dataType.getJavaClass() == Short.class)) {
+            } else if (rdfValue instanceof Short
+                    || (dataType != null && dataType.getJavaClass() == Short.class)) {
                 return valueFactory.createValue(literal.getShort());
             } else if (rdfValue instanceof Integer) {
                 return valueFactory.createValue((Integer) rdfValue);
             } else if (rdfValue instanceof XSDDateTime) {
                 return valueFactory.createValue(((XSDDateTime) rdfValue)
-                                                    .asCalendar());
+                        .asCalendar());
             } else {
                 return valueFactory.createValue(literal.getString(), STRING);
             }
@@ -607,9 +597,8 @@ public class JcrRdfTools {
      *        triples
      * @throws RepositoryException
      */
-    void addPropertyToModel(final Resource subject,
-                            final Model model, final Property property)
-        throws RepositoryException {
+    void addPropertyToModel(final Resource subject, final Model model,
+            final Property property) throws RepositoryException {
         if (property.isMultiple()) {
             final Value[] values = property.getValues();
 
@@ -632,9 +621,8 @@ public class JcrRdfTools {
      * @param v the actual JCR Value to insert into the graph
      * @throws RepositoryException
      */
-    void addPropertyToModel(final Resource subject,
-                            final Model model, final Property property, final Value v)
-        throws RepositoryException {
+    void addPropertyToModel(final Resource subject, final Model model,
+            final Property property, final Value v) throws RepositoryException {
 
         if (v.getType() == BINARY) {
             // exclude binary types from property serialization
@@ -652,7 +640,8 @@ public class JcrRdfTools {
                 model.add(subject, predicate, createTypedLiteral(v.getDate()));
                 break;
             case DECIMAL:
-                model.add(subject, predicate, createTypedLiteral(v.getDecimal()));
+                model.add(subject, predicate,
+                        createTypedLiteral(v.getDecimal()));
                 break;
             case DOUBLE:
                 model.addLiteral(subject, predicate, v.getDouble());
@@ -661,7 +650,8 @@ public class JcrRdfTools {
                 model.addLiteral(subject, predicate, v.getLong());
                 break;
             case URI:
-                model.add(subject, predicate, model.createResource(v.getString()));
+                model.add(subject, predicate, model.createResource(v
+                        .getString()));
                 return;
             case REFERENCE:
             case WEAKREFERENCE:
@@ -670,7 +660,8 @@ public class JcrRdfTools {
                         .getGraphSubject(refNode));
                 break;
             case PATH:
-                model.add(subject, predicate, graphSubjects.getGraphSubject(v.getString()));
+                model.add(subject, predicate, graphSubjects.getGraphSubject(v
+                        .getString()));
                 break;
 
             default:
@@ -679,7 +670,6 @@ public class JcrRdfTools {
         }
 
     }
-
 
     /**
      * Given an RDF predicate value (namespace URI + local name), figure out
@@ -691,7 +681,8 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     String getPropertyNameFromPredicate(final Node node,
-        final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+        final com.hp.hpl.jena.rdf.model.Property predicate)
+        throws RepositoryException {
         final Map<String, String> s = emptyMap();
         return getPropertyNameFromPredicate(node, predicate, s);
 
@@ -707,10 +698,8 @@ public class JcrRdfTools {
      * @return the JCR property name
      * @throws RepositoryException
      */
-    String getPropertyNameFromPredicate(final Node node,
-        final com.hp.hpl.jena.rdf.model.Property predicate,
-        final Map<String, String> namespaceMapping)
-        throws RepositoryException {
+    String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
+        final Map<String, String> namespaceMapping) throws RepositoryException {
 
         final String prefix;
 
@@ -724,9 +713,11 @@ public class JcrRdfTools {
         if (namespaceRegistry.isRegisteredUri(namespace)) {
             prefix = namespaceRegistry.getPrefix(namespace);
         } else {
-            final ImmutableBiMap<String, String> nsMap = ImmutableBiMap.copyOf(namespaceMapping);
+            final ImmutableBiMap<String, String> nsMap =
+                ImmutableBiMap.copyOf(namespaceMapping);
             if (nsMap.containsValue(namespace)
-                    && !namespaceRegistry.isRegisteredPrefix(nsMap.inverse().get(namespace))) {
+                    && !namespaceRegistry.isRegisteredPrefix(nsMap.inverse()
+                            .get(namespace))) {
                 prefix = nsMap.inverse().get(namespace);
                 namespaceRegistry.registerNamespace(prefix, namespace);
             } else {
@@ -739,7 +730,7 @@ public class JcrRdfTools {
         final String propertyName = prefix + ":" + localName;
 
         LOGGER.trace("Took RDF predicate {} and translated it to "
-                         + "JCR property {}", predicate, propertyName);
+                + "JCR property {}", predicate, propertyName);
 
         return propertyName;
 
@@ -749,15 +740,14 @@ public class JcrRdfTools {
      * Set the function used to get the cluster configuration for Infinispan
      */
     public static void setGetClusterConfiguration(
-        final GetClusterConfiguration newClusterConfiguration) {
+            final GetClusterConfiguration newClusterConfiguration) {
         getClusterConfiguration = newClusterConfiguration;
     }
 
     /**
      * Set the Low-level storage server implementation
      */
-    public void setLlstore(
-        final LowLevelStorageService lowLevelStorageService) {
+    public void setLlstore(final LowLevelStorageService lowLevelStorageService) {
         llstore = lowLevelStorageService;
     }
 

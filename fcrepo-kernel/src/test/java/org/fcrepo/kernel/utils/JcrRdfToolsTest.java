@@ -20,8 +20,8 @@ import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDshort;
-import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -138,8 +138,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 public class JcrRdfToolsTest {
@@ -150,8 +148,11 @@ public class JcrRdfToolsTest {
 
     private JcrRdfTools testObj;
 
-    private static final String mockPredicateName ="http://example.com#someProperty";
-    private static final String mockUri ="http://example.com/";
+    private static final String mockPredicateName =
+        "http://example.com#someProperty";
+
+    private static final String mockUri = "http://example.com/";
+
     /*
      * Also see enormous list of mock fields at bottom.
      */
@@ -192,7 +193,6 @@ public class JcrRdfToolsTest {
         when(mockParentProperties.hasNext()).thenReturn(false);
     }
 
-
     private void addContentNode() throws RepositoryException {
         when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
@@ -200,7 +200,8 @@ public class JcrRdfToolsTest {
         when(mockContentNode.getPath()).thenReturn("/test/jcr/jcr:content");
         when(mockBinary.getKey()).thenReturn(new BinaryKey("abc"));
         when(mockBinaryProperty.getBinary()).thenReturn(mockBinary);
-        when(mockContentNode.getProperty(JCR_DATA)).thenReturn(mockBinaryProperty);
+        when(mockContentNode.getProperty(JCR_DATA)).thenReturn(
+                mockBinaryProperty);
         when(mockBinaryProperty.getName()).thenReturn(JCR_DATA);
         when(mockBinaryProperty.getNode()).thenReturn(mockContentNode);
         when(mockCacheEntry.getExternalIdentifier()).thenReturn("xyz");
@@ -214,19 +215,22 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void testGetPropertiesModel() throws RepositoryException, IOException {
+    public final void testGetPropertiesModel() throws RepositoryException,
+                                              IOException {
         LOGGER.debug("Entering testGetPropertiesModel()...");
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
         logRDF(actual);
         assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
-        assertTrue("Didn't find appropriate triple!",actual.contains(testSubjects.getGraphSubject(mockNode),
-                actual.getProperty(mockPredicateName), actual.createLiteral("abc")));
+        assertTrue("Didn't find appropriate triple!", actual.contains(
+                testSubjects.getGraphSubject(mockNode), actual
+                        .getProperty(mockPredicateName), actual
+                        .createLiteral("abc")));
 
     }
 
-
     @Test
-    public final void testGetPropertiesModelWithContent() throws RepositoryException {
+    public final void
+            testGetPropertiesModelWithContent() throws RepositoryException {
         testObj.setLlstore(mockLowLevelStorageService);
         addContentNode();
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
@@ -239,7 +243,8 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void testGetPropertiesModelForRootNode() throws RepositoryException {
+    public final void
+            testGetPropertiesModelForRootNode() throws RepositoryException {
 
         LOGGER.debug("Entering testGetPropertiesModelForRootNode()...");
         when(mockRepository.login()).thenReturn(mockSession);
@@ -249,17 +254,16 @@ public class JcrRdfToolsTest {
         when(mockQueryManager.createQuery(anyString(), eq(JCR_SQL2)))
                 .thenReturn(mockQuery);
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
-        when(mockMetrics.getCounters())
-                .thenReturn(
-                        ImmutableSortedMap
-                                .of("LowLevelStorageService.fixity-check-counter",
-                                        mockCounter,
-                                        "LowLevelStorageService.fixity-error-counter",
-                                        mockCounter,
-                                        "LowLevelStorageService.fixity-repaired-counter",
-                                        mockCounter
+        when(mockMetrics.getCounters()).thenReturn(
+                ImmutableSortedMap.of(
+                        "LowLevelStorageService.fixity-check-counter",
+                        mockCounter,
+                        "LowLevelStorageService.fixity-error-counter",
+                        mockCounter,
+                        "LowLevelStorageService.fixity-repaired-counter",
+                        mockCounter
 
-                                ));
+                ));
         when(mockGetClusterConfiguration.apply(mockRepository)).thenReturn(
                 ImmutableMap.of("a", "b"));
         setGetClusterConfiguration(mockGetClusterConfiguration);
@@ -267,7 +271,6 @@ public class JcrRdfToolsTest {
         when(mockNode.getPath()).thenReturn("/");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPrimaryNodeType().getName()).thenReturn(ROOT);
-
 
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockRepository.getDescriptorKeys()).thenReturn(
@@ -283,16 +286,16 @@ public class JcrRdfToolsTest {
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
         assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
 
-        assertTrue(actual
-                .contains(
-                        testSubjects.getGraphSubject(mockNode),
-                        actual.createProperty(REPOSITORY_NAMESPACE +
-                                "repository/some-descriptor-key"),
-                        actual.createLiteral("some-descriptor-value")));
+        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
+                actual.createProperty(REPOSITORY_NAMESPACE
+                        + "repository/some-descriptor-key"), actual
+                        .createLiteral("some-descriptor-value")));
     }
 
     @Test
-    public final void shouldExcludeBinaryProperties() throws RepositoryException, IOException {
+    public final void
+            shouldExcludeBinaryProperties() throws RepositoryException,
+                                           IOException {
         when(mockNode.getDepth()).thenReturn(2);
         when(mockNode.getPrimaryNodeType().getName()).thenReturn(
                 "fedora:object");
@@ -312,20 +315,24 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void shouldBeAbleToDisableResourceInlining() throws RepositoryException {
+    public final void
+            shouldBeAbleToDisableResourceInlining() throws RepositoryException {
 
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, -2);
-        assertEquals(0, Iterators.size(actual.listObjectsOfProperty(actual.createProperty("http://www.w3.org/ns/ldp#inlinedResource"))));
+        assertEquals(0, Iterators.size(actual.listObjectsOfProperty(actual
+                .createProperty("http://www.w3.org/ns/ldp#inlinedResource"))));
         verify(mockParent, never()).getProperties();
         verify(mockNode, never()).getNodes();
     }
 
     @Test
-    public final void shouldIncludeLinkedDataPlatformContainerInformation() throws RepositoryException {
+    public final
+            void
+            shouldIncludeLinkedDataPlatformContainerInformation()
+                                                                 throws RepositoryException {
         final NodeType mockPrimaryNodeType = mock(NodeType.class);
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { mock(NodeDefinition.class) }
-        );
+                new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
 
         when(mockProperties.hasNext()).thenReturn(false);
@@ -334,89 +341,134 @@ public class JcrRdfToolsTest {
         when(mockNodes.hasNext()).thenReturn(false);
         when(mockNode.getNodes()).thenReturn(mockNodes);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Page")));
-        assertTrue(actual.contains(testSubjects.getContext(), actual.createProperty("http://www.w3.org/ns/ldp#membersInlined"), actual.createTypedLiteral(true)));
+        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual
+                .createProperty("http://www.w3.org/ns/ldp#Page")));
+        assertTrue(actual.contains(testSubjects.getContext(), actual
+                .createProperty("http://www.w3.org/ns/ldp#membersInlined"),
+                actual.createTypedLiteral(true)));
 
         final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
-        assertTrue(actual.contains(graphSubject, RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Container")));
+        assertTrue(actual.contains(graphSubject, RDF.type, actual
+                .createProperty("http://www.w3.org/ns/ldp#Container")));
 
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), graphSubject));
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), HAS_CHILD));
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"), actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
+        assertTrue(actual.contains(graphSubject, actual
+                .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
+                graphSubject));
+        assertTrue(actual
+                .contains(
+                        graphSubject,
+                        actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
+                        HAS_CHILD));
+        assertTrue(actual
+                .contains(
+                        graphSubject,
+                        actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
+                        actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
 
     }
 
     @Test
-    public final void shouldIncludeContainerInfoWithMixinTypeContainer() throws RepositoryException {
+    public final
+            void
+            shouldIncludeContainerInfoWithMixinTypeContainer()
+                                                              throws RepositoryException {
 
         final NodeType mockPrimaryNodeType = mock(NodeType.class);
         final NodeType mockMixinNodeType = mock(NodeType.class);
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { }
-        );
+                new NodeDefinition[] {});
 
         when(mockMixinNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { mock(NodeDefinition.class) }
-        );
+                new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockMixinNodeType });
+        when(mockNode.getMixinNodeTypes()).thenReturn(
+                new NodeType[] {mockMixinNodeType});
 
         when(mockProperties.hasNext()).thenReturn(false);
 
         when(mockNode.getDepth()).thenReturn(0);
         when(mockNodes.hasNext()).thenReturn(false);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Page")));
-        assertTrue(actual.contains(testSubjects.getContext(), actual.createProperty("http://www.w3.org/ns/ldp#membersInlined"), actual.createTypedLiteral(true)));
+        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual
+                .createProperty("http://www.w3.org/ns/ldp#Page")));
+        assertTrue(actual.contains(testSubjects.getContext(), actual
+                .createProperty("http://www.w3.org/ns/ldp#membersInlined"),
+                actual.createTypedLiteral(true)));
 
         final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
-        assertTrue(actual.contains(graphSubject, RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Container")));
+        assertTrue(actual.contains(graphSubject, RDF.type, actual
+                .createProperty("http://www.w3.org/ns/ldp#Container")));
 
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), graphSubject));
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), HAS_CHILD));
-        assertTrue(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"), actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
+        assertTrue(actual.contains(graphSubject, actual
+                .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
+                graphSubject));
+        assertTrue(actual
+                .contains(
+                        graphSubject,
+                        actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
+                        HAS_CHILD));
+        assertTrue(actual
+                .contains(
+                        graphSubject,
+                        actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
+                        actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
     }
 
     @Test
-    public final void shouldNotIncludeContainerInfoIfItIsntContainer() throws RepositoryException {
-
+    public final
+            void
+            shouldNotIncludeContainerInfoIfItIsntContainer()
+                                                            throws RepositoryException {
 
         final NodeType mockPrimaryNodeType = mock(NodeType.class);
         final NodeType mockMixinNodeType = mock(NodeType.class);
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { }
-        );
+                new NodeDefinition[] {});
 
         when(mockMixinNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { }
-        );
+                new NodeDefinition[] {});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockMixinNodeType });
+        when(mockNode.getMixinNodeTypes()).thenReturn(
+                new NodeType[] {mockMixinNodeType});
 
         when(mockProperties.hasNext()).thenReturn(false);
 
         when(mockNode.getDepth()).thenReturn(0);
         when(mockNodes.hasNext()).thenReturn(false);
         final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Page")));
-        assertFalse(actual.contains(testSubjects.getContext(), actual.createProperty("http://www.w3.org/ns/ldp#membersInlined"), actual.createTypedLiteral(true)));
+        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual
+                .createProperty("http://www.w3.org/ns/ldp#Page")));
+        assertFalse(actual.contains(testSubjects.getContext(), actual
+                .createProperty("http://www.w3.org/ns/ldp#membersInlined"),
+                actual.createTypedLiteral(true)));
 
         final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
-        assertFalse(actual.contains(graphSubject, RDF.type, actual.createProperty("http://www.w3.org/ns/ldp#Container")));
+        assertFalse(actual.contains(graphSubject, RDF.type, actual
+                .createProperty("http://www.w3.org/ns/ldp#Container")));
 
-        assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipSubject"), graphSubject));
-        assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"), HAS_CHILD));
-        assertFalse(actual.contains(graphSubject, actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"), actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
+        assertFalse(actual.contains(graphSubject, actual
+                .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
+                graphSubject));
+        assertFalse(actual
+                .contains(
+                        graphSubject,
+                        actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
+                        HAS_CHILD));
+        assertFalse(actual
+                .contains(
+                        graphSubject,
+                        actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
+                        actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
 
     }
 
     @Test
-    public final void shouldIncludeParentNodeInformation() throws RepositoryException {
+    public final void
+            shouldIncludeParentNodeInformation() throws RepositoryException {
 
         final NodeType mockPrimaryNodeType = mock(NodeType.class);
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { mock(NodeDefinition.class) }
-        );
+                new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode.getDepth()).thenReturn(2);
@@ -426,11 +478,11 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void shouldIncludeChildNodeInformation() throws RepositoryException {
+    public final void
+            shouldIncludeChildNodeInformation() throws RepositoryException {
         final NodeType mockPrimaryNodeType = mock(NodeType.class);
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { mock(NodeDefinition.class) }
-        );
+                new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockProperties.hasNext()).thenReturn(false);
 
@@ -447,13 +499,14 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void shouldIncludeFullChildNodeInformationInsideWindow()
-            throws RepositoryException {
+    public final
+            void
+            shouldIncludeFullChildNodeInformationInsideWindow()
+                                                               throws RepositoryException {
         when(mockNode.getDepth()).thenReturn(0);
         final NodeType mockPrimaryNodeType = mock(NodeType.class);
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-            new NodeDefinition[] { mock(NodeDefinition.class) }
-        );
+                new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
 
         when(mockChildNode.getName()).thenReturn("some-name");
@@ -464,25 +517,25 @@ public class JcrRdfToolsTest {
                 "/test/jcr/3");
         when(mockFullChildNode.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(false);
-        when(mockNodes.hasNext()).thenReturn(true, true, true, true,
-                false);
+        when(mockNodes.hasNext()).thenReturn(true, true, true, true, false);
         when(mockNode.hasNodes()).thenReturn(true);
         when(mockNodes.nextNode()).thenReturn(mockChildNode, mockFullChildNode,
                 mockFullChildNode, mockChildNode, mockChildNode);
         final Model actual = testObj.getJcrTreeModel(mockNode, 1, 2);
-        assertEquals(2, Iterators.size(actual.listSubjectsWithProperty(RdfLexicon.HAS_PARENT)));
+        assertEquals(2, Iterators.size(actual
+                .listSubjectsWithProperty(RdfLexicon.HAS_PARENT)));
         verify(mockChildNode, never()).getProperties();
     }
 
     @Test
-    public final void shouldMapRdfValuesToJcrPropertyValues()
-            throws RepositoryException {
+    public final void
+            shouldMapRdfValuesToJcrPropertyValues() throws RepositoryException {
         when(mockValueFactoryFunc.apply(mockNode)).thenReturn(mockValueFactory);
         final Function<Node, ValueFactory> holdValueFactory = getValueFactory;
         FedoraTypesUtils.getValueFactory = mockValueFactoryFunc;
 
         try {
-            RDFNode n = createResource(RESTAPI_NAMESPACE+"/abc");
+            RDFNode n = createResource(RESTAPI_NAMESPACE + "/abc");
 
             // node references
             when(mockSession.getNode("/abc")).thenReturn(mockNode);
@@ -494,8 +547,8 @@ public class JcrRdfToolsTest {
 
             // uris
             testObj.createValue(mockNode, n, UNDEFINED);
-            verify(mockValueFactory).createValue(
-                    RESTAPI_NAMESPACE + "/abc", PropertyType.URI);
+            verify(mockValueFactory).createValue(RESTAPI_NAMESPACE + "/abc",
+                    PropertyType.URI);
 
             // other random resources
             n = createResource();
@@ -556,7 +609,7 @@ public class JcrRdfToolsTest {
         when(mockPredicateFactoryFunc.apply(mockProperty)).thenReturn(
                 mockPredicate);
         final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> holdPredicate =
-                getPredicateForProperty;
+            getPredicateForProperty;
         getPredicateForProperty = mockPredicateFactoryFunc;
 
         try {
@@ -579,12 +632,12 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void shouldAddMultivaluedPropertiesToModel()
-            throws RepositoryException {
+    public final void
+            shouldAddMultivaluedPropertiesToModel() throws RepositoryException {
         when(mockPredicateFactoryFunc.apply(mockProperty)).thenReturn(
                 mockPredicate);
         final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> holdPredicate =
-                getPredicateForProperty;
+            getPredicateForProperty;
         getPredicateForProperty = mockPredicateFactoryFunc;
 
         try {
@@ -612,22 +665,24 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void shouldMapJcrTypesToRdfDataTypes() throws RepositoryException {
+    public final void
+            shouldMapJcrTypesToRdfDataTypes() throws RepositoryException {
         final Resource mockSubject = createResource("some-resource-uri");
         final Model mockModel = createDefaultModel();
         final Property mockPredicate =
-                mockModel.createProperty("some-predicate-uri");
+            mockModel.createProperty("some-predicate-uri");
         when(mockPredicateFactoryFunc.apply(mockProperty)).thenReturn(
                 mockPredicate);
 
         final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> holdPredicate =
-                getPredicateForProperty;
+            getPredicateForProperty;
         getPredicateForProperty = mockPredicateFactoryFunc;
 
         try {
             when(mockValue.getType()).thenReturn(BOOLEAN);
             when(mockValue.getBoolean()).thenReturn(true);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(true)));
 
@@ -635,35 +690,40 @@ public class JcrRdfToolsTest {
             final Calendar mockCalendar = Calendar.getInstance();
             when(mockValue.getType()).thenReturn(DATE);
             when(mockValue.getDate()).thenReturn(mockCalendar);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(mockCalendar)));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(DECIMAL);
             when(mockValue.getDecimal()).thenReturn(BigDecimal.valueOf(0.0));
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(BigDecimal.valueOf(0.0))));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(DOUBLE);
             when(mockValue.getDouble()).thenReturn((double) 0);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral((double) 0)));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(LONG);
             when(mockValue.getLong()).thenReturn(0L);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral(0L)));
 
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(STRING);
             when(mockValue.getString()).thenReturn("XYZ");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createTypedLiteral("XYZ")));
 
@@ -671,7 +731,8 @@ public class JcrRdfToolsTest {
             when(mockValue.getType()).thenReturn(URI);
             when(mockValue.getString()).thenReturn("info:fedora");
 
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource("info:fedora")));
@@ -683,7 +744,8 @@ public class JcrRdfToolsTest {
 
             when(mockValue.getType()).thenReturn(REFERENCE);
             when(mockValue.getString()).thenReturn("uuid");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource(RESTAPI_NAMESPACE + "/abc")));
@@ -692,7 +754,8 @@ public class JcrRdfToolsTest {
             when(mockValue.getType()).thenReturn(WEAKREFERENCE);
             when(mockValue.getString()).thenReturn("uuid");
             when(mockNode.getPath()).thenReturn("/def");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource(RESTAPI_NAMESPACE + "/def")));
@@ -700,7 +763,8 @@ public class JcrRdfToolsTest {
             mockValue = mock(Value.class);
             when(mockValue.getType()).thenReturn(PATH);
             when(mockValue.getString()).thenReturn("/ghi");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty, mockValue);
+            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
+                    mockValue);
 
             assertTrue(mockModel.contains(mockSubject, mockPredicate,
                     createResource(RESTAPI_NAMESPACE + "/ghi")));
@@ -727,17 +791,19 @@ public class JcrRdfToolsTest {
     public final void testJcrNodeIteratorModel() throws RepositoryException {
         when(mockNodes.hasNext()).thenReturn(false);
         final Model model =
-                testObj.getJcrPropertiesModel(
-                                                 new org.fcrepo.kernel.utils.iterators.NodeIterator(mockNodes),
-                                                 mockResource);
+            testObj.getJcrPropertiesModel(
+                    new org.fcrepo.kernel.utils.iterators.NodeIterator(
+                            mockNodes), mockResource);
         assertTrue(model != null);
     }
 
     @Test
-    public final void testJcrNodeIteratorAddsPredicatesForEachNode()
-            throws RepositoryException {
-        final Resource mockResource = createResource(
-                RESTAPI_NAMESPACE + "/search/resource");
+    public final
+            void
+            testJcrNodeIteratorAddsPredicatesForEachNode()
+                                                          throws RepositoryException {
+        final Resource mockResource =
+            createResource(RESTAPI_NAMESPACE + "/search/resource");
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode1.getSession()).thenReturn(mockSession);
@@ -754,41 +820,36 @@ public class JcrRdfToolsTest {
         when(mockNode3.getProperties()).thenReturn(mockProperties);
 
         final Iterator<Node> mockIterator =
-                asList(mockNode1, mockNode2, mockNode3).iterator();
+            asList(mockNode1, mockNode2, mockNode3).iterator();
         final Model model =
-                testObj.getJcrPropertiesModel(mockIterator,
-                                                 mockResource);
+            testObj.getJcrPropertiesModel(mockIterator, mockResource);
         assertEquals(3, model.listObjectsOfProperty(HAS_MEMBER_OF_RESULT)
                 .toSet().size());
     }
 
     @Test
     public final void testGetFixityResultsModel() throws RepositoryException,
-            URISyntaxException {
-        when(mockCacheEntry.getExternalIdentifier()).thenReturn("xyz");
+                                                 URISyntaxException,
+                                                 IOException {
+        when(mockCacheEntry.getExternalIdentifier()).thenReturn("http://xyz");
+        final String testFixityUri = "http://abc";
         final FixityResult mockResult =
-                new FixityResult(mockCacheEntry, 123, new URI("abc"));
+            new FixityResult(mockCacheEntry, 123, new URI(testFixityUri));
         mockResult.status.add(BAD_CHECKSUM);
         mockResult.status.add(BAD_SIZE);
 
         final List<FixityResult> mockBlobs = asList(mockResult);
-        when(mockNode.getPath()).thenReturn("/path/to/node");
-        when(mockProperties.hasNext()).thenReturn(false);
-        when(mockNode.getProperties()).thenReturn(mockProperties);
 
         final Model fixityResultsModel =
-                testObj.getJcrPropertiesModel(mockNode, mockBlobs);
+            testObj.getJcrPropertiesModel(mockNode, mockBlobs);
 
-        LOGGER.debug("Got graph {}", fixityResultsModel);
-
-        final GraphStore gs = GraphStoreFactory.create(fixityResultsModel);
-        assertTrue(gs.contains(ANY, ANY, IS_FIXITY_RESULT_OF.asNode(),
-                createResource(RESTAPI_NAMESPACE+"/path/to/node")
-                .asNode()));
-        assertTrue(gs.contains(ANY, ANY, HAS_COMPUTED_CHECKSUM.asNode(),
-                createResource("abc").asNode()));
-        assertTrue(gs.contains(ANY, ANY, HAS_COMPUTED_SIZE.asNode(),
-                createTypedLiteral(123).asNode()));
+        logRDF(fixityResultsModel);
+        assertTrue(fixityResultsModel.contains(null, IS_FIXITY_RESULT_OF,
+                createResource(RESTAPI_NAMESPACE + "/test/jcr")));
+        assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_CHECKSUM,
+                createPlainLiteral(testFixityUri)));
+        assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_SIZE,
+                createPlainLiteral(String.valueOf(123))));
 
     }
 
@@ -796,20 +857,17 @@ public class JcrRdfToolsTest {
     public final void testGetJcrNamespaceModel() throws Exception {
         final Model jcrNamespaceModel = testObj.getJcrNamespaceModel();
         assertTrue(jcrNamespaceModel.contains(
-                createResource(REPOSITORY_NAMESPACE),
-                HAS_NAMESPACE_PREFIX, "fcrepo"));
+                createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_PREFIX,
+                "fcrepo"));
 
         final Resource nsSubject = createResource(mockUri);
-        assertTrue(jcrNamespaceModel.contains(nsSubject,
-                                                RDF.type,
-                                                RdfLexicon.VOAF_VOCABULARY));
-        assertTrue(jcrNamespaceModel.contains(nsSubject,
-                                                 HAS_NAMESPACE_PREFIX,
-                                                 "some-prefix"));
+        assertTrue(jcrNamespaceModel.contains(nsSubject, RDF.type,
+                RdfLexicon.VOAF_VOCABULARY));
+        assertTrue(jcrNamespaceModel.contains(nsSubject, HAS_NAMESPACE_PREFIX,
+                "some-prefix"));
 
-        assertTrue(jcrNamespaceModel.contains(nsSubject,
-                                                 HAS_NAMESPACE_URI,
-                                                 mockUri));
+        assertTrue(jcrNamespaceModel.contains(nsSubject, HAS_NAMESPACE_URI,
+                mockUri));
     }
 
     @Test
@@ -844,29 +902,33 @@ public class JcrRdfToolsTest {
 
     @Test
     public final void testIsInternalProperty() throws Exception {
-        assertTrue(testObj.isInternalProperty(mockNode, createProperty(REPOSITORY_NAMESPACE, "some-property")));
-        assertTrue(testObj.isInternalProperty(mockNode, createProperty("http://www.jcp.org/jcr/1.0", "some-property")));
-        assertTrue(testObj.isInternalProperty(mockNode, createProperty("http://www.w3.org/ns/ldp#some-property")));
-        assertFalse(testObj.isInternalProperty(mockNode, createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#label")));
-        assertFalse(testObj.isInternalProperty(mockNode, createProperty("my-own-ns", "some-property")));
+        assertTrue(testObj.isInternalProperty(mockNode, createProperty(
+                REPOSITORY_NAMESPACE, "some-property")));
+        assertTrue(testObj.isInternalProperty(mockNode, createProperty(
+                "http://www.jcp.org/jcr/1.0", "some-property")));
+        assertTrue(testObj.isInternalProperty(mockNode,
+                createProperty("http://www.w3.org/ns/ldp#some-property")));
+        assertFalse(testObj
+                .isInternalProperty(
+                        mockNode,
+                        createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#label")));
+        assertFalse(testObj.isInternalProperty(mockNode, createProperty(
+                "my-own-ns", "some-property")));
     }
 
     private void mockNamespaceRegistry() throws RepositoryException {
 
-        when(mockNsRegistry.isRegisteredUri(mockUri))
-                .thenReturn(true);
+        when(mockNsRegistry.isRegisteredUri(mockUri)).thenReturn(true);
         when(mockNsRegistry.isRegisteredUri("not-registered-uri#")).thenReturn(
                 false);
         when(mockNsRegistry.isRegisteredUri("http://www.jcp.org/jcr/1.0"))
                 .thenReturn(true);
         when(mockNsRegistry.getPrefix("http://www.jcp.org/jcr/1.0"))
                 .thenReturn("jcr");
-        when(mockNsRegistry.getPrefix(mockUri)).thenReturn(
-                "some-prefix");
+        when(mockNsRegistry.getPrefix(mockUri)).thenReturn("some-prefix");
         when(mockNsRegistry.getURI("jcr")).thenReturn(
                 "http://www.jcp.org/jcr/1.0");
-        when(mockNsRegistry.getURI("some-prefix"))
-                .thenReturn(mockUri);
+        when(mockNsRegistry.getURI("some-prefix")).thenReturn(mockUri);
         when(mockNsRegistry.getPrefixes()).thenReturn(
                 new String[] {"jcr", "some-prefix"});
 
@@ -882,8 +944,7 @@ public class JcrRdfToolsTest {
 
     @Test
     public final void shouldMapFcrepoNamespaceToJcrNamespace() {
-        assertEquals(
-                "http://www.jcp.org/jcr/1.0",
+        assertEquals("http://www.jcp.org/jcr/1.0",
                 getJcrNamespaceForRDFNamespace(REPOSITORY_NAMESPACE));
     }
 
@@ -896,20 +957,21 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void shouldMapRdfPredicatesToJcrProperties()
-            throws RepositoryException {
+    public final void
+            shouldMapRdfPredicatesToJcrProperties() throws RepositoryException {
 
-        final Property p =
-                createProperty(REPOSITORY_NAMESPACE, "uuid");
-        assertEquals("jcr:uuid", testObj.getPropertyNameFromPredicate(mockNode, p));
+        final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
+        assertEquals("jcr:uuid", testObj.getPropertyNameFromPredicate(mockNode,
+                p));
 
     }
 
     @Test
-    public final void shouldReuseRegisteredNamespaces() throws RepositoryException {
+    public final void
+            shouldReuseRegisteredNamespaces() throws RepositoryException {
         final Property p = createProperty(mockUri, "uuid");
-        assertEquals("some-prefix:uuid", testObj.getPropertyNameFromPredicate(mockNode,
-                p));
+        assertEquals("some-prefix:uuid", testObj.getPropertyNameFromPredicate(
+                mockNode, p));
     }
 
     @Test
@@ -917,10 +979,9 @@ public class JcrRdfToolsTest {
         when(mockNsRegistry.registerNamespace("not-registered-uri#"))
                 .thenReturn("ns001");
         final Property p = createProperty("not-registered-uri#", "uuid");
-        assertEquals("ns001:uuid", testObj.getPropertyNameFromPredicate(mockNode, p));
+        assertEquals("ns001:uuid", testObj.getPropertyNameFromPredicate(
+                mockNode, p));
     }
-
-
 
     private void logRDF(final Model rdf) throws IOException {
         try (final Writer writer = new StringWriter()) {
@@ -928,7 +989,6 @@ public class JcrRdfToolsTest {
             LOGGER.debug("Found model: {}", writer);
         }
     }
-
 
     @Mock
     private Property mockPredicate;
