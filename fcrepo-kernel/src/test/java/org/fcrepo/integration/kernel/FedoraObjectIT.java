@@ -16,6 +16,8 @@
 package org.fcrepo.integration.kernel;
 
 import static java.util.regex.Pattern.compile;
+import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -30,7 +32,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -84,8 +85,7 @@ public class FedoraObjectIT extends AbstractIT {
             objectService.createObject(session, "/graphObject");
         final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
 
-        final String graphSubject =
-                RdfLexicon.RESTAPI_NAMESPACE + "/graphObject";
+        final String graphSubject = RESTAPI_NAMESPACE + "/graphObject";
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
@@ -129,7 +129,7 @@ public class FedoraObjectIT extends AbstractIT {
 
         UpdateAction
             .parseExecute("PREFIX fedora-rels-ext: <"
-                    + RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
+                    + RELATIONS_NAMESPACE + ">\n" +
                     "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
                     "isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
         assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
@@ -150,7 +150,7 @@ public class FedoraObjectIT extends AbstractIT {
 
         UpdateAction
             .parseExecute("PREFIX fedora-rels-ext: <" +
-                    RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
+                    RELATIONS_NAMESPACE + ">\n" +
                     "DELETE { <" + graphSubject + "> " +
                     "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
                     "} WHERE {}", graphStore);

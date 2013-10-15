@@ -66,25 +66,28 @@ public class NamespaceContext extends RdfContext {
         final ImmutableCollection.Builder<Triple> nsTriples =
             ImmutableSet.builder();
         for (String prefix : namespaceRegistry.getPrefixes()) {
-            final String nsURI = namespaceRegistry.getURI(prefix);
-            if (prefix.equals("jcr")) {
-                prefix = "fcrepo";
+            if (!prefix.isEmpty()) {
+                final String nsURI = namespaceRegistry.getURI(prefix);
+                if (prefix.equals("jcr")) {
+                    prefix = "fcrepo";
+                }
+                LOGGER.debug(
+                        "Discovered namespace prefix \"{}\" with URI \"{}\"",
+                        prefix, nsURI);
+                final String rdfNsUri = getRDFNamespaceForJcrNamespace(nsURI);
+                // first, let's put the namespace in context
+                namespaces.put(prefix, rdfNsUri);
+                LOGGER.debug("Added namespace prefix \"{}\" with URI \"{}\"",
+                        prefix, rdfNsUri);
+                final Node nsSubject = createURI(rdfNsUri);
+                // now, some triples describing this namespace
+                nsTriples.add(create(nsSubject, type.asNode(), VOAF_VOCABULARY
+                        .asNode()));
+                nsTriples.add(create(nsSubject, HAS_NAMESPACE_PREFIX.asNode(),
+                        createLiteral(prefix)));
+                nsTriples.add(create(nsSubject, HAS_NAMESPACE_URI.asNode(),
+                        createLiteral(nsURI)));
             }
-            LOGGER.debug("Discovered namespace prefix \"{}\" with URI \"{}\"",
-                    prefix, nsURI);
-            final String rdfNsUri = getRDFNamespaceForJcrNamespace(nsURI);
-            // first, let's put the namespace in context
-            namespaces.put(prefix, rdfNsUri);
-            LOGGER.debug("Added namespace prefix \"{}\" with URI \"{}\"",
-                    prefix, rdfNsUri);
-            final Node nsSubject = createURI(rdfNsUri);
-            // now, some triples describing this namespace
-            nsTriples.add(create(nsSubject, type.asNode(), VOAF_VOCABULARY
-                    .asNode()));
-            nsTriples.add(create(nsSubject, HAS_NAMESPACE_PREFIX.asNode(),
-                    createLiteral(prefix)));
-            nsTriples.add(create(nsSubject, HAS_NAMESPACE_URI.asNode(),
-                    createLiteral(nsURI)));
         }
         context.concat(nsTriples.build()).addNamespaces(namespaces.build());
     }

@@ -68,24 +68,23 @@ public class PropertyToTriple implements
     }
 
     /**
-     * This nightmare of Java verbosity is a curried transformation. We really
-     * want to go from an iterator of JCR {@link Properties} to an iterator of
-     * RDF {@link Triple}s. But we run into a thorny annoyance: some properties
-     * may produce several triples (multi-valued properties). So we cannot
-     * expect to find a simple Property -> Triple mapping. Instead, we wax much
-     * too clever and offer here a function from any specific property to a new
-     * function, one that takes multiple values (such as occur in our
-     * multi-valued properties) to multiple triples. In other words, this is a
-     * function the outputs of which are functions specific to a given JCR
-     * property. Each output knows how to take any specific value of its
-     * specific property to a triple representing the fact that its specific
-     * property obtains that specific value on some node. All of this is useful
-     * because with these operations represented as functions instead of
-     * ordinary methods, which may have side-effects, we can use elegant,
-     * efficient machinery to manipulate iterators of the objects in which we
-     * are interested, and that's exactly what we want to do in this class. See
-     * {@link PropertiesRdfContext#triplesFromProperties} for an example of the
-     * use of this class with {@link ZippingIterator}.
+     * This nightmare of Java signature verbosity is a curried transformation.
+     * We want to go from an iterator of JCR {@link Properties} to an iterator
+     * of RDF {@link Triple}s. An annoyance: some properties may produce several
+     * triples (multi-valued properties). So we cannot find a simple Property ->
+     * Triple mapping. Instead, we wax clever and offer a function from any
+     * specific property to a new function, one that takes multiple values (such
+     * as occur in our multi-valued properties) to multiple triples. In other
+     * words, this is a function the outputs of which are functions specific to
+     * a given JCR property. Each output knows how to take any specific value of
+     * its specific property to a triple representing the fact that its specific
+     * property obtains that specific value on the node to which that property
+     * belongs. All of this is useful because with these operations represented
+     * as functions instead of ordinary methods, which may have side-effects, we
+     * can use efficient machinery to manipulate iterators of the objects in
+     * which we are interested, and that's exactly what we want to do in this
+     * class. See {@link PropertiesRdfContext#triplesFromProperties} for an
+     * example of the use of this class with {@link ZippingIterator}.
      *
      * @see <a href="http://en.wikipedia.org/wiki/Currying">Currying</a>
      */
@@ -117,10 +116,11 @@ public class PropertyToTriple implements
      * @return An RDF {@link Triple} representing that property.
      */
     private Triple propertyvalue2triple(final Property p, final Value v) {
+        LOGGER.debug("Rendering triple for Property: {} with Value: {}", p, v);
         try {
             final Triple triple =
-                create(getGraphSubject(p.getNode()), getPredicateForProperty
-                        .apply(p).asNode(), propertyvalue2node(p, p.getValue()));
+                create(getGraphSubject(p.getParent()), getPredicateForProperty
+                        .apply(p).asNode(), propertyvalue2node(p, v));
             LOGGER.debug("Created triple: {} ", triple);
             return triple;
         } catch (final RepositoryException e) {
@@ -145,12 +145,10 @@ public class PropertyToTriple implements
                     return createResource(v.getString()).asNode();
                 case REFERENCE:
                 case WEAKREFERENCE:
-                    final javax.jcr.Node refNode =
-                        p.getSession().getNodeByIdentifier(v.getString());
-                    return getGraphSubject(refNode);
                 case PATH:
-                    return getGraphSubject(p.getSession()
-                            .getNode(v.getString()));
+                    final javax.jcr.Node refNode = p.getNode();
+                    return getGraphSubject(refNode);
+
                 default:
                     return literal2node(v.getString());
             }

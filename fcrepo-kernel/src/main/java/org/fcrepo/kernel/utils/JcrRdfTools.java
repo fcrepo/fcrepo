@@ -36,26 +36,17 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.INLINED_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
@@ -67,48 +58,35 @@ import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getNodeTypeManager;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.nodetype.NodeTypeIterator;
-import javax.jcr.nodetype.NodeTypeManager;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionIterator;
-
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
 
-import com.codahale.metrics.Counter;
 import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -143,7 +121,7 @@ public class JcrRdfTools {
             jcrNamespacesToRDFNamespaces.inverse();
     private static GetClusterConfiguration getClusterConfiguration =
             new GetClusterConfiguration();
-    private static LowLevelStorageService llstore;
+    private LowLevelStorageService llstore;
     private final GraphSubjects graphSubjects;
     private Session session;
 
@@ -168,6 +146,20 @@ public class JcrRdfTools {
     }
 
     /**
+     * Contructor with even more context.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param lls
+     */
+    public JcrRdfTools(final GraphSubjects graphSubjects,
+        final Session session, final LowLevelStorageService lls) {
+        this.graphSubjects = graphSubjects;
+        this.session = session;
+        this.llstore = lls;
+    }
+
+    /**
      * Factory method to create a new JcrRdfTools  instance
      * @param graphSubjects
      * @return
@@ -184,6 +176,19 @@ public class JcrRdfTools {
      */
     public static JcrRdfTools withContext(final GraphSubjects graphSubjects, final Session session) {
         return new JcrRdfTools(graphSubjects, session);
+    }
+
+    /**
+     * Factory method to create a new JcrRdfTools instance with full context.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param lls
+     * @return
+     */
+    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+        final Session session, final LowLevelStorageService lls) {
+        return new JcrRdfTools(graphSubjects, session, lls);
     }
 
     /**
@@ -242,29 +247,8 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel()
-        throws RepositoryException {
-        final Model model = createDefaultModel();
-
-        final javax.jcr.NamespaceRegistry namespaceRegistry =
-            getNamespaceRegistry(session);
-        assert (namespaceRegistry != null);
-
-        for (final String prefix : namespaceRegistry.getPrefixes()) {
-            final String nsURI = namespaceRegistry.getURI(prefix);
-            if (nsURI != null && !nsURI.equals("") && !prefix.equals("xmlns")) {
-
-                if (prefix.equals("jcr")) {
-                    model.setNsPrefix("fcrepo",
-                            getRDFNamespaceForJcrNamespace(nsURI));
-                } else {
-                    model.setNsPrefix(prefix,
-                            getRDFNamespaceForJcrNamespace(nsURI));
-                }
-            }
-        }
-
-        return model;
+    public Model getJcrPropertiesModel() throws RepositoryException {
+        return new NamespaceContext(session).context().asModel();
     }
 
     /**
@@ -300,30 +284,6 @@ public class JcrRdfTools {
     }
 
     /**
-     * Get an RDF Model for a node that includes all its own JCR properties, as
-     * well as the properties of its immediate children.
-     *
-     * @param node
-     * @return
-     * @throws RepositoryException
-     */
-    public Model getJcrPropertiesModel(final Node node, final int tag)
-        throws RepositoryException {
-
-        final Model model = getJcrPropertiesModel();
-
-        if (node.getPrimaryNodeType().getName().equals(ROOT)) {
-            /* a rdf description of the root node */
-            LOGGER.debug("Creating RDF response for repository description");
-            addRepositoryMetricsToModel(node, model);
-        }
-
-        addJcrPropertiesToModel(node, model);
-
-        return model;
-    }
-
-    /**
      * Get an {@link Model} for a node that includes all its own JCR properties, as
      * well as the properties of its immediate children.
      *
@@ -336,51 +296,30 @@ public class JcrRdfTools {
     public Model getJcrPropertiesModel(final Node node) throws RepositoryException {
         final RdfStream namespaceContext =
             new NamespaceContext(session).context();
+        // TODO fix GrpahProperties to allow for LowLevelStorageServices to pass through it
+        // this is horribly ugly. LowLevelStorageServices are supposed to be managged beans.
+        // but the contract of GraphProperties isn't wide enough to pass one in, so rather than
+        // alter GraphProperties right now, I'm just spinning one on the fly.
+        if (llstore == null) {
+            llstore = new LowLevelStorageService();
+            llstore.setRepository(session.getRepository());
+        }
         return namespaceContext.concat(
                 new PropertiesRdfContext(node, graphSubjects, llstore)
                         .context()).asModel();
     }
-
-
     /**
      * Get a Jena RDF model for the JCR version history information for a node
      *
      *
-     * @param versionHistory
+     * @param node
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel(final VersionHistory versionHistory, final Resource subject) throws RepositoryException {
-
-        final Model model = getJcrPropertiesModel();
-
-        final VersionIterator versionIterator = versionHistory.getAllVersions();
-
-        while (versionIterator.hasNext()) {
-            final Version version = versionIterator.nextVersion();
-            final Node frozenNode = version.getFrozenNode();
-            final Resource versionSubject =
-                graphSubjects.getGraphSubject(frozenNode);
-
-            model.add(subject, HAS_VERSION, versionSubject);
-
-            final String[] versionLabels =
-                versionHistory.getVersionLabels(version);
-            for (final String label : versionLabels) {
-                model.add(versionSubject, HAS_VERSION_LABEL, label);
-            }
-            final javax.jcr.PropertyIterator properties =
-                frozenNode.getProperties();
-
-            while (properties.hasNext()) {
-                final Property property = properties.nextProperty();
-
-                addPropertyToModel(versionSubject, model, property);
-            }
-
-        }
-
-        return model;
+    public Model getJcrVersionPropertiesModel(final Node node)
+        throws RepositoryException {
+        return new VersionsRdfContext(node, graphSubjects, llstore).context()
+                .asModel();
     }
 
     /**
@@ -581,81 +520,6 @@ public class JcrRdfTools {
             addJcrPropertiesToModel(contentNode, model);
             addJcrContentLocationInformationToModel(node, model);
         }
-    }
-
-    /**
-     * Add repository metrics data to the given JCR model
-     *
-     * @param node
-     * @param model
-     * @throws RepositoryException
-     */
-    private void addRepositoryMetricsToModel(final Node node, final Model model)
-        throws RepositoryException {
-
-        final Repository repository = node.getSession().getRepository();
-        /* retreive the metrics from the service */
-        final SortedMap<String, Counter> counters = getMetrics().getCounters();
-
-        final Resource subject = graphSubjects.getGraphSubject(node);
-        for (final String key : repository.getDescriptorKeys()) {
-            final String descriptor = repository.getDescriptor(key);
-            if (descriptor != null) {
-                final String uri = REPOSITORY_NAMESPACE + "repository/" + key;
-                model.add(subject, model.createProperty(uri), descriptor);
-            }
-        }
-
-        final NodeTypeManager nodeTypeManager = getNodeTypeManager(node);
-
-        final NodeTypeIterator nodeTypes = nodeTypeManager.getAllNodeTypes();
-
-        while (nodeTypes.hasNext()) {
-            final NodeType nodeType = nodeTypes.nextNodeType();
-            model.add(subject, HAS_NODE_TYPE, nodeType.getName());
-        }
-        model.add(subject, HAS_OBJECT_COUNT,
-                createTypedLiteral(getRepositoryCount(repository)));
-        model.add(subject, HAS_OBJECT_SIZE,
-                createTypedLiteral(getRepositorySize(repository)));
-
-        /* TODO Get and add the Storage policy to the RDF response */
-
-        /* add the configuration information */
-
-        /* Get the cluster configuration for the RDF response */
-        final Map<String, String> config =
-            getClusterConfiguration.apply(repository);
-
-        assert (config != null);
-
-        for (final Map.Entry<String, String> entry : config.entrySet()) {
-            model.add(subject, model.createProperty(REPOSITORY_NAMESPACE
-                    + entry.getKey()), entry.getValue());
-        }
-
-        /* and add the repository metrics to the RDF model */
-        if (counters.containsKey("LowLevelStorageService.fixity-check-counter")) {
-            model.add(subject, HAS_FIXITY_CHECK_COUNT,
-                    createTypedLiteral(counters.get(
-                            "org.fcrepo.services." + "LowLevelStorageService."
-                                    + "fixity-check-counter").getCount()));
-        }
-
-        if (counters.containsKey("LowLevelStorageService.fixity-error-counter")) {
-            model.add(subject, HAS_FIXITY_ERROR_COUNT,
-                    createTypedLiteral(counters.get(
-                            "org.fcrepo.services." + "LowLevelStorageService."
-                                    + "fixity-error-counter").getCount()));
-        }
-
-        if (counters.containsKey("LowLevelStorageService.fixity-repaired-counter")) {
-            model.add(subject, HAS_FIXITY_REPAIRED_COUNT,
-                    createTypedLiteral(counters.get(
-                            "org.fcrepo.services." + "LowLevelStorageService."
-                                    + "fixity-repaired-counter").getCount()));
-        }
-
     }
 
     /**
@@ -908,7 +772,7 @@ public class JcrRdfTools {
     /**
      * Set the Low-level storage server implementation
      */
-    public static void setLlstore(
+    public void setLlstore(
         final LowLevelStorageService lowLevelStorageService) {
         llstore = lowLevelStorageService;
     }
