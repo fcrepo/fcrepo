@@ -73,6 +73,9 @@ public abstract class NodeRdfContext extends RdfContext {
         return subject;
     }
 
+    /**
+     * @return the {@link LowLevelStorageService} in scope
+     */
     public LowLevelStorageService lowLevelStorageService() {
         return lowLevelStorageService;
     }

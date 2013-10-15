@@ -95,9 +95,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
      */
 
     public PropertiesRdfContext(final javax.jcr.Node node,
-            final GraphSubjects graphSubjects,
-            final LowLevelStorageService lowLevelStorageService)
-            throws RepositoryException {
+        final GraphSubjects graphSubjects,
+        final LowLevelStorageService lowLevelStorageService)
+        throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         property2triple = new PropertyToTriple(graphSubjects);
         putPropertiesIntoContext();
@@ -223,10 +223,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
         return b.build();
     }
 
-    private
-            Iterator<Triple>
-            triplesFromProperties(final javax.jcr.Node n)
-                                                         throws RepositoryException {
+    private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n)
+        throws RepositoryException {
         LOGGER.debug("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
             filter(new PropertyIterator(n.getProperties()),
@@ -237,7 +235,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
                     not(isBinaryProperty));
 
         return concat(new ZippingIterator<>(transform(nonBinaryProperties,
-                property2values), transform(nonBinaryPropertiesCopy,
+            property2values), transform(nonBinaryPropertiesCopy,
                 property2triple)));
 
     }

@@ -61,7 +61,7 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Service for managing access to low-level binary blobs (which may include
  * redundant copies, etc)
- * 
+ *
  * @author Chris Beer
  * @date Mar 11, 2013
  */
@@ -82,7 +82,7 @@ public class LowLevelStorageService {
 
     /**
      * Apply some Function to the low-level cache entries for the Node
-     * 
+     *
      * @param resource a JCR Node containing a jcr:data binary property (e.g. a
      *        jcr:content node)
      * @param transform a Function to transform the cache entries with
@@ -99,7 +99,7 @@ public class LowLevelStorageService {
     /**
      * Apply some Function to the low-level cache entries for the binary
      * property
-     * 
+     *
      * @param jcrBinaryProperty a binary property (e.g. jcr:data)
      * @param transform a Function to transform the underlying cache entry with
      * @throws RepositoryException
@@ -116,7 +116,7 @@ public class LowLevelStorageService {
     /**
      * Apply some Function to the low-level cache entries for a BinaryKey in the
      * store
-     * 
+     *
      * @param key a BinaryKey in the cache store
      * @param transform a Function to transform the underlying cache entry with
      * @throws RepositoryException
@@ -132,7 +132,7 @@ public class LowLevelStorageService {
 
     /**
      * Transform low-level cache entries from a particular CompositeBinaryStore
-     * 
+     *
      * @param key a Modeshape BinaryValue's key.
      * @return a set of transformed objects
      */
@@ -163,7 +163,7 @@ public class LowLevelStorageService {
     /**
      * Steer low-level cache entries to transform functions according to the
      * subtype of BinaryStore in question
-     * 
+     *
      * @param key a Modeshape BinaryValue's key.
      * @return a set of transformed objects
      */
@@ -198,7 +198,7 @@ public class LowLevelStorageService {
     /**
      * Get the low-level cache entries for a Node containing a jcr:data binary
      * property
-     * 
+     *
      * @param resource a JCR node that has a jcr:data property.
      * @return a map of binary stores and input streams
      * @throws RepositoryException if the jcr:data property isn't found, a
@@ -213,7 +213,7 @@ public class LowLevelStorageService {
 
     /**
      * Get the low-level cache entries for a JCR Binary property
-     * 
+     *
      * @param jcrBinaryProperty a JCR Binary property (e.g. jcr:data)
      * @return a map of binary stores and input streams
      * @throws RepositoryException if the binary key for property isn't found, a
@@ -227,7 +227,7 @@ public class LowLevelStorageService {
 
     /**
      * Get the low-level Cache entries for a Modeshape BinaryKey
-     * 
+     *
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
@@ -239,7 +239,7 @@ public class LowLevelStorageService {
 
     /**
      * Get the low-level cache entries from a particular BinaryStore
-     * 
+     *
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
@@ -251,7 +251,7 @@ public class LowLevelStorageService {
 
     /**
      * Get the low-level cache entries from a particular CompositeBinaryStore
-     * 
+     *
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
@@ -263,7 +263,7 @@ public class LowLevelStorageService {
 
     /**
      * Get the low-level cache entries from a particular InfinispanBinaryStore
-     * 
+     *
      * @param key a Modeshape BinaryValue's key.
      * @return a set of binary stores
      */
@@ -286,7 +286,7 @@ public class LowLevelStorageService {
 
     /**
      * Get the transform results in a clustered Infinispan binary store
-     * 
+     *
      * @param cacheStore the Modeshape BinaryStore to use
      * @param key the BinaryKey we want to transform
      * @param transform the Function to apply
@@ -345,6 +345,11 @@ public class LowLevelStorageService {
         this.getBinaryKey = getBinaryKey;
     }
 
+    /**
+     * @author cbeer
+     * @date 2013
+     * @param <T>
+     */
     static class ExternalIdDecorator<T> implements
             Function<LowLevelCacheEntry, T>, Serializable {
 
@@ -371,6 +376,10 @@ public class LowLevelStorageService {
 
     }
 
+    /**
+     * @author cbeer
+     * @date 2013
+     */
     static class Echo implements
             Function<LowLevelCacheEntry, LowLevelCacheEntry>, Serializable {
 
@@ -383,6 +392,11 @@ public class LowLevelStorageService {
 
     }
 
+    /**
+     * @author cbeer
+     * @date 2013
+     * @param <T>
+     */
     static class Unroll<T> implements
             Function<LowLevelCacheEntry, Collection<T>>, Serializable {
 

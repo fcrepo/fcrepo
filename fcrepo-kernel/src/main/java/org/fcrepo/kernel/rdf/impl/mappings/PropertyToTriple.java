@@ -163,8 +163,7 @@ public class PropertyToTriple implements
         return createTypedLiteral(literal).asNode();
     }
 
-    private Node
-            getGraphSubject(final javax.jcr.Node n) throws RepositoryException {
+    private Node getGraphSubject(final javax.jcr.Node n) throws RepositoryException {
         return graphSubjects.getGraphSubject(n).asNode();
     }
 

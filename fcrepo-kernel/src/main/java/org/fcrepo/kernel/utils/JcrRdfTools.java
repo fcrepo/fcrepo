@@ -333,8 +333,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Model
-            getJcrPropertiesModel(final Node node) throws RepositoryException {
+    public Model getJcrPropertiesModel(final Node node) throws RepositoryException {
         final RdfStream namespaceContext =
             new NamespaceContext(session).context();
         return namespaceContext.concat(

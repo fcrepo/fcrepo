@@ -337,8 +337,7 @@ public abstract class FedoraTypesUtils {
      * @return
      * @throws RepositoryException
      */
-    public static NodeTypeManager
-            getNodeTypeManager(final Node node) throws RepositoryException {
+    public static NodeTypeManager getNodeTypeManager(final Node node) throws RepositoryException {
         return node.getSession().getWorkspace().getNodeTypeManager();
     }
 
@@ -351,9 +350,8 @@ public abstract class FedoraTypesUtils {
      * @return a JCR PropertyDefinition, if available, or null
      * @throws javax.jcr.RepositoryException
      */
-    public static PropertyDefinition
-            getDefinitionForPropertyName(final Node node,
-                    final String propertyName) throws RepositoryException {
+    public static PropertyDefinition getDefinitionForPropertyName(final Node node,
+        final String propertyName) throws RepositoryException {
         final PropertyDefinition[] propertyDefinitions =
             getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE)
                     .getPropertyDefinitions();
@@ -396,8 +394,7 @@ public abstract class FedoraTypesUtils {
      * @return
      * @throws RepositoryException
      */
-    public static Version
-            getBaseVersion(final Node node) throws RepositoryException {
+    public static Version getBaseVersion(final Node node) throws RepositoryException {
         return node.getSession().getWorkspace().getVersionManager()
                 .getBaseVersion(node.getPath());
     }
@@ -409,8 +406,7 @@ public abstract class FedoraTypesUtils {
      * @return
      * @throws RepositoryException
      */
-    public static VersionHistory
-            getVersionHistory(final Node node) throws RepositoryException {
+    public static VersionHistory getVersionHistory(final Node node) throws RepositoryException {
         return getVersionHistory(node.getSession(), node.getPath());
     }
 
@@ -432,10 +428,8 @@ public abstract class FedoraTypesUtils {
      * @return a double of the size of the fedora:datastream binary content
      * @throws RepositoryException
      */
-    public static
-            long
-            getRepositoryCount(final Repository repository)
-                                                           throws RepositoryException {
+    public static long getRepositoryCount(final Repository repository)
+        throws RepositoryException {
         final Session session = repository.login();
         try {
             final QueryManager queryManager =
@@ -459,10 +453,8 @@ public abstract class FedoraTypesUtils {
      * @return a double of the size of the fedora:datastream binary content
      * @throws RepositoryException
      */
-    public static
-            long
-            getRepositorySize(final Repository repository)
-                                                          throws RepositoryException {
+    public static long getRepositorySize(final Repository repository)
+        throws RepositoryException {
         final Session session = repository.login();
         long sum = 0;
         final QueryManager queryManager =

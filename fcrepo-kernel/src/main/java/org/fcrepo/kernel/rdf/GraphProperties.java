@@ -25,6 +25,10 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
 
+/**
+ * @author barmintor
+ * @date 2013
+ */
 public interface GraphProperties {
 
     Symbol URI_SYMBOL = create("uri");

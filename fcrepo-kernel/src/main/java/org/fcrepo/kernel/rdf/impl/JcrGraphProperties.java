@@ -30,6 +30,10 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 
+/**
+ * @author barmintor
+ * @date 2013
+ */
 public class JcrGraphProperties implements GraphProperties {
 
     private static final String MODEL_NAME = "tree";
@@ -48,7 +52,7 @@ public class JcrGraphProperties implements GraphProperties {
         final Model treeModel = jcrRdfTools.getJcrTreeModel(node, offset, limit);
         final Model problemModel = JcrRdfTools.getProblemsModel();
 
-        JcrPropertyStatementListener listener =
+        final JcrPropertyStatementListener listener =
             JcrPropertyStatementListener.getListener(
                     subjects, node.getSession(), problemModel);
 
@@ -58,9 +62,9 @@ public class JcrGraphProperties implements GraphProperties {
         final Dataset dataset = DatasetFactory.create(model);
         dataset.addNamedModel(MODEL_NAME, treeModel);
 
-        Resource subject = subjects.getGraphSubject(node);
-        String uri = subject.getURI();
-        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        final Resource subject = subjects.getGraphSubject(node);
+        final String uri = subject.getURI();
+        final com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
         context.set(URI_SYMBOL,uri);
         context.set(INLINED_RESOURCES_MODEL,MODEL_NAME);
 

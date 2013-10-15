@@ -276,8 +276,7 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
-    public void testGetVersionHistoryForSessionAndPath()
-            throws RepositoryException {
+    public void testGetVersionHistoryForSessionAndPath() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockWS.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/my/path")).thenReturn(
