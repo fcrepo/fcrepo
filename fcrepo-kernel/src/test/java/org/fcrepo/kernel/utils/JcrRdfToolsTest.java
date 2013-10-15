@@ -738,16 +738,17 @@ public class JcrRdfToolsTest {
             throws RepositoryException {
         final Resource mockResource = createResource(
                 RESTAPI_NAMESPACE + "/search/resource");
-        final Node mockNode1 = mock(Node.class);
-        final Node mockNode2 = mock(Node.class);
-        final Node mockNode3 = mock(Node.class);
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode1.getSession()).thenReturn(mockSession);
-
+        when(mockNode2.getSession()).thenReturn(mockSession);
+        when(mockNode3.getSession()).thenReturn(mockSession);
         when(mockNode1.getPath()).thenReturn("/path/to/first/node");
         when(mockNode2.getPath()).thenReturn("/second/path/to/node");
         when(mockNode3.getPath()).thenReturn("/third/path/to/node");
+        when(mockNode1.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode2.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode3.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode2.getProperties()).thenReturn(mockProperties);
         when(mockNode3.getProperties()).thenReturn(mockProperties);
@@ -942,7 +943,7 @@ public class JcrRdfToolsTest {
     private Function<Node, ValueFactory> mockValueFactoryFunc;
 
     @Mock
-    private Node mockNode;
+    private Node mockNode, mockNode1, mockNode2, mockNode3;
 
     @Mock
     private Node mockParent;

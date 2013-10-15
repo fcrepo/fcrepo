@@ -17,13 +17,14 @@
 package org.fcrepo.kernel.utils;
 
 import static com.google.common.collect.Iterables.any;
-import static com.google.common.collect.Iterators.peekingIterator;
+import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singleton;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
@@ -91,7 +92,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.PeekingIterator;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -263,24 +263,18 @@ public class JcrRdfTools {
                                        final Resource iteratorSubject)
         throws RepositoryException {
 
-        if (!nodeIterator.hasNext()) {
-            return createDefaultModel();
-        }
-
-        final PeekingIterator<Node> iterator = peekingIterator(nodeIterator);
-        final Model model =
-                getJcrPropertiesModel();
-
-        while (iterator.hasNext()) {
-            final Node node = iterator.next();
-            addJcrPropertiesToModel(node, model);
+        final RdfStream results = new RdfStream();
+        while (nodeIterator.hasNext()) {
+            final Node node = nodeIterator.next();
+            results.concat(new PropertiesRdfContext(node, graphSubjects,
+                    llstore).context());
             if (iteratorSubject != null) {
-                model.add(iteratorSubject, HAS_MEMBER_OF_RESULT, graphSubjects
-                        .getGraphSubject(node));
+                results.concat(singleton(create(iteratorSubject.asNode(),
+                        HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
+                                .getGraphSubject(node).asNode())));
             }
         }
-
-        return model;
+        return results.asModel();
     }
 
     /**
@@ -296,14 +290,6 @@ public class JcrRdfTools {
     public Model getJcrPropertiesModel(final Node node) throws RepositoryException {
         final RdfStream namespaceContext =
             new NamespaceContext(session).context();
-        // TODO fix GrpahProperties to allow for LowLevelStorageServices to pass through it
-        // this is horribly ugly. LowLevelStorageServices are supposed to be managged beans.
-        // but the contract of GraphProperties isn't wide enough to pass one in, so rather than
-        // alter GraphProperties right now, I'm just spinning one on the fly.
-        if (llstore == null) {
-            llstore = new LowLevelStorageService();
-            llstore.setRepository(session.getRepository());
-        }
         return namespaceContext.concat(
                 new PropertiesRdfContext(node, graphSubjects, llstore)
                         .context()).asModel();

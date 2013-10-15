@@ -49,7 +49,18 @@ public abstract class NodeRdfContext extends RdfContext {
         this.node = node;
         this.graphSubjects = graphSubjects;
         subject = graphSubjects.getGraphSubject(node).asNode();
-        this.lowLevelStorageService = lowLevelStorageService;
+
+        // TODO fix GraphProperties to allow for LowLevelStorageServices to pass through it
+        // this is horribly ugly. LowLevelStorageServices are supposed to be managed beans.
+        // but the contract of GraphProperties isn't wide enough to pass one in, so rather than
+        // alter GraphProperties right now, I'm just spinning one on the fly.
+        if (lowLevelStorageService == null) {
+            this.lowLevelStorageService = new LowLevelStorageService();
+            this.lowLevelStorageService.setRepository(node.getSession()
+                    .getRepository());
+        } else {
+            this.lowLevelStorageService = lowLevelStorageService;
+        }
     }
 
     /**
