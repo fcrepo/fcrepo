@@ -21,7 +21,6 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDshort;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -896,9 +895,9 @@ public class JcrRdfToolsTest {
         assertTrue(fixityResultsModel.contains(null, IS_FIXITY_RESULT_OF,
                 createResource(RESTAPI_NAMESPACE + "/test/jcr")));
         assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_CHECKSUM,
-                createPlainLiteral(testFixityUri)));
+                createResource(testFixityUri)));
         assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_SIZE,
-                createPlainLiteral(String.valueOf(123))));
+                createTypedLiteral(123)));
 
     }
 

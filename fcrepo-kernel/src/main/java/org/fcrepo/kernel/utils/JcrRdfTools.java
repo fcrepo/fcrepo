@@ -55,6 +55,7 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
@@ -163,8 +164,12 @@ public class JcrRdfTools {
      * @return
      */
     public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
-            final Session session) {
-        return new JcrRdfTools(graphSubjects, session);
+        final Session session) {
+        if (graphSubjects == null) {
+            return new JcrRdfTools(new DefaultGraphSubjects(session), session);
+        } else {
+            return new JcrRdfTools(graphSubjects, session);
+        }
     }
 
     /**

@@ -21,9 +21,10 @@ import static com.google.common.collect.ImmutableSet.builder;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static java.lang.String.valueOf;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
@@ -96,10 +97,10 @@ public class FixityRdfContext extends NodeRdfContext {
                             final String checksum =
                                 blob.computedChecksum.toString();
                             b.add(create(resultSubject, HAS_COMPUTED_CHECKSUM
-                                    .asNode(), createLiteral(checksum)));
+                                    .asNode(), createURI(checksum)));
                             b.add(create(resultSubject, HAS_COMPUTED_SIZE
-                                    .asNode(),
-                                    createLiteral(valueOf(blob.computedSize))));
+                                    .asNode(), createTypedLiteral(blob.computedSize)
+                                    .asNode()));
                             return b.build().iterator();
                         } catch (final RepositoryException e) {
                             throw propagate(e);

@@ -75,19 +75,19 @@ public class FedoraRepositoryWorkspacesTest {
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{"yyy"});
-
+        when(mockNamespaceRegistry.getURI("yyy")).thenReturn("http://example.com");
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockUriBuilder);
         when(mockUriBuilder.path(any(String.class))).thenReturn(mockUriBuilder);
 
-        URI uri = new URI("http://base/workspaces");
+        final URI uri = new URI("http://base/workspaces");
         when(mockUriBuilder.build()).thenReturn(uri);
 
         // Do the test.
-        Dataset dataset = workspaces.getWorkspaces();
+        final Dataset dataset = workspaces.getWorkspaces();
 
-        Resource resource = dataset.getDefaultModel()
+        final Resource resource = dataset.getDefaultModel()
                 .getResource(uri.toString());
-        String resourceName = resource.toString();
+        final String resourceName = resource.toString();
 
         org.junit.Assert.assertNotNull(resourceName);
         org.junit.Assert.assertEquals(uri.toString(), resourceName);
