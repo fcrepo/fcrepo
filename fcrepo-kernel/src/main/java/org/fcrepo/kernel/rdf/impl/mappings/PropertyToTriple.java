@@ -146,15 +146,30 @@ public class PropertyToTriple implements
                 case REFERENCE:
                 case WEAKREFERENCE:
                 case PATH:
-                    final javax.jcr.Node refNode = p.getNode();
-                    return getGraphSubject(refNode);
-
+                    return traverseLink(p,v);
                 default:
                     return literal2node(v.getString());
             }
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
+    }
+
+    private Node traverseLink(final Property p, final Value v)
+        throws RepositoryException {
+        final javax.jcr.Node refNode;
+        if (p.isMultiple()) {
+            if (v.getType() == PATH) {
+                refNode = p.getParent().getNode(v.getString());
+            } else {
+                refNode = p.getSession().getNodeByIdentifier(v.getString());
+            }
+        } else {
+            // directly traverses the link
+            refNode = p.getNode();
+
+        }
+        return getGraphSubject(refNode);
     }
 
     private static Node literal2node(final Object literal) {

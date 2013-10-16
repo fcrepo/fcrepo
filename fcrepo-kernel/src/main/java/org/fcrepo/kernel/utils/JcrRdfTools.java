@@ -20,8 +20,6 @@ import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static com.hp.hpl.jena.vocabulary.RDF.nil;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static javax.jcr.PropertyType.BINARY;
@@ -36,33 +34,16 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
-import static org.fcrepo.kernel.RdfLexicon.INLINED_RESOURCE;
-import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_OBJECT;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_PREDICATE;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_SUBJECT;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
-import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
-import static org.fcrepo.kernel.RdfLexicon.PAGE;
-import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
@@ -71,9 +52,11 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
+
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
+import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
@@ -326,7 +309,6 @@ public class JcrRdfTools {
                 new FixityRdfContext(node, graphSubjects, llstore, blobs))
                 .concat(new PropertiesRdfContext(node, graphSubjects, llstore))
                 .asModel();
-
     }
 
     /**
@@ -349,86 +331,17 @@ public class JcrRdfTools {
      */
     public Model getJcrTreeModel(final Node node, final long offset,
             final int limit) throws RepositoryException {
-
-        final Model model = getJcrPropertiesModel();
-
-        if (limit < -1) {
-            return model;
-        }
-
-        final Resource subject = graphSubjects.getGraphSubject(node);
-        final Resource pageContext = graphSubjects.getContext();
-
-        model.add(pageContext, type, PAGE);
-        model.add(pageContext, PAGE_OF, subject);
-
-        if (isContainer(node)) {
-            model.add(pageContext, MEMBERS_INLINED, model
-                    .createTypedLiteral(true));
-
-            model.add(subject, type, CONTAINER);
-            model.add(subject, MEMBERSHIP_SUBJECT, subject);
-            model.add(subject, MEMBERSHIP_PREDICATE, HAS_CHILD);
-            model.add(subject, MEMBERSHIP_OBJECT, MEMBER_SUBJECT);
-        }
-
-        // don't do this if the node is the root node.
-        if (node.getDepth() > 0) {
-
-            final Node parentNode = node.getParent();
-            final Resource parentNodeSubject =
-                graphSubjects.getGraphSubject(parentNode);
-            model.add(subject, HAS_PARENT, parentNodeSubject);
-            model.add(parentNodeSubject, HAS_CHILD, subject);
-            addJcrPropertiesToModel(parentNode, model);
-            model.add(pageContext, INLINED_RESOURCE, parentNodeSubject);
-        }
-
-        if (node.hasNodes()) {
-
-            if (limit == -1) {
-                model.add(pageContext, PAGE, nil);
-            }
-
-            final javax.jcr.NodeIterator nodeIterator = node.getNodes();
-
-            int i = 0;
-            long excludedNodeCount = 0;
-
-            while (nodeIterator.hasNext()) {
-                final Node childNode = nodeIterator.nextNode();
-
-                // exclude jcr system nodes or jcr:content nodes
-                if (isInternalNode.apply(childNode)
-                        || childNode.getName().equals(JCR_CONTENT)) {
-                    excludedNodeCount++;
-                } else {
-                    final Resource childNodeSubject =
-                        graphSubjects.getGraphSubject(childNode);
-
-                    if (i >= offset && (limit == -1 || i < (offset + limit))) {
-                        addJcrPropertiesToModel(childNode, model);
-                        model.add(pageContext, INLINED_RESOURCE,
-                                childNodeSubject);
-                        model.add(childNodeSubject, HAS_PARENT, subject);
-                    }
-
-                    i++;
-
-                    model.add(subject, HAS_CHILD, childNodeSubject);
-                }
-
-            }
-
-            model.add(subject, HAS_CHILD_COUNT, createTypedLiteral(nodeIterator
-                    .getSize()
-                    - excludedNodeCount));
-        }
-
-        return model;
+        return new HierarchyRdfContext(node, graphSubjects, llstore).asModel();
     }
 
-    private boolean isContainer(final Node node) throws RepositoryException {
+    /**
+     * Decides whether the RDF represetnation of this {@link Node} will receive LDP Container status.
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean isContainer(final Node node) throws RepositoryException {
         return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())
                 || any(ImmutableList.copyOf(node.getMixinNodeTypes()),
                         HAS_CHILD_NODE_DEFINITIONS);
@@ -461,68 +374,6 @@ public class JcrRdfTools {
             default:
                 return false;
         }
-    }
-
-    /**
-     * Add all of a node's properties to the given model
-     *
-     * @param node
-     * @param model
-     * @throws RepositoryException
-     */
-    private void addJcrPropertiesToModel(final Node node, final Model model)
-        throws RepositoryException {
-
-        final Resource subject = graphSubjects.getGraphSubject(node);
-        final javax.jcr.PropertyIterator properties = node.getProperties();
-
-        while (properties.hasNext()) {
-            final Property property = properties.nextProperty();
-            addPropertyToModel(subject, model, property);
-        }
-
-        // always include the jcr:content node information
-        if (node.hasNode(JCR_CONTENT)) {
-            final Node contentNode = node.getNode(JCR_CONTENT);
-            final Resource contentSubject =
-                graphSubjects.getGraphSubject(contentNode);
-
-            model.add(subject, HAS_CONTENT, contentSubject);
-            model.add(contentSubject, IS_CONTENT_OF, subject);
-
-            addJcrPropertiesToModel(contentNode, model);
-            addJcrContentLocationInformationToModel(node, model);
-        }
-    }
-
-    /**
-     * Add information about a jcr:content node to the model
-     *
-     * @param node
-     * @param model
-     * @throws RepositoryException
-     */
-    private void addJcrContentLocationInformationToModel(final Node node,
-            final Model model) throws RepositoryException {
-        final Node contentNode = node.getNode(JCR_CONTENT);
-        final Resource contentNodeSubject =
-            graphSubjects.getGraphSubject(contentNode);
-
-        // TODO get this from somewhere else.
-
-        if (llstore == null) {
-            llstore = new LowLevelStorageService();
-            llstore.setRepository(node.getSession().getRepository());
-        }
-
-        final Set<LowLevelCacheEntry> cacheEntries =
-            llstore.getLowLevelCacheEntries(contentNode);
-
-        for (final LowLevelCacheEntry e : cacheEntries) {
-            model.add(contentNodeSubject, HAS_LOCATION, e
-                    .getExternalIdentifier());
-        }
-
     }
 
     /**

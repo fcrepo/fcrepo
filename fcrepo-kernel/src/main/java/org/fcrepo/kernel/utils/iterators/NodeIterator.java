@@ -22,7 +22,7 @@ import javax.jcr.Node;
 
 /**
  * Type-aware iterator to wrap the JCR NodeIterator
- * 
+ *
  * @author ajs6f
  * @date Apr 20, 2013
  */
@@ -32,7 +32,7 @@ public class NodeIterator implements Iterator<Node>, Iterable<Node> {
 
     /**
      * Wrap the NodeIterator with our generic version
-     * 
+     *
      * @param i
      */
     public NodeIterator(final javax.jcr.NodeIterator i) {
@@ -46,7 +46,7 @@ public class NodeIterator implements Iterator<Node>, Iterable<Node> {
 
     @Override
     public Node next() {
-        return (Node) i.next();
+        return i.nextNode();
     }
 
     @Override

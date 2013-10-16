@@ -226,7 +226,7 @@ public abstract class FedoraTypesUtils {
         @Override
         public boolean apply(final Node n) {
             checkArgument(n != null,
-                    "null is neither multiple or not multiple!");
+                    "null is neither internal nor not internal!");
             try {
                 final NodeType primaryNodeType = n.getPrimaryNodeType();
                 return primaryNodeType != null
