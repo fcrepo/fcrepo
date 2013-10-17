@@ -79,6 +79,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
             final GraphSubjects graphSubjects, final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         if (node.getDepth() > 0) {
+            LOGGER.debug("Determined that this node has a parent.");
             concat(parentContext());
         }
         final Node pageContext = graphSubjects.getContext().asNode();
@@ -87,10 +88,12 @@ public class HierarchyRdfContext extends NodeRdfContext {
                 create(pageContext, PAGE_OF.asNode(), subject())});
 
         if (JcrRdfTools.isContainer(node)) {
+            LOGGER.debug("Determined that this node is a container.");
             concat(containerContext(pageContext));
 
         }
         if (node.hasNodes()) {
+            LOGGER.debug("Found children of this node.");
             concat(childrenContext(pageContext));
         }
     }
@@ -126,8 +129,10 @@ public class HierarchyRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Triple> childrenContext(final Node pageContext) throws RepositoryException {
+
         final Iterator<javax.jcr.Node> niceChildren =
             filter(new NodeIterator(node().getNodes()), not(nastyChildren));
+
         final Iterator<Triple> results = Iterators.concat(transform(niceChildren,
                 child2triples(pageContext)));
         return results;

@@ -16,8 +16,8 @@
 
 package org.fcrepo.kernel.rdf.impl.mappings;
 
+import static com.google.common.collect.Iterators.singletonIterator;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static java.util.Collections.singletonList;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.STRING;
 import static org.junit.Assert.assertEquals;
@@ -133,7 +133,7 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(PATH);
         final Function<Iterator<Value>, Iterator<Triple>> mapping =
             testPropertyToTriple.apply(mockProperty);
-        final Triple t = mapping.apply(singleValueIterator(mockValue)).next();
+        final Triple t = mapping.apply(singletonIterator(mockValue)).next();
         LOGGER.debug("Constructed triple: {}", t);
         assertEquals("Got wrong RDF object!", t.getObject(), TEST_NODE_SUBJECT
                 .asNode());
@@ -153,7 +153,7 @@ public class PropertyToTripleTest {
         when(mockValue.getString()).thenReturn(TEST_VALUE);
         final Function<Iterator<Value>, Iterator<Triple>> mapping =
             testPropertyToTriple.apply(mockProperty);
-        final Triple t = mapping.apply(singleValueIterator(mockValue)).next();
+        final Triple t = mapping.apply(singletonIterator(mockValue)).next();
         LOGGER.debug("Constructed triple: {}", t);
         assertEquals("Got wrong RDF object!", t.getObject().getLiteralValue(),
                 TEST_VALUE);
@@ -200,10 +200,6 @@ public class PropertyToTripleTest {
                 createProperty(TEST_PROPERTY_NAME).asNode());
         assertEquals("Got wrong RDF subject!", t2.getSubject(),
                 TEST_NODE_SUBJECT.asNode());
-    }
-
-    private <T> Iterator<T> singleValueIterator(final T t) {
-        return singletonList(t).iterator();
     }
 
     private <T> Iterator<T> twoValueIterator(final T t, final T t2) {

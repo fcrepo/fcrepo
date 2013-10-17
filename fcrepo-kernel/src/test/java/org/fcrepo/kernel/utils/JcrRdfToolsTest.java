@@ -16,7 +16,6 @@
 
 package org.fcrepo.kernel.utils;
 
-import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDshort;
@@ -46,8 +45,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
@@ -77,8 +74,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -126,7 +121,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 import org.slf4j.Logger;
 
@@ -200,27 +194,6 @@ public class JcrRdfToolsTest {
         when(mockParentProperties.hasNext()).thenReturn(false);
     }
 
-    private void addContentNode() throws RepositoryException {
-        when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
-        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getSession()).thenReturn(mockSession);
-        when(mockContentNode.getPath()).thenReturn("/test/jcr/jcr:content");
-        when(mockBinary.getKey()).thenReturn(new BinaryKey("abc"));
-        when(mockBinaryProperty.getBinary()).thenReturn(mockBinary);
-        when(mockContentNode.getProperty(JCR_DATA)).thenReturn(
-                mockBinaryProperty);
-        when(mockBinaryProperty.getName()).thenReturn(JCR_DATA);
-        when(mockBinaryProperty.getNode()).thenReturn(mockContentNode);
-        when(mockCacheEntry.getExternalIdentifier()).thenReturn("xyz");
-        when(
-                mockLowLevelStorageService
-                        .getLowLevelCacheEntries(mockContentNode)).thenReturn(
-                of(mockCacheEntry));
-
-        when(mockContentNode.getProperties()).thenReturn(
-                new TestPropertyIterator(mockBinaryProperty));
-    }
-
     @Test
     public final void testGetPropertiesModel() throws RepositoryException,
                                               IOException {
@@ -236,19 +209,7 @@ public class JcrRdfToolsTest {
 
     }
 
-    @Test
-    public final void
-            testGetPropertiesModelWithContent() throws RepositoryException {
-        testObj.setLlstore(mockLowLevelStorageService);
-        addContentNode();
-        final Model actual = testObj.getJcrPropertiesModel(mockNode);
-        assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
-        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
-                HAS_CONTENT, testSubjects.getGraphSubject(mockContentNode)));
-        assertTrue(actual.contains(testSubjects
-                .getGraphSubject(mockContentNode), HAS_LOCATION, actual
-                .createLiteral("xyz")));
-    }
+
 
     @Test
     public final void
@@ -334,54 +295,6 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public
-            void
-            shouldIncludeLinkedDataPlatformContainerInformation()
-                                                                 throws RepositoryException,
-                                                                 IOException {
-        LOGGER.debug("Entering shouldIncludeLinkedDataPlatformContainerInformation()...");
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-                new NodeDefinition[] {mock(NodeDefinition.class)});
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-
-        when(mockProperties.hasNext()).thenReturn(false);
-
-        when(mockNode.getDepth()).thenReturn(0);
-        when(mockNodes.hasNext()).thenReturn(false);
-        when(mockNode.getNodes()).thenReturn(mockNodes);
-        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        logRDF(actual);
-        assertTrue(actual.contains(testSubjects.getContext(), type, actual
-                .createProperty("http://www.w3.org/ns/ldp#Page")));
-        assertTrue(actual.contains(testSubjects.getContext(), actual
-                .createProperty("http://www.w3.org/ns/ldp#membersInlined"),
-                actual.createLiteral(TRUE.toString())));
-
-        final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
-
-
-        assertTrue(actual.contains(graphSubject, type, actual
-                .createProperty("http://www.w3.org/ns/ldp#Container")));
-
-        assertTrue(actual.contains(graphSubject, actual
-                .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
-                graphSubject));
-        assertTrue(actual
-                .contains(
-                        graphSubject,
-                        actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
-                        HAS_CHILD));
-        assertTrue(actual
-                .contains(
-                        graphSubject,
-                        actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
-                        actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
-        LOGGER.debug("Leaving shouldIncludeLinkedDataPlatformContainerInformation()...");
-
-    }
-
-    @Test
     public final
             void
             shouldIncludeContainerInfoWithMixinTypeContainer()
@@ -427,127 +340,6 @@ public class JcrRdfToolsTest {
                         graphSubject,
                         actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
                         actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
-    }
-
-    @Test
-    public final
-            void
-            shouldNotIncludeContainerInfoIfItIsntContainer()
-                                                            throws RepositoryException {
-
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        final NodeType mockMixinNodeType = mock(NodeType.class);
-        when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-                new NodeDefinition[] {});
-
-        when(mockMixinNodeType.getChildNodeDefinitions()).thenReturn(
-                new NodeDefinition[] {});
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockMixinNodeType});
-
-        when(mockProperties.hasNext()).thenReturn(false);
-
-        when(mockNode.getDepth()).thenReturn(0);
-        when(mockNodes.hasNext()).thenReturn(false);
-        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertTrue(actual.contains(testSubjects.getContext(), RDF.type, actual
-                .createProperty("http://www.w3.org/ns/ldp#Page")));
-        assertFalse(actual.contains(testSubjects.getContext(), actual
-                .createProperty("http://www.w3.org/ns/ldp#membersInlined"),
-                actual.createTypedLiteral(true)));
-
-        final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
-        assertFalse(actual.contains(graphSubject, RDF.type, actual
-                .createProperty("http://www.w3.org/ns/ldp#Container")));
-
-        assertFalse(actual.contains(graphSubject, actual
-                .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
-                graphSubject));
-        assertFalse(actual
-                .contains(
-                        graphSubject,
-                        actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
-                        HAS_CHILD));
-        assertFalse(actual
-                .contains(
-                        graphSubject,
-                        actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
-                        actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
-
-    }
-
-    @Test
-    public final void
-            shouldIncludeParentNodeInformation() throws RepositoryException {
-
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
-                new NodeDefinition[] {mock(NodeDefinition.class)});
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockProperties.hasNext()).thenReturn(false);
-        when(mockNode.getDepth()).thenReturn(2);
-        when(mockNodes.hasNext()).thenReturn(false);
-        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
-        assertEquals(1, Iterators.size(actual.listObjectsOfProperty(HAS_CHILD)));
-    }
-
-    @Test
-    public void shouldIncludeChildNodeInformation() throws RepositoryException, IOException {
-        reset(mockChildNode, mockNodes, mockNode);
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockNode.getPath()).thenReturn("/test/jcr");
-        when(mockNode.getNodes()).thenReturn(mockNodes, mockNodes2, mockNodes3);
-        when(mockNode.getName()).thenReturn("mockNode");
-        when(mockNode.getProperties()).thenReturn(mockProperties);
-        when(mockNode.getDepth()).thenReturn(0);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-
-        when(mockChildNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockChildNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-        when(mockChildNode2.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockChildNode2.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-        when(mockChildNode3.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockChildNode3.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-        when(mockChildNode4.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockChildNode4.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-        when(mockChildNode5.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockChildNode5.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-
-        when(mockChildNode.getProperties()).thenReturn(mockProperties);
-        when(mockChildNode2.getProperties()).thenReturn(mockProperties);
-        when(mockChildNode3.getProperties()).thenReturn(mockProperties);
-        when(mockChildNode4.getProperties()).thenReturn(mockProperties);
-        when(mockChildNode5.getProperties()).thenReturn(mockProperties);
-
-        when(mockChildNode.getName()).thenReturn("mockChildNode");
-        when(mockChildNode2.getName()).thenReturn("mockChildNode2");
-        when(mockChildNode3.getName()).thenReturn("mockChildNode3");
-        when(mockChildNode4.getName()).thenReturn("mockChildNode4");
-        when(mockChildNode5.getName()).thenReturn("mockChildNode5");
-
-        when(mockChildNode.getParent()).thenReturn(mockNode);
-        when(mockChildNode2.getParent()).thenReturn(mockNode);
-        when(mockChildNode3.getParent()).thenReturn(mockNode);
-        when(mockChildNode4.getParent()).thenReturn(mockNode);
-        when(mockChildNode5.getParent()).thenReturn(mockNode);
-
-        when(mockChildNode.getPath()).thenReturn("/test/jcr/1");
-        when(mockChildNode2.getPath()).thenReturn("/test/jcr/2");
-        when(mockChildNode3.getPath()).thenReturn("/test/jcr/3");
-        when(mockChildNode4.getPath()).thenReturn("/test/jcr/4");
-        when(mockChildNode5.getPath()).thenReturn("/test/jcr/5");
-
-        when(mockNodes.hasNext()).thenReturn(true, true, true, true, true,
-                false);
-        when(mockNode.hasNodes()).thenReturn(true);
-        when(mockNodes.nextNode()).thenReturn(mockChildNode, mockChildNode2,
-                mockChildNode3, mockChildNode4, mockChildNode5);
-        final Model actual = testObj.getJcrTreeModel(mockNode, 0, 0);
-        LOGGER.debug("Retrieved RDF for shouldIncludeChildNodeInformation() as follows: ");
-        logRDF(actual);
-        assertEquals(5, Iterators.size(actual.listObjectsOfProperty(HAS_CHILD)));
     }
 
     @Test
@@ -822,18 +614,6 @@ public class JcrRdfToolsTest {
             getPredicateForProperty = holdPredicate;
         }
 
-    }
-
-    @Test
-    @Ignore
-    public final void testJcrNodeContent() throws RepositoryException {
-        addContentNode();
-        when(mockProperties.hasNext()).thenReturn(false);
-        when(mockNodes.hasNext()).thenReturn(false);
-
-        final Model model = testObj.getJcrPropertiesModel(mockNode);
-
-        assertTrue(model != null);
     }
 
     @Test
