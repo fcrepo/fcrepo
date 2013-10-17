@@ -19,6 +19,7 @@ package org.fcrepo.kernel.rdf.impl.mappings;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.PropertyType.PATH;
+import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -47,46 +48,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 public class PropertyToTripleTest {
 
-    private PropertyToTriple testPropertyToTriple;
-
-    @Mock
-    private Session mockSession;
-
-    @Mock
-    private GraphSubjects mockGraphSubjects;
-
-    @Mock
-    private Property mockProperty;
-
-    @Mock
-    private Value mockValue, mockValue2;
-
-    @Mock
-    private javax.jcr.Node mockNode;
-
-    private final static Logger LOGGER = getLogger(PropertyToTripleTest.class);
-
-    private static final String TEST_NODE_PATH = "/test";
-
-    private static final Resource TEST_NODE_SUBJECT = ResourceFactory
-            .createResource("http:/" + TEST_NODE_PATH);
-
-    private static final String TEST_VALUE = "test value";
-
-    private static final String TEST_PROPERTY_NAME = "info:predicate";
-
-    @Before
-    public void setUp() throws ValueFormatException, RepositoryException {
-        initMocks(this);
-        testPropertyToTriple = new PropertyToTriple(mockGraphSubjects);
-        when(mockProperty.getValue()).thenReturn(mockValue);
-        when(mockProperty.getParent()).thenReturn(mockNode);
-        when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
-        when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                TEST_NODE_SUBJECT);
-        when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
-    }
+    // for mocks and setup gear see after tests
 
     @Test
     public void testMultiValuedLiteralTriple() throws RepositoryException {
@@ -200,6 +162,90 @@ public class PropertyToTripleTest {
                 createProperty(TEST_PROPERTY_NAME).asNode());
         assertEquals("Got wrong RDF subject!", t2.getSubject(),
                 TEST_NODE_SUBJECT.asNode());
+    }
+
+    @Test
+    public void testMultiValuedResourceTripleWithReference() throws RepositoryException {
+
+        when(mockProperty.isMultiple()).thenReturn(true);
+        when(mockProperty.getType()).thenReturn(REFERENCE);
+        when(mockProperty.getValues()).thenReturn(
+                new Value[] {mockValue, mockValue2});
+        when(mockValue.getString()).thenReturn(TEST_NODE_PATH);
+        when(mockValue.getType()).thenReturn(REFERENCE);
+        when(mockValue2.getString()).thenReturn(TEST_NODE_PATH);
+        when(mockValue2.getType()).thenReturn(REFERENCE);
+        when(mockSession.getNodeByIdentifier(TEST_NODE_PATH)).thenReturn(
+                mockNode);
+
+        final Function<Iterator<Value>, Iterator<Triple>> mapping =
+            testPropertyToTriple.apply(mockProperty);
+        final Iterator<Triple> ts =
+            mapping.apply(twoValueIterator(mockValue, mockValue2));
+        final Triple t1 = ts.next();
+        LOGGER.debug(
+                "Constructed triple for testMultiValuedResourceTriple(): {}",
+                t1);
+        final Triple t2 = ts.next();
+        LOGGER.debug(
+                "Constructed triple for testMultiValuedResourceTriple(): {}",
+                t2);
+
+        assertEquals("Got wrong RDF object!", t1.getObject(), TEST_NODE_SUBJECT
+                .asNode());
+        assertEquals("Got wrong RDF predicate!", t1.getPredicate(),
+                createProperty(TEST_PROPERTY_NAME).asNode());
+        assertEquals("Got wrong RDF subject!", t1.getSubject(),
+                TEST_NODE_SUBJECT.asNode());
+
+        assertEquals("Got wrong RDF object!", t2.getObject(), TEST_NODE_SUBJECT
+                .asNode());
+        assertEquals("Got wrong RDF predicate!", t2.getPredicate(),
+                createProperty(TEST_PROPERTY_NAME).asNode());
+        assertEquals("Got wrong RDF subject!", t2.getSubject(),
+                TEST_NODE_SUBJECT.asNode());
+    }
+
+    private PropertyToTriple testPropertyToTriple;
+
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private GraphSubjects mockGraphSubjects;
+
+    @Mock
+    private Property mockProperty;
+
+    @Mock
+    private Value mockValue, mockValue2;
+
+    @Mock
+    private javax.jcr.Node mockNode;
+
+    private final static Logger LOGGER = getLogger(PropertyToTripleTest.class);
+
+    private static final String TEST_NODE_PATH = "/test";
+
+    private static final Resource TEST_NODE_SUBJECT = ResourceFactory
+            .createResource("http:/" + TEST_NODE_PATH);
+
+    private static final String TEST_VALUE = "test value";
+
+    private static final String TEST_PROPERTY_NAME = "info:predicate";
+
+    @Before
+    public void setUp() throws ValueFormatException, RepositoryException {
+        initMocks(this);
+        testPropertyToTriple = new PropertyToTriple(mockGraphSubjects);
+        when(mockProperty.getValue()).thenReturn(mockValue);
+        when(mockProperty.getParent()).thenReturn(mockNode);
+        when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
+        when(mockProperty.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
+        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
+                TEST_NODE_SUBJECT);
+        when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
     }
 
     private <T> Iterator<T> twoValueIterator(final T t, final T t2) {
