@@ -26,6 +26,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 
 import org.fcrepo.kernel.rdf.impl.NamespaceContext;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -41,21 +42,33 @@ public class NamespaceContextTest {
     private Session mockSession;
 
     @Mock
-    Workspace mockWorkspace;
+    private Workspace mockWorkspace;
 
     private final static String testUri = "http://example.com";
 
     private final static String prefix = "jcr";
 
-    @Test
-    public void testConstructor() throws RepositoryException {
+    @Before
+    public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockNamespaceRegistry.getPrefixes()).thenReturn(
-                new String[] {prefix});
-        when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testBadNamespaceRegistry() throws RepositoryException {
+        mockNamespaceRegistry = null;
+        new NamespaceContext(mockSession);
+    }
+
+    @Test
+    public void testConstructor() throws RepositoryException {
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(
+                new String[] {prefix, ""});
+        when(mockNamespaceRegistry.getURI("")).thenReturn(
+                "GARBAGE URI FOR FAKE NAMESPACE, SHOULD NEVER BE PARSED");
+        when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
         assertTrue(any(new NamespaceContext(mockSession), hasTestUriAsObject));
     }
 

@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.rdf.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -32,6 +33,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
+
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -60,8 +62,9 @@ public class NamespaceContext extends RdfStream {
         super();
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
-        assert (namespaceRegistry != null) : new RepositoryException(
+        checkNotNull(namespaceRegistry,
                 "Couldn't find namespace registry in repository!");
+
         final ImmutableMap.Builder<String, String> namespaces =
             ImmutableMap.builder();
         final ImmutableCollection.Builder<Triple> nsTriples =

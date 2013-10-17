@@ -225,6 +225,7 @@ public class JcrRdfToolsTest {
     public final void testGetPropertiesModel() throws RepositoryException,
                                               IOException {
         LOGGER.debug("Entering testGetPropertiesModel()...");
+        when(mockNode.hasProperties()).thenReturn(true);
         final Model actual = testObj.getJcrPropertiesModel(mockNode);
         logRDF(actual);
         assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));

@@ -93,10 +93,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
 
-    public PropertiesRdfContext(final javax.jcr.Node node,
-        final GraphSubjects graphSubjects,
-        final LowLevelStorageService lowLevelStorageService)
-        throws RepositoryException {
+    public PropertiesRdfContext(final javax.jcr.Node node, final GraphSubjects graphSubjects,
+        final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         property2triple = new PropertyToTriple(graphSubjects);
         putPropertiesIntoContext();
@@ -109,7 +107,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
                 node());
 
         // this node's own properties
-        concat(triplesFromProperties(node()));
+        if (node().hasProperties()) {
+            concat(triplesFromProperties(node()));
+        }
 
         // if there's a jcr:content node, include information about it
         if (node().hasNode(JCR_CONTENT)) {
@@ -119,31 +119,26 @@ public class PropertiesRdfContext extends NodeRdfContext {
             final Node subject =
                 graphSubjects().getGraphSubject(node()).asNode();
             // add triples representing parent-to-content-child relationship
-            concat(
-                    Iterators.forArray(new Triple[] {
-                            create(subject, HAS_CONTENT.asNode(),
-                                    contentSubject),
-                            create(contentSubject, IS_CONTENT_OF.asNode(),
-                                    subject)}));
+            concat(Iterators.forArray(new Triple[] {
+                    create(subject, HAS_CONTENT.asNode(), contentSubject),
+                    create(contentSubject, IS_CONTENT_OF.asNode(), subject)}));
             // add properties from content child
             concat(triplesFromProperties(node().getNode(JCR_CONTENT)));
 
             // add triples describing storage of content child
             lowLevelStorageService().setRepository(
                     node().getSession().getRepository());
-            concat(
-                    transform(lowLevelStorageService().getLowLevelCacheEntries(
-                            contentNode).iterator(),
-                            new Function<LowLevelCacheEntry, Triple>() {
+            concat(transform(lowLevelStorageService().getLowLevelCacheEntries(
+                    contentNode).iterator(),
+                    new Function<LowLevelCacheEntry, Triple>() {
 
-                                @Override
-                                public Triple apply(
-                                        final LowLevelCacheEntry llce) {
-                                    return create(contentSubject, HAS_LOCATION
-                                            .asNode(), createLiteral(llce
+                        @Override
+                        public Triple apply(final LowLevelCacheEntry llce) {
+                            return create(contentSubject,
+                                    HAS_LOCATION.asNode(), createLiteral(llce
                                             .getExternalIdentifier()));
-                                }
-                            }));
+                        }
+                    }));
 
         }
 
@@ -183,7 +178,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
         b.add(create(subject, HAS_OBJECT_SIZE.asNode(), createLiteral(String
                 .valueOf(getRepositorySize(repository)))));
         // Get the cluster configuration for the RDF response, if available
-        // this ugly test checks to see whether this is an ordinary JCR repository
+        // this ugly test checks to see whether this is an ordinary JCR
+        // repository
         // or a ModeShape repo, which will possess the extra info
         if (JcrRepository.class.isAssignableFrom(repository.getClass())) {
             final Map<String, String> config =
@@ -221,8 +217,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
         return b.build();
     }
 
-    private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n)
-        throws RepositoryException {
+    private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n) throws RepositoryException {
         LOGGER.debug("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
             filter(new PropertyIterator(n.getProperties()),
@@ -233,9 +228,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
                     not(isBinaryProperty));
 
         return Iterators.concat(new ZippingIterator<>(
-                transform(
+            transform(
                 nonBinaryProperties, property2values),
-                transform(
+            transform(
                 nonBinaryPropertiesCopy, property2triple)));
 
     }
