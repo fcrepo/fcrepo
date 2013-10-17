@@ -35,26 +35,7 @@ import com.hp.hpl.jena.graph.Triple;
 
 public class NamespaceContextTest {
 
-    @Mock
-    private NamespaceRegistry mockNamespaceRegistry;
-
-    @Mock
-    private Session mockSession;
-
-    @Mock
-    private Workspace mockWorkspace;
-
-    private final static String testUri = "http://example.com";
-
-    private final static String prefix = "jcr";
-
-    @Before
-    public void setUp() throws RepositoryException {
-        initMocks(this);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
-                mockNamespaceRegistry);
-    }
+    // for mocks and setup gear see after tests
 
     @Test(expected = NullPointerException.class)
     public void testBadNamespaceRegistry() throws RepositoryException {
@@ -71,6 +52,27 @@ public class NamespaceContextTest {
         when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
         assertTrue(any(new NamespaceContext(mockSession), hasTestUriAsObject));
     }
+
+    @Before
+    public void setUp() throws RepositoryException {
+        initMocks(this);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
+                mockNamespaceRegistry);
+    }
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    private final static String testUri = "http://example.com";
+
+    private final static String prefix = "jcr";
 
     private static Predicate<Triple> hasTestUriAsObject =
         new Predicate<Triple>() {

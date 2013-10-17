@@ -70,32 +70,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 public class HierarchyRdfContextTest {
 
-    // for mocks see bottom of this class
-
-    @Before
-    public void setUp() throws RepositoryException {
-        initMocks(this);
-        when(mockNode.getName()).thenReturn("mockNode");
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockGraphSubjects.getContext()).thenReturn(testPage);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockParentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.getName()).thenReturn("not:root");
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
-        when(mockNode.getPath()).thenReturn(MOCK_NODE_PATH);
-        when(mockParentNode.getPath()).thenReturn(MOCK_PARENT_NODE_PATH);
-        when(mockNode.getParent()).thenReturn(mockParentNode);
-        when(mockNode.getNodes()).thenReturn(mockNodes);
-        when(mockParentNode.hasProperties()).thenReturn(false);
-        when(mockNode.hasProperties()).thenReturn(false);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                testSubject);
-        when(mockGraphSubjects.getGraphSubject(mockParentNode)).thenReturn(
-                testParentSubject);
-        when(mockGraphSubjects.getGraphSubject(mockChildNode)).thenReturn(
-                testChildSubject);
-        when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
-    }
+    // for mocks and setup gear see after tests
 
     @Test
     public void testParentTriples() throws RepositoryException, IOException {
@@ -121,8 +96,8 @@ public class HierarchyRdfContextTest {
         when(mockNode.getNodes()).thenReturn(
                 nodeIterator(mockChildNode, mockChildNode2, mockChildNode3,
                         mockChildNode4, mockChildNode5));
-        // we exhaust the original mock so that the preceding node iterator is
-        // returned instead
+        // we exhaust the original mock from setUp() so that the preceding
+        // iterator is returned instead
         mockNode.getNodes();
 
         final Model actual = getResults();
@@ -195,6 +170,31 @@ public class HierarchyRdfContextTest {
         assertTrue(
                 "Didn't find node described as using the correct LDP membership predicate!",
                 results.contains(testSubject, MEMBERSHIP_PREDICATE, HAS_CHILD));
+    }
+
+    @Before
+    public void setUp() throws RepositoryException {
+        initMocks(this);
+        when(mockNode.getName()).thenReturn("mockNode");
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockGraphSubjects.getContext()).thenReturn(testPage);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockParentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("not:root");
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
+        when(mockNode.getPath()).thenReturn(MOCK_NODE_PATH);
+        when(mockParentNode.getPath()).thenReturn(MOCK_PARENT_NODE_PATH);
+        when(mockNode.getParent()).thenReturn(mockParentNode);
+        when(mockNode.getNodes()).thenReturn(mockNodes);
+        when(mockParentNode.hasProperties()).thenReturn(false);
+        when(mockNode.hasProperties()).thenReturn(false);
+        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
+                testSubject);
+        when(mockGraphSubjects.getGraphSubject(mockParentNode)).thenReturn(
+                testParentSubject);
+        when(mockGraphSubjects.getGraphSubject(mockChildNode)).thenReturn(
+                testChildSubject);
+        when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
     }
 
     private void nodeIsContainer() {
