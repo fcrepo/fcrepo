@@ -38,6 +38,8 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Iterator;
 
+import javax.jcr.AccessDeniedException;
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -234,6 +236,15 @@ public class PropertyToTripleTest {
                 .getSubject());
     }
 
+    @Test(expected = RuntimeException.class)
+    public void testBadSingleValuedTriple() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(URI);
+        when(mockValue.getType()).thenReturn(URI);
+        when(mockValue.getString()).thenThrow(
+                new RepositoryException("Bad value!"));
+        createSingleValuedLiteralTriple();
+    }
+
     @Test
     public void testMultiValuedResourceTriple() throws RepositoryException {
 
@@ -318,6 +329,17 @@ public class PropertyToTripleTest {
                 .getSubject());
     }
 
+    @Test(expected = RepositoryException.class)
+    public void badProperty() throws AccessDeniedException,
+                             ItemNotFoundException, RepositoryException {
+        when(mockProperty.getParent()).thenThrow(
+                new RepositoryException("Bad property!"));
+        // we exhaust the mock of mockProperty.getParent() to replace it with an
+        // exception
+        mockProperty.getParent();
+        createSingleValuedLiteralTriple();
+    }
+
     private Triple createSingleValuedLiteralTriple() throws RepositoryException {
 
         when(mockProperty.isMultiple()).thenReturn(false);
@@ -327,6 +349,24 @@ public class PropertyToTripleTest {
         final Triple t = mapping.apply(singletonIterator(mockValue)).next();
         LOGGER.debug("Constructed triple: {}", t);
         return t;
+    }
+
+    @Before
+    public void setUp() throws ValueFormatException, RepositoryException {
+        initMocks(this);
+        testPropertyToTriple = new PropertyToTriple(mockGraphSubjects);
+        when(mockProperty.getValue()).thenReturn(mockValue);
+        when(mockProperty.getParent()).thenReturn(mockNode);
+        when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
+        when(mockProperty.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
+        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
+                TEST_NODE_SUBJECT);
+        when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
+    }
+
+    private <T> Iterator<T> twoValueIterator(final T t, final T t2) {
+        return ImmutableList.of(t, t2).iterator();
     }
 
     private PropertyToTriple testPropertyToTriple;
@@ -356,23 +396,5 @@ public class PropertyToTripleTest {
     private static final String TEST_VALUE = "test value";
 
     private static final String TEST_PROPERTY_NAME = "info:predicate";
-
-    @Before
-    public void setUp() throws ValueFormatException, RepositoryException {
-        initMocks(this);
-        testPropertyToTriple = new PropertyToTriple(mockGraphSubjects);
-        when(mockProperty.getValue()).thenReturn(mockValue);
-        when(mockProperty.getParent()).thenReturn(mockNode);
-        when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
-        when(mockProperty.getSession()).thenReturn(mockSession);
-        when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                TEST_NODE_SUBJECT);
-        when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
-    }
-
-    private <T> Iterator<T> twoValueIterator(final T t, final T t2) {
-        return ImmutableList.of(t, t2).iterator();
-    }
 
 }
