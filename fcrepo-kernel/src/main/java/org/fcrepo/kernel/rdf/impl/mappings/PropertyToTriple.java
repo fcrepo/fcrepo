@@ -107,8 +107,6 @@ public class PropertyToTriple implements
 
     }
 
-
-
     /**
      * @param p A JCR {@link Property}
      * @param v The {@link Value} of that Property to use (in the case of
@@ -146,13 +144,19 @@ public class PropertyToTriple implements
                 case REFERENCE:
                 case WEAKREFERENCE:
                 case PATH:
-                    return traverseLink(p,v);
+                    return traverseLink(p, v);
                 default:
                     return literal2node(v.getString());
             }
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
+    }
+
+    private static Node literal2node(final Object literal) {
+        final Node result = createTypedLiteral(literal).asNode();
+        LOGGER.debug("Converting {} into {}", literal, result);
+        return result;
     }
 
     private Node traverseLink(final Property p, final Value v)
@@ -172,11 +176,8 @@ public class PropertyToTriple implements
         return getGraphSubject(refNode);
     }
 
-    private static Node literal2node(final Object literal) {
-        return createTypedLiteral(literal).asNode();
-    }
-
-    private Node getGraphSubject(final javax.jcr.Node n) throws RepositoryException {
+    private Node getGraphSubject(final javax.jcr.Node n)
+        throws RepositoryException {
         return graphSubjects.getGraphSubject(n).asNode();
     }
 
