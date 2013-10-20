@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -82,8 +83,8 @@ public class DefaultGraphSubjectsTest {
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals("Somehow got a Node from a bad RDF subject!", null, actual);
         // test a non-existent path
-        when(mockSubject.getURI())
-                .thenReturn("info:fedora" + expected + "/bad");
+        when(mockSubject.getURI()).thenReturn(
+                RESTAPI_NAMESPACE + expected + "/bad");
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals("Somehow got a Node from a non-existent RDF subject!",
                 null, actual);
@@ -115,6 +116,13 @@ public class DefaultGraphSubjectsTest {
         final Boolean actual = testObj.isFedoraGraphSubject(createResource());
         assertFalse("Misrecognized an RDF blank node as a Fedora resource!",
                 actual);
+    }
+
+    @Test
+    public void testGetContext() {
+        final Resource context = testObj.getContext();
+        assertTrue("Context was returned other than as an RDF blank node!",
+                context.isAnon());
     }
 
 }
