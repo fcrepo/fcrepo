@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.rdf.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
@@ -95,9 +95,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     @Override
     public boolean isFedoraGraphSubject(final Resource subject) {
-        checkArgument(subject != null, "null cannot be a Fedora object!");
-        assert(subject != null);
-
+        checkNotNull(subject, "null cannot be a Fedora object!");
         return subject.isURIResource() &&
             subject.getURI().startsWith(RESTAPI_NAMESPACE);
     }
