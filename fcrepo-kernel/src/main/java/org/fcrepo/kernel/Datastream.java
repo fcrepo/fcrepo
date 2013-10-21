@@ -97,11 +97,11 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
                 node.addMixin(FEDORA_DATASTREAM);
 
                 if (node.hasNode(JCR_CONTENT)) {
-                    Node contentNode = node.getNode(JCR_CONTENT);
+                    final Node contentNode = node.getNode(JCR_CONTENT);
                     decorateContentNode(contentNode);
                 }
             }
-        } catch (RepositoryException ex) {
+        } catch (final RepositoryException ex) {
             LOGGER.warn("Could not decorate {} with {} properties: {}" ,
                         JCR_CONTENT, FEDORA_DATASTREAM, ex);
         }
@@ -124,8 +124,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public void setContent(final InputStream content, final String contentType,
-                           final URI checksum,
-                           StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+        final URI checksum, final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
         throws RepositoryException, InvalidChecksumException {
 
         final Node contentNode =
@@ -149,7 +148,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
             hint = storagePolicyDecisionPoint.evaluatePolicies(node);
         }
 
-        Binary binary = (Binary) getBinary(node, content, hint);
+        final Binary binary = (Binary) getBinary(node, content, hint);
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -189,7 +188,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * @throws InvalidChecksumException
      * @throws RepositoryException
      */
-    public void setContent(InputStream content) throws InvalidChecksumException,
+    public void setContent(final InputStream content) throws InvalidChecksumException,
                                                        RepositoryException {
         setContent(content, null, null, null);
     }
@@ -202,7 +201,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         try {
             return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
                 .getLong();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             LOGGER.error("Could not get contentSize() - " + e.getMessage());
         }
         // TODO Size is not stored, recalculate size?
@@ -218,16 +217,16 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         final Node contentNode = node.getNode(JCR_CONTENT);
         try {
             return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             LOGGER.error("Could not get content digest: ", e);
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             LOGGER.error("Could not get content digest: {}", e);
         }
         //TODO checksum not stored. recalculating checksum,
         //however, this would defeat the purpose validating against the checksum
-        Binary binary = (Binary) contentNode.getProperty(JCR_DATA)
+        final Binary binary = (Binary) contentNode.getProperty(JCR_DATA)
             .getBinary();
-        String dsChecksum = binary.getHexHash();
+        final String dsChecksum = binary.getHexHash();
 
         return ContentDigest.asURI("SHA-1",dsChecksum);
     }
@@ -271,7 +270,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     }
 
-    private void decorateContentNode(Node contentNode)
+    private void decorateContentNode(final Node contentNode)
         throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{}/{} appears to be null!", JCR_CONTENT);
@@ -282,7 +281,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         }
 
         final Property dataProperty = contentNode.getProperty(JCR_DATA);
-        Binary binary = (Binary) dataProperty.getBinary();
+        final Binary binary = (Binary) dataProperty.getBinary();
         final String dsChecksum = binary.getHexHash();
 
         contentSizeHistogram.update(dataProperty.getLength());

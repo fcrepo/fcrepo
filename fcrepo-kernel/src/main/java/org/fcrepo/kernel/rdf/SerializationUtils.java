@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.rdf;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
@@ -26,7 +27,6 @@ import org.slf4j.Logger;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
@@ -84,7 +84,7 @@ public final class SerializationUtils {
      */
     public static Model unifyDatasetModel(final Dataset dataset) {
         final Iterator<String> iterator = dataset.listNames();
-        Model model = ModelFactory.createDefaultModel();
+        Model model = createDefaultModel();
 
         model = model.union(dataset.getDefaultModel());
 
