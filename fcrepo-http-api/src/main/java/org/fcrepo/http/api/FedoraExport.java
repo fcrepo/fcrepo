@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.Response.ok;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -60,30 +61,27 @@ public class FedoraExport extends AbstractResource {
     private final Logger logger = getLogger(this.getClass());
 
     /**
-     * Export an object with the given format, e.g.:
-     *
-     * GET /path/to/object/fcr:export?format=jcr/xml
-     * -> the node as JCR/XML
+     * Export an object with the given format, e.g.: GET
+     * /path/to/object/fcr:export?format=jcr/xml -> the node as JCR/XML
      *
      * @param pathList
      * @param format
      * @return
      */
     @GET
-    public Response exportObject(@PathParam("path")
-            final List<PathSegment> pathList,
-            @QueryParam("format")
-            @DefaultValue("jcr/xml")
-            final String format) {
+    public Response exportObject(
+        @PathParam("path") final List<PathSegment> pathList,
+        @QueryParam("format") @DefaultValue("jcr/xml") final String format) {
+
         final String path = toPath(pathList);
 
-        logger.debug("Requested object serialization for: " + path +
-                " using serialization format " + format);
+        logger.debug("Requested object serialization for: " + path
+                + " using serialization format " + format);
 
         final FedoraObjectSerializer serializer =
-                serializers.getSerializer(format);
+            serializers.getSerializer(format);
 
-        return Response.ok().type(serializer.getMediaType()).entity(
+        return ok().type(serializer.getMediaType()).entity(
                 new StreamingOutput() {
 
                     @Override
@@ -91,14 +89,14 @@ public class FedoraExport extends AbstractResource {
                         throws IOException {
 
                         try {
-                            logger.debug("Selecting from serializer map: " +
-                                    serializers);
-                            logger.debug("Retrieved serializer for format: " +
-                                    format);
+                            logger.debug("Selecting from serializer map: "
+                                    + serializers);
+                            logger.debug("Retrieved serializer for format: "
+                                    + format);
                             serializer.serialize(objectService.getObject(
                                     session, path), out);
-                            logger.debug("Successfully serialized object: " +
-                                    path);
+                            logger.debug("Successfully serialized object: "
+                                    + path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
                         } finally {

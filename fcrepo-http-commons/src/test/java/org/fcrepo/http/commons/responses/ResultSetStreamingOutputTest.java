@@ -19,7 +19,12 @@ package org.fcrepo.http.commons.responses;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.http.commons.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -28,7 +33,6 @@ import java.io.ByteArrayOutputStream;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.jena.riot.WebContent;
 import org.fcrepo.http.commons.responses.ResultSetStreamingOutput;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +46,6 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
-import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
 
 public class ResultSetStreamingOutputTest {
 
@@ -53,15 +56,14 @@ public class ResultSetStreamingOutputTest {
 
     Dataset testData = new DatasetImpl(createDefaultModel());
 
-
     {
         testData.asDatasetGraph().getDefaultGraph().add(
-                                                           new Triple(createURI("test:subject"),
-                                                                         createURI("test:predicate"),
-                                                                         createLiteral("test:object")));
+                new Triple(createURI("test:subject"),
+                        createURI("test:predicate"),
+                        createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
-                                                           new Triple(createURI("test:subject"), primaryTypePredicate,
-                                                                         createLiteral("nt:file")));
+                new Triple(createURI("test:subject"), primaryTypePredicate,
+                        createLiteral("nt:file")));
 
     }
 
@@ -76,12 +78,15 @@ public class ResultSetStreamingOutputTest {
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");
 
-        QueryExecution testResult = QueryExecutionFactory.create(sparqlQuery, testData);
+        final QueryExecution testResult =
+            QueryExecutionFactory.create(sparqlQuery, testData);
 
         try {
             final ResultSet resultSet = testResult.execSelect();
 
-            testObj = new ResultSetStreamingOutput(resultSet, MediaType.valueOf(WebContent.contentTypeTextTSV));
+            testObj =
+                new ResultSetStreamingOutput(resultSet, MediaType
+                        .valueOf(contentTypeTextTSV));
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 testObj.write(out);
@@ -99,12 +104,15 @@ public class ResultSetStreamingOutputTest {
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");
 
-        QueryExecution testResult = QueryExecutionFactory.create(sparqlQuery, testData);
+        final QueryExecution testResult =
+            QueryExecutionFactory.create(sparqlQuery, testData);
 
         try {
             final ResultSet resultSet = testResult.execSelect();
 
-            testObj = new ResultSetStreamingOutput(resultSet, MediaType.valueOf(WebContent.contentTypeRDFXML));
+            testObj =
+                new ResultSetStreamingOutput(resultSet, MediaType
+                        .valueOf(contentTypeRDFXML));
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 testObj.write(out);
@@ -118,7 +126,8 @@ public class ResultSetStreamingOutputTest {
 
     @Test
     public void testGetResultsFormat() throws Exception {
-        assertEquals(ResultsFormat.FMT_RS_TSV, ResultSetStreamingOutput.getResultsFormat(MediaType.valueOf(WebContent.contentTypeTextTSV)));
-        assertEquals(ResultsFormat.FMT_UNKNOWN, ResultSetStreamingOutput.getResultsFormat(MediaType.valueOf("some/type")));
+        assertEquals(FMT_RS_TSV, getResultsFormat(MediaType
+                        .valueOf(contentTypeTextTSV)));
+        assertEquals(FMT_UNKNOWN, getResultsFormat(MediaType.valueOf("some/type")));
     }
 }

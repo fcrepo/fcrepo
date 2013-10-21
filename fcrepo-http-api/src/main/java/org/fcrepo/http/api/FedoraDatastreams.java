@@ -16,16 +16,17 @@
 
 package org.fcrepo.http.api;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
@@ -84,7 +86,7 @@ public class FedoraDatastreams extends AbstractResource {
     /**
      * Update the content of multiple datastreams from a multipart POST. The
      * datastream to update is given by the name of the content disposition.
-     * 
+     *
      * @param pathList
      * @param dsidList
      * @param multipart
@@ -145,7 +147,7 @@ public class FedoraDatastreams extends AbstractResource {
 
     /**
      * Delete multiple datastreams given by the dsid query parameter
-     * 
+     *
      * @param pathList
      * @param dsidList
      * @return
@@ -173,7 +175,7 @@ public class FedoraDatastreams extends AbstractResource {
     /**
      * Retrieve multiple datastream bitstreams in a single request as a
      * multipart/mixed response.
-     * 
+     *
      * @param pathList
      * @param requestedDsids
      * @param request
@@ -227,7 +229,7 @@ public class FedoraDatastreams extends AbstractResource {
                 }
 
                 digest.update(ds.getContentDigest().toString().getBytes(
-                        StandardCharsets.UTF_8));
+                        UTF_8));
 
                 if (ds.getLastModifiedDate().after(date)) {
                     date = ds.getLastModifiedDate();
@@ -243,7 +245,7 @@ public class FedoraDatastreams extends AbstractResource {
             final Date roundedDate = new Date();
             roundedDate.setTime(date.getTime() - date.getTime() % 1000);
 
-            Response.ResponseBuilder builder =
+            ResponseBuilder builder =
                     request.evaluatePreconditions(roundedDate, etag);
 
             final CacheControl cc = new CacheControl();
@@ -265,7 +267,7 @@ public class FedoraDatastreams extends AbstractResource {
                     multipart.bodyPart(bodyPart);
                 }
 
-                builder = Response.ok(multipart, MULTIPART_FORM_DATA);
+                builder = ok(multipart, MULTIPART_FORM_DATA);
             }
 
             return builder.cacheControl(cc).lastModified(date).tag(etag)

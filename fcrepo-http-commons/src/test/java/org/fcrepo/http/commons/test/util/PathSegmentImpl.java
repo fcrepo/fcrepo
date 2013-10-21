@@ -16,6 +16,8 @@
 
 package org.fcrepo.http.commons.test.util;
 
+import static com.sun.jersey.api.uri.UriComponent.Type.PATH_SEGMENT;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,9 +41,7 @@ public class PathSegmentImpl implements PathSegment {
 
     PathSegmentImpl(final String path, final boolean decode,
             final MultivaluedMap<String, String> matrixParameters) {
-        this.path =
-                (decode) ? UriComponent.decode(path,
-                        UriComponent.Type.PATH_SEGMENT) : path;
+        this.path = (decode) ? UriComponent.decode(path, PATH_SEGMENT) : path;
         this.matrixParameters = matrixParameters;
     }
 
@@ -57,7 +57,7 @@ public class PathSegmentImpl implements PathSegment {
 
     public static List<PathSegment> createPathList(final String... strings) {
         final ArrayList<PathSegment> result =
-                new ArrayList<PathSegment>(strings.length);
+            new ArrayList<PathSegment>(strings.length);
         for (final String string : strings) {
             result.add(new PathSegmentImpl(string, false));
         }

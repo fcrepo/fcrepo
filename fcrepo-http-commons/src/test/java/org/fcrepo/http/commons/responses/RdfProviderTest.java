@@ -84,7 +84,7 @@ public class RdfProviderTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testWriteTo() throws WebApplicationException,
-            IllegalArgumentException, IOException {
+                             IllegalArgumentException, IOException {
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
         rdfProvider.writeTo(testData, Dataset.class, mock(Type.class), null,

@@ -16,29 +16,33 @@
 
 package org.fcrepo.integration.http.api.ldp;
 
+import static com.google.common.collect.Iterables.all;
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static org.apache.http.HttpVersion.HTTP_1_1;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFJSON;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.jena.riot.WebContent;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.Test;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 public class LdprIT extends AbstractResourceIT {
 
@@ -47,7 +51,7 @@ public class LdprIT extends AbstractResourceIT {
     public void testGeneralHttpVersion() throws IOException {
         final HttpHead testMethod = new HttpHead(serverAddress + "");
         final HttpResponse response = client.execute(testMethod);
-        assertTrue(response.getProtocolVersion().greaterEquals(HttpVersion.HTTP_1_1));
+        assertTrue(response.getProtocolVersion().greaterEquals(HTTP_1_1));
     }
 
     // 4.2.2
@@ -55,11 +59,14 @@ public class LdprIT extends AbstractResourceIT {
     public void testProvidesRDFRepresentation() throws IOException {
         final HttpGet testMethod = new HttpGet(serverAddress + "");
         final HttpResponse response = client.execute(testMethod);
-        assertEquals("text/turtle", response.getFirstHeader("Content-Type").getValue());
+        assertEquals("text/turtle", response.getFirstHeader("Content-Type")
+                .getValue());
 
-        final GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent(), "TTL");
+        final GraphStore graphStore =
+            parseTriples(response.getEntity().getContent(), "TTL");
 
-        assertTrue(graphStore.contains(Node.ANY, ResourceFactory.createResource(serverAddress).asNode(), Node.ANY, Node.ANY));
+        assertTrue(graphStore.contains(ANY, createResource(serverAddress)
+   .asNode(), ANY, ANY));
 
     }
 
@@ -71,25 +78,27 @@ public class LdprIT extends AbstractResourceIT {
     public void testShouldHaveAtLeastOneRdfType() throws IOException {
         final HttpGet testMethod = new HttpGet(serverAddress + "");
         final HttpResponse response = client.execute(testMethod);
-        assertEquals("text/turtle", response.getFirstHeader("Content-Type").getValue());
+        assertEquals("text/turtle", response.getFirstHeader("Content-Type")
+                .getValue());
 
-        final GraphStore graphStore = TestHelpers.parseTriples(response.getEntity().getContent(), "TTL");
+        final GraphStore graphStore =
+            parseTriples(response.getEntity().getContent(), "TTL");
 
-        assertTrue(graphStore.contains(Node.ANY, ResourceFactory.createResource(serverAddress).asNode(), RDF.type.asNode(), Node.ANY));
+        assertTrue(graphStore.contains(ANY, createResource(serverAddress)
+                .asNode(), type.asNode(), ANY));
 
     }
 
     // 4.2.6
     @Test
     public void testMaySupportStandardRepresentations() {
-        final ImmutableList<String> formats = ImmutableList.of(WebContent.contentTypeTurtle,
-                                                                  WebContent.contentTypeNTriples,
-                                                                  WebContent.contentTypeN3,
-                                                                  WebContent.contentTypeRDFJSON,
-                                                                  WebContent.contentTypeRDFXML,
-                                                                  TEXT_HTML);
+        final ImmutableList<String> formats =
+            ImmutableList.of(contentTypeTurtle, contentTypeNTriples,
+                    contentTypeN3, contentTypeRDFJSON, contentTypeRDFXML,
+                    TEXT_HTML);
 
-        assertTrue(Iterables.all(formats, new Predicate<String>() {
+        assertTrue(all(formats, new Predicate<String>() {
+
             @Override
             public boolean apply(final String input) {
                 final HttpGet testMethod = new HttpGet(serverAddress + "");
@@ -172,7 +181,6 @@ public class LdprIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         client.execute(new HttpDelete(serverAddress + "Ldpr461"));
-
 
         final HttpResponse postDeleteResponse = client.execute(testMethod);
         assertEquals(404, postDeleteResponse.getStatusLine().getStatusCode());

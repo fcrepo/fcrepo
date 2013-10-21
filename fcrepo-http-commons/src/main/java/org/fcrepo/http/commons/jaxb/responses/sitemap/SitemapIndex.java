@@ -26,11 +26,10 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * A Sitemap index is a sitemap of other sitemaps
  *
- *  @TODO replace with a 3rd party sitemap impl
+ * @TODO replace with a 3rd party sitemap impl
  */
-@XmlRootElement(name = "sitemapindex",
-        namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
-@XmlType(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+@XmlRootElement(name = "sitemapindex")
+@XmlType
 public class SitemapIndex {
 
     private final List<SitemapEntry> entries = new ArrayList<SitemapEntry>();
@@ -44,7 +43,7 @@ public class SitemapIndex {
 
     /**
      * Add an entry to the sitemap
-     * 
+     *
      * @param e
      */
     public void appendSitemapEntry(final SitemapEntry e) {
@@ -53,11 +52,10 @@ public class SitemapIndex {
 
     /**
      * Get all the sitemap's entries
-     * 
+     *
      * @return
      */
-    @XmlElement(name = "sitemap",
-            namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    @XmlElement(name = "sitemap")
     public List<SitemapEntry> getSitemapEntries() {
         return entries;
     }

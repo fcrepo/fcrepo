@@ -22,6 +22,7 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.modeshape.jcr.api.JcrConstants.JCR_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Calendar;
@@ -44,7 +45,6 @@ import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapUrlSet;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -55,7 +55,6 @@ import com.codahale.metrics.annotation.Timed;
  * A Sitemap implementation for Fedora objects
  *
  * @todo should this be fcr:sitemap?
- *
  * @author ajs6f
  * @author cbeer
  */
@@ -72,9 +71,7 @@ public class FedoraSitemap extends AbstractResource {
     public static final long entriesPerPage = 50000;
 
     /**
-     * Get the sitemap index for the repository
-     *
-     * GET /sitemap
+     * Get the sitemap index for the repository GET /sitemap
      *
      * @return
      * @throws RepositoryException
@@ -88,7 +85,7 @@ public class FedoraSitemap extends AbstractResource {
 
         try {
             final long count =
-                    objectService.getRepositoryObjectCount() / entriesPerPage;
+                objectService.getRepositoryObjectCount() / entriesPerPage;
 
             final SitemapIndex sitemapIndex = new SitemapIndex();
 
@@ -117,13 +114,13 @@ public class FedoraSitemap extends AbstractResource {
     @Path("/{page}")
     @Timed
     @Produces(TEXT_XML)
-    public SitemapUrlSet getSitemap(@PathParam("page")
-            final String page) throws RepositoryException {
+    public SitemapUrlSet getSitemap(@PathParam("page") final String page)
+        throws RepositoryException {
         try {
             final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 
             final RowIterator rows =
-                    getSitemapEntries(session, parseInt(page) - 1);
+                getSitemapEntries(session, parseInt(page) - 1);
 
             while (rows.hasNext()) {
                 final Row r = rows.nextRow();
@@ -139,13 +136,14 @@ public class FedoraSitemap extends AbstractResource {
 
     private RowIterator getSitemapEntries(final Session session, final long pg)
         throws RepositoryException {
+
         final QueryManager queryManager =
-                session.getWorkspace().getQueryManager();
+            session.getWorkspace().getQueryManager();
 
         // TODO expand to more fields
         final String sqlExpression =
-                "SELECT [" + JcrConstants.JCR_NAME + "],[" + JCR_LASTMODIFIED +
-                        "] FROM [" + FEDORA_OBJECT + "]";
+            "SELECT [" + JCR_NAME + "],[" + JCR_LASTMODIFIED + "] FROM ["
+                    + FEDORA_OBJECT + "]";
         final Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);
 
         query.setOffset(pg * entriesPerPage);
@@ -160,6 +158,7 @@ public class FedoraSitemap extends AbstractResource {
 
     private SitemapEntry getSitemapEntry(final Row r)
         throws RepositoryException {
+
         Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
         final String path = r.getNode().getPath();
 
@@ -168,7 +167,7 @@ public class FedoraSitemap extends AbstractResource {
             lkDateValue = r.getValue(JCR_CREATED);
         }
         final Calendar lastKnownDate =
-                (lkDateValue != null) ? lkDateValue.getDate() : null;
+            (lkDateValue != null) ? lkDateValue.getDate() : null;
         return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
                 FedoraNodes.class).build(path.substring(1)), lastKnownDate);
     }

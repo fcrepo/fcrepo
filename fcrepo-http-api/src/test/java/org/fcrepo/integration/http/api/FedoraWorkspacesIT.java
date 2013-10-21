@@ -64,9 +64,9 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         final String pid = randomUUID().toString();
 
         final HttpPost httpCreateWorkspace =
-                new HttpPost(serverAddress + "fcr:workspaces/" + workspace);
+            new HttpPost(serverAddress + "fcr:workspaces/" + workspace);
         final HttpResponse createWorkspaceResponse =
-                execute(httpCreateWorkspace);
+            execute(httpCreateWorkspace);
         assertEquals(201, createWorkspaceResponse.getStatusLine()
                 .getStatusCode());
 

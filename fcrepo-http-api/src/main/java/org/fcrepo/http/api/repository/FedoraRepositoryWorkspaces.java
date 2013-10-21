@@ -17,7 +17,10 @@
 package org.fcrepo.http.api.repository;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.created;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -29,7 +32,6 @@ import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.MalformedURLException;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -51,12 +53,10 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * This class exposes the JCR workspace functionality. It may be
@@ -97,7 +97,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
                                            .build()
                                            .toString());
             logger.debug("Discovered workspace: {}", resource);
-            workspaceModel.add(resource, RDF.type, NOT_IMPLEMENTED);
+            workspaceModel.add(resource, type, NOT_IMPLEMENTED);
         }
 
         try {
@@ -126,9 +126,9 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
         final Workspace workspace = session.getWorkspace();
         workspace.createWorkspace(path);
 
-        return Response.created(
+        return created(
                 uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
-                        .buildFromMap(ImmutableMap.of("path", path))).build();
+                        .buildFromMap(singletonMap("path", path))).build();
 
     }
 }

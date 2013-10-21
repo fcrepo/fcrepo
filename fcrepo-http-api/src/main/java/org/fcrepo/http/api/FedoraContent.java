@@ -19,6 +19,8 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -56,7 +58,6 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -199,7 +200,7 @@ public class FedoraContent extends AbstractResource {
                         new URI(
                                 subjects.getGraphSubject(
                                         datastreamNode
-                                                .getNode(JcrConstants.JCR_CONTENT))
+                                                .getNode(JCR_CONTENT))
                                         .getURI())).build();
             } else {
                 return noContent().build();
@@ -266,7 +267,7 @@ public class FedoraContent extends AbstractResource {
                     if (range.end() > contentSize ||
                             (range.end() == -1 && range.start() > contentSize)) {
                         builder =
-                                Response.status(
+                                status(
                                         REQUESTED_RANGE_NOT_SATISFIABLE)
                                         .header("Content-Range",
                                                 contentRangeValue);
@@ -276,14 +277,14 @@ public class FedoraContent extends AbstractResource {
                                         .start(), range.size());
 
                         builder =
-                                Response.status(PARTIAL_CONTENT).entity(
+                                status(PARTIAL_CONTENT).entity(
                                         rangeInputStream)
                                         .header("Content-Range",
                                                 contentRangeValue);
                     }
 
                 } else {
-                    builder = Response.ok(content);
+                    builder = ok(content);
                 }
             }
 

@@ -18,6 +18,8 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -65,7 +67,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * Basic administrative search across the repository
@@ -113,7 +114,7 @@ public class FedoraFieldSearch extends AbstractResource implements
             final int limit,
             @Context
             final Request request,
-            @Context HttpServletResponse servletResponse,
+            @Context final HttpServletResponse servletResponse,
             @Context
             final UriInfo uriInfo) throws RepositoryException {
         return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);
@@ -139,11 +140,11 @@ public class FedoraFieldSearch extends AbstractResource implements
             @QueryParam("offset") @DefaultValue("0") final long offset,
             @QueryParam("limit") @DefaultValue("25") final int limit,
             @Context final Request request,
-            @Context HttpServletResponse servletResponse,
+            @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException {
 
         if (terms == null) {
-            LOGGER.trace("Received search request, but terms was empty. Aborting.");
+            LOGGER.trace("Received search request, but terms were empty. Aborting.");
             throw new WebApplicationException(status(BAD_REQUEST).entity(
                     "q parameter is mandatory").build());
         }
@@ -185,8 +186,8 @@ public class FedoraFieldSearch extends AbstractResource implements
             final Model searchModel = createDefaultModel();
             if (terms != null) {
                 final Resource pageResource = createResource(uriInfo.getRequestUri().toASCIIString());
-                searchModel.add(pageResource, RDF.type, SEARCH_PAGE);
-                searchModel.add(pageResource, RDF.type, PAGE);
+                searchModel.add(pageResource, type, SEARCH_PAGE);
+                searchModel.add(pageResource, type, PAGE);
                 searchModel.add(pageResource, PAGE_OF, searchResult);
 
 
@@ -214,7 +215,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                                        .toString());
                     searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
                 } else {
-                    searchModel.add(pageResource, NEXT_PAGE, RDF.nil);
+                    searchModel.add(pageResource, NEXT_PAGE, nil);
                 }
 
                 final String firstPage = uriInfo

@@ -57,7 +57,7 @@ import com.hp.hpl.jena.query.Dataset;
  * traditional Fedora namespaced PIDs. Unlike Fedora Classic, a JCR requires
  * that namespaces be registered before use. The catalog of namespaces is very
  * simple, just a set of prefix-URI pairs.
- * 
+ *
  * @author ajs6f
  */
 @Component
@@ -70,7 +70,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 
     /**
      * Register multiple object namespaces.
-     * 
+     *
      * @return 204
      * @throws RepositoryException
      */
@@ -82,7 +82,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 
         try {
             final Dataset dataset =
-                    nodeService.getNamespaceRegistryGraph(session);
+                nodeService.getNamespaceRegistryGraph(session);
             parseExecute(IOUtils.toString(requestBodyStream), dataset);
             session.save();
             return status(SC_NO_CONTENT).build();
@@ -105,7 +105,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 
         try {
             final Dataset dataset =
-                    nodeService.getNamespaceRegistryGraph(session);
+                nodeService.getNamespaceRegistryGraph(session);
             return dataset;
         } finally {
             session.logout();

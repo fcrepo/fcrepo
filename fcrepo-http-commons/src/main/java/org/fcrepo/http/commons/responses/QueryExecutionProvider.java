@@ -16,7 +16,9 @@
 
 package org.fcrepo.http.commons.responses;
 
-import static com.google.common.collect.ImmutableList.of;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static java.util.Collections.singletonList;
+import static org.fcrepo.http.commons.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -35,7 +37,6 @@ import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
 
 /**
  * Helper for writing QueryExecutions results out in a variety
@@ -60,7 +61,7 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
                 mediaType);
 
         // add standard headers
-        httpHeaders.put("Content-type", of((Object) mediaType.toString()));
+        httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));
 
         try {
             final ResultSet results = qexec.execSelect();
@@ -75,9 +76,10 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
             final Annotation[] annotations, final MediaType mediaType) {
 
         // we can return a result for any MIME type that Jena can serialize
-        final Boolean appropriateResultType = ResultSetStreamingOutput.getResultsFormat(mediaType) != ResultsFormat.FMT_UNKNOWN;
-        return appropriateResultType &&
-                (QueryExecution.class.isAssignableFrom(type) || QueryExecution.class
+        final Boolean appropriateResultType =
+            getResultsFormat(mediaType) != FMT_UNKNOWN;
+        return appropriateResultType
+                && (QueryExecution.class.isAssignableFrom(type) || QueryExecution.class
                         .isAssignableFrom(genericType.getClass()));
     }
 

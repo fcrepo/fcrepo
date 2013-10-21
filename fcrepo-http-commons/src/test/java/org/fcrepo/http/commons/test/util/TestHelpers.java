@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons.test.util;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.mockito.Matchers.anyString;
@@ -62,7 +63,6 @@ import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.sun.jersey.api.uri.UriBuilderImpl;
@@ -80,8 +80,8 @@ public abstract class TestHelpers {
         final Answer<UriBuilder> answer = new Answer<UriBuilder>() {
 
             @Override
-            public UriBuilder answer(final InvocationOnMock invocation)
-                    throws Throwable {
+            public UriBuilder
+                    answer(final InvocationOnMock invocation) throws Throwable {
 
                 final UriBuilder ub = new UriBuilderImpl();
                 ub.scheme("http");
@@ -172,17 +172,17 @@ public abstract class TestHelpers {
         return mockSession;
     }
 
-    public static Collection<String> parseChildren(final HttpEntity entity)
-            throws IOException {
+    public static Collection<String>
+            parseChildren(final HttpEntity entity) throws IOException {
         final String body = EntityUtils.toString(entity);
         System.err.println(body);
         final String[] names =
-                body.replace("[", "").replace("]", "").trim().split(",\\s?");
+            body.replace("[", "").replace("]", "").trim().split(",\\s?");
         return Arrays.asList(names);
     }
 
     public static Session mockSession(final AbstractResource testObj)
-            throws RepositoryException, NoSuchFieldException {
+        throws RepositoryException, NoSuchFieldException {
 
         final SecurityContext mockSecurityContext = mock(SecurityContext.class);
         final Principal mockPrincipal = mock(Principal.class);
@@ -200,7 +200,7 @@ public abstract class TestHelpers {
     }
 
     public static Repository mockRepository() throws LoginException,
-            RepositoryException {
+                                             RepositoryException {
         final Repository mockRepo = mock(Repository.class);
         final Session mockSession = mock(Session.class);
         when(mockRepo.login()).thenReturn(mockSession);
@@ -237,8 +237,8 @@ public abstract class TestHelpers {
     }
 
     public static GraphStore parseTriples(final InputStream content,
-                                          final String contentType) {
-        final Model model = ModelFactory.createDefaultModel();
+            final String contentType) {
+        final Model model = createDefaultModel();
 
         model.read(content, "", contentType);
 
@@ -248,7 +248,7 @@ public abstract class TestHelpers {
 
     /**
      * Set a field via reflection
-     * 
+     *
      * @param parent the owner object of the field
      * @param name the name of the field
      * @param obj the value to set
@@ -267,15 +267,15 @@ public abstract class TestHelpers {
     }
 
     private static Field findField(final Class<?> clazz, final String name)
-            throws NoSuchFieldException {
+        throws NoSuchFieldException {
         for (final Field f : clazz.getDeclaredFields()) {
             if (f.getName().equals(name)) {
                 return f;
             }
         }
         if (clazz.getSuperclass() == null) {
-            throw new NoSuchFieldException("Field " + name +
-                    " could not be found");
+            throw new NoSuchFieldException("Field " + name
+                    + " could not be found");
         } else {
             return findField(clazz.getSuperclass(), name);
         }

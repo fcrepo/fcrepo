@@ -43,8 +43,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-
 public class FedoraFieldSearchTest {
 
     private FedoraFieldSearch testObj;
@@ -95,8 +93,7 @@ public class FedoraFieldSearchTest {
         verify(mockNodeService)
                 .searchRepository(
                         any(GraphSubjects.class),
-                        eq(ResourceFactory
-                                .createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
+                eq(createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
                         eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
     }
 

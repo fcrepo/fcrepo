@@ -16,21 +16,21 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.google.common.collect.Iterators.size;
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
@@ -40,7 +40,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     public void testGetNextPidResponds() throws Exception {
         final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
         logger.debug("Executed testGetNextPidResponds()");
-        assertEquals(HttpServletResponse.SC_OK, getStatus(method));
+        assertEquals(SC_OK, getStatus(method));
     }
 
     @Test
@@ -50,11 +50,10 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
         final GraphStore graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
-        assertTrue("Didn't find a single dang PID!", graphStore.contains(
-                Node.ANY, ResourceFactory.createResource(
-                        serverAddress + "fcr:pid").asNode(),
-                RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY));
+            parseTriples(response.getEntity().getContent());
+        assertTrue("Didn't find a single dang PID!", graphStore.contains(ANY,
+                ResourceFactory.createResource(serverAddress + "fcr:pid")
+                        .asNode(), HAS_MEMBER_OF_RESULT.asNode(), ANY));
 
     }
 
@@ -66,11 +65,10 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");
         final GraphStore graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
-        assertEquals("Didn't find two dang PIDs!", 2, Iterators.size(graphStore
-                .find(Node.ANY, ResourceFactory.createResource(
-                        serverAddress + "fcr:pid").asNode(),
-                        RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY)));
+                parseTriples(response.getEntity().getContent());
+        assertEquals("Didn't find two dang PIDs!", 2, size(graphStore.find(ANY,
+                createResource(serverAddress + "fcr:pid").asNode(),
+                HAS_MEMBER_OF_RESULT.asNode(), ANY)));
 
     }
 
@@ -78,7 +76,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     public void testGetNextPidRespondsWithPath() throws Exception {
         final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
         logger.debug("Executed testGetNextPidRespondsWithPath()");
-        assertEquals(HttpServletResponse.SC_OK, getStatus(method));
+        assertEquals(SC_OK, getStatus(method));
     }
 
     @Test
@@ -88,11 +86,10 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPidWithPath()");
         final GraphStore graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
-        assertTrue("Didn't find a single dang PID!", graphStore.contains(
-                Node.ANY, ResourceFactory.createResource(
-                        serverAddress + "fcr:pid").asNode(),
-                RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY));
+            parseTriples(response.getEntity().getContent());
+        assertTrue("Didn't find a single dang PID!", graphStore.contains(ANY,
+                createResource(serverAddress + "fcr:pid").asNode(),
+                HAS_MEMBER_OF_RESULT.asNode(), ANY));
 
     }
 
@@ -104,11 +101,10 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPidsWithPath()");
         final GraphStore graphStore =
-                TestHelpers.parseTriples(response.getEntity().getContent());
-        assertEquals("Didn't find two dang PIDs!", 2, Iterators.size(graphStore
-                .find(Node.ANY, ResourceFactory.createResource(
-                        serverAddress + "fcr:pid").asNode(),
-                        RdfLexicon.HAS_MEMBER_OF_RESULT.asNode(), Node.ANY)));
+            parseTriples(response.getEntity().getContent());
+        assertEquals("Didn't find two dang PIDs!", 2, size(graphStore.find(ANY,
+                createResource(serverAddress + "fcr:pid").asNode(),
+                HAS_MEMBER_OF_RESULT.asNode(), ANY)));
 
     }
 }

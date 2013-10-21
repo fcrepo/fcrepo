@@ -39,7 +39,7 @@ public class RepositoryExceptionMapper implements
     Boolean showStackTrace = true;
 
     @Override
-    public Response toResponse(RepositoryException e) {
+    public Response toResponse(final RepositoryException e) {
 
         LOGGER.warn("Caught repository exception: {}", e);
 

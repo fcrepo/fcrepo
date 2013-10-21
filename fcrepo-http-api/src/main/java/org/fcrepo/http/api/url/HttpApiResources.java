@@ -16,8 +16,10 @@
 
 package org.fcrepo.http.api.url;
 
-import static com.google.common.collect.ImmutableBiMap.of;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonMap;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SEARCH_SERVICE;
@@ -42,7 +44,6 @@ import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
@@ -63,15 +64,14 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final GraphSubjects graphSubjects)
+        final UriInfo uriInfo, final GraphSubjects graphSubjects)
         throws RepositoryException {
 
         final Model model = createDefaultModel();
 
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType(
-                FedoraJcrTypes.ROOT)) {
+        if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
         } else {
             addNodeStatements(resource, uriInfo, model, s);
@@ -84,11 +84,11 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         // fcr:export?format=xyz
         for (final String key : serializers.keySet()) {
             final Map<String, String> pathMap =
-                    of("path", resource.getPath().substring(1));
+                singletonMap("path", resource.getPath().substring(1));
             final Resource format =
-                    model.createResource(uriInfo.getBaseUriBuilder().path(
-                            FedoraExport.class).queryParam("format", key)
-                            .buildFromMap(pathMap).toASCIIString());
+                createResource(uriInfo.getBaseUriBuilder().path(
+                        FedoraExport.class).queryParam("format", key)
+                        .buildFromMap(pathMap).toASCIIString());
             model.add(s, HAS_SERIALIZATION, format);
             model.add(format, RDFS_LABEL, key);
         }
@@ -96,51 +96,50 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         return model;
     }
 
-    private void addContentStatements(FedoraResource resource, UriInfo uriInfo,
-            Model model, Resource s) throws RepositoryException {
+    private void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,
+        final Model model, final Resource s) throws RepositoryException {
         // fcr:fixity
         final Map<String, String> pathMap =
-                of("path", resource.getPath().substring(1));
-        model.add(s, HAS_FIXITY_SERVICE, model.createResource(uriInfo
+            singletonMap("path", resource.getPath().substring(1));
+        model.add(s, HAS_FIXITY_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(
                         pathMap).toASCIIString()));
     }
 
-    private void addNodeStatements(FedoraResource resource, UriInfo uriInfo,
-            Model model, Resource s) throws RepositoryException {
+    private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
+        final Model model, final Resource s) throws RepositoryException {
 
         // fcr:versions
         final Map<String, String> pathMap =
-                of("path", resource.getPath().substring(1));
-        model.add(s, HAS_VERSION_HISTORY, model.createResource(uriInfo
+            singletonMap("path", resource.getPath().substring(1));
+        model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
                         pathMap).toASCIIString()));
     }
 
-    private void addRepositoryStatements(UriInfo uriInfo, Model model,
-            Resource s) {
+    private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
+        final Resource s) {
         // fcr:search
-        model.add(s, HAS_SEARCH_SERVICE, model.createResource(uriInfo
+        model.add(s, HAS_SEARCH_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraFieldSearch.class).build()
                 .toASCIIString()));
 
         // sitemap
-        model.add(s, HAS_SITEMAP, model.createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraSitemap.class).build()
-                .toASCIIString()));
+        model.add(s, HAS_SITEMAP, createResource(uriInfo.getBaseUriBuilder()
+                .path(FedoraSitemap.class).build().toASCIIString()));
 
         // fcr:tx
-        model.add(s, HAS_TRANSACTION_SERVICE, model.createResource(uriInfo
+        model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)
                 .build().toASCIIString()));
 
         // fcr:namespaces
-        model.add(s, HAS_NAMESPACE_SERVICE, model.createResource(uriInfo
+        model.add(s, HAS_NAMESPACE_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryNamespaces.class)
                 .build().toASCIIString()));
 
         // fcr:workspaces
-        model.add(s, HAS_WORKSPACE_SERVICE, model.createResource(uriInfo
+        model.add(s, HAS_WORKSPACE_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryWorkspaces.class)
                 .build().toASCIIString()));
     }

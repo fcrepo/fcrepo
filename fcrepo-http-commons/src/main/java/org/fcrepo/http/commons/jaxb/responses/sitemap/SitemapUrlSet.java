@@ -27,12 +27,11 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  * @TODO replace with a 3rd party sitemap impl
  */
-@XmlRootElement(name = "urlset",
-        namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+@XmlRootElement(name = "urlset")
 public class SitemapUrlSet {
 
     private final List<SitemapEntry> sitemapEntries =
-            new ArrayList<SitemapEntry>();
+        new ArrayList<SitemapEntry>();
 
     /**
      * Create a new sitemap with the default settings
@@ -43,7 +42,7 @@ public class SitemapUrlSet {
 
     /**
      * Add an entry to the sitemap
-     * 
+     *
      * @param e
      */
     public void appendSitemapEntry(final SitemapEntry e) {
@@ -52,11 +51,10 @@ public class SitemapUrlSet {
 
     /**
      * Get all the sitemap entries
-     * 
+     *
      * @return
      */
-    @XmlElement(name = "url",
-             namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    @XmlElement(name = "url")
     public List<SitemapEntry> getSitemapEntries() {
         return sitemapEntries;
     }

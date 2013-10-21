@@ -23,26 +23,24 @@ import javax.jcr.RepositoryException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-
 /**
  * Entry in a sitemap document
  *
- *  @TODO replace with a 3rd party sitemap impl
+ * @TODO replace with a 3rd party sitemap impl
  */
-@XmlRootElement(name = "url",
-        namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+@XmlRootElement(name = "url")
 public class SitemapEntry {
 
-    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    @XmlElement
     private final URI loc;
 
-    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    @XmlElement
     private final Calendar lastmod;
 
-    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    @XmlElement
     private static final String changefreq = "monthly";
 
-    @XmlElement(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9")
+    @XmlElement
     private static final double priority = 0.8;
 
     /**
@@ -54,7 +52,7 @@ public class SitemapEntry {
 
     /**
      * Sitemap entry for a URL with a default last modified date
-     * 
+     *
      * @param loc
      * @throws RepositoryException
      */
@@ -64,7 +62,7 @@ public class SitemapEntry {
 
     /**
      * Sitemap entry for a URL with a last modified date
-     * 
+     *
      * @param loc
      * @param lastmod
      * @throws RepositoryException

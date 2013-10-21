@@ -16,69 +16,74 @@
 
 package org.fcrepo.http.commons.domain;
 
+import static javax.ws.rs.core.Variant.mediaTypes;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeNQuads;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFJSON;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeTriG;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+
 import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Variant;
 
-import org.apache.jena.riot.WebContent;
-
 /**
  * This is a convenience class carrying the various RDF content-type values as
  * Strings and MediaTypes, after the fashion of the constants available on
  * javax.ws.rs.core.MediaType
- * 
+ *
  * @author ba2213
  */
 public abstract class RDFMediaType extends MediaType {
 
-    public static final String N3 = WebContent.contentTypeN3;
+    public static final String N3 = contentTypeN3;
 
-    public static final MediaType N3_TYPE = new MediaType(N3.split("/")[0], N3
-            .split("/")[1]);
+    public static final MediaType N3_TYPE = typeFromString(N3);
 
-    public static final String N3_ALT1 = WebContent.contentTypeN3Alt1;
+    public static final String N3_ALT1 = contentTypeN3Alt1;
 
-    public static final MediaType N3_ALT1_TYPE = new MediaType(N3_ALT1
-            .split("/")[0], N3_ALT1.split("/")[1]);
+    public static final MediaType N3_ALT1_TYPE = typeFromString(N3_ALT1);
 
-    public static final String N3_ALT2 = WebContent.contentTypeN3Alt2;
+    public static final String N3_ALT2 = contentTypeN3Alt2;
 
-    public static final MediaType N3_ALT2_TYPE = new MediaType(N3_ALT2
-            .split("/")[0], N3_ALT2.split("/")[1]);
+    public static final MediaType N3_ALT2_TYPE = typeFromString(N3_ALT2);
 
-    public static final String TURTLE = WebContent.contentTypeTurtle;
+    public static final String TURTLE = contentTypeTurtle;
 
-    public static final MediaType TURTLE_TYPE = new MediaType(
-            TURTLE.split("/")[0], TURTLE.split("/")[1]);
+    public static final MediaType TURTLE_TYPE = typeFromString(TURTLE);
 
-    public static final String RDF_XML = WebContent.contentTypeRDFXML;
+    public static final String RDF_XML = contentTypeRDFXML;
 
-    public static final MediaType RDF_XML_TYPE = new MediaType(RDF_XML
-            .split("/")[0], RDF_XML.split("/")[1]);
+    public static final MediaType RDF_XML_TYPE = typeFromString(RDF_XML);
 
-    public static final String RDF_JSON = WebContent.contentTypeRDFJSON;
+    public static final String RDF_JSON = contentTypeRDFJSON;
 
-    public static final MediaType RDF_JSON_TYPE = new MediaType(RDF_JSON
-            .split("/")[0], RDF_JSON.split("/")[1]);
+    public static final MediaType RDF_JSON_TYPE = typeFromString(RDF_JSON);
 
-    public static final String NTRIPLES = WebContent.contentTypeNTriples;
+    public static final String NTRIPLES = contentTypeNTriples;
 
-    public static final MediaType NTRIPLES_TYPE = new MediaType(NTRIPLES
-            .split("/")[0], NTRIPLES.split("/")[1]);
+    public static final MediaType NTRIPLES_TYPE = typeFromString(NTRIPLES);
 
-    public static final String TRI_G = WebContent.contentTypeTriG;
+    public static final String TRI_G = contentTypeTriG;
 
-    public static final MediaType TRI_G_TYPE = new MediaType(
-            TRI_G.split("/")[0], TRI_G.split("/")[1]);
+    public static final MediaType TRI_G_TYPE = typeFromString(TRI_G);
 
-    public static final String NQUADS = WebContent.contentTypeNQuads;
+    public static final String NQUADS = contentTypeNQuads;
 
-    public static final MediaType NQUADS_TYPE = new MediaType(
-            NQUADS.split("/")[0], NQUADS.split("/")[1]);
+    public static final MediaType NQUADS_TYPE = typeFromString(NQUADS);
 
-    public static final List<Variant> POSSIBLE_RDF_VARIANTS = Variant
-            .mediaTypes(N3_TYPE, N3_ALT1_TYPE, N3_ALT2_TYPE, TURTLE_TYPE,
-                    RDF_XML_TYPE, RDF_JSON_TYPE, NTRIPLES_TYPE, TRI_G_TYPE,
-                    NQUADS_TYPE).add().build();
+    public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
+            N3_TYPE, N3_ALT1_TYPE, N3_ALT2_TYPE, TURTLE_TYPE, RDF_XML_TYPE,
+            RDF_JSON_TYPE, NTRIPLES_TYPE, TRI_G_TYPE, NQUADS_TYPE).add()
+            .build();
+
+    private static MediaType typeFromString(final String type) {
+        return new MediaType(type.split("/")[0], type.split("/")[1]);
+    }
+
 }

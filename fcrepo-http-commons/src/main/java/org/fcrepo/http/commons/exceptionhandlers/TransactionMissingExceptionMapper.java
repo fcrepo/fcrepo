@@ -16,6 +16,8 @@
 
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.GONE;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -23,15 +25,15 @@ import javax.ws.rs.ext.Provider;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 
 /**
- * If a transaction is requested that has been closed (or never existed),
- * just return an HTTP 410 Gone.
+ * If a transaction is requested that has been closed (or never existed), just
+ * return an HTTP 410 Gone.
  */
 @Provider
 public class TransactionMissingExceptionMapper implements
         ExceptionMapper<TransactionMissingException> {
 
     @Override
-    public Response toResponse(TransactionMissingException exception) {
-        return Response.status(Response.Status.GONE).build();
+    public Response toResponse(final TransactionMissingException exception) {
+        return status(GONE).build();
     }
 }

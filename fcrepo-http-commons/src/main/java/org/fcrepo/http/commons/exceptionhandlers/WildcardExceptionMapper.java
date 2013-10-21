@@ -37,7 +37,7 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
     Boolean showStackTrace = true;
 
     private static final Logger logger =
-            getLogger(WildcardExceptionMapper.class);
+        getLogger(WildcardExceptionMapper.class);
 
     @Override
     public Response toResponse(final Exception e) {

@@ -42,7 +42,6 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +63,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
@@ -108,20 +108,20 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testModifyDatastreams() throws RepositoryException,
-            IOException, InvalidChecksumException, URISyntaxException {
+                                       IOException, InvalidChecksumException,
+                                       URISyntaxException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId1 = "testDs1";
         final String dsId2 = "testDs2";
-        final HashMap<String, String> atts = new HashMap<String, String>(2);
-        atts.put(dsId1, "asdf");
-        atts.put(dsId2, "sdfg");
+        final Map<String, String> atts =
+            ImmutableMap.of(dsId1, "asdf", dsId2, "sdfg");
         final MultiPart multipart = getStringsAsMultipart(atts);
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                 mockNode);
         final Response actual =
-                testObj.modifyDatastreams(createPathList(pid), Arrays.asList(
-                        dsId1, dsId2), multipart);
+            testObj.modifyDatastreams(createPathList(pid), Arrays.asList(dsId1,
+                    dsId2), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq("/" + pid + "/" + dsId1), anyString(),
@@ -138,7 +138,7 @@ public class FedoraDatastreamsTest {
         final String path = "/" + pid;
         final List<String> dsidList = asList("ds1", "ds2");
         final Response actual =
-                testObj.deleteDatastreams(createPathList(pid), dsidList);
+            testObj.deleteDatastreams(createPathList(pid), dsidList);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockNodes).deleteObject(mockSession, path + "/" + "ds1");
         verify(mockNodes).deleteObject(mockSession, path + "/" + "ds2");
@@ -147,7 +147,8 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testGetDatastreamsContents() throws RepositoryException,
-            IOException, NoSuchAlgorithmException {
+                                            IOException,
+                                            NoSuchAlgorithmException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -162,15 +163,15 @@ public class FedoraDatastreamsTest {
         when(mockDatastreams.asDatastream(mockDsNode)).thenReturn(mockDs);
 
         final Response resp =
-                testObj.getDatastreamsContents(createPathList(pid),
-                        asList(dsId), mockRequest);
+            testObj.getDatastreamsContents(createPathList(pid), asList(dsId),
+                    mockRequest);
         final MultiPart multipart = (MultiPart) resp.getEntity();
 
         verify(mockDs).getContent();
         verify(mockSession, never()).save();
         assertEquals(1, multipart.getBodyParts().size());
         final InputStream actualContent =
-                (InputStream) multipart.getBodyParts().get(0).getEntity();
+            (InputStream) multipart.getBodyParts().get(0).getEntity();
         assertEquals("/FedoraDatastreamsTest1/testDS", multipart.getBodyParts()
                 .get(0).getContentDisposition().getFileName());
         assertEquals("asdf", IOUtils.toString(actualContent, "UTF-8"));
@@ -178,7 +179,8 @@ public class FedoraDatastreamsTest {
 
     @Test
     public void testGetDatastreamsContentsCached() throws RepositoryException,
-            IOException, NoSuchAlgorithmException {
+                                                  IOException,
+                                                  NoSuchAlgorithmException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -195,8 +197,8 @@ public class FedoraDatastreamsTest {
                         any(EntityTag.class))).thenReturn(notModified());
 
         final Response resp =
-                testObj.getDatastreamsContents(createPathList(pid),
-                        asList(dsId), mockRequest);
+            testObj.getDatastreamsContents(createPathList(pid), asList(dsId),
+                    mockRequest);
         verify(mockDs, never()).getContent();
         verify(mockSession, never()).save();
         assertEquals(NOT_MODIFIED.getStatusCode(), resp.getStatus());
@@ -212,8 +214,8 @@ public class FedoraDatastreamsTest {
             final StreamDataBodyPart part = new StreamDataBodyPart(id, src);
             try {
                 final FormDataContentDisposition cd =
-                        new FormDataContentDisposition("form-data;name=" + id +
-                                ";filename=" + id + ".txt");
+                    new FormDataContentDisposition("form-data;name=" + id
+                            + ";filename=" + id + ".txt");
                 part.contentDisposition(cd);
             } catch (final ParseException ex) {
                 ex.printStackTrace();

@@ -16,6 +16,10 @@
 
 package org.fcrepo.http.commons.responses;
 
+import static com.hp.hpl.jena.query.DatasetFactory.create;
+import static com.hp.hpl.jena.query.ResultSetFormatter.toModel;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -23,7 +27,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.jena.riot.WebContent;
 
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
@@ -50,12 +53,13 @@ class ResultSetStreamingOutput {
      * @param entityStream
      * @throws IOException
      */
-    public void write(OutputStream entityStream) throws IOException {
+    public void write(final OutputStream entityStream) throws IOException {
 
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
-        if (resultsFormat == ResultsFormat.FMT_UNKNOWN) {
-            new GraphStoreStreamingOutput(DatasetFactory.create(ResultSetFormatter.toModel(results)), mediaType).write(entityStream);
+        if (resultsFormat == FMT_UNKNOWN) {
+            new GraphStoreStreamingOutput(create(toModel(results)), mediaType)
+                    .write(entityStream);
         } else {
             ResultSetFormatter.output(entityStream, results, resultsFormat);
         }

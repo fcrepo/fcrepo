@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package org.fcrepo.http.commons.domain;
+@XmlSchema(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9",
+        elementFormDefault = QUALIFIED, xmlns = {@XmlNs(prefix = "sitemap",
+                namespaceURI = "http://www.sitemaps.org/schemas/sitemap/0.9")})
+package org.fcrepo.http.commons.jaxb.responses.sitemap;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static javax.xml.bind.annotation.XmlNsForm.QUALIFIED;
+import javax.xml.bind.annotation.XmlNs;
+import javax.xml.bind.annotation.XmlSchema;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import javax.ws.rs.HttpMethod;
-
-@Target({METHOD})
-@Retention(RUNTIME)
-@HttpMethod("PATCH")
-public @interface PATCH {
-}

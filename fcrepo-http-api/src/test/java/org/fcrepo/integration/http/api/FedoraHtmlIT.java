@@ -42,8 +42,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         final HttpResponse postResponse = client.execute(postMethod);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-        final HttpGet method =
-                new HttpGet(serverAddress + "FedoraHtmlObject");
+        final HttpGet method = new HttpGet(serverAddress + "FedoraHtmlObject");
         method.addHeader("Accept", "text/html");
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -59,11 +58,11 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
         final HttpPost postDsMethod =
-                postDSMethod("FedoraHtmlObject2", "ds1", "foo");
+            postDSMethod("FedoraHtmlObject2", "ds1", "foo");
         assertEquals(201, getStatus(postDsMethod));
 
         final HttpGet method =
-                new HttpGet(serverAddress + "FedoraHtmlObject2/ds1");
+            new HttpGet(serverAddress + "FedoraHtmlObject2/ds1");
         method.addHeader("Accept", "text/html");
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());

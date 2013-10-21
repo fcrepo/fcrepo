@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons.test.util;
 
+import static com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory.createHttpServer;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -45,8 +46,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-
-import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
 public class ContainerWrapper implements ApplicationContextAware {
 
@@ -79,7 +78,7 @@ public class ContainerWrapper implements ApplicationContextAware {
 
         final URI uri = URI.create("http://localhost:" + port);
 
-        server = GrizzlyServerFactory.createHttpServer(uri, new HttpHandler() {
+        server = createHttpServer(uri, new HttpHandler() {
 
             @Override
             public void service(final Request req, final Response res) throws Exception {

@@ -16,8 +16,11 @@
 
 package org.fcrepo.http.api;
 
+import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
@@ -43,8 +46,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ImmutableMap;
-
 /**
  * Transactions over REST
  */
@@ -53,8 +54,7 @@ import com.google.common.collect.ImmutableMap;
 @Path("/{path: .*}/fcr:tx")
 public class FedoraTransactions extends AbstractResource {
 
-    private static final Logger LOGGER =
-            getLogger(FedoraTransactions.class);
+    private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
     @Autowired
     private TransactionService txService;
@@ -64,7 +64,7 @@ public class FedoraTransactions extends AbstractResource {
 
     /**
      * Create a new transaction resource and add it to the registry
-     * 
+     *
      * @param pathList
      * @return
      * @throws RepositoryException
@@ -77,7 +77,7 @@ public class FedoraTransactions extends AbstractResource {
         LOGGER.debug("creating transaction at path {}", pathList);
 
         if (!pathList.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return status(BAD_REQUEST).build();
         }
 
         if (session instanceof TxSession) {
@@ -96,7 +96,7 @@ public class FedoraTransactions extends AbstractResource {
             return created(
                     uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
                             .buildFromMap(
-                                    ImmutableMap.of("path", "tx:" +
+                                    singletonMap("path", "tx:" +
                                             t.getId()))).expires(
                     t.getExpires()).build();
         }
@@ -104,7 +104,7 @@ public class FedoraTransactions extends AbstractResource {
 
     /**
      * Commit a transaction resource
-     * 
+     *
      * @param pathList
      * @return
      * @throws RepositoryException
@@ -135,7 +135,7 @@ public class FedoraTransactions extends AbstractResource {
 
         final String path = toPath(pathList);
         if (!path.equals("/")) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return status(BAD_REQUEST).build();
         }
 
         final String txId;
@@ -148,7 +148,7 @@ public class FedoraTransactions extends AbstractResource {
         if (txId.isEmpty()) {
             LOGGER.debug("cannot finalize an empty tx id {} at path {}",
                     txId, path);
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return status(BAD_REQUEST).build();
         }
 
         if (commit) {

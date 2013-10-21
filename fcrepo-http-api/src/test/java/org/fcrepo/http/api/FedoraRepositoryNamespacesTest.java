@@ -55,7 +55,7 @@ public class FedoraRepositoryNamespacesTest {
 
     @Before
     public void setUp() throws RepositoryException, URISyntaxException,
-            NoSuchFieldException {
+                       NoSuchFieldException {
         initMocks(this);
         testObj = new FedoraRepositoryNamespaces();
         setField(testObj, "nodeService", mockNodeService);

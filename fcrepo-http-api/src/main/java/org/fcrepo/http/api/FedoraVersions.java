@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -134,7 +135,7 @@ public class FedoraVersions extends AbstractResource {
                     nodeService.getObject(session, path);
             resource.addVersionLabel(versionLabel);
 
-            return Response.noContent().build();
+            return noContent().build();
         } finally {
             session.logout();
         }

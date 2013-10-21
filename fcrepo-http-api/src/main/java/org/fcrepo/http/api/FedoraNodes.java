@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.api;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.sun.jersey.api.Responses.clientError;
 import static com.sun.jersey.api.Responses.notAcceptable;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -36,6 +37,8 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
@@ -77,12 +80,10 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.WebContent;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -94,7 +95,6 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -178,7 +178,7 @@ public class FedoraNodes extends AbstractResource {
                     .contains(subjects.getGraphSubject(resource.getNode()),
                                  HAS_CHILD_COUNT)) {
 
-                final Model requestModel = ModelFactory.createDefaultModel();
+                final Model requestModel = createDefaultModel();
 
                 final long childCount = treeModel
                                             .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()), HAS_CHILD_COUNT)
@@ -214,7 +214,7 @@ public class FedoraNodes extends AbstractResource {
                 servletResponse.addHeader("ETag", etag.toString());
             }
 
-            servletResponse.addHeader("Accept-Patch", WebContent.contentTypeSPARQLUpdate);
+            servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
             servletResponse.addHeader("Link", "http://www.w3.org/ns/ldp/Resource;rel=\"type\"");
 
             addResponseInformationToDataset(resource, propertiesDataset,
@@ -350,7 +350,7 @@ public class FedoraNodes extends AbstractResource {
                 final String format = contentTypeToLang(contentType).getName()
                                           .toUpperCase();
 
-                final Model inputModel = ModelFactory.createDefaultModel()
+                final Model inputModel = createDefaultModel()
                                              .read(requestBodyStream,
                                                       subjects.getGraphSubject(resource.getNode()).toString(),
                                                       format);
@@ -434,23 +434,23 @@ public class FedoraNodes extends AbstractResource {
             } else {
                 if (requestContentType != null) {
                     final String s = requestContentType.toString();
-                    if (s.equals(WebContent.contentTypeSPARQLUpdate) || contentTypeToLang(s) != null) {
-                        objectType = FedoraJcrTypes.FEDORA_OBJECT;
+                    if (s.equals(contentTypeSPARQLUpdate) || contentTypeToLang(s) != null) {
+                        objectType = FEDORA_OBJECT;
                     } else {
-                        objectType = FedoraJcrTypes.FEDORA_DATASTREAM;
+                        objectType = FEDORA_DATASTREAM;
                     }
                 } else {
-                    objectType = FedoraJcrTypes.FEDORA_OBJECT;
+                    objectType = FEDORA_OBJECT;
                 }
             }
 
             final FedoraResource result;
 
             switch (objectType) {
-                case FedoraJcrTypes.FEDORA_OBJECT:
+                case FEDORA_OBJECT:
                     result = objectService.createObject(session, newObjectPath);
                     break;
-                case FedoraJcrTypes.FEDORA_DATASTREAM:
+                case FEDORA_DATASTREAM:
                     result = datastreamService.createDatastream(session, newObjectPath);
                     break;
                 default:
@@ -465,7 +465,7 @@ public class FedoraNodes extends AbstractResource {
 
                 final String contentTypeString = contentType.toString();
 
-                if (contentTypeString.equals(WebContent.contentTypeSPARQLUpdate)) {
+                if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                     result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
                 } else if (contentTypeToLang(contentTypeString) != null) {
 
@@ -478,7 +478,8 @@ public class FedoraNodes extends AbstractResource {
                     final String format = lang.getName()
                                               .toUpperCase();
 
-                    final Model inputModel = ModelFactory.createDefaultModel()
+                    final Model inputModel =
+                        createDefaultModel()
                                                  .read(requestBodyStream,
                                                           subjects.getGraphSubject(result.getNode()).toString(),
                                                           format);

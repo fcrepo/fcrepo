@@ -75,7 +75,7 @@ public class FedoraIdentifiersTest {
 
     @Test
     public void testGetNextPidAtRoot() throws NoSuchFieldException,
-            RepositoryException, URISyntaxException {
+                                      RepositoryException, URISyntaxException {
         when(mockPidMinter.makePid()).thenReturn(
                 new Function<Object, String>() {
 
@@ -124,7 +124,7 @@ public class FedoraIdentifiersTest {
         when(mockSession.getNode("/objects/asdf:123")).thenReturn(mockNode);
 
         final Dataset np =
-                testObj.getNextPid(createPathList("objects"), 2, uriInfo);
+            testObj.getNextPid(createPathList("objects"), 2, uriInfo);
 
         LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
         assertTrue(np.getDefaultModel().contains(

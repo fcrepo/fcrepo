@@ -17,12 +17,14 @@
 package org.fcrepo.http.commons.test.util;
 
 import static java.lang.reflect.Proxy.newProxyInstance;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.Set;
 
 import javax.servlet.Filter;
@@ -36,18 +38,15 @@ import javax.ws.rs.WebApplicationException;
 
 import org.glassfish.grizzly.http.server.GrizzlyPrincipal;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.sun.jersey.core.util.Base64;
-import com.sun.jersey.spi.container.ContainerRequest;
+import static  com.sun.jersey.api.core.HttpRequestContext.AUTHORIZATION;
+import static com.sun.jersey.core.util.Base64.base64Decode;
 
 /**
  * @author Gregory Jansen
  */
 public class TestAuthenticationRequestFilter implements Filter {
 
-    private static final Logger log = LoggerFactory
-            .getLogger(TestAuthenticationRequestFilter.class);
+    private static final Logger log = getLogger(TestAuthenticationRequestFilter.class);
 
     // @Context
     // UriInfo uriInfo;
@@ -67,12 +66,12 @@ public class TestAuthenticationRequestFilter implements Filter {
         final HttpServletRequest req = (HttpServletRequest) request;
         final String username = getUsername(req);
         // Validate the extracted credentials
-        Set<String> containerRoles = Collections.emptySet();
+        Set<String> containerRoles = emptySet();
         if (FEDORA_ADMIN_USER.equals(username)) {
-            containerRoles = Collections.singleton("fedoraAdmin");
+            containerRoles = singleton("fedoraAdmin");
             log.info("ADMIN AUTHENTICATED");
         } else {
-            containerRoles = Collections.singleton("fedoraUser");
+            containerRoles = singleton("fedoraUser");
             log.info("USER AUTHENTICATED");
         }
         final ServletRequest proxy = proxy(req, username, containerRoles);
@@ -116,8 +115,7 @@ public class TestAuthenticationRequestFilter implements Filter {
 
     private String getUsername(final HttpServletRequest request) {
         // Extract authentication credentials
-        String authentication =
-                request.getHeader(ContainerRequest.AUTHORIZATION);
+        String authentication = request.getHeader(AUTHORIZATION);
         if (authentication == null) {
             return null;
         }
@@ -126,7 +124,7 @@ public class TestAuthenticationRequestFilter implements Filter {
         }
         authentication = authentication.substring("Basic ".length());
         final String[] values =
-                new String(Base64.base64Decode(authentication)).split(":");
+            new String(base64Decode(authentication)).split(":");
         if (values.length < 2) {
             throw new WebApplicationException(400);
             // "Invalid syntax for username and password"

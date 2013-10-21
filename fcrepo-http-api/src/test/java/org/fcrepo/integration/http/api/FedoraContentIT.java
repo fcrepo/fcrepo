@@ -16,6 +16,7 @@
 
 package org.fcrepo.integration.http.api;
 
+import static java.util.TimeZone.getTimeZone;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -23,8 +24,6 @@ import static org.junit.Assert.assertTrue;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -152,7 +151,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final SimpleDateFormat format =
                 new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        format.setTimeZone(getTimeZone("GMT"));
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +

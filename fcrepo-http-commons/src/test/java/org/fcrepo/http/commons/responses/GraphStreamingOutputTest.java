@@ -41,7 +41,7 @@ import com.hp.hpl.jena.update.GraphStore;
 public class GraphStreamingOutputTest {
 
     private static final Logger LOGGER =
-            getLogger(GraphStreamingOutputTest.class);
+        getLogger(GraphStreamingOutputTest.class);
 
     @Test
     public void testStuff() throws WebApplicationException, IOException,

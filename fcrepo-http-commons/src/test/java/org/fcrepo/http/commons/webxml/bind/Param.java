@@ -34,7 +34,7 @@ public class Param extends Describable {
     public Param() {
     }
 
-    public Param(String name, String value) {
+    public Param(final String name, final String value) {
         this.name = name;
         this.value = value;
     }
@@ -48,15 +48,15 @@ public class Param extends Describable {
     }
 
     @Override
-    public boolean equals(Object object) {
+    public boolean equals(final Object object) {
         if (this.getClass().equals(object.getClass())) {
-            Param that = (Param) object;
-            boolean name =
-                    (this.name == null) ? that.name == null : this.name
-                            .equals(that.name);
-            boolean value =
-                    (this.value == null) ? that.value == null : this.value
-                            .equals(that.value);
+            final Param that = (Param) object;
+            final boolean name =
+                (this.name == null) ? that.name == null : this.name
+                        .equals(that.name);
+            final boolean value =
+                (this.value == null) ? that.value == null : this.value
+                        .equals(that.value);
             return name && value;
         }
         return false;

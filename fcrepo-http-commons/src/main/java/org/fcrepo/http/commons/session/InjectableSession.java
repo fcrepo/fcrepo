@@ -38,13 +38,12 @@ public class InjectableSession implements Injectable<Session> {
 
     private HttpServletRequest request;
 
-    private static final Logger logger =
-            getLogger(InjectableSession.class);
+    private static final Logger logger = getLogger(InjectableSession.class);
 
     /**
      * Construct our request-context and authorization-context aware session
      * factory
-     * 
+     *
      * @param sessionFactory
      * @param reqContext
      * @param request

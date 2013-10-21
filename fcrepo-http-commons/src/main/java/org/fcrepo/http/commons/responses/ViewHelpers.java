@@ -16,6 +16,9 @@
 
 package org.fcrepo.http.commons.responses;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
@@ -24,7 +27,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.api.rdf.QuadOrdering;
 import org.slf4j.Logger;
 
@@ -65,20 +67,20 @@ public class ViewHelpers {
 
     /**
      * Return an iterator of Quads that match the given subject and predicate
-     * 
+     *
      * @param dataset
      * @param subject
      * @param predicate
      * @return
      */
     public Iterator<Quad> getObjects(final DatasetGraph dataset,
-            final Node subject, final Resource predicate) {
-        return dataset.find(Node.ANY, subject, predicate.asNode(), Node.ANY);
+        final Node subject, final Resource predicate) {
+        return dataset.find(ANY, subject, predicate.asNode(), ANY);
     }
 
     /**
      * Get the canonical title of a subject from the graph
-     * 
+     *
      * @param dataset
      * @param subject
      * @return
@@ -86,10 +88,9 @@ public class ViewHelpers {
     public String getObjectTitle(final DatasetGraph dataset,
             final Node subject) {
 
-        Property[] properties =
-                new Property[] {RdfLexicon.RDFS_LABEL, RdfLexicon.DC_TITLE};
+        final Property[] properties = new Property[] {RDFS_LABEL, DC_TITLE};
 
-        for (Property p : properties) {
+        for (final Property p : properties) {
             final Iterator<Quad> objects = getObjects(dataset, subject, p);
 
             if (objects.hasNext()) {
@@ -110,7 +111,7 @@ public class ViewHelpers {
     /**
      * Get the string version of the object that matches the given subject and
      * predicate
-     * 
+     *
      * @param dataset
      * @param subject
      * @param predicate
@@ -142,7 +143,7 @@ public class ViewHelpers {
 
     /**
      * Generate url -> local name breadcrumbs for a given node's tree
-     * 
+     *
      * @param uriInfo
      * @param subject
      * @return
@@ -166,7 +167,7 @@ public class ViewHelpers {
 
         final String[] split = salientPath.split("/");
 
-        StringBuilder cumulativePath = new StringBuilder();
+        final StringBuilder cumulativePath = new StringBuilder();
 
         for (final String path : split) {
 
@@ -196,7 +197,7 @@ public class ViewHelpers {
     /**
      * Sort a Iterator of Quads alphabetically by its subject, predicate, and
      * object
-     * 
+     *
      * @param model
      * @param it
      * @return
@@ -210,7 +211,7 @@ public class ViewHelpers {
     /**
      * Get the namespace prefix (or the namespace URI itself, if no prefix is
      * available) from a prefix mapping
-     * 
+     *
      * @param mapping
      * @param namespace
      * @return
@@ -229,16 +230,16 @@ public class ViewHelpers {
     /**
      * Get a prefix preamble appropriate for a SPARQL-UPDATE query from a prefix
      * mapping object
-     * 
+     *
      * @param mapping
      * @return
      */
     public String getPrefixPreamble(final PrefixMapping mapping) {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
 
         final Map<String, String> nsPrefixMap = mapping.getNsPrefixMap();
 
-        for (Map.Entry<String, String> entry : nsPrefixMap.entrySet()) {
+        for (final Map.Entry<String, String> entry : nsPrefixMap.entrySet()) {
             sb.append("PREFIX " + entry.getKey() + ": <" + entry.getValue() +
                     ">\n");
         }

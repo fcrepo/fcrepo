@@ -16,7 +16,8 @@
 
 package org.fcrepo.http.commons.webxml.bind;
 
-import java.util.Collections;
+import static java.util.Collections.emptyList;
+
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -55,8 +56,11 @@ public class Servlet extends Displayable {
         return this.servletClass;
     }
 
-    @SuppressWarnings("unchecked")
     public List<InitParam> initParams() {
-        return (initParams != null) ? initParams : Collections.EMPTY_LIST;
+        if (initParams != null) {
+            return initParams;
+        } else {
+            return emptyList();
+        }
     }
 }

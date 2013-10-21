@@ -49,7 +49,7 @@ public class FedoraRepositoriesPropertiesTest {
 
     @Mock
     private FedoraObject mockObject;
-    
+
     @Mock
     private Dataset mockDataset;
 
@@ -68,10 +68,11 @@ public class FedoraRepositoriesPropertiesTest {
     @Test
     public void testSparqlUpdate() throws RepositoryException, IOException {
         final InputStream mockStream =
-                new ByteArrayInputStream("my-sparql-statement".getBytes());
+            new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, "/")).thenReturn(mockObject);
-        when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
-            .thenReturn(mockDataset);
+        when(
+                mockObject.updatePropertiesDataset(any(GraphSubjects.class),
+                        any(String.class))).thenReturn(mockDataset);
         testObj.updateSparql(mockStream);
 
         verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),

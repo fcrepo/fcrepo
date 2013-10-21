@@ -16,6 +16,7 @@
 package org.fcrepo.integration.http.api;
 
 
+import static com.google.common.io.Files.createTempDir;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -28,8 +29,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import com.google.common.io.Files;
-
 public class FedoraBackupIT extends AbstractResourceIT {
 
 	@Test
@@ -37,7 +36,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
 		final String objName = "objects/FedoraBackupITObject";
 
 		// set up the object
-        StringBuilder text = new StringBuilder();
+        final StringBuilder text = new StringBuilder();
         for (int x = 0; x < 1000; ++x) {
             text.append("data-" + x);
         }
@@ -55,20 +54,20 @@ public class FedoraBackupIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
 
 		// back it up
-        File dir = Files.createTempDir();
+        final File dir = createTempDir();
         logger.debug("Backing up repository to {}", dir.getCanonicalPath());
 		final HttpPost backupMethod =
 				new HttpPost(serverAddress + "fcr:backup");
         backupMethod.setEntity(new StringEntity(dir.getCanonicalPath()));
-		response = client.execute(backupMethod);
-		assertEquals(200, response.getStatusLine().getStatusCode());
+        response = client.execute(backupMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
 
-		final String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         assertEquals(dir.getCanonicalPath(), content);
-		logger.debug("Back up directory was {}", content);
+        logger.debug("Back up directory was {}", content);
 
         // delete it
-		response = client.execute(new HttpDelete(serverAddress + objName));
+        response = client.execute(new HttpDelete(serverAddress + objName));
         assertEquals(204, response.getStatusLine().getStatusCode());
 
         // Verify object removed
