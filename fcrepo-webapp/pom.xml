@@ -115,6 +115,7 @@
           <systemPropertyVariables>
             <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
+            <integration-test>true</integration-test>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -162,6 +163,11 @@
             <systemProperty>
               <name>fcrepo.activemq.dir</name>
               <value>${project.build.directory}/active-mq</value>
+            </systemProperty>
+
+            <systemProperty>
+              <name>integration-test</name>
+              <value>true</value>
             </systemProperty>
 
           </systemProperties>

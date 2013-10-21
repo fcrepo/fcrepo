@@ -47,6 +47,8 @@ public class ModeShapeRepositoryFactoryBean implements
     private static final Logger LOGGER =
             getLogger(ModeShapeRepositoryFactoryBean.class);
 
+    private DefaultPropertiesLoader propertiesLoader;
+
     @Inject
     private JcrRepositoryFactory jcrRepositoryFactory;
 
@@ -56,7 +58,7 @@ public class ModeShapeRepositoryFactoryBean implements
 
     /**
      * Generate a JCR repository from the given configuration
-     * 
+     *
      * @throws RepositoryException
      * @throws IOException
      */
@@ -66,6 +68,8 @@ public class ModeShapeRepositoryFactoryBean implements
             LOGGER.debug("Using repo config: {}",
                     ((ClassPathResource) repositoryConfiguration).getPath());
         }
+
+        getPropertiesLoader().loadSystemProperties();
 
         repository =
                 (JcrRepository) jcrRepositoryFactory
@@ -99,4 +103,10 @@ public class ModeShapeRepositoryFactoryBean implements
         this.repositoryConfiguration = repositoryConfiguration;
     }
 
+    private DefaultPropertiesLoader getPropertiesLoader() {
+        if (null == propertiesLoader) {
+            propertiesLoader = new DefaultPropertiesLoader();
+        }
+        return propertiesLoader;
+    }
 }

@@ -609,6 +609,7 @@
               <com.arjuna.ats.arjuna.objectstore.objectStoreDir>
                 ${project.build.directory}/object-store
               </com.arjuna.ats.arjuna.objectstore.objectStoreDir>
+              <integration-test>true</integration-test>
             </systemPropertyVariables>
           </configuration>
           <executions>
