@@ -16,9 +16,11 @@
 
 package org.fcrepo.http.commons.webxml;
 
+import static com.google.common.collect.Collections2.filter;
+import static java.util.Collections.unmodifiableList;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -34,7 +36,6 @@ import org.fcrepo.http.commons.webxml.bind.Servlet;
 import org.fcrepo.http.commons.webxml.bind.ServletMapping;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 
 @XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
         name = "web-app")
@@ -69,38 +70,34 @@ public class WebAppConfig extends Displayable {
             name = "filter-mapping")})
     List<FilterMapping> filterMappings;
 
-    public Collection<ServletMapping> servletMappings(String servletName) {
-        return Collections2
-                .filter(servletMappings, new SMapFilter(servletName));
+    public Collection<ServletMapping> servletMappings(final String servletName) {
+        return filter(servletMappings, new SMapFilter(servletName));
     }
 
-    public Collection<FilterMapping> filterMappings(String filterName) {
-        return Collections2.filter(filterMappings, new FMapFilter(filterName));
+    public Collection<FilterMapping> filterMappings(final String filterName) {
+        return filter(filterMappings, new FMapFilter(filterName));
     }
 
-    private static List<ContextParam> NO_CP = Collections
-            .unmodifiableList(new ArrayList<ContextParam>(0));
+    private static List<ContextParam> NO_CP = unmodifiableList(new ArrayList<ContextParam>(0));
 
     public Collection<ContextParam> contextParams() {
         return (contextParams != null) ? contextParams : NO_CP;
     }
 
-    private static List<Servlet> NO_S = Collections
-            .unmodifiableList(new ArrayList<Servlet>(0));
+    private static List<Servlet> NO_S = unmodifiableList(new ArrayList<Servlet>(0));
 
     public Collection<Servlet> servlets() {
         return (servlets != null) ? servlets : NO_S;
     }
 
-    private static List<Filter> NO_F = Collections
-            .unmodifiableList(new ArrayList<Filter>(0));
+    private static List<Filter> NO_F = unmodifiableList(new ArrayList<Filter>(0));
 
     public Collection<Filter> filters() {
         return (filters != null) ? filters : NO_F;
     }
 
-    private static List<Listener> NO_L = Collections
-            .unmodifiableList(new ArrayList<Listener>(0));
+    private static List<Listener> NO_L =
+        unmodifiableList(new ArrayList<Listener>(0));
 
     public Collection<Listener> listeners() {
         return (listeners != null) ? listeners : NO_L;
@@ -110,12 +107,12 @@ public class WebAppConfig extends Displayable {
 
         String servletName;
 
-        SMapFilter(String sName) {
+        SMapFilter(final String sName) {
             servletName = sName;
         }
 
         @Override
-        public boolean apply(ServletMapping input) {
+        public boolean apply(final ServletMapping input) {
             return (servletName == null) ? input.servletName() == null
                     : servletName.equals(input.servletName());
         }
@@ -126,12 +123,12 @@ public class WebAppConfig extends Displayable {
 
         String filterName;
 
-        FMapFilter(String sName) {
+        FMapFilter(final String sName) {
             filterName = sName;
         }
 
         @Override
-        public boolean apply(FilterMapping input) {
+        public boolean apply(final FilterMapping input) {
             return (filterName == null) ? input.filterName() == null
                     : filterName.equals(input.filterName());
         }

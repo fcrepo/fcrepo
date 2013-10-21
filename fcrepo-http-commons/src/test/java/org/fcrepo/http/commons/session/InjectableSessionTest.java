@@ -48,15 +48,15 @@ public class InjectableSessionTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         final HttpServletRequest mockHttpServletRequest =
-                mock(HttpServletRequest.class);
+            mock(HttpServletRequest.class);
         when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(
                 mockSession);
         when(
                 mockSessionFactory.getSession(mockSecurityContext,
                         mockHttpServletRequest)).thenReturn(mockSession);
         testObj =
-                new InjectableSession(mockSessionFactory, mockSecurityContext,
-                        mockHttpServletRequest);
+            new InjectableSession(mockSessionFactory, mockSecurityContext,
+                    mockHttpServletRequest);
 
     }
 

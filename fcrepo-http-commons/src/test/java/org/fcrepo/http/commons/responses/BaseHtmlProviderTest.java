@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -45,11 +45,9 @@ import javax.ws.rs.core.MultivaluedMap;
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
@@ -63,7 +61,7 @@ public class BaseHtmlProviderTest {
 
     {
         testData.asDatasetGraph().getDefaultGraph().add(
-                new Triple(NodeFactory.createURI("test:subject"),
+                new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
@@ -109,9 +107,9 @@ public class BaseHtmlProviderTest {
                 outStream.write("abcdefighijk".getBytes(), 0, 10);
                 return "I am pretending to merge a template for you.";
             }
-        }).when(mockTemplate).merge(Mockito.isA(Context.class),
-                isA(Writer.class));
-        setField(baseHtmlProvider, "templatesMap", of("nt:file", mockTemplate));
+        }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
+        setField(baseHtmlProvider, "templatesMap", singletonMap("nt:file",
+                mockTemplate));
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
                 new Annotation[] {}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedMapImpl(), outStream);
@@ -134,8 +132,7 @@ public class BaseHtmlProviderTest {
                 outStream.write("abcdefighijk".getBytes(), 0, 10);
                 return "I am pretending to merge a template for you.";
             }
-        }).when(mockTemplate).merge(Mockito.isA(Context.class),
-                isA(Writer.class));
+        }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
 
         setField(baseHtmlProvider, "templatesMap",
                 of("some:file", mockTemplate));

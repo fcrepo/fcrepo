@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.valueOf;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,7 +35,6 @@ import java.lang.reflect.Type;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.apache.jena.riot.WebContent;
 import org.fcrepo.http.commons.responses.QueryExecutionProvider;
 import org.junit.Test;
 
@@ -52,60 +52,61 @@ public class QueryExecutionProviderTest {
 
     Dataset testData = new DatasetImpl(createDefaultModel());
 
-
     {
         testData.asDatasetGraph().getDefaultGraph().add(
-                                                           new Triple(createURI("test:subject"),
-                                                                         createURI("test:predicate"),
-                                                                         createLiteral("test:object")));
+                new Triple(createURI("test:subject"),
+                        createURI("test:predicate"),
+                        createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
-                                                           new Triple(createURI("test:subject"), primaryTypePredicate,
-                                                                         createLiteral("nt:file")));
+                new Triple(createURI("test:subject"), primaryTypePredicate,
+                        createLiteral("nt:file")));
 
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testWriteTo() throws WebApplicationException,
-        IllegalArgumentException, IOException {
+                             IllegalArgumentException, IOException {
 
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");
 
-        QueryExecution testResult = QueryExecutionFactory.create(sparqlQuery, testData);
+        final QueryExecution testResult =
+            QueryExecutionFactory.create(sparqlQuery, testData);
 
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
-        testObj.writeTo(testResult, QueryExecution.class, mock(Type.class), null,
-                               valueOf(WebContent.contentTypeResultsXML), mock(MultivaluedMap.class),
-                               outStream);
+        testObj.writeTo(testResult, QueryExecution.class, mock(Type.class),
+                null, valueOf(contentTypeResultsXML),
+                mock(MultivaluedMap.class), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
         assertTrue("Couldn't find test RDF-object mentioned!", new String(
-                                                                             results).contains("test:subject"));
+                results).contains("test:subject"));
     }
 
     @Test
     public void testGetSize() {
-        assertEquals("Returned wrong size from QueryExecutionProvider!", testObj
-                                                                   .getSize(null, null, null, null, null), -1);
+        assertEquals("Returned wrong size from QueryExecutionProvider!",
+                testObj.getSize(null, null, null, null, null), -1);
 
     }
 
     @Test
     public void testIsWritable() throws Exception {
         assertTrue(
-                      "Gave false response to QueryExecutionProvider.isWriteable() that contained a legitimate combination of parameters!",
-                      testObj.isWriteable(QueryExecution.class, QueryExecution.class, null,
-                                                 valueOf(WebContent.contentTypeResultsXML)));
+                "Gave false response to QueryExecutionProvider.isWriteable() that contained a legitimate combination of parameters!",
+                testObj.isWriteable(QueryExecution.class, QueryExecution.class,
+                        null, valueOf(contentTypeResultsXML)));
         assertFalse(
-                       "RdfProvider.isWriteable() should return false if asked to serialize anything other than QueryExecution!",
-                       testObj.isWriteable(QueryExecutionProvider.class, QueryExecutionProvider.class,
-                                                  null, valueOf(WebContent.contentTypeResultsXML)));
+                "RdfProvider.isWriteable() should return false if asked to serialize anything other than QueryExecution!",
+                testObj.isWriteable(QueryExecutionProvider.class,
+                        QueryExecutionProvider.class, null,
+                        valueOf(contentTypeResultsXML)));
         assertFalse(
-                       "RdfProvider.isWriteable() should return false to text/html!",
-                       testObj.isWriteable(QueryExecution.class, QueryExecution.class, null,
-                                                  TEXT_HTML_TYPE));
+                "RdfProvider.isWriteable() should return false to text/html!",
+                testObj.isWriteable(QueryExecution.class, QueryExecution.class,
+                        null, TEXT_HTML_TYPE));
 
     }
 }

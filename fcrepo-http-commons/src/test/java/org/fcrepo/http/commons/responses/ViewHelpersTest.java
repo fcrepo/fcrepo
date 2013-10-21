@@ -65,8 +65,8 @@ public class ViewHelpersTest {
         final UriInfo mockUriInfo = getUriInfoImpl();
 
         final Map<String, String> nodeBreadcrumbs =
-                testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
-                        "http://localhost/fcrepo/a/b/c").asNode());
+            testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
+                    "http://localhost/fcrepo/a/b/c").asNode());
 
         assertEquals(of("http://localhost/fcrepo/a", "a",
                 "http://localhost/fcrepo/a/b", "b",
@@ -79,8 +79,8 @@ public class ViewHelpersTest {
         final UriInfo mockUriInfo = getUriInfoImpl();
 
         final Map<String, String> nodeBreadcrumbs =
-                testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
-                        "http://somewhere/else/a/b/c").asNode());
+            testObj.getNodeBreadcrumbs(mockUriInfo, createResource(
+                    "http://somewhere/else/a/b/c").asNode());
 
         assertTrue(nodeBreadcrumbs.isEmpty());
     }
@@ -176,10 +176,10 @@ public class ViewHelpersTest {
         model.add(a, propertyA, literalB);
 
         final Iterator<Quad> iterator =
-                DatasetFactory.create(model).asDatasetGraph().find();
+            DatasetFactory.create(model).asDatasetGraph().find();
 
         final List<Quad> sortedTriples =
-                testObj.getSortedTriples(model, iterator);
+            testObj.getSortedTriples(model, iterator);
 
         sortedTriples.get(0).matches(ANY, a.asNode(), propertyA.asNode(),
                 literalA.asNode());

@@ -53,10 +53,10 @@ public class HttpGraphSubjectsTest {
 
     @Mock
     private Session mockSession;
-    
+
     @Mock
     private Workspace mockWorkspace;
-    
+
     @Mock private  Resource mockSubject;
 
     @Mock
@@ -73,7 +73,8 @@ public class HttpGraphSubjectsTest {
         uriInfo = getUriInfoImpl(testPath);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         testObj =
-                new HttpGraphSubjects(mockSession, MockNodeController.class, uriInfo);
+            new HttpGraphSubjects(mockSession, MockNodeController.class,
+                    uriInfo);
     }
 
     @Test

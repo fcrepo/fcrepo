@@ -16,22 +16,23 @@
 
 package org.fcrepo.http.commons.responses;
 
-import java.lang.annotation.ElementType;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
  * An annotation that hints to the HtmlProvider a template that should be used
  * to render a response.
  */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
+@Target({METHOD})
+@Retention(RUNTIME)
 public @interface HtmlTemplate {
 
     /**
      * The name of the HMTL template to render for this method
-     * 
+     *
      * @return
      */
     String value();

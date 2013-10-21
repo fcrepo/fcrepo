@@ -77,7 +77,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionWithNullPath() throws LoginException,
-            RepositoryException {
+                                            RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn(null);
         testObj.getSession(mockRequest);
         verify(mockRepo).login();
@@ -85,7 +85,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionAuthenticated() throws LoginException,
-            RepositoryException {
+                                             RepositoryException {
         when(mockContext.getUserPrincipal()).thenReturn(mockUser);
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn("/some/path");
@@ -95,14 +95,14 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionUnauthenticated() throws LoginException,
-            RepositoryException {
+                                               RepositoryException {
         testObj.getInternalSession();
         verify(mockRepo).login();
     }
 
     @Test
     public void testGetSessionWithWorkspace() throws LoginException,
-            RepositoryException {
+                                             RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn(
                 "/workspace:some-workspace/some/path");
         testObj.getSession(mockRequest);
@@ -111,7 +111,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionWithTransaction() throws LoginException,
-            RepositoryException {
+                                               RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
@@ -120,8 +120,9 @@ public class SessionFactoryTest {
     }
 
     @Test
-    public void testGetAuthenticatedSessionWithWorkspace()
-            throws LoginException, RepositoryException {
+    public void
+            testGetAuthenticatedSessionWithWorkspace() throws LoginException,
+                                                      RepositoryException {
 
         when(mockContext.getUserPrincipal()).thenReturn(mockUser);
         when(mockRequest.getPathInfo()).thenReturn(
@@ -131,8 +132,9 @@ public class SessionFactoryTest {
     }
 
     @Test
-    public void testGetAuthenticatedSessionWithTransaction()
-            throws LoginException, RepositoryException {
+    public void
+            testGetAuthenticatedSessionWithTransaction() throws LoginException,
+                                                        RepositoryException {
 
         when(mockContext.getUserPrincipal()).thenReturn(mockUser);
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");

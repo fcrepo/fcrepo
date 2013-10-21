@@ -16,7 +16,7 @@
 
 package org.fcrepo.http.commons.responses;
 
-import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.singletonList;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.setCachingHeaders;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -59,7 +58,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
                 mediaType);
 
         // add standard headers
-        httpHeaders.put("Content-type", of((Object) mediaType.toString()));
+        httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));
 
         setCachingHeaders(httpHeaders, rdf);
 

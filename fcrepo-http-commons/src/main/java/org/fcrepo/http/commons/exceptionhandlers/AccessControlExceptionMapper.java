@@ -35,12 +35,11 @@ public class AccessControlExceptionMapper implements
         ExceptionMapper<AccessControlException> {
 
     private static final Logger logger =
-            getLogger(AccessControlExceptionMapper.class);
+        getLogger(AccessControlExceptionMapper.class);
 
     @Override
     public Response toResponse(final AccessControlException e) {
-        logger.debug(
-                "AccessControlExceptionMapper intercepted exception: \n",
+        logger.debug("AccessControlExceptionMapper intercepted exception: \n",
                 e);
 
         return status(FORBIDDEN).build();

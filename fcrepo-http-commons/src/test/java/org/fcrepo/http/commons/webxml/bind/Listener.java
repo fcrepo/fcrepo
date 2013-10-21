@@ -26,7 +26,7 @@ public class Listener extends Displayable {
     public Listener() {
     }
 
-    public Listener(String displayName, String className) {
+    public Listener(final String displayName, final String className) {
         this.displayName = displayName;
         this.className = className;
     }
@@ -40,15 +40,15 @@ public class Listener extends Displayable {
     }
 
     @Override
-    public boolean equals(Object object) {
+    public boolean equals(final Object object) {
         if (object instanceof Listener) {
-            Listener that = (Listener) object;
-            boolean className =
-                    (this.className == null) ? that.className == null
-                            : this.className.equals(that.className);
-            boolean displayName =
-                    (this.displayName == null) ? that.displayName == null
-                            : this.displayName.equals(that.displayName);
+            final Listener that = (Listener) object;
+            final boolean className =
+                (this.className == null) ? that.className == null
+                    : this.className.equals(that.className);
+            final boolean displayName =
+                (this.displayName == null) ? that.displayName == null
+                    : this.displayName.equals(that.displayName);
             return className && displayName;
         }
         return false;

@@ -17,6 +17,9 @@
 
 package org.fcrepo.http.commons.domain;
 
+import static java.lang.Long.parseLong;
+import static java.util.regex.Pattern.compile;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,9 +29,11 @@ import java.util.regex.Pattern;
 public class Range {
 
     private final long start;
+
     private final long end;
+
     private static Pattern rangePattern =
-        Pattern.compile("^bytes\\s*=\\s*(\\d*)\\s*-\\s*(\\d*)");
+        compile("^bytes\\s*=\\s*(\\d*)\\s*-\\s*(\\d*)");
 
     /**
      * Unbounded Range
@@ -105,22 +110,22 @@ public class Range {
         }
 
         matcher.matches();
-        String from = matcher.group(1);
-        String to = matcher.group(2);
+        final String from = matcher.group(1);
+        final String to = matcher.group(2);
 
         final long start;
 
         if (from.equals("")) {
             start = 0;
         } else {
-            start = Long.parseLong(from);
+            start = parseLong(from);
         }
 
         final long end;
         if (to.equals("")) {
             end = -1;
         } else {
-            end = Long.parseLong(to);
+            end = parseLong(to);
         }
 
         return new Range(start, end);

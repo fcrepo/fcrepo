@@ -50,7 +50,7 @@ public class RangeRequestInputStream extends FilterInputStream {
 
     private static class SkipInputStream extends ProxyInputStream {
         public SkipInputStream(final InputStream in,
-                               long skip) throws IOException {
+                               final long skip) throws IOException {
             super(in);
             IOUtils.skip(in, skip);
         }

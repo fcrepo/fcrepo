@@ -16,9 +16,13 @@
 
 package org.fcrepo.http.commons;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.sun.jersey.api.Responses.notAcceptable;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -39,10 +43,8 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.WebContent;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
@@ -53,7 +55,6 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,7 +135,7 @@ public abstract class AbstractResource {
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
-     * 
+     *
      * @param paths
      * @return
      */
@@ -185,13 +186,13 @@ public abstract class AbstractResource {
         final FedoraResource result;
 
         switch (mixin) {
-            case FedoraJcrTypes.FEDORA_OBJECT:
+            case FEDORA_OBJECT:
                 result = objectService.createObject(session, path);
 
                 if (requestBodyStream != null &&
                         requestContentType != null) {
                     switch(requestContentType.toString()) {
-                        case WebContent.contentTypeSPARQLUpdate:
+                        case contentTypeSPARQLUpdate:
                             result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
                             break;
                         default:
@@ -200,23 +201,28 @@ public abstract class AbstractResource {
                             final Lang lang = contentTypeToLang(contentType);
 
                             if (lang == null) {
-                                throw new WebApplicationException(notAcceptable().entity("Invalid Content type " + contentType).build());
+                                throw new WebApplicationException(
+                                        notAcceptable().entity(
+                                                "Invalid Content type "
+                                                        + contentType).build());
                             }
 
                             final String format = lang.getName()
                                                       .toUpperCase();
 
-                            final Model inputModel = ModelFactory.createDefaultModel()
-                                                         .read(requestBodyStream,
-                                                                  subjects.getGraphSubject(result.getNode()).toString(),
-                                                                  format);
+                            final Model inputModel =
+                                createDefaultModel().read(
+                                        requestBodyStream,
+                                        subjects.getGraphSubject(
+                                                result.getNode()).toString(),
+                                        format);
 
                             result.replacePropertiesDataset(subjects, inputModel);
                     }
                 }
 
                 break;
-            case FedoraJcrTypes.FEDORA_DATASTREAM:
+            case FEDORA_DATASTREAM:
                 final MediaType contentType =
                         requestContentType != null ? requestContentType
                                 : APPLICATION_OCTET_STREAM_TYPE;

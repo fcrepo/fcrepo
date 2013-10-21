@@ -40,7 +40,7 @@ import com.hp.hpl.jena.update.GraphStore;
 public class GraphStoreStreamingOutput implements StreamingOutput {
 
     private static final Logger LOGGER =
-            getLogger(GraphStoreStreamingOutput.class);
+        getLogger(GraphStoreStreamingOutput.class);
 
     private final Dataset dataset;
 
@@ -67,7 +67,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
             final MediaType mediaType) {
         this.dataset = dataset;
         format =
-                contentTypeToLang(mediaType.toString()).getName().toUpperCase();
+            contentTypeToLang(mediaType.toString()).getName().toUpperCase();
     }
 
     @Override
@@ -75,7 +75,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
         WebApplicationException {
         LOGGER.debug("Serializing graph  as {}", format);
         LOGGER.debug("Serializing default model");
-        Model model = unifyDatasetModel(dataset);
+        final Model model = unifyDatasetModel(dataset);
 
         model.write(out, format);
     }

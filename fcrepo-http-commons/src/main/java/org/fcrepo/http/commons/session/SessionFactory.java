@@ -16,6 +16,8 @@
 
 package org.fcrepo.http.commons.session;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.propagate;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
@@ -56,7 +58,7 @@ public class SessionFactory {
 
     /**
      * Initialize a session factory for the given Repository
-     * 
+     *
      * @param repo
      * @param transactionService
      */
@@ -71,15 +73,12 @@ public class SessionFactory {
      */
     @PostConstruct
     public void init() {
-        if (repo == null) {
-            logger.error("SessionFactory requires a Repository instance!");
-            throw new IllegalStateException();
-        }
+        checkNotNull(repo, "SessionFactory requires a Repository instance!");
     }
 
     /**
      * Get a new JCR Session
-     * 
+     *
      * @return
      * @throws RepositoryException
      */
@@ -89,7 +88,7 @@ public class SessionFactory {
 
     /**
      * Get a new JCR session in the given workspace
-     * 
+     *
      * @param workspace
      * @return
      * @throws RepositoryException
@@ -102,7 +101,7 @@ public class SessionFactory {
     /**
      * Get a JCR session for the given HTTP servlet request (within the right
      * transaction or workspace)
-     * 
+     *
      * @param servletRequest
      * @return
      * @throws RepositoryException
@@ -135,7 +134,7 @@ public class SessionFactory {
     /**
      * Get a JCR session for the given HTTP servlet request with a
      * SecurityContext attached
-     * 
+     *
      * @param securityContext
      * @param servletRequest
      * @return
@@ -188,13 +187,13 @@ public class SessionFactory {
 
             return session;
         } catch (final RepositoryException e) {
-            throw new IllegalStateException(e);
+            throw propagate(e);
         }
     }
 
     /**
      * Get the configured Session Provider
-     * 
+     *
      * @param securityContext
      * @param servletRequest
      * @return
@@ -208,7 +207,7 @@ public class SessionFactory {
 
     /**
      * Extract the workspace id embedded at the beginning of a request
-     * 
+     *
      * @param request
      * @return
      */
@@ -231,7 +230,7 @@ public class SessionFactory {
 
     /**
      * Extract the transaction id embedded at the beginning of a request
-     * 
+     *
      * @param servletRequest
      * @return
      * @throws TransactionMissingException

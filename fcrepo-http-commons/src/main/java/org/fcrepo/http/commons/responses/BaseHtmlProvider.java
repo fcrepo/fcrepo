@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableMap.builder;
+import static com.hp.hpl.jena.graph.Node.ANY;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
@@ -150,11 +151,11 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
                 }
             }
 
-            List<String> otherTemplates =
+            final List<String> otherTemplates =
                     ImmutableList.of("search:results", "jcr:namespaces",
                                      "jcr:workspaces", "node");
 
-            for (String key : otherTemplates) {
+            for (final String key : otherTemplates) {
                 final Template template =
                         velocity.getTemplate(templatesLocation + "/" +
                                 key.replace(':', '-') +
@@ -181,7 +182,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
         LOGGER.debug("Writing an HTML response for: {}", rdf);
         LOGGER.trace("Attempting to discover our subject");
-        Node subject = getDatasetSubject(rdf);
+        final Node subject = getDatasetSubject(rdf);
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) TEXT_HTML));
@@ -200,7 +201,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
     }
 
-    protected Context getContext(Dataset rdf, Node subject) {
+    protected Context getContext(final Dataset rdf, final Node subject) {
         final FieldTool fieldTool = new FieldTool();
 
         final Context context = new VelocityContext();
@@ -209,11 +210,11 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
         context.put("esc", escapeTool);
         context.put("rdf", rdf.asDatasetGraph());
 
-        Model model = unifyDatasetModel(rdf);
+        final Model model = unifyDatasetModel(rdf);
 
         context.put("model", model);
         context.put("subjects", model.listSubjects());
-        context.put("nodeany", Node.ANY);
+        context.put("nodeany", ANY);
         context.put("topic", subject);
         context.put("uriInfo", uriInfo);
         return context;
@@ -223,7 +224,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
             final Annotation[] annotations) {
         Template template = null;
 
-        for (Annotation a : annotations) {
+        for (final Annotation a : annotations) {
             if (a instanceof HtmlTemplate) {
                 final String value = ((HtmlTemplate) a).value();
                 LOGGER.debug("Found an HtmlTemplate annotation {}", value);

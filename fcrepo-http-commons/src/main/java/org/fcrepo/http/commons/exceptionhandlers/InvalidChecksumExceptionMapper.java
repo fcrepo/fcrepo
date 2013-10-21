@@ -36,13 +36,13 @@ public class InvalidChecksumExceptionMapper implements
         ExceptionMapper<InvalidChecksumException> {
 
     private static final Logger logger =
-            getLogger(InvalidChecksumExceptionMapper.class);
+        getLogger(InvalidChecksumExceptionMapper.class);
 
     @Override
-    public Response toResponse(InvalidChecksumException e) {
+    public Response toResponse(final InvalidChecksumException e) {
 
         logger.warn("InvalidChecksumExceptionMapper intercepted exception: \n",
-                           e);
+                e);
 
         return status(CONFLICT).entity(e.getMessage()).build();
     }

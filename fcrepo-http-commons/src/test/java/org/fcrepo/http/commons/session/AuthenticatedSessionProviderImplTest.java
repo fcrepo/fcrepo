@@ -38,17 +38,17 @@ public class AuthenticatedSessionProviderImplTest {
 
     @Test
     public void testCredentialsProvided() throws RepositoryException {
-        ServletCredentials mockCreds = mock(ServletCredentials.class);
-        AuthenticatedSessionProviderImpl test =
-                new AuthenticatedSessionProviderImpl(mockRepo, mockCreds);
+        final ServletCredentials mockCreds = mock(ServletCredentials.class);
+        final AuthenticatedSessionProviderImpl test =
+            new AuthenticatedSessionProviderImpl(mockRepo, mockCreds);
         test.getAuthenticatedSession();
         verify(mockRepo).login(mockCreds);
     }
 
     @Test
     public void testNoCredentialsProvided() throws RepositoryException {
-        AuthenticatedSessionProviderImpl test =
-                new AuthenticatedSessionProviderImpl(mockRepo, null);
+        final AuthenticatedSessionProviderImpl test =
+            new AuthenticatedSessionProviderImpl(mockRepo, null);
         test.getAuthenticatedSession();
         verify(mockRepo).login();
     }

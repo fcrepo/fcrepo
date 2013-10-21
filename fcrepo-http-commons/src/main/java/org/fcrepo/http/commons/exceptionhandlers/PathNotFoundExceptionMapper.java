@@ -35,7 +35,7 @@ public class PathNotFoundExceptionMapper implements
         ExceptionMapper<PathNotFoundException> {
 
     private static final Logger logger =
-            getLogger(PathNotFoundExceptionMapper.class);
+        getLogger(PathNotFoundExceptionMapper.class);
 
     @Override
     public Response toResponse(final PathNotFoundException e) {

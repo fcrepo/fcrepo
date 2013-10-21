@@ -58,8 +58,8 @@ public class RdfSerializationUtilsTest {
     @Test
     public void testGetFirstValueForPredicate() {
         final String foundValue =
-                getFirstValueForPredicate(testData, ANY,
-                        createURI("test:predicate"));
+            getFirstValueForPredicate(testData, ANY,
+                    createURI("test:predicate"));
         assertEquals("Didn't find correct value for predicate!", foundValue,
                 "test:object");
     }
