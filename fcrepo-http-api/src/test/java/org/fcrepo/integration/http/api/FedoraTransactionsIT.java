@@ -18,9 +18,14 @@ package org.fcrepo.integration.http.api;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static java.lang.Math.min;
+import static java.lang.Thread.sleep;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.Transaction.DEFAULT_TIMEOUT;
+import static org.fcrepo.kernel.Transaction.TIMEOUT_SYSTEM_PROPERTY;
+import static org.fcrepo.kernel.services.TransactionService.REAP_INTERVAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -28,13 +33,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
@@ -59,7 +60,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     public void testRequestsInTransactionThatDoestExist() throws Exception {
         /* create a tx */
         final HttpPost createTx =
-                new HttpPost(serverAddress + "tx:123/objects");
+            new HttpPost(serverAddress + "tx:123/objects");
         final HttpResponse response = execute(createTx);
         assertEquals(410, response.getStatusLine().getStatusCode());
 
@@ -69,10 +70,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     public void testCreateAndTimeoutTransaction() throws Exception {
 
         /* create a short-lived tx */
-        final long testTimeout =
-                Math.min(500, TransactionService.REAP_INTERVAL / 2);
-        System.setProperty(Transaction.TIMEOUT_SYSTEM_PROPERTY, Long
-                .toString(testTimeout));
+        final long testTimeout = min(500, REAP_INTERVAL / 2);
+        System.setProperty(TIMEOUT_SYSTEM_PROPERTY, Long.toString(testTimeout));
 
         /* create a tx */
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
@@ -88,7 +87,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         int statusCode = 0;
 
-        Thread.sleep(TransactionService.REAP_INTERVAL * 2);
+        sleep(REAP_INTERVAL * 2);
         final HttpGet getWithExpiredTx = new HttpGet(location);
         resp = execute(getWithExpiredTx);
         IOUtils.toString(resp.getEntity().getContent());
@@ -97,8 +96,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         try {
             assertEquals("Transaction did not expire", 410, statusCode);
         } finally {
-            System.setProperty(Transaction.TIMEOUT_SYSTEM_PROPERTY, Long
-                    .toString(Transaction.DEFAULT_TIMEOUT));
+            System.setProperty(TIMEOUT_SYSTEM_PROPERTY, Long
+                    .toString(DEFAULT_TIMEOUT));
             System.clearProperty("fcrepo4.tx.timeout");
         }
     }
@@ -112,17 +111,17 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final String txLocation =
-                response.getFirstHeader("Location").getValue();
+            response.getFirstHeader("Location").getValue();
 
         /* create a new object inside the tx */
         final HttpPost postNew =
-                new HttpPost(txLocation + "/object-in-tx-rollback");
+            new HttpPost(txLocation + "/object-in-tx-rollback");
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
 
         /* fetch the created tx from the endpoint */
         final HttpGet getTx =
-                new HttpGet(txLocation + "/object-in-tx-rollback");
+            new HttpGet(txLocation + "/object-in-tx-rollback");
         getTx.setHeader("Accept", "application/n3");
         resp = execute(getTx);
         assertEquals(
@@ -130,16 +129,15 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 200, resp.getStatusLine().getStatusCode());
 
         final GraphStore graphStore =
-                TestHelpers.parseTriples(resp.getEntity().getContent());
+            parseTriples(resp.getEntity().getContent());
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
-                NodeFactory.createURI(txLocation + "/object-in-tx-rollback"),
-                Node.ANY, Node.ANY));
+                createURI(txLocation + "/object-in-tx-rollback"), ANY, ANY));
 
         /* fetch the created tx from the endpoint */
         final HttpGet getObj =
-                new HttpGet(serverAddress + "/object-in-tx-rollback");
+            new HttpGet(serverAddress + "/object-in-tx-rollback");
         resp = execute(getObj);
         assertEquals(
                 "Expected to not find our object within the scope of the transaction",
@@ -147,7 +145,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* and rollback */
         final HttpPost rollbackTx =
-                new HttpPost(txLocation + "/fcr:tx/fcr:rollback");
+            new HttpPost(txLocation + "/fcr:tx/fcr:rollback");
         resp = execute(rollbackTx);
 
         assertEquals(204, resp.getStatusLine().getStatusCode());
@@ -166,11 +164,11 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(201, response.getStatusLine().getStatusCode());
 
         final String txLocation =
-                response.getFirstHeader("Location").getValue();
+            response.getFirstHeader("Location").getValue();
 
         /* create a new object inside the tx */
         final HttpPost postNew =
-                new HttpPost(txLocation + "/" + objectInTxCommit);
+            new HttpPost(txLocation + "/" + objectInTxCommit);
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
 
@@ -199,14 +197,14 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* and rollback */
         final HttpPost commitTx =
-                new HttpPost(txLocation + "/fcr:tx/fcr:commit");
+            new HttpPost(txLocation + "/fcr:tx/fcr:commit");
         resp = execute(commitTx);
 
         assertEquals(204, resp.getStatusLine().getStatusCode());
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
         final HttpGet getObjCommitted =
-                new HttpGet(serverAddress + "/" + objectInTxCommit);
+            new HttpGet(serverAddress + "/" + objectInTxCommit);
         resp = execute(getObjCommitted);
         assertEquals(
                 "Expected to  find our object after the transaction was committed",

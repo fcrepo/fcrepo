@@ -20,6 +20,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -33,7 +34,6 @@ import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.modeshape.jcr.api.Problems;
 
 /**
@@ -62,29 +62,29 @@ public class FedoraRepositoryBackupTest {
 
     @Test
     public void testRunBackup() throws Exception {
-        Problems mockProblems = Mockito.mock(Problems.class);
+        final Problems mockProblems = mock(Problems.class);
         when(mockProblems.hasProblems()).thenReturn(false);
         when(mockNodes.backupRepository(any(Session.class),
                                         any(File.class))).thenReturn(
                 mockProblems);
 
-        String backupPath = repoBackup.runBackup(null);
+        final String backupPath = repoBackup.runBackup(null);
         assertNotNull(backupPath);
     }
 
     @Test
     public void testRunBackupWithDir() throws Exception {
-        Problems mockProblems = Mockito.mock(Problems.class);
+        final Problems mockProblems = mock(Problems.class);
         when(mockProblems.hasProblems()).thenReturn(false);
         when(mockNodes.backupRepository(any(Session.class),
                                         any(File.class))).thenReturn(
                 mockProblems);
 
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        String tmpDirPath = new File(tmpDir).getCanonicalPath();
-        InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
+        final String tmpDir = System.getProperty("java.io.tmpdir");
+        final String tmpDirPath = new File(tmpDir).getCanonicalPath();
+        final InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
 
-        String backupPath = repoBackup.runBackup(inputStream);
+        final String backupPath = repoBackup.runBackup(inputStream);
         assertNotNull(backupPath);
         assertEquals(tmpDirPath, backupPath);
     }

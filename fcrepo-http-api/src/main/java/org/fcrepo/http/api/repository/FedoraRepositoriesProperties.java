@@ -17,8 +17,11 @@
 package org.fcrepo.http.api.repository;
 
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -32,13 +35,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.riot.WebContent;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -48,8 +49,8 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
- * Utility endpoint for running SPARQL Update queries on any object
- * in the repository
+ * Utility endpoint for running SPARQL Update queries on any object in the
+ * repository
  */
 @Component
 @Scope("prototype")
@@ -60,17 +61,17 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     protected Session session;
 
     private static final Logger logger =
-            getLogger(FedoraRepositoriesProperties.class);
+        getLogger(FedoraRepositoriesProperties.class);
 
     /**
      * Update an object using SPARQL-UPDATE
-     * 
+     *
      * @return 201
      * @throws javax.jcr.RepositoryException
      * @throws java.io.IOException
      */
     @POST
-    @Consumes({WebContent.contentTypeSPARQLUpdate})
+    @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(final InputStream requestBodyStream)
         throws RepositoryException, IOException {
@@ -79,19 +80,20 @@ public class FedoraRepositoriesProperties extends AbstractResource {
             if (requestBodyStream != null) {
 
                 final FedoraResource result =
-                        nodeService.getObject(session, "/");
+                    nodeService.getObject(session, "/");
 
-                Dataset dataset = result.updatePropertiesDataset(new HttpGraphSubjects(
-                        session, FedoraNodes.class, uriInfo), IOUtils
-                        .toString(requestBodyStream));
-                if (dataset.containsNamedModel(GraphProperties.PROBLEMS_MODEL_NAME)) {
-                    Model problems = dataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME);
+                final Dataset dataset =
+                    result.updatePropertiesDataset(new HttpGraphSubjects(
+                            session, FedoraNodes.class, uriInfo), IOUtils
+                            .toString(requestBodyStream));
+                if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {
+                    final Model problems = dataset.getNamedModel(PROBLEMS_MODEL_NAME);
 
                     logger.info(
                             "Found these problems updating the properties for {}: {}",
                             "/", problems.toString());
-                    return status(Response.Status.FORBIDDEN).entity(
-                            problems.toString()).build();
+                    return status(FORBIDDEN).entity(problems.toString())
+                            .build();
                 }
 
                 session.save();

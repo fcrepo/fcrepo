@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.api.repository;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -37,12 +39,10 @@ import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.modeshape.jcr.api.Problems;
 
 /**
- * @author Andrew Woods
- *         Date: 9/4/13
+ * @author Andrew Woods Date: 9/4/13
  */
 public class FedoraRepositoryRestoreTest {
 
@@ -66,17 +66,16 @@ public class FedoraRepositoryRestoreTest {
 
     @Test
     public void testRunBackup() throws Exception {
-        Problems mockProblems = Mockito.mock(Problems.class);
+        final Problems mockProblems = mock(Problems.class);
         when(mockProblems.hasProblems()).thenReturn(false);
-        when(mockNodes.backupRepository(any(Session.class),
-                                        any(File.class))).thenReturn(
-                mockProblems);
+        when(mockNodes.backupRepository(any(Session.class), any(File.class)))
+                .thenReturn(mockProblems);
 
         boolean thrown = false;
         try {
             repoRestore.runRestore(null);
             fail("Exception expected");
-        } catch (WebApplicationException e) {
+        } catch (final WebApplicationException e) {
             thrown = true;
         }
         assertTrue(thrown);
@@ -84,16 +83,15 @@ public class FedoraRepositoryRestoreTest {
 
     @Test
     public void testRunBackupWithDir() throws Exception {
-        Problems mockProblems = Mockito.mock(Problems.class);
+        final Problems mockProblems = mock(Problems.class);
         when(mockProblems.hasProblems()).thenReturn(false);
-        when(mockNodes.restoreRepository(any(Session.class),
-                                         any(File.class))).thenReturn(
-                mockProblems);
+        when(mockNodes.restoreRepository(any(Session.class), any(File.class)))
+                .thenReturn(mockProblems);
 
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
+        final String tmpDir = System.getProperty("java.io.tmpdir");
+        final InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
 
-        Response response = repoRestore.runRestore(inputStream);
+        final Response response = repoRestore.runRestore(inputStream);
         assertNotNull(response);
         assertEquals(204, response.getStatus());
     }

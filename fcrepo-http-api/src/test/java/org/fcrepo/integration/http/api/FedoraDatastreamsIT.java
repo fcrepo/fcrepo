@@ -32,7 +32,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -61,10 +60,9 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final GraphStore result =
-                TestHelpers.parseTriples(response.getEntity().getContent());
+            parseTriples(response.getEntity().getContent());
         logger.debug("Received triples: \n{}", result.toString());
-        final String subjectURI =
-                serverAddress + "FedoraDatastreamsTest7";
+        final String subjectURI = serverAddress + "FedoraDatastreamsTest7";
 
         assertTrue("Didn't find the first datastream! ", result.contains(ANY,
                 createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
@@ -79,13 +77,13 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(201, getStatus(objMethod));
 
         final HttpPost createDSVOIDMethod =
-                postDSMethod("FedoraDatastreamsTest8", "ds_void",
-                        "marbles for everyone");
+            postDSMethod("FedoraDatastreamsTest8", "ds_void",
+                    "marbles for everyone");
         assertEquals(201, getStatus(createDSVOIDMethod));
 
         final HttpPost post =
-                new HttpPost(serverAddress +
-                        "FedoraDatastreamsTest8/fcr:datastreams?delete=ds_void");
+            new HttpPost(serverAddress
+                    + "FedoraDatastreamsTest8/fcr:datastreams?delete=ds_void");
 
         final MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -98,15 +96,14 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
         final HttpGet getDSesMethod =
-                new HttpGet(serverAddress + "FedoraDatastreamsTest8");
+            new HttpGet(serverAddress + "FedoraDatastreamsTest8");
         getDSesMethod.addHeader("Accept", "text/n3");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        final String subjectURI =
-                serverAddress + "FedoraDatastreamsTest8";
+        final String subjectURI = serverAddress + "FedoraDatastreamsTest8";
         final GraphStore result =
-                parseTriples(response.getEntity().getContent());
+            parseTriples(response.getEntity().getContent());
         assertTrue("Didn't find the first datastream! ", result.contains(ANY,
                 createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
         assertTrue("Didn't find the second datastream! ", result.contains(ANY,
@@ -122,8 +119,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest9");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress +
-                        "FedoraDatastreamsTest9/fcr:datastreams/");
+            new HttpPost(serverAddress
+                    + "FedoraDatastreamsTest9/fcr:datastreams/");
 
         final MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -137,8 +134,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         // TODO: we should actually evaluate the multipart response for the
         // things we're expecting
         final HttpGet getDSesMethod =
-                new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest9/fcr:datastreams");
+            new HttpGet(serverAddress
+                    + "FedoraDatastreamsTest9/fcr:datastreams");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -156,8 +153,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest10");
         assertEquals(201, getStatus(objMethod));
         final HttpPost post =
-                new HttpPost(serverAddress +
-                        "FedoraDatastreamsTest10/fcr:datastreams");
+            new HttpPost(serverAddress
+                    + "FedoraDatastreamsTest10/fcr:datastreams");
 
         final MultipartEntity multiPartEntity = new MultipartEntity();
         multiPartEntity.addPart("ds1", new StringBody("asdfg"));
@@ -171,8 +168,8 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         // TODO: we should actually evaluate the multipart response for the
         // things we're expecting
         final HttpGet getDSesMethod =
-                new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest10/fcr:datastreams?dsid=ds1");
+            new HttpGet(serverAddress
+                    + "FedoraDatastreamsTest10/fcr:datastreams?dsid=ds1");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -188,24 +185,23 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
     public void testBatchDeleteDatastream() throws Exception {
         execute(postObjMethod("FedoraDatastreamsTest12"));
         final HttpPost method1 =
-                postDSMethod("FedoraDatastreamsTest12", "ds1", "foo1");
+            postDSMethod("FedoraDatastreamsTest12", "ds1", "foo1");
         assertEquals(201, getStatus(method1));
         final HttpPost method2 =
-                postDSMethod("FedoraDatastreamsTest12", "ds2", "foo2");
+            postDSMethod("FedoraDatastreamsTest12", "ds2", "foo2");
         assertEquals(201, getStatus(method2));
 
         final HttpDelete dmethod =
-                new HttpDelete(serverAddress +
-                        "FedoraDatastreamsTest12/fcr:datastreams?dsid=ds1&dsid=ds2");
+            new HttpDelete(
+                    serverAddress
+                            + "FedoraDatastreamsTest12/fcr:datastreams?dsid=ds1&dsid=ds2");
         assertEquals(204, getStatus(dmethod));
 
         final HttpGet method_test_get1 =
-                new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest12/ds1");
+            new HttpGet(serverAddress + "FedoraDatastreamsTest12/ds1");
         assertEquals(404, getStatus(method_test_get1));
         final HttpGet method_test_get2 =
-                new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest12/ds2");
+            new HttpGet(serverAddress + "FedoraDatastreamsTest12/ds2");
         assertEquals(404, getStatus(method_test_get2));
     }
 }

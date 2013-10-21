@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
@@ -24,6 +25,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -60,7 +62,6 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
@@ -115,7 +116,7 @@ public class FedoraNodesTest {
 
     @Mock
     private PidMinter mockPidMinter;
-    
+
     private UriInfo uriInfo;
 
     @Before
@@ -218,13 +219,13 @@ public class FedoraNodesTest {
                 mockDatastreams.createDatastreamNode(any(Session.class),
                         eq(dsPath), anyString(), eq(dsContentStream),
                         any(URI.class))).thenReturn(mockNode);
-        Datastream mockDatastream = mock(Datastream.class);
+        final Datastream mockDatastream = mock(Datastream.class);
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
-                        FEDORA_DATASTREAM, null, MediaType.APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
+                        FEDORA_DATASTREAM, null, APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
@@ -301,7 +302,7 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
 
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
-        when(mockDataset.getNamedModel(GraphProperties.PROBLEMS_MODEL_NAME))
+        when(mockDataset.getNamedModel(PROBLEMS_MODEL_NAME))
         .thenReturn(mockModel);
         testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest);
 

@@ -94,8 +94,8 @@ public class FedoraVersionsTest {
                 new MediaType("text", "turtle"));
 
         final Response response =
-                testObj.getVersionList(createPathList(pid), mockRequest,
-                        getUriInfoImpl());
+            testObj.getVersionList(createPathList(pid), mockRequest,
+                    getUriInfoImpl());
         assertNotNull(response);
         assertEquals(200, response.getStatus());
     }
@@ -108,7 +108,7 @@ public class FedoraVersionsTest {
                 mockResource);
 
         final Response response =
-                testObj.addVersionLabel(createPathList(pid), versionLabel);
+            testObj.addVersionLabel(createPathList(pid), versionLabel);
         verify(mockResource).addVersionLabel(anyString());
         assertNotNull(response);
     }

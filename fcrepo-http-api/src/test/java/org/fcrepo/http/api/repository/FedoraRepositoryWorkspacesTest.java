@@ -37,8 +37,7 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * @author Andrew Woods
- *         Date: 8/7/13
+ * @author Andrew Woods Date: 8/7/13
  */
 public class FedoraRepositoryWorkspacesTest {
 
@@ -70,12 +69,15 @@ public class FedoraRepositoryWorkspacesTest {
     @Test
     public void testGetWorkspaces() throws Exception {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(new String[]{"xxx"});
+        when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(
+                new String[] {"xxx"});
 
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);
+
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{"yyy"});
         when(mockNamespaceRegistry.getURI("yyy")).thenReturn("http://example.com");
+
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockUriBuilder);
         when(mockUriBuilder.path(any(String.class))).thenReturn(mockUriBuilder);
 
@@ -85,8 +87,9 @@ public class FedoraRepositoryWorkspacesTest {
         // Do the test.
         final Dataset dataset = workspaces.getWorkspaces();
 
-        final Resource resource = dataset.getDefaultModel()
-                .getResource(uri.toString());
+        final Resource resource =
+            dataset.getDefaultModel().getResource(uri.toString());
+
         final String resourceName = resource.toString();
 
         org.junit.Assert.assertNotNull(resourceName);

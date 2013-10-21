@@ -19,6 +19,7 @@ package org.fcrepo.integration.http.api;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
@@ -33,7 +34,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraFixityIT extends AbstractResourceIT {
@@ -43,11 +43,11 @@ public class FedoraFixityIT extends AbstractResourceIT {
         final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest11");
         assertEquals(201, getStatus(objMethod));
         final HttpPost method1 =
-                postDSMethod("FedoraDatastreamsTest11", "zxc", "foo");
+            postDSMethod("FedoraDatastreamsTest11", "zxc", "foo");
         assertEquals(201, getStatus(method1));
         final HttpGet method2 =
-                new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest11/zxc/fcr:fixity");
+            new HttpGet(serverAddress
+                    + "FedoraDatastreamsTest11/zxc/fcr:fixity");
         method2.setHeader("Accept", "application/n3");
         final HttpResponse response = execute(method2);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -62,10 +62,11 @@ public class FedoraFixityIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(),
                 createPlainLiteral("SUCCESS").asNode()));
 
-        assertTrue(graphStore.contains(ANY, ANY, HAS_COMPUTED_CHECKSUM.asNode(),
-                createResource("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
         assertTrue(graphStore.contains(ANY, ANY,
-                HAS_COMPUTED_SIZE.asNode(), ResourceFactory
-                        .createTypedLiteral(3).asNode()));
+                HAS_COMPUTED_CHECKSUM.asNode(), createResource(
+                        "urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33")
+                        .asNode()));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_COMPUTED_SIZE.asNode(),
+                createTypedLiteral(3).asNode()));
     }
 }

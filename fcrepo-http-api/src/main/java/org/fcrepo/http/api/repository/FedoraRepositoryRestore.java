@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.api.repository;
 
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -58,38 +60,38 @@ public class FedoraRepositoryRestore extends AbstractResource {
      * @throws IOException
      */
     @POST
-    public Response runRestore(InputStream bodyStream) throws RepositoryException, IOException {
+    public Response runRestore(final InputStream bodyStream) throws RepositoryException,
+        IOException {
 
         if (null == bodyStream) {
-            throw new WebApplicationException(
-                    Response.serverError()
-                            .entity("Request body must not be null")
-                            .build());
+            throw new WebApplicationException(serverError().entity(
+                    "Request body must not be null").build());
         }
 
-        String body = IOUtils.toString(bodyStream);
-        File backupDirectory = new File(body.trim());
+        final String body = IOUtils.toString(bodyStream);
+        final File backupDirectory = new File(body.trim());
         if (!backupDirectory.exists()) {
-            throw new WebApplicationException(
-                    Response.serverError().entity(
-                            "Backup directory does not exist: " +
-                                    backupDirectory.getAbsolutePath()).build());
+            throw new WebApplicationException(serverError().entity(
+                    "Backup directory does not exist: "
+                            + backupDirectory.getAbsolutePath()).build());
         }
 
         try {
-            Problems problems = nodeService.restoreRepository(session, backupDirectory);
-            if ( problems.hasProblems() ) {
+            final Problems problems =
+                nodeService.restoreRepository(session, backupDirectory);
+            if (problems.hasProblems()) {
                 LOGGER.error("Problems restoring up the repository:");
 
-                List<String> problemsOutput = new ArrayList<String>();
+                final List<String> problemsOutput = new ArrayList<String>();
 
                 // Report the problems (we'll just print them out) ...
-                for ( Problem problem : problems ) {
+                for (final Problem problem : problems) {
                     LOGGER.error("{}", problem.getMessage());
                     problemsOutput.add(problem.getMessage());
                 }
 
-                throw new WebApplicationException(Response.serverError().entity(problemsOutput).build());
+                throw new WebApplicationException(serverError()
+                        .entity(problemsOutput).build());
 
             } else {
                 return noContent().build();

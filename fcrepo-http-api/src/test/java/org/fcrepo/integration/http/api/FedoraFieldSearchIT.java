@@ -16,7 +16,17 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_ITEMS_PER_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_OFFSET;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,14 +40,9 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 
@@ -46,9 +51,9 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "text/html");
 
-        HttpResponse resp = execute(method);
+        final HttpResponse resp = execute(method);
 
-        String content = IOUtils.toString(resp.getEntity().getContent());
+        final String content = IOUtils.toString(resp.getEntity().getContent());
         logger.debug("Got search form: {}", content);
         assertEquals(200, resp.getStatusLine().getStatusCode());
         assertTrue(content.contains("<form"));
@@ -59,16 +64,16 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     public void testSearchResultsHtml() throws Exception {
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "text/html");
-        URI uri =
-                new URIBuilder(method.getURI()).addParameter("q", "testobj")
-                        .addParameter("offset", "0").addParameter("limit", "1")
-                        .build();
+        final URI uri =
+            new URIBuilder(method.getURI()).addParameter("q", "testobj")
+                    .addParameter("offset", "0").addParameter("limit", "1")
+                    .build();
 
         method.setURI(uri);
 
-        HttpResponse resp = execute(method);
+        final HttpResponse resp = execute(method);
 
-        String content = IOUtils.toString(resp.getEntity().getContent());
+        final String content = IOUtils.toString(resp.getEntity().getContent());
         logger.debug("Got search results: {}", content);
         assertEquals(200, resp.getStatusLine().getStatusCode());
 
@@ -77,67 +82,63 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchRdf() throws Exception {
         /* first post an object which can be used for the search */
-        HttpPost postObj = postObjMethod("testobj");
-        HttpResponse postResp = execute(postObj);
+        final HttpPost postObj = postObjMethod("testobj");
+        final HttpResponse postResp = execute(postObj);
         postObj.releaseConnection();
         assertEquals(201, postResp.getStatusLine().getStatusCode());
 
         /* and add a dc title to the object so the query returns a result */
-        HttpPatch postDc = new HttpPatch(serverAddress + "testobj");
+        final HttpPatch postDc = new HttpPatch(serverAddress + "testobj");
         postDc.setHeader("Content-Type", "application/sparql-update");
-        String updateString =
-                "INSERT { <" + serverAddress +
-                        "testobj> <http://purl.org/dc/terms/title> \"testobj\" } WHERE { }";
+        final String updateString =
+            "INSERT { <"
+                    + serverAddress
+                    + "testobj> <http://purl.org/dc/terms/title> \"testobj\" } WHERE { }";
         postDc.setEntity(new StringEntity(updateString));
-        HttpResponse dcResp = execute(postDc);
+        final HttpResponse dcResp = execute(postDc);
         assertEquals(dcResp.getStatusLine().toString(), 204, dcResp
                 .getStatusLine().getStatusCode());
         postDc.releaseConnection();
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "application/n3");
-        URI uri =
-                new URIBuilder(method.getURI()).addParameter("q", "testobj")
-                        .addParameter("offset", "0").addParameter("limit", "1")
-                        .build();
+        final URI uri =
+            new URIBuilder(method.getURI()).addParameter("q", "testobj")
+                    .addParameter("offset", "0").addParameter("limit", "1")
+                    .build();
 
         method.setURI(uri);
 
-        HttpResponse resp = execute(method);
+        final HttpResponse resp = execute(method);
 
         final GraphStore graphStore =
-                TestHelpers.parseTriples(resp.getEntity().getContent());
+            parseTriples(resp.getEntity().getContent());
 
         logger.debug("Got search results graph: {}", graphStore);
         assertEquals(200, resp.getStatusLine().getStatusCode());
-        assertTrue(graphStore
-                .contains(
-                        Node.ANY,
-                        createResource(serverAddress + "fcr:search?q=testobj")
-                                .asNode(),
-                        RdfLexicon.SEARCH_HAS_TOTAL_RESULTS.asNode(),
-                        ResourceFactory.createTypedLiteral(1).asNode()));
+        assertTrue(graphStore.contains(ANY, createResource(
+                serverAddress + "fcr:search?q=testobj").asNode(),
+                SEARCH_HAS_TOTAL_RESULTS.asNode(), createTypedLiteral(1)
+                        .asNode()));
 
-        assertTrue(graphStore.contains(Node.ANY,
-                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
-                                          RdfLexicon.PAGE_OF.asNode(),
-                                          createResource(serverAddress + "fcr:search?q=testobj").asNode()));
+        assertTrue(graphStore.contains(ANY, createResource(
+                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                .asNode(), PAGE_OF.asNode(), createResource(
+                serverAddress + "fcr:search?q=testobj").asNode()));
 
+        assertTrue(graphStore.contains(ANY, createResource(
+                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                .asNode(), SEARCH_OFFSET.asNode(), createTypedLiteral(0)
+                .asNode()));
 
-        assertTrue(graphStore.contains(Node.ANY,
-                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
-                                          RdfLexicon.SEARCH_OFFSET.asNode(),
-                                          ResourceFactory.createTypedLiteral(0).asNode()));
+        assertTrue(graphStore.contains(ANY, createResource(
+                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                .asNode(), SEARCH_ITEMS_PER_PAGE.asNode(),
+                createTypedLiteral(1).asNode()));
 
-        assertTrue(graphStore.contains(Node.ANY,
-                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
-                                          RdfLexicon.SEARCH_ITEMS_PER_PAGE.asNode(),
-                                          ResourceFactory.createTypedLiteral(1).asNode()));
-
-        assertTrue(graphStore.contains(Node.ANY,
-                                          createResource(serverAddress + "fcr:search?q=testobj&offset=0&limit=1").asNode(),
-                                          RdfLexicon.NEXT_PAGE.asNode(),
-                                          RDF.nil.asNode()));
+        assertTrue(graphStore.contains(ANY, createResource(
+                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                .asNode(), NEXT_PAGE.asNode(), nil.asNode()));
 
     }
 
@@ -146,28 +147,23 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "application/n3");
-        URI uri =
+        final URI uri =
                 new URIBuilder(method.getURI()).addParameter("q", "testobj")
                         .addParameter("offset", "1").addParameter("limit", "1")
                         .build();
 
         method.setURI(uri);
 
-        HttpResponse resp = execute(method);
+        final HttpResponse resp = execute(method);
 
         final GraphStore graphStore =
-                TestHelpers.parseTriples(resp.getEntity().getContent());
+            parseTriples(resp.getEntity().getContent());
 
         logger.debug("Got search results graph: {}", graphStore);
         assertEquals(200, resp.getStatusLine().getStatusCode());
-        assertFalse(graphStore
-                .contains(
-                        Node.ANY,
-                        createResource(
-                                          serverAddress +
-                                              "fcr:search?q=testobj")
-                                .asNode(), RdfLexicon.HAS_MEMBER_OF_RESULT
-                                .asNode(), Node.ANY));
+        assertFalse(graphStore.contains(ANY, createResource(
+                serverAddress + "fcr:search?q=testobj").asNode(),
+                HAS_MEMBER_OF_RESULT.asNode(), ANY));
 
     }
 }

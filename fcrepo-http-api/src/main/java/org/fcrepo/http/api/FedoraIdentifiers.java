@@ -101,8 +101,8 @@ public class FedoraIdentifiers extends AbstractResource {
                 createResource(uriInfo.getAbsolutePath().toASCIIString());
 
         final Collection<String> identifiers =
-                transform(create(closed(1, numPids), integers()), pidMinter
-                                                                          .makePid());
+            transform(create(closed(1, numPids), integers()), pidMinter
+                    .makePid());
 
         final HttpGraphSubjects subjects =
                 new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);

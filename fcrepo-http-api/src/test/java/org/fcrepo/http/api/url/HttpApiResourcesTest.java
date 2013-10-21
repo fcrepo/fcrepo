@@ -80,13 +80,15 @@ public class HttpApiResourcesTest {
         testObj = new HttpApiResources();
         mockResource = new FedoraResource(mockNode);
         uriInfo = getUriInfoImpl();
-        mockSubjects = new HttpGraphSubjects(mock(Session.class), FedoraNodes.class, uriInfo);
+        mockSubjects =
+            new HttpGraphSubjects(mock(Session.class), FedoraNodes.class,
+                    uriInfo);
         setField(testObj, "serializers", mockSerializers);
     }
 
     @Test
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
-            throws RepositoryException {
+        throws RepositoryException {
         when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
@@ -94,8 +96,7 @@ public class HttpApiResourcesTest {
         final Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
         final Model model =
-                testObj.createModelForResource(mockResource, uriInfo,
-                        mockSubjects);
+            testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_SEARCH_SERVICE));
         assertTrue(model.contains(graphSubject, HAS_SITEMAP));
@@ -106,7 +107,7 @@ public class HttpApiResourcesTest {
 
     @Test
     public void shouldDecorateNodesWithLinksToVersionsAndExport()
-            throws RepositoryException {
+        throws RepositoryException {
 
         when(mockNode.getPrimaryNodeType()).thenReturn(mock(NodeType.class));
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
@@ -115,8 +116,7 @@ public class HttpApiResourcesTest {
         final Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
         final Model model =
-                testObj.createModelForResource(mockResource, uriInfo,
-                        mockSubjects);
+            testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_VERSION_HISTORY));
         assertEquals(2, model.listObjectsOfProperty(graphSubject,
@@ -125,7 +125,7 @@ public class HttpApiResourcesTest {
 
     @Test
     public void shouldDecorateDatastreamsWithLinksToFixityChecks()
-            throws RepositoryException {
+        throws RepositoryException {
         when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockNode.getPrimaryNodeType()).thenReturn(mock(NodeType.class));
         when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
@@ -133,8 +133,7 @@ public class HttpApiResourcesTest {
         final Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
 
         final Model model =
-                testObj.createModelForResource(mockResource, uriInfo,
-                        mockSubjects);
+            testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_FIXITY_SERVICE));
     }
