@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.utils;
 
 import static com.google.common.base.Throwables.propagate;
+import static java.util.Collections.singletonMap;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -41,7 +42,7 @@ public abstract class ContentDigest {
             .of("SHA-1", "urn:sha1", "SHA1", "urn:sha1");
 
     public static final Map<String, String> schemeToAlgorithm =
-        ImmutableMap.of("urn:sha1", "SHA-1");
+        singletonMap("urn:sha1", "SHA-1");
 
     /**
      * Convert a MessageDigest algorithm and checksum value to a URN
@@ -76,7 +77,7 @@ public abstract class ContentDigest {
      * @param digestUri
      * @return
      */
-    public static String getAlgorithm(URI digestUri) {
+    public static String getAlgorithm(final URI digestUri) {
         return schemeToAlgorithm
             .get(digestUri.getScheme() + ":" +
                  digestUri.getSchemeSpecificPart().split(":", 2)[0]);
