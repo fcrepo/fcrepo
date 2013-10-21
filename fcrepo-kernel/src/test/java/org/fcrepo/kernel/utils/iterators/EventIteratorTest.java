@@ -55,7 +55,7 @@ public class EventIteratorTest {
 
     @Test
     public void testNext() {
-        when(i.nextEvent()).thenReturn(event1, event2);
+        when(i.next()).thenReturn(event1, event2);
         assertEquals(event1, testIterator.next());
         assertEquals(event2, testIterator.next());
     }

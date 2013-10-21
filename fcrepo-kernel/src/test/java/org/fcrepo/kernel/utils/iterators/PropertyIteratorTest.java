@@ -55,7 +55,7 @@ public class PropertyIteratorTest {
 
     @Test
     public void testNext() {
-        when(i.nextProperty()).thenReturn(property1, property2);
+        when(i.next()).thenReturn(property1, property2);
         assertEquals(property1, testIterator.next());
         assertEquals(property2, testIterator.next());
     }

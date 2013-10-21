@@ -20,19 +20,22 @@ import java.util.Iterator;
 
 import javax.jcr.Property;
 
+import com.google.common.collect.ForwardingIterator;
+
 /**
  * A type-aware iterator that wraps the generic JCR PropertyIterator
- * 
+ *
  * @author ajs6f
  * @date Apr 25, 2013
  */
-public class PropertyIterator implements Iterator<Property>, Iterable<Property> {
+public class PropertyIterator extends ForwardingIterator<Property> implements
+        Iterable<Property> {
 
     private javax.jcr.PropertyIterator i;
 
     /**
      * Wrap the JCR PropertyIterator with our generic iterator
-     * 
+     *
      * @param i
      */
     public PropertyIterator(final javax.jcr.PropertyIterator i) {
@@ -40,22 +43,13 @@ public class PropertyIterator implements Iterator<Property>, Iterable<Property> 
     }
 
     @Override
-    public boolean hasNext() {
-        return i.hasNext();
-    }
-
-    @Override
-    public Property next() {
-        return i.nextProperty();
-    }
-
-    @Override
-    public void remove() {
-        i.remove();
-    }
-
-    @Override
     public Iterator<Property> iterator() {
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Iterator<Property> delegate() {
+        return i;
     }
 }
