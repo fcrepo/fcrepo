@@ -15,7 +15,8 @@
  */
 package org.fcrepo.kernel.rdf.impl;
 
-import static com.google.common.collect.ImmutableSet.builder;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
@@ -27,13 +28,16 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionIterator;
+import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.NodeRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.utils.iterators.VersionIterator;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 
 
@@ -45,6 +49,10 @@ import com.hp.hpl.jena.graph.Triple;
  * @date Oct 15, 2013
  */
 public class VersionsRdfContext extends NodeRdfContext {
+
+    private final VersionManager versionManager;
+
+    private final VersionHistory versionHistory;
 
     /**
      * Ordinary constructor.
@@ -58,35 +66,46 @@ public class VersionsRdfContext extends NodeRdfContext {
         final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
+        versionManager = node().getSession().getWorkspace().getVersionManager();
+        versionHistory = versionManager.getVersionHistory(node().getPath());
         concat(versionTriples());
     }
 
     private Iterator<Triple> versionTriples() throws RepositoryException {
-        final VersionHistory versionHistory =
-            node().getSession().getWorkspace().getVersionManager()
-                    .getVersionHistory(node().getPath());
-
-        final VersionIterator versionIterator = versionHistory.getAllVersions();
-        final ImmutableSet.Builder<Triple> b = builder();
-        while (versionIterator.hasNext()) {
-            final Version version = versionIterator.nextVersion();
-            final Node frozenNode = version.getFrozenNode();
-            final com.hp.hpl.jena.graph.Node versionSubject =
-                graphSubjects().getGraphSubject(frozenNode).asNode();
-
-            b.add(create(subject(), HAS_VERSION.asNode(), versionSubject));
-
-            final String[] versionLabels =
-                versionHistory.getVersionLabels(version);
-            for (final String label : versionLabels) {
-                b.add(create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
-            }
-            concat(new PropertiesRdfContext(frozenNode, graphSubjects(),
-                    lowLevelStorageService()));
-
-        }
-        return b.build().iterator();
+        return Iterators.concat(transform(new VersionIterator(versionHistory
+                .getAllVersions()), version2triples));
     }
+
+    private Function<Version, Iterator<Triple>> version2triples =
+        new Function<Version, Iterator<Triple>>() {
+
+            @Override
+            public Iterator<Triple> apply(final Version version) {
+
+                try {
+                    final Node frozenNode = version.getFrozenNode();
+                    final com.hp.hpl.jena.graph.Node versionSubject =
+                        graphSubjects().getGraphSubject(frozenNode).asNode();
+
+                    final RdfStream results =
+                        new RdfStream(new PropertiesRdfContext(frozenNode,
+                                graphSubjects(), lowLevelStorageService()));
+
+                    results.concat(create(subject(), HAS_VERSION.asNode(),
+                            versionSubject));
+
+                    for (final String label : versionHistory
+                            .getVersionLabels(version)) {
+                        results.concat(create(versionSubject, HAS_VERSION_LABEL
+                                .asNode(), createLiteral(label)));
+                    }
+                    return results;
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
+                }
+            }
+
+        };
 
 
 }

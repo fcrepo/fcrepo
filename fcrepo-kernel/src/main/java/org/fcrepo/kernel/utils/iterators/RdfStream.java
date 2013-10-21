@@ -80,6 +80,17 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     }
 
     /**
+     * @param newTriple Triples to add.
+     * @return This object for continued use.
+     */
+    public RdfStream concat(final Triple newTriple) {
+        triples =
+            Iterators.concat(Iterators.forArray(new Triple[] {newTriple}),
+                    triples);
+        return this;
+    }
+
+    /**
      * @param newTriples Triples to add.
      * @return This object for continued use.
      */

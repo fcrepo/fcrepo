@@ -711,7 +711,7 @@ public class JcrRdfToolsTest {
                 "/jcr:system/versions/test/jcr");
         when(mockFrozenNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockVersion.getFrozenNode()).thenReturn(mockFrozenNode);
-        when(mockVersionIterator.nextVersion()).thenReturn(mockVersion);
+        when(mockVersionIterator.next()).thenReturn(mockVersion);
         when(mockVersionHistory.getAllVersions()).thenReturn(
                 mockVersionIterator);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
