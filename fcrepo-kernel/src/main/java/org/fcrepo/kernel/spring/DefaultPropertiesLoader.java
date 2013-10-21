@@ -35,6 +35,10 @@ public class DefaultPropertiesLoader {
     final private static String BASEDIR = getProperty("java.io.tmpdir") + SEP
             + "fcrepo4-data" + SEP;
 
+    /**
+     * @author awoods
+     * @date 2013
+     */
     private enum PROPERTIES {
         DEFAULT_OBJECT_STORE(
                 "com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir"),
@@ -49,7 +53,7 @@ public class DefaultPropertiesLoader {
 
         private String text;
 
-        private PROPERTIES(String text) {
+        private PROPERTIES(final String text) {
             this.text = text;
         }
 
@@ -70,24 +74,24 @@ public class DefaultPropertiesLoader {
         if (getProperty("integration-test") == null) {
             LOGGER.debug("Setting default properties, if necessary.");
 
-            for (PROPERTIES prop : PROPERTIES.values()) {
+            for (final PROPERTIES prop : PROPERTIES.values()) {
                 if (getProperty(prop.getValue()) == null) {
                     setProperty(prop.getValue());
                 }
             }
         }
 
-        for (PROPERTIES prop : PROPERTIES.values()) {
-            String val = prop.getValue();
+        for (final PROPERTIES prop : PROPERTIES.values()) {
+            final String val = prop.getValue();
             LOGGER.debug("{} = {}", val, getProperty(val));
         }
     }
 
-    private static String getProperty(String property) {
+    private static String getProperty(final String property) {
         return System.getProperty(property);
     }
 
-    private void setProperty(String prop) {
+    private void setProperty(final String prop) {
         System.setProperty(prop, BASEDIR + prop);
     }
 
