@@ -18,6 +18,8 @@ package org.fcrepo.kernel.services;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.services.RepositoryService.getRepositoryNamespaces;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -52,7 +54,6 @@ import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
@@ -117,7 +118,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     private QueryManager mockQueryManager;
 
     @Mock
-    QueryObjectModel mockQueryOM;
+    private QueryObjectModel mockQueryOM;
 
     @Mock
     private QueryResult mockQueryResult;
@@ -180,7 +181,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
                     mockNamespaceRegistry);
             when(mockNamespaceRegistry.getPrefixes()).thenReturn(mockPrefixes);
             when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
-            when(mockQueryManager.createQuery(anyString(), eq(Query.JCR_SQL2)))
+            when(mockQueryManager.createQuery(anyString(), eq(JCR_SQL2)))
                     .thenReturn(mockQuery);
             when(mockQuery.execute()).thenReturn(mockQueryResult);
             when(mockQueryResult.getRows()).thenReturn(mockRI);
@@ -234,11 +235,11 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     public void testSearchRepository() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjectFactory, mockSession)).thenReturn(mockJcrRdfTools);
 
-        final Resource subject = createResource(
-                RdfLexicon.RESTAPI_NAMESPACE + "search/request");
+        final Resource subject =
+            createResource(RESTAPI_NAMESPACE + "search/request");
 
         when(mockSession.getValueFactory()).thenReturn(mockFactory);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);

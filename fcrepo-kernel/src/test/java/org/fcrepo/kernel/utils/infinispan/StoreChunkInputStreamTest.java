@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.utils.infinispan;
 
+import static org.fcrepo.kernel.utils.TestHelpers.randomData;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
@@ -64,7 +65,7 @@ public class StoreChunkInputStreamTest {
 
     @Test
     public void testBufferedRead() throws IOException, CacheLoaderException {
-        final byte[] data = TestHelpers.randomData(DATA_SIZE);
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
         when(mockStore.load(anyString())).thenReturn(mockEntry).thenReturn(
                 mockEntry).thenReturn(null);
@@ -107,7 +108,7 @@ public class StoreChunkInputStreamTest {
     @Test
     public void testSkip() throws IOException, CacheLoaderException {
         final long expected = (DATA_SIZE - 1);
-        final byte[] data = TestHelpers.randomData(DATA_SIZE);
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
         when(mockStore.load(MOCK_FIRST_CHUNK)).thenReturn(mockEntry);
         final long actual = testObj.skip(expected);
@@ -122,7 +123,7 @@ public class StoreChunkInputStreamTest {
     @Test
     public void testSkipMultipleBuffers() throws IOException,
             CacheLoaderException {
-        final byte[] data = TestHelpers.randomData(DATA_SIZE);
+        final byte[] data = randomData(DATA_SIZE);
         when(mockEntry.getValue()).thenReturn(data);
         when(mockStore.load(anyString())).thenReturn(mockEntry).thenReturn(
                 mockEntry).thenReturn(null);

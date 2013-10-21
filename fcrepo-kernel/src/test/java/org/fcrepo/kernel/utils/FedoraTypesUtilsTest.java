@@ -30,8 +30,12 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isMultipleValuedProperty;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -351,17 +355,17 @@ public class FedoraTypesUtilsTest {
     public void testPredicateExceptionHandling() throws RepositoryException {
         when(mockNode.getMixinNodeTypes()).thenThrow(new RepositoryException());
         try {
-            FedoraTypesUtils.isFedoraResource.apply(mockNode);
+            isFedoraResource.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraResource" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
         try {
-            FedoraTypesUtils.isFedoraObject.apply(mockNode);
+            isFedoraObject.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraObject" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
         try {
-            FedoraTypesUtils.isFedoraDatastream.apply(mockNode);
+            isFedoraDatastream.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraDatastream" +
                  " completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
@@ -372,15 +376,15 @@ public class FedoraTypesUtilsTest {
         // test a valid Value
         final Value mockValue = mock(Value.class);
         when(mockValue.getString()).thenReturn("foo");
-        assertEquals("foo", FedoraTypesUtils.value2string.apply(mockValue));
+        assertEquals("foo", value2string.apply(mockValue));
         when(mockValue.getString()).thenThrow(new RepositoryException());
         try {
-            FedoraTypesUtils.value2string.apply(mockValue);
+            value2string.apply(mockValue);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
         try {
-            FedoraTypesUtils.value2string.apply(null);
+            value2string.apply(null);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion with null argument!");
         } catch (final IllegalArgumentException e) {} // expected
