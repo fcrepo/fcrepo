@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,26 +23,27 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.Node;
+import javax.jcr.observation.Event;
 
+import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-public class NodeIteratortest {
+public class EventIteratorTest {
 
     @Mock
-    javax.jcr.NodeIterator i;
+    javax.jcr.observation.EventIterator i;
 
     @Mock
-    Node node1, node2;
+    Event event1, event2;
 
-    NodeIterator testIterator;
+    EventIterator testIterator;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testIterator = new NodeIterator(i);
+        testIterator = new EventIterator(i);
     }
 
     @Test
@@ -54,9 +55,9 @@ public class NodeIteratortest {
 
     @Test
     public void testNext() {
-        when(i.next()).thenReturn(node1, node2);
-        assertEquals(node1, testIterator.next());
-        assertEquals(node2, testIterator.next());
+        when(i.nextEvent()).thenReturn(event1, event2);
+        assertEquals(event1, testIterator.next());
+        assertEquals(event2, testIterator.next());
     }
 
     @Test

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.utils.iterators;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -25,6 +25,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Property;
 
+import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

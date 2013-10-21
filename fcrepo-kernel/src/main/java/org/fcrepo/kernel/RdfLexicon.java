@@ -101,6 +101,22 @@ public final class RdfLexicon {
     public static final Property NEXT_PAGE =
             createProperty("http://www.w3.org/ns/ldp#nextPage");
 
+    public static final Property MEMBERS_INLINED =
+            createProperty("http://www.w3.org/ns/ldp#membersInlined");
+    public static final Property CONTAINER =
+            createProperty("http://www.w3.org/ns/ldp#Container");
+    public static final Property MEMBERSHIP_SUBJECT =
+            createProperty("http://www.w3.org/ns/ldp#membershipSubject");
+    public static final Property MEMBERSHIP_PREDICATE =
+            createProperty("http://www.w3.org/ns/ldp#membershipPredicate");
+    public static final Property MEMBERSHIP_OBJECT =
+            createProperty("http://www.w3.org/ns/ldp#membershipObject");
+    public static final Property MEMBER_SUBJECT =
+            createProperty("http://www.w3.org/ns/ldp#MemberSubject");
+    public static final Property INLINED_RESOURCE =
+            createProperty("http://www.w3.org/ns/ldp#inlinedResource");
+
+
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "objectCount");

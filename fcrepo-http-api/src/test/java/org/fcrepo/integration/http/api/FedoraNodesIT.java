@@ -19,6 +19,10 @@ package org.fcrepo.integration.http.api;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -46,6 +50,8 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -74,6 +80,8 @@ import org.xml.sax.SAXParseException;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
@@ -294,45 +302,36 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraph() throws Exception {
+        logger.debug("Entering testGetObjectGraph()...");
         client.execute(postObjMethod("FedoraDescribeTestGraph"));
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + "FedoraDescribeTestGraph");
-        getObjMethod.addHeader("Accept", "application/n-triples");
+        getObjMethod.addHeader("Accept", "application/rdf+xml");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
 
-        logger.debug("Retrieved object graph:\n" + content);
-
+        final Model model = createDefaultModel();
+        model.read(response.getEntity().getContent(), null);
+        try (final Writer w = new StringWriter()) {
+            model.write(w);
+            logger.debug(
+                    "Retrieved object graph for testGetObjectGraph():\n {}", w);
+        }
 
         assertEquals("application/sparql-update", response.getFirstHeader("Accept-Patch").getValue());
         assertEquals("http://www.w3.org/ns/ldp/Resource;rel=\"type\"", response.getFirstHeader("Link").getValue());
+        final Resource nodeUri = createResource(serverAddress + "FedoraDescribeTestGraph");
+        assertTrue("Didn't find inlined resources!", model.contains(nodeUri,
+                createProperty("http://www.w3.org/ns/ldp#inlinedResource")));
 
-        assertTrue(
-                      "Expect inlined resources",
-                      compile(
-                                 "<" +
-                                     serverAddress +
-                                     "FedoraDescribeTestGraph> <http://www.w3.org/ns/ldp#inlinedResource>",
-                                 DOTALL).matcher(content).find());
+        assertTrue("Didn't find an expected triple!", model.contains(nodeUri,
+                createProperty(REPOSITORY_NAMESPACE + "mixinTypes"),
+                createPlainLiteral("fedora:object"))
+                );
 
-        assertTrue(
-                "Didn't find an expected ntriple",
-                compile(
-                        "<" +
-                                serverAddress +
-                                "FedoraDescribeTestGraph> <" + REPOSITORY_NAMESPACE + "mixinTypes> \"fedora:object\" \\.",
-                        DOTALL).matcher(content).find());
 
-        assertTrue(
-                "Didn't find an expected ntriple",
-                compile(
-                        "<" +
-                                serverAddress +
-                                "FedoraDescribeTestGraph> <" + REPOSITORY_NAMESPACE + "mixinTypes> \"fedora:object\" \\.",
-                        DOTALL).matcher(content).find());
-
+        logger.debug("Leaving testGetObjectGraph()...");
     }
 
     @Test
@@ -342,16 +341,33 @@ public class FedoraNodesIT extends AbstractResourceIT {
         client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/b"));
         client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/c"));
         final HttpGet getObjMethod =
-            new HttpGet(serverAddress + "FedoraDescribeWithChildrenTestGraph?limit=1&offset=1");
-        getObjMethod.addHeader("Accept", "application/n-triples");
+            new HttpGet(serverAddress + "FedoraDescribeWithChildrenTestGraph");
+        getObjMethod.addHeader("Accept", "application/rdf+xml");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                                              .getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
-
-        logger.debug("Retrieved object graph:\n" + content);
-
-        assertEquals(serverAddress + "FedoraDescribeWithChildrenTestGraph?limit=1&offset=0;rel=\"first\"", response.getFirstHeader("Link").getValue());
+        final Model model = createDefaultModel();
+        model.read(response.getEntity().getContent(), null);
+        try (final Writer w = new StringWriter()) {
+            model.write(w);
+            logger.debug(
+                    "Retrieved object graph for testGetObjectGraphWithChildren():\n {}",
+                    w);
+        }
+        final Resource subjectUri =
+            createResource(serverAddress
+                    + "FedoraDescribeWithChildrenTestGraph");
+        assertTrue(
+                "Didn't find child node!",
+                model.contains(
+                        subjectUri,
+                createProperty(REPOSITORY_NAMESPACE + "hasChild"),
+                createResource(serverAddress
+                        + "FedoraDescribeWithChildrenTestGraph/c")));
+        logger.debug("Found Link header: {}", response.getFirstHeader("Link")
+                .getValue());
+        assertEquals("http://www.w3.org/ns/ldp/Resource;rel=\"type\"", response
+                .getFirstHeader("Link").getValue());
     }
 
     @Test
@@ -506,8 +522,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                                                 ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
-                                                     .getBytes()));
+                ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
+                        .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
@@ -515,17 +531,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
 
-        getObjMethod.addHeader("Accept", "application/n-triples");
+        getObjMethod.addHeader("Accept", "application/rdf+xml");
         final HttpResponse getResponse = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), getResponse.getStatusLine()
                                              .getStatusCode());
-        final String content = EntityUtils.toString(getResponse.getEntity());
-        logger.debug("Retrieved object graph:\n" + content);
-
-        assertTrue("Didn't find a triple we tried to create.", compile(
-                                                                        "<" + subjectURI + "> <info:rubydora#label> \"asdfg\" \\.",
-                                                                        DOTALL).matcher(content).find());
-
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), null);
+        try (final Writer w = new StringWriter()) {
+            model.write(w);
+            logger.debug(
+                    "Retrieved object graph for testReplaceGraph():\n {}", w);
+        }
+        assertTrue("Didn't find a triple we tried to create!", model.contains(
+                createResource(subjectURI),
+                createProperty("info:rubydora#label"),
+                createPlainLiteral("asdfg")));
 
     }
 
@@ -569,8 +589,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
             graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_SIZE.asNode(),
                     ANY);
 
-        final Integer oldSize =
-                (Integer) iterator.next().getObject().getLiteralValue();
+        final String oldSize = (String) iterator.next().getObject().getLiteralValue();
 
         assertEquals(CREATED.getStatusCode(),
                 getStatus(postObjMethod(sizeNode)));
@@ -588,13 +607,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.getDefaultGraph().find(ANY,
                         HAS_OBJECT_SIZE.asNode(), ANY);
 
-        final Integer newSize =
-                (Integer) iterator.next().getObject().getLiteralValue();
+        final String newSize = (String) iterator.next().getObject().getLiteralValue();
 
         logger.debug("Old size was: " + oldSize + " and new size was: " +
                 newSize);
         assertTrue("No increment in size occurred when we expected one!",
-                oldSize < newSize);
+                Integer.parseInt(oldSize) < Integer.parseInt(newSize));
     }
 
     @Test
@@ -609,11 +627,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         Iterator<Triple> iterator =
-                graphStore.getDefaultGraph().find(Node.ANY,
-                        HAS_OBJECT_COUNT.asNode(), Node.ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_COUNT.asNode(),
+                    ANY);
 
-        final Integer oldSize =
-                (Integer) iterator.next().getObject().getLiteralValue();
+        final String oldSize = (String) iterator.next().getObject().getLiteralValue();
 
         assertEquals(CREATED.getStatusCode(),
                 getStatus(postObjMethod("countNode")));
@@ -628,16 +645,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 graphStore.toString());
 
         iterator =
-                graphStore.getDefaultGraph().find(Node.ANY,
-                        HAS_OBJECT_COUNT.asNode(), Node.ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_COUNT.asNode(),
+                    ANY);
 
-        final Integer newSize =
-                (Integer) iterator.next().getObject().getLiteralValue();
+        final String newSize =
+                 (String) iterator.next().getObject().getLiteralValue();
 
         logger.debug("Old size was: " + oldSize + " and new size was: " +
                 newSize);
         assertTrue("No increment in count occurred when we expected one!",
-                oldSize < newSize);
+                Integer.parseInt(oldSize) < Integer.parseInt(newSize));
     }
 
     /**

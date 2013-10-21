@@ -37,7 +37,6 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.JcrGraphProperties;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
@@ -236,7 +235,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Dataset getPropertiesDataset(final GraphSubjects subjects,
-            final long offset, final int limit)
+        final long offset, final int limit)
         throws RepositoryException {
 
         if (this.properties != null) {
@@ -265,12 +264,14 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      */
     public Dataset getVersionDataset(final GraphSubjects subjects)
         throws RepositoryException {
-        final Model model = JcrRdfTools.withContext(subjects, node.getSession()).getJcrPropertiesModel(FedoraTypesUtils.getVersionHistory(node), subjects.getGraphSubject(node));
+        final Model model =
+            JcrRdfTools.withContext(subjects, node.getSession())
+                    .getJcrVersionPropertiesModel(node);
 
         final Dataset dataset = DatasetFactory.create(model);
 
-        String uri = subjects.getGraphSubject(node).getURI();
-        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        final String uri = subjects.getGraphSubject(node).getURI();
+        final com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
         context.set(GraphProperties.URI_SYMBOL,uri);
 
         return dataset;

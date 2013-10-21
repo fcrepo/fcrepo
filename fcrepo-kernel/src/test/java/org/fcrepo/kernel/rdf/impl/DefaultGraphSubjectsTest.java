@@ -16,7 +16,11 @@
 
 package org.fcrepo.kernel.rdf.impl;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -25,7 +29,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -54,7 +57,7 @@ public class DefaultGraphSubjectsTest {
     @Test
     public void testGetGraphSubject() throws RepositoryException {
         final String testPath = "/foo/bar";
-        final String expected = RdfLexicon.RESTAPI_NAMESPACE + testPath;
+        final String expected = RESTAPI_NAMESPACE + testPath;
         when(mockNode.getPath()).thenReturn(testPath);
         Resource actual = testObj.getGraphSubject(mockNode);
         assertEquals(expected, actual.getURI());
@@ -67,10 +70,10 @@ public class DefaultGraphSubjectsTest {
     public void testGetNodeFromGraphSubject() throws RepositoryException {
         final String expected = "/foo/bar";
         when(mockSession.nodeExists(expected)).thenReturn(true);
+        when(mockSession.nodeExists(expected + "/bad")).thenReturn(false);
         when(mockSession.getNode(expected)).thenReturn(mockNode);
         // test a good subject
-        when(mockSubject.getURI())
-                .thenReturn(RdfLexicon.RESTAPI_NAMESPACE + expected);
+        when(mockSubject.getURI()).thenReturn(RESTAPI_NAMESPACE + expected);
         when(mockSubject.isURIResource()).thenReturn(true);
         Node actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(mockNode, actual);
@@ -78,29 +81,48 @@ public class DefaultGraphSubjectsTest {
         when(mockSubject.getURI()).thenReturn(
                 "info:fedora2" + expected + "/bad");
         actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(null, actual);
+        assertEquals("Somehow got a Node from a bad RDF subject!", null, actual);
         // test a non-existent path
-        when(mockSubject.getURI())
-                .thenReturn("info:fedora" + expected + "/bad");
+        when(mockSubject.getURI()).thenReturn(
+                RESTAPI_NAMESPACE + expected + "/bad");
         actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(null, actual);
+        assertEquals("Somehow got a Node from a non-existent RDF subject!",
+                null, actual);
         // test a fcr:content path
         when(mockSubject.getURI()).thenReturn(
-                RdfLexicon.RESTAPI_NAMESPACE + expected + "/fcr:content");
+                RESTAPI_NAMESPACE + expected + "/fcr:content");
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         verify(mockSession).getNode(expected + "/jcr:content");
     }
 
     @Test
     public void testIsFedoraGraphSubject() {
-        when(mockSubject.getURI()).thenReturn(
-                RdfLexicon.RESTAPI_NAMESPACE + "foo");
+        when(mockSubject.getURI()).thenReturn(RESTAPI_NAMESPACE + "foo");
         when(mockSubject.isURIResource()).thenReturn(true);
         boolean actual = testObj.isFedoraGraphSubject(mockSubject);
         assertEquals(true, actual);
         when(mockSubject.getURI()).thenReturn("http://fedora/foo");
         actual = testObj.isFedoraGraphSubject(mockSubject);
         assertEquals(false, actual);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testIsFedoraGraphSubjectWithNull() {
+        testObj.isFedoraGraphSubject(null);
+    }
+
+    @Test
+    public void testIsFedoraGraphSubjectWithBlankNode() {
+        final Boolean actual = testObj.isFedoraGraphSubject(createResource());
+        assertFalse("Misrecognized an RDF blank node as a Fedora resource!",
+                actual);
+    }
+
+    @Test
+    public void testGetContext() {
+        final Resource context = testObj.getContext();
+        assertTrue("Context was returned other than as an RDF blank node!",
+                context.isAnon());
     }
 
 }

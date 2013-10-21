@@ -16,6 +16,8 @@
 package org.fcrepo.kernel;
 
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -72,14 +74,12 @@ public class FedoraObject extends FedoraResource {
         try {
             if (node.isNew() || !hasMixin(node)) {
                 logger.debug("Setting {} properties on a {} node {}...",
-                             FEDORA_OBJECT,
-                             JcrConstants.NT_FOLDER,
-                             node.getPath());
+                        FEDORA_OBJECT, NT_FOLDER, node.getPath());
                 node.addMixin(FEDORA_OBJECT);
             }
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             logger.warn("Could not decorate {} with {} properties: {} ",
-                        JcrConstants.JCR_CONTENT, FEDORA_OBJECT, e);
+                    JCR_CONTENT, FEDORA_OBJECT, e);
         }
     }
 

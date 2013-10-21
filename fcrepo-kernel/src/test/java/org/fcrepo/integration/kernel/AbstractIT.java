@@ -22,6 +22,10 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * @author ajs6f
+ * @date 2013
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 public abstract class AbstractIT {
 
