@@ -70,6 +70,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * Construct a FedoraObject without a backing JCR Node
      */
     public FedoraResource() {
+        super(false);
         node = null;
         this.properties = DEFAULT_PROPERTY_FACTORY;
     }
@@ -79,7 +80,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public FedoraResource(final Node node) {
-        super(false);
+        this();
         this.node = node;
     }
 
@@ -90,9 +91,8 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public FedoraResource(final Session session, final String path,
-                          final String nodeType)
-        throws RepositoryException {
-        super(false);
+        final String nodeType) throws RepositoryException {
+        this();
         this.node = findOrCreateNode(
                 session, path, NT_FOLDER, nodeType);
 
