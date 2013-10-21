@@ -133,9 +133,8 @@ public class HierarchyRdfContext extends NodeRdfContext {
         final Iterator<javax.jcr.Node> niceChildren =
             filter(new NodeIterator(node().getNodes()), not(nastyChildren));
 
-        final Iterator<Triple> results = Iterators.concat(transform(niceChildren,
-                child2triples(pageContext)));
-        return results;
+        return Iterators.concat(
+                transform(niceChildren, child2triples(pageContext)));
     }
 
     private Function<javax.jcr.Node, Iterator<Triple>> child2triples(
@@ -161,7 +160,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
                 }
             }
         };
-    };
+    }
 
     /**
      * Children for whom we will not generate triples.

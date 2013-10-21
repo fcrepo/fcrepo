@@ -49,7 +49,7 @@ public abstract class NodeRdfContext extends RdfStream {
         super();
         this.node = node;
         this.graphSubjects = graphSubjects;
-        subject = graphSubjects.getGraphSubject(node).asNode();
+        this.subject = graphSubjects.getGraphSubject(node).asNode();
 
         // TODO fix GraphProperties to allow for LowLevelStorageServices to pass through it
         // this is horribly ugly. LowLevelStorageServices are supposed to be managed beans.

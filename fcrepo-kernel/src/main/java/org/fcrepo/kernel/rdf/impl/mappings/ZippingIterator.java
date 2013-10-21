@@ -35,9 +35,9 @@ import com.google.common.base.Function;
  */
 public class ZippingIterator<F, T> extends AbstractIterator<T> {
 
-    Iterator<F> from;
+    private Iterator<F> from;
 
-    Iterator<Function<F, T>> through;
+    private Iterator<Function<F, T>> through;
 
     private static Logger LOGGER = getLogger(ZippingIterator.class);
 

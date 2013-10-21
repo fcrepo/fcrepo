@@ -41,7 +41,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
 
     private Iterator<Triple> triples;
 
-    private static Set<Triple> none = emptySet();
+    private final static Set<Triple> none = emptySet();
 
     /**
      * Constructor that begins the stream with proffered triples.
