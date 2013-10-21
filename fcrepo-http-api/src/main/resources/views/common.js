@@ -1,14 +1,7 @@
 
 function addChild()
 {
-    var id;
-    var userSuppliedId = $("#new_id").val().trim();
-
-    if ( userSuppliedId == "") {
-        id = "fcr:new";
-    } else {
-        id = userSuppliedId;
-    }
+    var id = $("#new_id").val().trim();
 
     var mixin = $("#new_mixin").val();
 
