@@ -16,10 +16,14 @@
 
 package org.fcrepo.kernel;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.Transaction.State.COMMITED;
+import static org.fcrepo.kernel.Transaction.State.DIRTY;
+import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
+
 import java.util.Calendar;
 import java.util.Date;
-import java.util.UUID;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -59,7 +63,7 @@ public class Transaction {
         super();
         this.session = session;
         this.created = new Date();
-        this.id = UUID.randomUUID().toString();
+        this.id = randomUUID().toString();
         this.expires = Calendar.getInstance();
         this.updateExpiryDate();
     }
@@ -96,7 +100,7 @@ public class Transaction {
      */
     public State getState() throws RepositoryException {
         if (this.session != null && this.session.hasPendingChanges()) {
-            return State.DIRTY;
+            return DIRTY;
         }
         return state;
     }
@@ -116,7 +120,7 @@ public class Transaction {
      */
     public void commit() throws RepositoryException {
         this.session.save();
-        this.state = State.COMMITED;
+        this.state = COMMITED;
         this.expire();
     }
 
@@ -126,7 +130,7 @@ public class Transaction {
      */
     public void expire() throws RepositoryException {
         this.session.logout();
-        this.expires.setTimeInMillis(System.currentTimeMillis());
+        this.expires.setTimeInMillis(currentTimeMillis());
     }
 
     /**
@@ -134,7 +138,7 @@ public class Transaction {
      * @throws RepositoryException
      */
     public void rollback() throws RepositoryException {
-        this.state = State.ROLLED_BACK;
+        this.state = ROLLED_BACK;
         this.session.refresh(false);
         this.expire();
     }
@@ -150,6 +154,6 @@ public class Transaction {
         } else {
             duration = DEFAULT_TIMEOUT;
         }
-        this.expires.setTimeInMillis(System.currentTimeMillis() + duration);
+        this.expires.setTimeInMillis(currentTimeMillis() + duration);
     }
 }

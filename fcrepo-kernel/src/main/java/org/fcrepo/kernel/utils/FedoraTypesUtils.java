@@ -22,6 +22,8 @@ import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
@@ -422,15 +424,15 @@ public abstract class FedoraTypesUtils {
                 session.getWorkspace().getQueryManager();
 
         final String querystring =
-                "SELECT [" + FedoraJcrTypes.CONTENT_SIZE + "] FROM [" +
-                        FedoraJcrTypes.FEDORA_BINARY + "]";
+                "SELECT [" + CONTENT_SIZE + "] FROM [" +
+                        FEDORA_BINARY + "]";
 
         final QueryResult queryResults =
                 queryManager.createQuery(querystring, JCR_SQL2).execute();
 
         for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
             final Value value =
-                    rows.nextRow().getValue(FedoraJcrTypes.CONTENT_SIZE);
+                    rows.nextRow().getValue(CONTENT_SIZE);
             sum += value.getLong();
         }
 

@@ -58,6 +58,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.Binary;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -169,12 +170,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         verify(mockSession).nodeExists("/foo/bar");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testGetFixityResultsModel() throws Exception {
         mockStatic(JcrRdfTools.class);
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
-        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         final FixityResult fixityResult = mock(FixityResult.class);
@@ -192,12 +192,12 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         when(
                 llStore.transformLowLevelCacheEntries(eq(mockContent),
-                        any(Function.class))).thenReturn(mockCollection);
+                       Matchers.<Function<LowLevelCacheEntry,FixityResult>> any())).thenReturn(mockCollection);
 
         final Model mockModel = mock(Model.class);
         when(
-                mockJcrRdfTools.getJcrPropertiesModel(eq(mockNode),
-                                                         any(Collection.class))).thenReturn(mockModel);
+                mockJcrRdfTools.getJcrPropertiesModel(eq(mockNode), Matchers
+                        .<Iterable<FixityResult>> any())).thenReturn(mockModel);
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));

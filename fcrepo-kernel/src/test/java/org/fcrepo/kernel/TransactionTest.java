@@ -55,7 +55,7 @@ public class TransactionTest {
         verify(mockSession).logout();
         assertEquals(ROLLED_BACK, testObj.getState());
         final long update = testObj.getExpires().getTime();
-        assertTrue(update <= System.currentTimeMillis());
+        assertTrue(update <= currentTimeMillis());
     }
 
     @Test
@@ -65,7 +65,7 @@ public class TransactionTest {
         verify(mockSession).logout();
         assertEquals(COMMITED, testObj.getState());
         final long update = testObj.getExpires().getTime();
-        assertTrue(update <= System.currentTimeMillis());
+        assertTrue(update <= currentTimeMillis());
     }
 
     @Test

@@ -17,9 +17,11 @@
 package org.fcrepo.kernel.utils;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
+import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
 import static org.mockito.Matchers.any;
@@ -40,7 +42,6 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,9 +55,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
@@ -136,7 +135,7 @@ public class JcrPropertyStatementListenerTest {
 
         when(mockPredicate.getURI()).thenReturn("x");
         testObj.addedStatement(mockStatement);
-        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq("x"));
+        verify(mockProblems).add(any(Resource.class), eq(COULD_NOT_STORE_PROPERTY), eq("x"));
     }
 
     @Test
@@ -219,7 +218,7 @@ public class JcrPropertyStatementListenerTest {
         when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.removedStatement(mockStatement);
-        verify(mockProblems).add(any(Resource.class), eq(RdfLexicon.COULD_NOT_STORE_PROPERTY), eq("x"));
+        verify(mockProblems).add(any(Resource.class), eq(COULD_NOT_STORE_PROPERTY), eq("x"));
     }
 
     @Test
@@ -233,7 +232,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testAddRdfType() throws RepositoryException {
 
-        final Resource resource = ResourceFactory.createResource();
+        final Resource resource = createResource();
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
         when(mockSubjects.getNodeFromGraphSubject(resource))
             .thenReturn(mockSubjectNode);
@@ -243,11 +242,11 @@ public class JcrPropertyStatementListenerTest {
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
 
-        when(mockSession.getNamespacePrefix(RdfLexicon.RESTAPI_NAMESPACE))
+        when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = ModelFactory.createDefaultModel();
-        model.add(resource, RDF.type,
-                model.createResource(RdfLexicon.RESTAPI_NAMESPACE+"object"));
+        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE
+                + "object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         testObj.addedStatements(model);
         verify(mockSubjectNode).addMixin("fedora:object");
@@ -256,7 +255,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testRemoveRdfType() throws RepositoryException {
 
-        final Resource resource = ResourceFactory.createResource();
+        final Resource resource = createResource();
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
         when(mockSubjects.getNodeFromGraphSubject(resource))
             .thenReturn(mockSubjectNode);
@@ -276,7 +275,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testAddRdfTypeForNonMixin() throws RepositoryException {
 
-        final Resource resource = ResourceFactory.createResource();
+        final Resource resource = createResource();
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
         when(mockSubjects.getNodeFromGraphSubject(resource))
             .thenReturn(mockSubjectNode);
@@ -303,7 +302,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testRemoveRdfTypeForNonMixin() throws RepositoryException {
 
-        final Resource resource = ResourceFactory.createResource();
+        final Resource resource = createResource();
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
         when(mockSubjects.getNodeFromGraphSubject(resource))
             .thenReturn(mockSubjectNode);

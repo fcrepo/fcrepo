@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.services.functions;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -31,7 +32,6 @@ import java.util.Map;
 import javax.jcr.Repository;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
@@ -98,7 +98,7 @@ public class GetClusterConfigurationTest {
         when(mockCM.getCache()).thenReturn(mockCache);
         when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
         when(mockCC.clustering()).thenReturn(mockClustering);
-        when(mockClustering.cacheMode()).thenReturn(CacheMode.LOCAL);
+        when(mockClustering.cacheMode()).thenReturn(LOCAL);
         when(mockCache.getCacheManager()).thenReturn(mockCM);
         final Map<String, String> actual = testObj.apply(mockRepo);
         assertNotNull(actual);

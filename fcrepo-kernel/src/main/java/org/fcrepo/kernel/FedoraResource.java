@@ -15,12 +15,18 @@
  */
 package org.fcrepo.kernel;
 
+import static com.hp.hpl.jena.update.UpdateAction.execute;
+import static com.hp.hpl.jena.update.UpdateFactory.create;
+import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
 import static org.fcrepo.kernel.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.nodetype2name;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Calendar;
@@ -32,22 +38,17 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.JcrGraphProperties;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
-import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.UpdateAction;
-import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 /**
@@ -69,6 +70,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * Construct a FedoraObject without a backing JCR Node
      */
     public FedoraResource() {
+        super(false);
         node = null;
         this.properties = DEFAULT_PROPERTY_FACTORY;
     }
@@ -78,9 +80,8 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public FedoraResource(final Node node) {
-        super(false);
+        this();
         this.node = node;
-        this.properties = DEFAULT_PROPERTY_FACTORY;
     }
 
     /**
@@ -90,11 +91,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public FedoraResource(final Session session, final String path,
-                          final String nodeType)
-        throws RepositoryException {
-        super(false);
+        final String nodeType) throws RepositoryException {
+        this();
         this.node = findOrCreateNode(
-                session, path, JcrConstants.NT_FOLDER, nodeType);
+                session, path, NT_FOLDER, nodeType);
 
         if (!hasMixin(node)) {
             node.addMixin(FEDORA_RESOURCE);
@@ -103,7 +103,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         if (node.isNew()) {
             node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
         }
-        this.properties = DEFAULT_PROPERTY_FACTORY;
     }
 
     /**
@@ -124,7 +123,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public boolean hasContent() throws RepositoryException {
-        return node.hasNode(JcrConstants.JCR_CONTENT);
+        return node.hasNode(JCR_CONTENT);
     }
 
     /**
@@ -216,12 +215,13 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public Dataset updatePropertiesDataset(final GraphSubjects subjects,
-                                        final String sparqlUpdateStatement)
-        throws RepositoryException {
+            final String sparqlUpdateStatement) throws RepositoryException {
         final Dataset dataset = getPropertiesDataset(subjects, 0, 0);
-        final UpdateRequest request = UpdateFactory.create(sparqlUpdateStatement, dataset.getContext().getAsString(GraphProperties.URI_SYMBOL));
+        final UpdateRequest request =
+            create(sparqlUpdateStatement, dataset.getContext().getAsString(
+                    URI_SYMBOL));
         dataset.getDefaultModel().setNsPrefixes(request.getPrefixMapping());
-        UpdateAction.execute(request, dataset);
+        execute(request, dataset);
         return dataset;
     }
 
@@ -265,13 +265,16 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      */
     public Dataset getVersionDataset(final GraphSubjects subjects)
         throws RepositoryException {
-        final Model model = JcrRdfTools.withContext(subjects, node.getSession()).getJcrPropertiesModel(FedoraTypesUtils.getVersionHistory(node), subjects.getGraphSubject(node));
+        final Model model =
+            JcrRdfTools.withContext(subjects, node.getSession())
+                    .getJcrPropertiesModel(getVersionHistory(node),
+                            subjects.getGraphSubject(node));
 
         final Dataset dataset = DatasetFactory.create(model);
 
-        String uri = subjects.getGraphSubject(node).getURI();
-        com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
-        context.set(GraphProperties.URI_SYMBOL,uri);
+        final String uri = subjects.getGraphSubject(node).getURI();
+        final com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
+        context.set(URI_SYMBOL,uri);
 
         return dataset;
     }
@@ -306,7 +309,8 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset replacePropertiesDataset(final GraphSubjects subjects, final Model inputModel) throws RepositoryException {
+    public Dataset replacePropertiesDataset(final GraphSubjects subjects,
+        final Model inputModel) throws RepositoryException {
         final Dataset propertiesDataset = getPropertiesDataset(subjects, 0, -2);
         final Model model = propertiesDataset.getDefaultModel();
 
@@ -320,12 +324,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * Construct an ETag value from the last modified date and path.
-     *
-     * JCR has a mix:etag type, but it only takes into account binary
-     * properties. We actually want whole-object etag data.
-     *
-     * TODO : construct and store an ETag value on object modify
+     * Construct an ETag value from the last modified date and path. JCR has a
+     * mix:etag type, but it only takes into account binary properties. We
+     * actually want whole-object etag data. TODO : construct and store an ETag
+     * value on object modify
      *
      * @return
      * @throws RepositoryException
@@ -334,7 +336,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         final Date lastModifiedDate = getLastModifiedDate();
 
         if (lastModifiedDate != null) {
-            return DigestUtils.shaHex(node.getPath() + lastModifiedDate.toString());
+            return shaHex(node.getPath() + lastModifiedDate.toString());
         } else {
             return "";
         }

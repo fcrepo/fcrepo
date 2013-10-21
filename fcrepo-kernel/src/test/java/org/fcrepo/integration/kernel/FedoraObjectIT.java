@@ -15,7 +15,10 @@
  */
 package org.fcrepo.integration.kernel;
 
+import static com.hp.hpl.jena.update.UpdateAction.parseExecute;
 import static java.util.regex.Pattern.compile;
+import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +40,6 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraObjectIT extends AbstractIT {
@@ -84,8 +86,7 @@ public class FedoraObjectIT extends AbstractIT {
             objectService.createObject(session, "/graphObject");
         final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
 
-        final String graphSubject =
-                RdfLexicon.RESTAPI_NAMESPACE + "/graphObject";
+        final String graphSubject = RESTAPI_NAMESPACE + "/graphObject";
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
@@ -93,14 +94,12 @@ public class FedoraObjectIT extends AbstractIT {
                     compile("fcrepo")
                     .matcher(graphStore.toString()).find());
 
-        UpdateAction
-            .parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
                           "INSERT { <http://example/egbook> dc:title " +
                           "\"This is an example of an update that will be " +
                           "ignored\" } WHERE {}", graphStore);
 
-        UpdateAction
-            .parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
                           "INSERT { <" + graphSubject + "> dc:title " +
                           "\"This is an example title\" } WHERE {}",
                           graphStore);
@@ -111,8 +110,7 @@ public class FedoraObjectIT extends AbstractIT {
                    .getString().equals("This is an example title"));
 
 
-        UpdateAction
-            .parseExecute("PREFIX myurn: <info:myurn/>\n" +
+        parseExecute("PREFIX myurn: <info:myurn/>\n" +
                           "INSERT { <" + graphSubject + "> myurn:info " +
                           "\"This is some example data\";" +
                           "myurn:info  \"And so it this\"     } WHERE {}",
@@ -127,11 +125,10 @@ public class FedoraObjectIT extends AbstractIT {
         assertEquals("And so it this", values[1].getString());
 
 
-        UpdateAction
-            .parseExecute("PREFIX fedora-rels-ext: <"
-                    + RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
-                    "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
-                    "isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
+        parseExecute("PREFIX fedora-rels-ext: <"
+                + RELATIONS_NAMESPACE + ">\n" + "INSERT { <" + graphSubject
+                + "> fedora-rels-ext:" + "isPartOf <" + graphSubject
+                + "> } WHERE {}", graphStore);
         assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
                    .getValues()[0].getString(),
                    object.getNode().getProperty("fedorarelsext:isPartOf")
@@ -139,8 +136,7 @@ public class FedoraObjectIT extends AbstractIT {
                    .equals(object.getNode().getIdentifier()));
 
 
-        UpdateAction
-            .parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
                           "DELETE { <" + graphSubject + "> dc:title " +
                           "\"This is an example title\" } WHERE {}",
                           graphStore);
@@ -148,8 +144,7 @@ public class FedoraObjectIT extends AbstractIT {
         assertFalse("Found unexpected dc:title",
                     object.getNode().hasProperty("dc:title"));
 
-        UpdateAction
-            .parseExecute("PREFIX fedora-rels-ext: <" +
+        parseExecute("PREFIX fedora-rels-ext: <" +
                     RdfLexicon.RELATIONS_NAMESPACE + ">\n" +
                     "DELETE { <" + graphSubject + "> " +
                     "fedora-rels-ext:isPartOf <" + graphSubject + "> " +

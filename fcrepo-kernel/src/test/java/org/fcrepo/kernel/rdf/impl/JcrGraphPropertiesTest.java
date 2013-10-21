@@ -17,6 +17,9 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
+import static org.fcrepo.kernel.utils.JcrRdfTools.getProblemsModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -27,8 +30,6 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import javax.jcr.Node;
 
 import org.fcrepo.kernel.DummyURIResource;
-import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.JcrRdfTools;
@@ -47,7 +48,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 
 @RunWith(PowerMockRunner.class)
 //PowerMock needs to ignore some packages to prevent class-cast errors
-//PowerMock needs to ignore unnecessary packages to keep from running out of heap 
+//PowerMock needs to ignore unnecessary packages to keep from running out of heap
 @PowerMockIgnore({
     "org.slf4j.*",
     "org.apache.xerces.*",
@@ -60,12 +61,12 @@ import com.hp.hpl.jena.sparql.util.Symbol;
     })
 @PrepareForTest({JcrRdfTools.class, JcrPropertyStatementListener.class})
 public class JcrGraphPropertiesTest {
-    
+
     private JcrGraphProperties testObj = new JcrGraphProperties();
-    
+
     @Mock
     Node mockNode;
-    
+
     @Mock
     GraphSubjects mockSubjects;
 
@@ -73,11 +74,11 @@ public class JcrGraphPropertiesTest {
     public void testGetPropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession())).thenReturn(mockJcrRdfTools);
 
         final Resource mockResource =
-                new DummyURIResource(RdfLexicon.RESTAPI_NAMESPACE + "xyz");
+                new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
@@ -87,8 +88,7 @@ public class JcrGraphPropertiesTest {
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(
                 treeModel);
         final Model problemsModel = createDefaultModel();
-        when(JcrRdfTools.getProblemsModel()).thenReturn(
-                problemsModel);
+        when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset =
                 testObj.getProperties(mockNode, mockSubjects, 0, -1);
 
@@ -96,7 +96,7 @@ public class JcrGraphPropertiesTest {
         assertEquals(treeModel, dataset.getNamedModel("tree"));
 
         assertEquals(propertiesModel, dataset.getDefaultModel());
-        assertEquals(RdfLexicon.RESTAPI_NAMESPACE + "xyz",
+        assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(Symbol.create("uri")));
     }
 
@@ -105,10 +105,10 @@ public class JcrGraphPropertiesTest {
         throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession())).thenReturn(mockJcrRdfTools);
         final Resource mockResource =
-                new DummyURIResource(RdfLexicon.RESTAPI_NAMESPACE + "xyz");
+                new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
         final Model propertiesModel = createDefaultModel();
@@ -118,8 +118,7 @@ public class JcrGraphPropertiesTest {
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(
                 treeModel);
         final Model problemsModel = createDefaultModel();
-        when(JcrRdfTools.getProblemsModel()).thenReturn(
-                problemsModel);
+        when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getProperties(mockNode, mockSubjects);
 
         verifyStatic();
@@ -128,9 +127,9 @@ public class JcrGraphPropertiesTest {
         assertEquals(treeModel, dataset.getNamedModel("tree"));
 
         assertEquals(propertiesModel, dataset.getDefaultModel());
-        assertEquals(RdfLexicon.RESTAPI_NAMESPACE + "xyz",
+        assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(Symbol.create("uri")));
-        
+
         assertTrue(dataset.containsNamedModel("problems"));
     }
 
@@ -138,11 +137,12 @@ public class JcrGraphPropertiesTest {
     public void testGetPropertiesDatasetDefaults() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
-        when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession())).thenReturn(mockJcrRdfTools);
+        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
+        when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession()))
+                .thenReturn(mockJcrRdfTools);
 
         final Resource mockResource =
-                new DummyURIResource(RdfLexicon.RESTAPI_NAMESPACE + "xyz");
+                new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 mockResource);
 
@@ -153,16 +153,15 @@ public class JcrGraphPropertiesTest {
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1))
                 .thenReturn(treeModel);
         final Model problemsModel = createDefaultModel();
-        when(JcrRdfTools.getProblemsModel()).thenReturn(
-                problemsModel);
+        when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getProperties(mockNode, mockSubjects);
 
         assertTrue(dataset.containsNamedModel("tree"));
         assertEquals(treeModel, dataset.getNamedModel("tree"));
 
         assertEquals(propertiesModel, dataset.getDefaultModel());
-        assertEquals(RdfLexicon.RESTAPI_NAMESPACE + "xyz",
-                dataset.getContext().get(GraphProperties.URI_SYMBOL));
+        assertEquals(RESTAPI_NAMESPACE + "xyz",
+                dataset.getContext().get(URI_SYMBOL));
     }
 
 }

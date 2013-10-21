@@ -16,6 +16,8 @@
 
 package org.fcrepo.integration.kernel.services;
 
+import static com.google.common.io.Files.createTempDir;
+import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.jgroups.util.Util.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,7 +38,6 @@ import org.junit.Test;
 import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
 
-import com.google.common.io.Files;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -77,32 +78,42 @@ public class ObjectServiceIT extends AbstractIT {
 
     @Test
     public void testGetNamespaceRegistryGraph() throws Exception {
-        Session session = repository.login();
+        final Session session = repository.login();
 
-        final Dataset registryGraph = objectService.getNamespaceRegistryGraph(session);
+        final Dataset registryGraph =
+            objectService.getNamespaceRegistryGraph(session);
 
-        final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
+        final NamespaceRegistry namespaceRegistry =
+            session.getWorkspace().getNamespaceRegistry();
 
         logger.info(namespaceRegistry.toString());
         logger.info(registryGraph.toString());
-        for (String s : namespaceRegistry.getPrefixes()) {
+        for (final String s : namespaceRegistry.getPrefixes()) {
             if (s.isEmpty() || s.equals("xmlns") || s.equals("jcr")) {
                 continue;
             }
             final String uri = namespaceRegistry.getURI(s);
-            assertTrue("expected to find JCR namespaces " + s + " in graph", registryGraph.asDatasetGraph().contains(Node.ANY, ResourceFactory.createResource(uri).asNode(), RdfLexicon.HAS_NAMESPACE_PREFIX.asNode(), ResourceFactory.createPlainLiteral(s).asNode()));
+            assertTrue("expected to find JCR namespaces " + s + " in graph",
+                    registryGraph.asDatasetGraph().contains(Node.ANY,
+                            ResourceFactory.createResource(uri).asNode(),
+                            RdfLexicon.HAS_NAMESPACE_PREFIX.asNode(),
+                            ResourceFactory.createPlainLiteral(s).asNode()));
         }
         session.logout();
     }
 
     @Test
     public void testUpdateNamespaceRegistryGraph() throws Exception {
-        Session session = repository.login();
+        final Session session = repository.login();
 
-        final Dataset registryGraph = objectService.getNamespaceRegistryGraph(session);
-        final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
+        final Dataset registryGraph =
+            objectService.getNamespaceRegistryGraph(session);
+        final NamespaceRegistry namespaceRegistry =
+            session.getWorkspace().getNamespaceRegistry();
 
-        UpdateAction.parseExecute("INSERT { <info:abc> <" + RdfLexicon.HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }", registryGraph);
+        UpdateAction.parseExecute("INSERT { <info:abc> <"
+                + HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }",
+                registryGraph);
 
         assertEquals("abc", namespaceRegistry.getPrefix("info:abc"));
         session.logout();
@@ -110,17 +121,17 @@ public class ObjectServiceIT extends AbstractIT {
 
     @Test
     public void testBackupRepository() throws Exception {
-        Session session = repository.login();
+        final Session session = repository.login();
 
         datastreamService.createDatastreamNode(session,
-                                                      "testObjectServiceNode0", "application/octet-stream",
-                                                      new ByteArrayInputStream("asdfx".getBytes()));
+                "testObjectServiceNode0", "application/octet-stream",
+                new ByteArrayInputStream("asdfx".getBytes()));
         session.save();
 
-        File backupDirectory = Files.createTempDir();
+        final File backupDirectory = createTempDir();
 
-        final Problems problems = objectService.backupRepository(session,
-                                                                 backupDirectory);
+        final Problems problems =
+            objectService.backupRepository(session, backupDirectory);
 
         assertFalse(problems.hasProblems());
         session.logout();
@@ -128,18 +139,19 @@ public class ObjectServiceIT extends AbstractIT {
 
     @Test
     public void testRestoreRepository() throws Exception {
-        Session session = repository.login();
+        final Session session = repository.login();
 
         datastreamService.createDatastreamNode(session,
-                                                      "testObjectServiceNode1", "application/octet-stream",
-                                                      new ByteArrayInputStream("asdfy".getBytes()));
+                "testObjectServiceNode1", "application/octet-stream",
+                new ByteArrayInputStream("asdfy".getBytes()));
         session.save();
 
-        File backupDirectory = Files.createTempDir();
+        final File backupDirectory = createTempDir();
 
         objectService.backupRepository(session, backupDirectory);
 
-        final Problems problems = objectService.restoreRepository(session, backupDirectory);
+        final Problems problems =
+            objectService.restoreRepository(session, backupDirectory);
 
         assertFalse(problems.hasProblems());
         session.logout();
