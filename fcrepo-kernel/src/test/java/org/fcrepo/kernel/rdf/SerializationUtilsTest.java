@@ -16,60 +16,64 @@
 
 package org.fcrepo.kernel.rdf;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
+import static org.fcrepo.kernel.rdf.SerializationUtils.setDatasetSubject;
+import static org.fcrepo.kernel.rdf.SerializationUtils.subjectKey;
+import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 public class SerializationUtilsTest {
 
 
     @Test
     public void testSetDatasetSubject() {
-        final Dataset dataset = DatasetFactory.create(ModelFactory.createDefaultModel());
+        final Dataset dataset = DatasetFactory.create(createDefaultModel());
 
-        SerializationUtils.setDatasetSubject(dataset, "some-uri");
+        setDatasetSubject(dataset, "some-uri");
 
-        assertEquals("some-uri", dataset.getContext().getAsString(SerializationUtils.subjectKey));
+        assertEquals("some-uri", dataset.getContext().getAsString(subjectKey));
     }
 
     @Test
     public void testGetDatasetSubject() {
-        final Dataset dataset = DatasetFactory.create(ModelFactory.createDefaultModel());
+        final Dataset dataset = DatasetFactory.create(createDefaultModel());
 
-        SerializationUtils.setDatasetSubject(dataset, "some-uri");
+        setDatasetSubject(dataset, "some-uri");
 
-        assertEquals(NodeFactory.createURI("some-uri"), SerializationUtils.getDatasetSubject(dataset));
+        assertEquals(createURI("some-uri"), getDatasetSubject(dataset));
     }
 
     @Test
     public void testGetDatasetSubjectWithoutContext() {
-        final Dataset dataset = DatasetFactory.create(ModelFactory.createDefaultModel());
+        final Dataset dataset = DatasetFactory.create(createDefaultModel());
 
-        assertEquals(null, SerializationUtils.getDatasetSubject(dataset));
+        assertEquals(null, getDatasetSubject(dataset));
     }
 
     @Test
     public void testUnifyDatasetModels() {
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
         model.setNsPrefix("a", "b");
         model.add(model.createResource(), model.createProperty("xyz"), "abc");
 
         final Dataset dataset = DatasetFactory.create(model);
 
-        final Model model2 = ModelFactory.createDefaultModel();
+        final Model model2 = createDefaultModel();
         model.add(model.createResource(), model.createProperty("abc"), "xyz");
 
         dataset.addNamedModel("xyz", model2);
 
 
-        final Model mergedModel = SerializationUtils.unifyDatasetModel(dataset);
+        final Model mergedModel = unifyDatasetModel(dataset);
 
         assertEquals(model.getNsPrefixMap(), mergedModel.getNsPrefixMap());
         assertTrue(mergedModel.containsAll(model));

@@ -153,9 +153,8 @@ public class DatastreamTest implements FedoraJcrTypes {
                 mock(org.modeshape.jcr.api.Binary.class);
         final InputStream mockStream = mock(InputStream.class);
         mockStatic(FedoraTypesUtils.class);
-        when(
-                getBinary(any(Node.class), any(InputStream.class),
-                        any(String.class))).thenReturn(mockBin);
+        when(getBinary(any(Node.class), any(InputStream.class),
+            any(String.class))).thenReturn(mockBin);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockSession.getValueFactory()).thenReturn(mockVF);

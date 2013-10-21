@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.rdf.impl;
 
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -54,7 +54,7 @@ public class DefaultGraphSubjectsTest {
     @Test
     public void testGetGraphSubject() throws RepositoryException {
         final String testPath = "/foo/bar";
-        final String expected = RdfLexicon.RESTAPI_NAMESPACE + testPath;
+        final String expected = RESTAPI_NAMESPACE + testPath;
         when(mockNode.getPath()).thenReturn(testPath);
         Resource actual = testObj.getGraphSubject(mockNode);
         assertEquals(expected, actual.getURI());
@@ -69,8 +69,7 @@ public class DefaultGraphSubjectsTest {
         when(mockSession.nodeExists(expected)).thenReturn(true);
         when(mockSession.getNode(expected)).thenReturn(mockNode);
         // test a good subject
-        when(mockSubject.getURI())
-                .thenReturn(RdfLexicon.RESTAPI_NAMESPACE + expected);
+        when(mockSubject.getURI()).thenReturn(RESTAPI_NAMESPACE + expected);
         when(mockSubject.isURIResource()).thenReturn(true);
         Node actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(mockNode, actual);
@@ -86,15 +85,14 @@ public class DefaultGraphSubjectsTest {
         assertEquals(null, actual);
         // test a fcr:content path
         when(mockSubject.getURI()).thenReturn(
-                RdfLexicon.RESTAPI_NAMESPACE + expected + "/fcr:content");
+                RESTAPI_NAMESPACE + expected + "/fcr:content");
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         verify(mockSession).getNode(expected + "/jcr:content");
     }
 
     @Test
     public void testIsFedoraGraphSubject() {
-        when(mockSubject.getURI()).thenReturn(
-                RdfLexicon.RESTAPI_NAMESPACE + "foo");
+        when(mockSubject.getURI()).thenReturn(RESTAPI_NAMESPACE + "foo");
         when(mockSubject.isURIResource()).thenReturn(true);
         boolean actual = testObj.isFedoraGraphSubject(mockSubject);
         assertEquals(true, actual);
