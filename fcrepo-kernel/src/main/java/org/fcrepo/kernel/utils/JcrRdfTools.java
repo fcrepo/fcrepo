@@ -19,16 +19,8 @@ package org.fcrepo.kernel.utils;
 import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
-import static javax.jcr.PropertyType.BINARY;
-import static javax.jcr.PropertyType.BOOLEAN;
-import static javax.jcr.PropertyType.DATE;
-import static javax.jcr.PropertyType.DECIMAL;
-import static javax.jcr.PropertyType.DOUBLE;
-import static javax.jcr.PropertyType.LONG;
-import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -36,7 +28,6 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -45,7 +36,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -117,7 +107,7 @@ public class JcrRdfTools {
      * @param graphSubjects
      */
     public JcrRdfTools(final GraphSubjects graphSubjects) {
-        this.graphSubjects = graphSubjects;
+        this(graphSubjects, null, null);
     }
 
     /**
@@ -128,8 +118,7 @@ public class JcrRdfTools {
      * @param session
      */
     public JcrRdfTools(final GraphSubjects graphSubjects, final Session session) {
-        this.graphSubjects = graphSubjects;
-        this.session = session;
+        this(graphSubjects, session, null);
     }
 
     /**
@@ -442,89 +431,6 @@ public class JcrRdfTools {
         } else {
             return valueFactory.createValue(data.asLiteral().getString(), type);
         }
-    }
-
-    /**
-     * Add a JCR property to the given RDF Model (with the given subject)
-     *
-     * @param subject the RDF subject to use in the assertions
-     * @param model the RDF graph to insert the triple into
-     * @param property the JCR property (multivalued or not) to convert to
-     *        triples
-     * @throws RepositoryException
-     */
-    void addPropertyToModel(final Resource subject, final Model model,
-            final Property property) throws RepositoryException {
-        if (property.isMultiple()) {
-            final Value[] values = property.getValues();
-
-            for (final Value v : values) {
-                addPropertyToModel(subject, model, property, v);
-            }
-
-        } else {
-            addPropertyToModel(subject, model, property, property.getValue());
-        }
-    }
-
-    /**
-     * Add a JCR property to the given RDF Model (with the given subject)
-     *
-     * @param subject the RDF subject to use in the assertions
-     * @param model the RDF graph to insert the triple into
-     * @param property the JCR property (multivalued or not) to convert to
-     *        triples
-     * @param v the actual JCR Value to insert into the graph
-     * @throws RepositoryException
-     */
-    void addPropertyToModel(final Resource subject, final Model model,
-            final Property property, final Value v) throws RepositoryException {
-
-        if (v.getType() == BINARY) {
-            // exclude binary types from property serialization
-            return;
-        }
-
-        final com.hp.hpl.jena.rdf.model.Property predicate =
-            getPredicateForProperty.apply(property);
-
-        switch (v.getType()) {
-            case BOOLEAN:
-                model.addLiteral(subject, predicate, v.getBoolean());
-                break;
-            case DATE:
-                model.add(subject, predicate, createTypedLiteral(v.getDate()));
-                break;
-            case DECIMAL:
-                model.add(subject, predicate,
-                        createTypedLiteral(v.getDecimal()));
-                break;
-            case DOUBLE:
-                model.addLiteral(subject, predicate, v.getDouble());
-                break;
-            case LONG:
-                model.addLiteral(subject, predicate, v.getLong());
-                break;
-            case URI:
-                model.add(subject, predicate, model.createResource(v
-                        .getString()));
-                return;
-            case REFERENCE:
-            case WEAKREFERENCE:
-                final Node refNode = session.getNodeByIdentifier(v.getString());
-                model.add(subject, predicate, graphSubjects
-                        .getGraphSubject(refNode));
-                break;
-            case PATH:
-                model.add(subject, predicate, graphSubjects.getGraphSubject(v
-                        .getString()));
-                break;
-
-            default:
-                model.add(subject, predicate, v.getString());
-
-        }
-
     }
 
     /**

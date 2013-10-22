@@ -19,7 +19,6 @@ package org.fcrepo.kernel.utils;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDshort;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -27,17 +26,10 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
-import static javax.jcr.PropertyType.BOOLEAN;
-import static javax.jcr.PropertyType.DATE;
-import static javax.jcr.PropertyType.DECIMAL;
-import static javax.jcr.PropertyType.DOUBLE;
-import static javax.jcr.PropertyType.LONG;
 import static javax.jcr.PropertyType.NAME;
-import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
-import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
@@ -54,7 +46,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
@@ -79,7 +70,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
@@ -441,177 +431,6 @@ public class JcrRdfToolsTest {
 
         } finally {
             getValueFactory = holdValueFactory;
-        }
-
-    }
-
-    @Test
-    public final void shouldAddPropertiesToModel() throws RepositoryException {
-        when(mockPredicateFactoryFunc.apply(mockProperty)).thenReturn(
-                mockPredicate);
-        final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> holdPredicate =
-            getPredicateForProperty;
-        getPredicateForProperty = mockPredicateFactoryFunc;
-
-        try {
-            final Resource mockSubject = mock(Resource.class);
-            final Model mockModel = mock(Model.class);
-
-            final Value mockValue = mock(Value.class);
-            when(mockValue.getString()).thenReturn("");
-
-            when(mockProperty.isMultiple()).thenReturn(false);
-            when(mockProperty.getValue()).thenReturn(mockValue);
-
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty);
-            verify(mockModel).add(mockSubject, mockPredicate, "");
-
-        } finally {
-            getPredicateForProperty = holdPredicate;
-        }
-
-    }
-
-    @Test
-    public final void
-            shouldAddMultivaluedPropertiesToModel() throws RepositoryException {
-        when(mockPredicateFactoryFunc.apply(mockProperty)).thenReturn(
-                mockPredicate);
-        final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> holdPredicate =
-            getPredicateForProperty;
-        getPredicateForProperty = mockPredicateFactoryFunc;
-
-        try {
-            final Resource mockSubject = mock(Resource.class);
-            final Model mockModel = mock(Model.class);
-
-            final Value mockValue = mock(Value.class);
-            when(mockValue.getString()).thenReturn("1");
-
-            final Value mockValue2 = mock(Value.class);
-            when(mockValue2.getString()).thenReturn("2");
-
-            when(mockProperty.isMultiple()).thenReturn(true);
-            when(mockProperty.getValues()).thenReturn(
-                    asList(mockValue, mockValue2).toArray(new Value[2]));
-
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty);
-            verify(mockModel).add(mockSubject, mockPredicate, "1");
-            verify(mockModel).add(mockSubject, mockPredicate, "2");
-
-        } finally {
-            getPredicateForProperty = holdPredicate;
-        }
-
-    }
-
-    @Test
-    public final void
-            shouldMapJcrTypesToRdfDataTypes() throws RepositoryException {
-        final Resource mockSubject = createResource("some-resource-uri");
-        final Model mockModel = createDefaultModel();
-        final Property mockPredicate =
-            mockModel.createProperty("some-predicate-uri");
-        when(mockPredicateFactoryFunc.apply(mockProperty)).thenReturn(
-                mockPredicate);
-
-        final Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> holdPredicate =
-            getPredicateForProperty;
-        getPredicateForProperty = mockPredicateFactoryFunc;
-
-        try {
-            when(mockValue.getType()).thenReturn(BOOLEAN);
-            when(mockValue.getBoolean()).thenReturn(true);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createTypedLiteral(true)));
-
-            mockValue = mock(Value.class);
-            final Calendar mockCalendar = Calendar.getInstance();
-            when(mockValue.getType()).thenReturn(DATE);
-            when(mockValue.getDate()).thenReturn(mockCalendar);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createTypedLiteral(mockCalendar)));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(DECIMAL);
-            when(mockValue.getDecimal()).thenReturn(BigDecimal.valueOf(0.0));
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createTypedLiteral(BigDecimal.valueOf(0.0))));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(DOUBLE);
-            when(mockValue.getDouble()).thenReturn((double) 0);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createTypedLiteral((double) 0)));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(LONG);
-            when(mockValue.getLong()).thenReturn(0L);
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createTypedLiteral(0L)));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(STRING);
-            when(mockValue.getString()).thenReturn("XYZ");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createTypedLiteral("XYZ")));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(URI);
-            when(mockValue.getString()).thenReturn("info:fedora");
-
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource("info:fedora")));
-
-            mockValue = mock(Value.class);
-            when(mockProperty.getSession()).thenReturn(mockSession);
-            when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
-            when(mockNode.getPath()).thenReturn("/abc");
-
-            when(mockValue.getType()).thenReturn(REFERENCE);
-            when(mockValue.getString()).thenReturn("uuid");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource(RESTAPI_NAMESPACE + "/abc")));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(WEAKREFERENCE);
-            when(mockValue.getString()).thenReturn("uuid");
-            when(mockNode.getPath()).thenReturn("/def");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource(RESTAPI_NAMESPACE + "/def")));
-
-            mockValue = mock(Value.class);
-            when(mockValue.getType()).thenReturn(PATH);
-            when(mockValue.getString()).thenReturn("/ghi");
-            testObj.addPropertyToModel(mockSubject, mockModel, mockProperty,
-                    mockValue);
-
-            assertTrue(mockModel.contains(mockSubject, mockPredicate,
-                    createResource(RESTAPI_NAMESPACE + "/ghi")));
-
-        } finally {
-            getPredicateForProperty = holdPredicate;
         }
 
     }
