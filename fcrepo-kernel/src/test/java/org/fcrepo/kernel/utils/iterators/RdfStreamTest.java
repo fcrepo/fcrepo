@@ -16,6 +16,9 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -31,11 +34,8 @@ import javax.jcr.RepositoryException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.NamespaceRegistry;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -47,7 +47,7 @@ public class RdfStreamTest {
     private Iterator<Triple> mockIterator;
 
     @Mock
-    private Triple triple1, triple2;
+    private Triple triple1, triple2, triple3;
 
     private final static String prefix1 = "testNS";
 
@@ -59,9 +59,6 @@ public class RdfStreamTest {
 
     private final Map<String, String> testNamespaces = ImmutableMap.of(prefix1,
             uri1, prefix2, uri2);
-
-    @Mock
-    private NamespaceRegistry mockNamespaceRegistry;
 
     @Before
     public void setUp() {
@@ -100,6 +97,12 @@ public class RdfStreamTest {
     }
 
     @Test
+    public void testIteratorConstructor() {
+        testStream = new RdfStream(ImmutableSet.of(triple1, triple2).iterator());
+        assertEquals(triple1, testStream.next());
+    }
+
+    @Test
     public void testCollectionConstructor() {
         testStream = new RdfStream(ImmutableSet.of(triple1, triple2));
         assertEquals(triple1, testStream.next());
@@ -108,16 +111,30 @@ public class RdfStreamTest {
     @Test
     public void testConcat() {
         when(mockIterator.next()).thenReturn(triple1, triple2);
-        final RdfStream testStream2 = new RdfStream(ImmutableSet.of(triple1));
+        final RdfStream testStream2 = new RdfStream(ImmutableSet.of(triple3));
         testStream.concat(testStream2);
-        assertEquals(triple1, Iterators.getLast(testStream));
+        assertEquals(triple3, testStream.next());
     }
 
     @Test
     public void testCollectionConcat() {
         when(mockIterator.next()).thenReturn(triple1, triple2);
-        testStream.concat(ImmutableSet.of(triple1));
-        assertEquals(triple1, Iterators.getLast(testStream));
+        testStream.concat(ImmutableSet.of(triple3));
+        assertEquals(triple3, testStream.next());
+    }
+
+    @Test
+    public void testArrayConcat() {
+        when(mockIterator.next()).thenReturn(triple1, triple2);
+        testStream.concat(new Triple[]{triple3});
+        assertEquals(triple3, testStream.next());
+    }
+
+    @Test
+    public void testSingletonConcat() {
+        when(mockIterator.next()).thenReturn(triple1, triple2);
+        testStream.concat(triple3);
+        assertEquals(triple3, testStream.next());
     }
 
     @Test
@@ -138,9 +155,24 @@ public class RdfStreamTest {
 
     @Test
     public void testAsModel() throws RepositoryException {
+        final Triple t = create(createAnon(), createAnon(), createAnon());
+        testStream = new RdfStream(singletonList(t));
         testStream.addNamespaces(testNamespaces);
+
         final Model testModel = testStream.asModel();
         assertEquals(testModel.getNsPrefixMap(), testNamespaces);
+        assertTrue(testModel.contains(testModel.asStatement(t)));
+    }
 
+    @Test
+    public void testCanContinue() {
+        when(mockIterator.hasNext()).thenReturn(true).thenThrow(
+                new RuntimeException("Expected.")).thenReturn(true);
+        assertTrue(mockIterator.hasNext());
+        try {
+            mockIterator.hasNext();
+        } catch (final RuntimeException ex) {
+        }
+        assertTrue("Couldn't continue with iteration!",mockIterator.hasNext());
     }
 }
