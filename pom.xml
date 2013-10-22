@@ -28,7 +28,7 @@
     <jgroups.version>3.3.1.Final</jgroups.version>
     <logback.version>1.0.13</logback.version>
     <metrics.version>3.0.0</metrics.version>
-    <modeshape.version>3.4.0.Final</modeshape.version>
+    <modeshape.version>3.5.0.Final</modeshape.version>
     <sesame.version>2.7.2</sesame.version>
     <slf4j.version>1.7.5</slf4j.version>
     <spring.version>3.2.3.RELEASE</spring.version>
