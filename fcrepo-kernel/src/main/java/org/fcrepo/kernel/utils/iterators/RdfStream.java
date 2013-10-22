@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.google.common.collect.Iterators.singletonIterator;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Collections.emptySet;
 
@@ -84,9 +85,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return This object for continued use.
      */
     public RdfStream concat(final Triple newTriple) {
-        triples =
-            Iterators.concat(Iterators.forArray(new Triple[] {newTriple}),
-                    triples);
+        triples = Iterators.concat(singletonIterator(newTriple), triples);
         return this;
     }
 
