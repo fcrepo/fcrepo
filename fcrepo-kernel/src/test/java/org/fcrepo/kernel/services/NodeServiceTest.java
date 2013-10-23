@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyNew;
 
 import java.util.Set;
 
@@ -29,6 +30,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +53,9 @@ public class NodeServiceTest {
 
     @Mock
     private Node mockObjNode;
+
+    @Mock
+    private Workspace mockWorkspace;
 
     private NodeService testObj;
 
@@ -90,5 +95,19 @@ public class NodeServiceTest {
         testObj.deleteObject(mockSession, "foo");
         verify(mockSession).getNode(objPath);
         verify(mockObjNode).remove();
+    }
+
+    @Test
+    public void testCopyObject() throws RepositoryException {
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        testObj.copyObject(mockSession, "foo", "bar");
+        verify(mockWorkspace).copy("foo", "bar");
+    }
+
+    @Test
+    public void testMoveObject() throws RepositoryException {
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        testObj.moveObject(mockSession, "foo", "bar");
+        verify(mockWorkspace).move("foo", "bar");
     }
 }
