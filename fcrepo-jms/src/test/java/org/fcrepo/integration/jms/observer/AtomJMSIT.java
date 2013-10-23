@@ -127,17 +127,19 @@ public class AtomJMSIT implements MessageListener {
     @Test
     public void testAtomStreamNodePath() throws RepositoryException,
         InterruptedException {
+        final int minEntriesSize = 2;
         Session session = repository.login();
         session.getRootNode().addNode("test1/sigma").addMixin(FEDORA_OBJECT);
         session.save();
 
-        waitForEntry(1);
+        waitForEntry(minEntriesSize);
         session.logout();
 
         if (entries.isEmpty())
             fail("Waited a second, got no messages");
 
         String path = null;
+        assertEquals("Entries size not 2", entries.size(), 2);
         for (Entry entry : entries) {
             List<Category> categories = copyOf(entry.getCategories("xsd:string"));
             String p = null;
