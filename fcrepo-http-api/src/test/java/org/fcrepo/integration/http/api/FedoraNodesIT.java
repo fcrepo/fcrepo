@@ -27,6 +27,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -52,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -61,11 +63,14 @@ import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -720,6 +725,56 @@ public class FedoraNodesIT extends AbstractResourceIT {
         validateHTML("testValidHTMLForDS/ds");
     }
 
+    @Test
+    public void testCopy() throws Exception {
+
+        final String pid = randomUUID().toString();
+
+        final HttpPost method = postObjMethod("");
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpCopy request = new HttpCopy(location);
+        request.addHeader("Destination", serverAddress + pid);
+        client.execute(request);
+
+        final HttpGet httpGet = new HttpGet(serverAddress + pid);
+
+        final HttpResponse copiedResult = client.execute(httpGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        final HttpResponse originalResult = client.execute(new HttpGet(location));
+        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testMove() throws Exception {
+
+        final String pid = randomUUID().toString();
+
+        final HttpPost method = postObjMethod("");
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpMove request = new HttpMove(location);
+        request.addHeader("Destination", serverAddress + pid);
+        client.execute(request);
+
+        final HttpGet httpGet = new HttpGet(serverAddress + pid);
+
+        final HttpResponse copiedResult = client.execute(httpGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        final HttpResponse originalResult = client.execute(new HttpGet(location));
+        assertEquals(NOT_FOUND.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
     private void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);
         getMethod.addHeader("Accept", "text/html");
@@ -759,4 +814,63 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
     }
 
+    @NotThreadSafe // HttpRequestBase is @NotThreadSafe
+    private class HttpCopy extends HttpRequestBase {
+
+        public final static String METHOD_NAME = "COPY";
+
+
+        public HttpCopy() {
+            super();
+        }
+
+        public HttpCopy(final URI uri) {
+            super();
+            setURI(uri);
+        }
+
+        /**
+         * @throws IllegalArgumentException if the uri is invalid.
+         */
+        public HttpCopy(final String uri) {
+            super();
+            setURI(URI.create(uri));
+        }
+
+        @Override
+        public String getMethod() {
+            return METHOD_NAME;
+        }
+
+    }
+
+    @NotThreadSafe // HttpRequestBase is @NotThreadSafe
+    private class HttpMove extends HttpRequestBase {
+
+        public final static String METHOD_NAME = "MOVE";
+
+
+        public HttpMove() {
+            super();
+        }
+
+        public HttpMove(final URI uri) {
+            super();
+            setURI(uri);
+        }
+
+        /**
+         * @throws IllegalArgumentException if the uri is invalid.
+         */
+        public HttpMove(final String uri) {
+            super();
+            setURI(URI.create(uri));
+        }
+
+        @Override
+        public String getMethod() {
+            return METHOD_NAME;
+        }
+
+    }
 }
