@@ -150,4 +150,31 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
         obj.remove();
     }
 
+    /**
+     * Copy an existing object from the source path to the destination path
+     * @param session
+     * @param source
+     * @param destination
+     * @throws RepositoryException
+     */
+    public void copyObject(final Session session,
+                           final String source,
+                           final String destination)
+        throws RepositoryException {
+        session.getWorkspace().copy(source, destination);
+    }
+
+    /**
+     * Move an existing object from the source path to the destination path
+     * @param session
+     * @param source
+     * @param destination
+     * @throws RepositoryException
+     */
+    public void moveObject(final Session session,
+                           final String source,
+                           final String destination)
+        throws RepositoryException {
+        session.getWorkspace().move(source, destination);
+    }
 }

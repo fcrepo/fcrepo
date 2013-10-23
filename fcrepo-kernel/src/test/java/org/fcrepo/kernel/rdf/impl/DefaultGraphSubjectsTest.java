@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -91,8 +92,34 @@ public class DefaultGraphSubjectsTest {
         // test a fcr:content path
         when(mockSubject.getURI()).thenReturn(
                 RESTAPI_NAMESPACE + expected + "/fcr:content");
+        when(mockSession.nodeExists(expected + "/jcr:content")).thenReturn(true);
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         verify(mockSession).getNode(expected + "/jcr:content");
+    }
+
+    @Test
+    public void testGetPathFromGraphSubject() throws RepositoryException {
+        final String expected = "/foo/bar";
+        // test a good subject
+        when(mockSubject.getURI())
+            .thenReturn(RESTAPI_NAMESPACE + expected);
+        when(mockSubject.isURIResource()).thenReturn(true);
+        String actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertEquals(expected, actual);
+        // test a bad subject
+        when(mockSubject.getURI()).thenReturn(
+                                                 "info:fedora2" + expected + "/bad");
+        actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertNull(actual);
+        // test a non-existent path
+        when(mockSubject.getURI())
+            .thenReturn("info:fedora" + expected + "/bad");
+        actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertNull(actual);
+        // test a fcr:content path
+        when(mockSubject.getURI()).thenReturn(RESTAPI_NAMESPACE + expected + "/fcr:content");
+        actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertEquals(expected + "/jcr:content", actual);
     }
 
     @Test

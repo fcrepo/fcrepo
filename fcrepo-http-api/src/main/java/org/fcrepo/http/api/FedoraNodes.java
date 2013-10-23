@@ -25,9 +25,11 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -53,6 +55,8 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 
+import javax.jcr.ItemExistsException;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -78,15 +82,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -534,4 +542,81 @@ public class FedoraNodes extends AbstractResource {
             session.logout();
         }
     }
+
+    /**
+     * Copies an object from one path to another
+     */
+    @COPY
+    @Timed
+    public Response copyObject(@PathParam("path") final List<PathSegment> path,
+                               @HeaderParam("Destination") final String destinationUri)
+        throws RepositoryException, URISyntaxException {
+
+        try {
+
+            final GraphSubjects subjects =
+                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+
+            if (!nodeService.exists(session, toPath(path))) {
+                return status(SC_CONFLICT).entity("The source path does not exist").build();
+            }
+
+            final String destination =
+                subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
+
+            if (destination == null) {
+                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
+            }
+
+            nodeService.copyObject(session, toPath(path), destination);
+            session.save();
+            return created(new URI(destinationUri)).build();
+        } catch (ItemExistsException e) {
+            return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+        } catch (PathNotFoundException e) {
+            return status(SC_CONFLICT).entity("There is no node that will serve as the parent of the moved item").build();
+        } finally {
+            session.logout();
+        }
+
+    }
+
+    /**
+     * Copies an object from one path to another
+     */
+    @MOVE
+    @Timed
+    public Response moveObject(@PathParam("path") final List<PathSegment> path,
+                               @HeaderParam("Destination") final String destinationUri)
+        throws RepositoryException, URISyntaxException {
+
+        try {
+
+            final GraphSubjects subjects =
+                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+
+            if (!nodeService.exists(session, toPath(path))) {
+                return status(SC_CONFLICT).entity("The source path does not exist").build();
+            }
+
+            final String destination =
+                subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
+
+            if (destination == null) {
+                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
+            }
+
+            nodeService.moveObject(session, toPath(path), destination);
+            session.save();
+            return created(new URI(destinationUri)).build();
+        } catch (ItemExistsException e) {
+            return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+        } catch (PathNotFoundException e) {
+            return status(SC_CONFLICT).entity("There is no node that will serve as the parent of the moved item").build();
+        } finally {
+            session.logout();
+        }
+
+    }
+
 }

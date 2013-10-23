@@ -102,6 +102,32 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     @Override
     public Node getNodeFromGraphSubject(final Resource subject) throws RepositoryException {
+
+        final String absPath = getPathFromGraphSubject(subject);
+
+        if (absPath == null) {
+            return null;
+        }
+
+        final Node node;
+
+
+        if (session.nodeExists(absPath)) {
+            node = session.getNode(absPath);
+            LOGGER.trace("RDF resource {} maps to JCR node {}", subject, node);
+        } else {
+            node = null;
+            LOGGER.debug(
+                            "RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
+                            subject);
+        }
+
+        return node;
+
+    }
+
+    @Override
+    public String getPathFromGraphSubject(final Resource subject) throws RepositoryException {
         if (!isFedoraGraphSubject(subject)) {
             LOGGER.debug(
                     "RDF resource {} was not a URI resource with our expected basePath {}, aborting.",
@@ -133,6 +159,9 @@ public class HttpGraphSubjects implements GraphSubjects {
                     throw new RepositoryException(
                             "Subject is not in this workspace");
                 }
+            } else if (segment.equals(FCR_CONTENT)) {
+                pathBuilder.append("/");
+                pathBuilder.append(JCR_CONTENT);
             } else {
                 if (!segment.isEmpty()) {
                     pathBuilder.append("/");
@@ -147,26 +176,11 @@ public class HttpGraphSubjects implements GraphSubjects {
             absPath = pathBuilder.toString();
         }
 
-        final Node node;
-
-        if (absPath.endsWith(FCR_CONTENT)) {
-            final String contentPath =
-                absPath.replace(FCR_CONTENT, JCR_CONTENT);
-            node = session.getNode(contentPath);
-            LOGGER.trace(
-                    "RDF resource {} is a fcr:content node, retrieving the corresponding JCR content node {}",
-                    subject, node);
-        } else if (isValidJcrPath(absPath) && session.nodeExists(absPath)) {
-            node = session.getNode(absPath);
-            LOGGER.trace("RDF resource {} maps to JCR node {}", subject, node);
+        if (isValidJcrPath(absPath)) {
+            return absPath;
         } else {
-            node = null;
-            LOGGER.debug(
-                    "RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
-                    subject);
+            return null;
         }
-
-        return node;
 
     }
 

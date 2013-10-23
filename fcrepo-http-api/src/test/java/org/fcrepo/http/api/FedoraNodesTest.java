@@ -17,8 +17,11 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -35,6 +38,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,9 +51,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
 
+import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFactory;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -329,4 +335,110 @@ public class FedoraNodesTest {
         verify(mockObject).replacePropertiesDataset(any(GraphSubjects.class), any(Model.class));
     }
 
+    @Test
+    public void testCopyObject() throws RepositoryException, URISyntaxException {
+
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+
+        final String pid = "foo";
+
+        testObj.copyObject(createPathList(pid), "http://localhost/fcrepo/bar");
+        verify(mockNodes).copyObject(mockSession, "/foo", "/bar");
+    }
+
+    @Test
+    public void testCopyMissingObject() throws RepositoryException, URISyntaxException {
+
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(false);
+
+        final String pid = "foo";
+
+        final Response response = testObj.copyObject(createPathList(pid), "http://localhost/fcrepo/bar");
+
+        assertEquals(CONFLICT.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testCopyObjectWithBadDestination() throws RepositoryException, URISyntaxException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+
+        final String pid = "foo";
+
+        final Response response = testObj.copyObject(createPathList(pid), "http://somewhere/else/baz");
+
+        // BAD GATEWAY
+        assertEquals(SC_BAD_GATEWAY, response.getStatus());
+    }
+
+    @Test
+    public void testCopyObjectToExistingDestination() throws RepositoryException, URISyntaxException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        doThrow(new ItemExistsException()).when(mockNodes).copyObject(mockSession, "/foo", "/baz");
+
+        final String pid = "foo";
+
+        final Response response = testObj.copyObject(createPathList(pid), "http://localhost/fcrepo/baz");
+
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testMoveObject() throws RepositoryException, URISyntaxException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+
+        final String pid = "foo";
+
+        testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar");
+        verify(mockNodes).moveObject(mockSession, "/foo", "/bar");
+    }
+
+    @Test
+    public void testMoveMissingObject() throws RepositoryException, URISyntaxException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(false);
+
+        final String pid = "foo";
+
+        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar");
+        assertEquals(CONFLICT.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testMoveObjectToExistingDestination() throws RepositoryException, URISyntaxException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        doThrow(new ItemExistsException()).when(mockNodes).moveObject(mockSession, "/foo", "/baz");
+
+        final String pid = "foo";
+
+        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/baz");
+
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testMoveObjectWithBadDestination() throws RepositoryException, URISyntaxException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+
+        final String pid = "foo";
+
+        final Response response = testObj.moveObject(createPathList(pid), "http://somewhere/else/baz");
+
+        // BAD GATEWAY
+        assertEquals(SC_BAD_GATEWAY, response.getStatus());
+    }
 }
