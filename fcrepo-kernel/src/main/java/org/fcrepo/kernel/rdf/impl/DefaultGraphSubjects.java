@@ -77,19 +77,33 @@ public class DefaultGraphSubjects implements GraphSubjects {
     @Override
     public Node getNodeFromGraphSubject(final Resource subject)
         throws RepositoryException {
+
+        final String absPath = getPathFromGraphSubject(subject);
+
+        if (absPath == null) {
+            return null;
+        }
+
+        if (session.nodeExists(absPath)) {
+            return session.getNode(absPath);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String getPathFromGraphSubject(Resource subject) throws RepositoryException {
         if (!isFedoraGraphSubject(subject)) {
             return null;
         }
 
-        final String absPath =
-            subject.getURI().substring(RESTAPI_NAMESPACE.length());
+        final String absPath = subject.getURI()
+                                   .substring(RESTAPI_NAMESPACE.length());
 
         if (absPath.endsWith(FCR_CONTENT)) {
-            return session.getNode(absPath.replace(FCR_CONTENT, JCR_CONTENT));
-        } else if (session.nodeExists(absPath)) {
-            return session.getNode(absPath);
+            return absPath.replace(FCR_CONTENT, JCR_CONTENT);
         } else {
-            return null;
+            return absPath;
         }
     }
 

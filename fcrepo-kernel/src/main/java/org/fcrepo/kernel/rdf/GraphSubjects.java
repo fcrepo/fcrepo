@@ -45,6 +45,14 @@ public interface GraphSubjects {
         throws RepositoryException;
 
     /**
+     * Translate an RDF resource into a JCR path
+     * @param subject
+     * @return
+     * @throws RepositoryException
+     */
+    String getPathFromGraphSubject(final Resource subject) throws RepositoryException;
+
+    /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
     boolean isFedoraGraphSubject(final Resource subject);

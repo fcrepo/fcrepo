@@ -117,6 +117,7 @@ public class HttpGraphSubjectsTest {
         actual = testObj.getNodeFromGraphSubject(mockSubject);
         assertEquals(null, actual);
         // test a fcr:content path
+        when(mockSession.nodeExists(testPath + "/jcr:content")).thenReturn(true);
         when(mockSubject.getURI())
                 .thenReturn(
                         "http://localhost:8080/fcrepo/rest" + testPath +
@@ -149,6 +150,16 @@ public class HttpGraphSubjectsTest {
     @Test
     public void testGetContext() {
         assertEquals(uriInfo.getRequestUri().toString(), testObj.getContext().getURI());
+    }
+
+    @Test
+    public void testGetPathFromGraphSubject() throws RepositoryException {
+        assertEquals("/abc", testObj.getPathFromGraphSubject(ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc")));
+    }
+
+    @Test
+    public void testGetPathFromGraphSubjectForNonJcrUrl() throws RepositoryException {
+        assertNull(testObj.getPathFromGraphSubject(ResourceFactory.createResource("who-knows-what-this-is")));
     }
 
     private static UriInfo getUriInfoImpl(final String path) {
