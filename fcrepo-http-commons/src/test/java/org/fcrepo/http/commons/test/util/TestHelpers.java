@@ -181,11 +181,8 @@ public abstract class TestHelpers {
         return Arrays.asList(names);
     }
 
-    public static
-            Session
-            mockSession(final AbstractResource testObj)
-                                                       throws RepositoryException,
-                                                       NoSuchFieldException {
+    public static Session mockSession(final AbstractResource testObj)
+        throws RepositoryException, NoSuchFieldException {
 
         final SecurityContext mockSecurityContext = mock(SecurityContext.class);
         final Principal mockPrincipal = mock(Principal.class);
@@ -269,10 +266,8 @@ public abstract class TestHelpers {
         }
     }
 
-    private static
-            Field
-            findField(final Class<?> clazz, final String name)
-                                                              throws NoSuchFieldException {
+    private static Field findField(final Class<?> clazz, final String name)
+        throws NoSuchFieldException {
         for (final Field f : clazz.getDeclaredFields()) {
             if (f.getName().equals(name)) {
                 return f;
