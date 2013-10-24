@@ -13,37 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.fcrepo.kernel.exception;
 
-package org.fcrepo.kernel.utils.iterators;
+import javax.jcr.RepositoryException;
 
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Implemented by something that can consume an {@link Iterator}.
- *
- * The assumption is that a reference to the appropriate iterator
- * is managed as part of the state of any implementation.
+ * Indicates that RDF was presented for persistence to the repository,
+ * but could not be persisted for some reportable reason.
  *
  * @author ajs6f
  * @date Oct 24, 2013
- * @param <E>
- * @param <T>
  */
-public interface IteratorConsumer<E, T> {
+public class MalformedRdfException extends RepositoryException {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Synchronous consumption.
+     * Ordinary constructor.
      *
-     * @param i
+     * @param msg
      */
-    void consume() throws Exception;
-
-    /**
-     * Asynchronous consumption.
-     *
-     * @param i
-     * @return
-     */
-    ListenableFuture<T> consumeAsync();
+    public MalformedRdfException(final String msg) {
+        super(msg);
+    }
 
 }

@@ -109,28 +109,29 @@ public final class RdfLexicon {
             SEARCH_OFFSET, SEARCH_TERMS, SEARCH_HAS_MORE);
 
     // Linked Data Platform
+    public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
     public static final Property PAGE =
-        createProperty("http://www.w3.org/ns/ldp#Page");
+        createProperty(LDP_NAMESPACE + "Page");
     public static final Property PAGE_OF =
-        createProperty("http://www.w3.org/ns/ldp#pageOf");
+        createProperty(LDP_NAMESPACE + "pageOf");
     public static final Property FIRST_PAGE =
-        createProperty("http://www.w3.org/ns/ldp#firstPage");
+        createProperty(LDP_NAMESPACE + "firstPage");
     public static final Property NEXT_PAGE =
-            createProperty("http://www.w3.org/ns/ldp#nextPage");
+            createProperty(LDP_NAMESPACE + "nextPage");
     public static final Property MEMBERS_INLINED =
-            createProperty("http://www.w3.org/ns/ldp#membersInlined");
+            createProperty(LDP_NAMESPACE + "membersInlined");
     public static final Property CONTAINER =
-            createProperty("http://www.w3.org/ns/ldp#Container");
+            createProperty(LDP_NAMESPACE + "Container");
     public static final Property MEMBERSHIP_SUBJECT =
-            createProperty("http://www.w3.org/ns/ldp#membershipSubject");
+            createProperty(LDP_NAMESPACE + "membershipSubject");
     public static final Property MEMBERSHIP_PREDICATE =
-            createProperty("http://www.w3.org/ns/ldp#membershipPredicate");
+            createProperty(LDP_NAMESPACE + "membershipPredicate");
     public static final Property MEMBERSHIP_OBJECT =
-            createProperty("http://www.w3.org/ns/ldp#membershipObject");
+            createProperty(LDP_NAMESPACE + "membershipObject");
     public static final Property MEMBER_SUBJECT =
-            createProperty("http://www.w3.org/ns/ldp#MemberSubject");
+            createProperty(LDP_NAMESPACE + "MemberSubject");
     public static final Property INLINED_RESOURCE =
-        createProperty("http://www.w3.org/ns/ldp#inlinedResource");
+        createProperty(LDP_NAMESPACE + "inlinedResource");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
             FIRST_PAGE, NEXT_PAGE, MEMBERS_INLINED, CONTAINER,

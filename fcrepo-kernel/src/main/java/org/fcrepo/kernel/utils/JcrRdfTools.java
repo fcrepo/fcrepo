@@ -379,7 +379,7 @@ public class JcrRdfTools {
      * @return a JCR Value
      * @throws javax.jcr.RepositoryException
      */
-    Value createValue(final Node node, final RDFNode data, final int type)
+    public Value createValue(final Node node, final RDFNode data, final int type)
         throws RepositoryException {
         final ValueFactory valueFactory = getValueFactory.apply(node);
         assert (valueFactory != null);
@@ -442,7 +442,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    String getPropertyNameFromPredicate(final Node node,
+    public String getPropertyNameFromPredicate(final Node node,
         final com.hp.hpl.jena.rdf.model.Property predicate)
         throws RepositoryException {
         final Map<String, String> s = emptyMap();
@@ -460,7 +460,7 @@ public class JcrRdfTools {
      * @return the JCR property name
      * @throws RepositoryException
      */
-    String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
+    public String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
         final Map<String, String> namespaceMapping) throws RepositoryException {
 
         final String prefix;

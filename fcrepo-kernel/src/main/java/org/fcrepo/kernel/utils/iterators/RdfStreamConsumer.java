@@ -16,34 +16,14 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
- * Implemented by something that can consume an {@link Iterator}.
- *
- * The assumption is that a reference to the appropriate iterator
- * is managed as part of the state of any implementation.
+ * {@link IteratorConsumer} specific to {@link RdfStream}s.
  *
  * @author ajs6f
  * @date Oct 24, 2013
- * @param <E>
- * @param <T>
  */
-public interface IteratorConsumer<E, T> {
-
-    /**
-     * Synchronous consumption.
-     *
-     * @param i
-     */
-    void consume() throws Exception;
-
-    /**
-     * Asynchronous consumption.
-     *
-     * @param i
-     * @return
-     */
-    ListenableFuture<T> consumeAsync();
+public interface RdfStreamConsumer extends IteratorConsumer<Triple, Boolean> {
 
 }
