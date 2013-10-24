@@ -34,7 +34,6 @@ import java.util.Iterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.NodeRdfContext;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.rdf.impl.mappings.ZippingIterator;
 import org.fcrepo.kernel.services.LowLevelStorageService;

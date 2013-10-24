@@ -74,6 +74,8 @@ public class PropertiesRdfContextTest {
         when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockNode.hasProperties()).thenReturn(false);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
+        when(mockContentNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.hasProperties()).thenReturn(false);
         when(
                 mockLowLevelStorageService
