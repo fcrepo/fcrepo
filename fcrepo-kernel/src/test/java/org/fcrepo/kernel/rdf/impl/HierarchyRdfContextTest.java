@@ -182,7 +182,9 @@ public class HierarchyRdfContextTest {
         when(mockParentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getName()).thenReturn("not:root");
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
+        when(mockParentNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockNode.getPath()).thenReturn(MOCK_NODE_PATH);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockParentNode.getPath()).thenReturn(MOCK_PARENT_NODE_PATH);
         when(mockNode.getParent()).thenReturn(mockParentNode);
         when(mockNode.getNodes()).thenReturn(mockNodes);

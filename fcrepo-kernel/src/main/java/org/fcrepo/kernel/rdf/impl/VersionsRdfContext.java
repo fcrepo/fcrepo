@@ -31,7 +31,6 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.NodeRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;

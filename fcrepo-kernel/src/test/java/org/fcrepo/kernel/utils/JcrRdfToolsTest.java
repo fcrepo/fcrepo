@@ -32,7 +32,6 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
@@ -167,7 +166,7 @@ public class JcrRdfToolsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockNodeType});
-        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        when(mockNodeType.getName()).thenReturn("jcr:someType");
         when(mockNodeType.getChildNodeDefinitions()).thenReturn(
                 new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getProperties()).thenReturn(
@@ -252,12 +251,9 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void
-            shouldExcludeBinaryProperties() throws RepositoryException,
-                                           IOException {
+    public final void shouldExcludeBinaryProperties() throws RepositoryException,
+        IOException {
         when(mockNode.getDepth()).thenReturn(2);
-        when(mockNode.getPrimaryNodeType().getName()).thenReturn(
-                "fedora:object");
         reset(mockProperty, mockValue, mockNodes);
         when(mockProperty.getType()).thenReturn(BINARY);
         when(mockProperty.isMultiple()).thenReturn(false);
@@ -285,16 +281,12 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final
-            void
-            shouldIncludeContainerInfoWithMixinTypeContainer()
-                                                              throws RepositoryException, IOException {
-
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        final NodeType mockMixinNodeType = mock(NodeType.class);
+    public final void shouldIncludeContainerInfoWithMixinTypeContainer()
+        throws RepositoryException, IOException {
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
                 new NodeDefinition[] {});
-
+        when(mockPrimaryNodeType.getName()).thenReturn("jcr:someType");
+        when(mockMixinNodeType.getName()).thenReturn("jcr:mixin");
         when(mockMixinNodeType.getChildNodeDefinitions()).thenReturn(
                 new NodeDefinition[] {mock(NodeDefinition.class)});
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
@@ -320,16 +312,12 @@ public class JcrRdfToolsTest {
         assertTrue(actual.contains(graphSubject, actual
                 .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
                 graphSubject));
-        assertTrue(actual
-                .contains(
-                        graphSubject,
-                        actual.createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
-                        HAS_CHILD));
-        assertTrue(actual
-                .contains(
-                        graphSubject,
-                        actual.createProperty("http://www.w3.org/ns/ldp#membershipObject"),
-                        actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
+        assertTrue(actual.contains(graphSubject,actual
+                .createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
+                HAS_CHILD));
+        assertTrue(actual.contains(graphSubject,actual
+                .createProperty("http://www.w3.org/ns/ldp#membershipObject"),
+                actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
     }
 
     @Test
@@ -446,10 +434,8 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final
-            void
-            testJcrNodeIteratorAddsPredicatesForEachNode()
-                                                          throws RepositoryException {
+    public final void testJcrNodeIteratorAddsPredicatesForEachNode()
+        throws RepositoryException {
         final Resource mockResource =
             createResource(RESTAPI_NAMESPACE + "/search/resource");
         when(mockProperties.hasNext()).thenReturn(false);
@@ -463,6 +449,10 @@ public class JcrRdfToolsTest {
         when(mockNode1.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode2.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode3.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode1.getMixinNodeTypes()).thenReturn(emptyNodeTypes);
+        when(mockNode2.getMixinNodeTypes()).thenReturn(emptyNodeTypes);
+        when(mockNode3.getMixinNodeTypes()).thenReturn(emptyNodeTypes);
+
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode2.getProperties()).thenReturn(mockProperties);
         when(mockNode3.getProperties()).thenReturn(mockProperties);
@@ -529,6 +519,7 @@ public class JcrRdfToolsTest {
         when(mockFrozenNode.getPath()).thenReturn(
                 "/jcr:system/versions/test/jcr");
         when(mockFrozenNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockFrozenNode.getMixinNodeTypes()).thenReturn(emptyNodeTypes);
         when(mockVersion.getFrozenNode()).thenReturn(mockFrozenNode);
         when(mockVersionIterator.next()).thenReturn(mockVersion);
         when(mockVersionHistory.getAllVersions()).thenReturn(
@@ -637,6 +628,8 @@ public class JcrRdfToolsTest {
             LOGGER.debug("Found model: {}", writer);
         }
     }
+
+    private static final NodeType[] emptyNodeTypes = new NodeType[] {};
 
     @Mock
     private Property mockPredicate;
@@ -755,4 +748,7 @@ public class JcrRdfToolsTest {
 
     @Mock
     private NodeTypeIterator mockNodeTypeIterator;
+
+    @Mock
+    private NodeType mockMixinNodeType, mockPrimaryNodeType;
 }

@@ -37,7 +37,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.NodeRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.FixityResult;
 
