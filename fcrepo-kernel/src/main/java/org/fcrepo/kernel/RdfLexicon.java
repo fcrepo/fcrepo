@@ -15,8 +15,14 @@
  */
 package org.fcrepo.kernel;
 
+import static com.google.common.base.Predicates.in;
+import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 
+import java.util.Set;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.rdf.model.Property;
 
 /**
@@ -58,6 +64,9 @@ public final class RdfLexicon {
     public static final Property HAS_CHILD_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "numberOfChildren");
 
+    public static final Set<Property> membershipProperties = of(
+            HAS_MEMBER_OF_RESULT, HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
+
     // FIXITY
     public static final Property IS_FIXITY_RESULT_OF =
             createProperty(REPOSITORY_NAMESPACE + "isFixityResultOf");
@@ -77,6 +86,10 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_REPAIRED_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "numFixityRepaired");
 
+    public static final Set<Property> fixityProperties = of(
+            IS_FIXITY_RESULT_OF, HAS_FIXITY_RESULT, HAS_FIXITY_STATE,
+            HAS_COMPUTED_CHECKSUM, HAS_COMPUTED_SIZE, HAS_FIXITY_CHECK_COUNT,
+            HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
 
     // SEARCH
     public static final Property SEARCH_PAGE = createProperty("http://sindice.com/vocab/search#Page");
@@ -91,16 +104,19 @@ public final class RdfLexicon {
     public static final Property SEARCH_HAS_MORE =
             createProperty(RESTAPI_NAMESPACE + "hasMoreResults");
 
+    public static final Set<Property> searchProperties = of(SEARCH_PAGE,
+            SEARCH_HAS_TOTAL_RESULTS, SEARCH_ITEMS_PER_PAGE, SEARCH_OFFSET,
+            SEARCH_OFFSET, SEARCH_TERMS, SEARCH_HAS_MORE);
+
+    // Linked Data Platform
     public static final Property PAGE =
         createProperty("http://www.w3.org/ns/ldp#Page");
     public static final Property PAGE_OF =
         createProperty("http://www.w3.org/ns/ldp#pageOf");
-
     public static final Property FIRST_PAGE =
         createProperty("http://www.w3.org/ns/ldp#firstPage");
     public static final Property NEXT_PAGE =
             createProperty("http://www.w3.org/ns/ldp#nextPage");
-
     public static final Property MEMBERS_INLINED =
             createProperty("http://www.w3.org/ns/ldp#membersInlined");
     public static final Property CONTAINER =
@@ -114,8 +130,12 @@ public final class RdfLexicon {
     public static final Property MEMBER_SUBJECT =
             createProperty("http://www.w3.org/ns/ldp#MemberSubject");
     public static final Property INLINED_RESOURCE =
-            createProperty("http://www.w3.org/ns/ldp#inlinedResource");
+        createProperty("http://www.w3.org/ns/ldp#inlinedResource");
 
+    public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
+            FIRST_PAGE, NEXT_PAGE, MEMBERS_INLINED, CONTAINER,
+            MEMBERSHIP_SUBJECT, MEMBERSHIP_PREDICATE, MEMBERSHIP_OBJECT,
+            MEMBER_SUBJECT, INLINED_RESOURCE);
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
@@ -134,6 +154,11 @@ public final class RdfLexicon {
     public static final Property HAS_SITEMAP =
             createProperty("http://microformats.org/wiki/rel-sitemap");
 
+    public static final Set<Property> repositoryProperties = of(
+            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE,
+            HAS_NAMESPACE_SERVICE, HAS_WORKSPACE_SERVICE, HAS_SEARCH_SERVICE,
+            HAS_SITEMAP);
+
     // NAMESPACES
     public static final Property HAS_NAMESPACE_PREFIX =
             createProperty("http://purl.org/vocab/vann/preferredNamespacePrefix");
@@ -141,6 +166,8 @@ public final class RdfLexicon {
             createProperty("http://purl.org/vocab/vann/preferredNamespaceUri");
     public static final Property VOAF_VOCABULARY = createProperty("http://purl.org/vocommons/voaf#Vocabulary");
 
+    public static final Set<Property> namespaceProperties = of(
+            HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI, VOAF_VOCABULARY);
 
     // OTHER SERVICES
     public static final Property HAS_SERIALIZATION =
@@ -158,6 +185,11 @@ public final class RdfLexicon {
     public static final Property NOT_IMPLEMENTED =
             createProperty(REPOSITORY_NAMESPACE + "notImplemented");
 
+    public static final Set<Property> otherServiceProperties = of(
+            HAS_SERIALIZATION, HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
+            HAS_FEED, HAS_SUBSCRIPTION_SERVICE, NOT_IMPLEMENTED);
+
+
     // CONTENT
     public static final Property HAS_CONTENT =
             createProperty(REPOSITORY_NAMESPACE + "hasContent");
@@ -170,11 +202,18 @@ public final class RdfLexicon {
     public static final Property HAS_SIZE =
             createProperty(REPOSITORY_NAMESPACE + "hasSize");
 
+    public static final Set<Property> contentProperties = of(HAS_CONTENT,
+            IS_CONTENT_OF, HAS_LOCATION, HAS_MIME_TYPE, HAS_SIZE);
+
+
     // VERSIONING
     public static final Property HAS_VERSION =
             createProperty(REPOSITORY_NAMESPACE + "hasVersion");
     public static final Property HAS_VERSION_LABEL =
             createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
+
+    public static final Set<Property> versioningProperties = of(HAS_VERSION,
+            HAS_VERSION_LABEL);
 
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
@@ -189,23 +228,39 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasNodeType");
     public static final Property HAS_MIXIN_TYPE =
             createProperty(REPOSITORY_NAMESPACE + "mixinTypes");
-
     public static final Property CREATED_DATE =
             createProperty(REPOSITORY_NAMESPACE + "created");
     public static final Property CREATED_BY =
             createProperty(REPOSITORY_NAMESPACE + "createdBy");
-
-
     public static final Property LAST_MODIFIED_DATE =
             createProperty(REPOSITORY_NAMESPACE + "lastModified");
     public static final Property LAST_MODIFIED_BY =
             createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
 
+    public static final Set<Property> jcrProperties = of(
+            HAS_PRIMARY_IDENTIFIER, HAS_PRIMARY_TYPE, HAS_NODE_TYPE,
+            HAS_MIXIN_TYPE, CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE,
+            LAST_MODIFIED_BY);
 
     public static final Property RDFS_LABEL =
             createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE =
             createProperty("http://purl.org/dc/terms/title");
+
+    public static final Set<Property> managedProperties;
+
+    static {
+        final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
+        b.addAll(membershipProperties).addAll(fixityProperties).addAll(
+                searchProperties).addAll(ldpProperties).addAll(
+                repositoryProperties).addAll(namespaceProperties).addAll(
+                otherServiceProperties).addAll(contentProperties).addAll(
+                versioningProperties).addAll(jcrProperties);
+        managedProperties = b.build();
+    }
+
+    public static final Predicate<Property> isManagedPredicate =
+        in(managedProperties);
 
     private RdfLexicon() {
 

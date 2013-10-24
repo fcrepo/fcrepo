@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.utils.iterators;
 
 import static com.google.common.collect.Iterators.singletonIterator;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Collections.emptySet;
 
@@ -26,10 +27,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * @author ajs6f
@@ -40,7 +43,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
 
     private Map<String, String> namespaces = new HashMap<String, String>();
 
-    private Iterator<Triple> triples;
+    protected Iterator<Triple> triples;
 
     private final static Set<Triple> none = emptySet();
 
@@ -155,5 +158,24 @@ public class RdfStream extends ForwardingIterator<Triple> implements
         }
         return model;
     }
+
+    /**
+     * @param model A {@link Model} containing the prefix mappings and triples to be put into
+     *         this stream of RDF
+     * @return
+     */
+    public static RdfStream fromModel(final Model model) {
+        final Iterator<Triple> triples = transform(model.listStatements(), statement2triple);
+        return new RdfStream(triples).addNamespaces(model.getNsPrefixMap());
+    }
+
+    public static Function<Statement, Triple> statement2triple = new Function<Statement, Triple>() {
+
+        @Override
+        public Triple apply(final Statement s) {
+            return s.asTriple();
+        }
+
+    };
 
 }
