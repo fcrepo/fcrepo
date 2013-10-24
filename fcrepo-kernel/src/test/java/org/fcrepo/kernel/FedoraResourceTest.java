@@ -55,6 +55,7 @@ import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceTools;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -213,21 +214,21 @@ public class FedoraResourceTest {
             new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
-        final Model propertiesModel = createDefaultModel();
+        final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(
-                propertiesModel);
-        final Model treeModel = createDefaultModel();
+                propertiesStream);
+        final RdfStream treeStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(
-                treeModel);
-        final Model problemsModel = createDefaultModel();
+                treeStream);
+        final Model problemsModel = new RdfStream().asModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset =
                 testObj.getPropertiesDataset(mockSubjects, 0, -1);
 
         assertTrue(dataset.containsNamedModel("tree"));
-        assertEquals(treeModel, dataset.getNamedModel("tree"));
+        assertEquals(treeStream, RdfStream.fromModel(dataset.getNamedModel("tree")));
 
-        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals(propertiesStream, RdfStream.fromModel(dataset.getDefaultModel()));
         assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(Symbol.create("uri")));
     }
@@ -243,18 +244,18 @@ public class FedoraResourceTest {
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
-        final Model propertiesModel = createDefaultModel();
-        when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(propertiesModel);
-        final Model treeModel = createDefaultModel();
-        when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(treeModel);
+        final RdfStream propertiesStream = new RdfStream();
+        when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(propertiesStream);
+        final RdfStream treeStream = new RdfStream();
+        when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getPropertiesDataset(mockSubjects);
 
         assertTrue(dataset.containsNamedModel("tree"));
-        assertEquals(treeModel, dataset.getNamedModel("tree"));
+        assertEquals(treeStream, RdfStream.fromModel(dataset.getNamedModel("tree")));
 
-        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals(propertiesStream, RdfStream.fromModel(dataset.getDefaultModel()));
         assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(Symbol.create("uri")));
     }
@@ -273,14 +274,11 @@ public class FedoraResourceTest {
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
-        final Model versionsModel = createDefaultModel();
+        final RdfStream versionsStream = new RdfStream();
         when(mockJcrRdfTools.getJcrVersionPropertiesModel(any(Node.class)))
-                .thenReturn(versionsModel);
-        final Dataset dataset = testObj.getVersionDataset(mockSubjects);
-
-        assertEquals(versionsModel, dataset.getDefaultModel());
-        assertEquals(RESTAPI_NAMESPACE + "xyz", dataset.getContext().get(
-                Symbol.create("uri")));
+                .thenReturn(versionsStream);
+        final RdfStream result = testObj.getVersionDataset(mockSubjects);
+        assertEquals(versionsStream, result);
     }
 
     @Test
@@ -333,11 +331,11 @@ public class FedoraResourceTest {
         propertiesModel.add(propertiesModel.createResource("x"),
                                propertiesModel.createProperty("y"),
                                "z");
-        when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(propertiesModel);
+        final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel);
+        when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(propertiesStream);
 
-        final Model treeModel = createDefaultModel();
-        when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -2)).thenReturn(
-                                                                             treeModel);
+        final RdfStream treeStream = new RdfStream();
+        when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -2)).thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
 
@@ -352,9 +350,9 @@ public class FedoraResourceTest {
                                 replacementModel.createProperty("j"),
                                "k");
 
-        testObj.replacePropertiesDataset(defaultGraphSubjects, replacementModel);
+        final Dataset replacements = testObj.replacePropertiesDataset(defaultGraphSubjects, replacementModel);
 
-        assertTrue(propertiesModel.containsAll(replacementModel));
+        assertTrue(replacements.getDefaultModel().containsAll(replacementModel));
 
         assertFalse(problemsModel.contains(propertiesModel.createResource("x"),
                                               propertiesModel.createProperty("y"),

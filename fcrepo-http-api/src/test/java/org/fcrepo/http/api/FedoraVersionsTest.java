@@ -44,6 +44,7 @@ import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -89,7 +90,7 @@ public class FedoraVersionsTest {
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
         when(mockResource.getVersionDataset(any(HttpGraphSubjects.class)))
-                .thenReturn(mockDataset);
+                .thenReturn(new RdfStream());
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
 

@@ -28,6 +28,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.slf4j.Logger;
 
 /**
@@ -83,7 +84,14 @@ public abstract class NodePropertiesTools {
                 property.setValue(newValue);
             }
         } else {
-            if (isMultivaluedProperty(node, propertyName)) {
+            boolean isMultiple = false;
+            try {
+                isMultiple = isMultivaluedProperty(node, propertyName);
+
+            } catch (final NoSuchPropertyDefinitionException e) {
+                // simply represents a new kind of property on this node
+            }
+            if (isMultiple) {
                 logger.debug("Creating new multivalued {} property {} with " +
                              "initial value [{}]",
                              PropertyType.nameFromValue(newValue.getType()),
@@ -197,7 +205,7 @@ public abstract class NodePropertiesTools {
             getDefinitionForPropertyName(node, propertyName);
 
         if (def == null) {
-            return true;
+            throw new NoSuchPropertyDefinitionException();
         }
 
         return def.isMultiple();

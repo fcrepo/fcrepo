@@ -103,25 +103,23 @@ public class FedoraObjectIT extends AbstractIT {
                           "\"This is an example title\" } WHERE {}",
                           graphStore);
 
-        assertTrue(object.getNode().getProperty("dc:title").getValues()[0]
+        assertTrue(object.getNode().getProperty("dc:title").getValue()
                    .getString(),
-                   object.getNode().getProperty("dc:title").getValues()[0]
+                   object.getNode().getProperty("dc:title").getValue()
                    .getString().equals("This is an example title"));
 
 
         parseExecute("PREFIX myurn: <info:myurn/>\n" +
                           "INSERT { <" + graphSubject + "> myurn:info " +
-                          "\"This is some example data\";" +
-                          "myurn:info  \"And so it this\"     } WHERE {}",
+                          "\"This is some example data\"} WHERE {}",
                           graphStore);
 
-        final Value[] values =
+        final Value value =
             object.getNode().getProperty(object.getNode().getSession()
                                          .getNamespacePrefix("info:myurn/") +
-                                         ":info").getValues();
+                                         ":info").getValue();
 
-        assertEquals("This is some example data", values[0].getString());
-        assertEquals("And so it this", values[1].getString());
+        assertEquals("This is some example data", value.getString());
 
         parseExecute("PREFIX fedora-rels-ext: <"
                 + RELATIONS_NAMESPACE + ">\n" +

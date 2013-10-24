@@ -71,7 +71,7 @@ import com.hp.hpl.jena.sparql.util.Context;
 
 /**
  * Repository-global helper methods
- * 
+ *
  * @author Chris Beer
  * @date Mar 11, 2013
  */
@@ -88,7 +88,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Test whether a node exists in the JCR store
-     * 
+     *
      * @param path
      * @return whether a node exists at the given path
      * @throws RepositoryException
@@ -100,7 +100,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Calculate the total size of all the binary properties in the repository
-     * 
+     *
      * @return size in bytes
      */
     public Long getRepositorySize() {
@@ -122,7 +122,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Calculate the number of objects in the repository
-     * 
+     *
      * @return
      */
     public Long getRepositoryObjectCount() {
@@ -135,7 +135,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Get the full list of node types in the repository
-     * 
+     *
      * @param session
      * @return
      * @throws RepositoryException
@@ -149,7 +149,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Get a map of JCR prefixes to their URI namespaces
-     * 
+     *
      * @param session
      * @return
      * @throws RepositoryException
@@ -175,7 +175,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Serialize the JCR namespace information as an RDF Dataset
-     * 
+     *
      * @param session
      * @return
      * @throws RepositoryException
@@ -183,7 +183,9 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     public Dataset getNamespaceRegistryGraph(final Session session)
         throws RepositoryException {
 
-        final Model model = JcrRdfTools.withContext(null, session).getJcrNamespaceModel();
+        final Model model =
+            JcrRdfTools.withContext(null, session).getJcrNamespaceModel()
+                    .asModel();
 
         model.register(new NamespaceChangedStatementListener(session));
 
@@ -196,7 +198,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     /**
      * Perform a full-text search on the whole repository and return the
      * information as an RDF Dataset
-     * 
+     *
      * @param subjectFactory
      * @param searchSubject RDF resource to use as the subject of the search
      * @param session
@@ -246,8 +248,10 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
                     limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
                             limit);
 
-            model = JcrRdfTools.withContext(subjectFactory, session).getJcrPropertiesModel(limitedIterator,
-                                                                                       searchSubject);
+            model =
+                JcrRdfTools.withContext(subjectFactory, session)
+                        .getJcrPropertiesModel(limitedIterator, searchSubject)
+                        .asModel();
 
             /* add the result description to the RDF model */
 
@@ -281,11 +285,11 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      */
     public Problems backupRepository(final Session session,
                                      final File backupDirectory) throws RepositoryException {
-        RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+        final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
                 .getWorkspace()
                 .getRepositoryManager();
 
-        Problems problems = repoMgr.backupRepository(backupDirectory);
+        final Problems problems = repoMgr.backupRepository(backupDirectory);
 
         return problems;
     }
@@ -300,18 +304,18 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      */
     public Problems restoreRepository(final Session session,
                                       final File backupDirectory) throws RepositoryException {
-        RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+        final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
                 .getWorkspace()
                 .getRepositoryManager();
 
-        Problems problems = repoMgr.restoreRepository(backupDirectory);
+        final Problems problems = repoMgr.restoreRepository(backupDirectory);
 
         return problems;
     }
 
     /**
      * Set the repository to back this RepositoryService
-     * 
+     *
      * @param repository
      */
     public void setRepository(final Repository repository) {
