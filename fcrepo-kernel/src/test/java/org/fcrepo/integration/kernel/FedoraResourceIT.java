@@ -19,7 +19,9 @@ package org.fcrepo.integration.kernel;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.createMatch;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.LONG;
@@ -58,8 +60,13 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
@@ -353,26 +360,24 @@ public class FedoraResourceIT extends AbstractIT {
 
         session.save();
 
-        final Dataset graphStore = object.getVersionDataset(subjects);
+        final Model graphStore = object.getVersionDataset(subjects).asModel();
 
         logger.info(graphStore.toString());
 
         // go querying for the version URI
-        Node s = createURI(RESTAPI_NAMESPACE + "/testObjectVersionGraph");
-        Node p = createURI(REPOSITORY_NAMESPACE + "hasVersion");
-        final ExtendedIterator<Triple> triples =
-            graphStore.asDatasetGraph().getDefaultGraph().find(
-                    createMatch(s, p, ANY));
+        Resource s = createResource(RESTAPI_NAMESPACE + "/testObjectVersionGraph");
+        Property p = createProperty(REPOSITORY_NAMESPACE + "hasVersion");
+        final ExtendedIterator<Statement> triples = graphStore.listStatements(s, p, (RDFNode)null);
 
-        final List<Triple> list = triples.toList();
+        final List<Statement> list = triples.toList();
         assertEquals(1, list.size());
 
         // make sure it matches the label
-        s = list.get(0).getMatchObject();
-        p = createURI(REPOSITORY_NAMESPACE + "hasVersionLabel");
-        final Node o = createLiteral("v0.0.1");
+        s = list.get(0).getObject().asResource();
+        p = createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
+        final Literal o = createPlainLiteral("v0.0.1");
 
-        assertTrue(graphStore.asDatasetGraph().contains(ANY, s, p, o));
+        assertTrue(graphStore.contains(s, p, o));
 
     }
 

@@ -43,11 +43,11 @@ import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.JcrGraphProperties;
 import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -263,19 +263,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getVersionDataset(final GraphSubjects subjects)
+    public RdfStream getVersionDataset(final GraphSubjects subjects)
         throws RepositoryException {
-        final Model model =
-            JcrRdfTools.withContext(subjects, node.getSession())
-                    .getJcrVersionPropertiesModel(node).asModel();
-
-        final Dataset dataset = DatasetFactory.create(model);
-
-        final String uri = subjects.getGraphSubject(node).getURI();
-        final com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
-        context.set(URI_SYMBOL,uri);
-
-        return dataset;
+        return JcrRdfTools.withContext(subjects, node.getSession())
+                .getJcrVersionPropertiesModel(node);
     }
 
     /**

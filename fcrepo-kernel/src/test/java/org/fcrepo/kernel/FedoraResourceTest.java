@@ -277,11 +277,8 @@ public class FedoraResourceTest {
         final RdfStream versionsStream = new RdfStream();
         when(mockJcrRdfTools.getJcrVersionPropertiesModel(any(Node.class)))
                 .thenReturn(versionsStream);
-        final Dataset dataset = testObj.getVersionDataset(mockSubjects);
-
-        assertEquals(versionsStream, RdfStream.fromModel(dataset.getDefaultModel()));
-        assertEquals(RESTAPI_NAMESPACE + "xyz", dataset.getContext().get(
-                Symbol.create("uri")));
+        final RdfStream result = testObj.getVersionDataset(mockSubjects);
+        assertEquals(versionsStream, result);
     }
 
     @Test
