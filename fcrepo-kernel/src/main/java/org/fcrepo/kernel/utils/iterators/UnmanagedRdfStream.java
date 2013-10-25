@@ -39,7 +39,7 @@ public class UnmanagedRdfStream extends RdfStream {
 
     private static final Model model = createDefaultModel();
 
-    private static final Predicate<Triple> isManagedTriple =
+    public static final Predicate<Triple> isManagedTriple =
         new Predicate<Triple>() {
 
             @Override

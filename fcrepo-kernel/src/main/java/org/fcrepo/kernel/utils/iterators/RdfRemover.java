@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.removeNodeProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -30,6 +31,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * Consumes an {@link RdfStream} by removing its contents from the
@@ -77,10 +79,17 @@ public class RdfRemover extends RdfPersister {
     }
 
     @Override
-    protected void operateOnOneValueOfProperty(final Node n, final String p,
-        final Value v) throws RepositoryException {
-        LOGGER.debug("Adding property: {} with value: {} to node: {}.", p, v, n
+    protected void operateOnProperty(final Statement t, final Node n)
+        throws RepositoryException {
+        LOGGER.debug("Removing property from triple: {} on node: {}.", t, n
                 .getPath());
-        removeNodeProperty(n, p, v);
+        final String propertyName =
+            getPropertyNameFromPredicate(n, t.getPredicate());
+        if (n.hasProperty(propertyName)) {
+            final Value v =
+                jcrRdfTools.createValue(n, t.getObject(), getPropertyType(n,
+                        propertyName));
+            removeNodeProperty(n, propertyName, v);
+        }
     }
 }
