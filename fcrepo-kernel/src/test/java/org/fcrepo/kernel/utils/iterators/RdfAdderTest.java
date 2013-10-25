@@ -16,6 +16,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -37,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
+import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Triple;
@@ -92,36 +94,55 @@ public class RdfAdderTest {
 
 
     @Test
-    public void testAdding() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+    public void testAddingProperty() throws Exception {
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnProperty(descriptiveStmnt, mockNode);
         verify(mockNode).setProperty(propertyShortName, mockValue, UNDEFINED);
+
+    }
+
+    @Test
+    public void testAddingModelWithStreamNamespace() throws Exception {
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
         verify(mockNode).addMixin(anyString());
     }
 
     @Test(expected = MalformedRdfException.class)
     public void testAddingWithBadNamespace() throws Exception {
-
+        // we drop our stream namespace map
+        testStream = new RdfStream(mockTriples);
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenThrow(new NamespaceException("Expected."));
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
+    }
+
+    @Test
+    public void testAddingWithRepoNamespace() throws Exception {
+        // we drop our stream namespace map
+        testStream = new RdfStream(mockTriples);
+        when(
+                mockSession
+                        .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
+                                .getNameSpace()))).thenReturn("rdf");
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
     }
 
     @Test(expected = MalformedRdfException.class)
     public void testAddingWithBadMixinOnNode() throws Exception {
         when(mockNode.canAddMixin(mixinShortName)).thenReturn(false);
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
     }
 
     @Test(expected = MalformedRdfException.class)
     public void testAddingWithBadMixinForRepo() throws Exception {
         when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(false);
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
     }
 
@@ -169,7 +190,8 @@ public class RdfAdderTest {
                 mockNodeSubject);
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
-        mockStream.addNamespaces(mockNamespaceMap);
+        testStream = new RdfStream(mockTriples);
+        testStream.addNamespaces(mockNamespaceMap);
     }
 
 
@@ -203,9 +225,11 @@ public class RdfAdderTest {
     @Mock
     private Iterator<Triple> mockTriples;
 
-    private RdfStream mockStream = new RdfStream(mockTriples);
+    private RdfStream testStream;
 
     @Mock
     private GraphSubjects mockGraphSubjects;
+
+    private static final Logger LOGGER = getLogger(RdfAdderTest.class);
 
 }

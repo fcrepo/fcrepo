@@ -98,7 +98,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         // we knock out managed RDF and non-Fedora RDF
         this.stream =
             new RdfStream(filter(stream, and(not(isManagedTriple),
-                    isFedoraSubjectTriple)));
+                    isFedoraSubjectTriple))).addNamespaces(stream.namespaces());
         this.session = session;
         this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);
     }
