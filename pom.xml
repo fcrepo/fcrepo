@@ -673,6 +673,9 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.16</version>
+          <configuration>
+            <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-war-plugin</artifactId>
