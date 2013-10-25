@@ -20,13 +20,12 @@ import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.removeNodeProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
 
-import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.slf4j.Logger;
 
@@ -60,28 +59,23 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     @Override
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
-        final String namespacePrefix;
-        try {
-            namespacePrefix =
-                session().getNamespacePrefix(mixinResource.getNameSpace());
-        } catch (final NamespaceException e) {
-            throw new MalformedRdfException(
-                    "Unable to resolve registered namespace for resource "
-                            + mixinResource.toString());
-        }
-        final String mixinName =
-            namespacePrefix + ":" + mixinResource.getLocalName();
+
+        final String mixinName = jcrMixinNameFromRdfResource(mixinResource);
         if (session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
             LOGGER.debug("Removing mixin: {} from node: {}.", mixinName,
                     subjectNode.getPath());
-            subjectNode.removeMixin(mixinName);
+            try {
+                subjectNode.removeMixin(mixinName);
+            } catch (final NoSuchNodeTypeException e) {
+                LOGGER.debug("which that node turned out not to have.");
+            }
         }
     }
 
     @Override
     protected void operateOnProperty(final Statement t, final Node n)
         throws RepositoryException {
-        LOGGER.debug("Removing property from triple: {} on node: {}.", t, n
+        LOGGER.debug("Trying to remove property from triple: {} on node: {}.", t, n
                 .getPath());
         final String propertyName =
             getPropertyNameFromPredicate(n, t.getPredicate());

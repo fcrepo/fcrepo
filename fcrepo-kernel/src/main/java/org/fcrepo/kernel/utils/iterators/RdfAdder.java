@@ -16,15 +16,10 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Map;
-
-import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -64,39 +59,8 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     @Override
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
-        final String namespace = getJcrNamespaceForRDFNamespace(mixinResource.getNameSpace());
-        String namespacePrefix = null;
-        final Map<String, String> streamNSMap =
-            checkNotNull(stream().namespaces(),
-                    "Use an empty map of namespaces, not null!");
-        if (streamNSMap.containsValue(namespace)) {
-            LOGGER.debug("Found namespace: {} in stream namespace mapping.",
-                    namespace);
-            for (final String prefix : streamNSMap.keySet()) {
-                final String streamNamespace = streamNSMap.get(prefix);
-                if (namespace.equals(streamNamespace)) {
-                    LOGGER.debug(
-                            "Found namespace: {} in stream namespace mapping with prefix: {}.",
-                            namespace, namespacePrefix);
-                    namespacePrefix = prefix;
-                }
-            }
-        } else {
-            try {
-                namespacePrefix = session().getNamespacePrefix(namespace);
-                LOGGER.debug(
-                        "Found namespace: {} in repository namespace mapping with prefix: {}.",
-                        namespace, namespacePrefix);
-            } catch (final NamespaceException e) {
-                throw new MalformedRdfException(
-                        "Unable to resolve registered namespace for resource "
-                                + mixinResource.toString());
 
-            }
-        }
-        final String mixinName =
-            namespacePrefix + ":" + mixinResource.getLocalName();
-        LOGGER.debug("Constructed JCR mixin name: {}", mixinName);
+        final String mixinName = jcrMixinNameFromRdfResource(mixinResource);
         if (session().getWorkspace().getNodeTypeManager()
                 .hasNodeType(mixinName)) {
             if (subjectNode.canAddMixin(mixinName)) {

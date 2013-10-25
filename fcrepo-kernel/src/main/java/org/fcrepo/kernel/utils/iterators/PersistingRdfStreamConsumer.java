@@ -16,19 +16,25 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.filter;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.utils.iterators.UnmanagedRdfStream.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Map;
+
+import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.slf4j.Logger;
@@ -141,6 +147,44 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected Value createValue(final Node subjectNode, final RDFNode object,
         final Integer propertyType) throws RepositoryException {
         return jcrRdfTools().createValue(subjectNode, object, propertyType);
+    }
+
+    protected String jcrMixinNameFromRdfResource(final Resource mixinResource) throws RepositoryException {
+
+        final String namespace = getJcrNamespaceForRDFNamespace(mixinResource.getNameSpace());
+        String namespacePrefix = null;
+        final Map<String, String> streamNSMap =
+            checkNotNull(stream().namespaces(),
+                    "Use an empty map of namespaces, not null!");
+        if (streamNSMap.containsValue(namespace)) {
+            LOGGER.debug("Found namespace: {} in stream namespace mapping.",
+                    namespace);
+            for (final String prefix : streamNSMap.keySet()) {
+                final String streamNamespace = streamNSMap.get(prefix);
+                if (namespace.equals(streamNamespace)) {
+                    LOGGER.debug(
+                            "Found namespace: {} in stream namespace mapping with prefix: {}.",
+                            namespace, namespacePrefix);
+                    namespacePrefix = prefix;
+                }
+            }
+        } else {
+            try {
+                namespacePrefix = session().getNamespacePrefix(namespace);
+                LOGGER.debug(
+                        "Found namespace: {} in repository namespace mapping with prefix: {}.",
+                        namespace, namespacePrefix);
+            } catch (final NamespaceException e) {
+                throw new MalformedRdfException(
+                        "Unable to resolve registered namespace for resource "
+                                + mixinResource.toString());
+
+            }
+        }
+        final String mixinName =
+            namespacePrefix + ":" + mixinResource.getLocalName();
+        LOGGER.debug("Constructed JCR mixin name: {}", mixinName);
+        return mixinName;
     }
 
     protected abstract void operateOnProperty(final Statement t,
