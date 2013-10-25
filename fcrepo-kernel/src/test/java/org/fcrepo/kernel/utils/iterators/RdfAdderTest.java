@@ -20,6 +20,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -30,6 +31,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,6 +98,31 @@ public class RdfAdderTest {
         verify(mockNode).setProperty(propertyShortName, mockValue, UNDEFINED);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
         verify(mockNode).addMixin(anyString());
+    }
+
+    @Test(expected = MalformedRdfException.class)
+    public void testAddingWithBadNamespace() throws Exception {
+
+        when(
+                mockSession
+                        .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
+                                .getNameSpace()))).thenThrow(new NamespaceException("Expected."));
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+        testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
+    }
+
+    @Test(expected = MalformedRdfException.class)
+    public void testAddingWithBadMixinOnNode() throws Exception {
+        when(mockNode.canAddMixin(mixinShortName)).thenReturn(false);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+        testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
+    }
+
+    @Test(expected = MalformedRdfException.class)
+    public void testAddingWithBadMixinForRepo() throws Exception {
+        when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(false);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, mockStream);
+        testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
     }
 
     @Before
