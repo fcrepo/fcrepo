@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -41,7 +42,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * @author ajs6f
  * @date Oct 24, 2013
  */
-public class RdfAdder extends RdfPersister {
+public class RdfAdder extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfAdder.class);
 
@@ -60,18 +61,37 @@ public class RdfAdder extends RdfPersister {
     @Override
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
-        final String namespacePrefix;
-        try {
-            namespacePrefix =
-                session.getNamespacePrefix(mixinResource.getNameSpace());
-        } catch (final NamespaceException e) {
-            throw new MalformedRdfException(
-                    "Unable to resolve registered namespace for resource "
-                            + mixinResource.toString());
+        final String namespace = getJcrNamespaceForRDFNamespace(mixinResource.getNameSpace());
+        String namespacePrefix = null;
+        LOGGER.debug(
+                "Checking for namespace: {} in stream namespace mapping: {}",
+                namespace, stream().namespaces());
+        if (stream().namespaces().containsValue(namespace)) {
+            LOGGER.debug("Found namespace: {} in stream namespace mapping.",
+                    namespace);
+            for (final String prefix : stream().namespaces().keySet()) {
+                if (stream().namespaces().get(prefix) == namespace) {
+                    namespacePrefix = stream().namespaces().get(prefix);
+                }
+            }
+        } else {
+            try {
+                namespacePrefix = session().getNamespacePrefix(namespace);
+                LOGGER.debug(
+                        "Found namespace: {} in repository namespace mapping with prefix: {}.",
+                        namespace, namespacePrefix);
+            } catch (final NamespaceException e) {
+                throw new MalformedRdfException(
+                        "Unable to resolve registered namespace for resource "
+                                + mixinResource.toString());
+
+            }
         }
         final String mixinName =
             namespacePrefix + ":" + mixinResource.getLocalName();
-        if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+        LOGGER.debug("Constructed JCR mixin name: {}", mixinName);
+        if (session().getWorkspace().getNodeTypeManager()
+                .hasNodeType(mixinName)) {
             if (subjectNode.canAddMixin(mixinName)) {
                 LOGGER.debug("Adding mixin: {} to node: {}.", mixinName,
                         subjectNode.getPath());
@@ -80,7 +100,8 @@ public class RdfAdder extends RdfPersister {
                 throw new MalformedRdfException(
                         "Could not persist triple containing type assertion:"
                                 + mixinResource.toString()
-                                + " because no such mixin/type exists in repository!");
+                                + " because no such mixin/type can be added to this node: "
+                                + subjectNode.getPath() + "!");
             }
         }
     }
@@ -93,8 +114,7 @@ public class RdfAdder extends RdfPersister {
         final String propertyName =
             getPropertyNameFromPredicate(n, t.getPredicate());
         final Value v =
-            jcrRdfTools.createValue(n, t.getObject(), getPropertyType(n,
-                    propertyName));
+            createValue(n, t.getObject(), getPropertyType(n, propertyName));
         appendOrReplaceNodeProperty(n, propertyName, v);
     }
 }

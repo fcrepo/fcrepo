@@ -47,22 +47,22 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * @author ajs6f
  * @date Oct 24, 2013
  */
-public abstract class RdfPersister implements RdfStreamConsumer {
+public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
-    protected final RdfStream stream;
+    private final RdfStream stream;
 
-    protected final GraphSubjects idTranslator;
+    private final GraphSubjects idTranslator;
 
-    protected final Session session;
+    private final Session session;
 
-    protected final JcrRdfTools jcrRdfTools;
+    private final JcrRdfTools jcrRdfTools;
 
     // if it's not about a Fedora resource, we don't care.
     protected final Predicate<Triple> isFedoraSubjectTriple;
 
     private static final Model m = createDefaultModel();
 
-    private static final Logger LOGGER = getLogger(RdfPersister.class);
+    private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumer.class);
 
     /**
      * Ordinary constructor.
@@ -71,7 +71,7 @@ public abstract class RdfPersister implements RdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public RdfPersister(final GraphSubjects graphSubjects,
+    public PersistingRdfStreamConsumer(final GraphSubjects graphSubjects,
             final Session session, final RdfStream stream) {
         // this filters out triples with internal or managed predicates
         this.idTranslator = graphSubjects;
@@ -116,7 +116,7 @@ public abstract class RdfPersister implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement t)
         throws RepositoryException {
         final Resource subject = t.getSubject();
-        final Node subjectNode = idTranslator.getNodeFromGraphSubject(subject);
+        final Node subjectNode = idTranslator().getNodeFromGraphSubject(subject);
 
         // if this is a RDF type assertion, update the node's mixins. If it
         // isn't, treat it as a "data" property.
@@ -134,13 +134,13 @@ public abstract class RdfPersister implements RdfStreamConsumer {
 
     protected String getPropertyNameFromPredicate(final Node subjectNode,
         final Property predicate) throws RepositoryException {
-        return jcrRdfTools.getPropertyNameFromPredicate(subjectNode, predicate,
+        return jcrRdfTools().getPropertyNameFromPredicate(subjectNode, predicate,
                 stream.namespaces());
     }
 
     protected Value createValue(final Node subjectNode, final RDFNode object,
         final Integer propertyType) throws RepositoryException {
-        return jcrRdfTools.createValue(subjectNode, object, propertyType);
+        return jcrRdfTools().createValue(subjectNode, object, propertyType);
     }
 
     protected abstract void operateOnProperty(final Statement t,
@@ -161,5 +161,37 @@ public abstract class RdfPersister implements RdfStreamConsumer {
             result.set(false);
         }
         return result;
+    }
+
+
+    /**
+     * @return the stream
+     */
+    public RdfStream stream() {
+        return stream;
+    }
+
+
+    /**
+     * @return the idTranslator
+     */
+    public GraphSubjects idTranslator() {
+        return idTranslator;
+    }
+
+
+    /**
+     * @return the session
+     */
+    public Session session() {
+        return session;
+    }
+
+
+    /**
+     * @return the jcrRdfTools
+     */
+    public JcrRdfTools jcrRdfTools() {
+        return jcrRdfTools;
     }
 }

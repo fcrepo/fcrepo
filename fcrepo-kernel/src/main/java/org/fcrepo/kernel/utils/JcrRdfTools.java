@@ -429,6 +429,8 @@ public class JcrRdfTools {
             }
 
         } else {
+            LOGGER.debug("Using default JCR value creation for RDF literal: {}",
+                    data);
             return valueFactory.createValue(data.asLiteral().getString(), type);
         }
     }
@@ -473,13 +475,15 @@ public class JcrRdfTools {
         assert (namespaceRegistry != null);
 
         if (namespaceRegistry.isRegisteredUri(namespace)) {
+            LOGGER.debug("Discovered namespace: {} in namespace registry.",namespace);
             prefix = namespaceRegistry.getPrefix(namespace);
         } else {
+            LOGGER.debug("Didn't discover namespace: {} in namespace registry.",namespace);
             final ImmutableBiMap<String, String> nsMap =
                 ImmutableBiMap.copyOf(namespaceMapping);
-            if (nsMap.containsValue(namespace)
-                    && !namespaceRegistry.isRegisteredPrefix(nsMap.inverse()
-                            .get(namespace))) {
+            if (nsMap.containsValue(namespace)) {
+                LOGGER.debug("Discovered namespace: {} in namespace map: {}.",
+                        nsMap);
                 prefix = nsMap.inverse().get(namespace);
                 namespaceRegistry.registerNamespace(prefix, namespace);
             } else {
@@ -491,7 +495,7 @@ public class JcrRdfTools {
 
         final String propertyName = prefix + ":" + localName;
 
-        LOGGER.trace("Took RDF predicate {} and translated it to "
+        LOGGER.debug("Took RDF predicate {} and translated it to "
                 + "JCR property {}", predicate, propertyName);
 
         return propertyName;

@@ -197,7 +197,8 @@ public abstract class NodePropertiesTools {
             getDefinitionForPropertyName(node, propertyName);
 
         if (def == null) {
-            return true;
+            throw new RepositoryException("No such property as " + propertyName
+                    + " in definitions for " + node.getPath());
         }
 
         return def.isMultiple();

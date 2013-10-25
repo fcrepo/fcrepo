@@ -354,13 +354,22 @@ public abstract class FedoraTypesUtils {
      */
     public static PropertyDefinition getDefinitionForPropertyName(final Node node,
         final String propertyName) throws RepositoryException {
-        final PropertyDefinition[] propertyDefinitions =
-            getNodeTypeManager(node).getNodeType(FEDORA_RESOURCE)
-                    .getPropertyDefinitions();
 
+        final PropertyDefinition[] propertyDefinitions =
+            node.getPrimaryNodeType().getPropertyDefinitions();
+        LOGGER.debug("Looking for property name: {}", propertyName);
         for (final PropertyDefinition p : propertyDefinitions) {
+            LOGGER.debug("Checking property: {}", p.getName());
             if (p.getName().equals(propertyName)) {
                 return p;
+            }
+        }
+
+        for (final NodeType nodeType : node.getMixinNodeTypes()) {
+            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
+                if (p.getName().equals(propertyName)) {
+                    return p;
+                }
             }
         }
         return null;

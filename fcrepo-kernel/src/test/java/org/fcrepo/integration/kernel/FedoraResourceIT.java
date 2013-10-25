@@ -57,7 +57,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -213,7 +212,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         // structure
         p = createURI(REPOSITORY_NAMESPACE + "numberOfChildren");
-        final RDFDatatype long_datatype = createTypedLiteral(0L).getDatatype();
+        //final RDFDatatype long_datatype = createTypedLiteral(0L).getDatatype();
         o = createLiteral("0");
 
         //TODO: re-enable number of children reporting, if practical

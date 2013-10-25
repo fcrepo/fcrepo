@@ -25,7 +25,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-public class RdfPersisterTest {
+public class PersistingRdfStreamConsumerTest {
 
     @Mock
     private Session mockSession;
@@ -39,7 +39,7 @@ public class RdfPersisterTest {
     @Mock
     private RdfStream mockStream;
 
-    private RdfPersister testPersister;
+    private PersistingRdfStreamConsumer testPersister;
 
     private boolean successfullyOperatedOnAProperty = false;
 
@@ -107,7 +107,7 @@ public class RdfPersisterTest {
                         .getSubject())).thenReturn(true);
 
         testPersister =
-            new RdfPersister(mockGraphSubjects, mockSession, mockStream) {
+            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, mockStream) {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
@@ -134,7 +134,7 @@ public class RdfPersisterTest {
     public void testBadStream() throws Exception {
         when(mockStream.hasNext()).thenThrow(new RuntimeException("Expected."));
         testPersister =
-                new RdfPersister(mockGraphSubjects, mockSession, mockStream) {
+                new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, mockStream) {
 
                     @Override
                     protected void operateOnProperty(final Statement s,

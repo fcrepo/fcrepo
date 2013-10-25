@@ -41,7 +41,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * @author ajs6f
  * @date Oct 24, 2013
  */
-public class RdfRemover extends RdfPersister {
+public class RdfRemover extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfRemover.class);
 
@@ -63,7 +63,7 @@ public class RdfRemover extends RdfPersister {
         final String namespacePrefix;
         try {
             namespacePrefix =
-                session.getNamespacePrefix(mixinResource.getNameSpace());
+                session().getNamespacePrefix(mixinResource.getNameSpace());
         } catch (final NamespaceException e) {
             throw new MalformedRdfException(
                     "Unable to resolve registered namespace for resource "
@@ -71,7 +71,7 @@ public class RdfRemover extends RdfPersister {
         }
         final String mixinName =
             namespacePrefix + ":" + mixinResource.getLocalName();
-        if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+        if (session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
             LOGGER.debug("Removing mixin: {} from node: {}.", mixinName,
                     subjectNode.getPath());
             subjectNode.removeMixin(mixinName);
@@ -87,7 +87,7 @@ public class RdfRemover extends RdfPersister {
             getPropertyNameFromPredicate(n, t.getPredicate());
         if (n.hasProperty(propertyName)) {
             final Value v =
-                jcrRdfTools.createValue(n, t.getObject(), getPropertyType(n,
+                jcrRdfTools().createValue(n, t.getObject(), getPropertyType(n,
                         propertyName));
             removeNodeProperty(n, propertyName, v);
         }

@@ -24,11 +24,14 @@ import java.util.Set;
 import com.google.common.collect.AbstractIterator;
 
 /**
- * A wrapping {@link Iterator} that filters any element that appears in a set
+ * A wrapping {@link Iterator} that calculates two differences between a
+ * {@link Set} A and a source Iterator B. The differences are (A - (A ∩ B)) and
+ * (B - (A ∩ B)). The ordinary output of this iterator is (B - (A ∩ B)), and
+ * after exhaustion, sets containing (A - (A ∩ B)) and (A ∩ B) are available.
  *
  * @author ajs6f
  * @date Oct 24, 2013
- * @param <E>
+ * @param <E> The type of element common to both source and set.
  */
 public class DifferencingIterator<E> extends AbstractIterator<E> {
 
