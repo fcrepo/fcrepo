@@ -56,6 +56,12 @@ public class PermitRootAndPathEndsWithPermitSuffixPEP implements
             return true;
         }
 
+        // allow anywhere the last path segment is "jcr:content"
+        if (absPath.getLastSegment().getName().getLocalName().toLowerCase()
+                .equals("content")) {
+            return true;
+        }
+
         // allow properties to be set under parent nodes that end with "permit"
         if (actions.length == 1 && "set_property".equals(actions[0])) {
             return absPath.getParent().getLastSegment().getName()
