@@ -2,6 +2,7 @@
 package org.fcrepo.kernel.utils.iterators;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -52,10 +53,16 @@ public class RdfPersisterTest {
     private static final Statement propertyStatement = m
             .asStatement(propertyTriple);
 
+    private static final Triple badMixinTriple = create(createAnon(),
+            type.asNode(), createLiteral("mixin:mixin"));
+
+    private static final Statement badMixinStatement = m.asStatement(badMixinTriple);
+
     private static final Triple mixinTriple = create(createAnon(),
             type.asNode(), createAnon());
 
     private static final Statement mixinStatement = m.asStatement(mixinTriple);
+
 
     private static final Triple foreignTriple = create(createAnon(),
             createAnon(), createAnon());
@@ -71,8 +78,9 @@ public class RdfPersisterTest {
 
     @Test
     public void testConsumeAsync() throws Exception {
-        when(mockStream.hasNext()).thenReturn(true, true, false);
-        when(mockStream.next()).thenReturn(propertyTriple, mixinTriple);
+        when(mockStream.hasNext()).thenReturn(true, true, true, true, false);
+        when(mockStream.next()).thenReturn(propertyTriple, mixinTriple,
+                foreignTriple, badMixinTriple);
         when(
                 mockGraphSubjects.getNodeFromGraphSubject(propertyStatement
                         .getSubject())).thenReturn(mockNode);
@@ -83,6 +91,9 @@ public class RdfPersisterTest {
                 mockGraphSubjects.getNodeFromGraphSubject(foreignStatement
                         .getSubject())).thenReturn(mockNode);
         when(
+                mockGraphSubjects.getNodeFromGraphSubject(badMixinStatement
+                        .getSubject())).thenReturn(mockNode);
+        when(
                 mockGraphSubjects.isFedoraGraphSubject(propertyStatement
                         .getSubject())).thenReturn(true);
         when(
@@ -91,6 +102,9 @@ public class RdfPersisterTest {
         when(
                 mockGraphSubjects.isFedoraGraphSubject(foreignStatement
                         .getSubject())).thenReturn(false);
+        when(
+                mockGraphSubjects.isFedoraGraphSubject(badMixinStatement
+                        .getSubject())).thenReturn(true);
 
         testPersister =
             new RdfPersister(mockGraphSubjects, mockSession, mockStream) {
