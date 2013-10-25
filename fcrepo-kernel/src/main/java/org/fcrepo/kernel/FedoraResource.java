@@ -267,7 +267,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         throws RepositoryException {
         final Model model =
             JcrRdfTools.withContext(subjects, node.getSession())
-                    .getJcrVersionPropertiesModel(node);
+                    .getJcrVersionPropertiesModel(node).asModel();
 
         final Dataset dataset = DatasetFactory.create(model);
 

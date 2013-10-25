@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -177,5 +178,25 @@ public class RdfStream extends ForwardingIterator<Triple> implements
         }
 
     };
+
+    /*
+     * We ignore duplicated triples for equality.
+     *
+     * (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof RdfStream) {
+            final RdfStream rdfo = (RdfStream) o;
+            final boolean triplesEqual =
+                copyOf(rdfo.triples).equals(copyOf(this.triples));
+            final boolean namespaceMappingsEqual =
+                rdfo.namespaces().equals(this.namespaces());
+            return triplesEqual && namespaceMappingsEqual;
+        } else {
+            return false;
+        }
+    }
 
 }

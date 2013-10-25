@@ -16,7 +16,6 @@
 
 package org.fcrepo.kernel.services;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
@@ -58,6 +57,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceTools;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -253,7 +253,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(mockNI.next()).thenReturn("");
         when(
                 mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.kernel.utils.iterators.NodeIterator.class), eq(subject)))
-                .thenReturn(createDefaultModel());
+                .thenReturn(new RdfStream());
 
         testObj.searchRepository(mockSubjectFactory, subject, mockSession,
                 "search terms", 10, 0L);

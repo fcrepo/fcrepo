@@ -53,6 +53,7 @@ import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.infinispan.loaders.CacheLoaderException;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +68,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
 @RunWith(PowerMockRunner.class)
@@ -194,10 +194,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                 llStore.transformLowLevelCacheEntries(eq(mockContent),
                        Matchers.<Function<LowLevelCacheEntry,FixityResult>> any())).thenReturn(mockCollection);
 
-        final Model mockModel = mock(Model.class);
         when(
                 mockJcrRdfTools.getJcrPropertiesModel(eq(mockNode), Matchers
-                        .<Iterable<FixityResult>> any())).thenReturn(mockModel);
+                        .<Iterable<FixityResult>> any())).thenReturn(new RdfStream());
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));
