@@ -34,12 +34,17 @@ public class DifferencingIteratorTest {
 
     private static final String commonValue = "common";
 
+    private static final String commonValue2 = "common2";
+
     private static final String onlyInIteratorValue = "only in iterator";
 
     private DifferencingIterator<String> testIterator;
 
     private Set<String> toBeCompared = ImmutableSet.of(onlyInCollection,
             commonValue);
+
+    private Set<String> toBeCompared2 = ImmutableSet.of(onlyInCollection,
+            commonValue, commonValue2);
 
     @Test
     public void testDifferencing() {
@@ -64,6 +69,45 @@ public class DifferencingIteratorTest {
                 testIterator.notCommon().contains(onlyInCollection));
         assertFalse("Found the not-common value in wrong final result!",
                 testIterator.common().contains(onlyInCollection));
+    }
+
+    @Test
+    public void testDifferencingWithMoreCommonValues() {
+
+        final Iterator<String> i =
+            forArray(new String[] {onlyInIteratorValue, commonValue,
+                    commonValue, commonValue2});
+        testIterator = new DifferencingIterator<String>(toBeCompared2, i);
+
+        assertTrue("Didn't see a first value!", testIterator.hasNext());
+        assertEquals("Retrieved final results too early!", null, testIterator
+                .notCommon());
+        assertEquals("Retrieved final results too early!", null, testIterator
+                .common());
+        assertEquals("Didn't get the only-in-iterator value!",
+                onlyInIteratorValue, testIterator.next());
+        assertFalse("Shouldn't see any more values!", testIterator.hasNext());
+        assertTrue("Didn't find the common value in correct final result!",
+                testIterator.common().contains(commonValue));
+        assertTrue("Didn't find the second common value in correct final result!",
+                testIterator.common().contains(commonValue2));
+        assertFalse("Found the common value in wrong final result!",
+                testIterator.notCommon().contains(commonValue));
+        assertFalse("Found the second common value in wrong final result!",
+                testIterator.notCommon().contains(commonValue2));
+        assertTrue("Didn't find the not-common value in correct final result!",
+                testIterator.notCommon().contains(onlyInCollection));
+        assertFalse("Found the not-common value in wrong final result!",
+                testIterator.common().contains(onlyInCollection));
+    }
+
+    @Test
+    public void testDifferencingWithNoValues() {
+
+        final Iterator<String> i = forArray(new String[] {});
+        testIterator = new DifferencingIterator<String>(toBeCompared, i);
+        assertFalse("Found a value where there should be none!", testIterator
+                .hasNext());
     }
 
 }
