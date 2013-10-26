@@ -227,24 +227,25 @@ public class JcrRdfTools {
     }
 
     /**
-     * Create a default Jena Model populated with the registered JCR namespaces
+     * Create a default {@link RdfStream} populated with the registered JCR
+     * namespaces
      *
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel() throws RepositoryException {
-        return new NamespaceContext(session).asModel();
+    public RdfStream getJcrPropertiesModel() throws RepositoryException {
+        return new NamespaceContext(session);
     }
 
     /**
-     * Get an RDF model for the given JCR NodeIterator
+     * Get an {@link RdfStream} for the given JCR NodeIterator
      *
      * @param nodeIterator
      * @param iteratorSubject
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel(final Iterator<Node> nodeIterator,
+    public RdfStream getJcrPropertiesModel(final Iterator<Node> nodeIterator,
             final Resource iteratorSubject) throws RepositoryException {
 
         final RdfStream results = new RdfStream();
@@ -258,11 +259,11 @@ public class JcrRdfTools {
                                 .getGraphSubject(node).asNode())));
             }
         }
-        return results.asModel();
+        return results;
     }
 
     /**
-     * Get an {@link Model} for a node that includes all its own JCR properties,
+     * Get an {@link RdfStream} for a node that includes all its own JCR properties,
      * as well as the properties of its immediate children. TODO add triples for
      * root node, ala addRepositoryMetricsToModel()
      *
@@ -270,62 +271,56 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel(final Node node) throws RepositoryException {
-        final RdfStream namespaceContext = new NamespaceContext(session);
-        return namespaceContext.concat(
-                new PropertiesRdfContext(node, graphSubjects, llstore))
-                .asModel();
+    public RdfStream getJcrPropertiesModel(final Node node) throws RepositoryException {
+        return new PropertiesRdfContext(node, graphSubjects, llstore);
     }
 
     /**
-     * Get a Jena RDF model for the JCR version history information for a node
+     * Get an {@link RdfStream} for the JCR version history information for a node
      *
      * @param node
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrVersionPropertiesModel(final Node node)
+    public RdfStream getJcrVersionPropertiesModel(final Node node)
         throws RepositoryException {
-        return new VersionsRdfContext(node, graphSubjects, llstore).asModel();
+        return new VersionsRdfContext(node, graphSubjects, llstore);
     }
 
     /**
-     * Serialize the JCR fixity information in a Jena Model
+     * Serialize the JCR fixity information in an {@link RdfStream}
      *
      * @param node
      * @param blobs
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrPropertiesModel(final Node node,
-            final Iterable<FixityResult> blobs) throws RepositoryException {
-        return new NamespaceContext(session).concat(
-                new FixityRdfContext(node, graphSubjects, llstore, blobs))
-                .concat(new PropertiesRdfContext(node, graphSubjects, llstore))
-                .asModel();
+    public RdfStream getJcrPropertiesModel(final Node node,
+        final Iterable<FixityResult> blobs) throws RepositoryException {
+        return new FixityRdfContext(node, graphSubjects, llstore, blobs);
     }
 
     /**
-     * Get an RDF model of the registered JCR namespaces
+     * Get an {@link RdfStream} of the registered JCR namespaces
      *
      * @return
      * @throws RepositoryException
      */
-    public Model getJcrNamespaceModel() throws RepositoryException {
-        return new NamespaceContext(session).asModel();
+    public RdfStream getJcrNamespaceModel() throws RepositoryException {
+        return new NamespaceContext(session);
     }
 
     /**
      * Add the properties of a Node's parent and immediate children (as well as
-     * the jcr:content of children) to the given RDF model
+     * the jcr:content of children) to the given {@link RdfStream}
      *
      * @param node
      * @param offset
      * @param limit @throws RepositoryException
      */
-    public Model getJcrTreeModel(final Node node, final long offset,
+    public RdfStream getJcrTreeModel(final Node node, final long offset,
             final int limit) throws RepositoryException {
-        return new HierarchyRdfContext(node, graphSubjects, llstore).asModel();
+        return new HierarchyRdfContext(node, graphSubjects, llstore);
     }
 
     /**
@@ -379,7 +374,7 @@ public class JcrRdfTools {
      * @return a JCR Value
      * @throws javax.jcr.RepositoryException
      */
-    Value createValue(final Node node, final RDFNode data, final int type)
+    public Value createValue(final Node node, final RDFNode data, final int type)
         throws RepositoryException {
         final ValueFactory valueFactory = getValueFactory.apply(node);
         assert (valueFactory != null);
@@ -429,6 +424,8 @@ public class JcrRdfTools {
             }
 
         } else {
+            LOGGER.debug("Using default JCR value creation for RDF literal: {}",
+                    data);
             return valueFactory.createValue(data.asLiteral().getString(), type);
         }
     }
@@ -442,7 +439,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    String getPropertyNameFromPredicate(final Node node,
+    public String getPropertyNameFromPredicate(final Node node,
         final com.hp.hpl.jena.rdf.model.Property predicate)
         throws RepositoryException {
         final Map<String, String> s = emptyMap();
@@ -460,7 +457,7 @@ public class JcrRdfTools {
      * @return the JCR property name
      * @throws RepositoryException
      */
-    String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
+    public String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
         final Map<String, String> namespaceMapping) throws RepositoryException {
 
         final String prefix;
@@ -473,13 +470,15 @@ public class JcrRdfTools {
         assert (namespaceRegistry != null);
 
         if (namespaceRegistry.isRegisteredUri(namespace)) {
+            LOGGER.debug("Discovered namespace: {} in namespace registry.",namespace);
             prefix = namespaceRegistry.getPrefix(namespace);
         } else {
+            LOGGER.debug("Didn't discover namespace: {} in namespace registry.",namespace);
             final ImmutableBiMap<String, String> nsMap =
                 ImmutableBiMap.copyOf(namespaceMapping);
-            if (nsMap.containsValue(namespace)
-                    && !namespaceRegistry.isRegisteredPrefix(nsMap.inverse()
-                            .get(namespace))) {
+            if (nsMap.containsValue(namespace)) {
+                LOGGER.debug("Discovered namespace: {} in namespace map: {}.",
+                        nsMap);
                 prefix = nsMap.inverse().get(namespace);
                 namespaceRegistry.registerNamespace(prefix, namespace);
             } else {
@@ -491,7 +490,7 @@ public class JcrRdfTools {
 
         final String propertyName = prefix + ":" + localName;
 
-        LOGGER.trace("Took RDF predicate {} and translated it to "
+        LOGGER.debug("Took RDF predicate {} and translated it to "
                 + "JCR property {}", predicate, propertyName);
 
         return propertyName;

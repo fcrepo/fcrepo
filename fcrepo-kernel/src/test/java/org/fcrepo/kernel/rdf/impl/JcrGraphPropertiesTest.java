@@ -33,6 +33,7 @@ import org.fcrepo.kernel.DummyURIResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -81,21 +82,21 @@ public class JcrGraphPropertiesTest {
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
-        final Model propertiesModel = createDefaultModel();
+        final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(
-                propertiesModel);
-        final Model treeModel = createDefaultModel();
+                propertiesStream);
+        final RdfStream treeStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(
-                treeModel);
+                treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset =
                 testObj.getProperties(mockNode, mockSubjects, 0, -1);
 
         assertTrue(dataset.containsNamedModel("tree"));
-        assertEquals(treeModel, dataset.getNamedModel("tree"));
+        assertEquals(treeStream, RdfStream.fromModel(dataset.getNamedModel("tree")));
 
-        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals(propertiesStream, RdfStream.fromModel(dataset.getDefaultModel()));
         assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(Symbol.create("uri")));
     }
@@ -111,12 +112,12 @@ public class JcrGraphPropertiesTest {
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
 
-        final Model propertiesModel = createDefaultModel();
+        final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrPropertiesModel(mockNode)).thenReturn(
-                propertiesModel);
-        final Model treeModel = createDefaultModel();
+                propertiesStream);
+        final RdfStream treeStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1)).thenReturn(
-                treeModel);
+                treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getProperties(mockNode, mockSubjects);
@@ -124,9 +125,9 @@ public class JcrGraphPropertiesTest {
         verifyStatic();
         mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1);
         assertTrue(dataset.containsNamedModel("tree"));
-        assertEquals(treeModel, dataset.getNamedModel("tree"));
+        assertEquals(treeStream, RdfStream.fromModel(dataset.getNamedModel("tree")));
 
-        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals(propertiesStream, RdfStream.fromModel(dataset.getDefaultModel()));
         assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(Symbol.create("uri")));
 
@@ -146,20 +147,20 @@ public class JcrGraphPropertiesTest {
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 mockResource);
 
-        final Model propertiesModel = createDefaultModel();
+        final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrPropertiesModel(mockNode))
-                .thenReturn(propertiesModel);
-        final Model treeModel = createDefaultModel();
+                .thenReturn(propertiesStream);
+        final RdfStream treeStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTreeModel(mockNode, 0, -1))
-                .thenReturn(treeModel);
+                .thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getProperties(mockNode, mockSubjects);
 
         assertTrue(dataset.containsNamedModel("tree"));
-        assertEquals(treeModel, dataset.getNamedModel("tree"));
+        assertEquals(treeStream, RdfStream.fromModel(dataset.getNamedModel("tree")));
 
-        assertEquals(propertiesModel, dataset.getDefaultModel());
+        assertEquals(propertiesStream, RdfStream.fromModel(dataset.getDefaultModel()));
         assertEquals(RESTAPI_NAMESPACE + "xyz",
                 dataset.getContext().get(URI_SYMBOL));
     }

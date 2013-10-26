@@ -188,9 +188,8 @@ public class JcrRdfToolsTest {
                                               IOException {
         LOGGER.debug("Entering testGetPropertiesModel()...");
         when(mockNode.hasProperties()).thenReturn(true);
-        final Model actual = testObj.getJcrPropertiesModel(mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockNode).asModel();
         logRDF(actual);
-        assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
         assertTrue("Didn't find appropriate triple!", actual.contains(
                 testSubjects.getGraphSubject(mockNode), actual
                         .getProperty(mockPredicateName), actual
@@ -241,9 +240,7 @@ public class JcrRdfToolsTest {
         when(mockWorkspace.getNodeTypeManager())
                 .thenReturn(mockNodeTypeManager);
 
-        final Model actual = testObj.getJcrPropertiesModel(mockNode);
-        assertEquals(REPOSITORY_NAMESPACE, actual.getNsPrefixURI("fcrepo"));
-
+        final Model actual = testObj.getJcrPropertiesModel(mockNode).asModel();
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
                 actual.createProperty(REPOSITORY_NAMESPACE
                         + "repository/some-descriptor-key"), actual
@@ -262,7 +259,7 @@ public class JcrRdfToolsTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getType()).thenReturn(BINARY);
         when(mockNodes.hasNext()).thenReturn(false);
-        final Model actual = testObj.getJcrPropertiesModel(mockNode);
+        final Model actual = testObj.getJcrPropertiesModel(mockNode).asModel();
         logRDF(actual);
         assertFalse(
                 "RDF contained a statement based on a binary property when it shouldn't have!",
@@ -273,7 +270,7 @@ public class JcrRdfToolsTest {
     public final void
             shouldBeAbleToDisableResourceInlining() throws RepositoryException {
 
-        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -2);
+        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -2).asModel();
         assertEquals(0, Iterators.size(actual.listObjectsOfProperty(actual
                 .createProperty("http://www.w3.org/ns/ldp#inlinedResource"))));
         verify(mockParent, never()).getProperties();
@@ -297,7 +294,7 @@ public class JcrRdfToolsTest {
 
         when(mockNode.getDepth()).thenReturn(0);
         when(mockNodes.hasNext()).thenReturn(false);
-        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1);
+        final Model actual = testObj.getJcrTreeModel(mockNode, 0, -1).asModel();
 
         assertTrue(actual.contains(testSubjects.getContext(), type, actual
                 .createProperty("http://www.w3.org/ns/ldp#Page")));
@@ -340,7 +337,7 @@ public class JcrRdfToolsTest {
         when(mockFullChildNode.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode.hasNodes()).thenReturn(true);
-        final Model actual = testObj.getJcrTreeModel(mockNode, 1, 2);
+        final Model actual = testObj.getJcrTreeModel(mockNode, 1, 2).asModel();
         assertEquals(2, Iterators.size(actual
                 .listSubjectsWithProperty(HAS_PARENT)));
         verify(mockChildNode, never()).getProperties();
@@ -429,7 +426,7 @@ public class JcrRdfToolsTest {
         final Model model =
             testObj.getJcrPropertiesModel(
                     new org.fcrepo.kernel.utils.iterators.NodeIterator(
-                            mockNodes), mockResource);
+                            mockNodes), mockResource).asModel();
         assertTrue(model != null);
     }
 
@@ -460,7 +457,7 @@ public class JcrRdfToolsTest {
         final Iterator<Node> mockIterator =
             asList(mockNode1, mockNode2, mockNode3).iterator();
         final Model model =
-            testObj.getJcrPropertiesModel(mockIterator, mockResource);
+            testObj.getJcrPropertiesModel(mockIterator, mockResource).asModel();
         assertEquals(3, model.listObjectsOfProperty(HAS_MEMBER_OF_RESULT)
                 .toSet().size());
     }
@@ -479,7 +476,7 @@ public class JcrRdfToolsTest {
         final List<FixityResult> mockBlobs = asList(mockResult);
 
         final Model fixityResultsModel =
-            testObj.getJcrPropertiesModel(mockNode, mockBlobs);
+            testObj.getJcrPropertiesModel(mockNode, mockBlobs).asModel();
 
         logRDF(fixityResultsModel);
         assertTrue(fixityResultsModel.contains(null, IS_FIXITY_RESULT_OF,
@@ -493,7 +490,7 @@ public class JcrRdfToolsTest {
 
     @Test
     public final void testGetJcrNamespaceModel() throws Exception {
-        final Model jcrNamespaceModel = testObj.getJcrNamespaceModel();
+        final Model jcrNamespaceModel = testObj.getJcrNamespaceModel().asModel();
         assertTrue(jcrNamespaceModel.contains(
                 createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_PREFIX,
                 "fcrepo"));
@@ -530,7 +527,8 @@ public class JcrRdfToolsTest {
 
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockFrozenNode.getProperties()).thenReturn(mockProperties);
-        final Model actual = testObj.getJcrVersionPropertiesModel(mockNode);
+        final Model actual =
+            testObj.getJcrVersionPropertiesModel(mockNode).asModel();
 
         assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
                 HAS_VERSION, testSubjects.getGraphSubject(mockFrozenNode)));

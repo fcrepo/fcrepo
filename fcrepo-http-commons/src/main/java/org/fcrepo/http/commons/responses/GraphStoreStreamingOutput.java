@@ -27,9 +27,11 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStore;
 
@@ -66,7 +68,20 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     public GraphStoreStreamingOutput(final Dataset dataset,
             final MediaType mediaType) {
         this.dataset = dataset;
-        format =
+        this.format =
+            contentTypeToLang(mediaType.toString()).getName().toUpperCase();
+    }
+
+    /**
+     * Construct the StreamingOutput machinery to serialize
+     * an RdfStream to the mime type given
+     * @param dataset
+     * @param mediaType
+     */
+    public GraphStoreStreamingOutput(final RdfStream stream,
+            final MediaType mediaType) {
+        this.dataset = DatasetFactory.create(stream.asModel());
+        this.format =
             contentTypeToLang(mediaType.toString()).getName().toUpperCase();
     }
 

@@ -227,6 +227,8 @@ public class FedoraTypesUtilsTest {
     public void testGetDefinitionForPropertyName() throws RepositoryException {
         final String mockPropertyName = "mock:property";
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
         when(mockNTM.getNodeType(anyString())).thenReturn(mockNodeType);

@@ -85,7 +85,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     public Dataset getWorkspaces() throws RepositoryException {
 
         final Model workspaceModel =
-                JcrRdfTools.withContext(null, session).getJcrPropertiesModel();
+            JcrRdfTools.withContext(null, session).getJcrPropertiesModel().asModel();
 
         final String[] workspaces =
                 session.getWorkspace().getAccessibleWorkspaceNames();

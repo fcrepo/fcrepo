@@ -18,7 +18,10 @@ package org.fcrepo.kernel.utils.iterators;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -48,6 +51,9 @@ public class RdfStreamTest {
 
     @Mock
     private Triple triple1, triple2, triple3;
+
+    private static final Triple triple = create(createAnon(), createAnon(),
+            createAnon());
 
     private final static String prefix1 = "testNS";
 
@@ -155,13 +161,23 @@ public class RdfStreamTest {
 
     @Test
     public void testAsModel() throws RepositoryException {
-        final Triple t = create(createAnon(), createAnon(), createAnon());
-        testStream = new RdfStream(singletonList(t));
+        testStream = new RdfStream(singletonList(triple));
         testStream.addNamespaces(testNamespaces);
 
         final Model testModel = testStream.asModel();
         assertEquals(testModel.getNsPrefixMap(), testNamespaces);
-        assertTrue(testModel.contains(testModel.asStatement(t)));
+        assertTrue(testModel.contains(testModel.asStatement(triple)));
+    }
+
+    @Test
+    public void testFromModel() {
+        final Model model = createDefaultModel();
+        model.setNsPrefix(prefix1, uri1);
+        testStream = fromModel(model.add(model.asStatement(triple)));
+        assertEquals("Didn't find triple in stream from Model!", triple,
+                testStream.next());
+        assertEquals("Didn't find namespace mapping in stream from Model!",
+                singletonMap(prefix1, uri1), testStream.namespaces());
     }
 
     @Test
