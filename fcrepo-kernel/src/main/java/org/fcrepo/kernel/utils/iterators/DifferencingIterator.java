@@ -44,8 +44,7 @@ public class DifferencingIterator<E> extends AbstractIterator<E> {
     /**
      * Ordinary constructor.
      *
-     * @param notCommon
-     * @param common
+     * @param original
      * @param source
      */
     public DifferencingIterator(final Set<? extends E> original,
@@ -86,7 +85,7 @@ public class DifferencingIterator<E> extends AbstractIterator<E> {
      *
      * @return The elements that turned out to be common to the two inputs.
      */
-    public Set<E> common() {
+    protected Set<E> common() {
         return source.hasNext() ? null : common;
     }
 
@@ -95,7 +94,7 @@ public class DifferencingIterator<E> extends AbstractIterator<E> {
      *
      * @return The elements that turned out not to be common to the two inputs.
      */
-    public Set<? extends E> notCommon() {
+    protected Set<? extends E> notCommon() {
         return source.hasNext() ? null : notCommon;
     }
 

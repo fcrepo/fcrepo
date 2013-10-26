@@ -68,7 +68,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     public GraphStoreStreamingOutput(final Dataset dataset,
             final MediaType mediaType) {
         this.dataset = dataset;
-        format =
+        this.format =
             contentTypeToLang(mediaType.toString()).getName().toUpperCase();
     }
 
@@ -81,7 +81,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     public GraphStoreStreamingOutput(final RdfStream stream,
             final MediaType mediaType) {
         this.dataset = DatasetFactory.create(stream.asModel());
-        format =
+        this.format =
             contentTypeToLang(mediaType.toString()).getName().toUpperCase();
     }
 
