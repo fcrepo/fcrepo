@@ -30,9 +30,12 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.property2values;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.security.AccessControlException;
 import java.util.Iterator;
+
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.rdf.impl.mappings.ZippingIterator;
@@ -85,9 +88,17 @@ public class PropertiesRdfContext extends NodeRdfContext {
             concat(triplesFromProperties(node()));
         }
 
-        // if there's a jcr:content node, include information about it
-        if (node().hasNode(JCR_CONTENT)) {
-            final javax.jcr.Node contentNode = node().getNode(JCR_CONTENT);
+        // if there's an accessible jcr:content node, include information about
+        // it
+        javax.jcr.Node contentNode = null;
+        try {
+            if (node().hasNode(JCR_CONTENT)) {
+                contentNode = node().getNode(JCR_CONTENT);
+            }
+        } catch (final AccessControlException e) {
+            LOGGER.debug("Access denied to content node", e);
+        }
+        if (contentNode != null) {
             final Node contentSubject =
                 graphSubjects().getGraphSubject(contentNode).asNode();
             final Node subject =
