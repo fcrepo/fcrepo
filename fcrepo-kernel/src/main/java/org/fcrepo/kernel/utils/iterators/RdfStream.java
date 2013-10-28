@@ -84,6 +84,15 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     }
 
     /**
+     * Constructor that begins the stream with proffered triple.
+     *
+     * @param triple
+     */
+    public <T extends Triple> RdfStream(final T triple) {
+        this(Iterators.forArray(new Triple[] {triple}));
+    }
+
+    /**
      * Constructor that begins the stream without any triples.
      */
     public RdfStream() {
@@ -153,6 +162,9 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public RdfStream limit(final Integer limit) {
+        if (limit < 0) {
+            return this;
+        }
         return withThisContext(Iterables.limit(this, limit));
     }
 
@@ -163,6 +175,9 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public RdfStream skip(final Integer skipNum) {
+        if (skipNum < 0) {
+            return this;
+        }
         return withThisContext(Iterables.skip(this, skipNum));
     }
 

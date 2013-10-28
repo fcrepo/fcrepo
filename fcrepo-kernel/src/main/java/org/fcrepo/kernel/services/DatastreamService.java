@@ -195,7 +195,7 @@ public class DatastreamService extends RepositoryService {
         final Model model =
             JcrRdfTools
                     .withContext(subjects, datastream.getNode().getSession())
-                    .getJcrPropertiesModel(datastream.getNode(), blobs).asModel();
+                    .getJcrTriples(datastream.getNode(), blobs).asModel();
 
         final Dataset dataset = GraphStoreFactory.create(model).toDataset();
 

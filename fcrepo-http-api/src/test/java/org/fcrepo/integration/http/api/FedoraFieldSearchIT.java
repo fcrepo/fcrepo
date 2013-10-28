@@ -40,10 +40,12 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
+@Ignore("Destined for death.")
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 
     @Test

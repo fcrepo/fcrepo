@@ -34,7 +34,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
@@ -262,7 +261,7 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
         when(
                 mockObject.getPropertiesDataset(any(GraphSubjects.class),
-                        anyLong(), anyInt())).thenReturn(mockDataset);
+                        anyInt(), anyInt())).thenReturn(mockDataset);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
@@ -285,7 +284,7 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
         when(
                 mockObject.getPropertiesDataset(any(GraphSubjects.class),
-                                                   anyLong(), eq(-2))).thenReturn(mockDataset);
+                                                   anyInt(), eq(-2))).thenReturn(mockDataset);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);

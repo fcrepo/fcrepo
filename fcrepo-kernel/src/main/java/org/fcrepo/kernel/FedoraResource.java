@@ -15,9 +15,11 @@
  */
 package org.fcrepo.kernel;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
 import static org.fcrepo.kernel.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
@@ -39,15 +41,15 @@ import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.impl.JcrGraphProperties;
+import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -59,12 +61,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraResource.class);
 
-    private static final GraphProperties DEFAULT_PROPERTY_FACTORY =
-            new JcrGraphProperties();
-
     protected Node node;
-
-    private GraphProperties properties;
 
     /**
      * Construct a FedoraObject without a backing JCR Node
@@ -72,7 +69,6 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public FedoraResource() {
         super(false);
         node = null;
-        this.properties = DEFAULT_PROPERTY_FACTORY;
     }
 
     /**
@@ -216,7 +212,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      */
     public Dataset updatePropertiesDataset(final GraphSubjects subjects,
             final String sparqlUpdateStatement) throws RepositoryException {
-        final Dataset dataset = getPropertiesDataset(subjects, 0, 0);
+        final Dataset dataset = getPropertiesDataset(subjects);
         final UpdateRequest request =
             create(sparqlUpdateStatement, dataset.getContext().getAsString(
                     URI_SYMBOL));
@@ -235,16 +231,37 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getPropertiesDataset(final GraphSubjects subjects,
-        final long offset, final int limit)
+    public Dataset getPropertiesDataset(final GraphSubjects graphSubjects,
+        final int offset, final int limit)
         throws RepositoryException {
 
-        if (this.properties != null) {
-            return this.properties.getProperties(
-                    node, subjects, offset, limit);
-        } else {
-            return null;
-        }
+        final JcrRdfTools jcrRdfTools =
+            JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+
+        final RdfStream propertiesStream =
+            jcrRdfTools.getJcrTriples(getNode()).limit(limit).skip(offset);
+
+        propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode(), offset,
+                limit));
+
+        final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
+
+        final Model problemsModel = createDefaultModel();
+
+        final JcrPropertyStatementListener listener =
+            JcrPropertyStatementListener.getListener(graphSubjects, node
+                    .getSession(), problemsModel);
+
+        dataset.getDefaultModel().register(listener);
+
+        dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
+
+        dataset.getContext().set(URI_SYMBOL,
+                graphSubjects.getGraphSubject(getNode()));
+
+
+
+        return dataset;
     }
 
     /**
@@ -263,10 +280,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getVersionDataset(final GraphSubjects subjects)
+    public RdfStream getVersionTriples(final GraphSubjects graphSubjects)
         throws RepositoryException {
-        return JcrRdfTools.withContext(subjects, node.getSession())
-                .getJcrVersionPropertiesModel(node);
+        return JcrRdfTools.withContext(graphSubjects, node.getSession())
+                .getVersionTriples(node);
     }
 
     /**

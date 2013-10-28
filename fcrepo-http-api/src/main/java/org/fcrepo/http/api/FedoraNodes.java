@@ -136,7 +136,7 @@ public class FedoraNodes extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     public Dataset describe(@PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("offset") @DefaultValue("0") final long offset,
+            @QueryParam("offset") @DefaultValue("0") final int offset,
             @QueryParam("limit") @DefaultValue("-1") final int limit,
             @QueryParam("non-member-properties") final String nonMemberProperties,
             @Context final Request request,
@@ -285,6 +285,8 @@ public class FedoraNodes extends AbstractResource {
                 final Dataset properties = resource.updatePropertiesDataset(new HttpGraphSubjects(
                         session, FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
+
+
                 final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
                 if (problems.size() > 0) {
                     logger.info(
@@ -571,9 +573,9 @@ public class FedoraNodes extends AbstractResource {
             nodeService.copyObject(session, toPath(path), destination);
             session.save();
             return created(new URI(destinationUri)).build();
-        } catch (ItemExistsException e) {
+        } catch (final ItemExistsException e) {
             return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             return status(SC_CONFLICT).entity("There is no node that will serve as the parent of the moved item").build();
         } finally {
             session.logout();
@@ -609,9 +611,9 @@ public class FedoraNodes extends AbstractResource {
             nodeService.moveObject(session, toPath(path), destination);
             session.save();
             return created(new URI(destinationUri)).build();
-        } catch (ItemExistsException e) {
+        } catch (final ItemExistsException e) {
             return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             return status(SC_CONFLICT).entity("There is no node that will serve as the parent of the moved item").build();
         } finally {
             session.logout();

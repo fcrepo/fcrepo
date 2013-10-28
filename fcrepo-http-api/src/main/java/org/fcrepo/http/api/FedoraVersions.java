@@ -103,7 +103,7 @@ public class FedoraVersions extends AbstractResource {
 
             return Response.ok(
                     new GraphStoreStreamingOutput(resource
-                            .getVersionDataset(new HttpGraphSubjects(session,
+                            .getVersionTriples(new HttpGraphSubjects(session,
                                                                         FedoraNodes.class,
                                                                         uriInfo)),
                             bestPossibleResponse.getMediaType())).build();
