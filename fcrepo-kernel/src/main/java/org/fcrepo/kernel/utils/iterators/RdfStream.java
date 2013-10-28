@@ -20,14 +20,10 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static java.util.Collections.emptySet;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterables;
@@ -47,14 +43,14 @@ public class RdfStream extends ForwardingIterator<Triple> implements
 
     protected Iterator<Triple> triples;
 
-    private final static Set<Triple> none = emptySet();
+    private final static Triple[] NONE = new Triple[] {};
 
     /**
      * Constructor that begins the stream with proffered triples.
      *
      * @param triples
      */
-    public <T extends Triple> RdfStream(final Iterator<T> triples) {
+    public <Tr extends Triple, T extends Iterator<Tr>> RdfStream(final T triples) {
         super();
         this.triples = Iterators.transform(triples, cast());
     }
@@ -64,9 +60,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param triples
      */
-    public <T extends Triple> RdfStream(final Iterable<T> triples) {
-        super();
-        this.triples = Iterators.transform(triples.iterator(), cast());
+    public <Tr extends Triple, T extends Iterable<Tr>> RdfStream(final T triples) {
+        this(triples.iterator());
     }
 
     /**
@@ -74,16 +69,25 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param triples
      */
-    public <T extends Triple> RdfStream(final Collection<T> triples) {
-        super();
-        this.triples = Iterators.transform(triples.iterator(), cast());
+    public <Tr extends Triple, T extends Collection<Tr>> RdfStream(
+            final T triples) {
+        this(triples.iterator());
+    }
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
+    public <T extends Triple> RdfStream(final T[] triples) {
+        this(Iterators.forArray(triples));
     }
 
     /**
      * Constructor that begins the stream without any triples.
      */
     public RdfStream() {
-        this(none);
+        this(NONE);
     }
 
     /**

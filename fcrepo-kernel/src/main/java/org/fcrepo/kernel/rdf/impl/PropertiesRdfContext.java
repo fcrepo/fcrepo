@@ -102,9 +102,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
             final Node subject =
                 graphSubjects().getGraphSubject(node()).asNode();
             // add triples representing parent-to-content-child relationship
-            concat(Iterators.forArray(new Triple[] {
+            concat(new Triple[] {
                     create(subject, HAS_CONTENT.asNode(), contentSubject),
-                    create(contentSubject, IS_CONTENT_OF.asNode(), subject)}));
+                    create(contentSubject, IS_CONTENT_OF.asNode(), subject)});
             // add properties from content child
             concat(new PropertiesRdfContext(node().getNode(JCR_CONTENT),
                     graphSubjects(), lowLevelStorageService()));
