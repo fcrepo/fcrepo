@@ -25,7 +25,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
-import org.fcrepo.kernel.rdf.impl.NamespaceContext;
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -40,7 +40,7 @@ public class NamespaceContextTest {
     @Test(expected = NullPointerException.class)
     public void testBadNamespaceRegistry() throws RepositoryException {
         mockNamespaceRegistry = null;
-        new NamespaceContext(mockSession);
+        new NamespaceRdfContext(mockSession);
     }
 
     @Test
@@ -50,7 +50,7 @@ public class NamespaceContextTest {
         when(mockNamespaceRegistry.getURI("")).thenReturn(
                 "GARBAGE URI FOR FAKE NAMESPACE, SHOULD NEVER BE PARSED");
         when(mockNamespaceRegistry.getURI(prefix)).thenReturn(testUri);
-        assertTrue(any(new NamespaceContext(mockSession), hasTestUriAsObject));
+        assertTrue(any(new NamespaceRdfContext(mockSession), hasTestUriAsObject));
     }
 
     @Before

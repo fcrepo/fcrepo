@@ -47,9 +47,9 @@ import com.hp.hpl.jena.graph.Triple;
  * @author ajs6f
  * @date Oct 9, 2013
  */
-public class NamespaceContext extends RdfStream {
+public class NamespaceRdfContext extends RdfStream {
 
-    private static Logger LOGGER = getLogger(NamespaceContext.class);
+    private static Logger LOGGER = getLogger(NamespaceRdfContext.class);
 
     /**
      * Default constructor. Loads context with RDF describing namespaces in
@@ -58,7 +58,7 @@ public class NamespaceContext extends RdfStream {
      * @param session
      * @throws RepositoryException
      */
-    public NamespaceContext(final Session session) throws RepositoryException {
+    public NamespaceRdfContext(final Session session) throws RepositoryException {
         super();
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();

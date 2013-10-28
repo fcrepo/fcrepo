@@ -48,7 +48,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
-import org.fcrepo.kernel.rdf.impl.NamespaceContext;
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
@@ -234,7 +234,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public RdfStream getJcrPropertiesModel() throws RepositoryException {
-        return new NamespaceContext(session);
+        return new NamespaceRdfContext(session);
     }
 
     /**
@@ -307,7 +307,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public RdfStream getJcrNamespaceModel() throws RepositoryException {
-        return new NamespaceContext(session);
+        return new NamespaceRdfContext(session);
     }
 
     /**
