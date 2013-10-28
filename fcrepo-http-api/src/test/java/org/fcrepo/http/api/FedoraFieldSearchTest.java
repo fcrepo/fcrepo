@@ -40,9 +40,11 @@ import javax.ws.rs.core.Variant;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
+@Ignore("Destined for death.")
 public class FedoraFieldSearchTest {
 
     private FedoraFieldSearch testObj;

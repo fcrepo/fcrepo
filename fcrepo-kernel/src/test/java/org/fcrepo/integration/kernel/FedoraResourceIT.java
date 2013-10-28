@@ -307,11 +307,12 @@ public class FedoraResourceIT extends AbstractIT {
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
         // jcr property
-        final Node s = createURI(RESTAPI_NAMESPACE + "/testObjectGraphUpdates");
-        final Node p = createURI("info:fcrepo/zyx");
-        Node o = createLiteral("a");
-        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
-                .contains(ANY, s, p, o));
+        final Resource s =
+            createResource(RESTAPI_NAMESPACE + "/testObjectGraphUpdates");
+        final Property p = createProperty("info:fcrepo/zyx");
+        Literal o = createPlainLiteral("a");
+        assertTrue(object.getPropertiesDataset(subjects).getDefaultModel()
+                .contains(s, p, o));
 
         object.updatePropertiesDataset(subjects, "DELETE { " + "<"
                 + RESTAPI_NAMESPACE + "/testObjectGraphUpdates> "
@@ -322,11 +323,11 @@ public class FedoraResourceIT extends AbstractIT {
                 + "<info:fcrepo/zyx> ?o } ");
 
         assertFalse("found value we should have removed", object
-                .getPropertiesDataset(subjects).asDatasetGraph().contains(ANY,
-                        s, p, o));
-        o = createLiteral("b");
+                .getPropertiesDataset(subjects).getDefaultModel().contains(s,
+                        p, o));
+        o = createPlainLiteral("b");
         assertTrue("could not find new value", object.getPropertiesDataset(
-                subjects).asDatasetGraph().contains(ANY, s, p, o));
+                subjects).getDefaultModel().contains(s, p, o));
 
     }
 
@@ -360,7 +361,7 @@ public class FedoraResourceIT extends AbstractIT {
 
         session.save();
 
-        final Model graphStore = object.getVersionDataset(subjects).asModel();
+        final Model graphStore = object.getVersionTriples(subjects).asModel();
 
         logger.info(graphStore.toString());
 

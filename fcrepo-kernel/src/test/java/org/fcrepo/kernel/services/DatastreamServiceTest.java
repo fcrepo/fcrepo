@@ -195,7 +195,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                        Matchers.<Function<LowLevelCacheEntry,FixityResult>> any())).thenReturn(mockCollection);
 
         when(
-                mockJcrRdfTools.getJcrPropertiesModel(eq(mockNode), Matchers
+                mockJcrRdfTools.getJcrTriples(eq(mockNode), Matchers
                         .<Iterable<FixityResult>> any())).thenReturn(new RdfStream());
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(

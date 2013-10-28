@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,7 +88,7 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        when(mockResource.getVersionDataset(any(HttpGraphSubjects.class)))
+        when(mockResource.getVersionTriples(any(HttpGraphSubjects.class)))
                 .thenReturn(new RdfStream());
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
@@ -124,7 +123,7 @@ public class FedoraVersionsTest {
         testObj.getVersion(createPathList(pid), versionLabel, TestHelpers
                 .getUriInfoImpl());
         verify(mockResource).getPropertiesDataset(any(HttpGraphSubjects.class),
-                anyLong(), anyInt());
+                anyInt(), anyInt());
     }
 
 }

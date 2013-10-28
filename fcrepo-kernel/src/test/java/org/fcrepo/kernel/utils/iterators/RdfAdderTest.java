@@ -31,8 +31,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.Iterator;
 import java.util.Map;
 
@@ -53,8 +51,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.slf4j.Logger;
-
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -244,7 +240,5 @@ public class RdfAdderTest {
 
     @Mock
     private GraphSubjects mockGraphSubjects;
-
-    private static final Logger LOGGER = getLogger(RdfAdderTest.class);
 
 }

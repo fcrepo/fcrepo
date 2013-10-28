@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils.iterators;
+package org.fcrepo.kernel.rdf;
 
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterators.filter;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-
+import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
-import java.util.Iterator;
 
 import com.google.common.base.Predicate;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * This wraps an {@link Iterator} of {@link Triple}s and produces only those
- * safe for persistence into the repo as properties. It does this by filtering
- * all triples with managed predicates, as defined in {@link RdfLexicon}.
+ * {@link Predicate}s for determining when RDF is managed by the repository.
  *
  * @author ajs6f
  * @date Oct 23, 2013
  */
-public class UnmanagedRdfStream extends RdfStream {
+public class ManagedRdf {
 
     private static final Model model = createDefaultModel();
 
@@ -50,18 +46,13 @@ public class UnmanagedRdfStream extends RdfStream {
 
         };
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param triples
-     */
-    public UnmanagedRdfStream(final Iterator<Triple> triples) {
-        super(triples);
-    }
+    public static final Predicate<Resource> isManagedMixin =
+        new Predicate<Resource>() {
 
-    @Override
-    protected Iterator<Triple> delegate() {
-        return filter(triples, not(isManagedTriple));
-    }
+            @Override
+            public boolean apply(final Resource m) {
+                return isManagedNamespace.apply(m.getNameSpace());
+            }
 
+        };
 }

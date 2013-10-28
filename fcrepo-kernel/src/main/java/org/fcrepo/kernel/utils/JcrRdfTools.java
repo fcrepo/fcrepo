@@ -48,7 +48,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
-import org.fcrepo.kernel.rdf.impl.NamespaceContext;
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
@@ -227,17 +227,6 @@ public class JcrRdfTools {
     }
 
     /**
-     * Create a default {@link RdfStream} populated with the registered JCR
-     * namespaces
-     *
-     * @return
-     * @throws RepositoryException
-     */
-    public RdfStream getJcrPropertiesModel() throws RepositoryException {
-        return new NamespaceContext(session);
-    }
-
-    /**
      * Get an {@link RdfStream} for the given JCR NodeIterator
      *
      * @param nodeIterator
@@ -271,7 +260,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getJcrPropertiesModel(final Node node) throws RepositoryException {
+    public RdfStream getJcrTriples(final Node node) throws RepositoryException {
         return new PropertiesRdfContext(node, graphSubjects, llstore);
     }
 
@@ -282,7 +271,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getJcrVersionPropertiesModel(final Node node)
+    public RdfStream getVersionTriples(final Node node)
         throws RepositoryException {
         return new VersionsRdfContext(node, graphSubjects, llstore);
     }
@@ -295,7 +284,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getJcrPropertiesModel(final Node node,
+    public RdfStream getJcrTriples(final Node node,
         final Iterable<FixityResult> blobs) throws RepositoryException {
         return new FixityRdfContext(node, graphSubjects, llstore, blobs);
     }
@@ -306,8 +295,8 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getJcrNamespaceModel() throws RepositoryException {
-        return new NamespaceContext(session);
+    public RdfStream getNamespaceTriples() throws RepositoryException {
+        return new NamespaceRdfContext(session);
     }
 
     /**
@@ -318,9 +307,10 @@ public class JcrRdfTools {
      * @param offset
      * @param limit @throws RepositoryException
      */
-    public RdfStream getJcrTreeModel(final Node node, final long offset,
+    public RdfStream getTreeTriples(final Node node, final int offset,
             final int limit) throws RepositoryException {
-        return new HierarchyRdfContext(node, graphSubjects, llstore);
+        return new HierarchyRdfContext(node, graphSubjects, llstore).limit(
+                limit).skip(offset);
     }
 
     /**

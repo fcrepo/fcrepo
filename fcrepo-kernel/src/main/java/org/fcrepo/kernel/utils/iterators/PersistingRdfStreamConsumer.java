@@ -19,11 +19,11 @@ package org.fcrepo.kernel.utils.iterators;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterators.filter;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
-import static org.fcrepo.kernel.utils.iterators.UnmanagedRdfStream.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
@@ -79,8 +79,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
      */
     public PersistingRdfStreamConsumer(final GraphSubjects graphSubjects,
             final Session session, final RdfStream stream) {
-        // this filters out triples with internal or managed predicates
         this.idTranslator = graphSubjects;
+        this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);
         this.isFedoraSubjectTriple = new Predicate<Triple>() {
 
             @Override
@@ -103,10 +103,9 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         };
         // we knock out managed RDF and non-Fedora RDF
         this.stream =
-            new RdfStream(filter(stream, and(not(isManagedTriple),
-                    isFedoraSubjectTriple))).addNamespaces(stream.namespaces());
+            stream.withThisContext(stream.filter(and(not(isManagedTriple),
+                    isFedoraSubjectTriple)).iterator());
         this.session = session;
-        this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);
     }
 
     @Override
@@ -124,13 +123,17 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         final Resource subject = t.getSubject();
         final Node subjectNode = idTranslator().getNodeFromGraphSubject(subject);
 
-        // if this is a RDF type assertion, update the node's mixins. If it
-        // isn't, treat it as a "data" property.
+        // if this is a user-managed RDF type assertion, update the node's
+        // mixins. If it isn't, treat it as a "data" property.
         if (t.getPredicate().equals(type) && t.getObject().isResource()) {
             final Resource mixinResource = t.getObject().asResource();
-            LOGGER.debug("Operating on node: {} with mixin: {}.", subjectNode,
-                    mixinResource);
-            operateOnMixin(mixinResource, subjectNode);
+            if (!isManagedMixin.apply(mixinResource)) {
+                LOGGER.debug("Operating on node: {} with mixin: {}.",
+                        subjectNode, mixinResource);
+                operateOnMixin(mixinResource, subjectNode);
+            } else {
+                LOGGER.debug("Found repository-managed mixin on which we will not operate.");
+            }
         } else {
             LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode,
                     t);
@@ -238,4 +241,5 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     public JcrRdfTools jcrRdfTools() {
         return jcrRdfTools;
     }
+
 }

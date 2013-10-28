@@ -184,7 +184,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         throws RepositoryException {
 
         final Model model =
-            JcrRdfTools.withContext(null, session).getJcrNamespaceModel()
+            JcrRdfTools.withContext(null, session).getNamespaceTriples()
                     .asModel();
 
         model.register(new NamespaceChangedStatementListener(session));

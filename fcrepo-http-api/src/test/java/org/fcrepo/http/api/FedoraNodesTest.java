@@ -34,7 +34,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
@@ -66,7 +65,6 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -150,8 +148,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testCreateObject() throws RepositoryException, IOException,
-            InvalidChecksumException, URISyntaxException {
+    public void testCreateObject() throws Exception {
         final String pid = "testObject";
         final String path = "/" + pid;
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
@@ -168,8 +165,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testCreateChildObject() throws RepositoryException, IOException,
-                                                       InvalidChecksumException, URISyntaxException, NoSuchFieldException {
+    public void testCreateChildObject() throws Exception {
 
         setField(testObj, "pidMinter", mockPidMinter);
         final String pid = "testObject";
@@ -190,8 +186,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testCreateChildObjectWithSlug() throws RepositoryException, IOException,
-                                                               InvalidChecksumException, URISyntaxException, NoSuchFieldException {
+    public void testCreateChildObjectWithSlug() throws Exception {
         setField(testObj, "pidMinter", mockPidMinter);
 
         final String pid = "testObject";
@@ -211,8 +206,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testCreateDatastream() throws RepositoryException, IOException,
-            InvalidChecksumException, URISyntaxException {
+    public void testCreateDatastream() throws Exception {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -262,7 +256,7 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
         when(
                 mockObject.getPropertiesDataset(any(GraphSubjects.class),
-                        anyLong(), anyInt())).thenReturn(mockDataset);
+                        anyInt(), anyInt())).thenReturn(mockDataset);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
@@ -285,7 +279,7 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
         when(
                 mockObject.getPropertiesDataset(any(GraphSubjects.class),
-                                                   anyLong(), eq(-2))).thenReturn(mockDataset);
+                                                   anyInt(), eq(-2))).thenReturn(mockDataset);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
@@ -319,7 +313,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testReplaceRdf() throws RepositoryException, IOException, URISyntaxException {
+    public void testReplaceRdf() throws IllegalArgumentException, Exception {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
@@ -332,7 +326,7 @@ public class FedoraNodesTest {
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest);
-        verify(mockObject).replacePropertiesDataset(any(GraphSubjects.class), any(Model.class));
+        verify(mockObject).replaceProperties(any(GraphSubjects.class), any(Model.class));
     }
 
     @Test

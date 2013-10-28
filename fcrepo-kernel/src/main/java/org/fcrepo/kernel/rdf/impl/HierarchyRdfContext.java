@@ -18,8 +18,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -130,10 +128,10 @@ public class HierarchyRdfContext extends NodeRdfContext {
     private Iterator<Triple> childrenContext(final Node pageContext) throws RepositoryException {
 
         final Iterator<javax.jcr.Node> niceChildren =
-            filter(new NodeIterator(node().getNodes()), not(nastyChildren));
+            Iterators.filter(new NodeIterator(node().getNodes()), not(nastyChildren));
 
         return Iterators.concat(
-                transform(niceChildren, child2triples(pageContext)));
+                Iterators.transform(niceChildren, child2triples(pageContext)));
     }
 
     private Function<javax.jcr.Node, Iterator<Triple>> child2triples(

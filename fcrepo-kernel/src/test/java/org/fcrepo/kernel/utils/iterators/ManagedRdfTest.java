@@ -16,23 +16,25 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedTriple;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.util.Iterator;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import com.hp.hpl.jena.graph.Triple;
 
-public class UnmanagedRdfStreamTest {
+public class ManagedRdfTest {
 
     private final static Triple managedTriple = create(createAnon(), HAS_CHILD
             .asNode(), createAnon());
@@ -40,24 +42,28 @@ public class UnmanagedRdfStreamTest {
     private final static Triple unManagedTriple = create(createAnon(),
             createAnon(), createAnon());
 
-    @Mock
-    private Iterator<Triple> mockIterator;
-
-    private UnmanagedRdfStream testStream;
+    private RdfStream testStream;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testStream = new UnmanagedRdfStream(mockIterator);
+        testStream =
+            new RdfStream(managedTriple, unManagedTriple)
+                    .filter(not(isManagedTriple));
     }
 
     @Test
     public void testFiltering() {
-        when(mockIterator.hasNext()).thenReturn(true, true, false);
-        when(mockIterator.next()).thenReturn(managedTriple, unManagedTriple);
         assertEquals("Didn't get unmanaged triple!", unManagedTriple,
                 testStream.next());
         assertFalse("Failed to filter managed triple!", testStream.hasNext());
+    }
+
+    @Test
+    public void testMixinFiltering(){
+        assertTrue(isManagedMixin.apply(createResource(REPOSITORY_NAMESPACE
+                + "thing")));
+        assertFalse(isManagedMixin.apply(createResource("myNS:thing")));
     }
 
 }

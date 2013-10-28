@@ -18,7 +18,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.builder;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -68,7 +67,7 @@ public class FixityRdfContext extends NodeRdfContext {
             final Iterable<FixityResult> blobs) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
 
-        concat(Iterators.concat(transform(blobs.iterator(),
+        concat(Iterators.concat(Iterators.transform(blobs.iterator(),
                 new Function<FixityResult, Iterator<Triple>>() {
 
                     @Override
