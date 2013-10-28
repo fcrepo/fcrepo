@@ -23,6 +23,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -47,7 +48,11 @@ public class RdfStreamTest {
     private RdfStream testStream;
 
     @Mock
-    private Iterator<Triple> mockIterator;
+    private Iterator<Triple> mockIterator, differentMockIterator;
+
+    @Mock
+    private Iterable<Triple> mockIterable;
+
 
     @Mock
     private Triple triple1, triple2, triple3;
@@ -69,7 +74,8 @@ public class RdfStreamTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testStream = new RdfStream(mockIterator);
+        when(mockIterable.iterator()).thenReturn(mockIterator);
+        testStream = new RdfStream(mockIterable);
     }
 
     @Test
@@ -112,6 +118,22 @@ public class RdfStreamTest {
     public void testCollectionConstructor() {
         testStream = new RdfStream(ImmutableSet.of(triple1, triple2));
         assertEquals(triple1, testStream.next());
+    }
+
+    @Test
+    public void testWithThisContextIterator() {
+        testStream.addNamespace(prefix1, uri1);
+        final RdfStream testStream2 =
+            testStream.withThisContext((Iterator<Triple>) testStream);
+        assertEquals(testStream.namespaces(), testStream2.namespaces());
+    }
+
+    @Test
+    public void testWithThisContextIterable() {
+        testStream.addNamespace(prefix1, uri1);
+        final RdfStream testStream2 =
+            testStream.withThisContext((Iterable<Triple>) testStream);
+        assertEquals(testStream.namespaces(), testStream2.namespaces());
     }
 
     @Test
@@ -181,6 +203,23 @@ public class RdfStreamTest {
     }
 
     @Test
+    public void testLimit() {
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockIterator.next()).thenReturn(triple);
+        testStream = testStream.limit(2);
+        testStream.next();
+        testStream.next();
+        assertFalse(testStream.hasNext());
+    }
+
+    @Test
+    public void testSkip() {
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        testStream = testStream.skip(3);
+        assertFalse(testStream.hasNext());
+    }
+
+    @Test
     public void testCanContinue() {
         when(mockIterator.hasNext()).thenReturn(true).thenThrow(
                 new RuntimeException("Expected.")).thenReturn(true);
@@ -190,5 +229,18 @@ public class RdfStreamTest {
         } catch (final RuntimeException ex) {
         }
         assertTrue("Couldn't continue with iteration!",mockIterator.hasNext());
+    }
+
+    @Test
+    public void testEquals() {
+        assertNotEquals(testStream,new Object());
+        RdfStream testStreamToCompare = new RdfStream(mockIterator);
+        assertEquals(testStream, testStreamToCompare);
+        testStreamToCompare.addNamespace(prefix1, uri1);
+        assertNotEquals(testStream, testStreamToCompare);
+        when(differentMockIterator.hasNext()).thenReturn(true, false);
+        when(differentMockIterator.next()).thenReturn(triple);
+        testStreamToCompare = new RdfStream(differentMockIterator);
+        assertNotEquals(testStream, testStreamToCompare);
     }
 }

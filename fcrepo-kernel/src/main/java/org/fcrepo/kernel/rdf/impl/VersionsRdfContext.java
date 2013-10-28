@@ -88,7 +88,8 @@ public class VersionsRdfContext extends NodeRdfContext {
 
                     final RdfStream results =
                         new RdfStream(new PropertiesRdfContext(frozenNode,
-                                graphSubjects(), lowLevelStorageService()));
+                                graphSubjects(), lowLevelStorageService())
+                                .iterator());
 
                     results.concat(create(subject(), HAS_VERSION.asNode(),
                             versionSubject));

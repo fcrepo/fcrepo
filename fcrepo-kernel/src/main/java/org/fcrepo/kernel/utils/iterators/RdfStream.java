@@ -30,6 +30,7 @@ import java.util.Set;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ForwardingIterator;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -63,6 +64,16 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param triples
      */
+    public <T extends Triple> RdfStream(final Iterable<T> triples) {
+        super();
+        this.triples = Iterators.transform(triples.iterator(), cast());
+    }
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
     public <T extends Triple> RdfStream(final Collection<T> triples) {
         super();
         this.triples = Iterators.transform(triples.iterator(), cast());
@@ -73,6 +84,26 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      */
     public RdfStream() {
         this(none);
+    }
+
+    /**
+     * Returns the proffered {@link Triple}s with the context of this RdfStream.
+     *
+     * @param stream
+     * @return
+     */
+    public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
+        return new RdfStream(stream).addNamespaces(namespaces());
+    }
+
+    /**
+     * Returns the proffered {@link Triple}s with the context of this RdfStream.
+     *
+     * @param stream
+     * @return
+     */
+    public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
+        return new RdfStream(stream).addNamespaces(namespaces());
     }
 
     /**
@@ -112,6 +143,26 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     }
 
     /**
+     * As {@link Iterables#limit(Iterable, int)} while maintaining context.
+     *
+     * @param limit
+     * @return
+     */
+    public RdfStream limit(final Integer limit) {
+        return withThisContext(Iterables.limit(this, limit));
+    }
+
+    /**
+     * As {@link Iterables#skip(Iterable, int)} while maintaining context.
+     *
+     * @param skipNum
+     * @return
+     */
+    public RdfStream skip(final Integer skipNum) {
+        return withThisContext(Iterables.skip(this, skipNum));
+    }
+
+    /**
      * @param prefix
      * @param uri
      * @return This object for continued use.
@@ -127,23 +178,6 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      */
     public RdfStream addNamespaces(final Map<String, String> nses) {
         namespaces.putAll(nses);
-        return this;
-    }
-
-    /**
-     * @return Namespaces in scope for this stream.
-     */
-    public Map<String, String> namespaces() {
-        return namespaces;
-    }
-
-    @Override
-    protected Iterator<Triple> delegate() {
-        return triples;
-    }
-
-    @Override
-    public Iterator<Triple> iterator() {
         return this;
     }
 
@@ -182,6 +216,24 @@ public class RdfStream extends ForwardingIterator<Triple> implements
         }
 
     };
+
+    @Override
+    protected Iterator<Triple> delegate() {
+        return triples;
+    }
+
+    @Override
+    public Iterator<Triple> iterator() {
+        return this;
+    }
+
+    /**
+     * @return Namespaces in scope for this stream.
+     */
+    public Map<String, String> namespaces() {
+        return namespaces;
+    }
+
 
     private static <T extends Triple> Function<T, Triple> cast() {
         return new Function<T, Triple>() {
