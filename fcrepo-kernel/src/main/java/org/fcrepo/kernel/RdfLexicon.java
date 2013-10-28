@@ -16,6 +16,7 @@
 package org.fcrepo.kernel;
 
 import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.or;
 import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 
@@ -37,6 +38,8 @@ public final class RdfLexicon {
     **/
     public static final String REPOSITORY_NAMESPACE =
             "http://fedora.info/definitions/v4/repository#";
+
+    public static final String JCR_NAMESPACE = "http://www.jcp.org/jcr/1.0";
 
     /**
      * REST API namespace "fedora", used for internal API links and node
@@ -260,8 +263,31 @@ public final class RdfLexicon {
         managedProperties = b.build();
     }
 
-    public static final Predicate<Property> isManagedPredicate =
-        in(managedProperties);
+    private static Predicate<Property> hasJcrNamespace =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                return p.getNameSpace() == JCR_NAMESPACE;
+
+            }
+        };
+
+    private static Predicate<Property> hasFedoraNamespace =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                return p.getNameSpace() == REPOSITORY_NAMESPACE;
+
+            }
+        };
+
+    /**
+     * Detects whether an RDF property is managed by the repository.
+     */
+    public static final Predicate<Property> isManagedPredicate = or(
+            in(managedProperties), hasJcrNamespace, hasFedoraNamespace);
 
     private RdfLexicon() {
 

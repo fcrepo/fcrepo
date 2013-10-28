@@ -70,7 +70,6 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -159,7 +158,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(new ByteArrayInputStream("<> <http://purl.org/dc/terms/title> \"this is a title\"".getBytes()));
+        final String rdf = "<> <http://purl.org/dc/terms/title> \"this is a title\".";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());
@@ -820,15 +820,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         public final static String METHOD_NAME = "COPY";
 
 
-        public HttpCopy() {
-            super();
-        }
-
-        public HttpCopy(final URI uri) {
-            super();
-            setURI(uri);
-        }
-
         /**
          * @throws IllegalArgumentException if the uri is invalid.
          */
@@ -849,15 +840,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         public final static String METHOD_NAME = "MOVE";
 
-
-        public HttpMove() {
-            super();
-        }
-
-        public HttpMove(final URI uri) {
-            super();
-            setURI(uri);
-        }
 
         /**
          * @throws IllegalArgumentException if the uri is invalid.

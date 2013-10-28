@@ -311,7 +311,7 @@ public class FedoraResourceTest {
     }
 
     @Test
-    public void testReplacePropertiesDataset() throws RepositoryException {
+    public void testReplacePropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
         final DefaultGraphSubjects defaultGraphSubjects = new DefaultGraphSubjects(mockSession);
@@ -351,9 +351,9 @@ public class FedoraResourceTest {
                                 replacementModel.createProperty("j"),
                                "k");
 
-        final Dataset replacements = testObj.replacePropertiesDataset(defaultGraphSubjects, replacementModel);
+        final Model replacements = testObj.replaceProperties(defaultGraphSubjects, replacementModel).asModel();
 
-        assertTrue(replacements.getDefaultModel().containsAll(replacementModel));
+        assertTrue(replacements.containsAll(replacementModel));
 
         assertFalse(problemsModel.contains(propertiesModel.createResource("x"),
                                               propertiesModel.createProperty("y"),

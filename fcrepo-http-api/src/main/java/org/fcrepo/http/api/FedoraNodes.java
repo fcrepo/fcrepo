@@ -93,7 +93,6 @@ import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
@@ -317,7 +316,7 @@ public class FedoraNodes extends AbstractResource {
      * @param requestContentType
      * @param requestBodyStream
      * @return
-     * @throws RepositoryException
+     * @throws Exception
      */
     @PUT
     @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
@@ -328,7 +327,7 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
             final InputStream requestBodyStream,
-            @Context final Request request) throws RepositoryException, URISyntaxException {
+            @Context final Request request) throws Exception {
         final String path = toPath(pathList);
         logger.debug("Attempting to replace path: {}", path);
         try {
@@ -352,7 +351,7 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.build());
             }
 
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final HttpGraphSubjects graphSubjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             if (requestContentType != null && requestBodyStream != null)  {
                 final String contentType = requestContentType.toString();
@@ -362,10 +361,10 @@ public class FedoraNodes extends AbstractResource {
 
                 final Model inputModel = createDefaultModel()
                                              .read(requestBodyStream,
-                                                      subjects.getGraphSubject(resource.getNode()).toString(),
+                                                      graphSubjects.getGraphSubject(resource.getNode()).toString(),
                                                       format);
 
-                resource.replacePropertiesDataset(subjects, inputModel);
+                resource.replaceProperties(graphSubjects, inputModel);
             }
 
             session.save();
@@ -381,9 +380,7 @@ public class FedoraNodes extends AbstractResource {
      *
      * @param pathList
      * @return 201
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     * @throws IOException
+     * @throws Exception
      */
     @POST
     @Timed
@@ -399,7 +396,7 @@ public class FedoraNodes extends AbstractResource {
             final String slug,
             @Context
             final UriInfo uriInfo, final InputStream requestBodyStream)
-        throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException {
+        throws Exception {
 
         final String newObjectPath;
         final String path = toPath(pathList);
@@ -494,7 +491,7 @@ public class FedoraNodes extends AbstractResource {
                                                           subjects.getGraphSubject(result.getNode()).toString(),
                                                           format);
 
-                    result.replacePropertiesDataset(subjects, inputModel);
+                    result.replaceProperties(subjects, inputModel);
                 } else if (result instanceof Datastream) {
 
                     datastreamService.createDatastreamNode(session,

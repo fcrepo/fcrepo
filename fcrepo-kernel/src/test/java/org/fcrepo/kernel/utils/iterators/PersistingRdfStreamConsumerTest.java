@@ -18,6 +18,7 @@ package org.fcrepo.kernel.utils.iterators;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -74,7 +75,7 @@ public class PersistingRdfStreamConsumerTest {
     private static final Statement badMixinStatement = m.asStatement(badMixinTriple);
 
     private static final Triple mixinTriple = create(createAnon(),
-            type.asNode(), createAnon());
+            type.asNode(), createURI("myNS:mymixin"));
 
     private static final Statement mixinStatement = m.asStatement(mixinTriple);
 

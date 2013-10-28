@@ -25,7 +25,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
@@ -49,7 +48,6 @@ import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -180,8 +178,7 @@ public abstract class AbstractResource {
             final String path, final String mixin, final GraphSubjects subjects,
             final InputStream requestBodyStream,
             final MediaType requestContentType,
-            final URI checksum) throws RepositoryException,
-        InvalidChecksumException, IOException {
+            final URI checksum) throws Exception {
 
         final FedoraResource result;
 
@@ -217,7 +214,7 @@ public abstract class AbstractResource {
                                                 result.getNode()).toString(),
                                         format);
 
-                            result.replacePropertiesDataset(subjects, inputModel);
+                            result.replaceProperties(subjects, inputModel);
                     }
                 }
 

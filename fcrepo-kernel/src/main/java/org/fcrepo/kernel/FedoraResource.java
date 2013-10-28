@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel;
 
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
@@ -34,6 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -44,10 +46,15 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
+import org.fcrepo.kernel.utils.iterators.RdfAdder;
+import org.fcrepo.kernel.utils.iterators.RdfRemover;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
+import com.google.common.collect.Iterables;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -222,8 +229,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * Serialize the JCR properties as an RDF Dataset
-     *
+     * Return the JCR properties of this object as a Jena {@link Dataset}
      *
      * @param subjects
      * @param offset
@@ -265,13 +271,27 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     }
 
     /**
-     * Serialize the JCR properties of this object as an RDF Dataset
+     * Return the JCR properties of this object as a Jena {@link Dataset}
      * @return
      * @throws RepositoryException
      */
     public Dataset getPropertiesDataset(final GraphSubjects subjects)
         throws RepositoryException {
         return getPropertiesDataset(subjects, 0, -1);
+    }
+
+    /**
+     * Return the JCR properties of this object as an {@link RdfStream}
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getTriples(final GraphSubjects graphSubjects)
+        throws RepositoryException {
+
+        final JcrRdfTools jcrRdfTools =
+                JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+
+        return jcrRdfTools.getJcrTriples(getNode());
     }
 
     /**
@@ -314,20 +334,28 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param subjects
      * @param inputModel
      * @return
-     * @throws RepositoryException
+     * @throws Exception
      */
-    public Dataset replacePropertiesDataset(final GraphSubjects subjects,
-        final Model inputModel) throws RepositoryException {
-        final Dataset propertiesDataset = getPropertiesDataset(subjects, 0, -2);
-        final Model model = propertiesDataset.getDefaultModel();
+    public RdfStream replaceProperties(final GraphSubjects graphSubjects,
+        final Model inputModel) throws Exception {
+        final RdfStream originalTriples = getTriples(graphSubjects);
 
-        final Model removed = model.difference(inputModel);
-        model.remove(removed.listStatements());
+        final RdfStream replacementStream = RdfStream.fromModel(inputModel);
 
-        final Model created = inputModel.difference(model);
-        model.add(created.listStatements());
+        final Set<Triple> replacementTriples =
+            copyOf(replacementStream.iterator());
 
-        return propertiesDataset;
+        final DifferencingIterator<Triple> differencer =
+            new DifferencingIterator<>(replacementTriples, originalTriples);
+
+        new RdfRemover(graphSubjects, getNode().getSession(), replacementStream
+                .withThisContext(differencer)).consume();
+
+        new RdfAdder(graphSubjects, getNode().getSession(), replacementStream
+                .withThisContext(differencer.notCommon())).consume();
+
+        return replacementStream.withThisContext(Iterables.concat(differencer
+                .common(), differencer.notCommon()));
     }
 
     /**
