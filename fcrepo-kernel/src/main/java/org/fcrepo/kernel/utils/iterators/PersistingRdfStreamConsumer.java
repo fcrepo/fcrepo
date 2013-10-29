@@ -21,9 +21,9 @@ import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
-import static org.fcrepo.kernel.utils.iterators.ManagedRdf.isManagedMixin;
-import static org.fcrepo.kernel.utils.iterators.ManagedRdf.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
