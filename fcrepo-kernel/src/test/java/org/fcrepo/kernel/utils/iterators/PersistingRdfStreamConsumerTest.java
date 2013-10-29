@@ -22,7 +22,9 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -83,13 +85,17 @@ public class PersistingRdfStreamConsumerTest {
                 acceptedStatements.contains(propertyStatement)
                         && !rejectedStatements.contains(propertyStatement));
 
-        assertTrue("Wrongly operated on managed property!",
-                !acceptedStatements.contains(managedPropertyStatement)
-                        && rejectedStatements.contains(managedPropertyStatement));
+        assertTrue("Wrongly operated on LDP managed property!",
+                !acceptedStatements.contains(ldpManagedPropertyStatement)
+                        && rejectedStatements.contains(ldpManagedPropertyStatement));
 
         assertTrue("Wrongly operated on JCR managed property!",
                 !acceptedStatements.contains(jcrManagedPropertyStatement)
                         && rejectedStatements.contains(jcrManagedPropertyStatement));
+
+        assertTrue("Wrongly operated on Fedora managed property!",
+                !acceptedStatements.contains(fedoraManagedPropertyStatement)
+                        && rejectedStatements.contains(fedoraManagedPropertyStatement));
 
         assertTrue("Wrongly operated on foreign property!",
                 !acceptedStatements.contains(foreignStatement)
@@ -158,14 +164,20 @@ public class PersistingRdfStreamConsumerTest {
     private static final Statement propertyStatement = m
             .asStatement(propertyTriple);
 
-    private static final Triple managedPropertyTriple = create(createAnon(),
+    private static final Triple ldpManagedPropertyTriple = create(createAnon(),
             PAGE.asNode(), createAnon());
 
-    private static final Statement managedPropertyStatement = m
-            .asStatement(managedPropertyTriple);
+    private static final Statement ldpManagedPropertyStatement = m
+            .asStatement(ldpManagedPropertyTriple);
+
+    private static final Triple fedoraManagedPropertyTriple = create(createAnon(),
+            createURI(REPOSITORY_NAMESPACE + "thing"), createAnon());
+
+    private static final Statement fedoraManagedPropertyStatement = m
+            .asStatement(fedoraManagedPropertyTriple);
 
     private static final Triple jcrManagedPropertyTriple = create(createAnon(),
-            PAGE.asNode(), createAnon());
+            createURI(JCR_NAMESPACE + "thing"), createAnon());
 
     private static final Statement jcrManagedPropertyStatement = m
             .asStatement(jcrManagedPropertyTriple);
@@ -187,8 +199,9 @@ public class PersistingRdfStreamConsumerTest {
     private static final Statement foreignStatement = m.asStatement(foreignTriple);
 
     private static final Statement[] fedoraStatements = new Statement[] {
-            propertyStatement, managedPropertyStatement, mixinStatement,
-            managedMixinStatement, jcrManagedPropertyStatement};
+            propertyStatement, ldpManagedPropertyStatement, mixinStatement,
+            managedMixinStatement, jcrManagedPropertyStatement,
+            fedoraManagedPropertyStatement};
 
     private static final Statement[] profferedStatements = ObjectArrays
             .concat(fedoraStatements, foreignStatement);
