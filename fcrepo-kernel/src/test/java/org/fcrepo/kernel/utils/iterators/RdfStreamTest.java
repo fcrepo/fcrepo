@@ -219,6 +219,7 @@ public class RdfStreamTest {
         testStream.next();
         testStream.next();
         assertFalse(testStream.hasNext());
+        assertEquals(testStream, testStream.limit(-1));
     }
 
     @Test
@@ -226,6 +227,7 @@ public class RdfStreamTest {
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         testStream = testStream.skip(3);
         assertFalse(testStream.hasNext());
+        assertEquals(testStream, testStream.skip(-1));
     }
 
     @Test
