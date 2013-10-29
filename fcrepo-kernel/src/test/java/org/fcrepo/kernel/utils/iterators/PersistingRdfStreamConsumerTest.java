@@ -87,6 +87,10 @@ public class PersistingRdfStreamConsumerTest {
                 !acceptedStatements.contains(managedPropertyStatement)
                         && rejectedStatements.contains(managedPropertyStatement));
 
+        assertTrue("Wrongly operated on JCR managed property!",
+                !acceptedStatements.contains(jcrManagedPropertyStatement)
+                        && rejectedStatements.contains(jcrManagedPropertyStatement));
+
         assertTrue("Wrongly operated on foreign property!",
                 !acceptedStatements.contains(foreignStatement)
                         && rejectedStatements.contains(foreignStatement));
@@ -160,6 +164,12 @@ public class PersistingRdfStreamConsumerTest {
     private static final Statement managedPropertyStatement = m
             .asStatement(managedPropertyTriple);
 
+    private static final Triple jcrManagedPropertyTriple = create(createAnon(),
+            PAGE.asNode(), createAnon());
+
+    private static final Statement jcrManagedPropertyStatement = m
+            .asStatement(jcrManagedPropertyTriple);
+
     private static final Triple managedMixinTriple = create(createAnon(), type
             .asNode(), createURI(RESTAPI_NAMESPACE + "mixin"));
 
@@ -178,7 +188,7 @@ public class PersistingRdfStreamConsumerTest {
 
     private static final Statement[] fedoraStatements = new Statement[] {
             propertyStatement, managedPropertyStatement, mixinStatement,
-            managedMixinStatement};
+            managedMixinStatement, jcrManagedPropertyStatement};
 
     private static final Statement[] profferedStatements = ObjectArrays
             .concat(fedoraStatements, foreignStatement);
