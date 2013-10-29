@@ -19,12 +19,11 @@ package org.fcrepo.kernel.utils.iterators;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterators.filter;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
-import static org.fcrepo.kernel.utils.iterators.UnmanagedRdfStream.isManagedTriple;
+import static org.fcrepo.kernel.utils.iterators.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.utils.iterators.ManagedRdf.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
@@ -103,10 +102,9 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
         };
         // we knock out managed RDF and non-Fedora RDF
-
         this.stream =
-            new RdfStream(filter(stream, and(not(isManagedTriple),
-                    isFedoraSubjectTriple))).addNamespaces(stream.namespaces());
+            stream.withThisContext(stream.filter(and(not(isManagedTriple),
+                    isFedoraSubjectTriple)).iterator());
         this.session = session;
     }
 
@@ -129,7 +127,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         // mixins. If it isn't, treat it as a "data" property.
         if (t.getPredicate().equals(type) && t.getObject().isResource()) {
             final Resource mixinResource = t.getObject().asResource();
-            if (!isManagedNamespace.apply(mixinResource.getNameSpace())) {
+            if (!isManagedMixin.apply(mixinResource)) {
                 LOGGER.debug("Operating on node: {} with mixin: {}.",
                         subjectNode, mixinResource);
                 operateOnMixin(mixinResource, subjectNode);

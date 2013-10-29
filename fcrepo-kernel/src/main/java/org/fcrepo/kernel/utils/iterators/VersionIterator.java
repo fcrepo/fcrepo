@@ -23,7 +23,7 @@ import javax.jcr.version.Version;
 import com.google.common.collect.ForwardingIterator;
 
 /**
- * Type-aware iterator to wrap the JCR NodeIterator
+ * Type-aware iterator to wrap the JCR NodeIterator.
  *
  * @author ajs6f
  * @date Apr 20, 2013
@@ -34,7 +34,7 @@ public class VersionIterator extends ForwardingIterator<Version> implements
     private javax.jcr.version.VersionIterator i;
 
     /**
-     * Wrap the NodeIterator with our generic version
+     * Wrap the NodeIterator with our generic version.
      *
      * @param i
      */

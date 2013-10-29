@@ -38,6 +38,9 @@ import javax.jcr.RepositoryException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.graph.Triple;
@@ -121,6 +124,12 @@ public class RdfStreamTest {
     }
 
     @Test
+    public void testVarargsConstructor() {
+        testStream = new RdfStream(triple1, triple2);
+        assertEquals(triple1, testStream.next());
+    }
+
+    @Test
     public void testWithThisContextIterator() {
         testStream.addNamespace(prefix1, uri1);
         final RdfStream testStream2 =
@@ -152,7 +161,7 @@ public class RdfStreamTest {
     }
 
     @Test
-    public void testArrayConcat() {
+    public void testVarargsConcat() {
         when(mockIterator.next()).thenReturn(triple1, triple2);
         testStream.concat(new Triple[]{triple3});
         assertEquals(triple3, testStream.next());
@@ -220,6 +229,45 @@ public class RdfStreamTest {
     }
 
     @Test
+    public void testFilter() {
+        final Predicate<Triple> predicate = new Predicate<Triple>() {
+
+            @Override
+            public boolean apply(final Triple t) {
+                return t.equals(triple);
+            }
+
+        };
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockIterator.next()).thenReturn(triple1, triple2, triple);
+        testStream = testStream.filter(predicate);
+        assertEquals(triple, testStream.next());
+    }
+
+    @Test
+    public void testTransform() {
+
+        final String oneResult = "One result";
+
+        final String otherResult = "The other result";
+
+        final Function<Triple, String> f = new Function<Triple, String>() {
+
+            @Override
+            public String apply(final Triple t) {
+                return t.equals(triple) ? oneResult : otherResult;
+            }
+
+        };
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockIterator.next()).thenReturn(triple1, triple2, triple);
+        final Iterator<String> testIterator = testStream.transform(f);
+        assertEquals(otherResult, testIterator.next());
+        assertEquals(otherResult, testIterator.next());
+        assertEquals(oneResult, testIterator.next());
+    }
+
+    @Test
     public void testCanContinue() {
         when(mockIterator.hasNext()).thenReturn(true).thenThrow(
                 new RuntimeException("Expected.")).thenReturn(true);
@@ -242,5 +290,12 @@ public class RdfStreamTest {
         when(differentMockIterator.next()).thenReturn(triple);
         testStreamToCompare = new RdfStream(differentMockIterator);
         assertNotEquals(testStream, testStreamToCompare);
+    }
+
+    @Test
+    public void testHashCode() {
+        final RdfStream testStreamToCompare = new RdfStream(mockIterator);
+        testStreamToCompare.addNamespace(prefix1, uri1);
+        assertNotEquals(testStream.hashCode(), testStreamToCompare.hashCode());
     }
 }

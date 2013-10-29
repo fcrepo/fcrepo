@@ -17,8 +17,6 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
@@ -112,7 +110,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
             // add triples describing storage of content child
             lowLevelStorageService().setRepository(
                     node().getSession().getRepository());
-            concat(transform(lowLevelStorageService().getLowLevelCacheEntries(
+            concat(Iterators.transform(lowLevelStorageService().getLowLevelCacheEntries(
                     contentNode).iterator(),
                     new Function<LowLevelCacheEntry, Triple>() {
 
@@ -136,17 +134,17 @@ public class PropertiesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         LOGGER.debug("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
-            filter(new PropertyIterator(n.getProperties()),
+            Iterators.filter(new PropertyIterator(n.getProperties()),
                     not(isBinaryProperty));
 
         final UnmodifiableIterator<Property> nonBinaryPropertiesCopy =
-            filter(new PropertyIterator(n.getProperties()),
+            Iterators.filter(new PropertyIterator(n.getProperties()),
                     not(isBinaryProperty));
 
         return Iterators.concat(new ZippingIterator<>(
-                transform(
+                Iterators.transform(
                     nonBinaryProperties, property2values),
-                transform(
+                Iterators.transform(
                     nonBinaryPropertiesCopy, property2triple)));
 
     }

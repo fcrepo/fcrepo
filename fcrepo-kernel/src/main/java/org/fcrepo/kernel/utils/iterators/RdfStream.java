@@ -18,13 +18,13 @@ package org.fcrepo.kernel.utils.iterators;
 
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.singletonIterator;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -81,8 +81,18 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param triples
      */
-    public <T extends Triple> RdfStream(final T[] triples) {
+    public <T extends Triple> RdfStream(final T... triples) {
         this(Iterators.forArray(triples));
+    }
+
+    /**
+     * Constructor that begins the stream with proffered statements.
+     *
+     * @param statements
+     */
+    public <T extends Statement> RdfStream(final T... statements) {
+        this(Iterators.transform(Iterators.forArray(statements),
+                statement2triple));
     }
 
     /**
@@ -143,7 +153,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @param newTriples Triples to add.
      * @return This object for continued use.
      */
-    public <T extends Triple> RdfStream concat(final T[] newTriples) {
+    public <T extends Triple> RdfStream concat(final T... newTriples) {
         triples = Iterators.concat(Iterators.forArray(newTriples), triples);
         return this;
     }
@@ -181,6 +191,26 @@ public class RdfStream extends ForwardingIterator<Triple> implements
             return this;
         }
         return withThisContext(Iterables.skip(this, skipNum));
+    }
+
+    /**
+     * As {@link Iterables#filter(Iterable, Predicate)} while maintaining context.
+     *
+     * @param predicate
+     * @return
+     */
+    public RdfStream filter(final Predicate<? super Triple> predicate) {
+        return withThisContext(Iterables.filter(this, predicate));
+    }
+
+    /**
+     * As {@link Iterators#transform(Iterator, Function)}.
+     *
+     * @param f
+     * @return
+     */
+    public <ToType> Iterator<ToType> transform(final Function<? super Triple, ToType> f) {
+        return Iterators.transform(this, f);
     }
 
     /**
@@ -225,7 +255,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public static RdfStream fromModel(final Model model) {
-        final Iterator<Triple> triples = transform(model.listStatements(), statement2triple);
+        final Iterator<Triple> triples = Iterators.transform(model.listStatements(), statement2triple);
         return new RdfStream(triples).addNamespaces(model.getNsPrefixMap());
     }
 
@@ -285,6 +315,11 @@ public class RdfStream extends ForwardingIterator<Triple> implements
         } else {
             return false;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return namespaces().hashCode() + 2 * triples.hashCode();
     }
 
 }

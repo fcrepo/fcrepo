@@ -18,7 +18,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.forArray;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -37,6 +36,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -89,7 +89,7 @@ public class NodeRdfContext extends RdfStream {
 
         // add JCR mixins as rdf:type triples
         final Iterator<NodeType> nodeTypes = forArray(node.getMixinNodeTypes());
-        concat(transform(nodeTypes, nodetype2triple()));
+        concat(Iterators.transform(nodeTypes, nodetype2triple()));
     }
 
     /**

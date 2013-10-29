@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
@@ -71,7 +70,7 @@ public class VersionsRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Triple> versionTriples() throws RepositoryException {
-        return Iterators.concat(transform(new VersionIterator(versionHistory
+        return Iterators.concat(Iterators.transform(new VersionIterator(versionHistory
                 .getAllVersions()), version2triples));
     }
 

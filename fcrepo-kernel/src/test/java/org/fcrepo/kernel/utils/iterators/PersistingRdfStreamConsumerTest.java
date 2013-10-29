@@ -16,26 +16,34 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.RdfLexicon.PAGE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.slf4j.Logger;
 
+import com.google.common.collect.ObjectArrays;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -43,114 +51,69 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 public class PersistingRdfStreamConsumerTest {
 
-    @Mock
-    private Session mockSession;
-
-    @Mock
-    private Node mockNode;
-
-    @Mock
-    private GraphSubjects mockGraphSubjects;
-
-    @Mock
-    private RdfStream mockStream;
-
-    private PersistingRdfStreamConsumer testPersister;
-
-    private boolean successfullyOperatedOnAProperty = false;
-
-    private boolean successfullyOperatedOnAMixin = false;
-
-    private static final Model m = createDefaultModel();
-
-    private static final Triple propertyTriple = create(createAnon(),
-            createAnon(), createAnon());
-
-    private static final Statement propertyStatement = m
-            .asStatement(propertyTriple);
-
-    private static final Triple badMixinTriple = create(createAnon(),
-            type.asNode(), createLiteral("mixin:mixin"));
-
-    private static final Statement badMixinStatement = m.asStatement(badMixinTriple);
-
-    private static final Triple mixinTriple = create(createAnon(),
-            type.asNode(), createURI("myNS:mymixin"));
-
-    private static final Statement mixinStatement = m.asStatement(mixinTriple);
-
-
-    private static final Triple foreignTriple = create(createAnon(),
-            createAnon(), createAnon());
-
-    private static final Statement foreignStatement = m.asStatement(foreignTriple);
-
-
-    @Before
-    public void setUp() throws RepositoryException {
-        initMocks(this);
-
-    }
-
     @Test
     public void testConsumeAsync() throws Exception {
-        when(mockStream.hasNext()).thenReturn(true, true, true, true, false);
-        when(mockStream.next()).thenReturn(propertyTriple, mixinTriple,
-                foreignTriple, badMixinTriple);
-        when(
-                mockGraphSubjects.getNodeFromGraphSubject(propertyStatement
-                        .getSubject())).thenReturn(mockNode);
-        when(
-                mockGraphSubjects.getNodeFromGraphSubject(mixinStatement
-                        .getSubject())).thenReturn(mockNode);
-        when(
-                mockGraphSubjects.getNodeFromGraphSubject(foreignStatement
-                        .getSubject())).thenReturn(mockNode);
-        when(
-                mockGraphSubjects.getNodeFromGraphSubject(badMixinStatement
-                        .getSubject())).thenReturn(mockNode);
-        when(
-                mockGraphSubjects.isFedoraGraphSubject(propertyStatement
-                        .getSubject())).thenReturn(true);
-        when(
-                mockGraphSubjects.isFedoraGraphSubject(mixinStatement
-                        .getSubject())).thenReturn(true);
-        when(
-                mockGraphSubjects.isFedoraGraphSubject(foreignStatement
-                        .getSubject())).thenReturn(false);
-        when(
-                mockGraphSubjects.isFedoraGraphSubject(badMixinStatement
-                        .getSubject())).thenReturn(true);
+
+        final RdfStream testStream = new RdfStream(profferedStatements);
+
+        final Set<Statement> rejectedStatements =
+            newHashSet(profferedStatements);
+        final Set<Statement> acceptedStatements = newHashSet();
+
+        final Set<Resource> rejectedMixins = newHashSet(profferedMixins);
+        final Set<Resource> acceptedMixins = newHashSet();
 
         testPersister =
-            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, mockStream) {
+            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, testStream) {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
                     final Node subjectNode) throws RepositoryException {
-                    successfullyOperatedOnAProperty = true;
+                    rejectedStatements.remove(s);
+                    acceptedStatements.add(s);
                 }
 
                 @Override
                 protected void operateOnMixin(final Resource mixinResource,
                         final Node subjectNode) throws RepositoryException {
-                    successfullyOperatedOnAMixin = true;
+                    rejectedMixins.remove(mixinResource);
+                    acceptedMixins.add(mixinResource);
                 }
             };
 
         testPersister.consumeAsync();
-        assertTrue("Didn't successfully operate on a property!",
-                successfullyOperatedOnAProperty);
 
-        assertTrue("Didn't successfully operate on a mixin!",
-                successfullyOperatedOnAMixin);
+        assertTrue("Failed to operate on ordinary property!",
+                acceptedStatements.contains(propertyStatement)
+                        && !rejectedStatements.contains(propertyStatement));
+
+        assertTrue("Wrongly operated on managed property!",
+                !acceptedStatements.contains(managedPropertyStatement)
+                        && rejectedStatements.contains(managedPropertyStatement));
+
+        assertTrue("Wrongly operated on foreign property!",
+                !acceptedStatements.contains(foreignStatement)
+                        && rejectedStatements.contains(foreignStatement));
+
+        assertTrue("Wrongly operated on managed mixin!", !acceptedMixins
+                .contains(managedMixinStatement.getObject().asResource())
+                && rejectedMixins.contains(managedMixinStatement.getObject()
+                        .asResource()));
+
+        assertTrue("Failed to operate on ordinary mixin!", acceptedMixins
+                .contains(mixinStatement.getObject().asResource())
+                && !rejectedMixins.contains(mixinStatement.getObject()
+                        .asResource()));
+
     }
 
     @Test(expected = ExecutionException.class)
     public void testBadStream() throws Exception {
-        when(mockStream.hasNext()).thenThrow(new RuntimeException("Expected."));
+        when(mockTriples.hasNext())
+                .thenThrow(new RuntimeException("Expected."));
         testPersister =
-                new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, mockStream) {
+            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession,
+                    new RdfStream(mockTriples)) {
 
                     @Override
                     protected void operateOnProperty(final Statement s,
@@ -165,6 +128,84 @@ public class PersistingRdfStreamConsumerTest {
         // this should blow out when we try to retrieve the result
         testPersister.consumeAsync().get();
     }
+
+    @Before
+    public void setUp() throws RepositoryException {
+        initMocks(this);
+
+        for (final Statement fedoraStatement : fedoraStatements) {
+            when(
+                    mockGraphSubjects.getNodeFromGraphSubject(fedoraStatement
+                            .getSubject())).thenReturn(mockNode);
+            when(
+                    mockGraphSubjects.isFedoraGraphSubject(fedoraStatement
+                            .getSubject())).thenReturn(true);
+        }
+        when(
+                mockGraphSubjects.getNodeFromGraphSubject(foreignStatement
+                        .getSubject())).thenReturn(mockNode);
+        when(
+                mockGraphSubjects.isFedoraGraphSubject(foreignStatement
+                        .getSubject())).thenReturn(false);
+    }
+
+
+    private static final Model m = createDefaultModel();
+
+    private static final Triple propertyTriple = create(createAnon(),
+            createAnon(), createAnon());
+
+    private static final Statement propertyStatement = m
+            .asStatement(propertyTriple);
+
+    private static final Triple managedPropertyTriple = create(createAnon(),
+            PAGE.asNode(), createAnon());
+
+    private static final Statement managedPropertyStatement = m
+            .asStatement(managedPropertyTriple);
+
+    private static final Triple managedMixinTriple = create(createAnon(), type
+            .asNode(), createURI(RESTAPI_NAMESPACE + "mixin"));
+
+    private static final Statement managedMixinStatement = m.asStatement(managedMixinTriple);
+
+    private static final Triple mixinTriple = create(createAnon(),
+            type.asNode(), createURI("myNS:mymixin"));
+
+    private static final Statement mixinStatement = m.asStatement(mixinTriple);
+
+
+    private static final Triple foreignTriple = create(createAnon(),
+            createAnon(), createAnon());
+
+    private static final Statement foreignStatement = m.asStatement(foreignTriple);
+
+    private static final Statement[] fedoraStatements = new Statement[] {
+            propertyStatement, managedPropertyStatement, mixinStatement,
+            managedMixinStatement};
+
+    private static final Statement[] profferedStatements = ObjectArrays
+            .concat(fedoraStatements, foreignStatement);
+
+    private final static Resource[] profferedMixins = new Resource[] {
+            mixinStatement.getObject().asResource(),
+            managedMixinStatement.getObject().asResource()};
+
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Node mockNode;
+
+    @Mock
+    private GraphSubjects mockGraphSubjects;
+
+    @Mock
+    private Iterator<Triple> mockTriples;
+
+    private PersistingRdfStreamConsumer testPersister;
+
+    private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumerTest.class);
 
 
 }
