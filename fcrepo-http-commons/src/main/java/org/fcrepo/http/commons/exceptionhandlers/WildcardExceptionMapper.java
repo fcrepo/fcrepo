@@ -20,6 +20,7 @@ import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.jcr.security.AccessControlException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -47,6 +48,17 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
                     "WebApplicationException intercepted by WildcardExceptionMapper: \n",
                     e);
             return ((WebApplicationException) e).getResponse();
+        }
+
+        if (java.security.AccessControlException.class.isAssignableFrom(e
+                .getClass())) {
+            return new AccessControlExceptionMapper()
+                    .toResponse((java.security.AccessControlException) e);
+        }
+
+        if (AccessControlException.class.isAssignableFrom(e.getClass())) {
+            return new AccessControlExceptionMapper()
+                    .toResponse((AccessControlException) e);
         }
 
         if (e.getCause() instanceof TransactionMissingException) {

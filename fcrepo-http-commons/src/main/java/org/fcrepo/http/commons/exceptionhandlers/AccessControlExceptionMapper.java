@@ -45,4 +45,15 @@ public class AccessControlExceptionMapper implements
         return status(FORBIDDEN).build();
     }
 
+    /**
+     * @param e
+     * @return
+     */
+    public Response toResponse(final java.security.AccessControlException e) {
+        logger.debug("AccessControlExceptionMapper intercepted exception: \n",
+                e);
+
+        return status(FORBIDDEN).build();
+    }
+
 }
