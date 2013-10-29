@@ -22,7 +22,7 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.filter;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.utils.iterators.UnmanagedRdfStream.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -129,7 +129,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         // mixins. If it isn't, treat it as a "data" property.
         if (t.getPredicate().equals(type) && t.getObject().isResource()) {
             final Resource mixinResource = t.getObject().asResource();
-            if (!mixinResource.getNameSpace().equals(RESTAPI_NAMESPACE)) {
+            if (!isManagedNamespace.apply(mixinResource.getNameSpace())) {
                 LOGGER.debug("Operating on node: {} with mixin: {}.",
                         subjectNode, mixinResource);
                 operateOnMixin(mixinResource, subjectNode);

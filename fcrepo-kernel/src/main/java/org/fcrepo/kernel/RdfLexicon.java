@@ -39,7 +39,11 @@ public final class RdfLexicon {
     public static final String REPOSITORY_NAMESPACE =
             "http://fedora.info/definitions/v4/repository#";
 
+    /**
+     *  The core JCR namespace.
+     */
     public static final String JCR_NAMESPACE = "http://www.jcp.org/jcr/1.0";
+
 
     /**
      * REST API namespace "fedora", used for internal API links and node
@@ -48,6 +52,18 @@ public final class RdfLexicon {
     **/
     public static final String RESTAPI_NAMESPACE =
             "http://fedora.info/definitions/v4/rest-api#";
+
+    /**
+     * The namespaces that the repository manages internally.
+     */
+    public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
+            REPOSITORY_NAMESPACE, JCR_NAMESPACE);
+
+    /**
+     * Is this namespace one that the repository manages?
+     */
+    public static final Predicate<String> isManagedNamespace =
+        in(managedNamespaces);
 
     /**
      * Relations (RELS-EXT) namespace "fedorarelsext", used for linking
