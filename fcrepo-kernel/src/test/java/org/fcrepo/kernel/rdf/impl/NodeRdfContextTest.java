@@ -112,6 +112,15 @@ public class NodeRdfContextTest {
                 mockNodeSubject, type, expectedRdfType));
     }
 
+    @Test(expected = RuntimeException.class)
+    public void testBadRepository() throws RepositoryException {
+        when(mockNamespaceRegistry.getURI("jcr")).thenThrow(
+                new RepositoryException("Expected."));
+        new NodeRdfContext(mockNode, mockGraphSubjects,
+                    mockLowLevelStorageService).asModel();
+
+    }
+
     private void logRdf(final String message, final Model model) throws IOException {
         LOGGER.debug(message);
         try (Writer w = new StringWriter()) {
