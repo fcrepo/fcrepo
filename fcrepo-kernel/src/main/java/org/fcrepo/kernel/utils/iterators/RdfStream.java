@@ -81,6 +81,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param triples
      */
+    @SafeVarargs
     public <T extends Triple> RdfStream(final T... triples) {
         this(Iterators.forArray(triples));
     }
@@ -90,6 +91,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param statements
      */
+    @SafeVarargs
     public <T extends Statement> RdfStream(final T... statements) {
         this(Iterators.transform(Iterators.forArray(statements),
                 statement2triple));

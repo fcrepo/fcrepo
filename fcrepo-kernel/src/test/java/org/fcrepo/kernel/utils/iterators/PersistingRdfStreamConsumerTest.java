@@ -27,8 +27,6 @@ import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -41,8 +39,6 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.slf4j.Logger;
-
 import com.google.common.collect.ObjectArrays;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -204,8 +200,5 @@ public class PersistingRdfStreamConsumerTest {
     private Iterator<Triple> mockTriples;
 
     private PersistingRdfStreamConsumer testPersister;
-
-    private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumerTest.class);
-
 
 }
