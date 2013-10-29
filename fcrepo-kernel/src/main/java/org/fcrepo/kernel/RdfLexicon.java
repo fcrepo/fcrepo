@@ -303,7 +303,7 @@ public final class RdfLexicon {
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate = or(
-            in(managedProperties), hasJcrNamespace, hasFedoraNamespace);
+            in(managedProperties), or(hasJcrNamespace, hasFedoraNamespace));
 
     private RdfLexicon() {
 
