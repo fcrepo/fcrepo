@@ -45,6 +45,7 @@ import com.google.common.collect.ObjectArrays;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 public class PersistingRdfStreamConsumerTest {
@@ -176,11 +177,10 @@ public class PersistingRdfStreamConsumerTest {
     private static final Statement fedoraManagedPropertyStatement = m
             .asStatement(fedoraManagedPropertyTriple);
 
-    private static final Triple jcrManagedPropertyTriple = create(createAnon(),
-            createURI(JCR_NAMESPACE + "thing"), createAnon());
-
-    private static final Statement jcrManagedPropertyStatement = m
-            .asStatement(jcrManagedPropertyTriple);
+    private static final Statement jcrManagedPropertyStatement =
+        ResourceFactory.createStatement(ResourceFactory.createResource(),
+                ResourceFactory.createProperty(JCR_NAMESPACE, "thing"),
+                ResourceFactory.createResource());
 
     private static final Triple managedMixinTriple = create(createAnon(), type
             .asNode(), createURI(RESTAPI_NAMESPACE + "mixin"));

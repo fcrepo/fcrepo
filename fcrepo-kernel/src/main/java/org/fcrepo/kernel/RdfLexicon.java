@@ -19,7 +19,6 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.or;
 import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-
 import java.util.Set;
 
 import com.google.common.base.Predicate;
@@ -284,7 +283,7 @@ public final class RdfLexicon {
 
             @Override
             public boolean apply(final Property p) {
-                return p.getNameSpace() == JCR_NAMESPACE;
+                return !p.isAnon() && p.getNameSpace().equals(JCR_NAMESPACE);
 
             }
         };
@@ -294,7 +293,8 @@ public final class RdfLexicon {
 
             @Override
             public boolean apply(final Property p) {
-                return p.getNameSpace() == REPOSITORY_NAMESPACE;
+                return !p.isAnon()
+                        && p.getNameSpace().equals(REPOSITORY_NAMESPACE);
 
             }
         };
@@ -303,7 +303,7 @@ public final class RdfLexicon {
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate = or(
-            in(managedProperties), or(hasJcrNamespace, hasFedoraNamespace));
+            in(managedProperties), hasJcrNamespace, hasFedoraNamespace);
 
     private RdfLexicon() {
 
