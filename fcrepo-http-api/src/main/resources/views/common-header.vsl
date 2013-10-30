@@ -1,6 +1,6 @@
 #* @vtlvariable name="uriInfo" type="javax.ws.rs.core.UriInfo" *#
 
-<nav class="navbar navbar-default" role="navigation">
+<nav class="navbar navbar-default navbar-static-top" role="navigation">
     <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
             <span class="sr-only">Toggle navigation</span>
@@ -20,7 +20,7 @@
         </ul>
         <form class="navbar-form navbar-left" role="search" method="GET" action="$uriInfo.baseUriBuilder.build()fcr:search">
             <div class="form-group">
-                <input class="search-query" type="text" name="q" placeholder="Search"/>
+                <input class="form-control" type="text" name="q" placeholder="Search"/>
             </div>
             <button type="submit" class="btn btn-default">Search</button>
         </form>

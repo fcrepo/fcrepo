@@ -16,11 +16,23 @@
 
 
     <div class="row">
-        <div class="col-md-9">
 
-
+        <div class="col-md-12">
             #parse("views/common-breadcrumb.vsl")
+        </div>
 
+        <div class="col-md-3 col-md-push-9 clearfix">
+            <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
+                <span>Toggle actions</span>
+            </button>
+
+        ## output actions
+            <div class="actions collapse visible-lg visible-md" id="actions">
+                #parse("views/common-node-actions.vsl")
+            </div>
+        </div>
+
+        <div class="col-md-9 col-md-pull-3">
 
             #parse("views/common-metadata.vsl")
 
@@ -42,12 +54,6 @@
             #end
         </div>
 
-        <div class="col-md-3">
-        ## output actions
-            <div class="actions">
-                #parse("views/common-node-actions.vsl")
-            </div>
-        </div>
 
     </div>
 

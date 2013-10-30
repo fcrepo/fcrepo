@@ -1,23 +1,30 @@
 
 <form id="action_create">
     <h3>Create New Node</h3>
-    <label>
+    <div class="form-group">
+    <label for="new_mixin" class="control-label">
         Type
-    <select id="new_mixin">
+    </label>
+    <select id="new_mixin" class="form-control">
         <option value="fedora:object">object</option>
         <option value="fedora:datastream">datastream</option>
     </select>
-    </label>
-    <label>
+        </div>
+
+    <div class="form-group">
+    <label for="new_id"  class="control-label">
         Identifier
-    <input type="text" id="new_id" placeholder="(auto-generated identifier)"/>
     </label>
+    <input type="text" id="new_id" placeholder="(auto-generated identifier)"  class="form-control"/>
+        </div>
 
 
-    <label id="datastream_payload_container" for="datastream_payload">
+    <div  id="datastream_payload_container" class="form-group">
+    <label for="datastream_payload"  class="control-label">
         File
-    <input type="file" id="datastream_payload"/>
     </label>
+    <input type="file" id="datastream_payload"/>
+    </div>
     <button type="submit" class="btn btn-primary">Add</button>
     <hr />
 </form>
@@ -25,12 +32,14 @@
 
 <form id="action_sparql_update">
     <h3>Update Properties</h3>
-    <textarea class="span3" rows="10" id="sparql_update_query" name="query">
+    <div class="form-group">
+    <textarea rows="10" id="sparql_update_query" name="query" class="form-control">
 $helpers.getPrefixPreamble($model)
 DELETE { }
 INSERT { }
 WHERE { }
  </textarea>
+    </div>
     <button type="submit" class="btn btn-primary">Update</button>
     <hr />
 </form>
@@ -48,7 +57,7 @@ WHERE { }
 #if($serializations.hasNext())
 <div class="btn-group">
     <div class="dropdown">
-        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
             Export as...
             <span class="caret"></span>
         </a>
@@ -70,13 +79,19 @@ WHERE { }
 <form id="action_import">
 <h3>Import</h3>
 
-<input type="file" id="import_file"/>
 
-    <select id="import_format" name="format">
+    <div class="form-group">
+<input type="file" id="import_file"/>
+    </div>
+
+    <div class="form-group">
+    <label class="control-label">Format</label>
+    <select id="import_format" name="format" class="form-control">
         #foreach($quad in $helpers.getSortedTriples($model, $serializations))
             <option>$helpers.getObjectTitle($rdf, $quad.getObject())</option>
         #end
     </select>
+        </div>
     <button type="submit" class="btn">Import</button>
 </form>
 
