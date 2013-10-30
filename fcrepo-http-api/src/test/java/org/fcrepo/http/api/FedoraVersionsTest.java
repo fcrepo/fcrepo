@@ -24,7 +24,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -120,10 +119,13 @@ public class FedoraVersionsTest {
         when(
                 mockNodes.getObject(any(Session.class), any(String.class),
                         any(String.class))).thenReturn(mockResource);
-        testObj.getVersion(createPathList(pid), versionLabel, TestHelpers
+        when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
+                mockVariant);
+        when(mockVariant.getMediaType()).thenReturn(
+                new MediaType("text", "turtle"));
+        testObj.getVersion(createPathList(pid), versionLabel, mockRequest, TestHelpers
                 .getUriInfoImpl());
-        verify(mockResource).getPropertiesDataset(any(HttpGraphSubjects.class),
-                anyInt(), anyInt());
+        verify(mockResource).getTriples(any(HttpGraphSubjects.class));
     }
 
 }

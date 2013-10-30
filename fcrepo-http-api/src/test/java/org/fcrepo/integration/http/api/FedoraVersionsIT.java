@@ -18,10 +18,10 @@ package org.fcrepo.integration.http.api;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 public class FedoraVersionsIT extends AbstractResourceIT {
@@ -32,7 +32,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final HttpGet method =
             new HttpGet(serverAddress + "FedoraDatastreamsTest1/fcr:versions");
         final HttpResponse resp = execute(method);
-        assertEquals(200, resp.getStatusLine().getStatusCode());
+        final String profile = EntityUtils.toString(resp.getEntity());
+        assertEquals("Failed to retrieve version profile!\n" + profile, 200,
+                resp.getStatusLine().getStatusCode());
+        logger.debug("Retrieved version profile: \n{}", profile);
     }
 
     @Test
@@ -48,9 +51,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             new HttpGet(serverAddress
                     + "FedoraVersioningTest2/fcr:versions/v0.0.1");
         final HttpResponse resp = execute(getVersion);
-        assertEquals(200, resp.getStatusLine().getStatusCode());
-        logger.info("Got version profile: {}", IOUtils.toString(resp
-                .getEntity().getContent()));
+        final String version = EntityUtils.toString(resp.getEntity());
+        assertEquals("Failed to retrieve new version!\n" + version, 200, resp
+                .getStatusLine().getStatusCode());
+        logger.info("Got version profile: {}", version);
     }
 
     @Test

@@ -16,7 +16,9 @@
 
 package org.fcrepo.http.api;
 
+import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -49,14 +51,13 @@ import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
+import org.fcrepo.http.commons.responses.RdfStreamStreamingOutput;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.utils.LogoutCallback;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * Endpoint for retrieving previous versions of nodes
@@ -97,21 +98,17 @@ public class FedoraVersions extends AbstractResource {
         final Variant bestPossibleResponse =
                 request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-        try {
-            final FedoraResource resource =
-                    nodeService.getObject(session, path);
+        final FedoraResource resource = nodeService.getObject(session, path);
 
-            return Response.ok(
-                    new GraphStoreStreamingOutput(resource
-                            .getVersionTriples(new HttpGraphSubjects(session,
-                                                                        FedoraNodes.class,
-                                                                        uriInfo)),
-                            bestPossibleResponse.getMediaType())).build();
+        final RdfStreamStreamingOutput streamOutput =
+            new RdfStreamStreamingOutput(resource
+                    .getVersionTriples(new HttpGraphSubjects(session,
+                            FedoraVersions.class, uriInfo)),
+                    bestPossibleResponse.getMediaType(), session);
 
-        } finally {
-            session.logout();
-        }
+        addCallback(streamOutput, new LogoutCallback(session));
 
+        return ok(streamOutput).build();
     }
 
     /**
@@ -153,31 +150,37 @@ public class FedoraVersions extends AbstractResource {
     @Path("/{versionLabel}")
     @GET
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
-    public Dataset getVersion(@PathParam("path")
+    public Response getVersion(@PathParam("path")
             final List<PathSegment> pathList,
             @PathParam("versionLabel")
             final String versionLabel,
+            @Context
+            final Request request,
             @Context
             final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
         LOGGER.trace("getting version profile for {} at version {}", path,
                 versionLabel);
 
-        try {
-            final FedoraResource resource =
-                    nodeService.getObject(session, path, versionLabel);
+        final FedoraResource resource =
+            nodeService.getObject(session, path, versionLabel);
 
-            if (resource == null) {
-                throw new WebApplicationException(status(NOT_FOUND).build());
-            } else {
+        if (resource == null) {
+            throw new WebApplicationException(status(NOT_FOUND).build());
+        } else {
 
-                return resource.getPropertiesDataset(new HttpGraphSubjects(
-                        session, FedoraNodes.class, uriInfo), 0, -1);
-            }
+            final Variant bestPossibleResponse =
+                request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-        } finally {
-            session.logout();
+            final RdfStreamStreamingOutput streamOutput =
+                new RdfStreamStreamingOutput(resource
+                        .getTriples(new HttpGraphSubjects(session,
+                                FedoraVersions.class, uriInfo)),
+                        bestPossibleResponse.getMediaType(), session);
+
+            addCallback(streamOutput, new LogoutCallback(session));
+
+            return ok(streamOutput).build();
         }
-
     }
 }
