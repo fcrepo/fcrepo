@@ -115,6 +115,8 @@
           <systemPropertyVariables>
             <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
+            <jms.port>${jms.port}</jms.port>
+            <stomp.port>${stomp.port}</stomp.port>
             <integration-test>true</integration-test>
           </systemPropertyVariables>
         </configuration>
@@ -127,6 +129,8 @@
             <portName>test.port</portName>
             <!-- reserves the stop port for jetty-maven-plugin -->
             <portName>jetty.port.stop</portName>
+            <portName>jms.port</portName>
+            <portName>stomp.port</portName>
           </portNames>
         </configuration>
       </plugin>
@@ -163,6 +167,16 @@
             <systemProperty>
               <name>fcrepo.activemq.dir</name>
               <value>${project.build.directory}/active-mq</value>
+            </systemProperty>
+
+            <systemProperty>
+              <name>jms.port</name>
+              <value>${jms.port}</value>
+            </systemProperty>
+
+            <systemProperty>
+              <name>stomp.port</name>
+              <value>${stomp.port}</value>
             </systemProperty>
 
             <systemProperty>
