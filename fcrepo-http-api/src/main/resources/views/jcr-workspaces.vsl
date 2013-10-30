@@ -14,7 +14,7 @@
     #parse("views/common-header.vsl")
 
     <div class="row">
-<div class="span9">
+<div class="col-md-9">
 <h1>Workspaces</h1>
 
 ## output other nodes
