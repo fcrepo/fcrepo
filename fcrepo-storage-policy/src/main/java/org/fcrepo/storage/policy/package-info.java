@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 /**
- This package provides functionality for auditing Fedora events. An <code> Auditor</code> records auditable Fedora events.
- Currently the implementation registers itself to Google Guava
- <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/eventbus/EventBus.html">EventBus</a>
- and uses Logback framework.
+This package provides functionality for registering storage policies for
+different node types. It also provides a service that records Fedora wide
+storage policies and produces storage hints for streams.
  */
 
-package org.fcrepo.audit;
+package org.fcrepo.storage.policy;

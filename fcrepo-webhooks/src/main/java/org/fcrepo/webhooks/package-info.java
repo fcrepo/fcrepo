@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 /**
- This package provides functionality for auditing Fedora events. An <code> Auditor</code> records auditable Fedora events.
- Currently the implementation registers itself to Google Guava
- <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/eventbus/EventBus.html">EventBus</a>
- and uses Logback framework.
- */
+This package provides functionality for managing web hooks. Web hooks are HTTP
+callbacks, and allow for event-based trigger mechanism. An external application can
+choose to be notified when an event takes place. Upon receiving a
+<code>FedoraEvent</code>, webhooks callbacks registered for the resource are triggered.
+*/
 
-package org.fcrepo.audit;
+package org.fcrepo.webhooks;

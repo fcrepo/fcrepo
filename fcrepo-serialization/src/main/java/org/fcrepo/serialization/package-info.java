@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 /**
- This package provides functionality for auditing Fedora events. An <code> Auditor</code> records auditable Fedora events.
- Currently the implementation registers itself to Google Guava
- <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/eventbus/EventBus.html">EventBus</a>
- and uses Logback framework.
- */
+This package provides serialization capability. A {@link org.fcrepo.kernel.FedoraObject FedoraObject} can
+be serialized to an XML stream. A {@link org.fcrepo.serialization.FedoraObjectSerializer
+FedoraObjectSerializer} is responsible for the serialization mechanism.
+*/
 
-package org.fcrepo.audit;
+package org.fcrepo.serialization;

@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 /**
- This package provides functionality for auditing Fedora events. An <code> Auditor</code> records auditable Fedora events.
- Currently the implementation registers itself to Google Guava
- <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/eventbus/EventBus.html">EventBus</a>
- and uses Logback framework.
- */
+This package provides a RESTful API for several content management and
+core repository services.
 
-package org.fcrepo.audit;
+<ul>
+      <li>Fixity Service</li>
+      <li>Contract for repository management services (e.g. backup/restore)</li>
+      <li>Sitemap</li>
+      <li>Controllers for manipulating object and data streams</li>
+</ul>
+*/
+
+package org.fcrepo.http.api;

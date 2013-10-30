@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 /**
- This package provides functionality for auditing Fedora events. An <code> Auditor</code> records auditable Fedora events.
- Currently the implementation registers itself to Google Guava
- <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/eventbus/EventBus.html">EventBus</a>
- and uses Logback framework.
- */
+This package provides abstractions for different types of transforms, e.g for
+<a href="http://www.w3.org/DesignIssues/LinkedData.html"> LinkedData </a> and
+<a href="http://www.w3.org/TR/rdf-sparql-query/">SPARQL</a>.
+*/
 
-package org.fcrepo.audit;
+package org.fcrepo.transform;

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 /**
- This package provides functionality for auditing Fedora events. An <code> Auditor</code> records auditable Fedora events.
- Currently the implementation registers itself to Google Guava
- <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/eventbus/EventBus.html">EventBus</a>
- and uses Logback framework.
- */
+This package provides web syndication capability. An RSS feed for fedora wide events
+can be obtained by calling the appropriate RESTful interface.
+*/
 
-package org.fcrepo.audit;
+package org.fcrepo.syndication;
