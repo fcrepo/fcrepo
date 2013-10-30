@@ -15,7 +15,7 @@
     #parse("views/common-node-header.vsl")
 
     <div class="row">
-        <div class="span9">
+        <div class="col-md-9">
 
 
             #parse("views/common-breadcrumb.vsl")
@@ -46,7 +46,7 @@
             #end
         </div>
 
-        <div class="span3">
+        <div class="col-md-3">
         ## output actions
     ## output actions
     <div class="actions">
