@@ -16,13 +16,18 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -38,6 +43,8 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.hp.hpl.jena.rdf.model.Model;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/spring-test/test-container.xml")
@@ -116,6 +123,17 @@ public abstract class AbstractResourceIT {
             logger.warn(EntityUtils.toString(response.getEntity()));
         }
         return result;
+    }
+
+    protected Model extract(final String serialization) throws IOException {
+        logger.debug("Reading RDF:\n{}", serialization);
+        try (
+
+            final InputStream rdf =
+                new ByteArrayInputStream(serialization.getBytes(Charset
+                        .forName("UTF8")))) {
+            return createDefaultModel().read(rdf, null);
+        }
     }
 
 }

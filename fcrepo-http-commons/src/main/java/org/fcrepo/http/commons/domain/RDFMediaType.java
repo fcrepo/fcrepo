@@ -78,9 +78,8 @@ public abstract class RDFMediaType extends MediaType {
     public static final MediaType NQUADS_TYPE = typeFromString(NQUADS);
 
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
-            N3_TYPE, N3_ALT1_TYPE, N3_ALT2_TYPE, TURTLE_TYPE, RDF_XML_TYPE,
-            RDF_JSON_TYPE, NTRIPLES_TYPE, TRI_G_TYPE, NQUADS_TYPE).add()
-            .build();
+            RDF_XML_TYPE, NTRIPLES_TYPE, TURTLE_TYPE, RDF_JSON_TYPE, N3_TYPE,
+            N3_ALT1_TYPE, N3_ALT2_TYPE, TRI_G_TYPE, NQUADS_TYPE).add().build();
 
     private static MediaType typeFromString(final String type) {
         return new MediaType(type.split("/")[0], type.split("/")[1]);
