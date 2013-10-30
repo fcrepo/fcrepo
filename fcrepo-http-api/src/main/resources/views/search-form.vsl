@@ -15,7 +15,7 @@
 
 ## output actions
 <div class="actions">
-    <form class="form-search" method="GET">
+    <form class="form-search" method="GET" role="search">
         <div class="input-append">
             <input class="search-query" type="text" name="q" />
             <button type="submit" class="btn">Search</button>

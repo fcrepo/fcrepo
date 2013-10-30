@@ -47,16 +47,18 @@ WHERE { }
 
 #if($serializations.hasNext())
 <div class="btn-group">
-    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-        Export as...
-        <span class="caret"></span>
-    </a>
+    <div class="dropdown">
+        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+            Export as...
+            <span class="caret"></span>
+        </a>
 
-    <ul class="dropdown-menu">
-    #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-      <li><a href="$quad.getObject().getURI()">$helpers.getObjectTitle($rdf, $quad.getObject())</a></li>
-    #end
-    </ul>
+        <ul class="dropdown-menu">
+        #foreach($quad in $helpers.getSortedTriples($model, $serializations))
+          <li><a href="$quad.getObject().getURI()">$helpers.getObjectTitle($rdf, $quad.getObject())</a></li>
+        #end
+        </ul>
+    </div>
 </div>
 <hr />
 #end
