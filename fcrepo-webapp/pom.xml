@@ -159,6 +159,8 @@
           <systemPropertyVariables>
             <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
+            <jms.port>${jms.port}</jms.port>
+            <stomp.port>${stomp.port}</stomp.port>
             <integration-test>true</integration-test>
           </systemPropertyVariables>
         </configuration>
@@ -171,9 +173,44 @@
             <portName>test.port</portName>
             <!-- reserves the stop port for jetty-maven-plugin -->
             <portName>jetty.port.stop</portName>
+            <portName>jms.port</portName>
+            <portName>stomp.port</portName>
           </portNames>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0-alpha-2</version>
+        <executions>
+          <execution>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>set-system-properties</goal>
+            </goals>
+            <configuration>
+              <properties>
+                <property>
+                  <name>jms.port</name>
+                  <value>${jms.port}</value>
+                </property>
+
+                <property>
+                  <name>stomp.port</name>
+                  <value>${stomp.port}</value>
+                </property>
+
+                <property>
+                  <name>integration-test</name>
+                  <value>true</value>
+                </property>
+              </properties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
@@ -209,11 +246,6 @@
               <value>${project.build.directory}/active-mq</value>
             </systemProperty>
 
-            <systemProperty>
-              <name>integration-test</name>
-              <value>true</value>
-            </systemProperty>
-
           </systemProperties>
 
         </configuration>
@@ -234,6 +266,24 @@
               </connectors>
               <daemon>true</daemon>
               <stopPort>${jetty.port.stop}</stopPort>
+
+              <systemProperties>
+                <systemProperty>
+                  <name>jms.port</name>
+                  <value>${jms.port}</value>
+                </systemProperty>
+
+                <systemProperty>
+                  <name>stomp.port</name>
+                  <value>${stomp.port}</value>
+                </systemProperty>
+
+                <systemProperty>
+                  <name>integration-test</name>
+                  <value>true</value>
+                </systemProperty>
+              </systemProperties>
+
             </configuration>
           </execution>
           <execution>

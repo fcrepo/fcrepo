@@ -15,7 +15,7 @@
 
     <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory"
         depends-on="jmsBroker">
-        <property name="brokerURL" value="vm://localhost?create=false"/>
+        <property name="brokerURL" value="vm://localhost:${jms.port:61616}?create=false"/>
     </bean>
 
     <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean">
