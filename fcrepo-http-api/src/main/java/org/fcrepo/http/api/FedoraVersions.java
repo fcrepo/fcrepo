@@ -104,7 +104,7 @@ public class FedoraVersions extends AbstractResource {
             new RdfStreamStreamingOutput(resource
                     .getVersionTriples(new HttpGraphSubjects(session,
                             FedoraVersions.class, uriInfo)),
-                    bestPossibleResponse.getMediaType(), session);
+                    bestPossibleResponse.getMediaType());
 
         addCallback(streamOutput, new LogoutCallback(session));
 
@@ -176,7 +176,7 @@ public class FedoraVersions extends AbstractResource {
                 new RdfStreamStreamingOutput(resource
                         .getTriples(new HttpGraphSubjects(session,
                                 FedoraVersions.class, uriInfo)),
-                        bestPossibleResponse.getMediaType(), session);
+                        bestPossibleResponse.getMediaType());
 
             addCallback(streamOutput, new LogoutCallback(session));
 

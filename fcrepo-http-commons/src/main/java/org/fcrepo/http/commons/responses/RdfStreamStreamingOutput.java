@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 
-import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
@@ -72,7 +71,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
      * @param mediaType
      */
     public RdfStreamStreamingOutput(final RdfStream rdfStream,
-            final MediaType mediaType, final Session session) {
+            final MediaType mediaType) {
         super();
         this.format = forMIMEType(mediaType.toString(), RDFXML);
         this.rdfStream = rdfStream;
@@ -80,7 +79,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     @Override
     public void write(final OutputStream output) throws IOException,
-                                                WebApplicationException {
+        WebApplicationException {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
             Rio.write(asStatements(), output, format, new WriterConfig());
@@ -125,7 +124,5 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         }
         throw new UnsupportedOperationException(
                 "We do not serialize blank nodes!");
-
     }
-
 }
