@@ -29,7 +29,7 @@ import com.google.common.util.concurrent.FutureCallback;
  * @author ajs6f
  * @date Oct 30, 2013
  */
-public class LogoutCallback implements FutureCallback<Session> {
+public class LogoutCallback implements FutureCallback<Void> {
 
     final Session session;
 
@@ -43,8 +43,8 @@ public class LogoutCallback implements FutureCallback<Session> {
     }
 
     @Override
-    public void onSuccess(final Session s) {
-        s.logout();
+    public void onSuccess(final Void finishedMarker) {
+        session.logout();
 
     }
 

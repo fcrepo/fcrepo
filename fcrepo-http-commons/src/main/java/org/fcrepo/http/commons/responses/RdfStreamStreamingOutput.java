@@ -51,7 +51,7 @@ import com.hp.hpl.jena.graph.Triple;
  * @author ajs6f
  * @date Oct 30, 2013
  */
-public class RdfStreamStreamingOutput extends AbstractFuture<Session> implements
+public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         StreamingOutput {
 
     private static final Logger LOGGER =
@@ -63,13 +63,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Session> implements
 
     private final RdfStream rdfStream;
 
-    /**
-     * This should be passed in as the {@link Session} in which the
-     * {@link RdfStream} to be serialized is rooted. It will be made available
-     * again after serialization for further operation via the {@link Future}
-     * methods.
-     */
-    private final Session session;
+    private static final Void finishedMarker = null;
 
     /**
      * Normal constructor
@@ -82,7 +76,6 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Session> implements
         super();
         this.format = forMIMEType(mediaType.toString(), RDFXML);
         this.rdfStream = rdfStream;
-        this.session = session;
     }
 
     @Override
@@ -95,7 +88,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Session> implements
             setException(e);
         } finally {
             // we're done.
-            set(session);
+            set(finishedMarker);
         }
     }
 

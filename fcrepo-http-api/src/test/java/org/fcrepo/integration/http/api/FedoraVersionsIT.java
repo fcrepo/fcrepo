@@ -16,7 +16,11 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,19 +28,32 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+
 public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectVersionProfile() throws Exception {
-        execute(postObjMethod("FedoraDatastreamsTest1"));
+        final String pid = "FedoraDatastreamsTest1";
+
+        execute(postObjMethod(pid));
         final HttpGet method =
-            new HttpGet(serverAddress + "FedoraDatastreamsTest1/fcr:versions");
+            new HttpGet(serverAddress + pid + "/fcr:versions");
         final HttpResponse resp = execute(method);
         final String profile = EntityUtils.toString(resp.getEntity());
         assertEquals("Failed to retrieve version profile!\n" + profile, 200,
                 resp.getStatusLine().getStatusCode());
-        logger.debug("Retrieved version profile: \n{}", profile);
+        logger.debug("Retrieved version profile:");
+        final Model results = extract(profile);
+        final Resource subject =
+            createResource(serverAddress + pid + "/fcr:versions");
+        assertTrue("Didn't find a version triple!", results.contains(subject,
+                HAS_VERSION, (RDFNode) null));
     }
+
+
 
     @Test
     public void testAddVersion() throws Exception {
@@ -54,7 +71,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String version = EntityUtils.toString(resp.getEntity());
         assertEquals("Failed to retrieve new version!\n" + version, 200, resp
                 .getStatusLine().getStatusCode());
-        logger.info("Got version profile: {}", version);
+        logger.info("Got version profile:");
+        final Model results = extract(version);
+        assertTrue("Found no version!", results.contains(null,
+                HAS_PRIMARY_TYPE, "nt:frozenNode"));
     }
 
     @Test
