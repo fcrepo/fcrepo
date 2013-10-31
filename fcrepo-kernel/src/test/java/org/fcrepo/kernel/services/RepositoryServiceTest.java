@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -263,5 +264,23 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         verify(mockQueryOM).setOffset(0);
         verify(mockQueryOM).execute();
 
+    }
+
+    @Test
+    public void testGetNodeTypes() throws Exception {
+        when(mockNodeTypeManager.getPrimaryNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
+        when(mockNodeTypeManager.getMixinNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
+        testObj.getNodeTypes(mockSession);
+
+        verify(mockNodeTypeManager).getPrimaryNodeTypes();
+        verify(mockNodeTypeManager).getMixinNodeTypes();
+    }
+
+    @Test
+    public void testRegisterNodeTypes() throws Exception {
+        InputStream mockInputStream = mock(InputStream.class);
+        testObj.registerNodeTypes(mockSession, mockInputStream);
+
+        verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);
     }
 }

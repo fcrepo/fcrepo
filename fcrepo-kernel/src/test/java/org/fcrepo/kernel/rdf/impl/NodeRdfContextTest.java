@@ -18,6 +18,7 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -80,8 +81,6 @@ public class NodeRdfContextTest {
 
     private static final Resource mockNodeSubject = createResource();
 
-    private static final String jcrNamespace = "http://www.jcp.org/jcr/1.0";
-
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -95,7 +94,7 @@ public class NodeRdfContextTest {
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
-        when(mockNamespaceRegistry.getURI("jcr")).thenReturn(jcrNamespace);
+        when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
         when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
                 mockNodeSubject);
     }

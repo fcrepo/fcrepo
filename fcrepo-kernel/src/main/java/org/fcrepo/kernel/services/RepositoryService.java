@@ -30,6 +30,8 @@ import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -51,9 +53,11 @@ import javax.jcr.query.qom.Source;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.impl.NodeTypeRdfContext;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Problems;
 import org.modeshape.jcr.api.RepositoryManager;
@@ -320,5 +324,27 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      */
     public void setRepository(final Repository repository) {
         repo = repository;
+    }
+
+    /**
+     *
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getNodeTypes(final Session session) throws RepositoryException {
+        return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());
+    }
+
+    /**
+     *
+     * @param session
+     * @param cndStream
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    public void registerNodeTypes(final Session session, final InputStream cndStream) throws RepositoryException, IOException {
+        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
+        nodeTypeManager.registerNodeTypes(cndStream, true);
     }
 }
