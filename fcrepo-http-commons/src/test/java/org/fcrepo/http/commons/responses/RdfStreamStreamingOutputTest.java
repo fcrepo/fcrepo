@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.util.concurrent.Futures.addCallback;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -22,6 +24,7 @@ import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
@@ -30,18 +33,25 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.rio.RDFHandlerException;
+
+import com.google.common.util.concurrent.FutureCallback;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-
 
 public class RdfStreamStreamingOutputTest {
 
@@ -50,7 +60,13 @@ public class RdfStreamStreamingOutputTest {
     private static final Triple triple = create(createURI("info:testSubject"),
             createURI("info:testPredicate"), createURI("info:testObject"));
 
+    @Mock
+    private Node mockNode;
+
     private RdfStream testRdfStream = new RdfStream(triple);
+
+    @Mock
+    private RdfStream mockRdfStream;
 
     private MediaType testMediaType = valueOf("application/rdf+xml");
 
@@ -90,11 +106,43 @@ public class RdfStreamStreamingOutputTest {
             try (
                 final InputStream resultStream =
                     new ByteArrayInputStream(output.toByteArray())) {
-                final Model result = createDefaultModel().read(resultStream, null);
+                final Model result =
+                    createDefaultModel().read(resultStream, null);
                 assertTrue("Didn't find our test triple!", result
                         .contains(result.asStatement(triple)));
             }
         }
+    }
+
+    @Test
+    public void testWriteWithException() throws IOException {
+
+        final FutureCallback<Void> callback = new FutureCallback<Void>() {
+
+            @Override
+            public void onSuccess(final Void v) {
+                throw new AssertionError("Should never happen!");
+            }
+
+            @Override
+            public void onFailure(final Throwable e) {
+                assertTrue("Got wrong kind of exception!",
+                        e instanceof RDFHandlerException);
+            }
+
+        };
+        addCallback(testRdfStreamStreamingOutput, callback);
+        final OutputStream mockOutputStream =
+            mock(OutputStream.class, new Answer<Object>() {
+
+                @Override
+                public Object answer(final InvocationOnMock invocation)
+                    throws IOException {
+                    throw new IOException("Expected.");
+                }
+            });
+
+        testRdfStreamStreamingOutput.write(mockOutputStream);
     }
 
 }

@@ -36,7 +36,6 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.Rio;
-import org.openrdf.rio.WriterConfig;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
@@ -82,7 +81,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         WebApplicationException {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
-            Rio.write(asStatements(), output, format, new WriterConfig());
+            Rio.write(asStatements(), output, format);
         } catch (final RDFHandlerException e) {
             setException(e);
         } finally {
