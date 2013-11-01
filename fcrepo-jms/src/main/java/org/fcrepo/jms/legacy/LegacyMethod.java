@@ -96,7 +96,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param jcrEvent
      * @param resource
      * @throws RepositoryException
@@ -133,7 +133,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param atomEntry
      */
     public LegacyMethod(final Entry atomEntry) {
@@ -142,7 +142,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param atomEntry
      */
     public LegacyMethod(final String atomEntry) {
@@ -151,7 +151,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @return
      */
     public Entry getEntry() {
@@ -160,7 +160,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param content
      */
     public void setContent(final String content) {
@@ -169,11 +169,11 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param val
      */
-    public void setUserId(String val) {
-        if (val == null) {
+    public void setUserId(final String val) {
+        if (val == null || "<anonymous>".equals(val)) {
             delegate.addAuthor("unknown", null, getBaseURL());
         } else {
             delegate.addAuthor(val, null, getBaseURL());
@@ -182,7 +182,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @return
      */
     public String getUserID() {
@@ -191,7 +191,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param date
      */
     public void setModified(final Date date) {
@@ -200,7 +200,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @return
      */
     public Date getModified() {
@@ -209,7 +209,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param val
      */
     public void setMethodName(final String val) {
@@ -218,18 +218,18 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @return
      */
     public String getMethodName() {
         return delegate.getTitle();
     }
 
-    private void setLabelledCategory(String label, String val) {
+    private void setLabelledCategory(final String label, final String val) {
         final List<Category> vals = delegate.getCategories(FEDORA_ID_SCHEME);
         Category found = null;
         if (vals != null && !vals.isEmpty()) {
-            for (Category c : vals) {
+            for (final Category c : vals) {
                 if (label.equals(c.getLabel())) {
                     found = c.setTerm(val);
                 }
@@ -240,7 +240,7 @@ public class LegacyMethod {
         }
     }
 
-    private String getLabelledCategory(String label) {
+    private String getLabelledCategory(final String label) {
         final List<Category> categories =
                 delegate.getCategories(FEDORA_ID_SCHEME);
         for (final Category c : categories) {
@@ -253,7 +253,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param val
      */
     public void setPid(final String val) {
@@ -263,7 +263,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @return
      */
     public String getPid() {
@@ -272,7 +272,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param val
      */
     public void setDsId(final String val) {
@@ -281,7 +281,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @return
      */
     public String getDsId() {
@@ -292,15 +292,15 @@ public class LegacyMethod {
      * Adds node path as a category
      * @param path
      */
-    private void setPath(String path) {
+    private void setPath(final String path) {
         setLabelledCategory("path", path);
     }
 
     protected String getBaseURL() {
-        StringBuilder url = new StringBuilder();
-        String host = System.getProperty("fcrepo.host", "localhost");
-        String port = System.getProperty("fcrepo.port", "8080");
-        String ctxt = System.getProperty("fcrepo.ctxt", "rest");
+        final StringBuilder url = new StringBuilder();
+        final String host = System.getProperty("fcrepo.host", "localhost");
+        final String port = System.getProperty("fcrepo.port", "8080");
+        final String ctxt = System.getProperty("fcrepo.ctxt", "rest");
 
         url.append(port.equalsIgnoreCase("443") ? "https://" : "http://");
         url.append(host);
@@ -313,7 +313,7 @@ public class LegacyMethod {
 
     /**
      * TODO
-     * 
+     *
      * @param writer
      * @throws IOException
      */
@@ -381,19 +381,14 @@ public class LegacyMethod {
                 return isObjectNode ? INGEST_METHOD : ADD_DS_METHOD;
             case NODE_REMOVED:
                 return isObjectNode ? PURGE_OBJ_METHOD : PURGE_DS_METHOD;
-            case PROPERTY_ADDED:
-                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
-            case PROPERTY_CHANGED:
-                return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
-            case PROPERTY_REMOVED:
+            default :
                 return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
         }
-        return null;
     }
 
     /**
      * TODO
-     * 
+     *
      * @param jmsMessage
      * @return
      */

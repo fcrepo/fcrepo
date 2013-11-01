@@ -13,69 +13,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.fcrepo.kernel.rdf.impl.mappings;
 
+import static com.google.common.base.Functions.forMap;
+import static com.google.common.collect.ImmutableMap.of;
+import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.singletonIterator;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Iterator;
-
 import org.junit.Test;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 
+/**
+ * @author ajs6f
+ * @date Oct 2013
+ */
 public class ZippingIteratorTest {
 
-    private ZippingIterator<String, String> zip;
-
-    private static final String from = "from";
-
-    private static final String to = "to";
+    private ZippingIterator<Object, Object> zip;
 
     /*
-     * We test to see that a ZippingIterator will return results until one or
-     * the other source iterator is exhausted.
+     * We test to see that a ZippingIterator will return correct results until
+     * one or the other source iterator is exhausted.
      */
 
     @Test
     public void testMoreValuesThanFunctions() {
-        final Iterator<String> values =
-            Iterators.forArray(new String[] {from, from});
-        final Iterator<Function<String, String>> functions =
-            ImmutableList.of(f).iterator();
-        zip = new ZippingIterator<String, String>(values, functions);
-        while (zip.hasNext()) {
-            assertEquals("Got wrong value!", to, zip.next());
-        }
-
+        values = forArray(from1, from2);
+        functions = singletonIterator(f);
+        zip = new ZippingIterator<>(values, functions);
+        assertEquals("Got wrong value!", to1, zip.next());
+        assertFalse("Too many values!", zip.hasNext());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testMoreFunctionsThanValues() {
-        final Iterator<String> values = Iterators.forArray(new String[] {from});
-        final Iterator<Function<String, String>> functions =
-            ImmutableList.of(f, f).iterator();
-        zip = new ZippingIterator<String, String>(values, functions);
-        while (zip.hasNext()) {
-            assertEquals("Got wrong value!", to, zip.next());
-        }
-
+        values = singletonIterator(from1);
+        functions = forArray(f, f);
+        zip = new ZippingIterator<>(values, functions);
+        assertEquals("Got wrong value!", to1, zip.next());
+        assertFalse("Too many values!", zip.hasNext());
     }
 
-    private static final Function<String, String> f =
-        new Function<String, String>() {
+    Iterator<Object> values;
 
-            @Override
-            public String apply(final String input) {
-                if (input == from) {
-                    return to;
-                } else {
-                    throw new AssertionError("Received 'impossible' input!");
-                }
-            }
+    Iterator<Function<Object, Object>> functions;
 
-        };
+    private static Object from1 = new Object();
+
+    private static Object from2 = new Object();
+
+    private static Object to1 = new Object();
+
+    private static Object to2 = new Object();
+
+    private static final Function<Object, Object> f = forMap(of(from1, to1,
+            from2, to2));
 
 }

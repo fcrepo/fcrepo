@@ -17,12 +17,7 @@
 package org.fcrepo.kernel.utils;
 
 import static javax.jcr.observation.Event.NODE_ADDED;
-import static javax.jcr.observation.Event.NODE_MOVED;
-import static javax.jcr.observation.Event.NODE_REMOVED;
-import static javax.jcr.observation.Event.PERSIST;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.kernel.utils.EventType.getEventName;
+import static org.fcrepo.kernel.utils.EventType.valueOf;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
@@ -31,11 +26,18 @@ public class EventTypeTest {
 
     @Test
     public void testGetEventName() throws Exception {
-        assertEquals("node added", getEventName(NODE_ADDED));
-        assertEquals("node removed", getEventName(NODE_REMOVED));
-        assertEquals("property added", getEventName(PROPERTY_ADDED));
-        assertEquals("property removed", getEventName(PROPERTY_REMOVED));
-        assertEquals("node moved", getEventName(NODE_MOVED));
-        assertEquals("persist", getEventName(PERSIST));
+        assertEquals("node added", valueOf(NODE_ADDED).getName());
     }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testBadEvent() {
+        valueOf(9999999);
+    }
+
+    @Test()
+    public void testValueOf() {
+        assertEquals(EventType.PERSIST, EventType.valueOf("PERSIST"));
+    }
+
+
 }

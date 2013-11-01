@@ -28,8 +28,13 @@ import javax.jcr.Node;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+/**
+ * @author ajs6f
+ * @date 2013
+ */
 public class NodeIteratorTest {
 
     @Mock
@@ -38,12 +43,12 @@ public class NodeIteratorTest {
     @Mock
     Node node1, node2;
 
+    @InjectMocks
     NodeIterator testIterator;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testIterator = new NodeIterator(i);
     }
 
     @Test

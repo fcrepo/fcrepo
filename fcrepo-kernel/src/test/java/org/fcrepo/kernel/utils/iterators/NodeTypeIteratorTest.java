@@ -18,6 +18,7 @@ package org.fcrepo.kernel.utils.iterators;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import javax.jcr.nodetype.NodeType;
@@ -30,7 +31,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
+ * @author ajs6f
  * @author cbeer
+ * @date 2013
  */
 public class NodeTypeIteratorTest {
 
@@ -40,12 +43,12 @@ public class NodeTypeIteratorTest {
     @Mock
     NodeType node1, node2;
 
+    @InjectMocks
     NodeTypeIterator testIterator;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testIterator = new NodeTypeIterator(i);
     }
 
     @Test

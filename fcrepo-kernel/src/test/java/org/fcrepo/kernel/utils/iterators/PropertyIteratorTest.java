@@ -28,8 +28,13 @@ import javax.jcr.Property;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+/**
+ * @author ajs6f
+ * @date 2013
+ */
 public class PropertyIteratorTest {
 
     @Mock
@@ -38,12 +43,12 @@ public class PropertyIteratorTest {
     @Mock
     Property property1, property2;
 
+    @InjectMocks
     PropertyIterator testIterator;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testIterator = new PropertyIterator(i);
     }
 
     @Test

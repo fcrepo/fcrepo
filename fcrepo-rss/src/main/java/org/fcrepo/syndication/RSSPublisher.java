@@ -19,8 +19,6 @@ package org.fcrepo.syndication;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
-import static org.fcrepo.kernel.utils.EventType.getEventType;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -36,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.xml.transform.stream.StreamSource;
 
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.utils.EventType;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 
@@ -73,7 +72,7 @@ public class RSSPublisher extends AbstractResource {
 
     /**
      * Get the RSS feed
-     * 
+     *
      * @return
      * @throws FeedException
      */
@@ -100,7 +99,7 @@ public class RSSPublisher extends AbstractResource {
                                 .toDate());
                         final SyndContent description = new SyndContentImpl();
                         description.setType("text/plain");
-                        description.setValue(getEventType(event.getType())
+                        description.setValue(EventType.valueOf(event.getType())
                                 .toString());
                         entry.setDescription(description);
                     } catch (final RepositoryException e) {
@@ -133,7 +132,7 @@ public class RSSPublisher extends AbstractResource {
 
     /**
      * When a new event is received, add it to the buffer.
-     * 
+     *
      * @param event
      */
     @Subscribe
