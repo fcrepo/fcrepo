@@ -1,5 +1,3 @@
-body { padding-top: 40px; }
-
 .mode_root #action_delete {
     display: none;
 }
@@ -13,6 +11,18 @@ body { padding-top: 40px; }
     display: none;
 }
 
+dl {
+    padding-left: 19px;
+}
+
+dd {
+    padding-left: 38px;
+}
+
+.well dl {
+    padding-left: 0;
+}
+
 .well {
     text-indent: -35px;
     padding-left: 54px;
@@ -20,4 +30,17 @@ body { padding-top: 40px; }
 
 #datastream_payload_container {
     display: none;
+}
+
+#actions.visible-lg.in, #actions.visible-lg.collapsing, #actions.visible-md.in, #actions.visible-md.collapsing  {
+    display: block !important;
+}
+
+#toggle-actions {
+    float:right;
+    margin-bottom: 1em;
+}
+
+#actions {
+    margin-bottom: 3em;
 }
