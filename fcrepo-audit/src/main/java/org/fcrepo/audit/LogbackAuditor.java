@@ -16,13 +16,12 @@
 
 package org.fcrepo.audit;
 
-import static org.fcrepo.kernel.utils.EventType.getEventName;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
+import org.fcrepo.kernel.utils.EventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +30,7 @@ import com.google.common.eventbus.Subscribe;
 
 /**
  * A proof-of-concept Auditor implementation that uses Logback.
- * 
+ *
  * @author Edwin Shin
  */
 public class LogbackAuditor implements Auditor {
@@ -56,7 +55,7 @@ public class LogbackAuditor implements Auditor {
     @Override
     @Subscribe
     public void recordEvent(final Event e) throws RepositoryException {
-        logger.info(e.getUserID() + " " + getEventName(e.getType()) + " " +
+        logger.info(e.getUserID() + " " + EventType.valueOf(e.getType()).getName() + " " +
                 e.getPath());
     }
 }

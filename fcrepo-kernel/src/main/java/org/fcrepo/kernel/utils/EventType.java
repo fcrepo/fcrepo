@@ -16,15 +16,60 @@
 
 package org.fcrepo.kernel.utils;
 
+import static com.google.common.base.Functions.forMap;
+import static com.google.common.collect.ImmutableMap.builder;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
 /**
  * A convenient abstraction over JCR's integer-typed events.
  *
  * @author ajs6f
  * @date Feb 7, 2013
  */
+/**
+ * @author ajs6f
+ * @date Oct 22, 2013
+ */
 public enum EventType {
-    NODE_ADDED, NODE_REMOVED, PROPERTY_ADDED, PROPERTY_REMOVED,
-    PROPERTY_CHANGED, NODE_MOVED, PERSIST;
+    NODE_ADDED(javax.jcr.observation.Event.NODE_ADDED, "node added"),
+    NODE_REMOVED(javax.jcr.observation.Event.NODE_REMOVED, "node removed"),
+    PROPERTY_ADDED(javax.jcr.observation.Event.PROPERTY_ADDED, "property added"),
+    PROPERTY_REMOVED(javax.jcr.observation.Event.PROPERTY_REMOVED, "property removed"),
+    PROPERTY_CHANGED(javax.jcr.observation.Event.PROPERTY_CHANGED, "property changed"),
+    NODE_MOVED(javax.jcr.observation.Event.NODE_MOVED, "node moved"),
+    PERSIST(javax.jcr.observation.Event.PERSIST, "persist");
+
+    private final static Map<Integer, EventType> translation;
+
+    private final Integer jcrEventType;
+
+    private final String eventName;
+
+
+    /*
+     * Create a translation map
+     */
+    static {
+        final ImmutableMap.Builder<Integer, EventType> b = builder();
+        for (final EventType eventType : values()) {
+            b.put(eventType.jcrEventType, eventType);
+        }
+        translation = b.build();
+    }
+
+    EventType(final Integer jcrEventType, final String eventName) {
+        this.jcrEventType = jcrEventType;
+        this.eventName = eventName;
+    }
+
+    /**
+     * @return a human-readable name for this event
+     */
+    public String getName() {
+        return this.eventName;
+    }
 
     /**
      * Get the Fedora event type for a JCR type
@@ -32,54 +77,7 @@ public enum EventType {
      * @param i
      * @return
      */
-    public static EventType getEventType(final Integer i) {
-        switch (i) {
-            case javax.jcr.observation.Event.NODE_ADDED:
-                return NODE_ADDED;
-            case javax.jcr.observation.Event.NODE_REMOVED:
-                return NODE_REMOVED;
-            case javax.jcr.observation.Event.PROPERTY_ADDED:
-                return PROPERTY_ADDED;
-            case javax.jcr.observation.Event.PROPERTY_REMOVED:
-                return PROPERTY_REMOVED;
-            case javax.jcr.observation.Event.PROPERTY_CHANGED:
-                return PROPERTY_CHANGED;
-            case javax.jcr.observation.Event.NODE_MOVED:
-                return NODE_MOVED;
-            case javax.jcr.observation.Event.PERSIST:
-                return PERSIST;
-                // no default
-            default:
-                throw new IllegalArgumentException("Invalid JCR event type: "
-                        + i);
-        }
-    }
-
-    /**
-     * @param jcrEvent
-     * @return A human-readable name for the type of this JCR event.
-     */
-    public static String getEventName(final Integer jcrEvent) {
-
-        switch (getEventType(jcrEvent)) {
-            case NODE_ADDED:
-                return "node added";
-            case NODE_REMOVED:
-                return "node removed";
-            case PROPERTY_ADDED:
-                return "property added";
-            case PROPERTY_CHANGED:
-                return "property changed";
-            case PROPERTY_REMOVED:
-                return "property removed";
-            case NODE_MOVED:
-                return "node moved";
-            case PERSIST:
-                return "persist";
-                // no default
-            default:
-                throw new IllegalArgumentException("Invalid JCR event type: "
-                        + jcrEvent);
-        }
+    public static EventType valueOf(final Integer i) {
+        return forMap(translation).apply(i);
     }
 }
