@@ -27,6 +27,8 @@
 
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
+    <!-- for standalone operation -->
+    <jetty.version>8.1.13.v20130916</jetty.version>
   </properties>
 
   <dependencies>
@@ -75,6 +77,26 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-webapp</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlets</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-deploy</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-jmx</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.sun.jersey.contribs</groupId>
       <artifactId>jersey-spring</artifactId>
     </dependency>
@@ -107,9 +129,31 @@
               </includes>
             </resource>
           </webResources>
+            <archive>
+              <index>true</index>
+              <manifest>
+                <addClasspath>true</addClasspath>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+            </archive>
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.simplericity.jettyconsole</groupId>
+        <artifactId>jetty-console-maven-plugin</artifactId>
+        <version>1.52</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>createconsole</goal>
+            </goals>
+            <configuration>
+              <backgroundImage>${basedir}/src/main/jettyconsole/fedora_logo_10in.png</backgroundImage>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+        <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
@@ -224,7 +268,6 @@
           <shortRevisionLength>8</shortRevisionLength>
         </configuration>
       </plugin>
-
     </plugins>
   </build>
 
