@@ -28,7 +28,7 @@ function addChild()
             }
         }
 
-        if (userSuppliedId == "") {
+        if (id == "") {
             xhr.open( "POST", newURI + "/fcr:content" );
         } else {
             xhr.open( "PUT", newURI + "/fcr:content" );
