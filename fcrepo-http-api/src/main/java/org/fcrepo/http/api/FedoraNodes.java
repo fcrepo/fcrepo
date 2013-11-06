@@ -83,6 +83,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
@@ -519,6 +520,31 @@ public class FedoraNodes extends AbstractResource {
         } finally {
             session.logout();
         }
+    }
+
+    /**
+     * Create a new object from a multipart/form-data POST request
+     * @param pathList
+     * @param mixin
+     * @param slug
+     * @param uriInfo
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Timed
+    public Response createObjectFromFormPost(
+                                                @PathParam("path") final List<PathSegment> pathList,
+                                                @FormDataParam("mixin") final String mixin,
+                                                @FormDataParam("slug") final String slug,
+                                                @Context final UriInfo uriInfo,
+                                                @FormDataParam("file") final InputStream file
+    ) throws Exception {
+
+        return createObject(pathList, mixin, null, null, slug, uriInfo, file);
+
     }
 
     /**

@@ -1,11 +1,11 @@
 
-<form id="action_create">
+<form id="action_create" method="POST" enctype="multipart/form-data">
     <h3>Create New Node</h3>
     <div class="form-group">
     <label for="new_mixin" class="control-label">
         Type
     </label>
-    <select id="new_mixin" class="form-control">
+    <select id="new_mixin" name="mixin" class="form-control">
         <option value="fedora:object">object</option>
         <option value="fedora:datastream">datastream</option>
     </select>
@@ -15,7 +15,7 @@
     <label for="new_id"  class="control-label">
         Identifier
     </label>
-    <input type="text" id="new_id" placeholder="(auto-generated identifier)"  class="form-control"/>
+    <input type="text" id="new_id" name="slug" placeholder="(auto-generated identifier)"  class="form-control"/>
         </div>
 
 
@@ -23,14 +23,15 @@
     <label for="datastream_payload"  class="control-label">
         File
     </label>
-    <input type="file" id="datastream_payload"/>
+    <input type="file" name="file" id="datastream_payload"/>
     </div>
     <button type="submit" class="btn btn-primary">Add</button>
     <hr />
 </form>
 
 
-<form id="action_sparql_update">
+<form id="action_sparql_update" method="POST">
+    <input type="hidden" name="_method" value="PATCH" />
     <h3>Update Properties</h3>
     <div class="form-group">
     <textarea rows="10" id="sparql_update_query" name="query" class="form-control">
@@ -45,7 +46,8 @@ WHERE { }
 </form>
 
 
-<form id="action_delete" action="javascript:deleteItem()">
+<form id="action_delete" action="javascript:deleteItem()" method="POST">
+    <input type="hidden" name="_method" value="DELETE" />
     <h3>Delete Object</h3>
     <button type="submit" class="btn btn-danger">Delete</button>
     <hr />
@@ -76,7 +78,7 @@ WHERE { }
 #set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
-<form id="action_import">
+<form id="action_import" action="fcr:import" method="POST">
 <h3>Import</h3>
 
 
