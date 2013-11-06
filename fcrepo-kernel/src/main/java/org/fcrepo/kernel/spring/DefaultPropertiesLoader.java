@@ -17,6 +17,7 @@ package org.fcrepo.kernel.spring;
 
 import org.slf4j.Logger;
 
+import static java.lang.System.getProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -85,10 +86,6 @@ public class DefaultPropertiesLoader {
             final String val = prop.getValue();
             LOGGER.debug("{} = {}", val, getProperty(val));
         }
-    }
-
-    private static String getProperty(final String property) {
-        return System.getProperty(property);
     }
 
     private void setProperty(final String prop) {
