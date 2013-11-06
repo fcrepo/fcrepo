@@ -56,7 +56,6 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
-import org.fcrepo.kernel.utils.NamespaceTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,8 +84,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
   "com.hp.hpl.jena.*",
   "com.codahale.metrics.*"
   })
-@PrepareForTest({NamespaceTools.class, JcrRdfTools.class,
-        FedoraTypesUtils.class})
+@PrepareForTest({JcrRdfTools.class, FedoraTypesUtils.class})
 public class FedoraResourceTest {
 
     private FedoraResource testObj;

@@ -55,9 +55,7 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.JcrRdfTools;
-import org.fcrepo.kernel.utils.NamespaceTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,8 +73,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
         "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({NamespaceTools.class, JcrRdfTools.class,
-        FedoraTypesUtils.class})
+@PrepareForTest({JcrRdfTools.class})
 public class RepositoryServiceTest implements FedoraJcrTypes {
 
     private static final String TESTPID = "testObj";
@@ -278,7 +275,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testRegisterNodeTypes() throws Exception {
-        InputStream mockInputStream = mock(InputStream.class);
+        final InputStream mockInputStream = mock(InputStream.class);
         testObj.registerNodeTypes(mockSession, mockInputStream);
 
         verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);

@@ -28,7 +28,6 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -366,7 +365,7 @@ public class JcrRdfTools {
      */
     public Value createValue(final Node node, final RDFNode data, final int type)
         throws RepositoryException {
-        final ValueFactory valueFactory = getValueFactory.apply(node);
+        final ValueFactory valueFactory = node.getSession().getValueFactory();
         assert (valueFactory != null);
 
         if (data.isURIResource()
@@ -455,7 +454,8 @@ public class JcrRdfTools {
         final String namespace =
             getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
 
-        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(node);
+        final NamespaceRegistry namespaceRegistry =
+            getNamespaceRegistry.apply(node);
 
         assert (namespaceRegistry != null);
 

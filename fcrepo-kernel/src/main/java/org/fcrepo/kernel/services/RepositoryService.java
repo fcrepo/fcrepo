@@ -25,7 +25,6 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
-import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -161,7 +160,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
     public static Map<String, String> getRepositoryNamespaces(
             final Session session) throws RepositoryException {
 
-        final NamespaceRegistry reg = getNamespaceRegistry(session);
+        final NamespaceRegistry reg =
+            session.getWorkspace().getNamespaceRegistry();
         return asMap(newHashSet(reg.getPrefixes()),
                 new Function<String, String>() {
 

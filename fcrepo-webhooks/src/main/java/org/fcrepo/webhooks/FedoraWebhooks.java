@@ -110,7 +110,6 @@ public class FedoraWebhooks extends AbstractResource {
      *
      * @throws RepositoryException
      */
-    @Override
     @PostConstruct
     public void initialize() throws RepositoryException {
 
@@ -125,7 +124,7 @@ public class FedoraWebhooks extends AbstractResource {
     /**
      * Trigger all the registered webhook callbacks for a resource when the
      * event is received
-     * 
+     *
      * @param resource
      * @param event
      * @throws RepositoryException
@@ -245,7 +244,7 @@ public class FedoraWebhooks extends AbstractResource {
 
     /**
      * Listen to the EventBus and trigger webhooks callbacks (see .runHooks)
-     * 
+     *
      * @param event
      */
     @Subscribe

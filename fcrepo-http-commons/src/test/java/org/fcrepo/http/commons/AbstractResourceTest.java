@@ -19,17 +19,10 @@ package org.fcrepo.http.commons;
 import static org.fcrepo.http.commons.AbstractResource.toPath;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
 import java.util.List;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
@@ -68,13 +61,6 @@ public class AbstractResourceTest {
     public void setUp() {
         initMocks(this);
         testObj = new AbstractResource() {};
-    }
-
-    @Test
-    public void testInitialize() throws RepositoryException {
-        mockStatic(NamespaceTools.class);
-        when(getNamespaceRegistry(any(Session.class))).thenReturn(mockNames);
-        testObj.initialize();
     }
 
     @Test

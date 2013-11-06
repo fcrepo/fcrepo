@@ -46,13 +46,6 @@ public class NamespaceToolsTest {
     }
 
     @Test
-    public void testGetNamespaceRegistry() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWork);
-        getNamespaceRegistry(mockNode);
-    }
-
-    @Test
     public void testFunction() throws RepositoryException {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWork);

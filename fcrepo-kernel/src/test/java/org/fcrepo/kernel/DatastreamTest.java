@@ -17,7 +17,6 @@
 package org.fcrepo.kernel;
 
 import static org.fcrepo.kernel.Datastream.hasMixin;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.kernel.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.utils.TestHelpers.getPropertyIterator;
@@ -33,8 +32,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -47,27 +44,19 @@ import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.modeshape.jcr.api.ValueFactory;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({FedoraTypesUtils.class})
 public class DatastreamTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
@@ -129,14 +118,12 @@ public class DatastreamTest implements FedoraJcrTypes {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         final InputStream mockStream = mock(InputStream.class);
-        mockStatic(FedoraTypesUtils.class);
-        when(
-                getBinary(any(Node.class), any(InputStream.class),
-                        any(String.class))).thenReturn(mockBin);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
+        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+                .thenReturn(mockBin);
         final Property mockData = mock(Property.class);
         when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
@@ -152,13 +139,12 @@ public class DatastreamTest implements FedoraJcrTypes {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         final InputStream mockStream = mock(InputStream.class);
-        mockStatic(FedoraTypesUtils.class);
-        when(getBinary(any(Node.class), any(InputStream.class),
-            any(String.class))).thenReturn(mockBin);
         final Node mockContent = getContentNodeMock(8);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockVF.createBinary(any(InputStream.class))).thenReturn(mockBin);
+        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+                .thenReturn(mockBin);
         final Property mockData = mock(Property.class);
         when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);

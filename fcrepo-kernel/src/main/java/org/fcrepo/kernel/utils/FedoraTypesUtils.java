@@ -31,18 +31,15 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
@@ -57,7 +54,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
@@ -240,24 +236,6 @@ public abstract class FedoraTypesUtils {
     };
 
     /**
-     * Retrieves a JCR {@link ValueFactory} for use with a @ link Node}
-     */
-    public static Function<Node, ValueFactory> getValueFactory =
-        new Function<Node, ValueFactory>() {
-
-            @Override
-            public ValueFactory apply(final Node n) {
-                try {
-                    checkArgument(n != null,
-                            "null has no ValueFactory associated with it!");
-                    return n.getSession().getValueFactory();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
-
-    /**
      * Map a JCR property to an RDF property with the right namespace URI and
      * local name
      */
@@ -290,47 +268,6 @@ public abstract class FedoraTypesUtils {
      * returns are as well.
      */
     private static final DateTimeFormatter FMT = ISODateTimeFormat.dateTime();
-
-    /**
-     * Creates a JCR {@link Binary}
-     *
-     * @param n a {@link Node}
-     * @param i an {@link InputStream}
-     * @return a JCR {@link Binary}
-     */
-    public static Binary getBinary(final Node n, final InputStream i) {
-        try {
-            checkArgument(n != null,
-                    "null cannot have a Binary created for it!");
-            checkArgument(i != null,
-                    "null cannot have a Binary created from it!");
-            return n.getSession().getValueFactory().createBinary(i);
-        } catch (final RepositoryException e) {
-            throw propagate(e);
-        }
-    }
-
-    /**
-     * Creates a JCR {@link Binary}
-     *
-     * @param n a {@link Node}
-     * @param i an {@link InputStream}
-     * @return a JCR {@link Binary}
-     */
-    public static Binary getBinary(final Node n, final InputStream i,
-            final String hint) {
-        try {
-            checkArgument(n != null,
-                    "null cannot have a Binary created for it!");
-            checkArgument(i != null,
-                    "null cannot have a Binary created from it!");
-            final JcrValueFactory jcrValueFactory =
-                ((JcrValueFactory) n.getSession().getValueFactory());
-            return jcrValueFactory.createBinary(i, hint);
-        } catch (final RepositoryException e) {
-            throw propagate(e);
-        }
-    }
 
     /**
      * Get the JCR Node Type manager
