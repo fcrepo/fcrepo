@@ -28,7 +28,6 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.getDefinitionForPropertyN
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
@@ -172,19 +171,6 @@ public class FedoraTypesUtilsTest {
         when(mockYes.isMultiple()).thenThrow(new RepositoryException());
         try {
             test.apply(mockYes);
-            fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
-    }
-
-    @Test
-    public void testGetValueFactory() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getValueFactory()).thenReturn(mockVF);
-        final ValueFactory actual = getValueFactory.apply(mockNode);
-        assertEquals(mockVF, actual);
-        when(mockSession.getValueFactory()).thenThrow(new RepositoryException());
-        try {
-            getValueFactory.apply(mockNode);
             fail("Unexpected completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
     }

@@ -42,7 +42,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
@@ -238,24 +237,6 @@ public abstract class FedoraTypesUtils {
             }
         }
     };
-
-    /**
-     * Retrieves a JCR {@link ValueFactory} for use with a @ link Node}
-     */
-    public static Function<Node, ValueFactory> getValueFactory =
-        new Function<Node, ValueFactory>() {
-
-            @Override
-            public ValueFactory apply(final Node n) {
-                try {
-                    checkArgument(n != null,
-                            "null has no ValueFactory associated with it!");
-                    return n.getSession().getValueFactory();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
 
     /**
      * Map a JCR property to an RDF property with the right namespace URI and

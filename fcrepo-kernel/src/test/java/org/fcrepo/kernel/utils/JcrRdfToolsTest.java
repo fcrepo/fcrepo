@@ -45,7 +45,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getValueFactory;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
@@ -343,79 +342,74 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    public final void
-            shouldMapRdfValuesToJcrPropertyValues() throws RepositoryException {
-        when(mockValueFactoryFunc.apply(mockNode)).thenReturn(mockValueFactory);
-        final Function<Node, ValueFactory> holdValueFactory = getValueFactory;
-        FedoraTypesUtils.getValueFactory = mockValueFactoryFunc;
+    public final void shouldMapRdfValuesToJcrPropertyValues()
+        throws RepositoryException {
 
-        try {
-            RDFNode n = createResource(RESTAPI_NAMESPACE + "/abc");
+        when(mockNode.getSession().getValueFactory()).thenReturn(
+                mockValueFactory);
 
-            // node references
-            when(mockSession.getNode("/abc")).thenReturn(mockNode);
-            when(mockSession.nodeExists("/abc")).thenReturn(true);
-            testObj.createValue(mockNode, n, REFERENCE);
-            verify(mockValueFactory).createValue(mockNode, false);
-            testObj.createValue(mockNode, n, WEAKREFERENCE);
-            verify(mockValueFactory).createValue(mockNode, true);
+        RDFNode n = createResource(RESTAPI_NAMESPACE + "/abc");
 
-            // uris
-            testObj.createValue(mockNode, n, UNDEFINED);
-            verify(mockValueFactory).createValue(RESTAPI_NAMESPACE + "/abc",
-                    PropertyType.URI);
+        // node references
+        when(mockSession.getNode("/abc")).thenReturn(mockNode);
+        when(mockSession.nodeExists("/abc")).thenReturn(true);
+        testObj.createValue(mockNode, n, REFERENCE);
+        verify(mockValueFactory).createValue(mockNode, false);
+        testObj.createValue(mockNode, n, WEAKREFERENCE);
+        verify(mockValueFactory).createValue(mockNode, true);
 
-            // other random resources
-            n = createResource();
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue(n.toString(), UNDEFINED);
+        // uris
+        testObj.createValue(mockNode, n, UNDEFINED);
+        verify(mockValueFactory).createValue(RESTAPI_NAMESPACE + "/abc",
+                PropertyType.URI);
 
-            // undeclared types, but infer them from rdf types
+        // other random resources
+        n = createResource();
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue(n.toString(), UNDEFINED);
 
-            n = createTypedLiteral(true);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue(true);
+        // undeclared types, but infer them from rdf types
 
-            n = createTypedLiteral("1", XSDbyte);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue((byte) 1);
+        n = createTypedLiteral(true);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue(true);
 
-            n = createTypedLiteral((double) 2);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue((double) 2);
+        n = createTypedLiteral("1", XSDbyte);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue((byte) 1);
 
-            n = createTypedLiteral((float) 3);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue((float) 3);
+        n = createTypedLiteral((double) 2);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue((double) 2);
 
-            n = createTypedLiteral(4);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue(4);
+        n = createTypedLiteral((float) 3);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue((float) 3);
 
-            n = createTypedLiteral("5", XSDlong);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue(5);
+        n = createTypedLiteral(4);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue(4);
 
-            n = createTypedLiteral("6", XSDshort);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue((short) 6);
+        n = createTypedLiteral("5", XSDlong);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue(5);
 
-            final Calendar calendar = Calendar.getInstance();
-            n = createTypedLiteral(calendar);
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue(any(Calendar.class));
+        n = createTypedLiteral("6", XSDshort);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue((short) 6);
 
-            n = createTypedLiteral("string");
-            testObj.createValue(mockNode, n, 0);
-            verify(mockValueFactory).createValue("string", STRING);
+        final Calendar calendar = Calendar.getInstance();
+        n = createTypedLiteral(calendar);
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue(any(Calendar.class));
 
-            n = createTypedLiteral("string");
-            testObj.createValue(mockNode, n, NAME);
-            verify(mockValueFactory).createValue("string", NAME);
+        n = createTypedLiteral("string");
+        testObj.createValue(mockNode, n, 0);
+        verify(mockValueFactory).createValue("string", STRING);
 
-        } finally {
-            getValueFactory = holdValueFactory;
-        }
+        n = createTypedLiteral("string");
+        testObj.createValue(mockNode, n, NAME);
+        verify(mockValueFactory).createValue("string", NAME);
 
     }
 
