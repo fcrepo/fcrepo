@@ -20,6 +20,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -72,6 +73,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
                   TEXT_HTML})
     @Timed
+    @HtmlTemplate("jcr:nodetypes")
     public Dataset getNodeTypes() throws RepositoryException {
         try {
             return DatasetFactory.create(nodeService.getNodeTypes(session).asModel());

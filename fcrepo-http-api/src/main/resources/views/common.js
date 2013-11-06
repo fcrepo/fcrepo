@@ -100,6 +100,7 @@ $(function() {
     $('#action_rollback_transaction').submit(submitAndRedirectToBase);
     $('#action_commit_transaction').submit(submitAndRedirectToBase);
     $('#action_import').submit(sendImport);
+    $('#action_cnd_update').submit(sendCndUpdate);
 
 });
 
@@ -153,6 +154,14 @@ function sendSparqlUpdate() {
 
     return false;
 }
+
+function sendCndUpdate() {
+    var postURI = $('#main').attr('resource');
+
+
+    $.ajax({url: postURI, type: "POST", contentType: "text/cnd", data: $("#cnd_update_query").val(), success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }, error: ajaxErrorHandler});
 
     return false;
 }

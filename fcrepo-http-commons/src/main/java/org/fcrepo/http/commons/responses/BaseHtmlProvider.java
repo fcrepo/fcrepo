@@ -153,7 +153,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
             final List<String> otherTemplates =
                     ImmutableList.of("search:results", "jcr:namespaces",
-                                     "jcr:workspaces", "node");
+                                     "jcr:workspaces", "jcr:nodetypes", "node");
 
             for (final String key : otherTemplates) {
                 final Template template =

@@ -17,6 +17,7 @@
             <li><a href="$uriInfo.baseUriBuilder.build()">Home</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:namespaces">Namespaces</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:workspaces">Workspaces</a></li>
+            <li><a href="$uriInfo.baseUriBuilder.build()fcr:nodetypes">Types</a></li>
         </ul>
         <form class="navbar-form navbar-left" role="search" method="GET" action="$uriInfo.baseUriBuilder.build()fcr:search">
             <div class="form-group">

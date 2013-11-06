@@ -1,0 +1,91 @@
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
+#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
+<!DOCTYPE html>
+    #parse("views/common.vsl")
+<html>
+<head>
+    <title>registered types</title>
+    #parse("views/common-head.vsl")
+    <script type="text/javascript">
+        $(function() {
+
+            var uriToId = {};
+
+            $('h3').each(function() {
+                if ( !this.id && this.innerText ) {
+                    this.id = this.innerText.toLowerCase().replace(/[^a-z0-9\-_]+/g, "_");
+                }
+
+                uriToId[this.innerText] = this.id;
+            });
+
+           $('dd a').each(function() {
+               if (uriToId[this.href]) {
+                   this.href = "#" + uriToId[this.href];
+               }
+           });
+        });
+    </script>
+</head>
+<body>
+<div id="main" class="container" resource="$uriInfo.baseUriBuilder.build()fcr:nodetypes">
+    #parse("views/common-header.vsl")
+
+    <div class="row">
+
+        <div id="sidebar" class="col-md-3 col-md-push-9 clearfix">
+            <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
+                <span>Toggle actions</span>
+            </button>
+
+        ## output actions
+            <div class="actions collapse visible-lg visible-md" id="actions">
+
+                <form id="action_cnd_update" method="POST">
+                    <h3>Update CND</h3>
+                    <div class="form-group">
+                        <textarea rows="10" id="cnd_update_query" name="query" class="form-control"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <hr />
+                </form>
+
+
+            </div>
+        </div>
+
+        <div id="metadata" class="col-md-9 col-md-pull-3">
+            <h1>Node Types</h1>
+
+            #foreach($subject in $model.listSubjectsWithProperty($helpers.rdfType(), $helpers.rdfsClass()))
+            <div class="panel panel-default">
+
+                <div class="panel-heading">
+                    <h3 class="panel-title">$subject.getURI()</h3>
+                    </div>
+
+
+                <div class="panel-body">
+                    #triples($subject.asNode())
+
+
+                    <h4>Properties</h4>
+                    #foreach($propertySubject in $model.listSubjectsWithProperty($helpers.rdfsDomain(), $subject))
+                        <div resource="$propertySubject.getURI()">
+                            <h5>$propertySubject.getURI()</h5>
+                            <div>
+                            #triples($propertySubject.asNode())
+                            </div>
+                        </div>
+                    #end
+                </div>
+                </div>
+            #end
+        </div>
+
+    </div>
+</body>
+</html>

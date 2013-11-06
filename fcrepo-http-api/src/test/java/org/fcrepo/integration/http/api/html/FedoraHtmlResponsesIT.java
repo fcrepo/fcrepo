@@ -17,6 +17,7 @@ package org.fcrepo.integration.http.api.html;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
+import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlFileInput;
@@ -138,6 +139,12 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals(404, page2.getWebResponse().getStatusCode());
 
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
+    }
+
+    @Test
+    public void testNodeTypes() throws IOException {
+        final HtmlPage page = webClient.getPage(serverAddress + "fcr:nodetypes");
+        assertTrue(page.asText().contains("fedora:object"));
     }
 
     @Test
