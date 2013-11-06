@@ -51,7 +51,6 @@ import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.utils.JcrRdfTools.setGetClusterConfiguration;
-import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -569,8 +568,10 @@ public class JcrRdfToolsTest {
         when(mockNsRegistry.getPrefixes()).thenReturn(
                 new String[] {"jcr", "some-prefix"});
 
-        when(getNamespaceRegistry(mockSession)).thenReturn(mockNsRegistry);
-        when(getNamespaceRegistry(mockNode)).thenReturn(mockNsRegistry);
+        when(mockSession.getWorkspace().getNamespaceRegistry()).thenReturn(
+                mockNsRegistry);
+        when(mockNode.getSession().getWorkspace().getNamespaceRegistry())
+                .thenReturn(mockNsRegistry);
     }
 
     @Test

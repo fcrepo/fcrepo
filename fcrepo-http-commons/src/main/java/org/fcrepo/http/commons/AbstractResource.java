@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -120,16 +119,6 @@ public abstract class AbstractResource {
      * repository.
      */
     protected static final JcrTools jcrTools = new JcrTools(true);
-
-    /**
-     * Initialize our resource
-     * @todo is this actually needed?
-     * @throws RepositoryException
-     */
-    @PostConstruct
-    public void initialize() throws RepositoryException {
-
-    }
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path

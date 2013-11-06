@@ -113,7 +113,6 @@ public class RSSPublisher extends AbstractResource {
     /**
      * Engage the eventbus listener and set basic feed properties
      */
-    @Override
     @PostConstruct
     public void initialize() {
         eventBus.register(this);

@@ -455,7 +455,8 @@ public class JcrRdfTools {
         final String namespace =
             getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
 
-        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(node);
+        final NamespaceRegistry namespaceRegistry =
+            getNamespaceRegistry.apply(node);
 
         assert (namespaceRegistry != null);
 

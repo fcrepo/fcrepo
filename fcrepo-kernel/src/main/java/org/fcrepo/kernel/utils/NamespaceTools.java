@@ -17,11 +17,8 @@ package org.fcrepo.kernel.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-
 import org.modeshape.jcr.api.NamespaceRegistry;
 
 import com.google.common.base.Function;
@@ -33,28 +30,6 @@ import com.google.common.base.Function;
  * @date May 13, 2013
  */
 public abstract class NamespaceTools {
-
-    /**
-     * Get the namespace registry for the session
-     * @param session
-     * @return
-     * @throws RepositoryException
-     */
-    public static NamespaceRegistry getNamespaceRegistry(final Session session)
-        throws RepositoryException {
-        return (NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
-    }
-
-    /**
-     * Get the namespace registry for the given node
-     * @param item
-     * @return
-     * @throws RepositoryException
-     */
-    public static NamespaceRegistry getNamespaceRegistry(final Item item)
-        throws RepositoryException {
-        return getNamespaceRegistry(item.getSession());
-    }
 
     /**
      * We need the Modeshape NamespaceRegistry, because it allows us to register
