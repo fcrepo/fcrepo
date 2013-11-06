@@ -23,7 +23,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.convertDateToXSDString;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
@@ -182,29 +181,6 @@ public class FedoraTypesUtilsTest {
         when(mockProp.getNamespaceURI()).thenThrow(new RepositoryException());
         try {
             getPredicateForProperty.apply(mockProp);
-            fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
-    }
-
-    @Test
-    public void testGetBinary() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getValueFactory()).thenReturn(mockVF);
-        getBinary(mockNode, mockInput);
-        verify(mockVF).createBinary(mockInput);
-        // try it with hints
-        when(mockSession.getValueFactory()).thenReturn(mockJVF);
-        final String mockHint = "storage-hint";
-        getBinary(mockNode, mockInput, mockHint);
-        verify(mockJVF).createBinary(mockInput, mockHint);
-
-        when(mockNode.getSession()).thenThrow(new RepositoryException());
-        try {
-            getBinary(mockNode, mockInput);
-            fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
-        try {
-            getBinary(mockNode, mockInput, mockHint);
             fail("Unexpected completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
     }

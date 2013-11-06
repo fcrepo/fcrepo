@@ -17,7 +17,6 @@ package org.fcrepo.kernel;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.kernel.services.ServiceHelpers.getNodePropertySize;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBinary;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -41,6 +40,7 @@ import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrConstants;
+import org.modeshape.jcr.api.ValueFactory;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Histogram;
@@ -147,8 +147,9 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         if (storagePolicyDecisionPoint != null) {
             hint = storagePolicyDecisionPoint.evaluatePolicies(node);
         }
-
-        final Binary binary = (Binary) getBinary(node, content, hint);
+        final ValueFactory modevf =
+            (ValueFactory) node.getSession().getValueFactory();
+        final Binary binary = modevf.createBinary(content, hint);
 
         /*
          * This next line of code deserves explanation. If we chose for the

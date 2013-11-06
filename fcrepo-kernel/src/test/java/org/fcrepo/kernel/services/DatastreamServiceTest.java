@@ -19,7 +19,6 @@ package org.fcrepo.kernel.services;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBinary;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentCaptor.forClass;
@@ -49,7 +48,6 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
@@ -62,6 +60,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.ValueFactory;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -73,8 +72,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
         "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({FedoraTypesUtils.class, ServiceHelpers.class,
-        JcrRdfTools.class})
+@PrepareForTest({JcrRdfTools.class})
 public class DatastreamServiceTest implements FedoraJcrTypes {
 
     private static final String MOCK_CONTENT_TYPE = "application/test-data";
@@ -99,6 +97,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     private LowLevelStorageService llStore;
 
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -116,7 +117,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         final Binary mockBinary = mock(Binary.class);
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockData.getBinary()).thenReturn(mockBinary);
+
         final InputStream mockIS = mock(InputStream.class);
         when(mockContent.setProperty(JCR_DATA, mockBinary))
                 .thenReturn(mockData);
@@ -124,9 +127,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         final StoragePolicyDecisionPoint pdp = mock(StoragePolicyDecisionPoint.class);
         when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
         testObj.setStoragePolicyDecisionPoint(pdp);
-        mockStatic(FedoraTypesUtils.class);
-        when(getBinary(eq(mockNode), eq(mockIS), any(String.class)))
-                .thenReturn(mockBinary);
+        when(mockNode.getSession().getValueFactory()).thenReturn(
+                mockValueFactory);
+        when(
+                mockValueFactory.createBinary(any(InputStream.class),
+                        any(String.class))).thenReturn(mockBinary);
 
         final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,
