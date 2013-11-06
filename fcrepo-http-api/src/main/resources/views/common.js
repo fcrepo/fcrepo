@@ -149,7 +149,10 @@ function sendSparqlUpdate() {
 
     $.ajax({url: postURI, type: "PATCH", contentType: "application/sparql-update", data: $("#sparql_update_query").val(), success: function(data, textStatus, request) {
         window.location.reload(true);
-    }});
+    }, error: ajaxErrorHandler});
+
+    return false;
+}
 
     return false;
 }
@@ -189,4 +192,11 @@ function updateFile()
         xhr.send(data.buffer);
     };
     reader.readAsBinaryString(update_file);
+}
+
+function ajaxErrorHandler(xhr, textStatus, errorThrown) {
+    $('#errorLabel').text(errorThrown);
+    $('#errorText').text(xhr.responseText);
+    $('#errorModal').modal('show');
+
 }
