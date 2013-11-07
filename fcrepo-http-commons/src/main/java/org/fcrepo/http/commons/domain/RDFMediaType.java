@@ -24,6 +24,13 @@ import static org.apache.jena.riot.WebContent.contentTypeNQuads;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFJSON;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
+import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
+import static org.apache.jena.riot.WebContent.contentTypeSSE;
+import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
+import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
+import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTriG;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 
@@ -80,6 +87,40 @@ public abstract class RDFMediaType extends MediaType {
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
             RDF_XML_TYPE, NTRIPLES_TYPE, TURTLE_TYPE, RDF_JSON_TYPE, N3_TYPE,
             N3_ALT1_TYPE, N3_ALT2_TYPE, TRI_G_TYPE, NQUADS_TYPE).add().build();
+
+
+    public static final String TSV = contentTypeTextTSV;
+
+    public static final MediaType TSV_TYPE = typeFromString(TSV);
+
+    public static final String CSV = contentTypeTextCSV;
+
+    public static final MediaType CSV_TYPE = typeFromString(CSV);
+
+    public static final String SSE = contentTypeSSE;
+
+    public static final MediaType SSE_TYPE = typeFromString(SSE);
+
+    public static final String PLAIN = contentTypeTextPlain;
+
+    public static final MediaType PLAIN_TYPE = typeFromString(PLAIN);
+
+    public static final String RESULTS_JSON = contentTypeResultsJSON;
+
+    public static final MediaType RESULTS_JSON_TYPE = typeFromString(RESULTS_JSON);
+
+    public static final String RESULTS_XML = contentTypeResultsXML;
+
+    public static final MediaType RESULTS_XML_TYPE = typeFromString(RESULTS_XML);
+
+    public static final String RESULTS_BIO = contentTypeResultsBIO;
+
+    public static final MediaType RESULTS_BIO_TYPE = typeFromString(RESULTS_BIO);
+
+    public static final List<Variant> POSSIBLE_SPARQL_RDF_VARIANTS = mediaTypes(
+            TSV_TYPE, CSV_TYPE, SSE_TYPE, PLAIN_TYPE, RESULTS_JSON_TYPE,
+            RESULTS_XML_TYPE, RESULTS_BIO_TYPE, RDF_XML_TYPE, NTRIPLES_TYPE,
+            N3_TYPE, N3_ALT1_TYPE, N3_ALT2_TYPE, TURTLE_TYPE).add().build();
 
     private static MediaType typeFromString(final String type) {
         return new MediaType(type.split("/")[0], type.split("/")[1]);

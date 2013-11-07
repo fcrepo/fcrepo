@@ -27,12 +27,16 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import javax.inject.Inject;
+import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.kernel.identifiers.UUIDPathMinter;
+import org.fcrepo.kernel.identifiers.UUIDPidMinter;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;

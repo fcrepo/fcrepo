@@ -203,6 +203,8 @@ public final class RdfLexicon {
             createProperty("http://microformats.org/wiki/rel-subscription");
     public static final Property NOT_IMPLEMENTED =
             createProperty(REPOSITORY_NAMESPACE + "notImplemented");
+    public static final Property HAS_SPARQL_ENDPOINT =
+        createProperty(RESTAPI_NAMESPACE + "sparql");
 
     public static final Set<Property> otherServiceProperties = of(
             HAS_SERIALIZATION, HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,

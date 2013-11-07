@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.http.commons.responses;
+package org.fcrepo.transform.http.responses;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -24,7 +24,7 @@ import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
-import static org.fcrepo.http.commons.responses.ResultSetStreamingOutput.getResultsFormat;
+import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -33,7 +33,6 @@ import java.io.ByteArrayOutputStream;
 
 import javax.ws.rs.core.MediaType;
 
-import org.fcrepo.http.commons.responses.ResultSetStreamingOutput;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

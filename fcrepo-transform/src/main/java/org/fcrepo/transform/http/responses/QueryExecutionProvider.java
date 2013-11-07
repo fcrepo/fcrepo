@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.fcrepo.http.commons.responses;
+package org.fcrepo.transform.http.responses;
 
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
 import static java.util.Collections.singletonList;
-import static org.fcrepo.http.commons.responses.ResultSetStreamingOutput.getResultsFormat;
+import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
