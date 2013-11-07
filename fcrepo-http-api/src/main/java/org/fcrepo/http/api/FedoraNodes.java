@@ -181,7 +181,10 @@ public class FedoraNodes extends AbstractResource {
             final Dataset propertiesDataset =
                     resource.getPropertiesDataset(subjects, offset, realLimit);
 
-            final Model treeModel = propertiesDataset.getNamedModel(propertiesDataset.getContext().getAsString(INLINED_RESOURCES_MODEL, "NO SUCH MODEL"));
+            final Model treeModel = propertiesDataset.getNamedModel(
+                    propertiesDataset.getContext()
+                            .getAsString(INLINED_RESOURCES_MODEL,
+                                         "NO SUCH MODEL"));
             if (limit > 0 && treeModel != null && treeModel
                     .contains(subjects.getGraphSubject(resource.getNode()),
                                  HAS_CHILD_COUNT)) {
@@ -189,8 +192,9 @@ public class FedoraNodes extends AbstractResource {
                 final Model requestModel = createDefaultModel();
 
                 final long childCount = treeModel
-                                            .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()), HAS_CHILD_COUNT)
-                                            .nextNode().asLiteral().getLong();
+                        .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()),
+                                               HAS_CHILD_COUNT)
+                        .nextNode().asLiteral().getLong();
 
                 if (childCount > (offset + limit)) {
 
@@ -462,7 +466,8 @@ public class FedoraNodes extends AbstractResource {
                     result = datastreamService.createDatastream(session, newObjectPath);
                     break;
                 default:
-                    throw new WebApplicationException(clientError().entity("Unknown object type " + objectType).build());
+                    throw new WebApplicationException(clientError().entity(
+                            "Unknown object type " + objectType).build());
             }
 
             if (requestBodyStream != null) {
@@ -480,7 +485,8 @@ public class FedoraNodes extends AbstractResource {
                     final Lang lang = contentTypeToLang(contentTypeString);
 
                     if (lang == null) {
-                        throw new WebApplicationException(notAcceptable().entity("Invalid Content type " + contentType).build());
+                        throw new WebApplicationException(notAcceptable().entity(
+                                "Invalid Content type " + contentType).build());
                     }
 
                     final String format = lang.getName()
@@ -599,7 +605,9 @@ public class FedoraNodes extends AbstractResource {
         } catch (final ItemExistsException e) {
             return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
         } catch (final PathNotFoundException e) {
-            return status(SC_CONFLICT).entity("There is no node that will serve as the parent of the moved item").build();
+            return status(SC_CONFLICT).entity(
+                    "There is no node that will serve as the parent of the moved item")
+                    .build();
         } finally {
             session.logout();
         }
@@ -637,7 +645,9 @@ public class FedoraNodes extends AbstractResource {
         } catch (final ItemExistsException e) {
             return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
         } catch (final PathNotFoundException e) {
-            return status(SC_CONFLICT).entity("There is no node that will serve as the parent of the moved item").build();
+            return status(SC_CONFLICT).entity(
+                    "There is no node that will serve as the parent of the moved item")
+                    .build();
         } finally {
             session.logout();
         }

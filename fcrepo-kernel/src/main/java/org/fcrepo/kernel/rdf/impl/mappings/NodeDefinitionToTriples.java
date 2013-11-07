@@ -59,9 +59,13 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
 
             if (requiredPrimaryTypes.length > 1) {
                 // TODO we can express this as an OWL unionOf. But should we?
-                LOGGER.trace("Skipping RDFS:range for {} with multiple primary types", propertyDefinitionNode.getName());
+                LOGGER.trace(
+                        "Skipping RDFS:range for {} with multiple primary types",
+                        propertyDefinitionNode.getName());
             } else if (requiredPrimaryTypes.length == 1) {
-                LOGGER.trace("Adding RDFS:range for {} with primary types {}", input.getName(), requiredPrimaryTypes[0].getName());
+                LOGGER.trace("Adding RDFS:range for {} with primary types {}",
+                             input.getName(),
+                             requiredPrimaryTypes[0].getName());
                 final Triple nsTriple =
                     create(propertyDefinitionNode, range.asNode(), getResource(
                             requiredPrimaryTypes[0]).asNode());

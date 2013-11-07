@@ -135,7 +135,10 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // extract the JCR propertyName from the predicate
             final String propertyName =
-                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate(), s.getModel().getNsPrefixMap());
+                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode,
+                                                             s.getPredicate(),
+                                                             s.getModel()
+                                                                     .getNsPrefixMap());
 
             if (validateModificationsForPropertyName(
                     subject, subjectNode, s.getPredicate())) {
@@ -188,7 +191,12 @@ public class JcrPropertyStatementListener extends StatementListener {
                         try {
                             subjectNode.removeMixin(mixinName);
                         } catch (final RepositoryException e) {
-                            LOGGER.info("problem with removing <{}> <{}> <{}>: {}", subject.getURI(), RdfLexicon.COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI(), e);
+                            LOGGER.info(
+                                    "problem with removing <{}> <{}> <{}>: {}",
+                                    subject.getURI(),
+                                    RdfLexicon.COULD_NOT_STORE_PROPERTY,
+                                    s.getPredicate().getURI(),
+                                    e);
                             problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());
                         }
                         return;
@@ -226,7 +234,10 @@ public class JcrPropertyStatementListener extends StatementListener {
     private boolean validateModificationsForPropertyName(
             final Resource subject, final Node subjectNode, final Resource predicate) {
         if (jcrRdfTools.isInternalProperty(subjectNode, predicate)) {
-            LOGGER.debug("problem with <{}> <{}> <{}>", subject.getURI(), RdfLexicon.COULD_NOT_STORE_PROPERTY, predicate.getURI());
+            LOGGER.debug("problem with <{}> <{}> <{}>",
+                         subject.getURI(),
+                         RdfLexicon.COULD_NOT_STORE_PROPERTY,
+                         predicate.getURI());
             problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, predicate.getURI());
             return false;
         }

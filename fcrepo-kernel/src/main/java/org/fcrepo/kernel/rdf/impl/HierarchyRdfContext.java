@@ -73,7 +73,9 @@ public class HierarchyRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
     public HierarchyRdfContext(final javax.jcr.Node node,
-            final GraphSubjects graphSubjects, final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
+                               final GraphSubjects graphSubjects,
+                               final LowLevelStorageService lowLevelStorageService)
+        throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         if (node.getDepth() > 0) {
             LOGGER.debug("Determined that this node has a parent.");

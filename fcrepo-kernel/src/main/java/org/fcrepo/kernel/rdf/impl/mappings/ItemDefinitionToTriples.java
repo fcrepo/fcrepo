@@ -71,7 +71,9 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
         try {
             final Node propertyDefinitionNode = getResource(input).asNode();
 
-            LOGGER.trace("Adding triples for nodeType: {} with child nodes: {}", context.getURI(), propertyDefinitionNode.getURI());
+            LOGGER.trace("Adding triples for nodeType: {} with child nodes: {}",
+                         context.getURI(),
+                         propertyDefinitionNode.getURI());
 
             return new RdfStream(
                     create(propertyDefinitionNode, type.asNode(), Property.asNode()),

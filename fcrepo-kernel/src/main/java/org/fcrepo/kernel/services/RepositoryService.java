@@ -343,8 +343,11 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws RepositoryException
      * @throws IOException
      */
-    public void registerNodeTypes(final Session session, final InputStream cndStream) throws RepositoryException, IOException {
-        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
+    public void registerNodeTypes(final Session session,
+                                  final InputStream cndStream)
+        throws RepositoryException, IOException {
+        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace()
+                .getNodeTypeManager();
         nodeTypeManager.registerNodeTypes(cndStream, true);
     }
 }

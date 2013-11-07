@@ -69,7 +69,10 @@ public class TransformationFactory {
             if (Transformation.class.isAssignableFrom(transform)) {
                 try {
                     return (Transformation)(transform.getConstructor(InputStream.class).newInstance(inputStream));
-                } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                } catch (NoSuchMethodException
+                        | InvocationTargetException
+                        | InstantiationException
+                        | IllegalAccessException e) {
                     propagate(e);
                 }
             }

@@ -50,7 +50,7 @@ public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoin
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.StoragePolicy)
+     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(StoragePolicy)
      */
     @Override
     public void addPolicy(final org.fcrepo.kernel.services.policy.StoragePolicy p) {
@@ -74,7 +74,7 @@ public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoin
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.StoragePolicy)
+     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(StoragePolicy)
      */
     @Override
     public void removePolicy(final StoragePolicy p) {
@@ -83,7 +83,7 @@ public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoin
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(org.fcrepo.kernel.services.policy.StoragePolicy)
+     * @see org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint#addPolicy(StoragePolicy)
      */
     @Override
     public void removeAll() {
