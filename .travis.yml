@@ -1,13 +1,9 @@
 language: java
 jdk:
   - oraclejdk7
-before_script:  
+before_install:  
  - "echo $JAVA_OPTS"
  - "export JAVA_OPTS=-Xmx512m"
-install: JAVA_OPTS=-Xmx512m mvn install  -DskipTests=true
-branches:
-    only:
-        - master
 notifications:
   irc: "irc.freenode.org#duraspace-ff"
   email:
