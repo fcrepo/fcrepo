@@ -27,6 +27,8 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
 import org.fcrepo.http.commons.api.rdf.QuadOrdering;
 import org.slf4j.Logger;
 
@@ -267,5 +269,29 @@ public class ViewHelpers {
      */
     public int addOne(final int i) {
         return i + 1;
+    }
+
+    /**
+     * Proxying access to the RDF type static property
+     * @return
+     */
+    public Property rdfType() {
+        return RDF.type;
+    }
+
+    /**
+     * Proxying access to the RDFS domain static property
+     * @return
+     */
+    public Property rdfsDomain() {
+        return RDFS.domain;
+    }
+
+    /**
+     * Proxying access to the RDFS class static property
+     * @return
+     */
+    public Resource rdfsClass() {
+        return RDFS.Class;
     }
 }

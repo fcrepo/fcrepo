@@ -100,6 +100,7 @@ $(function() {
     $('#action_rollback_transaction').submit(submitAndRedirectToBase);
     $('#action_commit_transaction').submit(submitAndRedirectToBase);
     $('#action_import').submit(sendImport);
+    $('#action_cnd_update').submit(sendCndUpdate);
 
 });
 
@@ -149,7 +150,18 @@ function sendSparqlUpdate() {
 
     $.ajax({url: postURI, type: "PATCH", contentType: "application/sparql-update", data: $("#sparql_update_query").val(), success: function(data, textStatus, request) {
         window.location.reload(true);
-    }});
+    }, error: ajaxErrorHandler});
+
+    return false;
+}
+
+function sendCndUpdate() {
+    var postURI = $('#main').attr('resource');
+
+
+    $.ajax({url: postURI, type: "POST", contentType: "text/cnd", data: $("#cnd_update_query").val(), success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }, error: ajaxErrorHandler});
 
     return false;
 }
@@ -189,4 +201,11 @@ function updateFile()
         xhr.send(data.buffer);
     };
     reader.readAsBinaryString(update_file);
+}
+
+function ajaxErrorHandler(xhr, textStatus, errorThrown) {
+    $('#errorLabel').text(errorThrown);
+    $('#errorText').text(xhr.responseText);
+    $('#errorModal').modal('show');
+
 }

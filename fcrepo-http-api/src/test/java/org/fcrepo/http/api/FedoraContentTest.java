@@ -135,7 +135,7 @@ public class FedoraContentTest {
                         eq((URI) null))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-            testObj.create(createPathList(pid, dsId), null, TEXT_PLAIN_TYPE,
+            testObj.create(createPathList(pid, dsId), null, null, TEXT_PLAIN_TYPE,
                     dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession, dsPath,
@@ -150,27 +150,57 @@ public class FedoraContentTest {
                                                URISyntaxException,
                                                NoSuchFieldException {
         final String pid = "FedoraDatastreamsTest1";
-        final String dsId = "fcr:new";
         final String dsContent = "asdf";
-        final String dsPath = "/" + pid + "/" + dsId;
+        final String dsPath = "/" + pid;
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
         when(mockMinter.mintPid()).thenReturn("xyz");
         setField(testObj, "pidMinter", mockMinter);
         when(mockNode.isNew()).thenReturn(true);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
-        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
+        when(mockContentNode.getPath()).thenReturn(dsPath + "xyz/jcr:content");
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class), eq("/"
                         + pid + "/xyz"), anyString(), any(InputStream.class),
                         eq((URI) null))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-            testObj.create(createPathList(pid, dsId), null, TEXT_PLAIN_TYPE,
+            testObj.create(createPathList(pid), null, null, TEXT_PLAIN_TYPE,
                     dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession,
                 "/" + pid + "/xyz", "text/plain", dsContentStream, null);
+        verify(mockSession).save();
+    }
+
+
+    @Test
+    public void testCreateContentWithSlug() throws RepositoryException,
+                                                           IOException,
+                                                           InvalidChecksumException,
+                                                           URISyntaxException,
+                                                           NoSuchFieldException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsid = "slug";
+        final String dsContent = "asdf";
+        final String dsPath = "/" + pid;
+        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
+        setField(testObj, "pidMinter", mockMinter);
+        when(mockNode.isNew()).thenReturn(true);
+        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
+        when(mockContentNode.getPath()).thenReturn(dsPath + "slug/jcr:content");
+        when(
+                mockDatastreams.createDatastreamNode(any(Session.class), eq("/"
+                                                                                + pid + "/slug"), anyString(), any(InputStream.class),
+                                                        eq((URI) null))).thenReturn(mockNode);
+        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final Response actual =
+            testObj.create(createPathList(pid), dsid, null, TEXT_PLAIN_TYPE,
+                              dsContentStream);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams).createDatastreamNode(mockSession,
+                                                        "/" + pid + "/slug", "text/plain", dsContentStream, null);
         verify(mockSession).save();
     }
 

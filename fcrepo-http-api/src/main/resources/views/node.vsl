@@ -21,7 +21,7 @@
             #parse("views/common-breadcrumb.vsl")
         </div>
 
-        <div class="col-md-3 col-md-push-9 clearfix">
+        <div id="sidebar" class="col-md-3 col-md-push-9 clearfix">
             <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
                 <span>Toggle actions</span>
             </button>
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="col-md-9 col-md-pull-3">
+        <div id="metadata" class="col-md-9 col-md-pull-3">
 
             #parse("views/common-metadata.vsl")
 

@@ -24,16 +24,18 @@
             <div class="actions collapse visible-lg visible-md" id="actions">
                 <form id="action_register_namespace">
                     <h3>Register Namespace</h3>
-                    <label>
-                        Prefix
-                        <input type="text" name="prefix" id="namespace_prefix"/>
-                    </label>
+
+                    <div class="form-group">
+                        <label for="namespace_prefix">Prefix</label>
+                        <input class="form-control" type="text" name="prefix" id="namespace_prefix"/>
+                    </div>
 
 
-                    <label>
-                        URI
-                        <input type="text" name="uri" id="namespace_uri"/>
-                    </label>
+                    <div class="form-group">
+                        <label for="namespace_uri">URI</label>
+                        <input class="form-control" type="text" name="uri" id="namespace_uri"/>
+                    </div>
+
 
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>

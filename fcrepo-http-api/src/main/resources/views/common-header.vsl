@@ -17,6 +17,7 @@
             <li><a href="$uriInfo.baseUriBuilder.build()">Home</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:namespaces">Namespaces</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:workspaces">Workspaces</a></li>
+            <li><a href="$uriInfo.baseUriBuilder.build()fcr:nodetypes">Types</a></li>
         </ul>
         <form class="navbar-form navbar-left" role="search" method="GET" action="$uriInfo.baseUriBuilder.build()fcr:search">
             <div class="form-group">
@@ -26,3 +27,22 @@
         </form>
     </div>
 </nav>
+
+
+<!-- Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="errorLabel"></h4>
+            </div>
+            <div class="modal-body">
+                <div id="errorText"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
