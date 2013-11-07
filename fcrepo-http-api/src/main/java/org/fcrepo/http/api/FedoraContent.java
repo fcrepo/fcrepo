@@ -21,6 +21,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -92,9 +93,10 @@ public class FedoraContent extends AbstractResource {
     @POST
     @Timed
     public Response create(@PathParam("path")
-            final List<PathSegment> pathList, @QueryParam("checksum")
-            final String checksum, @HeaderParam("Content-Type")
-            final MediaType requestContentType,
+            final List<PathSegment> pathList,
+            @HeaderParam("Slug") final String slug,
+            @QueryParam("checksum") final String checksum,
+            @HeaderParam("Content-Type") final MediaType requestContentType,
                     final InputStream requestBodyStream)
         throws IOException, InvalidChecksumException,
                     RepositoryException, URISyntaxException {
@@ -102,16 +104,35 @@ public class FedoraContent extends AbstractResource {
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
 
-        String path = toPath(pathList);
-        if (path.endsWith("/fcr:new")) {
-            logger.debug("Creating a new unnamed object");
-            final String dsid = pidMinter.mintPid();
-            path = path.replaceFirst("\\/fcr\\:new$", "/" + dsid);
+
+        final String newDatastreamPath;
+        final String path = toPath(pathList);
+
+
+        if (nodeService.exists(session, path)) {
+            final String pid;
+
+            if (slug != null) {
+                pid = slug;
+            }  else {
+                pid = pidMinter.mintPid();
+            }
+
+            newDatastreamPath = path + "/" + pid;
+        } else {
+            newDatastreamPath = path;
         }
 
-        logger.debug("create Datastream {}", path);
+
+        logger.debug("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
 
         try {
+
+            if (nodeService.exists(session, newDatastreamPath)) {
+                return status(SC_CONFLICT)
+                           .entity(path + " is an existing resource!").build();
+            }
+
             final URI checksumURI;
 
             if (checksum != null && !checksum.equals("")) {
@@ -121,7 +142,7 @@ public class FedoraContent extends AbstractResource {
             }
 
             final Node datastreamNode =
-                    datastreamService.createDatastreamNode(session, path,
+                    datastreamService.createDatastreamNode(session, newDatastreamPath,
                             contentType.toString(), requestBodyStream,
                             checksumURI);
 
