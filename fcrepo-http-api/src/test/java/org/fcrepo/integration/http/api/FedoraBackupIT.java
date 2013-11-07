@@ -17,6 +17,7 @@ package org.fcrepo.integration.http.api;
 
 
 import static com.google.common.io.Files.createTempDir;
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -33,7 +34,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
 
 	@Test
 	public void shouldRoundTripBackups() throws Exception {
-		final String objName = "objects/FedoraBackupITObject";
+        final String objName = randomUUID().toString();
 
 		// set up the object
         final StringBuilder text = new StringBuilder();

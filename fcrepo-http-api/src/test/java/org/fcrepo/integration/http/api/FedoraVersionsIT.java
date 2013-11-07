@@ -17,6 +17,7 @@
 package org.fcrepo.integration.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.junit.Assert.assertEquals;
@@ -79,15 +80,17 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastreamVersionNotFound() throws Exception {
-        execute(postObjMethod("FedoraDatastreamsTest1"));
 
-        final HttpPost postDs = postDSMethod("FedoraDatastreamsTest1", "ds1", "foo");
-        execute(postDs);
+        final String pid = randomUUID().toString();
+
+        execute(postObjMethod(pid));
+
+        final HttpPost postDs = postDSMethod(pid, "ds1", "foo");
         assertEquals(201, getStatus(postDs));
 
         final HttpGet getVersion =
             new HttpGet(serverAddress
-                    + "FedoraDatastreamsTest1/ds1/fcr:versions/lastVersion");
+                    + pid + "/ds1/fcr:versions/lastVersion");
         final HttpResponse resp = execute(getVersion);
         assertEquals(404, resp.getStatusLine().getStatusCode());
     }
