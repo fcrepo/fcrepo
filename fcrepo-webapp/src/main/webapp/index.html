@@ -2,13 +2,45 @@
 <head>
   <title>Fedora Commons Repository 4.0</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" />
+    <style >
+        .thumbnail {
+            background: transparent; border: none; margin-bottom: 1.5em
+        }
+
+        body {
+            padding-top: 70px;
+            padding-bottom: 70px;
+        }
+
+    </style>
 </head>
 <body>
-<p>This is the exciting stub page for your Fedora 4.0 repository that we have placed 
+<div class="container">
+<div class="col-md-12">
+<div class="jumbotron">
+<a href="rest/" class="thumbnail" style=""><img src="images/fedora_logo_10in.png" /></a>
+<p>This is the exciting stub page for your Fedora ${project.version} repository that we have placed
 here.</p>
 
-<p>You probably want to visit something a little more interesting, such as the 
-Fedora <a href="rest/">REST API</a> endpoint.</p>
-<p>Release: ${project.version} | Git build: ${buildNumber}, ${build.timestamp}</p>
+<p>You probably want to visit something a little more interesting, such as:       </p>
+<a class="btn btn-primary btn-lg" href="rest/">the Fedora REST API endpoint</a>
+</div>
+</div>
+</div>
+
+<nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+    <div class="container">
+        <ul class="nav navbar-nav">
+            <li><a href="https://github.com/futures/fcrepo4/issues">Issue Tracker</a></li>
+            <li><a href="https://wiki.duraspace.org/display/FF">Wiki</a></li>
+            </ul>
+
+    <p class="navbar-text pull-right">Release: ${project.version} | Build #${buildNumber} (${build.timestamp})</p>
+    </div>
+</nav>
 </body>
 </html>
