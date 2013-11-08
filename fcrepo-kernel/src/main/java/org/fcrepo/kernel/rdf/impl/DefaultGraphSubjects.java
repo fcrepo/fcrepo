@@ -70,7 +70,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
-        LOGGER.debug("Returning RDF subject for: {}", node);
+        LOGGER.trace("Returning RDF subject for: {}", node);
         return getGraphSubject(node.getPath());
     }
 

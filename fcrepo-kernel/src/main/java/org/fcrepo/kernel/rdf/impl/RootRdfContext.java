@@ -76,7 +76,7 @@ public class RootRdfContext extends NodeRdfContext {
 
         super(node, graphSubjects, llsService);
 
-        LOGGER.debug("Creating RDF triples for repository description");
+        LOGGER.trace("Creating RDF triples for repository description");
         final Repository repository = node().getSession().getRepository();
 
         final ImmutableSet.Builder<Triple> b = builder();

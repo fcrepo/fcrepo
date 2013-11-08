@@ -114,12 +114,12 @@ public class PropertyToTriple implements
      * @return An RDF {@link Triple} representing that property.
      */
     private Triple propertyvalue2triple(final Property p, final Value v) {
-        LOGGER.debug("Rendering triple for Property: {} with Value: {}", p, v);
+        LOGGER.trace("Rendering triple for Property: {} with Value: {}", p, v);
         try {
             final Triple triple =
                 create(getGraphSubject(p.getParent()), getPredicateForProperty
                         .apply(p).asNode(), propertyvalue2node(p, v));
-            LOGGER.debug("Created triple: {} ", triple);
+            LOGGER.trace("Created triple: {} ", triple);
             return triple;
         } catch (final RepositoryException e) {
             throw propagate(e);
@@ -155,7 +155,7 @@ public class PropertyToTriple implements
 
     private static Node literal2node(final Object literal) {
         final Node result = createTypedLiteral(literal).asNode();
-        LOGGER.debug("Converting {} into {}", literal, result);
+        LOGGER.trace("Converting {} into {}", literal, result);
         return result;
     }
 

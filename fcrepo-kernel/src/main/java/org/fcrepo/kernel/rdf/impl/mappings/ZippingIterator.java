@@ -57,10 +57,10 @@ public class ZippingIterator<FromType, ToType> extends AbstractIterator<ToType> 
     protected ToType computeNext() {
         final boolean hasNext = (from.hasNext() && through.hasNext());
         if (hasNext) {
-            LOGGER.debug("Found next element.");
+            LOGGER.trace("Found next element.");
             final FromType f = from.next();
             final Function<FromType, ToType> t = through.next();
-            LOGGER.debug("Supplying from next element {} through function {}",
+            LOGGER.trace("Supplying from next element {} through function {}",
                     f, t);
             return t.apply(f);
         } else {

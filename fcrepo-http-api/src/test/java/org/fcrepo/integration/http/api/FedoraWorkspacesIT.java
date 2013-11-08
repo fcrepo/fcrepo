@@ -82,6 +82,5 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         assertEquals(200, profileResponse.getStatusLine().getStatusCode());
         final GraphStore graphStore =
             parseTriples(profileResponse.getEntity().getContent());
-        logger.info(graphStore.toString());
     }
 }

@@ -75,7 +75,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
 
     private void putPropertiesIntoContext() throws RepositoryException {
 
-        LOGGER.debug(
+        LOGGER.trace(
                 "Pushing RDF triples into context for properties of node: {}",
                 node());
 
@@ -92,7 +92,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
                 contentNode = node().getNode(JCR_CONTENT);
             }
         } catch (final AccessControlException e) {
-            LOGGER.debug("Access denied to content node", e);
+            LOGGER.trace("Access denied to content node", e);
         }
         if (contentNode != null) {
             final Node contentSubject =
@@ -132,7 +132,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
 
     private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n)
         throws RepositoryException {
-        LOGGER.debug("Creating triples for node: {}", n);
+        LOGGER.trace("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
             Iterators.filter(new PropertyIterator(n.getProperties()),
                     not(isBinaryProperty));
