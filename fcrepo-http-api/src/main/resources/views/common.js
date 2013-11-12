@@ -101,6 +101,7 @@ $(function() {
     $('#action_commit_transaction').submit(submitAndRedirectToBase);
     $('#action_import').submit(sendImport);
     $('#action_cnd_update').submit(sendCndUpdate);
+    $('#action_sparql_select').submit(sendSparqlQuery);
 
 });
 
@@ -140,6 +141,22 @@ function registerNamespace() {
     $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: query, success: function(data, textStatus, request) {
         window.location.reload(true);
     }});
+
+    return false;
+}
+
+
+function sendSparqlQuery() {
+    var $form = $(this);
+    var postURI = $form.attr('action');
+
+    $.ajax({url: postURI, type: "POST", contentType: "application/sparql-query", data: $("#sparql_select_query").val(), success: function(data, textStatus, request) {
+
+        $('#errorLabel').text("RESULT");
+        $('#errorText').html("<pre></pre>");
+        $('#errorText pre').text(request.responseText);
+        $('#errorModal').modal('show');
+    }, error: ajaxErrorHandler});
 
     return false;
 }

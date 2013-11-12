@@ -21,6 +21,7 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -56,7 +57,6 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     public void setUpTestData() throws RepositoryException {
         session = repo.login();
         final ValueFactory valueFactory = session.getValueFactory();
-
         final FedoraResource fedoraResource = new FedoraResource(session, "/abc", JcrConstants.NT_FOLDER);
         final FedoraResource fedoraResource2 = new FedoraResource(session, "/xyz", JcrConstants.NT_FOLDER);
         fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
@@ -69,6 +69,16 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     @After
     public void destroy() {
         session.logout();
+    }
+    
+    @Test
+    public void itShouldHaveAnHtmlView() throws IOException {
+        HttpGet request = new HttpGet(serverAddress + "/fcr:sparql");
+        request.addHeader("Accept", "text/html");
+        HttpResponse response = client.execute(request);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        String content = EntityUtils.toString(response.getEntity());
+        assertTrue(content.contains("SPARQL"));
     }
 
     @Test

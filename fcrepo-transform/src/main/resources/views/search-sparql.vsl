@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+#parse("views/common.vsl")
+<html>
+<head>
+    <title>Search</title>
+    <meta charset="UTF-8">
+    #parse("views/common-head.vsl")
+</head>
+<body>
+
+<div class="container"">
+    #parse("views/common-header.vsl")
+
+<h1>Search</h1>
+
+## output actions
+<div class="actions">
+    <form id="action_sparql_select" action="$uriInfo.baseUriBuilder.build()fcr:sparql" class="form-sparql" method="POST" role="search">
+        <h2>SPARQL</h2>
+        <div class="form-group">
+            <textarea name="q" id="sparql_select_query" class="form-control">SELECT ?pid FROM { }</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <a class="btn" href="$uriInfo.baseUriBuilder.build()fcr:search">Fulltext Search</a>
+</div>
+</div>
+
+</body>
+</html>
