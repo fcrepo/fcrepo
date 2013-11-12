@@ -29,6 +29,8 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
@@ -49,12 +51,10 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
@@ -198,17 +198,17 @@ public abstract class FedoraTypesUtils {
         };
 
     /**
-     * Check if a JCR property is a binary property or not
+     * Check if a JCR property is a binary jcr:data property
      */
-    public static Predicate<Property> isBinaryProperty =
+    public static Predicate<Property> isBinaryContentProperty =
         new Predicate<Property>() {
 
             @Override
             public boolean apply(final Property p) {
                 checkArgument(p != null,
-                        "null is neither binary nor not binary!");
+                                 "null is neither binary nor not binary!");
                 try {
-                    return p.getType() == BINARY;
+                    return p.getType() == BINARY && p.getName().equals(JCR_DATA);
                 } catch (final RepositoryException e) {
                     throw propagate(e);
                 }
@@ -384,8 +384,8 @@ public abstract class FedoraTypesUtils {
                 session.getWorkspace().getQueryManager();
 
             final String querystring =
-                "SELECT [" + JcrConstants.JCR_PATH + "] FROM ["
-                        + FedoraJcrTypes.FEDORA_OBJECT + "]";
+                "SELECT [" + JCR_PATH + "] FROM ["
+                        + FEDORA_OBJECT + "]";
 
             final QueryResult queryResults =
                 queryManager.createQuery(querystring, JCR_SQL2).execute();

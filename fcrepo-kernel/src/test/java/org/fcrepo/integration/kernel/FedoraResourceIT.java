@@ -24,7 +24,9 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Arrays.asList;
+import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.LONG;
+import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
@@ -53,6 +55,7 @@ import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -175,6 +178,48 @@ public class FedoraResourceIT extends AbstractIT {
         o = createLiteral("fedora:object");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                 .contains(ANY, s, p, o));
+
+    }
+
+
+    @Test
+    public void testObjectGraphWithCustomProperty() throws IOException, RepositoryException {
+
+        FedoraResource object =
+            objectService.createObject(session, "/testObjectGraph");
+
+        final javax.jcr.Node node = object.getNode();
+        node.setProperty("dc:title", "this-is-some-title");
+        node.setProperty("dc:subject", "this-is-some-subject-stored-as-a-binary", BINARY);
+        node.setProperty("jcr:data", "jcr-data-should-be-ignored", BINARY);
+
+        session.save();
+        session.logout();
+
+        session = repo.login();
+
+        object = objectService.getObject(session, "/testObjectGraph");
+
+
+        logger.warn(object.getPropertiesDataset(subjects).toString());
+
+        // jcr property
+        final Node s = createURI(RESTAPI_NAMESPACE + "/testObjectGraph");
+        Node p = DC_TITLE.asNode();
+        Node o = createLiteral("this-is-some-title");
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                       .contains(ANY, s, p, o));
+
+        p = createURI("http://purl.org/dc/terms/subject");
+        o = createLiteral("this-is-some-subject-stored-as-a-binary");
+        assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
+                       .contains(ANY, s, p, o));
+
+        p = Node.ANY;
+        o = createLiteral("jcr-data-should-be-ignored");
+        assertFalse(object.getPropertiesDataset(subjects).asDatasetGraph()
+                        .contains(ANY, s, p, o));
+
 
     }
 
