@@ -209,7 +209,7 @@ public class FedoraResourceIT extends AbstractIT {
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                        .contains(ANY, s, p, o));
 
-        p = createURI("http://purl.org/dc/terms/subject");
+        p = createURI("http://purl.org/dc/elements/1.1/subject");
         o = createLiteral("this-is-some-subject-stored-as-a-binary");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                        .contains(ANY, s, p, o));

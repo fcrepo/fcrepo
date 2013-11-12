@@ -66,7 +66,7 @@ public class LDPathServiceIT {
         final FedoraObject object = objectService.createObject(session, "/testObject");
         object.getNode().setProperty("dc:title", "some-title");
 
-        String s = "@prefix dc : <http://purl.org/dc/terms/>\n" +
+        String s = "@prefix dces : <http://purl.org/dc/elements/1.1/>\n" +
                        "@prefix fcrepo : <" + REPOSITORY_NAMESPACE + ">\n" +
                            "id      = . :: xsd:string ;\n" +
                            "title = dc:title :: xsd:string ;\n" +

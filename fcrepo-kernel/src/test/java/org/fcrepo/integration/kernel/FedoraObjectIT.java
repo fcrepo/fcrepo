@@ -93,20 +93,24 @@ public class FedoraObjectIT extends AbstractIT {
                     compile("fcrepo")
                     .matcher(graphStore.toString()).find());
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                           "INSERT { <http://example/egbook> dc:title " +
                           "\"This is an example of an update that will be " +
                           "ignored\" } WHERE {}", graphStore);
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                           "INSERT { <" + graphSubject + "> dc:title " +
                           "\"This is an example title\" } WHERE {}",
                           graphStore);
 
-        assertTrue(object.getNode().getProperty("dc:title").getValue()
-                   .getString(),
-                   object.getNode().getProperty("dc:title").getValue()
-                   .getString().equals("This is an example title"));
+
+        final Value[] values = object.getNode().getProperty("dc:title").getValues();
+        assertTrue(values.length > 0);
+
+        assertTrue(values[0]
+                       .getString(),
+                      values[0]
+                          .getString().equals("This is an example title"));
 
 
         parseExecute("PREFIX myurn: <info:myurn/>\n" +
@@ -133,7 +137,7 @@ public class FedoraObjectIT extends AbstractIT {
                    .equals(object.getNode().getIdentifier()));
 
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                           "DELETE { <" + graphSubject + "> dc:title " +
                           "\"This is an example title\" } WHERE {}",
                           graphStore);

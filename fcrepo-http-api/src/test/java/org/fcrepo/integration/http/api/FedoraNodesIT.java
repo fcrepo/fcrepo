@@ -129,7 +129,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         method.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(
-                ("INSERT { <> <http://purl.org/dc/terms/title> \"this is a title\" } WHERE {}")
+                ("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"this is a title\" } WHERE {}")
                 .getBytes()));
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
@@ -153,7 +153,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
-        final String rdf = "<> <http://purl.org/dc/terms/title> \"this is a title\".";
+        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
         entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
@@ -405,7 +405,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + serverAddress + "FedoraDescribeTestGraphUpdate> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
+                ("INSERT { <" + serverAddress + "FedoraDescribeTestGraphUpdate> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
                         .getBytes()));
         updateObjectGraphMethod.setEntity(e);
         final HttpResponse response = client.execute(updateObjectGraphMethod);

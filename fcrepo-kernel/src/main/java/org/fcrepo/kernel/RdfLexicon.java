@@ -264,7 +264,7 @@ public final class RdfLexicon {
     public static final Property RDFS_LABEL =
             createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE =
-            createProperty("http://purl.org/dc/terms/title");
+            createProperty("http://purl.org/dc/elements/1.1/title");
 
     public static final Set<Property> managedProperties;
 
