@@ -60,14 +60,14 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * JAX-RS Resource offering PID creation.
+ * JAX-RS Resource offering identifier creation.
  *
  * @author ajs6f
  * @author cbeer
  */
 @Component
 @Scope("prototype")
-@Path("/{path: .*}/fcr:pid")
+@Path("/{path: .*}/fcr:identifier")
 public class FedoraIdentifiers extends AbstractResource {
 
     @InjectedSession
@@ -76,7 +76,7 @@ public class FedoraIdentifiers extends AbstractResource {
     /**
      * Mint identifiers (without creating the objects)
      *
-     * POST /path/to/mint/from/fcr:pid?numPids=15
+     * POST /path/to/mint/from/fcr:identifier?numPids=15
      *
      * @param numPids number of PIDs to return
      * @return HTTP 200 with block of PIDs
