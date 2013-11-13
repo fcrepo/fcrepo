@@ -106,7 +106,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* create a tx */
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
 
-        HttpResponse resp;
         final HttpResponse response = execute(createTx);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
@@ -158,7 +157,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         final String txLocation =
             response.getFirstHeader("Location").getValue();
-        HttpResponse resp;
 
         /* create a new object inside the tx */
         final HttpPost postNew =
