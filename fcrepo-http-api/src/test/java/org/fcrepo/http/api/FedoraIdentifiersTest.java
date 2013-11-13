@@ -88,7 +88,7 @@ public class FedoraIdentifiersTest {
         setField(testObj, "pidMinter", mockPidMinter);
 
         when(uriInfo.getAbsolutePath()).thenReturn(
-                new URI("http://localhost/fcrepo/fcr:pid"));
+                new URI("http://localhost/fcrepo/fcr:identifier"));
 
         final Node mockNode = mock(Node.class);
         when(mockNode.getPath()).thenReturn("/asdf:123");
@@ -98,7 +98,7 @@ public class FedoraIdentifiersTest {
 
         LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
         assertTrue(np.getDefaultModel().contains(
-                createResource("http://localhost/fcrepo/fcr:pid"),
+                createResource("http://localhost/fcrepo/fcr:identifier"),
                 HAS_MEMBER_OF_RESULT,
                 createResource("http://localhost/fcrepo/asdf:123")));
 
@@ -118,7 +118,7 @@ public class FedoraIdentifiersTest {
         setField(testObj, "pidMinter", mockPidMinter);
 
         when(uriInfo.getAbsolutePath()).thenReturn(
-                new URI("http://localhost/fcrepo/objects/fcr:pid"));
+                new URI("http://localhost/fcrepo/objects/fcr:identifier"));
 
         when(mockNode.getPath()).thenReturn("/objects/asdf:123");
         when(mockSession.getNode("/objects/asdf:123")).thenReturn(mockNode);
@@ -128,7 +128,7 @@ public class FedoraIdentifiersTest {
 
         LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
         assertTrue(np.getDefaultModel().contains(
-                createResource("http://localhost/fcrepo/objects/fcr:pid"),
+                createResource("http://localhost/fcrepo/objects/fcr:identifier"),
                 HAS_MEMBER_OF_RESULT,
                 createResource("http://localhost/fcrepo/objects/asdf:123")));
 
