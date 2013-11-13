@@ -23,14 +23,15 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 public class FedoraVersionsIT extends AbstractResourceIT {
@@ -39,19 +40,16 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     public void testGetObjectVersionProfile() throws Exception {
         final String pid = "FedoraDatastreamsTest1";
 
-        execute(postObjMethod(pid));
-        final HttpGet method =
+        createObject(pid);
+        final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
-        final HttpResponse resp = execute(method);
-        final String profile = EntityUtils.toString(resp.getEntity());
-        assertEquals("Failed to retrieve version profile!\n" + profile, 200,
-                resp.getStatusLine().getStatusCode());
+        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
-        final Model results = extract(profile);
+        final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
             createResource(serverAddress + pid + "/fcr:versions");
-        assertTrue("Didn't find a version triple!", results.contains(subject,
-                HAS_VERSION, (RDFNode) null));
+        assertTrue("Didn't find a version triple!",
+            results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
     }
 
 
@@ -68,14 +66,12 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final HttpGet getVersion =
             new HttpGet(serverAddress
                     + "FedoraVersioningTest2/fcr:versions/v0.0.1");
-        final HttpResponse resp = execute(getVersion);
-        final String version = EntityUtils.toString(resp.getEntity());
-        assertEquals("Failed to retrieve new version!\n" + version, 200, resp
-                .getStatusLine().getStatusCode());
+        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.info("Got version profile:");
-        final Model results = extract(version);
-        assertTrue("Found no version!", results.contains(null,
-                HAS_PRIMARY_TYPE, "nt:frozenNode"));
+        final GraphStore results = getGraphStore(getVersion);
+
+        assertTrue("Didn't find a version triple!",
+                      results.contains(Node.ANY, Node.ANY, HAS_PRIMARY_TYPE.asNode(), NodeFactory.createLiteral("nt:frozenNode")));
     }
 
     @Test
@@ -83,10 +79,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final String pid = randomUUID().toString();
 
-        execute(postObjMethod(pid));
-
-        final HttpPost postDs = postDSMethod(pid, "ds1", "foo");
-        assertEquals(201, getStatus(postDs));
+        createObject(pid);
+        createDatastream(pid, "ds1", "foo");
 
         final HttpGet getVersion =
             new HttpGet(serverAddress

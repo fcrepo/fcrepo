@@ -16,18 +16,19 @@
 
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -43,8 +44,6 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import com.hp.hpl.jena.rdf.model.Model;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/spring-test/test-container.xml")
@@ -111,7 +110,7 @@ public abstract class AbstractResourceIT {
     protected HttpResponse execute(final HttpUriRequest method)
         throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
-                method.getURI());
+                         method.getURI());
         return client.execute(method);
     }
 
@@ -125,15 +124,34 @@ public abstract class AbstractResourceIT {
         return result;
     }
 
-    protected Model extract(final String serialization) throws IOException {
-        logger.debug("Reading RDF:\n{}", serialization);
-        try (
 
-            final InputStream rdf =
-                new ByteArrayInputStream(serialization.getBytes(Charset
-                        .forName("UTF8")))) {
-            return createDefaultModel().read(rdf, null);
+    protected GraphStore getGraphStore(final HttpClient client, final HttpUriRequest method) throws IOException {
+
+        if (method.getFirstHeader("Accept") == null) {
+            method.addHeader("Accept", "text/n3");
         }
+
+        HttpResponse response = client.execute(method);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        return parseTriples(response.getEntity());
+
+    }
+
+    protected GraphStore getGraphStore(final HttpUriRequest method) throws IOException {
+        return getGraphStore(client, method);
+    }
+
+    protected HttpResponse createObject(final String pid) throws IOException {
+        final HttpResponse response = client.execute(postObjMethod(pid));
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        return response;
+    }
+
+    protected HttpResponse createDatastream(final String pid, final String dsid, final String content) throws IOException {
+        final HttpResponse response = client.execute(postDSMethod(pid, dsid, content));
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        return response;
     }
 
 }

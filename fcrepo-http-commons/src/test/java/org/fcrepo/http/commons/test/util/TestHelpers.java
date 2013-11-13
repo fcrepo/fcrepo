@@ -18,6 +18,9 @@ package org.fcrepo.http.commons.test.util;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -45,6 +48,7 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -52,7 +56,9 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.identifiers.UUIDPidMinter;
@@ -232,6 +238,17 @@ public abstract class TestHelpers {
         return mockDs;
     }
 
+    private static String getRdfSerialization(final HttpEntity entity) {
+        final MediaType mediaType = MediaType.valueOf(entity.getContentType().getValue());
+        final Lang lang = contentTypeToLang(mediaType.toString());
+        assertNotNull("Entity is not an RDF serialization", lang);
+        return lang.getName();
+    }
+
+    public static GraphStore parseTriples(final HttpEntity entity) throws IOException {
+        return parseTriples(entity.getContent(), getRdfSerialization(entity));
+    }
+
     public static GraphStore parseTriples(final InputStream content) {
         return parseTriples(content, "N3");
     }
@@ -243,7 +260,6 @@ public abstract class TestHelpers {
         model.read(content, "", contentType);
 
         return GraphStoreFactory.create(model);
-
     }
 
     /**

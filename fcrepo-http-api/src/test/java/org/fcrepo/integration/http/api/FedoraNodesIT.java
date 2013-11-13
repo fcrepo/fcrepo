@@ -34,7 +34,6 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
@@ -94,10 +93,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final String pid = randomUUID().toString();
 
-        final HttpPost method = postObjMethod(pid);
-        final HttpResponse response = client.execute(method);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+        final HttpResponse response = createObject(pid);
+
         final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
@@ -108,8 +105,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testIngestWithNew() throws Exception {
-        final HttpPost method = postObjMethod("");
-        final HttpResponse response = client.execute(method);
+        final HttpResponse response = createObject("");
         final String content = EntityUtils.toString(response.getEntity());
         final int status = response.getStatusLine().getStatusCode();
         assertEquals("Didn't get a CREATED response! Got content:\n" + content,
@@ -143,10 +139,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(location);
 
-        final HttpResponse result = client.execute(httpGet);
-
-        final GraphStore graphStore =
-            parseTriples(result.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(httpGet);
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
@@ -171,10 +164,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(location);
 
-        final HttpResponse result = client.execute(httpGet);
-
-        final GraphStore graphStore =
-            parseTriples(result.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(httpGet);
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
@@ -236,11 +226,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final String pid = UUID.randomUUID().toString();
 
-        execute(postObjMethod(pid));
+        createObject(pid);
+        createDatastream(pid, "ds1", "foo");
 
-        assertEquals(404, getStatus(new HttpGet(serverAddress + pid + "/ds1")));
-        assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(pid,
-                "ds1", "foo")));
         final HttpResponse response =
             execute(new HttpGet(serverAddress + pid + "/ds1"));
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
@@ -250,34 +238,24 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDeleteDatastream() throws Exception {
-        execute(postObjMethod("FedoraDatastreamsTest5"));
+        final String pid = UUID.randomUUID().toString();
 
-        final HttpPost method =
-            postDSMethod("FedoraDatastreamsTest5", "ds1", "foo");
-        assertEquals(CREATED.getStatusCode(), getStatus(method));
-
-        final HttpGet method_2 =
-            new HttpGet(serverAddress + "FedoraDatastreamsTest5/ds1");
-        assertEquals(OK.getStatusCode(), getStatus(method_2));
+        createObject(pid);
+        createDatastream(pid, "ds1", "foo");
 
         final HttpDelete dmethod =
-            new HttpDelete(serverAddress + "FedoraDatastreamsTest5/ds1");
+            new HttpDelete(serverAddress + pid + "/ds1");
         assertEquals(204, getStatus(dmethod));
 
         final HttpGet method_test_get =
-            new HttpGet(serverAddress + "FedoraDatastreamsTest5/ds1");
+            new HttpGet(serverAddress +  pid + "/ds1");
         assertEquals(404, getStatus(method_test_get));
     }
 
     @Test
     public void testGetRepositoryGraph() throws Exception {
-        final HttpGet getObjMethod = new HttpGet(serverAddress + "");
-        getObjMethod.addHeader("Accept", "application/n-triples");
-        final HttpResponse response = client.execute(getObjMethod);
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final HttpGet getObjMethod = new HttpGet(serverAddress);
+        final GraphStore graphStore = getGraphStore(getObjMethod);
         logger.debug("Retrieved repository graph:\n" + graphStore.toString());
 
         assertTrue("expected to find the root node data", graphStore.contains(
@@ -287,7 +265,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphHtml() throws Exception {
-        client.execute(postObjMethod("FedoraDescribeTestGraph"));
+        createObject("FedoraDescribeTestGraph");
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + "FedoraDescribeTestGraph");
         getObjMethod.addHeader("Accept", "text/html");
@@ -300,7 +278,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testGetObjectGraph() throws Exception {
         logger.debug("Entering testGetObjectGraph()...");
-        client.execute(postObjMethod("FedoraDescribeTestGraph"));
+        createObject("FedoraDescribeTestGraph");
+
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + "FedoraDescribeTestGraph");
         getObjMethod.addHeader("Accept", "application/rdf+xml");
@@ -332,10 +311,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphWithChildren() throws Exception {
-        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph"));
-        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/a"));
-        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/b"));
-        client.execute(postObjMethod("FedoraDescribeWithChildrenTestGraph/c"));
+        createObject("FedoraDescribeWithChildrenTestGraph");
+        createObject("FedoraDescribeWithChildrenTestGraph/a");
+        createObject("FedoraDescribeWithChildrenTestGraph/b");
+        createObject("FedoraDescribeWithChildrenTestGraph/c");
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + "FedoraDescribeWithChildrenTestGraph");
         getObjMethod.addHeader("Accept", "application/rdf+xml");
@@ -368,7 +347,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphNonMemberProperties() throws Exception {
-        client.execute(postObjMethod("FedoraDescribeTestGraph"));
+        createObject("FedoraDescribeTestGraph");
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + "FedoraDescribeTestGraph?non-member-properties");
         getObjMethod.addHeader("Accept", "application/n-triples");
@@ -391,17 +370,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphByUUID() throws Exception {
-        client.execute(postObjMethod("FedoraDescribeTestGraphByUuid"));
+        createObject("FedoraDescribeTestGraphByUuid");
 
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress +
                         "FedoraDescribeTestGraphByUuid");
-        getObjMethod.addHeader("Accept", "application/n3");
-        final HttpResponse response = client.execute(getObjMethod);
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(getObjMethod);
         final Iterator<Quad> iterator =
             graphStore.find(ANY, createURI(serverAddress +
                         "FedoraDescribeTestGraphByUuid"),
@@ -421,7 +395,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testUpdateObjectGraph() throws Exception {
-        client.execute(postObjMethod("FedoraDescribeTestGraphUpdate"));
+        createObject("FedoraDescribeTestGraphUpdate");
         final HttpPatch updateObjectGraphMethod =
             new HttpPatch(serverAddress + "FedoraDescribeTestGraphUpdate");
         updateObjectGraphMethod.addHeader("Content-Type",
@@ -439,7 +413,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testUpdateAndReplaceObjectGraph() throws Exception {
-        client.execute(postObjMethod("FedoraDescribeTestGraphReplace"));
+        createObject("FedoraDescribeTestGraphReplace");
         final String subjectURI =
             serverAddress + "FedoraDescribeTestGraphReplace";
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
@@ -545,7 +519,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     @Ignore("waiting on MODE-1998")
     public void testRoundTripReplaceGraph() throws Exception {
-        client.execute(postObjMethod("FedoraRoundTripGraph"));
+        createObject("FedoraRoundTripGraph");
 
         final String subjectURI =
             serverAddress + "FedoraRoundTripGraph";
@@ -569,12 +543,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final String sizeNode = randomUUID().toString();
 
-        final HttpGet describeMethod = new HttpGet(serverAddress + "");
-        describeMethod.addHeader("Accept", "text/n3");
-        HttpResponse response = client.execute(describeMethod);
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-        GraphStore graphStore = parseTriples(response.getEntity().getContent());
+        GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeSize() first size retrieved repository graph:\n"
                 + graphStore.toString());
 
@@ -590,10 +559,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(sizeNode,
                 "asdf", "1234")));
 
-        response = client.execute(describeMethod);
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-        graphStore = parseTriples(response.getEntity().getContent());
+        graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeSize() new size retrieved repository graph:\n"
                 + graphStore.toString());
 
@@ -611,12 +577,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeCount() throws Exception {
-        final HttpGet describeMethod = new HttpGet(serverAddress + "");
-        describeMethod.addHeader("Accept", "text/n3");
-        HttpResponse response = client.execute(describeMethod);
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-        GraphStore graphStore = parseTriples(response.getEntity().getContent());
+        GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeCount() first count retrieved repository graph:\n"
                 + graphStore.toString());
 
@@ -631,10 +592,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(
                 "countNode", "asdf", "1234")));
 
-        response = client.execute(describeMethod);
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-        graphStore = parseTriples(response.getEntity().getContent());
+        graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeCount() first count repository graph:\n"
                 + graphStore.toString());
 
@@ -661,15 +619,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testGetProjectedNode() throws Exception {
         final HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
-        method.setHeader("Accept", "text/n3");
-        final HttpResponse response = execute(method);
-
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+        final Graph result = getGraphStore(method).getDefaultGraph();
 
         final String subjectURI = serverAddress + "files/FileSystem1";
-        final Graph result =
-            parseTriples(response.getEntity().getContent()).getDefaultGraph();
         logger.debug("For testGetProjectedNode() retrieved graph:\n"
                 + result.toString());
         assertTrue("Didn't find the first datastream! ", result.contains(
