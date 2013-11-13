@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isBinaryContentProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
@@ -53,6 +54,7 @@ import java.util.TimeZone;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -75,6 +77,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.JcrValueFactory;
+import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Predicate;
@@ -172,6 +175,26 @@ public class FedoraTypesUtilsTest {
             test.apply(mockYes);
             fail("Unexpected completion after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
+    }
+
+    @Test
+    public void testIsBinaryContentProperty() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
+        when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
+        assertTrue(isBinaryContentProperty.apply(mockProperty));
+    }
+
+    @Test
+    public void testIsNotBinaryContentProperty() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(PropertyType.STRING);
+        assertFalse(isBinaryContentProperty.apply(mockProperty));
+    }
+
+    @Test
+    public void testContentButNotBinaryContentProperty() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(PropertyType.STRING);
+        when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
+        assertFalse(isBinaryContentProperty.apply(mockProperty));
     }
 
     @Test
