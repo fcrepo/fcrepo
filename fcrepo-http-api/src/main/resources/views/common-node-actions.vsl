@@ -1,3 +1,9 @@
+#set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CONTENT, false))
+
+#if ($content != "")
+    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download</a>
+    <hr />
+#end
 
 <form id="action_create" method="POST" enctype="multipart/form-data">
     <h3>Create New Node</h3>

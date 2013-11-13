@@ -1,14 +1,13 @@
-
 <dl>
-    <dt>UUID</dt> <dd>$esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_PRIMARY_IDENTIFIER))</dd>
+    <dt>UUID</dt> <dd>$esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_PRIMARY_IDENTIFIER, true))</dd>
 
-    <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_DATE)
-    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_BY))</dd>
+    <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_DATE, true)
+    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_BY, true))</dd>
 
-    <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_DATE)
-    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_BY))</dd>
+    <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_DATE, true)
+    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_BY, true))</dd>
 
-    <dt>Children <span class="badge">$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CHILD_COUNT)</span></dt>
+    <dt>Children <span class="badge">$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CHILD_COUNT, true)</span></dt>
     <dd>
         <ol>
             #foreach($quad in $helpers.getObjects($rdf, $topic, $rdfLexicon.HAS_CHILD))

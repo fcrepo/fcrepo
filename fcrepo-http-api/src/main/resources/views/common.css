@@ -2,6 +2,9 @@
     display: none;
 }
 
+body {
+    padding-bottom: 40px;
+}
 
 .nt_file #action_create, .nt_resource #action_create {
     display: none;
@@ -28,6 +31,12 @@ dd {
     padding-left: 54px;
 }
 
+#metadata .panel-body {
+    word-wrap: break-word;
+    text-indent: -35px;
+    padding-left: 35px;
+}
+
 #datastream_payload_container {
     display: none;
 }
@@ -43,4 +52,8 @@ dd {
 
 #actions {
     margin-bottom: 3em;
+}
+
+.namespace {
+    font-size: .8em;
 }
