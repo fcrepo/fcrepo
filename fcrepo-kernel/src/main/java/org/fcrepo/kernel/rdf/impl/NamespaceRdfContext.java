@@ -75,13 +75,13 @@ public class NamespaceRdfContext extends RdfStream {
                 if (prefix.equals("jcr")) {
                     prefix = "fcrepo";
                 }
-                LOGGER.debug(
+                LOGGER.trace(
                         "Discovered namespace prefix \"{}\" with URI \"{}\"",
                         prefix, nsURI);
                 final String rdfNsUri = getRDFNamespaceForJcrNamespace(nsURI);
                 // first, let's put the namespace in context
                 namespaces.put(prefix, rdfNsUri);
-                LOGGER.debug("Added namespace prefix \"{}\" with URI \"{}\"",
+                LOGGER.trace("Added namespace prefix \"{}\" with URI \"{}\"",
                         prefix, rdfNsUri);
                 final Node nsSubject = createURI(rdfNsUri);
                 // now, some triples describing this namespace

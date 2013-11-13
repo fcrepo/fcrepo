@@ -73,12 +73,13 @@ public class HierarchyRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
     public HierarchyRdfContext(final javax.jcr.Node node,
-                               final GraphSubjects graphSubjects,
-                               final LowLevelStorageService lowLevelStorageService)
+            final GraphSubjects graphSubjects,
+            final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
+
         super(node, graphSubjects, lowLevelStorageService);
         if (node.getDepth() > 0) {
-            LOGGER.debug("Determined that this node has a parent.");
+            LOGGER.trace("Determined that this node has a parent.");
             concat(parentContext());
         }
         final Node pageContext = graphSubjects.getContext().asNode();
@@ -87,12 +88,12 @@ public class HierarchyRdfContext extends NodeRdfContext {
                 create(pageContext, PAGE_OF.asNode(), subject())});
 
         if (JcrRdfTools.isContainer(node)) {
-            LOGGER.debug("Determined that this node is a container.");
+            LOGGER.trace("Determined that this node is a container.");
             concat(containerContext(pageContext));
 
         }
         if (node.hasNodes()) {
-            LOGGER.debug("Found children of this node.");
+            LOGGER.trace("Found children of this node.");
             concat(childrenContext(pageContext));
         }
     }
@@ -145,7 +146,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
                 try {
                     final Node childSubject =
                         graphSubjects().getGraphSubject(child).asNode();
-                    LOGGER.debug("Creating triples for child node: {}", child);
+                    LOGGER.trace("Creating triples for child node: {}", child);
                     return new PropertiesRdfContext(child, graphSubjects(),
                         lowLevelStorageService()).concat(new Triple[] {
                             create(pageContext, INLINED_RESOURCE.asNode(),
@@ -169,7 +170,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
 
             @Override
             public boolean apply(final javax.jcr.Node n) {
-                LOGGER.debug("Testing child node {}", n);
+                LOGGER.trace("Testing child node {}", n);
                 try {
                     return (isInternalNode.apply(n) || n.getName().equals(
                             JCR_CONTENT));

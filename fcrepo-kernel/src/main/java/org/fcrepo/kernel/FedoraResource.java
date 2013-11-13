@@ -155,7 +155,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
             return new Date(node.getProperty(JCR_CREATED).getDate()
                             .getTimeInMillis());
         } else {
-            LOGGER.info("Node {} does not have a createdDate", node);
+            LOGGER.debug("Node {} does not have a createdDate", node);
             return null;
         }
     }
@@ -170,7 +170,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
             return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
                             .getTimeInMillis());
         } else {
-            LOGGER.info(
+            LOGGER.debug(
                         "Could not get last modified date property for node {}",
                         node);
         }
@@ -178,7 +178,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         final Date createdDate = getCreatedDate();
 
         if (createdDate != null) {
-            LOGGER.info(
+            LOGGER.trace(
                         "Using created date for last modified date for node {}",
                         node);
             return createdDate;

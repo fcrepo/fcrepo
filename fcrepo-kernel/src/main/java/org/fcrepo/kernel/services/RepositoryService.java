@@ -110,7 +110,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         try {
 
             final Timer.Context context = objectSizeCalculationTimer.time();
-            logger.info("Calculating repository size from index");
+            logger.debug("Calculating repository size from index");
 
             try {
                 return FedoraTypesUtils.getRepositorySize(repo);
@@ -344,10 +344,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @throws IOException
      */
     public void registerNodeTypes(final Session session,
-                                  final InputStream cndStream)
-        throws RepositoryException, IOException {
-        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace()
-                .getNodeTypeManager();
+                                  final InputStream cndStream) throws RepositoryException, IOException {
+        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
         nodeTypeManager.registerNodeTypes(cndStream, true);
     }
 }

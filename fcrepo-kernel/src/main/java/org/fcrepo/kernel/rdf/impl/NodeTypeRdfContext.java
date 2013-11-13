@@ -116,7 +116,7 @@ public class NodeTypeRdfContext extends RdfStream {
                 getResource((Namespaced) nodeType).asNode();
         final String nodeTypeName = nodeType.getName();
 
-        LOGGER.debug("Adding triples for nodeType: {} with URI: {}",
+        LOGGER.trace("Adding triples for nodeType: {} with URI: {}",
                 nodeTypeName, nodeTypeResource.getURI());
 
         nsTriples.add(create(nodeTypeResource, type.asNode(), Class

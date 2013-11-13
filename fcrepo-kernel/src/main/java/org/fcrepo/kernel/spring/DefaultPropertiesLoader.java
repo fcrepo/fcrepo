@@ -73,7 +73,7 @@ public class DefaultPropertiesLoader {
         LOGGER.info("Loading properties");
 
         if (getProperty("integration-test") == null) {
-            LOGGER.debug("Setting default properties, if necessary.");
+            LOGGER.trace("Setting default properties, if necessary.");
 
             for (final PROPERTIES prop : PROPERTIES.values()) {
                 if (getProperty(prop.getValue()) == null) {
@@ -84,7 +84,7 @@ public class DefaultPropertiesLoader {
 
         for (final PROPERTIES prop : PROPERTIES.values()) {
             final String val = prop.getValue();
-            LOGGER.debug("{} = {}", val, getProperty(val));
+            LOGGER.trace("{} = {}", val, getProperty(val));
         }
     }
 

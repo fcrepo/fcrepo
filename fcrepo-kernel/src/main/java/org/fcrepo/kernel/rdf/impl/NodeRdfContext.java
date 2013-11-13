@@ -127,15 +127,15 @@ public class NodeRdfContext extends RdfStream {
             public Triple apply(final NodeType nodeType) {
                 try {
                     final String fullTypeName = nodeType.getName();
-                    LOGGER.debug("Translating JCR mixin name: {}", fullTypeName);
+                    LOGGER.trace("Translating JCR mixin name: {}", fullTypeName);
                     final String prefix = fullTypeName.split(":")[0];
                     final String typeName = fullTypeName.split(":")[1];
                     final String namespace = getJcrUri(prefix);
-                    LOGGER.debug("with JCR namespace: {}", namespace);
+                    LOGGER.trace("with JCR namespace: {}", namespace);
                     final com.hp.hpl.jena.graph.Node rdfType =
                         createURI(getRDFNamespaceForJcrNamespace(namespace)
                                 + typeName);
-                    LOGGER.debug("into RDF resource: {}", rdfType);
+                    LOGGER.trace("into RDF resource: {}", rdfType);
                     return create(subject(), type.asNode(), rdfType);
                 } catch (final RepositoryException e) {
                     throw propagate(e);
