@@ -27,7 +27,6 @@ import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFJSON;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -58,12 +57,9 @@ public class LdprIT extends AbstractResourceIT {
     @Test
     public void testProvidesRDFRepresentation() throws IOException {
         final HttpGet testMethod = new HttpGet(serverAddress + "");
-        final HttpResponse response = client.execute(testMethod);
-        assertEquals("text/turtle", response.getFirstHeader("Content-Type")
-                .getValue());
+        testMethod.addHeader("Accept", "text/turtle");
 
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent(), "TTL");
+        final GraphStore graphStore = getGraphStore(testMethod);
 
         assertTrue(graphStore.contains(ANY, createResource(serverAddress)
    .asNode(), ANY, ANY));
@@ -77,12 +73,9 @@ public class LdprIT extends AbstractResourceIT {
     @Test
     public void testShouldHaveAtLeastOneRdfType() throws IOException {
         final HttpGet testMethod = new HttpGet(serverAddress + "");
-        final HttpResponse response = client.execute(testMethod);
-        assertEquals("text/turtle", response.getFirstHeader("Content-Type")
-                .getValue());
+        testMethod.addHeader("Accept", "text/turtle");
 
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent(), "TTL");
+        final GraphStore graphStore = getGraphStore(testMethod);
 
         assertTrue(graphStore.contains(ANY, createResource(serverAddress)
                 .asNode(), type.asNode(), ANY));

@@ -17,7 +17,6 @@
 package org.fcrepo.integration.http.api;
 
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -70,17 +69,11 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         assertEquals(201, createWorkspaceResponse.getStatusLine()
                 .getStatusCode());
 
-        final HttpPost httpPost =
-            new HttpPost(serverAddress + "workspace:" + workspace + "/" + pid);
-        final HttpResponse response = execute(httpPost);
-        assertEquals(201, response.getStatusLine().getStatusCode());
+        createObject("workspace:" + workspace + "/" + pid);
 
         final HttpGet httpGet =
             new HttpGet(serverAddress + "workspace:" + workspace + "/" + pid);
-        httpGet.setHeader("Accept", "application/n3");
-        final HttpResponse profileResponse = execute(httpGet);
-        assertEquals(200, profileResponse.getStatusLine().getStatusCode());
-        final GraphStore graphStore =
-            parseTriples(profileResponse.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(httpGet);
+        logger.info(graphStore.toString());
     }
 }

@@ -20,18 +20,13 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
@@ -40,20 +35,14 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test
     public void testCheckDatastreamFixity() throws Exception {
-        final HttpPost objMethod = postObjMethod("FedoraDatastreamsTest11");
-        assertEquals(201, getStatus(objMethod));
-        final HttpPost method1 =
-            postDSMethod("FedoraDatastreamsTest11", "zxc", "foo");
-        assertEquals(201, getStatus(method1));
-        final HttpGet method2 =
+        createObject("FedoraDatastreamsTest11");
+        createDatastream("FedoraDatastreamsTest11", "zxc", "foo");
+
+        final HttpGet method =
             new HttpGet(serverAddress
                     + "FedoraDatastreamsTest11/zxc/fcr:fixity");
-        method2.setHeader("Accept", "application/n3");
-        final HttpResponse response = execute(method2);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        final HttpEntity entity = response.getEntity();
-        final GraphStore graphStore = parseTriples(entity.getContent());
 
+        final GraphStore graphStore = getGraphStore(method);
         logger.info("Got triples {}", graphStore);
 
         assertTrue(graphStore.contains(ANY, ANY, IS_FIXITY_RESULT_OF.asNode(),

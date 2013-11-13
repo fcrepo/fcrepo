@@ -22,7 +22,6 @@ import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.Transaction.DEFAULT_TIMEOUT;
 import static org.fcrepo.kernel.Transaction.TIMEOUT_SYSTEM_PROPERTY;
 import static org.fcrepo.kernel.services.TransactionService.REAP_INTERVAL;
@@ -107,6 +106,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* create a tx */
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
 
+        HttpResponse resp;
         final HttpResponse response = execute(createTx);
         assertEquals(201, response.getStatusLine().getStatusCode());
 
@@ -122,14 +122,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* fetch the created tx from the endpoint */
         final HttpGet getTx =
             new HttpGet(txLocation + "/object-in-tx-rollback");
-        getTx.setHeader("Accept", "application/n3");
-        resp = execute(getTx);
-        assertEquals(
-                "Expected to find our object within the scope of the transaction",
-                200, resp.getStatusLine().getStatusCode());
-
-        final GraphStore graphStore =
-            parseTriples(resp.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(getTx);
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
@@ -165,6 +158,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         final String txLocation =
             response.getFirstHeader("Location").getValue();
+        HttpResponse resp;
 
         /* create a new object inside the tx */
         final HttpPost postNew =
@@ -174,14 +168,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* fetch the created tx from the endpoint */
         final HttpGet getTx = new HttpGet(txLocation + "/" + objectInTxCommit);
-        getTx.setHeader("Accept", "application/n3");
-        resp = execute(getTx);
-        assertEquals(
-                "Expected to find our object within the scope of the transaction",
-                200, resp.getStatusLine().getStatusCode());
+        GraphStore graphStore = getGraphStore(getTx);
 
-        final GraphStore graphStore =
-            parseTriples(resp.getEntity().getContent());
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(ANY,
@@ -189,7 +177,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* fetch the object-in-tx outside of the tx */
         final HttpGet getObj =
-                new HttpGet(serverAddress + "/" + objectInTxCommit);
+                new HttpGet(serverAddress + objectInTxCommit);
         resp = execute(getObj);
         assertEquals(
                 "Expected to not find our object within the scope of the transaction",
@@ -204,11 +192,12 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
         final HttpGet getObjCommitted =
-            new HttpGet(serverAddress + "/" + objectInTxCommit);
-        resp = execute(getObjCommitted);
-        assertEquals(
-                "Expected to  find our object after the transaction was committed",
-                200, resp.getStatusLine().getStatusCode());
+            new HttpGet(serverAddress + objectInTxCommit);
+        graphStore = getGraphStore(getObjCommitted);
+
+        assertTrue("Expected to  find our object after the transaction was committed",
+                      graphStore.toDataset().asDatasetGraph()
+                          .contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
 
     }
 

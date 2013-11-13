@@ -20,14 +20,12 @@ import static com.google.common.collect.Iterators.size;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
@@ -46,11 +44,8 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasAPid() throws IOException {
         final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
-        method.setHeader("Accept", "application/n3");
-        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPid()");
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(method);
         assertTrue("Didn't find a single dang PID!", graphStore.contains(ANY,
                 ResourceFactory.createResource(serverAddress + "fcr:pid")
                         .asNode(), HAS_MEMBER_OF_RESULT.asNode(), ANY));
@@ -62,10 +57,8 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
         final HttpPost method =
                 new HttpPost(serverAddress + "fcr:pid?numPids=2");
         method.setHeader("Accept", "application/n3");
-        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPids()");
-        final GraphStore graphStore =
-                parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(method);
         assertEquals("Didn't find two dang PIDs!", 2, size(graphStore.find(ANY,
                 createResource(serverAddress + "fcr:pid").asNode(),
                 HAS_MEMBER_OF_RESULT.asNode(), ANY)));
@@ -82,11 +75,8 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasAPidWithPath() throws IOException {
         final HttpPost method = new HttpPost(serverAddress + "fcr:pid");
-        method.setHeader("Accept", "application/n3");
-        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasAPidWithPath()");
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(method);
         assertTrue("Didn't find a single dang PID!", graphStore.contains(ANY,
                 createResource(serverAddress + "fcr:pid").asNode(),
                 HAS_MEMBER_OF_RESULT.asNode(), ANY));
@@ -97,11 +87,8 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     public void testGetNextHasTwoPidsWithPath() throws IOException {
         final HttpPost method =
                 new HttpPost(serverAddress + "fcr:pid?numPids=2");
-        method.setHeader("Accept", "application/n3");
-        final HttpResponse response = client.execute(method);
         logger.debug("Executed testGetNextHasTwoPidsWithPath()");
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(method);
         assertEquals("Didn't find two dang PIDs!", 2, size(graphStore.find(ANY,
                 createResource(serverAddress + "fcr:pid").asNode(),
                 HAS_MEMBER_OF_RESULT.asNode(), ANY)));

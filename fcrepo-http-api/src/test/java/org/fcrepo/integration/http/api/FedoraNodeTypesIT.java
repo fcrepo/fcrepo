@@ -31,7 +31,6 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -42,12 +41,7 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(serverAddress + "/fcr:nodetypes");
 
-        final HttpResponse result = client.execute(httpGet);
-
-        assertEquals(200, result.getStatusLine().getStatusCode());
-
-        final GraphStore graphStore =
-            parseTriples(result.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(httpGet);
 
         assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(RdfLexicon.RESTAPI_NAMESPACE + "resource"), RDF.type.asNode(), RDFS.Class.asNode()));
         assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(RdfLexicon.RESTAPI_NAMESPACE + "object"), RDF.type.asNode(), RDFS.Class.asNode()));
@@ -69,10 +63,7 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(serverAddress + "/fcr:nodetypes");
 
-        final HttpResponse result = client.execute(httpGet);
-
-        final GraphStore graphStore =
-            parseTriples(result.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(httpGet);
 
         assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI("info:local#object"), RDFS.subClassOf.asNode(), NodeFactory.createURI(RdfLexicon.RESTAPI_NAMESPACE + "object")));
 

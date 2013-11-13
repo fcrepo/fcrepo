@@ -20,7 +20,6 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
@@ -37,7 +36,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.junit.Ignore;
@@ -84,10 +82,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchRdf() throws Exception {
         /* first post an object which can be used for the search */
-        final HttpPost postObj = postObjMethod("testobj");
-        final HttpResponse postResp = execute(postObj);
-        postObj.releaseConnection();
-        assertEquals(201, postResp.getStatusLine().getStatusCode());
+        createObject("testobj");
 
         /* and add a dc title to the object so the query returns a result */
         final HttpPatch postDc = new HttpPatch(serverAddress + "testobj");
@@ -103,7 +98,6 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         postDc.releaseConnection();
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
-        method.setHeader("Accept", "application/n3");
         final URI uri =
             new URIBuilder(method.getURI()).addParameter("q", "testobj")
                     .addParameter("offset", "0").addParameter("limit", "1")
@@ -111,13 +105,9 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         method.setURI(uri);
 
-        final HttpResponse resp = execute(method);
-
-        final GraphStore graphStore =
-            parseTriples(resp.getEntity().getContent());
+        final GraphStore graphStore =  getGraphStore(method);
 
         logger.debug("Got search results graph: {}", graphStore);
-        assertEquals(200, resp.getStatusLine().getStatusCode());
         assertTrue(graphStore.contains(ANY, createResource(
                 serverAddress + "fcr:search?q=testobj").asNode(),
                 SEARCH_HAS_TOTAL_RESULTS.asNode(), createTypedLiteral(1)
@@ -148,7 +138,6 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     public void testSearchSubmitPaging() throws Exception {
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
-        method.setHeader("Accept", "application/n3");
         final URI uri =
                 new URIBuilder(method.getURI()).addParameter("q", "testobj")
                         .addParameter("offset", "1").addParameter("limit", "1")
@@ -156,13 +145,9 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         method.setURI(uri);
 
-        final HttpResponse resp = execute(method);
-
-        final GraphStore graphStore =
-            parseTriples(resp.getEntity().getContent());
+        final GraphStore graphStore =  getGraphStore(method);
 
         logger.debug("Got search results graph: {}", graphStore);
-        assertEquals(200, resp.getStatusLine().getStatusCode());
         assertFalse(graphStore.contains(ANY, createResource(
                 serverAddress + "fcr:search?q=testobj").asNode(),
                 HAS_MEMBER_OF_RESULT.asNode(), ANY));

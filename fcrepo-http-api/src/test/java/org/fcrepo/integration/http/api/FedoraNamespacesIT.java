@@ -41,13 +41,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
     public void testGet() throws Exception {
 
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
-        get.addHeader("Accept", "application/n-triples");
-        final HttpResponse response = execute(get);
-        final int status = response.getStatusLine().getStatusCode();
-        assertEquals(200, status);
-
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(get);
 
         logger.debug("Got store {}", graphStore);
         assertTrue("expected to find nt property in response", graphStore
@@ -70,13 +64,8 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         execute(post);
 
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
-        get.addHeader("Accept", "application/n-triples");
-        final HttpResponse response = execute(get);
-        final int status = response.getStatusLine().getStatusCode();
-        assertEquals(200, status);
 
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(get);
 
         logger.debug("Got store {}", graphStore);
         assertTrue("expected to find our new property in response", graphStore
@@ -115,7 +104,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         assertEquals(200, status);
 
         final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+            parseTriples(response.getEntity());
 
         logger.debug("Got store {}", graphStore);
         assertTrue("expected to find our updated property in response",
@@ -148,13 +137,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         execute(post);
 
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
-        get.addHeader("Accept", "application/n-triples");
-        final HttpResponse response = execute(get);
-        final int status = response.getStatusLine().getStatusCode();
-        assertEquals(200, status);
-
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(get);
 
         logger.debug("Got store {}", graphStore);
         assertTrue("expected to find our updated property in response",
@@ -187,13 +170,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         execute(post);
 
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
-        get.addHeader("Accept", "application/n-triples");
-        final HttpResponse response = execute(get);
-        final int status = response.getStatusLine().getStatusCode();
-        assertEquals(200, status);
-
-        final GraphStore graphStore =
-            parseTriples(response.getEntity().getContent());
+        final GraphStore graphStore = getGraphStore(get);
 
         logger.debug("Got store {}", graphStore);
         assertFalse("should not find deleted property in response", graphStore
