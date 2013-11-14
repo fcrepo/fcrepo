@@ -22,6 +22,7 @@
   <input type="submit" class="btn btn-primary" value="Add"/>
   <hr/>
 </form>
+
 <form id="action_create" method="POST" enctype="multipart/form-data">
     <h3>Create New Node</h3>
     <div class="form-group">
