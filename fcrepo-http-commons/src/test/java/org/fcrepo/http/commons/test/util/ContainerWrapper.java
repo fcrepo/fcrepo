@@ -146,7 +146,7 @@ public class ContainerWrapper implements ApplicationContextAware {
         } catch (final Exception e) {
             logger.warn(e.getMessage(), e);
         } finally {
-            server.stop();
+            server.shutdownNow();
         }
     }
 

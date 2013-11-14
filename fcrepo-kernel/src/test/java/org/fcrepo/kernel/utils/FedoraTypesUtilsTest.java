@@ -163,8 +163,8 @@ public class FedoraTypesUtilsTest {
         final Predicate<Property> test = isMultipleValuedProperty;
         try {
             test.apply(null);
-            fail("Null values should throw an IllegalArgumentException");
-        } catch (final IllegalArgumentException e) {
+            fail("Null values should throw a NullPointerException");
+        } catch (final NullPointerException e) {
         }
         boolean actual = test.apply(mockYes);
         assertEquals(true, actual);

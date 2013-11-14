@@ -24,6 +24,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.Property;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.domain;
 import static com.hp.hpl.jena.vocabulary.RDFS.label;
+import static org.fcrepo.kernel.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -80,8 +81,7 @@ public class ItemDefinitionToTriplesTest {
         }
 
         final Node subject =
-            testMapper.getResource((ItemDefinition) mockItemDefinition)
-                    .asNode();
+            getResource((ItemDefinition) mockItemDefinition).asNode();
         assertTrue(results.contains(create(subject, type.asNode(), Property
                 .asNode())));
         assertTrue(results.contains(create(subject, label.asNode(),
@@ -101,7 +101,7 @@ public class ItemDefinitionToTriplesTest {
     public void testGetResourceFromNodeType() throws RepositoryException {
         when(mockNodeType.getNamespaceURI()).thenReturn("namespace#");
         when(mockNodeType.getLocalName()).thenReturn("localname");
-        final Resource answer = testMapper.getResource((NodeType) mockNodeType);
+        final Resource answer = getResource((NodeType) mockNodeType);
         assertEquals("namespace#", answer.getNameSpace());
         assertEquals("localname", answer.getLocalName());
     }

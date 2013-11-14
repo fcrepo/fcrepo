@@ -17,7 +17,6 @@ package org.fcrepo.integration.http.api.html;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
-import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlFileInput;
@@ -35,8 +34,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static java.util.UUID.randomUUID;
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -136,7 +134,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
 
         final HtmlPage page2 = webClient.getPage(serverAddress + pid);
-        assertEquals(404, page2.getWebResponse().getStatusCode());
+        assertEquals("Didn't get a 404!", 404, page2.getWebResponse()
+                .getStatusCode());
 
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
@@ -164,7 +163,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
     }
 
-    private void checkForHeaderSearch(HtmlPage page) {
+    private void checkForHeaderSearch(final HtmlPage page) {
         final HtmlForm form = page.getFirstByXPath("//form[@role='search']");
         assertNotNull(form);
         assertEquals(serverAddress + "fcr:search", form.getActionAttribute());
@@ -194,7 +193,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient getDefaultWebClient() {
 
-        WebClient webClient = new WebClient(BrowserVersion.FIREFOX_17);
+        final WebClient webClient = new WebClient(BrowserVersion.FIREFOX_17);
         webClient.addRequestHeader("Accept", "text/html");
 
         webClient.waitForBackgroundJavaScript(1000);
