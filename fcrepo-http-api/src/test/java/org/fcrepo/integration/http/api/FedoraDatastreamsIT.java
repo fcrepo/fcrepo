@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static junit.framework.TestCase.assertFalse;
+import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -28,7 +29,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
@@ -66,12 +67,10 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPost post =
             new HttpPost(serverAddress
                     + "FedoraDatastreamsTest8/fcr:datastreams?delete=ds_void");
-
-        final MultipartEntity multiPartEntity = new MultipartEntity();
-        multiPartEntity.addPart("ds1", new StringBody("asdfg"));
-        multiPartEntity.addPart("ds2", new StringBody("qwerty"));
-
-        post.setEntity(multiPartEntity);
+        final MultipartEntityBuilder multiPartEntityBuilder = MultipartEntityBuilder.create();
+        multiPartEntityBuilder.addPart("ds1", new StringBody("asdfg", TEXT_PLAIN));
+        multiPartEntityBuilder.addPart("ds2", new StringBody("qwerty", TEXT_PLAIN));
+        post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = client.execute(post);
 
@@ -98,12 +97,12 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         final HttpPost post =
             new HttpPost(serverAddress
                     + "FedoraDatastreamsTest9/fcr:datastreams/");
+        final MultipartEntityBuilder multiPartEntityBuilder =
+            MultipartEntityBuilder.create().addPart("ds1",
+                    new StringBody("asdfg", TEXT_PLAIN)).addPart("ds2",
+                    new StringBody("qwerty", TEXT_PLAIN));
 
-        final MultipartEntity multiPartEntity = new MultipartEntity();
-        multiPartEntity.addPart("ds1", new StringBody("asdfg"));
-        multiPartEntity.addPart("ds2", new StringBody("qwerty"));
-
-        post.setEntity(multiPartEntity);
+        post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
@@ -132,11 +131,12 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
             new HttpPost(serverAddress
                     + "FedoraDatastreamsTest10/fcr:datastreams");
 
-        final MultipartEntity multiPartEntity = new MultipartEntity();
-        multiPartEntity.addPart("ds1", new StringBody("asdfg"));
-        multiPartEntity.addPart("ds2", new StringBody("qwerty"));
+        final MultipartEntityBuilder multiPartEntityBuilder =
+            MultipartEntityBuilder.create().addPart("ds1",
+                    new StringBody("asdfg", TEXT_PLAIN)).addPart("ds2",
+                    new StringBody("qwerty", TEXT_PLAIN));
 
-        post.setEntity(multiPartEntity);
+        post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = client.execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());

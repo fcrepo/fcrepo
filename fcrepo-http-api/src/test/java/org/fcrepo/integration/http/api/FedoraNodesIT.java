@@ -274,6 +274,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Retrieved: {}", content);
     }
 
     @Test
