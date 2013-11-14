@@ -44,6 +44,8 @@ import java.util.Date;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -54,6 +56,7 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.VersionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -67,6 +70,9 @@ public class FedoraContentTest {
 
     @Mock
     private NodeService mockNodeService;
+
+    @Mock
+    private VersionService mockVersions;
 
     @Mock
     private Session mockSession;
@@ -87,8 +93,14 @@ public class FedoraContentTest {
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "uriInfo", getUriInfoImpl());
+        setField(testObj, "versionService", mockVersions);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final VersionManager mockVM = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
     }
 
     @Test

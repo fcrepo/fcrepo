@@ -63,8 +63,12 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
                 postObjMethod("FedoraDatastreamsTest2Permit");
 
         assertEquals(201, getStatus(objMethod));
-        final HttpPost method =
-                postDSMethod("FedoraDatastreamsTest2Permit", "zxc", "foo");
+        final HttpPost obj2Method = postObjMethod(
+                "FedoraDatastreamsTest2Permit/FedoraDatastreamsTest2Deny");
+        assertEquals(201, getStatus(obj2Method));
+        final HttpPost method = postDSMethod(
+                "FedoraDatastreamsTest2Permit/FedoraDatastreamsTest2Deny",
+                "zxc", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(403, response.getStatusLine().getStatusCode());
     }
@@ -90,7 +94,7 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
     public void testDeniedAddDeepDatastream() throws Exception {
         final HttpPost method =
                 postDSMethod(
-                        "FedoraDatastreamsTest2_permit/does_permit/not_permit/exist_permit/yet_permit",
+                        "FedoraDatastreamsTest2_permit/does_permit/not_permit/exist_permit/yet_permit/allowed_child",
                         "zxc", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(403, response.getStatusLine().getStatusCode());
@@ -111,11 +115,11 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
     @Test
     public void testDeniedPutDatastream() throws Exception {
         final HttpPost objMethod =
-                postObjMethod("FedoraDatastreamsTestPut_permit");
+                postObjMethod("FedoraDatastreamsTestPut_permit/allowed_child");
         assertEquals(201, getStatus(objMethod));
         final HttpPut method =
-                putDSMethod("FedoraDatastreamsTestPut_permit", "zxc",
-                        "foo");
+                putDSMethod("FedoraDatastreamsTestPut_permit/allowed_child",
+                        "zxc", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(403, response.getStatusLine().getStatusCode());
     }

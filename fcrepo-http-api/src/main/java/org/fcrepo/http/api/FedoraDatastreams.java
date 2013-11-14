@@ -31,7 +31,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -107,9 +109,11 @@ public class FedoraDatastreams extends AbstractResource {
 
         final String path = toPath(pathList);
         try {
+            Set<String> pathsChanged = new HashSet<String>();
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
-                nodeService.deleteObject(session, path + "/" + dsid);
+                String dsPath = path + "/" + dsid;
+                nodeService.deleteObject(session, dsPath);
             }
 
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -129,9 +133,14 @@ public class FedoraDatastreams extends AbstractResource {
                 }
                 datastreamService.createDatastreamNode(session, dsPath, part
                         .getMediaType().toString(), src);
+                pathsChanged.add(dsPath);
             }
 
             session.save();
+            versionService.checkpoint(session, path);
+            for (String dsPath : pathsChanged) {
+                versionService.checkpoint(session, dsPath);
+            }
 
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
@@ -162,10 +171,12 @@ public class FedoraDatastreams extends AbstractResource {
         try {
             final String path = toPath(pathList);
             for (final String dsid : dsidList) {
-                logger.debug("purging datastream {}", path + "/" + dsid);
-                nodeService.deleteObject(session, path + "/" + dsid);
+                String dsPath = path + "/" + dsid;
+                logger.debug("purging datastream {}", dsPath);
+                nodeService.deleteObject(session, dsPath);
             }
             session.save();
+            versionService.checkpoint(session, path);
             return noContent().build();
         } finally {
             session.logout();
