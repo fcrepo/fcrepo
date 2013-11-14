@@ -55,7 +55,6 @@ import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;

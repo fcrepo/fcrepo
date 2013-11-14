@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
@@ -187,8 +188,7 @@ public abstract class FedoraTypesUtils {
 
             @Override
             public boolean apply(final Property p) {
-                checkArgument(p != null,
-                        "null is neither multiple nor not multiple!");
+                checkNotNull(p, "null is neither multiple nor not multiple!");
                 try {
                     return p.isMultiple();
                 } catch (final RepositoryException e) {
@@ -205,8 +205,7 @@ public abstract class FedoraTypesUtils {
 
             @Override
             public boolean apply(final Property p) {
-                checkArgument(p != null,
-                                 "null is neither binary nor not binary!");
+                checkNotNull(p, "null is neither binary nor not binary!");
                 try {
                     return p.getType() == BINARY && p.getName().equals(JCR_DATA);
                 } catch (final RepositoryException e) {
@@ -223,8 +222,7 @@ public abstract class FedoraTypesUtils {
 
         @Override
         public boolean apply(final Node n) {
-            checkArgument(n != null,
-                    "null is neither internal nor not internal!");
+            checkNotNull(n, "null is neither internal nor not internal!");
             try {
                 final NodeType primaryNodeType = n.getPrimaryNodeType();
                 return primaryNodeType != null
