@@ -28,9 +28,9 @@ import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import com.google.common.base.Function;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.After;
@@ -40,9 +40,9 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -90,7 +90,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         createAndVerifyObjectWithIdFromRootPage(randomUUID().toString());
     }
 
-    private HtmlPage createAndVerifyObjectWithIdFromRootPage(String pid) throws IOException {
+    private HtmlPage createAndVerifyObjectWithIdFromRootPage(final String pid) throws IOException {
         final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = form.getSelectByName("mixin");
@@ -205,22 +205,33 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "WHERE { <> dc:title ?t }";
         postSparqlUpdateUsingHttpClient(updateSparql2, pid);
 
-        final HtmlPage versions = webClient.getPage(serverAddress + pid + "/fcr:versions");
-        List<DomAttr> versionLinks = (List<DomAttr>) versions.getByXPath("//a[@class='version_link']/@href");
+        final HtmlPage versions =
+            webClient.getPage(serverAddress + pid + "/fcr:versions");
+        final List<DomAttr> versionLinks =
+            castList(versions.getByXPath("//a[@class='version_link']/@href"));
         assertEquals("There should be two revisions.", 2, versionLinks.size());
 
         // get the labels
         // will look like "Version from 2013-00-0T00:00:00.000Z"
         // and will sort chronologically based on a String comparison
-        List<DomText> labels = (List<DomText>) versions.getByXPath("//a[@class='version_link']/text()");
-        boolean chronological = labels.get(0).asText().compareTo(labels.get(1).toString()) < 0;
+        final List<DomText> labels =
+            castList(versions
+                    .getByXPath("//a[@class='version_link']/text()"));
+        final boolean chronological = labels.get(0).asText().compareTo(labels.get(1).toString()) < 0;
         logger.debug("Versions {} in chronological order: {}, {}", chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
 
-
-        final HtmlPage firstRevision = webClient.getPage(versionLinks.get(chronological ? 0 : 1).getNodeValue());
-        final List<DomText> v1Titles = (List<DomText>) firstRevision.getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()");
-        final HtmlPage secondRevision = webClient.getPage(versionLinks.get(chronological ? 1 : 0).getNodeValue());
-        final List<DomText> v2Titles = (List<DomText>) secondRevision.getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()");
+        final HtmlPage firstRevision =
+            webClient.getPage(versionLinks.get(chronological ? 0 : 1)
+                    .getNodeValue());
+        final List<DomText> v1Titles =
+            castList(firstRevision
+                    .getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()"));
+        final HtmlPage secondRevision =
+            webClient.getPage(versionLinks.get(chronological ? 1 : 0)
+                    .getNodeValue());
+        final List<DomText> v2Titles =
+            castList(secondRevision
+                    .getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()"));
 
         assertEquals("Version one should have one title.", 1, v1Titles.size());
         assertEquals("Version two should have one title.", 1, v2Titles.size());
@@ -229,22 +240,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals("Second version should be preserved.", "Updated Title", v2Titles.get(0).getWholeText());
     }
 
-    /**
-     * This doesn't work due to some incompatibility between HtmlUnit's
-     * "browser" and jquery 1.9.1.  Until that's corrected, or we change the
-     * javascript we use, consider using {@link
-     * #postSparqlUpdateUsingHttpClient(String, String)} instead.
-     */
-    private void postSparqlUpdateUsingHtml(String sparql, HtmlPage objectPage) throws IOException {
-        final HtmlForm form = (HtmlForm) objectPage.getElementById("action_sparql_update");
-        final HtmlTextArea sparql_update_query = (HtmlTextArea) objectPage.getElementById("sparql_update_query");
-        sparql_update_query.setText(sparql);
-        System.out.println(form.getFirstByXPath("button"));
-        final HtmlButton button = form.getFirstByXPath("button");
-        button.click();
-    }
-
-    private void postSparqlUpdateUsingHttpClient(String sparql, String pid) throws IOException {
+    private void postSparqlUpdateUsingHttpClient(final String sparql, final String pid) throws IOException {
         final HttpPatch method = new HttpPatch(serverAddress + pid);
         method.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity entity = new BasicHttpEntity();
@@ -338,6 +334,18 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.setAjaxController(new NicelyResynchronizingAjaxController());
         return webClient;
 
+    }
+
+
+    private <T> List<T> castList(final List<?> l) {
+        return transform(l, new Function<Object, T>() {
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public T apply(final Object input) {
+                return (T) input;
+            }
+        });
     }
 
 }

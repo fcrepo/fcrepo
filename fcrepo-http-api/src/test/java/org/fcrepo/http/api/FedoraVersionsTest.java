@@ -50,6 +50,7 @@ import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -123,7 +124,8 @@ public class FedoraVersionsTest {
         final Response response =
             testObj.addVersion(createPathList(pid), versionLabel);
         verify(mockResource).addVersionLabel(anyString());
-        verify(mockVersions).createVersion(any(Workspace.class), any(Collection.class));
+        verify(mockVersions).createVersion(any(Workspace.class),
+                Matchers.<Collection<String>> any());
         assertNotNull(response);
     }
 
