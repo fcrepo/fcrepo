@@ -814,7 +814,7 @@
               </goals>
               <configuration>
                 <destFile>${project.basedir}/target/jacoco-it.exec</destFile>
-                <propertyName>failsafe.argLine</propertyName>
+                <propertyName>${failsafe.argLine}</propertyName>
               </configuration>
             </execution>
             <execution>
