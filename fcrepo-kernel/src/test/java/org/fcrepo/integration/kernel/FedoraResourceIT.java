@@ -447,7 +447,7 @@ public class FedoraResourceIT extends AbstractIT {
         assertEquals(LONG, object.getNode().getProperty("example:int-property")
                 .getType());
         assertEquals(0L, object.getNode().getProperty("example:int-property")
-                .getValue().getLong());
+                .getValues()[0].getLong());
     }
 
     @Test
@@ -466,7 +466,7 @@ public class FedoraResourceIT extends AbstractIT {
         assertEquals(PropertyType.URI, object.getNode().getProperty("rdf:type")
                 .getType());
         assertEquals("http://some/uri", object.getNode()
-                .getProperty("rdf:type").getValue().getString());
+                .getProperty("rdf:type").getValues()[0].getString());
     }
 
     @Test

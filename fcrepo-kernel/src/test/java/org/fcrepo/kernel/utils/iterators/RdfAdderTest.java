@@ -36,6 +36,7 @@ import java.util.Map;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -107,6 +108,7 @@ public class RdfAdderTest {
     @Test
     public void testAddingProperty() throws Exception {
         testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        when(mockNode.setProperty(propertyShortName, mockValue, UNDEFINED)).thenReturn(mockProperty);
         testAdder.operateOnProperty(descriptiveStmnt, mockNode);
         verify(mockNode).setProperty(propertyShortName, mockValue, UNDEFINED);
 
@@ -240,5 +242,8 @@ public class RdfAdderTest {
 
     @Mock
     private GraphSubjects mockGraphSubjects;
+
+    @Mock
+    private Property mockProperty;
 
 }

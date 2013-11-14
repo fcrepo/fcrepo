@@ -28,8 +28,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
+import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.slf4j.Logger;
+
+import static javax.jcr.PropertyType.URI;
 
 /**
  * Tools for replacing, appending and deleting JCR node properties
@@ -39,6 +44,7 @@ import org.slf4j.Logger;
 public abstract class NodePropertiesTools {
 
     private static final Logger logger = getLogger(NodePropertiesTools.class);
+    public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 
     /**
      * Given a JCR node, property and value, either:
@@ -51,7 +57,8 @@ public abstract class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public static void appendOrReplaceNodeProperty(final Node node,
+    public static void appendOrReplaceNodeProperty(final GraphSubjects subjects,
+                                                   final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
         throws RepositoryException {
@@ -76,15 +83,18 @@ public abstract class NodePropertiesTools {
                     property.setValue(newValues
                                       .toArray(new Value[newValues.size()]));
                 }
+
+                addReferencePlaceholders(subjects, node, property, newValue);
             } else {
                 // or we'll just overwrite it
                 logger.debug("Overwriting {} property {} with new value {}",
                              PropertyType.nameFromValue(property.getType()),
                              propertyName, newValue);
                 property.setValue(newValue);
+                addReferencePlaceholders(subjects, node, property, newValue);
             }
         } else {
-            boolean isMultiple = false;
+            boolean isMultiple = true;
             try {
                 isMultiple = isMultivaluedProperty(node, propertyName);
 
@@ -96,18 +106,55 @@ public abstract class NodePropertiesTools {
                              "initial value [{}]",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
-                node.setProperty(propertyName, new Value[]{newValue}, newValue.getType());
+                final Property property = node.setProperty(propertyName, new Value[]{newValue}, newValue.getType());
+                addReferencePlaceholders(subjects, node, property, newValue);
             } else {
                 logger.debug("Creating new single-valued {} property {} with " +
                              "initial value {}",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
-                node.setProperty(propertyName, newValue, newValue.getType());
+                final Property property = node.setProperty(propertyName, newValue, newValue.getType());
+                addReferencePlaceholders(subjects, node, property, newValue);
             }
         }
 
     }
 
+    private static void addReferencePlaceholders(final GraphSubjects subjects, final Node node, final Property property, final Value newValue) throws RepositoryException {
+        if (property.getType() == URI) {
+            final Resource resource = ResourceFactory.createResource(newValue.getString());
+
+            if (subjects.isFedoraGraphSubject(resource)) {
+                final Node refNode = subjects.getNodeFromGraphSubject(resource);
+                final String referencePropertyName = getReferencePropertyName(property);
+
+                if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
+                    node.setProperty(referencePropertyName, (Value[])null);
+                }
+
+                final Value v = node.getSession().getValueFactory().createValue(refNode, true);
+                appendOrReplaceNodeProperty(subjects, node, referencePropertyName, v);
+            }
+        }
+    }
+
+    private static void removeReferencePlaceholders(final GraphSubjects subjects, final Node node, final Property property, final Value newValue) throws RepositoryException {
+        if (property.getType() == URI) {
+            final Resource resource = ResourceFactory.createResource(newValue.getString());
+
+            if (subjects.isFedoraGraphSubject(resource)) {
+                final String referencePropertyName = getReferencePropertyName(property);
+
+                if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
+                    node.setProperty(referencePropertyName, (Value[])null);
+                } else {
+                    final Node refNode = subjects.getNodeFromGraphSubject(resource);
+                    final Value v = node.getSession().getValueFactory().createValue(refNode, true);
+                    removeNodeProperty(subjects, node, referencePropertyName, v);
+                }
+            }
+        }
+    }
     /**
      * Given a JCR node, property and value, remove the value (if it exists)
      * from the property, and remove the
@@ -119,7 +166,8 @@ public abstract class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public static void removeNodeProperty(final Node node,
+    public static void removeNodeProperty(final GraphSubjects subjects,
+                                          final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)
         throws RepositoryException {
@@ -154,17 +202,34 @@ public abstract class NodePropertiesTools {
                             .setValue(newValues
                                       .toArray(new Value[newValues.size()]));
                     }
+                    removeReferencePlaceholders(subjects, node, property, valueToRemove);
                 }
 
             } else {
                 if (property.getValue().equals(valueToRemove)) {
                     logger.debug("Removing value {} property {}", propertyName);
                     property.setValue((Value)null);
+
+                    if (property.getType() == URI && node.hasProperty(getReferencePropertyName(propertyName))) {
+                        removeReferencePlaceholders(subjects, node, property, valueToRemove);
+                    }
                 }
             }
         }
     }
 
+    /**
+     * When we add certain URI properties, we also want to leave a reference node
+     * @param propertyName
+     * @return
+     */
+    public static String getReferencePropertyName(final String propertyName) {
+        return propertyName + REFERENCE_PROPERTY_SUFFIX;
+    }
+
+    private static String getReferencePropertyName(final Property property) throws RepositoryException {
+        return getReferencePropertyName(property.getName());
+    }
     /**
      * Get the JCR property type ID for a given property name. If unsure, mark
      * it as UNDEFINED.

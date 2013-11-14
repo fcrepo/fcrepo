@@ -88,9 +88,11 @@ import java.util.Set;
 
 import static com.google.common.base.Throwables.propagate;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_EQUAL_TO;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -454,14 +456,22 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
                         final Column objectColumn;
 
-                        if ((propertyType == REFERENCE || propertyType == WEAKREFERENCE)
+                        if ((propertyType == REFERENCE || propertyType == WEAKREFERENCE || propertyType == URI)
                                 && variables.containsKey(object.getName()))  {
 
                             objectColumn = variables.get(object.getName());
 
+                            final String joinPropertyName;
+
+                            if (propertyType == URI) {
+                                joinPropertyName = getReferencePropertyName(propertyName);
+                            } else {
+                                joinPropertyName = propertyName;
+                            }
+
                             joinConditions.put(object.getName(),
                                                   queryFactory.equiJoinCondition(
-                                                      c.getSelectorName(), propertyName,
+                                                      c.getSelectorName(), joinPropertyName,
                                                       objectColumn.getSelectorName(), "jcr:uuid"));
                         } else {
                             objectColumn = queryFactory.column(c.getSelectorName(),

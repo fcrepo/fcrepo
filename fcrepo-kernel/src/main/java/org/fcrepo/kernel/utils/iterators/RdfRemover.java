@@ -83,7 +83,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
             final Value v =
                 jcrRdfTools().createValue(n, t.getObject(), getPropertyType(n,
                         propertyName));
-            removeNodeProperty(n, propertyName, v);
+            removeNodeProperty(idTranslator(), n, propertyName, v);
         }
     }
 }

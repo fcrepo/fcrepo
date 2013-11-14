@@ -91,6 +91,6 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
             getPropertyNameFromPredicate(n, t.getPredicate());
         final Value v =
             createValue(n, t.getObject(), getPropertyType(n, propertyName));
-        appendOrReplaceNodeProperty(n, propertyName, v);
+        appendOrReplaceNodeProperty(idTranslator(), n, propertyName, v);
     }
 }
