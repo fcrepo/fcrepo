@@ -266,7 +266,6 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (requestBodyStream != null) {
-
                 final FedoraResource resource =
                         nodeService.getObject(session, path);
 
@@ -302,6 +301,7 @@ public class FedoraNodes extends AbstractResource {
                 }
 
                 session.save();
+                versionService.checkpoint(session, path);
 
                 return status(SC_NO_CONTENT).build();
             } else {
@@ -338,7 +338,6 @@ public class FedoraNodes extends AbstractResource {
         try {
             final FedoraResource resource =
                 nodeService.getObject(session, path);
-
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
 
@@ -373,6 +372,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             session.save();
+            versionService.checkpoint(session, path);
 
             return status(SC_NO_CONTENT).build();
         } finally {
@@ -509,6 +509,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             session.save();
+            versionService.checkpoint(session, newObjectPath);
 
             logger.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
@@ -601,6 +602,7 @@ public class FedoraNodes extends AbstractResource {
 
             nodeService.copyObject(session, toPath(path), destination);
             session.save();
+            versionService.checkpoint(session, destination);
             return created(new URI(destinationUri)).build();
         } catch (final ItemExistsException e) {
             return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
@@ -641,6 +643,7 @@ public class FedoraNodes extends AbstractResource {
 
             nodeService.moveObject(session, toPath(path), destination);
             session.save();
+            versionService.checkpoint(session, destination);
             return created(new URI(destinationUri)).build();
         } catch (final ItemExistsException e) {
             return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();

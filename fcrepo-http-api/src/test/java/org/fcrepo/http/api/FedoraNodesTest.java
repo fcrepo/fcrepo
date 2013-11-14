@@ -55,6 +55,8 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
+import javax.jcr.Workspace;
+import javax.jcr.version.VersionManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -70,6 +72,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.VersionService;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -78,6 +81,7 @@ import org.mockito.Mock;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
+
 
 public class FedoraNodesTest {
 
@@ -88,6 +92,9 @@ public class FedoraNodesTest {
 
     @Mock
     private NodeService mockNodes;
+
+    @Mock
+    private VersionService mockVersions;
 
     @Mock
     private Node mockNode;
@@ -129,12 +136,18 @@ public class FedoraNodesTest {
         testObj = new FedoraNodes();
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodes);
+        setField(testObj, "versionService", mockVersions);
         this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
         setField(testObj, "pidMinter", mockPidMinter);
         setField(testObj, "objectService", mockObjects);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final VersionManager mockVM = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
     }
 
     @Test

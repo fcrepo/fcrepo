@@ -52,6 +52,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.VersionService;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +96,12 @@ public abstract class AbstractResource {
      */
     @Autowired
     protected DatastreamService datastreamService;
+
+    /**
+     * The fcrepo version service
+     */
+    @Autowired
+    protected VersionService versionService;
 
     @Autowired(required = false)
     private HttpTripleUtil httpTripleUtil;
