@@ -156,7 +156,7 @@
         updating nodes within the same process. If you're not sure, use pessimistic locking.
      -->
     <clustering mode="distribution">
-      <sync/>
+      <sync replTimeout="${fcrepo.ispn.replication.timeout:10000}" />
       <l1 enabled="false" lifespan="0" onRehash="false"/>
       <hash numOwners="${fcrepo.ispn.numOwners:2}" numSegments="40"/>
       <stateTransfer chunkSize="100" fetchInMemoryState="true"/>
