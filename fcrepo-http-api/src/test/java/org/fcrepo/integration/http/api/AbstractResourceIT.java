@@ -36,8 +36,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -64,16 +64,17 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/";
 
-    protected final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
+    protected final PoolingHttpClientConnectionManager connectionManager =
+            new PoolingHttpClientConnectionManager();
 
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        connectionManager.setMaxTotal(MAX_VALUE);
-        connectionManager.setDefaultMaxPerRoute(5);
         connectionManager.closeIdleConnections(3, SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        final HttpClientBuilder b =
+            HttpClientBuilder.create().setMaxConnPerRoute(5).setMaxConnTotal(
+                    MAX_VALUE).setConnectionManager(connectionManager);
+        client = b.build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {
@@ -131,7 +132,7 @@ public abstract class AbstractResourceIT {
             method.addHeader("Accept", "text/n3");
         }
 
-        HttpResponse response = client.execute(method);
+        final HttpResponse response = client.execute(method);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                                              .getStatusCode());
         return parseTriples(response.getEntity());

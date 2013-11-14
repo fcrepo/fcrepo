@@ -18,7 +18,6 @@ package org.fcrepo.http.commons.test.util;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
@@ -58,7 +57,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.identifiers.UUIDPidMinter;

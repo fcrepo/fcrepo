@@ -70,7 +70,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.impl.client.cache.CachingHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -636,8 +637,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeRdfCached() throws RepositoryException, IOException {
-        final CachingHttpClient specialClient = new CachingHttpClient(client);
-
+        final CloseableHttpClient specialClient =
+            CachingHttpClientBuilder.create().build();
         final String pid = "FedoraObjectsRdfTest2";
         final String path = "" + pid;
         specialClient.execute(new HttpPost(serverAddress + path));
