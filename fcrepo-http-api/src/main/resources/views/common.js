@@ -209,3 +209,42 @@ function ajaxErrorHandler(xhr, textStatus, errorThrown) {
     $('#errorModal').modal('show');
 
 }
+
+function addProperty() {
+    var sub = $('#main').attr('resource');
+    var preSel = document.getElementById("add-pre");
+    var pre = preSel.options[preSel.selectedIndex].value;
+    var obj = document.getElementById("add-val").value;
+    var update = "insert data { <" + sub + "> <" + pre + "> " + obj + " }";
+    alert( "update: " + update );
+
+    $.ajax({url: sub, type: "PATCH", contentType: "application/sparql-update", data: update, success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }, error: ajaxErrorHandler});
+    return false;
+}
+function deleteProperty( id ) {
+    var elem = document.getElementById(id);
+    var sub = $('#main').attr('resource');
+    var pre = elem.getAttribute('property');
+    var obj = elem.firstChild.data;
+    //var obj = elem.innerHTML();
+    var update = "delete data { <" + sub + "> <" + pre + "> ";
+    if ( obj.startsWith('"') )
+    {
+      if ( obj.indexOf("^^") > -1 ) { obj = obj.substring(0,obj.indexOf("^^") ); }
+      update += obj;
+    }
+    else
+    {
+      update += "<" + obj + ">";
+    }
+    update += " }";
+
+    alert( "update: " + update );
+
+    $.ajax({url: sub, type: "PATCH", contentType: "application/sparql-update", data: update, success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }, error: ajaxErrorHandler});
+    return false;
+}
