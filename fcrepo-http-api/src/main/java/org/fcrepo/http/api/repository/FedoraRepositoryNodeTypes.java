@@ -49,8 +49,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 
-
-
 /**
  * Expose node types at a REST endpoint
  * @author cbeer
