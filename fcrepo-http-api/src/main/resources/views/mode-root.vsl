@@ -37,21 +37,34 @@
 
 
         ## output triples for the topic node
-            <div class="well">
-                #triples($topic)
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4>Properties</h4>
+                </div>
+                <div class="panel-body">
+                    #triples($topic)
+                </div>
             </div>
 
         ## output other nodes
 
-            <h2>Triples for other nodes</h2>
+            <h2>Inlined Resources</h2>
+            <div class="panel-group" id="accordion">
             #foreach($subject in $model.listSubjects())
                 #if( $subject != $topic )
-                <div class="well" resource="$subject.getURI()">
-                    <h3><a href="$subject.getURI()">$helpers.getObjectTitle($rdf, $subject.asNode())</a></h3>
-                    #triples($subject.asNode())
-                </div>
+                    <div class="panel panel-default" resource="$subject.getURI()">
+                        <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples">
+                            <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                        </div>
+                        <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
+                            <div class="panel-body">
+                                #triples($subject.asNode())
+                            </div>
+                        </div>
+                    </div>
                 #end
             #end
+                </div>
 
         </div>
 

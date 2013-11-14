@@ -120,7 +120,7 @@ public class ViewHelpers {
      * @return
      */
     public String getObjectsAsString(final DatasetGraph dataset,
-            final Node subject, final Resource predicate) {
+            final Node subject, final Resource predicate, final boolean uriAsLink) {
         final Iterator<Quad> iterator = getObjects(dataset, subject, predicate);
 
         if (iterator.hasNext()) {
@@ -135,8 +135,12 @@ public class ViewHelpers {
                     return s;
                 }
             } else {
-                return "&lt;<a href=\"" + object.getURI() + "\">" +
-                        object.getURI() + "</a>&gt;";
+                if (uriAsLink) {
+                    return "&lt;<a href=\"" + object.getURI() + "\">" +
+                               object.getURI() + "</a>&gt;";
+                } else {
+                    return object.getURI();
+                }
             }
         } else {
             return "";
@@ -219,11 +223,32 @@ public class ViewHelpers {
      * @return
      */
     public String getNamespacePrefix(final PrefixMapping mapping,
-            final String namespace) {
+            final String namespace, final boolean compact) {
         final String nsURIPrefix = mapping.getNsURIPrefix(namespace);
 
         if (nsURIPrefix == null) {
-            return namespace;
+            if (compact) {
+                final int hashIdx = namespace.lastIndexOf("#");
+
+                final int split;
+
+                if (hashIdx > 0) {
+                    split = namespace.substring(0, hashIdx).lastIndexOf("/");
+                } else {
+                    split = namespace.lastIndexOf("/");
+                }
+
+                if (split > 0) {
+                    return "..." + namespace.substring(split);
+                } else {
+                    return namespace;
+                }
+
+            } else {
+                return namespace;
+            }
+
+
         } else {
             return nsURIPrefix + ":";
         }
@@ -293,5 +318,14 @@ public class ViewHelpers {
      */
     public Resource rdfsClass() {
         return RDFS.Class;
+    }
+
+    /**
+     * Transform a source string to something appropriate for HTML ids
+     * @param source
+     * @return
+     */
+    public String parameterize(final String source) {
+        return source.toLowerCase().replaceAll("[^a-z0-9\\-_]+", "_");
     }
 }

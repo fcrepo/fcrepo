@@ -131,16 +131,20 @@ public class ViewHelpersTest {
                 createURI("some-uri"));
 
         assertEquals("abc", testObj.getObjectsAsString(mem,
-                createURI("subject"), createResource("a/b/c")));
+                createURI("subject"), createResource("a/b/c"), true));
         assertEquals("0", testObj.getObjectsAsString(mem, createURI("subject"),
-                createResource("a-numeric-type")));
+                createResource("a-numeric-type"), true));
         assertEquals("<empty>", testObj.getObjectsAsString(mem,
-                createURI("subject"), createResource("an-empty-string")));
+                createURI("subject"), createResource("an-empty-string"), true));
         assertEquals("&lt;<a href=\"some-uri\">some-uri</a>&gt;", testObj
                 .getObjectsAsString(mem, createURI("subject"),
-                        createResource("a-uri")));
+                        createResource("a-uri"), true));
+
+        assertEquals("some-uri", testObj
+                .getObjectsAsString(mem, createURI("subject"),
+                        createResource("a-uri"), false));
         assertEquals("", testObj.getObjectsAsString(mem, createURI("subject"),
-                createResource("a-nonexistent-uri")));
+                createResource("a-nonexistent-uri"), true));
 
     }
 
@@ -149,9 +153,9 @@ public class ViewHelpersTest {
         final Model model = createDefaultModel();
         model.setNsPrefix("prefix", "namespace");
 
-        assertEquals("prefix:", testObj.getNamespacePrefix(model, "namespace"));
+        assertEquals("prefix:", testObj.getNamespacePrefix(model, "namespace", false));
         assertEquals("some-other-namespace", testObj.getNamespacePrefix(model,
-                "some-other-namespace"));
+                "some-other-namespace", false));
     }
 
     @Test

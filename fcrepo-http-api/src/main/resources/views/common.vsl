@@ -3,14 +3,25 @@
 #* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
 #macro( triples $sub )
         <dl>
-            #foreach($quad in $helpers.getSortedTriples($model, $rdf.find($nodeany, $sub, $nodeany, $nodeany)))
-                    <dt>
-                            <span class="namespace muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace())</span><span class="localName">$quad.getPredicate().getLocalName()</span>
 
-</dt>
+            #set ($last_quad = false)
+            #foreach($quad in $helpers.getSortedTriples($model, $rdf.find($nodeany, $sub, $nodeany, $nodeany)))
+
+                #if($last_quad == false || !$last_quad.getPredicate().equals($quad.getPredicate()))
+                    <dt>
+                        #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($quad.getPredicate().getNameSpace()))
+                        <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), false)</span>
+                        #else
+                        <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), true)</span>
+                        #end
+                        <span class="localName">$quad.getPredicate().getLocalName()</span>
+                    </dt>
+                #end
                     <dd>
                         #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
                             <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</a>
+                        #elseif ($quad.getObject().isLiteral())
+                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject().getLiteral().getLexicalForm())</span>
                         #else
                             <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
                         #end
@@ -18,6 +29,8 @@
                             <a href="$topic/fcr:fixity">check fixity</a>
                         #end
                     </dd>
+                #set ($last_quad = $quad)
+
             #end
         </dl>
 #end
