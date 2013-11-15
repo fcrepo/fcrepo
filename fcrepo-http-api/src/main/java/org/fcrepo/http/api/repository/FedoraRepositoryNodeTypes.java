@@ -22,7 +22,6 @@ import com.hp.hpl.jena.query.DatasetFactory;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -48,7 +47,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Expose node types at a REST endpoint
@@ -58,8 +56,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Scope("prototype")
 @Path("/fcr:nodetypes")
 public class FedoraRepositoryNodeTypes extends AbstractResource {
-
-    private final Logger LOGGER = getLogger(FedoraRepositoryNodeTypes.class);
 
     @InjectedSession
     protected Session session;

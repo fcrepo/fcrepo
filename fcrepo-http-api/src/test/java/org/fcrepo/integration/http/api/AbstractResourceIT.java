@@ -18,7 +18,6 @@ package org.fcrepo.integration.http.api;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
@@ -36,8 +35,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -64,16 +62,13 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/";
 
-    protected final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
-
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        connectionManager.setMaxTotal(MAX_VALUE);
-        connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.closeIdleConnections(3, SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        final HttpClientBuilder b =
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
+                    .setMaxConnTotal(MAX_VALUE);
+        client = b.build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {
@@ -131,7 +126,7 @@ public abstract class AbstractResourceIT {
             method.addHeader("Accept", "text/n3");
         }
 
-        HttpResponse response = client.execute(method);
+        final HttpResponse response = client.execute(method);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                                              .getStatusCode());
         return parseTriples(response.getEntity());
@@ -149,7 +144,11 @@ public abstract class AbstractResourceIT {
     }
 
     protected HttpResponse createDatastream(final String pid, final String dsid, final String content) throws IOException {
-        final HttpResponse response = client.execute(postDSMethod(pid, dsid, content));
+        logger.trace(
+                "Attempting to create datastream for object: {} at datastream ID: {}",
+                pid, dsid);
+        final HttpResponse response =
+            client.execute(postDSMethod(pid, dsid, content));
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         return response;
     }

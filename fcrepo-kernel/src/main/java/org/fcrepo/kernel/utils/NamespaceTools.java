@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -41,9 +41,7 @@ public abstract class NamespaceTools {
         @Override
         public NamespaceRegistry apply(final Node n) {
             try {
-                checkArgument(n != null,
-                              "null has no Namespace Registry associated " +
-                              "with it!");
+                checkNotNull(n, "null has no Namespace Registry associated with it!");
                 return (org.modeshape.jcr.api.NamespaceRegistry)n.getSession().getWorkspace().getNamespaceRegistry();
             } catch (final RepositoryException e) {
                 throw new IllegalStateException(e);
