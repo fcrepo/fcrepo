@@ -261,6 +261,8 @@ public final class RdfLexicon {
             HAS_MIXIN_TYPE, CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE,
             LAST_MODIFIED_BY);
 
+    public static final Property RDF_TYPE =
+            createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
     public static final Property RDFS_LABEL =
             createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE =
@@ -304,6 +306,17 @@ public final class RdfLexicon {
      */
     public static final Predicate<Property> isManagedPredicate = or(
             in(managedProperties), hasJcrNamespace, hasFedoraNamespace);
+
+    /**
+     * Detects whether an RDF predicate is managed by the repository.
+    */
+    public static Predicate<String> isManagedPredicateURI =
+        new Predicate<String>() {
+            @Override
+            public boolean apply( final String uri ) {
+                return isManagedPredicate.apply( createProperty(uri) );
+            }
+        };
 
     private RdfLexicon() {
 

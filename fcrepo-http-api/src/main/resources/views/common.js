@@ -212,12 +212,15 @@ function ajaxErrorHandler(xhr, textStatus, errorThrown) {
 
 function addProperty() {
     var sub = $('#main').attr('resource');
-    var preSel = document.getElementById("add-pre");
-    var pre = preSel.options[preSel.selectedIndex].value;
-    var obj = document.getElementById("add-val").value;
+    var pre = document.getElementById("add-pre-custom").value;
+    if ( pre == '' ) {
+        var preMenu = document.getElementById("add-pre-menu");
+        pre = preMenu.options[preMenu.selectedIndex].value;
+    }
+    var obj = quoteObject( document.getElementById("add-val").value );
     var update = "insert data { <" + sub + "> <" + pre + "> " + obj + " }";
-    alert( "update: " + update );
 
+    // perform sparql update
     $.ajax({url: sub, type: "PATCH", contentType: "application/sparql-update", data: update, success: function(data, textStatus, request) {
         window.location.reload(true);
     }, error: ajaxErrorHandler});
@@ -227,24 +230,26 @@ function deleteProperty( id ) {
     var elem = document.getElementById(id);
     var sub = $('#main').attr('resource');
     var pre = elem.getAttribute('property');
-    var obj = elem.firstChild.data;
-    //var obj = elem.innerHTML();
-    var update = "delete data { <" + sub + "> <" + pre + "> ";
-    if ( obj.startsWith('"') )
-    {
-      if ( obj.indexOf("^^") > -1 ) { obj = obj.substring(0,obj.indexOf("^^") ); }
-      update += obj;
+    var obj = quoteObject( elem.firstChild.data );
+    if ( obj.startsWith('"') && obj.indexOf("^^") > -1 ) {
+        obj = obj.substring( 0, obj.indexOf("^^") );
     }
-    else
-    {
-      update += "<" + obj + ">";
-    }
-    update += " }";
+    var update = "delete data { <" + sub + "> <" + pre + "> " + obj + " }";
 
-    alert( "update: " + update );
-
+    // perform sparql update
     $.ajax({url: sub, type: "PATCH", contentType: "application/sparql-update", data: update, success: function(data, textStatus, request) {
         window.location.reload(true);
     }, error: ajaxErrorHandler});
     return false;
+}
+
+function quoteObject( obj ) {
+    if (obj.charAt(0) != '"' && obj.charAt(0) != "'" && obj.charAt(0) != '<') {
+        if (obj.substring(0,4) == "http") {
+            obj = "<" + obj + ">";
+        } else {
+            obj = "\"" + obj.replace(/\"/g,"\\\"") + "\"";
+        }
+    }
+	return obj;
 }
