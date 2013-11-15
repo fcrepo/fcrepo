@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
+import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
@@ -639,7 +640,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testDescribeRdfCached() throws RepositoryException, IOException {
         final CloseableHttpClient specialClient =
-            CachingHttpClientBuilder.create().build();
+            CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build();
         final String pid = "FedoraObjectsRdfTest2";
         final String path = "" + pid;
         specialClient.execute(new HttpPost(serverAddress + path));

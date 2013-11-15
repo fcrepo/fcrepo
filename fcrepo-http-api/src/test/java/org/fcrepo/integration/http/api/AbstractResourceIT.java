@@ -18,7 +18,6 @@ package org.fcrepo.integration.http.api;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
@@ -37,7 +36,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -64,16 +62,12 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/";
 
-    protected final PoolingHttpClientConnectionManager connectionManager =
-            new PoolingHttpClientConnectionManager();
-
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        connectionManager.closeIdleConnections(3, SECONDS);
         final HttpClientBuilder b =
-            HttpClientBuilder.create().setMaxConnPerRoute(5).setMaxConnTotal(
-                    MAX_VALUE).setConnectionManager(connectionManager);
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
+                    .setMaxConnTotal(MAX_VALUE);
         client = b.build();
     }
 
@@ -150,7 +144,11 @@ public abstract class AbstractResourceIT {
     }
 
     protected HttpResponse createDatastream(final String pid, final String dsid, final String content) throws IOException {
-        final HttpResponse response = client.execute(postDSMethod(pid, dsid, content));
+        logger.trace(
+                "Attempting to create datastream for object: {} at datastream ID: {}",
+                pid, dsid);
+        final HttpResponse response =
+            client.execute(postDSMethod(pid, dsid, content));
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         return response;
     }
