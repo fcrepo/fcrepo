@@ -8,12 +8,26 @@
 <form id="action_addprop" onsubmit="addProperty()">
   <h3>Add Property</h3>
   <div class="form-group">
-    <label for="add-pre">Property</label>
-    <select id="add-pre" class="form-control">
-      <option value="http://purl.org/dc/terms/creator">dc:creator</option>
-      <option value="http://purl.org/dc/terms/description">dc:description</option>
-      <option value="http://purl.org/dc/terms/title">dc:title</option>
+    <label for="add-pre-menu">Property</label>
+    <select id="add-pre-menu" class="form-control">
+      <option value="http://purl.org/dc/elements/1.1/contributor">dc:contributor</option>
+      <option value="http://purl.org/dc/elements/1.1/coverage">dc:coverage</option>
+      <option value="http://purl.org/dc/elements/1.1/creator">dc:creator</option>
+      <option value="http://purl.org/dc/elements/1.1/date">dc:date</option>
+      <option value="http://purl.org/dc/elements/1.1/description">dc:description</option>
+      <option value="http://purl.org/dc/elements/1.1/format">dc:format</option>
+      <option value="http://purl.org/dc/elements/1.1/identifier">dc:identifier</option>
+      <option value="http://purl.org/dc/elements/1.1/language">dc:language</option>
+      <option value="http://purl.org/dc/elements/1.1/publisher">dc:publisher</option>
+      <option value="http://purl.org/dc/elements/1.1/relation">dc:relation</option>
+      <option value="http://purl.org/dc/elements/1.1/rights">dc:rights</option>
+      <option value="http://purl.org/dc/elements/1.1/source">dc:source</option>
+      <option value="http://purl.org/dc/elements/1.1/subject">dc:subject</option>
+      <option value="http://purl.org/dc/elements/1.1/title">dc:title</option>
+      <option value="http://purl.org/dc/elements/1.1/type">dc:type</option>
     </select>
+    <input type="text" id="add-pre-custom" placeholder="Custom Property URI..."
+        class="form-control"/>
   </div>
   <div class="form-group">
     <label for="add-val">Value</label>

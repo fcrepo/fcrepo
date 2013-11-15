@@ -28,7 +28,9 @@
                         #if( $quad.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
                             <a href="$topic/fcr:fixity">check fixity</a>
                         #end
-                        <span><a href="#" onClick="deleteProperty('prop$quad.hashCode()');return false;" title="Delete Property">x</a></span>
+                        #if( !$rdfLexicon.isManagedPredicateURI.apply($quad.getPredicate().toString()) )
+                          <a href="#" onClick="deleteProperty('prop$quad.hashCode()');return false;" title="Delete Property">&times;</a>
+                        #end
                     </dd>
                 #set ($last_quad = $quad)
 
