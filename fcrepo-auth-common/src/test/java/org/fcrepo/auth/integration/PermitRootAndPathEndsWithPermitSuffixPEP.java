@@ -67,7 +67,14 @@ public class PermitRootAndPathEndsWithPermitSuffixPEP implements
             return absPath.getParent().getLastSegment().getName()
                     .getLocalName().toLowerCase().endsWith("permit");
         }
-        return false;
+
+        // due to the fact that versioning creates version nodes under the
+        // created node, for the test implementation we should allow actions
+        // on nodes whose parents end with "permit".
+        return (!absPath.getParent().isRoot() && absPath.getParent()
+                .getLastSegment().getName().getLocalName().toLowerCase()
+                .endsWith("permit"));
+
     }
 
     /*

@@ -108,7 +108,6 @@ public class FedoraContent extends AbstractResource {
         final String newDatastreamPath;
         final String path = toPath(pathList);
 
-
         if (nodeService.exists(session, path)) {
             final String pid;
 
@@ -151,6 +150,7 @@ public class FedoraContent extends AbstractResource {
                             uriInfo);
 
             session.save();
+            versionService.checkpoint(session, path);
             return created(
                     new URI(subjects.getGraphSubject(
                             datastreamNode.getNode(JCR_CONTENT)).getURI()))
@@ -211,6 +211,7 @@ public class FedoraContent extends AbstractResource {
                             contentType.toString(), requestBodyStream);
             final boolean isNew = datastreamNode.isNew();
             session.save();
+            versionService.checkpoint(session, path);
 
             if (isNew) {
                 final HttpGraphSubjects subjects =

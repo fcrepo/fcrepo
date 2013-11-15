@@ -23,7 +23,10 @@ import static org.fcrepo.kernel.Transaction.State.DIRTY;
 import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -54,6 +57,8 @@ public class Transaction {
     private Calendar expires;
 
     private State state = State.NEW;
+
+    private Set<String> versionedPaths = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * Create a transaction for the given Session
@@ -115,11 +120,26 @@ public class Transaction {
     }
 
     /**
+     * Adds a path at which a new version should be made upon successful
+     * completion of this transaction.  Subsequent calls with the same path
+     * have no effect, as the entire transaction is meant to be atomic and only
+     * one new version can result from it.
+     * @param absPath the object path to the resource to have a version
+     *                checkpoint made
+     */
+    public void addPathToVersion(String absPath) {
+        versionedPaths.add(absPath);
+    }
+
+    /**
      * "Commit" the transaction by saving the backing-session
      * @throws RepositoryException
      */
     public void commit() throws RepositoryException {
         this.session.save();
+        for (String path : versionedPaths) {
+            session.getWorkspace().getVersionManager().checkpoint(path);
+        }
         this.state = COMMITED;
         this.expire();
     }
