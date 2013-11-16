@@ -1,7 +1,16 @@
 #set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CONTENT, false))
 
 #if ($content != "")
-    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download</a>
+    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a>
+    
+    <h3>Update Content</h3>
+      <form action="javascript:updateFile()">
+        <div class="form-group">
+          <label for="update_file" class="control-label">File</label>
+          <input type="file" id="update_file"/>
+        </div>
+        <input type="submit" class="btn btn-primary" value="Update">
+      </form>
     <hr />
 #end
 
@@ -101,13 +110,10 @@ WHERE { }
     </select>
         </div>
     <button type="submit" class="btn">Import</button>
+    <hr />
 </form>
 
 #end
-
-
-
-<hr />
 
 <h3>Transactions</h3>
 #if($uriInfo.getAbsolutePath().toString().contains("/tx:"))
