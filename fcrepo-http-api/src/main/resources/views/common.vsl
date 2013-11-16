@@ -19,14 +19,17 @@
                 #end
                     <dd>
                         #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
-                            <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</a>
+                            <a id="prop$quad.hashCode()" href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</a>
                         #elseif ($quad.getObject().isLiteral())
-                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject().getLiteral().getLexicalForm())</span>
+                            <span id="prop$quad.hashCode()" property="$quad.getPredicate().toString()">$esc.html($quad.getObject().getLiteral().getLexicalForm())</span>
                         #else
-                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
+                            <span id="prop$quad.hashCode()" property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
                         #end
                         #if( $quad.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
                             <a href="$topic/fcr:fixity">check fixity</a>
+                        #end
+                        #if( !$rdfLexicon.isManagedPredicateURI.apply($quad.getPredicate().toString()) )
+                          <a href="#" onClick="deleteProperty('prop$quad.hashCode()');return false;" title="Delete Property">&times;</a>
                         #end
                     </dd>
                 #set ($last_quad = $quad)
