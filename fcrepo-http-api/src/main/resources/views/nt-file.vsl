@@ -29,11 +29,6 @@
         ## output actions
             <div class="actions collapse visible-lg visible-md" id="actions">
                 #parse("views/common-node-actions.vsl")
-
-                <form action="javascript:updateFile()">
-                    <input type="file" id="update_file"/>
-                    <input type="submit" value="update content">
-                </form>
             </div>
         </div>
 
