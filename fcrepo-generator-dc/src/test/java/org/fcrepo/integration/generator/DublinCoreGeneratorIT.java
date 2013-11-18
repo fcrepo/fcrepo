@@ -46,7 +46,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String subjectURI = serverAddress + "DublinCoreTest1";
         entity.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + subjectURI + "> <http://purl.org/dc/terms/identifier> \"this is an identifier\" } WHERE {}")
+                ("INSERT { <" + subjectURI + "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
                         .getBytes()));
         post.setEntity(entity);
         assertEquals(204, getStatus(post));

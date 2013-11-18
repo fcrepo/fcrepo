@@ -16,7 +16,7 @@
  * 
  * http://dublincore.org/documents/dcmi-namespace/
  */
-<dc = 'http://purl.org/dc/terms/'>
+<dc = 'http://purl.org/dc/elements/1.1/'>
 
 /*
  * Generic Fedora namespace
@@ -59,9 +59,29 @@
 	- fedorarelsext:hasEquivalent (REFERENCE) multiple COPY
 
 /*
+ *  Dublin Core terms
+ */
+[dc:describable] mixin
+  - dc:contributor (STRING) multiple
+  - dc:coverage (STRING) multiple
+  - dc:creator (STRING) multiple
+  - dc:date (STRING) multiple
+  - dc:description (STRING) multiple
+  - dc:format (STRING) multiple
+  - dc:identifier (STRING) multiple
+  - dc:language (STRING) multiple
+  - dc:publisher (STRING) multiple
+  - dc:relation (STRING) multiple
+  - dc:rights (STRING) multiple
+  - dc:source (STRING) multiple
+  - dc:subject (STRING) multiple
+  - dc:title (STRING) multiple
+  - dc:type (STRING) multiple
+
+/*
  * Any Fedora resource.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable mixin
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
 
   - * (undefined) multiple
   - * (undefined)

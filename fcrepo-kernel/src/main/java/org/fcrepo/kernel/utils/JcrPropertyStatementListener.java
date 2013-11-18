@@ -146,7 +146,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     jcrRdfTools.createValue(subjectNode, s.getObject(),
                                 NodePropertiesTools.getPropertyType(subjectNode,
                                                                     propertyName));
-                NodePropertiesTools.appendOrReplaceNodeProperty(subjectNode,
+                NodePropertiesTools.appendOrReplaceNodeProperty(subjects, subjectNode,
                                                                 propertyName,
                                                                 v);
             }
@@ -220,7 +220,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     jcrRdfTools.createValue(subjectNode, s.getObject(),
                                 NodePropertiesTools.getPropertyType(subjectNode,
                                                                     propertyName));
-                NodePropertiesTools.removeNodeProperty(subjectNode,
+                NodePropertiesTools.removeNodeProperty(subjects, subjectNode,
                                                        propertyName,
                                                        v);
             }

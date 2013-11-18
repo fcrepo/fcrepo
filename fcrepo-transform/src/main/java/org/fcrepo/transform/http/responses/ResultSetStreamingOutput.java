@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.http.commons.responses;
+package org.fcrepo.transform.http.responses;
 
 import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static com.hp.hpl.jena.query.ResultSetFormatter.toModel;
@@ -24,19 +24,24 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.StreamingOutput;
 
+import com.google.common.util.concurrent.AbstractFuture;
 import org.apache.jena.riot.WebContent;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
+import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
 
 /**
  * Stream the results of a SPARQL Query
  */
-class ResultSetStreamingOutput {
+public class ResultSetStreamingOutput extends AbstractFuture<Void> implements StreamingOutput {
     private final ResultSet results;
     private final MediaType mediaType;
+
+    private static final Void finishedMarker = null;
 
     /**
      * Stream the results of a SPARQL Query with the given MediaType
@@ -54,16 +59,18 @@ class ResultSetStreamingOutput {
      * @throws IOException
      */
     public void write(final OutputStream entityStream) throws IOException {
-
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
-        if (resultsFormat == FMT_UNKNOWN) {
-            new GraphStoreStreamingOutput(create(toModel(results)), mediaType)
-                    .write(entityStream);
-        } else {
-            ResultSetFormatter.output(entityStream, results, resultsFormat);
+        try {
+            if (resultsFormat == FMT_UNKNOWN) {
+                new GraphStoreStreamingOutput(create(toModel(results)), mediaType)
+                        .write(entityStream);
+            } else {
+                ResultSetFormatter.output(entityStream, results, resultsFormat);
+            }
+        } finally {
+            set(finishedMarker);
         }
-
     }
 
     /**

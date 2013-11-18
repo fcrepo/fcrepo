@@ -41,6 +41,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -366,6 +367,41 @@ public class JcrRdfTools {
     public Value createValue(final Node node, final RDFNode data, final int type)
         throws RepositoryException {
         final ValueFactory valueFactory = node.getSession().getValueFactory();
+        return createValue(valueFactory, data, type);
+
+    }
+
+    /**
+     * Create a JCR value (with an undefined type) from a RDFNode
+     * @param data
+     * @return
+     * @throws RepositoryException
+     */
+    public Value createValue(final RDFNode data) throws RepositoryException {
+        return createValue(data, UNDEFINED);
+    }
+
+    /**
+     * Create a JCR value from an RDFNode with the given JCR type
+     * @param data
+     * @param type
+     * @return
+     * @throws RepositoryException
+     */
+    public Value createValue(final RDFNode data, final int type) throws RepositoryException {
+        return createValue(session.getValueFactory(), data, type);
+    }
+
+    /**
+     * Create a JCR value from an RDF node with the given JCR type
+     * @param valueFactory
+     * @param data
+     * @param type
+     * @return
+     * @throws RepositoryException
+     */
+    public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
+        throws RepositoryException {
         assert (valueFactory != null);
 
         if (data.isURIResource()
@@ -446,16 +482,60 @@ public class JcrRdfTools {
      * @return the JCR property name
      * @throws RepositoryException
      */
+
     public String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map<String, String> namespaceMapping) throws RepositoryException {
+
+        final NamespaceRegistry namespaceRegistry =
+            getNamespaceRegistry.apply(node);
+
+        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
+    }
+
+    /**
+     * Get the property name for an RDF predicate
+     * @param predicate
+     * @param namespaceMapping
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map<String, String> namespaceMapping) throws RepositoryException {
+
+        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry)session.getWorkspace().getNamespaceRegistry();
+
+        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
+    }
+
+    /**
+     * Get a property name for an RDF predicate
+     * @param predicate
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+
+
+        Map<String, String> emptyNamespaceMapping = emptyMap();
+        return getPropertyNameFromPredicate(predicate, emptyNamespaceMapping);
+    }
+
+
+    /**
+     * Get the JCR property name for an RDF predicate
+     * @param namespaceRegistry
+     * @param predicate
+     * @param namespaceMapping
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry, final com.hp.hpl.jena.rdf.model.Property predicate,
         final Map<String, String> namespaceMapping) throws RepositoryException {
 
         final String prefix;
 
         final String namespace =
             getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
-
-        final NamespaceRegistry namespaceRegistry =
-            getNamespaceRegistry.apply(node);
 
         assert (namespaceRegistry != null);
 
@@ -500,6 +580,41 @@ public class JcrRdfTools {
      */
     public void setLlstore(final LowLevelStorageService lowLevelStorageService) {
         llstore = lowLevelStorageService;
+    }
+
+    /**
+     * Given a node type and a property name, figure out an appropriate jcr value type
+     * @param nodeType
+     * @param propertyName
+     * @return
+     * @throws RepositoryException
+     */
+    public int getPropertyType(final String nodeType, final String propertyName) throws RepositoryException {
+        return getPropertyType(session.getWorkspace().getNodeTypeManager().getNodeType(nodeType), propertyName);
+
+    }
+
+    /**
+     * Given a node type and a property name, figure out an appropraite jcr value type
+     * @param nodeType
+     * @param propertyName
+     * @return
+     * @throws RepositoryException
+     */
+    public int getPropertyType(final NodeType nodeType, final String propertyName) throws RepositoryException {
+        final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
+        int type = UNDEFINED;
+        for (PropertyDefinition propertyDefinition : propertyDefinitions) {
+            if (propertyDefinition.getName().equals(propertyName)) {
+                if (type != UNDEFINED) {
+                    return UNDEFINED;
+                }
+
+                type = propertyDefinition.getRequiredType();
+            }
+        }
+
+        return type;
     }
 
 }

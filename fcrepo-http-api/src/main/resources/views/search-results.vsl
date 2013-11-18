@@ -25,6 +25,7 @@
                 <button type="submit" class="btn">Search</button>
             </div>
         </form>
+        <a class="btn" href="$uriInfo.baseUriBuilder.build()fcr:sparql">SPARQL</a>
     </div>
 
     ## output triples for the topic node

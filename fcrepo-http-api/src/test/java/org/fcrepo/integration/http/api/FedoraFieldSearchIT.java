@@ -90,7 +90,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         final String updateString =
             "INSERT { <"
                     + serverAddress
-                    + "testobj> <http://purl.org/dc/terms/title> \"testobj\" } WHERE { }";
+                    + "testobj> <http://purl.org/dc/elements/1.1/title> \"testobj\" } WHERE { }";
         postDc.setEntity(new StringEntity(updateString));
         final HttpResponse dcResp = execute(postDc);
         assertEquals(dcResp.getStatusLine().toString(), 204, dcResp

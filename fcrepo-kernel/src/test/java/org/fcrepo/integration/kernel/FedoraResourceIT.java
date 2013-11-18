@@ -209,7 +209,7 @@ public class FedoraResourceIT extends AbstractIT {
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                        .contains(ANY, s, p, o));
 
-        p = createURI("http://purl.org/dc/terms/subject");
+        p = createURI("http://purl.org/dc/elements/1.1/subject");
         o = createLiteral("this-is-some-subject-stored-as-a-binary");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                        .contains(ANY, s, p, o));
@@ -447,7 +447,7 @@ public class FedoraResourceIT extends AbstractIT {
         assertEquals(LONG, object.getNode().getProperty("example:int-property")
                 .getType());
         assertEquals(0L, object.getNode().getProperty("example:int-property")
-                .getValue().getLong());
+                .getValues()[0].getLong());
     }
 
     @Test
@@ -466,7 +466,7 @@ public class FedoraResourceIT extends AbstractIT {
         assertEquals(PropertyType.URI, object.getNode().getProperty("rdf:type")
                 .getType());
         assertEquals("http://some/uri", object.getNode()
-                .getProperty("rdf:type").getValue().getString());
+                .getProperty("rdf:type").getValues()[0].getString());
     }
 
     @Test

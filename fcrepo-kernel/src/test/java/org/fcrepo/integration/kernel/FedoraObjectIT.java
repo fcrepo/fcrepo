@@ -27,12 +27,16 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import javax.inject.Inject;
+import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.kernel.identifiers.UUIDPathMinter;
+import org.fcrepo.kernel.identifiers.UUIDPidMinter;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -93,20 +97,24 @@ public class FedoraObjectIT extends AbstractIT {
                     compile("fcrepo")
                     .matcher(graphStore.toString()).find());
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                           "INSERT { <http://example/egbook> dc:title " +
                           "\"This is an example of an update that will be " +
                           "ignored\" } WHERE {}", graphStore);
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                           "INSERT { <" + graphSubject + "> dc:title " +
                           "\"This is an example title\" } WHERE {}",
                           graphStore);
 
-        assertTrue(object.getNode().getProperty("dc:title").getValue()
-                   .getString(),
-                   object.getNode().getProperty("dc:title").getValue()
-                   .getString().equals("This is an example title"));
+
+        final Value[] values = object.getNode().getProperty("dc:title").getValues();
+        assertTrue(values.length > 0);
+
+        assertTrue(values[0]
+                       .getString(),
+                      values[0]
+                          .getString().equals("This is an example title"));
 
 
         parseExecute("PREFIX myurn: <info:myurn/>\n" +
@@ -117,7 +125,7 @@ public class FedoraObjectIT extends AbstractIT {
         final Value value =
             object.getNode().getProperty(object.getNode().getSession()
                                          .getNamespacePrefix("info:myurn/") +
-                                         ":info").getValue();
+                                         ":info").getValues()[0];
 
         assertEquals("This is some example data", value.getString());
 
@@ -133,7 +141,7 @@ public class FedoraObjectIT extends AbstractIT {
                    .equals(object.getNode().getIdentifier()));
 
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/terms/>\n" +
+        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                           "DELETE { <" + graphSubject + "> dc:title " +
                           "\"This is an example title\" } WHERE {}",
                           graphStore);
@@ -150,6 +158,40 @@ public class FedoraObjectIT extends AbstractIT {
                     object.getNode().hasProperty("fedorarelsext:isPartOf"));
 
         session.save();
+
+    }
+
+    @Test
+    public void testObjectGraphWithUriProperty() throws RepositoryException {
+        final Session session = repo.login();
+        final FedoraObject object =
+            objectService.createObject(session, "/graphObject");
+        final String graphSubject = RESTAPI_NAMESPACE + "/graphObject";
+        final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
+
+        parseExecute("PREFIX some: <info:some#>\n" +
+                         "INSERT { <" + graphSubject + "> some:urlProperty " +
+                         "<" + graphSubject + "> } WHERE {}", graphStore);
+
+        final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
+
+        assertNotNull(object.getNode().getProperty(prefix + ":urlProperty"));
+
+        assertEquals(object.getNode(), session.getNodeByIdentifier(object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
+
+        parseExecute("PREFIX some: <info:some#>\n" +
+                         "DELETE { <" + graphSubject + "> some:urlProperty " +
+                         "<" + graphSubject + "> } WHERE {}", graphStore);
+
+        assertFalse(object.getNode().hasProperty(prefix + ":urlProperty_ref"));
+
+
+        parseExecute("PREFIX some: <info:some#>\n" +
+                         "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
+                         "       some:urlProperty <info:somewhere/else> . }", graphStore);
+
+        assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
+        assertEquals(object.getNode(), session.getNodeByIdentifier(object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
     }
 }

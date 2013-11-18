@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.http.commons.responses;
+package org.fcrepo.transform.http.responses;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -35,7 +35,6 @@ import java.lang.reflect.Type;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.fcrepo.http.commons.responses.QueryExecutionProvider;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Triple;

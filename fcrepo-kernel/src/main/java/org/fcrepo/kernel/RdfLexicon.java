@@ -203,6 +203,8 @@ public final class RdfLexicon {
             createProperty("http://microformats.org/wiki/rel-subscription");
     public static final Property NOT_IMPLEMENTED =
             createProperty(REPOSITORY_NAMESPACE + "notImplemented");
+    public static final Property HAS_SPARQL_ENDPOINT =
+        createProperty(RESTAPI_NAMESPACE + "sparql");
 
     public static final Set<Property> otherServiceProperties = of(
             HAS_SERIALIZATION, HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
@@ -264,7 +266,7 @@ public final class RdfLexicon {
     public static final Property RDFS_LABEL =
             createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE =
-            createProperty("http://purl.org/dc/terms/title");
+            createProperty("http://purl.org/dc/elements/1.1/title");
 
     public static final Set<Property> managedProperties;
 
