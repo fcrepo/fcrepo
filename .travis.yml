@@ -7,5 +7,5 @@ before_install:
 notifications:
   irc: "irc.freenode.org#duraspace-ff"
   email:
-      - ff-tech@googlegroups.com
+      - fedora-tech@googlegroups.com
 
