@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -35,6 +36,7 @@ import java.net.MalformedURLException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -82,7 +84,8 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
                TEXT_HTML})
     @HtmlTemplate("jcr:workspaces")
-    public Dataset getWorkspaces() throws RepositoryException {
+    public Dataset getWorkspaces(@Context final UriInfo uriInfo)
+        throws RepositoryException {
 
         final Model workspaceModel =
             JcrRdfTools.withContext(null, session).getNamespaceTriples().asModel();
@@ -130,5 +133,24 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
                 uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
                         .buildFromMap(singletonMap("path", path))).build();
 
+    }
+
+    /**
+     * Delete a workspace from the repository
+     * @param path
+     * @return
+     * @throws RepositoryException
+     */
+    @DELETE
+    @Path("{path}")
+    public Response deleteWorkspace(@PathParam("path") final String path) throws RepositoryException {
+        try {
+            final Workspace workspace = session.getWorkspace();
+            workspace.deleteWorkspace(path);
+
+            return noContent().build();
+        } finally {
+            session.logout();
+        }
     }
 }

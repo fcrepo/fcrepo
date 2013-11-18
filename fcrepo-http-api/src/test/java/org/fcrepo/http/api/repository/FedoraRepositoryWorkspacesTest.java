@@ -16,8 +16,11 @@
 
 package org.fcrepo.http.api.repository;
 
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -25,6 +28,7 @@ import java.net.URI;
 
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -64,11 +68,12 @@ public class FedoraRepositoryWorkspacesTest {
         workspaces = new FedoraRepositoryWorkspaces();
         setField(workspaces, "session", mockSession);
         setField(workspaces, "uriInfo", mockUriInfo);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        mockUriInfo = getUriInfoImpl();
     }
 
     @Test
     public void testGetWorkspaces() throws Exception {
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(
                 new String[] {"xxx"});
 
@@ -85,7 +90,7 @@ public class FedoraRepositoryWorkspacesTest {
         when(mockUriBuilder.build()).thenReturn(uri);
 
         // Do the test.
-        final Dataset dataset = workspaces.getWorkspaces();
+        final Dataset dataset = workspaces.getWorkspaces(mockUriInfo);
 
         final Resource resource =
             dataset.getDefaultModel().getResource(uri.toString());
@@ -93,7 +98,20 @@ public class FedoraRepositoryWorkspacesTest {
         final String resourceName = resource.toString();
 
         org.junit.Assert.assertNotNull(resourceName);
-        org.junit.Assert.assertEquals(uri.toString(), resourceName);
+        assertEquals(uri.toString(), resourceName);
     }
 
+    @Test
+    public void testCreateWorkspace() throws Exception {
+        final Response response = workspaces.createWorkspace("xxx", mockUriInfo);
+        verify(mockWorkspace).createWorkspace("xxx");
+        assertEquals(201, response.getStatus());
+    }
+
+    @Test
+    public void testDeleteWorkspace() throws Exception {
+        final Response response = workspaces.deleteWorkspace("xxx");
+        verify(mockWorkspace).deleteWorkspace("xxx");
+        assertEquals(204, response.getStatus());
+    }
 }

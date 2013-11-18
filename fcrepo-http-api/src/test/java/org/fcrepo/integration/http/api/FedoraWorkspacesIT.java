@@ -28,6 +28,7 @@ import javax.jcr.RepositoryException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
@@ -75,5 +76,27 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
             new HttpGet(serverAddress + "workspace:" + workspace + "/" + pid);
         final GraphStore graphStore = getGraphStore(httpGet);
         logger.info(graphStore.toString());
+    }
+
+    @Test
+    public void shouldCreateAndDeleteWorkspace() throws IOException {
+        final String workspace = randomUUID().toString();
+
+        final HttpPost httpCreateWorkspace =
+            new HttpPost(serverAddress + "fcr:workspaces/" + workspace);
+        final HttpResponse createWorkspaceResponse =
+            execute(httpCreateWorkspace);
+
+        assertEquals(201, createWorkspaceResponse.getStatusLine()
+                              .getStatusCode());
+
+        final HttpDelete httpDeleteWorkspace = new HttpDelete(serverAddress + "fcr:workspaces/" + workspace);
+
+        final HttpResponse deleteWorkspaceResponse =
+            execute(httpDeleteWorkspace);
+
+        assertEquals(204, deleteWorkspaceResponse.getStatusLine()
+                              .getStatusCode());
+
     }
 }
