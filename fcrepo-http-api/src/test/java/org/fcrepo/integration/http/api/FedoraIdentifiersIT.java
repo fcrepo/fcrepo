@@ -55,7 +55,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasTwoPids() throws IOException {
         final HttpPost method =
-                new HttpPost(serverAddress + "fcr:identifier?numPids=2");
+                new HttpPost(serverAddress + "fcr:identifier?count=2");
         method.setHeader("Accept", "application/n3");
         logger.debug("Executed testGetNextHasTwoPids()");
         final GraphStore graphStore = getGraphStore(method);
@@ -86,7 +86,7 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
     @Test
     public void testGetNextHasTwoPidsWithPath() throws IOException {
         final HttpPost method =
-                new HttpPost(serverAddress + "fcr:identifier?numPids=2");
+                new HttpPost(serverAddress + "fcr:identifier?count=2");
         logger.debug("Executed testGetNextHasTwoPidsWithPath()");
         final GraphStore graphStore = getGraphStore(method);
         assertEquals("Didn't find two dang PIDs!", 2, size(graphStore.find(ANY,

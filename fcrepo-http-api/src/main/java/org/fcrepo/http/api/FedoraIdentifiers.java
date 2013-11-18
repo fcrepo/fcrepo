@@ -76,9 +76,9 @@ public class FedoraIdentifiers extends AbstractResource {
     /**
      * Mint identifiers (without creating the objects)
      *
-     * POST /path/to/mint/from/fcr:identifier?numPids=15
+     * POST /path/to/mint/from/fcr:identifier?count=15
      *
-     * @param numPids number of PIDs to return
+     * @param count number of PIDs to return
      * @return HTTP 200 with block of PIDs
      */
     @POST
@@ -87,9 +87,9 @@ public class FedoraIdentifiers extends AbstractResource {
             TEXT_HTML})
     public Dataset getNextPid(@PathParam("path")
             final List<PathSegment> pathList,
-            @QueryParam("numPids")
+            @QueryParam("count")
             @DefaultValue("1")
-            final Integer numPids,
+            final Integer count,
             @Context
             final UriInfo uriInfo) throws RepositoryException {
 
@@ -101,7 +101,7 @@ public class FedoraIdentifiers extends AbstractResource {
                 createResource(uriInfo.getAbsolutePath().toASCIIString());
 
         final Collection<String> identifiers =
-            transform(create(closed(1, numPids), integers()), pidMinter
+            transform(create(closed(1, count), integers()), pidMinter
                     .makePid());
 
         final HttpGraphSubjects subjects =
