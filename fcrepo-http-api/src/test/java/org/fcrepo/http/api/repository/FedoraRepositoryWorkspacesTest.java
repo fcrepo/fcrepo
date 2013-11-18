@@ -17,6 +17,7 @@
 package org.fcrepo.http.api.repository;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockRepository;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -39,6 +40,7 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.modeshape.jcr.api.Repository;
 
 /**
  * @author Andrew Woods Date: 8/7/13
@@ -62,6 +64,12 @@ public class FedoraRepositoryWorkspacesTest {
     @Mock
     private Session mockSession;
 
+    @Mock
+    private Session mockWorkspaceSession;
+
+    @Mock
+    private Workspace mockOtherWorkspace;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -69,6 +77,7 @@ public class FedoraRepositoryWorkspacesTest {
         setField(workspaces, "session", mockSession);
         setField(workspaces, "uriInfo", mockUriInfo);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getName()).thenReturn("default");
         mockUriInfo = getUriInfoImpl();
     }
 
@@ -103,9 +112,16 @@ public class FedoraRepositoryWorkspacesTest {
 
     @Test
     public void testCreateWorkspace() throws Exception {
+        final Repository mockRepository = mockRepository();
+        when(mockSession.getRepository()).thenReturn(mockRepository);
+        when(mockRepository.login("xxx")).thenReturn(mockWorkspaceSession);
+        when(mockWorkspaceSession.getWorkspace()).thenReturn(mockOtherWorkspace);
+        when(mockOtherWorkspace.getName()).thenReturn("xxx");
         final Response response = workspaces.createWorkspace("xxx", mockUriInfo);
         verify(mockWorkspace).createWorkspace("xxx");
         assertEquals(201, response.getStatus());
+        final String location = response.getMetadata().getFirst("Location").toString();
+        assertEquals("http://localhost/fcrepo/workspace:xxx/", location);
     }
 
     @Test

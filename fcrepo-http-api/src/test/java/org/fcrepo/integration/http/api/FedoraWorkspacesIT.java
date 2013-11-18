@@ -69,6 +69,7 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
             execute(httpCreateWorkspace);
         assertEquals(201, createWorkspaceResponse.getStatusLine()
                 .getStatusCode());
+        assertEquals(serverAddress + "workspace:" + workspace + "/", createWorkspaceResponse.getFirstHeader("Location").getValue());
 
         createObject("workspace:" + workspace + "/" + pid);
 

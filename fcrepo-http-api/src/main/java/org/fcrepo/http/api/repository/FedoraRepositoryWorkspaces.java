@@ -18,7 +18,7 @@ package org.fcrepo.http.api.repository;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.util.Collections.singletonMap;
+import static com.sun.jersey.api.Responses.clientError;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
@@ -33,6 +33,8 @@ import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -42,14 +44,17 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -121,18 +126,29 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
      */
     @POST
     @Path("{path}")
-    public Response createWorkspace(@PathParam("path")
-            final String path,
-            @Context
-            final UriInfo uriInfo) throws RepositoryException,
-        MalformedURLException {
-        final Workspace workspace = session.getWorkspace();
-        workspace.createWorkspace(path);
+    public Response createWorkspace(@PathParam("path") final String path,
+            @Context final UriInfo uriInfo)
+        throws RepositoryException, MalformedURLException, URISyntaxException {
 
-        return created(
-                uriInfo.getAbsolutePathBuilder().path(FedoraNodes.class)
-                        .buildFromMap(singletonMap("path", path))).build();
+        try {
+            final Workspace workspace = session.getWorkspace();
 
+            if (!workspace.getName().equals("default")) {
+                throw new WebApplicationException(
+                    clientError().entity("Unable to create workspace from non-default workspace")
+                        .build());
+            }
+
+            workspace.createWorkspace(path);
+
+            final GraphSubjects subjects =
+                new HttpGraphSubjects(session.getRepository().login(path), FedoraNodes.class, uriInfo);
+
+
+            return created(new URI(subjects.getGraphSubject("/").getURI())).build();
+        } finally {
+            session.logout();
+        }
     }
 
     /**
