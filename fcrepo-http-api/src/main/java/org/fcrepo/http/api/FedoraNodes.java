@@ -266,6 +266,7 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (requestBodyStream != null) {
+
                 final FedoraResource resource =
                         nodeService.getObject(session, path);
 
@@ -338,6 +339,7 @@ public class FedoraNodes extends AbstractResource {
         try {
             final FedoraResource resource =
                 nodeService.getObject(session, path);
+
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
 
@@ -522,7 +524,7 @@ public class FedoraNodes extends AbstractResource {
                                                  .getURI());
             }
 
-            return created(location).entity(newObjectPath).build();
+            return created(location).entity(location.toString()).build();
 
         } finally {
             session.logout();
