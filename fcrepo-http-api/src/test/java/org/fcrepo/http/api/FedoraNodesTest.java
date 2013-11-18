@@ -251,7 +251,12 @@ public class FedoraNodesTest {
     public void testDeleteObject() throws RepositoryException {
         final String pid = "testObject";
         final String path = "/" + pid;
-        final Response actual = testObj.deleteObject(createPathList(pid));
+        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+            .thenReturn(mockObject);
+        when(mockObject.getEtagValue()).thenReturn("");
+
+        final Response actual = testObj.deleteObject(createPathList(pid), mockRequest);
+
         assertNotNull(actual);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockNodes).deleteObject(mockSession, path);
@@ -400,12 +405,16 @@ public class FedoraNodesTest {
     @Test
     public void testMoveObject() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+            .thenReturn(mockObject);
+        when(mockObject.getEtagValue()).thenReturn("");
+
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
 
         final String pid = "foo";
 
-        testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar");
+        testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar", mockRequest);
         verify(mockNodes).moveObject(mockSession, "/foo", "/bar");
     }
 
@@ -414,10 +423,13 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(false);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+            .thenReturn(mockObject);
+        when(mockObject.getEtagValue()).thenReturn("");
 
         final String pid = "foo";
 
-        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar");
+        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar", mockRequest);
         assertEquals(CONFLICT.getStatusCode(), response.getStatus());
     }
 
@@ -426,11 +438,14 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+            .thenReturn(mockObject);
+        when(mockObject.getEtagValue()).thenReturn("");
         doThrow(new ItemExistsException()).when(mockNodes).moveObject(mockSession, "/foo", "/baz");
 
         final String pid = "foo";
 
-        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/baz");
+        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/baz", mockRequest);
 
         assertEquals(PRECONDITION_FAILED.getStatusCode(), response.getStatus());
     }
@@ -439,11 +454,14 @@ public class FedoraNodesTest {
     public void testMoveObjectWithBadDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+            .thenReturn(mockObject);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        when(mockObject.getEtagValue()).thenReturn("");
 
         final String pid = "foo";
 
-        final Response response = testObj.moveObject(createPathList(pid), "http://somewhere/else/baz");
+        final Response response = testObj.moveObject(createPathList(pid), "http://somewhere/else/baz", mockRequest);
 
         // BAD GATEWAY
         assertEquals(SC_BAD_GATEWAY, response.getStatus());
