@@ -131,7 +131,7 @@ public class RdfStreamTest {
 
     @Test
     public void testWithThisContextIterator() {
-        testStream.addNamespace(prefix1, uri1);
+        testStream.namespace(prefix1, uri1);
         final RdfStream testStream2 =
             testStream.withThisContext((Iterator<Triple>) testStream);
         assertEquals(testStream.namespaces(), testStream2.namespaces());
@@ -139,7 +139,7 @@ public class RdfStreamTest {
 
     @Test
     public void testWithThisContextIterable() {
-        testStream.addNamespace(prefix1, uri1);
+        testStream.namespace(prefix1, uri1);
         final RdfStream testStream2 =
             testStream.withThisContext((Iterable<Triple>) testStream);
         assertEquals(testStream.namespaces(), testStream2.namespaces());
@@ -176,14 +176,14 @@ public class RdfStreamTest {
 
     @Test
     public void testAddNamespace() {
-        testStream.addNamespace(prefix1, uri1);
+        testStream.namespace(prefix1, uri1);
         assertTrue(testStream.namespaces().containsKey(prefix1));
         assertTrue(testStream.namespaces().containsValue(uri1));
     }
 
     @Test
     public void testAddNamespaces() {
-        testStream.addNamespaces(testNamespaces);
+        testStream.namespaces(testNamespaces);
         assertTrue(testStream.namespaces().containsKey(prefix1));
         assertTrue(testStream.namespaces().containsValue(uri1));
         assertTrue(testStream.namespaces().containsKey(prefix2));
@@ -193,7 +193,7 @@ public class RdfStreamTest {
     @Test
     public void testAsModel() throws RepositoryException {
         testStream = new RdfStream(singletonList(triple));
-        testStream.addNamespaces(testNamespaces);
+        testStream.namespaces(testNamespaces);
 
         final Model testModel = testStream.asModel();
         assertEquals(testModel.getNsPrefixMap(), testNamespaces);
@@ -286,7 +286,7 @@ public class RdfStreamTest {
         assertNotEquals(testStream,new Object());
         RdfStream testStreamToCompare = new RdfStream(mockIterator);
         assertEquals(testStream, testStreamToCompare);
-        testStreamToCompare.addNamespace(prefix1, uri1);
+        testStreamToCompare.namespace(prefix1, uri1);
         assertNotEquals(testStream, testStreamToCompare);
         when(differentMockIterator.hasNext()).thenReturn(true, false);
         when(differentMockIterator.next()).thenReturn(triple);
@@ -297,7 +297,7 @@ public class RdfStreamTest {
     @Test
     public void testHashCode() {
         final RdfStream testStreamToCompare = new RdfStream(mockIterator);
-        testStreamToCompare.addNamespace(prefix1, uri1);
+        testStreamToCompare.namespace(prefix1, uri1);
         assertNotEquals(testStream.hashCode(), testStreamToCompare.hashCode());
     }
 }

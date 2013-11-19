@@ -87,16 +87,17 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
+        final RdfStream testRdfStream = new RdfStream();
         when(mockResource.getVersionTriples(any(HttpGraphSubjects.class)))
-                .thenReturn(new RdfStream());
+                .thenReturn(testRdfStream);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
 
-        final Response response =
+        final RdfStream response =
             testObj.getVersionList(createPathList(pid), mockRequest,
                     getUriInfoImpl());
         assertNotNull(response);
-        assertEquals(200, response.getStatus());
+        assertEquals("Got wrong RdfStream!", testRdfStream, response);
     }
 
     @Test

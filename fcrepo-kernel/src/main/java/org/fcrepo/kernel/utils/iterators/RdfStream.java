@@ -23,6 +23,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.jcr.Session;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ForwardingIterator;
@@ -44,6 +47,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     private Map<String, String> namespaces = new HashMap<String, String>();
 
     protected Iterator<Triple> triples;
+
+    protected Session context;
 
     private final static Triple[] NONE = new Triple[] {};
 
@@ -120,7 +125,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).addNamespaces(namespaces());
+        return new RdfStream(stream).namespaces(namespaces());
     }
 
     /**
@@ -130,7 +135,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).addNamespaces(namespaces());
+        return new RdfStream(stream).namespaces(namespaces());
     }
 
     /**
@@ -220,7 +225,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @param uri
      * @return This object for continued use.
      */
-    public RdfStream addNamespace(final String prefix, final String uri) {
+    public RdfStream namespace(final String prefix, final String uri) {
         namespaces.put(prefix, uri);
         return this;
     }
@@ -229,9 +234,25 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @param nses
      * @return This object for continued use.
      */
-    public RdfStream addNamespaces(final Map<String, String> nses) {
+    public RdfStream namespaces(final Map<String, String> nses) {
         namespaces.putAll(nses);
         return this;
+    }
+
+    /**
+     * @return The {@link Session} in context
+     */
+    public Session session() {
+        return this.context;
+    }
+
+    /**
+     * Sets the JCR context of this stream
+     *
+     * @param session The {@link Session} in context
+     */
+    public void session(final Session session) {
+        this.context = session;
     }
 
     /**
@@ -258,7 +279,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      */
     public static RdfStream fromModel(final Model model) {
         final Iterator<Triple> triples = Iterators.transform(model.listStatements(), statement2triple);
-        return new RdfStream(triples).addNamespaces(model.getNsPrefixMap());
+        return new RdfStream(triples).namespaces(model.getNsPrefixMap());
     }
 
     private static Function<Statement, Triple> statement2triple = new Function<Statement, Triple>() {

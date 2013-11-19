@@ -204,7 +204,7 @@ public class RdfAdderTest {
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         testStream = new RdfStream(mockTriples);
-        testStream.addNamespaces(mockNamespaceMap);
+        testStream.namespaces(mockNamespaceMap);
     }
 
 

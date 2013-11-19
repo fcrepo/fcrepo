@@ -304,17 +304,14 @@ public class JcrRdfTools {
      * the jcr:content of children) to the given {@link RdfStream}
      *
      * @param node
-     * @param offset
-     * @param limit @throws RepositoryException
+     * @throws RepositoryException
      */
-    public RdfStream getTreeTriples(final Node node, final int offset,
-            final int limit) throws RepositoryException {
-        return new HierarchyRdfContext(node, graphSubjects, llstore).limit(
-                limit).skip(offset);
+    public RdfStream getTreeTriples(final Node node) throws RepositoryException {
+        return new HierarchyRdfContext(node, graphSubjects, llstore);
     }
 
     /**
-     * Decides whether the RDF represetnation of this {@link Node} will receive LDP Container status.
+     * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.
      *
      * @param node
      * @return
@@ -516,7 +513,7 @@ public class JcrRdfTools {
     public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
 
 
-        Map<String, String> emptyNamespaceMapping = emptyMap();
+        final Map<String, String> emptyNamespaceMapping = emptyMap();
         return getPropertyNameFromPredicate(predicate, emptyNamespaceMapping);
     }
 
@@ -604,7 +601,7 @@ public class JcrRdfTools {
     public int getPropertyType(final NodeType nodeType, final String propertyName) throws RepositoryException {
         final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
         int type = UNDEFINED;
-        for (PropertyDefinition propertyDefinition : propertyDefinitions) {
+        for (final PropertyDefinition propertyDefinition : propertyDefinitions) {
             if (propertyDefinition.getName().equals(propertyName)) {
                 if (type != UNDEFINED) {
                     return UNDEFINED;

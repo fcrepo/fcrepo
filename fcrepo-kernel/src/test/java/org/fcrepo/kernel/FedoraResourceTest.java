@@ -222,7 +222,7 @@ public class FedoraResourceTest {
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
                 propertiesStream);
         final RdfStream treeStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getTreeTriples(mockNode, 0, -1)).thenReturn(
+        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(
                 treeStream);
         final Model problemsModel = new RdfStream().asModel();
         when(getProblemsModel()).thenReturn(problemsModel);
@@ -249,7 +249,7 @@ public class FedoraResourceTest {
         final RdfStream propertiesStream = new RdfStream(mockTriple);
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
         final RdfStream treeStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getTreeTriples(mockNode, 0, -1)).thenReturn(treeStream);
+        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getPropertiesDataset(mockSubjects);
@@ -334,7 +334,7 @@ public class FedoraResourceTest {
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
 
         final RdfStream treeStream = new RdfStream();
-        when(mockJcrRdfTools.getTreeTriples(mockNode, 0, -2)).thenReturn(treeStream);
+        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
 
