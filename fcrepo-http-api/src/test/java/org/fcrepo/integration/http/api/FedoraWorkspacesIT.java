@@ -34,6 +34,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
+import org.w3c.dom.ElementTraversal;
 
 public class FedoraWorkspacesIT extends AbstractResourceIT {
 
@@ -97,6 +98,18 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
             execute(httpDeleteWorkspace);
 
         assertEquals(204, deleteWorkspaceResponse.getStatusLine()
+                              .getStatusCode());
+
+    }
+
+    @Test
+    public void shouldBe404WhenDeletingJunkWorkspace() throws IOException {
+        final HttpDelete httpDeleteWorkspace = new HttpDelete(serverAddress + "fcr:workspaces/junk");
+
+        final HttpResponse deleteWorkspaceResponse =
+            execute(httpDeleteWorkspace);
+
+        assertEquals(404, deleteWorkspaceResponse.getStatusLine()
                               .getStatusCode());
 
     }

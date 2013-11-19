@@ -49,6 +49,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.collect.ImmutableSet;
+import com.sun.jersey.api.NotFoundException;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
@@ -162,6 +164,11 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     public Response deleteWorkspace(@PathParam("path") final String path) throws RepositoryException {
         try {
             final Workspace workspace = session.getWorkspace();
+
+            if (!ImmutableSet.copyOf(workspace.getAccessibleWorkspaceNames()).contains(path)) {
+                throw new NotFoundException();
+            }
+
             workspace.deleteWorkspace(path);
 
             return noContent().build();
