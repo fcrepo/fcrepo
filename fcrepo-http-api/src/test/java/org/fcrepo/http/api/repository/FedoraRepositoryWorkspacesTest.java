@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.sun.jersey.api.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -126,8 +127,16 @@ public class FedoraRepositoryWorkspacesTest {
 
     @Test
     public void testDeleteWorkspace() throws Exception {
+        when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(new String[] { "xxx" });
         final Response response = workspaces.deleteWorkspace("xxx");
         verify(mockWorkspace).deleteWorkspace("xxx");
         assertEquals(204, response.getStatus());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testDeleteMissingWorkspace() throws Exception {
+        when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(new String[] { "yyy" });
+        final Response response = workspaces.deleteWorkspace("xxx");
+        assertEquals(404, response.getStatus());
     }
 }
