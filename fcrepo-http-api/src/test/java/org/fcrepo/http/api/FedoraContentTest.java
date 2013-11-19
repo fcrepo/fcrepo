@@ -117,15 +117,15 @@ public class FedoraContentTest {
         when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
-                        eq(dsPath), anyString(), any(InputStream.class)))
+                        eq(dsPath), anyString(), any(InputStream.class), eq((URI)null)))
                 .thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-            testObj.modifyContent(createPathList(pid, dsId), null,
+            testObj.modifyContent(createPathList(pid, dsId), null, null,
                     dsContentStream, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq(dsPath), anyString(), any(InputStream.class));
+                eq(dsPath), anyString(), any(InputStream.class), eq((URI)null));
         verify(mockSession).save();
     }
 
@@ -223,6 +223,7 @@ public class FedoraContentTest {
         final String dsId = "testDS";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
+        final URI checksum = new URI("urn:sha1:some-checksum");
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNode.isNew()).thenReturn(false);
         final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
@@ -234,15 +235,15 @@ public class FedoraContentTest {
                         any(EntityTag.class))).thenReturn(null);
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
-                        eq(dsPath), anyString(), any(InputStream.class)))
+                        eq(dsPath), anyString(), any(InputStream.class), eq(checksum)))
                 .thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
-            testObj.modifyContent(createPathList(pid, dsId), null,
+            testObj.modifyContent(createPathList(pid, dsId), "urn:sha1:some-checksum", null,
                     dsContentStream, mockRequest);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq(dsPath), anyString(), any(InputStream.class));
+                eq(dsPath), anyString(), any(InputStream.class), eq(checksum));
         verify(mockSession).save();
     }
 

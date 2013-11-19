@@ -16,8 +16,12 @@
 
 package org.fcrepo.http.api.repository;
 
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockRepository;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -25,6 +29,7 @@ import java.net.URI;
 
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -35,6 +40,7 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.modeshape.jcr.api.Repository;
 
 /**
  * @author Andrew Woods Date: 8/7/13
@@ -58,17 +64,25 @@ public class FedoraRepositoryWorkspacesTest {
     @Mock
     private Session mockSession;
 
+    @Mock
+    private Session mockWorkspaceSession;
+
+    @Mock
+    private Workspace mockOtherWorkspace;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
         workspaces = new FedoraRepositoryWorkspaces();
         setField(workspaces, "session", mockSession);
         setField(workspaces, "uriInfo", mockUriInfo);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getName()).thenReturn("default");
+        mockUriInfo = getUriInfoImpl();
     }
 
     @Test
     public void testGetWorkspaces() throws Exception {
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(
                 new String[] {"xxx"});
 
@@ -85,7 +99,7 @@ public class FedoraRepositoryWorkspacesTest {
         when(mockUriBuilder.build()).thenReturn(uri);
 
         // Do the test.
-        final Dataset dataset = workspaces.getWorkspaces();
+        final Dataset dataset = workspaces.getWorkspaces(mockUriInfo);
 
         final Resource resource =
             dataset.getDefaultModel().getResource(uri.toString());
@@ -93,7 +107,27 @@ public class FedoraRepositoryWorkspacesTest {
         final String resourceName = resource.toString();
 
         org.junit.Assert.assertNotNull(resourceName);
-        org.junit.Assert.assertEquals(uri.toString(), resourceName);
+        assertEquals(uri.toString(), resourceName);
     }
 
+    @Test
+    public void testCreateWorkspace() throws Exception {
+        final Repository mockRepository = mockRepository();
+        when(mockSession.getRepository()).thenReturn(mockRepository);
+        when(mockRepository.login("xxx")).thenReturn(mockWorkspaceSession);
+        when(mockWorkspaceSession.getWorkspace()).thenReturn(mockOtherWorkspace);
+        when(mockOtherWorkspace.getName()).thenReturn("xxx");
+        final Response response = workspaces.createWorkspace("xxx", mockUriInfo);
+        verify(mockWorkspace).createWorkspace("xxx");
+        assertEquals(201, response.getStatus());
+        final String location = response.getMetadata().getFirst("Location").toString();
+        assertEquals("http://localhost/fcrepo/workspace:xxx/", location);
+    }
+
+    @Test
+    public void testDeleteWorkspace() throws Exception {
+        final Response response = workspaces.deleteWorkspace("xxx");
+        verify(mockWorkspace).deleteWorkspace("xxx");
+        assertEquals(204, response.getStatus());
+    }
 }

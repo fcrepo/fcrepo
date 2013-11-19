@@ -174,11 +174,11 @@ public class FedoraContent extends AbstractResource {
      */
     @PUT
     @Timed
-    public Response modifyContent(@PathParam("path")
-        final List<PathSegment> pathList, @HeaderParam("Content-Type")
-        final MediaType requestContentType,
-        final InputStream requestBodyStream, @Context
-        final Request request) throws RepositoryException,
+    public Response modifyContent(@PathParam("path") final List<PathSegment> pathList,
+                                  @QueryParam("checksum") final String checksum,
+                                  @HeaderParam("Content-Type") final MediaType requestContentType,
+                                  final InputStream requestBodyStream,
+                                  @Context final Request request) throws RepositoryException,
             IOException, InvalidChecksumException, URISyntaxException {
         try {
             final String path = toPath(pathList);
@@ -206,9 +206,20 @@ public class FedoraContent extends AbstractResource {
             }
 
             logger.debug("create Datastream {}", path);
+
+            final URI checksumURI;
+
+            if (checksum != null && !checksum.equals("")) {
+                checksumURI = new URI(checksum);
+            } else {
+                checksumURI = null;
+            }
+
+
             final Node datastreamNode =
-                    datastreamService.createDatastreamNode(session, path,
-                            contentType.toString(), requestBodyStream);
+                datastreamService.createDatastreamNode(session, path,
+                    contentType.toString(), requestBodyStream, checksumURI);
+
             final boolean isNew = datastreamNode.isNew();
             session.save();
             versionService.checkpoint(session, path);

@@ -266,6 +266,7 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (requestBodyStream != null) {
+
                 final FedoraResource resource =
                         nodeService.getObject(session, path);
 
@@ -338,6 +339,7 @@ public class FedoraNodes extends AbstractResource {
         try {
             final FedoraResource resource =
                 nodeService.getObject(session, path);
+
             final Date date = resource.getLastModifiedDate();
             final Date roundedDate = new Date();
 
@@ -522,7 +524,7 @@ public class FedoraNodes extends AbstractResource {
                                                  .getURI());
             }
 
-            return created(location).entity(newObjectPath).build();
+            return created(location).entity(location.toString()).build();
 
         } finally {
             session.logout();
@@ -564,10 +566,33 @@ public class FedoraNodes extends AbstractResource {
     @DELETE
     @Timed
     public Response deleteObject(@PathParam("path")
-            final List<PathSegment> path) throws RepositoryException {
+            final List<PathSegment> pathList,
+            @Context final Request request) throws RepositoryException {
 
         try {
-            nodeService.deleteObject(session, toPath(path));
+
+            final String path = toPath(pathList);
+
+            final FedoraResource resource =
+                nodeService.getObject(session, path);
+
+
+            final EntityTag etag = new EntityTag(resource.getEtagValue());
+            final Date date = resource.getLastModifiedDate();
+            final Date roundedDate = new Date();
+
+            if (date != null) {
+                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+            }
+
+            final ResponseBuilder builder =
+                request.evaluatePreconditions(roundedDate, etag);
+
+            if (builder != null) {
+                throw new WebApplicationException(builder.build());
+            }
+
+            nodeService.deleteObject(session, path);
             session.save();
             return noContent().build();
         } finally {
@@ -621,18 +646,41 @@ public class FedoraNodes extends AbstractResource {
      */
     @MOVE
     @Timed
-    public Response moveObject(@PathParam("path") final List<PathSegment> path,
-                               @HeaderParam("Destination") final String destinationUri)
+    public Response moveObject(@PathParam("path") final List<PathSegment> pathList,
+                               @HeaderParam("Destination") final String destinationUri,
+                               @Context final Request request)
         throws RepositoryException, URISyntaxException {
 
         try {
 
-            final GraphSubjects subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final String path = toPath(pathList);
 
-            if (!nodeService.exists(session, toPath(path))) {
+            if (!nodeService.exists(session, path)) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
             }
+
+
+            final FedoraResource resource =
+                nodeService.getObject(session, path);
+
+
+            final EntityTag etag = new EntityTag(resource.getEtagValue());
+            final Date date = resource.getLastModifiedDate();
+            final Date roundedDate = new Date();
+
+            if (date != null) {
+                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+            }
+
+            final ResponseBuilder builder =
+                request.evaluatePreconditions(roundedDate, etag);
+
+            if (builder != null) {
+                throw new WebApplicationException(builder.build());
+            }
+
+            final GraphSubjects subjects =
+                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             final String destination =
                 subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
@@ -641,7 +689,7 @@ public class FedoraNodes extends AbstractResource {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
             }
 
-            nodeService.moveObject(session, toPath(path), destination);
+            nodeService.moveObject(session, path, destination);
             session.save();
             versionService.checkpoint(session, destination);
             return created(new URI(destinationUri)).build();

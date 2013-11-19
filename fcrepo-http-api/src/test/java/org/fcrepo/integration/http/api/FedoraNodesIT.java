@@ -224,6 +224,22 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDeleteWithBadEtag() throws Exception {
+
+        final HttpPost method = postObjMethod("");
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpDelete request = new HttpDelete(location);
+        request.addHeader("If-Match", "\"doesnt-match\"");
+        final HttpResponse deleteResponse = client.execute(request);
+        assertEquals(412, deleteResponse.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testGetDatastream() throws Exception {
 
         final String pid = UUID.randomUUID().toString();
@@ -728,6 +744,25 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse originalResult = client.execute(new HttpGet(location));
         assertEquals(NOT_FOUND.getStatusCode(), originalResult.getStatusLine().getStatusCode());
     }
+
+    @Test
+    public void testMoveWithBadEtag() throws Exception {
+
+        final String pid = randomUUID().toString();
+
+        final HttpPost method = postObjMethod("");
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpMove request = new HttpMove(location);
+        request.addHeader("Destination", serverAddress + pid);
+        request.addHeader("If-Match", "\"doesnt-match\"");
+        final HttpResponse moveResponse = client.execute(request);
+        assertEquals(412, moveResponse.getStatusLine().getStatusCode());
+   }
 
     private void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);
