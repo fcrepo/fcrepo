@@ -255,9 +255,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
     @Override
     public boolean isWriteable(final Class<?> type, final Type genericType,
             final Annotation[] annotations, final MediaType mediaType) {
-        return mediaType.equals(TEXT_HTML_TYPE) &&
-                (Dataset.class.isAssignableFrom(type) || Dataset.class
-                        .isAssignableFrom(genericType.getClass()));
+        return mediaType.equals(TEXT_HTML_TYPE)
+                && Dataset.class.isAssignableFrom(type) ;
     }
 
     @Override

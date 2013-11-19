@@ -311,7 +311,7 @@ public class JcrRdfTools {
     }
 
     /**
-     * Decides whether the RDF represetnation of this {@link Node} will receive LDP Container status.
+     * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.
      *
      * @param node
      * @return

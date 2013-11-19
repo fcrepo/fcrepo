@@ -72,9 +72,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
         // we can return a result for any MIME type that Jena can serialize
         final Boolean appropriateMimeType =
                 contentTypeToLang(mediaType.toString()) != null;
-        return appropriateMimeType &&
-                (Dataset.class.isAssignableFrom(type) || Dataset.class
-                        .isAssignableFrom(genericType.getClass()));
+        return appropriateMimeType && Dataset.class.isAssignableFrom(type);
     }
 
     @Override

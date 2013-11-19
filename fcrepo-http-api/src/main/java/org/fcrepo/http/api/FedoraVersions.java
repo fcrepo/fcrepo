@@ -16,16 +16,13 @@
 
 package org.fcrepo.http.api;
 
-import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
@@ -47,14 +44,12 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Variant;
-
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.http.commons.responses.RdfStreamStreamingOutput;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.utils.LogoutCallback;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -85,7 +80,7 @@ public class FedoraVersions extends AbstractResource {
      */
     @GET
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
-    public Response getVersionList(@PathParam("path")
+    public RdfStream getVersionList(@PathParam("path")
             final List<PathSegment> pathList,
             @Context
             final Request request,
@@ -93,22 +88,11 @@ public class FedoraVersions extends AbstractResource {
             final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
 
-        LOGGER.trace("getting versions list for {}", path);
-
-        final Variant bestPossibleResponse =
-                request.selectVariant(POSSIBLE_RDF_VARIANTS);
+        LOGGER.trace("Getting versions list for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        final RdfStreamStreamingOutput streamOutput =
-            new RdfStreamStreamingOutput(resource
-                    .getVersionTriples(new HttpGraphSubjects(session,
-                            FedoraVersions.class, uriInfo)),
-                    bestPossibleResponse.getMediaType());
-
-        addCallback(streamOutput, new LogoutCallback(session));
-
-        return ok(streamOutput).build();
+        return resource.getVersionTriples(translator());
     }
 
     /**
@@ -150,7 +134,7 @@ public class FedoraVersions extends AbstractResource {
     @Path("/{versionLabel}")
     @GET
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
-    public Response getVersion(@PathParam("path")
+    public RdfStream getVersion(@PathParam("path")
             final List<PathSegment> pathList,
             @PathParam("versionLabel")
             final String versionLabel,
@@ -159,7 +143,7 @@ public class FedoraVersions extends AbstractResource {
             @Context
             final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
-        LOGGER.trace("getting version profile for {} at version {}", path,
+        LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 versionLabel);
 
         final FedoraResource resource =
@@ -168,19 +152,12 @@ public class FedoraVersions extends AbstractResource {
         if (resource == null) {
             throw new WebApplicationException(status(NOT_FOUND).build());
         } else {
-
-            final Variant bestPossibleResponse =
-                request.selectVariant(POSSIBLE_RDF_VARIANTS);
-
-            final RdfStreamStreamingOutput streamOutput =
-                new RdfStreamStreamingOutput(resource
-                        .getTriples(new HttpGraphSubjects(session,
-                                FedoraVersions.class, uriInfo)),
-                        bestPossibleResponse.getMediaType());
-
-            addCallback(streamOutput, new LogoutCallback(session));
-
-            return ok(streamOutput).build();
+            return resource.getTriples(translator());
         }
     }
+
+    protected GraphSubjects translator() {
+        return new HttpGraphSubjects(session, this.getClass(), uriInfo);
+    }
+
 }

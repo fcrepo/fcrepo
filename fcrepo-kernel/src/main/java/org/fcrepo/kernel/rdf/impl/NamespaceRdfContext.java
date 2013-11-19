@@ -93,6 +93,6 @@ public class NamespaceRdfContext extends RdfStream {
                         createLiteral(nsURI)));
             }
         }
-        concat(nsTriples.build()).addNamespaces(namespaces.build());
+        concat(nsTriples.build()).namespaces(namespaces.build());
     }
 }
