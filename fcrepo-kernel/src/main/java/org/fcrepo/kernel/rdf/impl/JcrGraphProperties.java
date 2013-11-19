@@ -49,8 +49,10 @@ public class JcrGraphProperties implements GraphProperties {
             final int offset, final int limit)
         throws RepositoryException {
         final JcrRdfTools jcrRdfTools = JcrRdfTools.withContext(subjects, node.getSession());
-        final Model model = jcrRdfTools.getJcrTriples(node).asModel();
-        final Model treeModel = jcrRdfTools.getTreeTriples(node, offset, limit).asModel();
+        final Model model =
+            jcrRdfTools.getJcrTriples(node).concat(
+                    jcrRdfTools.getTreeTriples(node)).limit(limit).skip(offset)
+                    .asModel();
         final Model problemModel = JcrRdfTools.getProblemsModel();
 
         final JcrPropertyStatementListener listener =
@@ -58,10 +60,9 @@ public class JcrGraphProperties implements GraphProperties {
                     subjects, node.getSession(), problemModel);
 
         model.register(listener);
-        treeModel.register(listener);
 
         final Dataset dataset = DatasetFactory.create(model);
-        dataset.addNamedModel(MODEL_NAME, treeModel);
+        dataset.addNamedModel(MODEL_NAME, model);
 
         final Resource subject = subjects.getGraphSubject(node);
         final String uri = subject.getURI();

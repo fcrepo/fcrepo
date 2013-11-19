@@ -268,7 +268,7 @@ public class JcrRdfToolsTest {
     public final void
             shouldBeAbleToDisableResourceInlining() throws RepositoryException {
 
-        final Model actual = testObj.getTreeTriples(mockNode, 0, -2).asModel();
+        final Model actual = testObj.getTreeTriples(mockNode).asModel();
         assertEquals(0, Iterators.size(actual.listObjectsOfProperty(actual
                 .createProperty("http://www.w3.org/ns/ldp#inlinedResource"))));
         verify(mockParent, never()).getProperties();
@@ -292,7 +292,7 @@ public class JcrRdfToolsTest {
 
         when(mockNode.getDepth()).thenReturn(0);
         when(mockNodes.hasNext()).thenReturn(false);
-        final Model actual = testObj.getTreeTriples(mockNode, 0, -1).asModel();
+        final Model actual = testObj.getTreeTriples(mockNode).asModel();
 
         assertTrue(actual.contains(testSubjects.getContext(), type, actual
                 .createProperty("http://www.w3.org/ns/ldp#Page")));
@@ -335,7 +335,8 @@ public class JcrRdfToolsTest {
         when(mockFullChildNode.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode.hasNodes()).thenReturn(true);
-        final Model actual = testObj.getTreeTriples(mockNode, 1, 2).asModel();
+        final Model actual =
+            testObj.getTreeTriples(mockNode).limit(2).asModel();
         assertEquals(2, Iterators.size(actual
                 .listSubjectsWithProperty(HAS_PARENT)));
         verify(mockChildNode, never()).getProperties();

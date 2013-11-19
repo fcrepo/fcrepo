@@ -86,7 +86,7 @@ public class JcrGraphPropertiesTest {
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
                 propertiesStream);
         final RdfStream treeStream = new RdfStream();
-        when(mockJcrRdfTools.getTreeTriples(mockNode, 0, -1)).thenReturn(
+        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(
                 treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
@@ -116,14 +116,14 @@ public class JcrGraphPropertiesTest {
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
                 propertiesStream);
         final RdfStream treeStream = new RdfStream();
-        when(mockJcrRdfTools.getTreeTriples(mockNode, 0, -1)).thenReturn(
+        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(
                 treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getProperties(mockNode, mockSubjects);
 
         verifyStatic();
-        mockJcrRdfTools.getTreeTriples(mockNode, 0, -1);
+        mockJcrRdfTools.getTreeTriples(mockNode);
         assertTrue(dataset.containsNamedModel("tree"));
         assertEquals(treeStream, RdfStream.fromModel(dataset.getNamedModel("tree")));
 
@@ -151,7 +151,7 @@ public class JcrGraphPropertiesTest {
         when(mockJcrRdfTools.getJcrTriples(mockNode))
                 .thenReturn(propertiesStream);
         final RdfStream treeStream = new RdfStream();
-        when(mockJcrRdfTools.getTreeTriples(mockNode, 0, -1))
+        when(mockJcrRdfTools.getTreeTriples(mockNode))
                 .thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);

@@ -245,12 +245,11 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
             JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
         final RdfStream propertiesStream =
-            jcrRdfTools.getJcrTriples(getNode()).limit(limit).skip(offset);
+            jcrRdfTools.getJcrTriples(getNode());
 
-        propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode(), offset,
-                limit));
+        propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode()));
 
-        final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
+        final Dataset dataset = DatasetFactory.create(propertiesStream.limit(limit).skip(offset).asModel());
 
         final Model problemsModel = createDefaultModel();
 
