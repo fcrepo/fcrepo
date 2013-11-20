@@ -178,7 +178,9 @@ public class FedoraNodes extends AbstractResource {
 
         final RdfStream rdfStream =
             resource.getTriples(subjects).concat(
-                    resource.getHierarchyTriples(subjects)).session(session);
+                    resource.getHierarchyTriples(subjects)).session(session)
+                    .topic(subjects.getGraphSubject(resource.getNode())
+                            .asNode());
         if (realLimit != -2) {
             final Node firstPage =
                 createURI(uriInfo.getRequestUriBuilder().replaceQueryParam(

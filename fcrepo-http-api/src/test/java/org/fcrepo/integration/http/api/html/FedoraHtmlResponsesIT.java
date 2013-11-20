@@ -16,6 +16,7 @@
 package org.fcrepo.integration.http.api.html;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
@@ -37,6 +38,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
@@ -70,28 +72,38 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final String pid = randomUUID().toString();
 
-        final HtmlPage page = webClient.getPage(serverAddress);
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
+        final HtmlForm form = (HtmlForm)page.getElementById("action_create");
+        final HtmlSelect type = form.getSelectByName("mixin");
+        type.getOptionByValue("fedora:object").setSelected(true);
 
         final HtmlInput new_id = (HtmlInput)page.getElementById("new_id");
         new_id.setValueAttribute(pid);
-        page.executeJavaScript("$('#action_create .btn-primary').click();");
-        webClient.waitForBackgroundJavaScript(1000);
+        final HtmlButton button = form.getFirstByXPath("button");
+        button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
-        assertEquals(serverAddress + pid, page1.getTitleText());
+
+        try {
+            final HtmlPage page1 = webClient.getPage(serverAddress + pid);
+            assertEquals("Page had wrong title!", serverAddress + pid, page1.getTitleText());
+        } catch (final FailingHttpStatusCodeException e) {
+            fail("Did not successfully retrieve created page! Got HTTP code: " + e.getStatusCode());
+        }
+
     }
 
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException, InterruptedException {
 
         final HtmlPage page = webClient.getPage(serverAddress);
-
-        page.executeJavaScript("$('#action_create .btn-primary').click();");
-
-        webClient.waitForBackgroundJavaScript(1000);
+        final HtmlForm form = (HtmlForm)page.getElementById("action_create");
+        final HtmlSelect type = form.getSelectByName("mixin");
+        type.getOptionByValue("fedora:object").setSelected(true);
+        final HtmlButton button = form.getFirstByXPath("button");
+        button.click();
 
         final HtmlPage page1 = webClient.getPage(serverAddress);
-        assertTrue(page1.asText().length() > page.asText().length());
+        assertTrue("Didn't see new information in page!", page1.asText().length() > page.asText().length());
     }
 
     @Test
@@ -121,17 +133,16 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateNewObjectAndDeleteIt() throws IOException {
+    public void testCreateNewObjectAndDeleteIt() throws IOException, InterruptedException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 
         final String pid = createNewObject();
-
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
-        final HtmlForm action_delete = (HtmlForm) page1.getElementById("action_delete");
-        ((HtmlButton)action_delete.getFirstByXPath("button")).click();
+        final HtmlPage page = webClient.getPage(serverAddress + pid);
+        final HtmlForm action_delete = page.getFormByName("action_delete");
+        action_delete.getButtonByName("delete-button").click();
         webClient.waitForBackgroundJavaScript(1000);
-
+        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
         final HtmlPage page2 = webClient.getPage(serverAddress + pid);
         assertEquals("Didn't get a 404!", 404, page2.getWebResponse()
@@ -177,8 +188,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final String pid = randomUUID().toString();
 
-        final HtmlPage page = webClient.getPage(serverAddress);
-        final HtmlForm form = (HtmlForm)page.getElementById("action_create");
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
+        final HtmlForm form = page.getFormByName("action_create");
 
         final HtmlInput slug = form.getInputByName("slug");
         slug.setValueAttribute(pid);
@@ -186,7 +197,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        webClient.waitForBackgroundJavaScript(1000);
         return pid;
     }
 

@@ -60,7 +60,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 import org.apache.commons.lang.NotImplementedException;
-import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.modeshape.common.collection.Collections;
 import org.modeshape.jcr.api.query.qom.Limit;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
@@ -146,7 +146,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      *
      * @param jqlQueryVisitor
      */
-    public JQLQueryVisitor(JQLQueryVisitor jqlQueryVisitor) {
+    public JQLQueryVisitor(final JQLQueryVisitor jqlQueryVisitor) {
         this.session = jqlQueryVisitor.session;
         this.jcrTools = jqlQueryVisitor.jcrTools;
         this.queryFactory = jqlQueryVisitor.queryFactory;
@@ -216,7 +216,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                 }
             }
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
         return this.source;
@@ -227,7 +227,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @return
      */
     private Column[] getColumns() {
-        ImmutableSet<Column> build = this.columns.build();
+        final ImmutableSet<Column> build = this.columns.build();
         return build.toArray(new Column[build.size()]);
     }
 
@@ -236,7 +236,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @return
      */
     private Ordering[] getOrderings() {
-        ImmutableList<Ordering> build = this.orderings.build();
+        final ImmutableList<Ordering> build = this.orderings.build();
         return build.toArray(new Ordering[build.size()]);
     }
 
@@ -323,7 +323,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         if (query.hasOrderBy()) {
             logger.trace("VISIT ORDER BY: {}", query.getOrderBy());
             try {
-                for (SortCondition sortCondition : query.getOrderBy()) {
+                for (final SortCondition sortCondition : query.getOrderBy()) {
 
                     final PropertyValue property;
                     final Expr expression = sortCondition.getExpression();
@@ -331,7 +331,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     if (expression.isConstant()) {
                         property = queryFactory.propertyValue(FEDORA_RESOURCE, expression.getConstant().asString());
                     } else if (expression.isVariable()) {
-                        Column c = variables.get(expression.getVarName());
+                        final Column c = variables.get(expression.getVarName());
 
                         property = queryFactory.propertyValue(c.getSelectorName(), c.getPropertyName());
                     } else {
@@ -354,14 +354,14 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     }
                 }
 
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw propagate(e);
             }
         }
     }
 
     @Override
-    public void visitLimit(Query query) {
+    public void visitLimit(final Query query) {
         if (query.hasLimit()) {
             logger.trace("VISIT LIMIT: {}", query.getLimit());
             this.hasLimit = true;
@@ -370,7 +370,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void visitOffset(Query query) {
+    public void visitOffset(final Query query) {
         if (query.hasOffset()) {
             logger.trace("VISIT OFFSET: {}", query.getOffset());
             this.offset = query.getOffset();
@@ -378,7 +378,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void visitValues(Query query) {
+    public void visitValues(final Query query) {
         if (query.hasValues()) {
             logger.trace("VISIT VALUES: {}", query.getValuesData());
             throw new NotImplementedException("VALUES");
@@ -386,12 +386,12 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void finishVisit(Query query) {
+    public void finishVisit(final Query query) {
         logger.trace("FINISH VISIT: {}", query);
     }
 
     @Override
-    public void visit(ElementTriplesBlock el) {
+    public void visit(final ElementTriplesBlock el) {
         logger.trace("VISIT TRIPLES: {}", el);
         final Iterator<Triple> tripleIterator = el.patternElts();
 
@@ -402,7 +402,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void visit(ElementPathBlock el) {
+    public void visit(final ElementPathBlock el) {
         logger.trace("VISIT PATH BLOCK: {}", el);
         Iterator<TriplePath> triplePathIterator = el.patternElts();
 
@@ -418,7 +418,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     this.joins.put(subject.getName(),
                                       queryFactory.selector(FEDORA_RESOURCE, selectorName));
 
-                    Column c = queryFactory.column(selectorName,
+                    final Column c = queryFactory.column(selectorName,
                                                       "jcr:path",
                                                       subject.getName());
                     variables.put(subject.getName(), c);
@@ -508,43 +508,43 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                 }
 
             }
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             propagate(e);
         }
     }
 
     @Override
-    public void visit(ElementFilter el) {
+    public void visit(final ElementFilter el) {
         logger.trace("VISIT FILTER: {}", el);
         el.getExpr().visit(this);
     }
 
     @Override
-    public void visit(ElementAssign el) {
+    public void visit(final ElementAssign el) {
         logger.trace("VISIT ASSIGN: {}", el);
         throw new NotImplementedException("ASSIGN");
     }
 
     @Override
-    public void visit(ElementBind el) {
+    public void visit(final ElementBind el) {
         logger.trace("VISIT BIND: {}", el);
         throw new NotImplementedException("BIND");
     }
 
     @Override
-    public void visit(ElementData el) {
+    public void visit(final ElementData el) {
         logger.trace("VISIT DATA: {}", el);
         throw new NotImplementedException("DATA");
     }
 
     @Override
-    public void visit(ElementUnion el) {
+    public void visit(final ElementUnion el) {
         logger.trace("VISIT UNION: {}", el);
         throw new NotImplementedException("UNION");
     }
 
     @Override
-    public void visit(ElementOptional el) {
+    public void visit(final ElementOptional el) {
         logger.trace("VISIT OPTIONAL: {}", el);
         this.inOptional = true;
         el.getOptionalElement().visit(this);
@@ -552,52 +552,52 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void visit(ElementGroup el) {
+    public void visit(final ElementGroup el) {
         logger.trace("VISIT GROUP: {}", el);
 
-        for (Element element : el.getElements()) {
+        for (final Element element : el.getElements()) {
             element.visit(this);
         }
     }
 
     @Override
-    public void visit(ElementDataset el) {
+    public void visit(final ElementDataset el) {
         logger.trace("VISIT DATASET: {}", el);
         throw new NotImplementedException("DATASET");
     }
 
     @Override
-    public void visit(ElementNamedGraph el) {
+    public void visit(final ElementNamedGraph el) {
         logger.trace("VISIT NAMED GRAPH: {}", el);
         throw new NotImplementedException("NAMED GRAPH");
     }
 
     @Override
-    public void visit(ElementExists el) {
+    public void visit(final ElementExists el) {
         logger.trace("VISIT EXISTS: {}", el);
         throw new NotImplementedException("EXISTS");
     }
 
     @Override
-    public void visit(ElementNotExists el) {
+    public void visit(final ElementNotExists el) {
         logger.trace("VISIT NOT EXISTS: {}", el);
         throw new NotImplementedException("NOT EXISTS");
     }
 
     @Override
-    public void visit(ElementMinus el) {
+    public void visit(final ElementMinus el) {
         logger.trace("VISIT MINUS: {}", el);
         throw new NotImplementedException("MINUS");
     }
 
     @Override
-    public void visit(ElementService el) {
+    public void visit(final ElementService el) {
         logger.trace("VISIT SERVICE: {}", el);
         throw new NotImplementedException("SERVICE");
     }
 
     @Override
-    public void visit(ElementSubQuery el) {
+    public void visit(final ElementSubQuery el) {
         logger.trace("VISIT SUBQUERY: {}", el);
         throw new NotImplementedException("SUB QUERY");
     }
@@ -607,14 +607,14 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void visit(ExprFunction0 func) {
+    public void visit(final ExprFunction0 func) {
         logger.trace("VISIT EXPRFUNCTION0: {}", func);
     }
 
     @Override
-    public void visit(ExprFunction1 func) {
+    public void visit(final ExprFunction1 func) {
         logger.trace("VISIT EXPRFUNCTION1: {}", func);
-        String funcName = func.getFunctionSymbol().getSymbol().toLowerCase();
+        final String funcName = func.getFunctionSymbol().getSymbol().toLowerCase();
 
         try {
             switch (funcName) {
@@ -630,15 +630,15 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     throw new NotImplementedException(funcName);
             }
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void visit(ExprFunction2 func) {
+    public void visit(final ExprFunction2 func) {
         logger.trace("VISIT EXPRFUNCTION2: {}", func);
-        String funcName = func.getFunctionSymbol().getSymbol().toLowerCase();
+        final String funcName = func.getFunctionSymbol().getSymbol().toLowerCase();
 
         try {
             if (funcName.equals("and") || funcName.equals("or")) {
@@ -701,7 +701,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
             }
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             propagate(e);
         }
 
@@ -709,16 +709,16 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     @Override
-    public void visit(ExprFunction3 func) {
+    public void visit(final ExprFunction3 func) {
         logger.trace("VISIT EXPRFUNCTION3: {}", func);
     }
 
     @Override
-    public void visit(ExprFunctionN func) {
+    public void visit(final ExprFunctionN func) {
         logger.trace("VISIT EXPRFUNCTIONN: {}", func);
         try {
             final FunctionLabel functionSymbol = func.getFunctionSymbol();
-            List<Expr> args = func.getArgs();
+            final List<Expr> args = func.getArgs();
 
             final String symbol = functionSymbol.getSymbol().toLowerCase();
             if (symbol.equals("regex")) {
@@ -734,28 +734,28 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                 throw new NotImplementedException("ExprFunctionN " + symbol);
             }
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             propagate(e);
         }
     }
 
     @Override
-    public void visit(ExprFunctionOp funcOp) {
+    public void visit(final ExprFunctionOp funcOp) {
         logger.trace("VISIT EXPRFUNCTIONOp: {}", funcOp);
     }
 
     @Override
-    public void visit(NodeValue nv) {
+    public void visit(final NodeValue nv) {
         logger.trace("VISIT NODEVALUE: {}", nv);
     }
 
     @Override
-    public void visit(ExprVar nv) {
+    public void visit(final ExprVar nv) {
         logger.trace("VISIT EXPRVAR: {}", nv);
     }
 
     @Override
-    public void visit(ExprAggregator eAgg) {
+    public void visit(final ExprAggregator eAgg) {
         logger.trace("VISIT EXPRAGGREGATOR: {}", eAgg);
     }
 
@@ -766,7 +766,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private PropertyValue getPropertyValue(final Column column) {
         try {
             return queryFactory.propertyValue(column.getSelectorName(), column.getPropertyName());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             propagate(e);
         }
         return null;

@@ -18,8 +18,6 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableMap.builder;
-import static com.google.common.collect.ImmutableMultiset.copyOf;
-import static com.google.common.collect.Multisets.copyHighestCountFirst;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
@@ -217,13 +215,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
         context.put("model", model);
         context.put("subjects", model.listSubjects());
         context.put("nodeany", ANY);
-        if (subject != null) {
-            context.put("topic", subject);
-        } else {
-            // the most common subject is a plausible subject of the graph
-            context.put("topic", copyHighestCountFirst(
-                    copyOf(model.listSubjects())).iterator().next().asNode());
-        }
+        context.put("topic", subject);
         context.put("uriInfo", uriInfo);
         return context;
     }

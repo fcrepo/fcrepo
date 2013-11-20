@@ -31,6 +31,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
@@ -57,6 +58,9 @@ public class FedoraVersionsTest {
     @Mock
     private NodeService mockNodes;
 
+    @Mock
+    private Node mockNode;
+
     private Session mockSession;
 
     @Mock
@@ -81,6 +85,8 @@ public class FedoraVersionsTest {
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
+        when(mockNode.getPath()).thenReturn("/test/path");
+        when(mockResource.getNode()).thenReturn(mockNode);
     }
 
     @Test
@@ -94,7 +100,6 @@ public class FedoraVersionsTest {
                 .thenReturn(mockRdfStream);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
-
         final RdfStream response =
             testObj.getVersionList(createPathList(pid), mockRequest,
                     getUriInfoImpl());

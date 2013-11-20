@@ -19,7 +19,7 @@ package org.fcrepo.transform.sparql;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;

@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons.responses;
 
+import static org.fcrepo.kernel.rdf.SerializationUtils.subjectKey;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -91,6 +92,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
             final OutputStream entityStream) throws IOException,
                                             WebApplicationException {
         final Dataset dataset = DatasetFactory.create(rdfStream.asModel());
+        dataset.getContext().set(subjectKey, rdfStream.topic());
         delegate.writeTo(dataset, type, genericType, annotations, mediaType,
                 httpHeaders, entityStream);
     }

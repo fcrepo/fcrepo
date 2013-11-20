@@ -31,6 +31,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -49,6 +50,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     protected Iterator<Triple> triples;
 
     protected Session context;
+
+    protected Node topic;
 
     private final static Triple[] NONE = new Triple[] {};
 
@@ -253,6 +256,23 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      */
     public RdfStream session(final Session session) {
         this.context = session;
+        return this;
+    }
+
+    /**
+     * @return The {@link Node} topic in context
+     */
+    public Node topic() {
+        return this.topic;
+    }
+
+    /**
+     * Sets the topic of this stream
+     *
+     * @param topic The {@link Node} topic in context
+     */
+    public RdfStream topic(final Node topic) {
+        this.topic = topic;
         return this;
     }
 

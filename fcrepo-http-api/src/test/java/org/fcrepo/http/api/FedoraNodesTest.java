@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.api;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -117,9 +118,9 @@ public class FedoraNodesTest {
     @Mock
     private Dataset mockDataset;
 
-    private RdfStream mockRdfStream = new RdfStream();
+    private RdfStream mockRdfStream = new RdfStream().topic(createAnon());
 
-    private RdfStream mockRdfStream2 = new RdfStream();
+    private RdfStream mockRdfStream2 = new RdfStream().topic(createAnon());
 
     @Mock
     private Model mockModel;
@@ -156,6 +157,8 @@ public class FedoraNodesTest {
         final VersionManager mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
         when(mockDate.getTime()).thenReturn(0L);
+        when(mockNode.getPath()).thenReturn("/test/path");
+        when(mockObject.getNode()).thenReturn(mockNode);
     }
 
     @Test
