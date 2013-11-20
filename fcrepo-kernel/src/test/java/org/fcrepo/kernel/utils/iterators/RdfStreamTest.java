@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -34,15 +35,16 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -299,5 +301,19 @@ public class RdfStreamTest {
         final RdfStream testStreamToCompare = new RdfStream(mockIterator);
         testStreamToCompare.namespace(prefix1, uri1);
         assertNotEquals(testStream.hashCode(), testStreamToCompare.hashCode());
+    }
+
+    @Test
+    public void testContext() {
+        final Session mockSession = mock(Session.class);
+        assertEquals("Didn't retrieve the session we stored!", mockSession,
+                testStream.session(mockSession).session());
+    }
+
+    @Test
+    public void testTopic() {
+        final Node mockNode = mock(Node.class);
+        assertEquals("Didn't retrieve the session we stored!", mockNode,
+                testStream.topic(mockNode).topic());
     }
 }
