@@ -43,6 +43,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

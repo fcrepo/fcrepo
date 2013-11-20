@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -42,6 +43,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -54,6 +56,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -62,6 +65,7 @@ import javax.jcr.RepositoryException;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.HttpDelete;
@@ -81,6 +85,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -297,33 +303,37 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testGetObjectGraph() throws Exception {
         logger.debug("Entering testGetObjectGraph()...");
-        createObject("FedoraDescribeTestGraph");
+        final String pid = "FedoraDescribeTestGraph";
+        createObject(pid);
 
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "FedoraDescribeTestGraph");
-        getObjMethod.addHeader("Accept", "application/rdf+xml");
+                new HttpGet(serverAddress + pid);
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
+        assertEquals("application/sparql-update", response.getFirstHeader(
+                "Accept-Patch").getValue());
 
-        final Model model = createDefaultModel();
-        model.read(response.getEntity().getContent(), null);
-        try (final Writer w = new StringWriter()) {
-            model.write(w);
-            logger.debug(
-                    "Retrieved object graph for testGetObjectGraph():\n {}", w);
-        }
+        final Collection<String> links =
+            map(response.getHeaders("Link"), new Function<Header, String>() {
 
-        assertEquals("application/sparql-update", response.getFirstHeader("Accept-Patch").getValue());
-        assertEquals("http://www.w3.org/ns/ldp/Resource;rel=\"type\"", response.getFirstHeader("Link").getValue());
-        final Resource nodeUri = createResource(serverAddress + "FedoraDescribeTestGraph");
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+        assertTrue("Didn't find LDP link header!", links
+                .contains("http://www.w3.org/ns/ldp/Resource;rel=\"type\""));
+        final GraphStore results = getGraphStore(getObjMethod);
+        final Model model = createModelForGraph(results.getDefaultGraph());
+
+        final Resource nodeUri = createResource(serverAddress + pid);
         assertTrue("Didn't find inlined resources!", model.contains(nodeUri,
                 createProperty("http://www.w3.org/ns/ldp#inlinedResource")));
 
         assertTrue("Didn't find an expected triple!", model.contains(nodeUri,
                 createProperty(REPOSITORY_NAMESPACE + "mixinTypes"),
-                createPlainLiteral("fedora:object"))
-                );
+                createPlainLiteral("fedora:object")));
 
         logger.debug("Leaving testGetObjectGraph()...");
     }
@@ -358,10 +368,15 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 createProperty(REPOSITORY_NAMESPACE + "hasChild"),
                 createResource(serverAddress
                         + "FedoraDescribeWithChildrenTestGraph/c")));
-        logger.debug("Found Link header: {}", response.getFirstHeader("Link")
-                .getValue());
-        assertEquals("http://www.w3.org/ns/ldp/Resource;rel=\"type\"", response
-                .getFirstHeader("Link").getValue());
+        final Collection<String> links =
+            map(response.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+        assertTrue("Didn't find LDP link header!", links.contains("http://www.w3.org/ns/ldp/Resource;rel=\"type\""));
     }
 
     @Test
@@ -460,11 +475,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
 
-        final HttpGet getObjMethod =
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
 
-        new HttpGet(subjectURI);
-
-        getObjMethod.addHeader("Accept", "application/n-triples");
+        getObjMethod.addHeader("Accept", "application/rdf+xml");
         final HttpResponse getResponse = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), getResponse.getStatusLine()
                 .getStatusCode());
@@ -596,6 +609,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeCount() throws Exception {
+        logger.trace("Entering testDescribeCount()...");
         GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeCount() first count retrieved repository graph:\n"
                 + graphStore.toString());
@@ -664,6 +678,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
         HttpResponse response = specialClient.execute(getObjMethod);
         assertEquals("Client didn't return a OK!", OK.getStatusCode(), response
                 .getStatusLine().getStatusCode());
+        logger.debug("Found HTTP headers:\n{}", Joiner.on('\n').join(
+                response.getAllHeaders()));
+        assertTrue("Didn't find Last-Modified header!", response
+                .containsHeader("Last-Modified"));
         final String lastModed =
             response.getFirstHeader("Last-Modified").getValue();
         final String etag = response.getFirstHeader("ETag").getValue();

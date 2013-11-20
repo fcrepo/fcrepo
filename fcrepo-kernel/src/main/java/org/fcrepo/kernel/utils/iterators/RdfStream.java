@@ -251,8 +251,9 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param session The {@link Session} in context
      */
-    public void session(final Session session) {
+    public RdfStream session(final Session session) {
         this.context = session;
+        return this;
     }
 
     /**

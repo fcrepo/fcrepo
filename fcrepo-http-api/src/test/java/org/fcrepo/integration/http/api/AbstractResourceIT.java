@@ -123,13 +123,18 @@ public abstract class AbstractResourceIT {
     protected GraphStore getGraphStore(final HttpClient client, final HttpUriRequest method) throws IOException {
 
         if (method.getFirstHeader("Accept") == null) {
-            method.addHeader("Accept", "text/n3");
+            method.addHeader("Accept", "application/n-triples");
+        } else {
+            logger.debug("Retrieving RDF in mimeType: {}", method
+                    .getFirstHeader("Accept"));
         }
 
         final HttpResponse response = client.execute(method);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                                              .getStatusCode());
-        return parseTriples(response.getEntity());
+        final GraphStore result = parseTriples(response.getEntity());
+        logger.debug("Retrieved RDF: {}", result);
+        return result;
 
     }
 

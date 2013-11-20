@@ -16,11 +16,11 @@
 
 package org.fcrepo.http.commons.responses;
 
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
-import static org.openrdf.rio.RDFFormat.RDFXML;
-import static org.openrdf.rio.RDFFormat.forMIMEType;
 import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
@@ -35,10 +35,12 @@ import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFWriterRegistry;
 import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -72,7 +74,19 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     public RdfStreamStreamingOutput(final RdfStream rdfStream,
             final MediaType mediaType) {
         super();
-        this.format = forMIMEType(mediaType.toString(), RDFXML);
+        for (final RDFFormat format : RDFWriterRegistry.getInstance().getKeys()) {
+            LOGGER.debug("Discovered RDF writer format: {} with mimeTypes: {}",
+                    format.getName(), Joiner.on(" ")
+                            .join(format.getMIMETypes()));
+        }
+        final RDFFormat format = Rio.getWriterFormatForMIMEType(mediaType.toString());
+        if (format != null) {
+            this.format = format;
+            LOGGER.debug("Setting up to serialize to: {}", format);
+        } else {
+            throw new WebApplicationException(NOT_ACCEPTABLE);
+        }
+
         this.rdfStream = rdfStream;
     }
 
@@ -82,11 +96,10 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
             Rio.write(asStatements(), output, format);
+            set(finishedMarker);
         } catch (final RDFHandlerException e) {
             setException(e);
-        } finally {
-            // we're done.
-            set(finishedMarker);
+            throw new WebApplicationException(e);
         }
     }
 

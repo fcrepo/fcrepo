@@ -33,7 +33,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
@@ -49,6 +48,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
+import java.util.Date;
 
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
@@ -73,6 +73,7 @@ import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -116,6 +117,10 @@ public class FedoraNodesTest {
     @Mock
     private Dataset mockDataset;
 
+    private RdfStream mockRdfStream = new RdfStream();
+
+    private RdfStream mockRdfStream2 = new RdfStream();
+
     @Mock
     private Model mockModel;
 
@@ -128,7 +133,10 @@ public class FedoraNodesTest {
     @Mock
     private PidMinter mockPidMinter;
 
-    private UriInfo uriInfo;
+    @Mock
+    private Date mockDate;
+
+    private UriInfo mockUriInfo;
 
     @Before
     public void setUp() throws Exception {
@@ -137,8 +145,7 @@ public class FedoraNodesTest {
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "versionService", mockVersions);
-        this.uriInfo = getUriInfoImpl();
-        setField(testObj, "uriInfo", uriInfo);
+        this.mockUriInfo = getUriInfoImpl();
         setField(testObj, "pidMinter", mockPidMinter);
         setField(testObj, "objectService", mockObjects);
         mockSession = mockSession(testObj);
@@ -148,6 +155,7 @@ public class FedoraNodesTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         final VersionManager mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
+        when(mockDate.getTime()).thenReturn(0L);
     }
 
     @Test
@@ -270,18 +278,20 @@ public class FedoraNodesTest {
 
         when(mockDataset.getDefaultModel()).thenReturn(mockModel);
         when(mockDataset.getContext()).thenReturn(mockContext);
-
+        when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
         when(mockObject.getEtagValue()).thenReturn("");
-        when(
-                mockObject.getPropertiesDataset(any(GraphSubjects.class),
-                        anyInt(), anyInt())).thenReturn(mockDataset);
+        when(mockObject.getTriples(any(GraphSubjects.class))).thenReturn(
+                mockRdfStream);
+        when(mockObject.getHierarchyTriples(any(GraphSubjects.class))).thenReturn(
+                mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
-        final Dataset dataset =
-                testObj.describe(createPathList(path), 0, -1, null, mockRequest, mockResponse,
-                        uriInfo);
-        assertNotNull(dataset.getDefaultModel());
+        final RdfStream rdfStream =
+            testObj.describe(createPathList(path), 0, -2, null, mockRequest,
+                    mockResponse, mockUriInfo);
+        assertEquals("Got wrong triples!", mockRdfStream.concat(mockRdfStream2),
+                rdfStream);
         verify(mockResponse).addHeader("Accept-Patch", "application/sparql-update");
 
     }
@@ -295,16 +305,19 @@ public class FedoraNodesTest {
         when(mockDataset.getContext()).thenReturn(mockContext);
 
         when(mockObject.getEtagValue()).thenReturn("");
-        when(
-                mockObject.getPropertiesDataset(any(GraphSubjects.class),
-                                                   anyInt(), eq(-2))).thenReturn(mockDataset);
+        when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
+        when(mockObject.getTriples(any(GraphSubjects.class))).thenReturn(
+                mockRdfStream);
+        when(mockObject.getHierarchyTriples(any(GraphSubjects.class))).thenReturn(
+                mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
-        final Dataset dataset =
+        final RdfStream rdfStream =
             testObj.describe(createPathList(path), 0, -1, "", mockRequest, mockResponse,
-                                uriInfo);
-        assertNotNull(dataset.getDefaultModel());
+                                mockUriInfo);
+        assertEquals("Got wrong RDF!", mockRdfStream.concat(mockRdfStream2),
+                rdfStream);
 
     }
 

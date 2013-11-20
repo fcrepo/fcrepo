@@ -16,6 +16,8 @@
 
 package org.fcrepo.http.api;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.sun.jersey.api.Responses.clientError;
 import static com.sun.jersey.api.Responses.notAcceptable;
@@ -42,9 +44,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
-import static org.fcrepo.kernel.rdf.GraphProperties.INLINED_RESOURCES_MODEL;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -95,15 +95,16 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * CRUD operations on Fedora Nodes
@@ -135,7 +136,7 @@ public class FedoraNodes extends AbstractResource {
     @GET
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
-    public Dataset describe(@PathParam("path") final List<PathSegment> pathList,
+    public RdfStream describe(@PathParam("path") final List<PathSegment> pathList,
             @QueryParam("offset") @DefaultValue("0") final int offset,
             @QueryParam("limit") @DefaultValue("-1") final int limit,
             @QueryParam("non-member-properties") final String nonMemberProperties,
@@ -143,100 +144,77 @@ public class FedoraNodes extends AbstractResource {
             @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
-        logger.trace("Getting profile for {}", path);
+        logger.trace("Getting profile for: {}", path);
 
-        try {
-            final FedoraResource resource =
-                    nodeService.getObject(session, path);
+        final FedoraResource resource = nodeService.getObject(session, path);
 
-
-            final EntityTag etag = new EntityTag(resource.getEtagValue());
-            final Date date = resource.getLastModifiedDate();
-            final Date roundedDate = new Date();
-            if (date != null) {
-                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-            }
-            final ResponseBuilder builder =
-                    request.evaluatePreconditions(roundedDate, etag);
-            if (builder != null) {
-                final CacheControl cc = new CacheControl();
-                cc.setMaxAge(0);
-                cc.setMustRevalidate(true);
-                // here we are implicitly emitting a 304
-                // the exception is not an error, it's genuinely
-                // an exceptional condition
-                throw new WebApplicationException(builder.cacheControl(cc)
-                        .lastModified(date).tag(etag).build());
-            }
-            final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
-
-            final int realLimit;
-            if (nonMemberProperties != null && limit == -1) {
-                realLimit = -2;
-            } else {
-                realLimit = limit;
-            }
-
-            final Dataset propertiesDataset =
-                    resource.getPropertiesDataset(subjects, offset, realLimit);
-
-            final Model treeModel = propertiesDataset.getNamedModel(
-                    propertiesDataset.getContext()
-                            .getAsString(INLINED_RESOURCES_MODEL,
-                                         "NO SUCH MODEL"));
-            if (limit > 0 && treeModel != null && treeModel
-                    .contains(subjects.getGraphSubject(resource.getNode()),
-                                 HAS_CHILD_COUNT)) {
-
-                final Model requestModel = createDefaultModel();
-
-                final long childCount = treeModel
-                        .listObjectsOfProperty(subjects.getGraphSubject(resource.getNode()),
-                                               HAS_CHILD_COUNT)
-                        .nextNode().asLiteral().getLong();
-
-                if (childCount > (offset + limit)) {
-
-                    final Resource nextPageResource =
-                        requestModel.createResource(uriInfo
-                                                       .getRequestUriBuilder()
-                                                       .replaceQueryParam("offset", offset + limit)
-                                                       .replaceQueryParam("limit", limit)
-                                                       .build()
-                                                       .toString());
-                    requestModel.add(subjects.getContext(), NEXT_PAGE, nextPageResource);
-                }
-
-                final String firstPage = uriInfo
-                                       .getRequestUriBuilder()
-                                       .replaceQueryParam("offset", 0)
-                                       .replaceQueryParam("limit", limit)
-                                       .build().toString();
-                final Resource firstPageResource =
-                    requestModel.createResource(firstPage);
-                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
-                requestModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
-
-                propertiesDataset.addNamedModel("requestModel", requestModel);
-
-            }
-
-            if (!etag.getValue().isEmpty()) {
-                servletResponse.addHeader("ETag", etag.toString());
-            }
-
-            servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
-            servletResponse.addHeader("Link", "http://www.w3.org/ns/ldp/Resource;rel=\"type\"");
-
-            addResponseInformationToDataset(resource, propertiesDataset,
-                                               uriInfo, subjects);
-
-            return propertiesDataset;
-
-        } finally {
-            session.logout();
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+        final Date roundedDate = new Date();
+        if (date != null) {
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
         }
+        final ResponseBuilder builder =
+            request.evaluatePreconditions(roundedDate, etag);
+        if (builder != null) {
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+            throw new WebApplicationException(builder.cacheControl(cc)
+                    .lastModified(date).tag(etag).build());
+        }
+        final HttpGraphSubjects subjects =
+            new HttpGraphSubjects(session, this.getClass(), uriInfo);
+
+        final int realLimit;
+        if (nonMemberProperties != null && limit == -1) {
+            realLimit = -2;
+        } else {
+            realLimit = limit;
+        }
+
+        final RdfStream rdfStream =
+            resource.getTriples(subjects).concat(
+                    resource.getHierarchyTriples(subjects)).session(session);
+        if (realLimit != -2) {
+            final Node firstPage =
+                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam(
+                        "offset", 0).replaceQueryParam("limit", limit).build()
+                        .toString().replace("&", "&amp;"));
+            final Node nextPage =
+                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam(
+                        "offset", offset + limit).replaceQueryParam("limit",
+                        limit).build().toString().replace("&", "&amp;"));
+            rdfStream.concat(
+                    create(subjects.getContext().asNode(), NEXT_PAGE.asNode(),
+                            nextPage),
+                    create(subjects.getContext().asNode(), FIRST_PAGE.asNode(),
+                            firstPage)).limit(realLimit).skip(offset);
+
+            servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+        }
+
+
+        if (!etag.getValue().isEmpty()) {
+            servletResponse.addHeader("ETag", etag.toString());
+        }
+
+        if (resource.getLastModifiedDate() != null) {
+            servletResponse.addDateHeader("Last-Modified", resource
+                    .getLastModifiedDate().getTime());
+        }
+        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+        servletResponse.addHeader("Link",
+                "http://www.w3.org/ns/ldp/Resource;rel=\"type\"");
+
+        addResponseInformationToStream(resource, rdfStream, uriInfo,
+                subjects);
+
+        return rdfStream;
+
 
     }
 

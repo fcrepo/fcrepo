@@ -42,8 +42,8 @@ import java.util.Iterator;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.slf4j.Logger;
 
@@ -90,8 +90,10 @@ public class HierarchyRdfContext extends NodeRdfContext {
         if (JcrRdfTools.isContainer(node)) {
             LOGGER.trace("Determined that this node is a container.");
             concat(containerContext(pageContext));
-
+        } else {
+            LOGGER.trace("Determined that this node is not a container.");
         }
+
         if (node.hasNodes()) {
             LOGGER.trace("Found children of this node.");
             concat(childrenContext(pageContext));

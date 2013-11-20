@@ -44,8 +44,8 @@ import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.utils.iterators.RdfRemover;
@@ -291,6 +291,20 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
                 JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
         return jcrRdfTools.getJcrTriples(getNode());
+    }
+
+    /**
+     * Return the JCR properties of this object as an {@link RdfStream}
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
+        throws RepositoryException {
+
+        final JcrRdfTools jcrRdfTools =
+                JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+
+        return jcrRdfTools.getTreeTriples(getNode());
     }
 
     /**

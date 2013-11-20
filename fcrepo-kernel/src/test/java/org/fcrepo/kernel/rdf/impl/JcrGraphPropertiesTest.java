@@ -19,7 +19,7 @@ package org.fcrepo.kernel.rdf.impl;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getProblemsModel;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getProblemsModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -31,8 +31,8 @@ import javax.jcr.Node;
 
 import org.fcrepo.kernel.DummyURIResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
