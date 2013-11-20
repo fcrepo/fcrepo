@@ -18,6 +18,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.junit.Before;
 import org.junit.Test;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -25,6 +26,11 @@ import com.hp.hpl.jena.rdf.model.Model;
 public class RdfStreamProviderTest {
 
     private RdfStreamProvider testProvider = new RdfStreamProvider();
+
+    @Before
+    public void setUp() {
+        testProvider.registerMimeTypes();
+    }
 
     @Test
     public void testGetSize() {
