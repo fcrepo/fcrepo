@@ -1,0 +1,22 @@
+{
+    "name" : "repo",
+    "jndiName" : "",
+    "workspaces" : {
+        "predefined" : [],
+        "default" : "default",
+        "allowCreation" : true
+    },
+    "storage" : {
+        "binaryStorage" : {
+            "type" : "transient",
+            "minimumBinarySizeInBytes" : 1
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : true
+        }
+    },
+    "node-types" : ["fedora-node-types.cnd"]
+}
