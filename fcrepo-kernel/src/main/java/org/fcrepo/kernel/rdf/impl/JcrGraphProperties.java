@@ -21,8 +21,8 @@ import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;

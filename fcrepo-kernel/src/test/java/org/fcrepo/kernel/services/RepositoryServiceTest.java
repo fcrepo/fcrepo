@@ -55,7 +55,7 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;

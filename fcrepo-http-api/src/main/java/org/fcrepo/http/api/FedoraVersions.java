@@ -92,7 +92,8 @@ public class FedoraVersions extends AbstractResource {
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        return resource.getVersionTriples(translator());
+        return resource.getVersionTriples(translator()).session(session).topic(
+                translator().getGraphSubject(resource.getNode()).asNode());
     }
 
     /**
@@ -152,7 +153,8 @@ public class FedoraVersions extends AbstractResource {
         if (resource == null) {
             throw new WebApplicationException(status(NOT_FOUND).build());
         } else {
-            return resource.getTriples(translator());
+            return resource.getTriples(translator()).session(session).topic(
+                    translator().getGraphSubject(resource.getNode()).asNode());
         }
     }
 

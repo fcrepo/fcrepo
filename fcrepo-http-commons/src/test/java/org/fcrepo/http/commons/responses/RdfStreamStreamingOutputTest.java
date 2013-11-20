@@ -28,6 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -46,6 +48,7 @@ import org.mockito.stubbing.Answer;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.rio.RDFHandlerException;
+import org.slf4j.Logger;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.hp.hpl.jena.graph.Node;
@@ -71,6 +74,9 @@ public class RdfStreamStreamingOutputTest {
     private MediaType testMediaType = valueOf("application/rdf+xml");
 
     private static final ValueFactory vf = getInstance();
+
+    private static final Logger LOGGER =
+            getLogger(RdfStreamStreamingOutputTest.class);
 
     @Before
     public void setUp() {
@@ -114,7 +120,7 @@ public class RdfStreamStreamingOutputTest {
         }
     }
 
-    @Test
+    @Test(expected=WebApplicationException.class)
     public void testWriteWithException() throws IOException {
 
         final FutureCallback<Void> callback = new FutureCallback<Void>() {
@@ -126,6 +132,7 @@ public class RdfStreamStreamingOutputTest {
 
             @Override
             public void onFailure(final Throwable e) {
+                LOGGER.debug("Got exception:", e);
                 assertTrue("Got wrong kind of exception!",
                         e instanceof RDFHandlerException);
             }

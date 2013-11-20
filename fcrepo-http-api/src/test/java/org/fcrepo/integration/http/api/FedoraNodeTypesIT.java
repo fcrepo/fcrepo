@@ -39,7 +39,7 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
     public void itShouldContainFcrepoClasses() throws IOException {
 
         final HttpGet httpGet = new HttpGet(serverAddress + "/fcr:nodetypes");
-
+        httpGet.addHeader("Accept", "application/n-triples");
         final GraphStore graphStore = getGraphStore(httpGet);
 
         assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(RdfLexicon.RESTAPI_NAMESPACE + "resource"), RDF.type.asNode(), RDFS.Class.asNode()));
@@ -61,6 +61,7 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
 
         final HttpGet httpGet = new HttpGet(serverAddress + "/fcr:nodetypes");
+        httpGet.addHeader("Accept", "application/n-triples");
 
         final GraphStore graphStore = getGraphStore(httpGet);
 

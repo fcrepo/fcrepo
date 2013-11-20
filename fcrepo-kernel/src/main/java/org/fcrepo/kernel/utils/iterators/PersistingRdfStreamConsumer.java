@@ -21,9 +21,9 @@ import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedMixin;
 import static org.fcrepo.kernel.rdf.ManagedRdf.isManagedTriple;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
@@ -36,7 +36,7 @@ import javax.jcr.Value;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.utils.JcrRdfTools;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.slf4j.Logger;
 
 import com.google.common.base.Predicate;

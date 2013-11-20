@@ -14,7 +14,7 @@
     <hr />
 #end
 
-<form id="action_create" method="POST" enctype="multipart/form-data">
+<form id="action_create" name="action_create" method="POST" enctype="multipart/form-data">
     <h3>Create New Node</h3>
     <div class="form-group">
     <label for="new_mixin" class="control-label">
@@ -61,10 +61,10 @@ WHERE { }
 </form>
 
 
-<form id="action_delete" action="javascript:deleteItem()" method="POST">
+<form id="action_delete" name="action_delete" action="javascript:deleteItem()" method="POST">
     <input type="hidden" name="_method" value="DELETE" />
     <h3>Delete Object</h3>
-    <button type="submit" class="btn btn-danger">Delete</button>
+    <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
     <hr />
 </form>
 

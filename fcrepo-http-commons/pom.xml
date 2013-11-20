@@ -231,6 +231,11 @@
       <groupId>org.openrdf.sesame</groupId>
       <artifactId>sesame-rio-turtle</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.openrdf.sesame</groupId>
+      <artifactId>sesame-rio-n3</artifactId>
+      <version>2.7.7</version>
+    </dependency>
   </dependencies>
 
   <build>

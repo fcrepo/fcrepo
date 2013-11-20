@@ -28,6 +28,7 @@ import javax.jcr.Value;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
