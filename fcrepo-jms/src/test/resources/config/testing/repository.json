@@ -15,11 +15,8 @@
     "security" : {
         "anonymous" : {
             "roles" : ["readonly","readwrite","admin"],
-            "useOnFailedLogin" : false
-        },
-        "providers" : [
-            { "classname" : "org.fcrepo.http.commons.session.BypassSecurityServletAuthenticationProvider" }
-        ]
+            "useOnFailedLogin" : true
+        }
     },
     "node-types" : ["fedora-node-types.cnd"]
 }
