@@ -16,8 +16,6 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
-import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
-import static org.fcrepo.kernel.utils.NodePropertiesTools.removeNodeProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -27,6 +25,7 @@ import javax.jcr.Value;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.NodePropertiesTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -43,6 +42,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class RdfRemover extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfRemover.class);
+    private final NodePropertiesTools propertiesTools = new NodePropertiesTools();
 
     /**
      * Ordinary constructor.
@@ -81,9 +81,10 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
             getPropertyNameFromPredicate(n, t.getPredicate());
         if (n.hasProperty(propertyName)) {
             final Value v =
-                jcrRdfTools().createValue(n, t.getObject(), getPropertyType(n,
-                        propertyName));
-            removeNodeProperty(idTranslator(), n, propertyName, v);
+                jcrRdfTools().createValue(n, t.getObject(),
+                        propertiesTools.getPropertyType(n, propertyName));
+            propertiesTools.removeNodeProperty(idTranslator(), n, propertyName,
+                    v);
         }
     }
 }
