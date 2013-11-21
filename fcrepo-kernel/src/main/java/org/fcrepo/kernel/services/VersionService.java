@@ -39,12 +39,15 @@ public class VersionService extends RepositoryService {
 
     private static final Logger logger = getLogger(VersionService.class);
 
+    protected static final String VERSIONABLE = "mix:versionable";
+
     @Autowired
     TransactionService txService;
 
     /**
-     * Creates a version checkpoint for the given path.  This is the equivalent
-     * of VersionManager#checkpoint(path), except that it is aware of
+     * Creates a version checkpoint for the given path if versioning is enabled
+     * for that node type.  When versioning is enabled this is the equivalent of
+     * VersionManager#checkpoint(path), except that it is aware of
      * TxSessions and queues these operations accordingly.
      *
      * @param session
@@ -53,14 +56,18 @@ public class VersionService extends RepositoryService {
      * @throws RepositoryException
      */
     public void checkpoint(final Session session, String absPath) throws RepositoryException {
-        logger.trace("Setting checkpoint for {}", absPath);
+        if (session.getNode(absPath).isNodeType(VERSIONABLE)) {
+            logger.trace("Setting checkpoint for {}", absPath);
 
-        String txId = TransactionService.getCurrentTransactionId(session);
-        if (txId != null) {
-            Transaction tx = txService.getTransaction(txId);
-            tx.addPathToVersion(absPath);
+            String txId = TransactionService.getCurrentTransactionId(session);
+            if (txId != null) {
+                Transaction tx = txService.getTransaction(txId);
+                tx.addPathToVersion(absPath);
+            } else {
+                session.getWorkspace().getVersionManager().checkpoint(absPath);
+            }
         } else {
-            session.getWorkspace().getVersionManager().checkpoint(absPath);
+            logger.trace("No checkpoint set for unversionable {}", absPath);
         }
     }
 }

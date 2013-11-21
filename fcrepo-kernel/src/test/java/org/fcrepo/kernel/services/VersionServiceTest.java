@@ -19,7 +19,9 @@ package org.fcrepo.kernel.services;
 import org.fcrepo.kernel.Transaction;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
+import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.version.VersionManager;
@@ -41,53 +43,90 @@ public class VersionServiceTest {
 
     private TransactionService txService;
 
+    @Mock
+    private Session s;
+
+    @Mock
+    private VersionManager mockVM;
+
     @Before
     public void setup() throws Exception {
         txService = new TransactionService();
         initMocks(this);
         testObj = new VersionService();
         testObj.txService = txService;
+
+        s = mock(Session.class);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(s.getWorkspace()).thenReturn(mockWorkspace);
+        mockVM = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
+
+        // add a node that's versioned
+        Node versionedNode = mock(Node.class);
+        when(versionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(true);
+        when(s.getNode("/example-versioned")).thenReturn(versionedNode);
+
+        // add a node that's unversioned
+        Node unversionedNode = mock(Node.class);
+        when(unversionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(false);
+        when(s.getNode("/example-unversioned")).thenReturn(unversionedNode);
     }
 
     @Test
     public void testCheckpoint() throws Exception {
-        Session s = mock(Session.class);
-        final Workspace mockWorkspace = mock(Workspace.class);
-        when(mockWorkspace.getName()).thenReturn("default");
-        when(s.getWorkspace()).thenReturn(mockWorkspace);
-        final VersionManager mockVM = mock(VersionManager.class);
-        when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
-
         // request a version be created
-        testObj.checkpoint(s, "/example");
+        testObj.checkpoint(s, "/example-versioned");
 
         // ensure that it was
-        verify(mockVM, only()).checkpoint("/example");
+        verify(mockVM, only()).checkpoint("/example-versioned");
+    }
+
+    @Test
+    public void testCheckpointUnversioned() throws Exception {
+        // request a version be created
+        testObj.checkpoint(s, "/example-unversioned");
+
+        // ensure that it was
+        verify(mockVM, never()).checkpoint("/example-unversioned");
     }
 
     @Test
     public void testDeferredCheckpoint() throws Exception {
-        Session s = mock(Session.class);
-        final Workspace mockWorkspace = mock(Workspace.class);
-        when(mockWorkspace.getName()).thenReturn("default");
-        when(s.getWorkspace()).thenReturn(mockWorkspace);
-        final VersionManager mockVM = mock(VersionManager.class);
-        when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
-
         // start a transaction
         Transaction t = txService.beginTransaction(s);
         s = t.getSession();
 
         // request a version be created
-        testObj.checkpoint(s, "/example");
+        testObj.checkpoint(s, "/example-versioned");
 
         // ensure that no version was created (because the transaction is still open)
-        verify(mockVM, never()).checkpoint("/example");
+        verify(mockVM, never()).checkpoint("/example-versioned");
 
         // close the transaction
         txService.commit(t.getId());
 
         // ensure that the version was made
-        verify(mockVM, only()).checkpoint("/example");
+        verify(mockVM, only()).checkpoint("/example-versioned");
+    }
+
+    @Test
+    public void testDeferredCheckpointUnversioned() throws Exception {
+        // start a transaction
+        Transaction t = txService.beginTransaction(s);
+        s = t.getSession();
+
+        // request a version be created
+        testObj.checkpoint(s, "/example-unversioned");
+
+        // ensure that no version was created (because the transaction is still open)
+        verify(mockVM, never()).checkpoint("/example-unversioned");
+
+        // close the transaction
+        txService.commit(t.getId());
+
+        // ensure that the version was made
+        verify(mockVM, never()).checkpoint("/example-unversioned");
     }
 }
