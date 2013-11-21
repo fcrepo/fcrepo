@@ -61,6 +61,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 import org.apache.commons.lang.NotImplementedException;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.fcrepo.kernel.utils.NodePropertiesTools;
 import org.modeshape.common.collection.Collections;
 import org.modeshape.jcr.api.query.qom.Limit;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
@@ -92,7 +93,6 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_EQUAL_TO;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -121,6 +121,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private boolean inOptional;
     private Map<String, Source> joins;
     private Map<String, JoinCondition> joinConditions;
+
+    private NodePropertiesTools propertiesTools = new NodePropertiesTools();
 
     /**
      * Create a new query
@@ -464,7 +466,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                             final String joinPropertyName;
 
                             if (propertyType == URI) {
-                                joinPropertyName = getReferencePropertyName(propertyName);
+                                joinPropertyName =
+                                    propertiesTools
+                                            .getReferencePropertyName(propertyName);
                             } else {
                                 joinPropertyName = propertyName;
                             }
