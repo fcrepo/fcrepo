@@ -44,6 +44,9 @@ import com.hp.hpl.jena.vocabulary.RDF;
 public class JcrPropertyStatementListener extends StatementListener {
 
     private final JcrRdfTools jcrRdfTools;
+
+    private NodePropertiesTools propertiesTools = new NodePropertiesTools();
+
     private Model problems;
 
     private static final Logger LOGGER =
@@ -145,11 +148,10 @@ public class JcrPropertyStatementListener extends StatementListener {
                     subject, subjectNode, s.getPredicate())) {
                 final Value v =
                     jcrRdfTools.createValue(subjectNode, s.getObject(),
-                                NodePropertiesTools.getPropertyType(subjectNode,
-                                                                    propertyName));
-                NodePropertiesTools.appendOrReplaceNodeProperty(subjects, subjectNode,
-                                                                propertyName,
-                                                                v);
+                            propertiesTools.getPropertyType(subjectNode,
+                                    propertyName));
+                propertiesTools.appendOrReplaceNodeProperty(subjects,
+                        subjectNode, propertyName, v);
             }
         } catch (final RepositoryException e) {
             throw propagate(e);
@@ -219,11 +221,10 @@ public class JcrPropertyStatementListener extends StatementListener {
                                                             s.getPredicate())) {
                 final Value v =
                     jcrRdfTools.createValue(subjectNode, s.getObject(),
-                                NodePropertiesTools.getPropertyType(subjectNode,
-                                                                    propertyName));
-                NodePropertiesTools.removeNodeProperty(subjects, subjectNode,
-                                                       propertyName,
-                                                       v);
+                            propertiesTools.getPropertyType(subjectNode,
+                                    propertyName));
+                propertiesTools.removeNodeProperty(subjects, subjectNode,
+                        propertyName, v);
             }
 
         } catch (final RepositoryException e) {

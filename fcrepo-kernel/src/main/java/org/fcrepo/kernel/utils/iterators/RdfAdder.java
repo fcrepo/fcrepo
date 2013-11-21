@@ -16,8 +16,6 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
-import static org.fcrepo.kernel.utils.NodePropertiesTools.appendOrReplaceNodeProperty;
-import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -27,6 +25,7 @@ import javax.jcr.Value;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.NodePropertiesTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -43,6 +42,8 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class RdfAdder extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfAdder.class);
+
+    private final NodePropertiesTools propertiesTools = new NodePropertiesTools();
 
     /**
      * Ordinary constructor.
@@ -90,7 +91,8 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         final String propertyName =
             getPropertyNameFromPredicate(n, t.getPredicate());
         final Value v =
-            createValue(n, t.getObject(), getPropertyType(n, propertyName));
-        appendOrReplaceNodeProperty(idTranslator(), n, propertyName, v);
+            createValue(n, t.getObject(), propertiesTools.getPropertyType(n,
+                    propertyName));
+        propertiesTools.appendOrReplaceNodeProperty(idTranslator(), n, propertyName, v);
     }
 }

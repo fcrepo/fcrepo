@@ -23,7 +23,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.utils.NodePropertiesTools.getPropertyType;
+import static org.fcrepo.kernel.utils.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collections;
 import java.util.Map;
@@ -51,6 +52,7 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -60,8 +62,11 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({JcrRdfTools.class, NodePropertiesTools.class})
+@PrepareForTest({JcrRdfTools.class})
 public class JcrPropertyStatementListenerTest {
+
+    private static final Logger LOGGER =
+        getLogger(JcrPropertyStatementListenerTest.class);
 
     private JcrPropertyStatementListener testObj;
 
@@ -101,10 +106,13 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Model mockModel;
 
-    Map<String, String> mockNsMapping = Collections.emptyMap();
+    private Map<String, String> mockNsMapping = Collections.emptyMap();
+
+    @Mock
+    private NodePropertiesTools mockPropertiesTools;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws RepositoryException, NoSuchFieldException {
         initMocks(this);
         mockStatic(JcrRdfTools.class);
 
@@ -113,7 +121,7 @@ public class JcrPropertyStatementListenerTest {
         testObj = JcrPropertyStatementListener.getListener(mockSubjects, mockSession, mockProblems);
         when(mockStatement.getSubject()).thenReturn(mockSubject);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
-
+        setField(testObj, "propertiesTools", mockPropertiesTools);
         when(mockStatement.getModel()).thenReturn(mockModel);
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
     }
@@ -146,14 +154,15 @@ public class JcrPropertyStatementListenerTest {
         when(mockSubjects.getNodeFromGraphSubject(mockSubject))
                 .thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
-            .thenReturn(mockPropertyName);
-
-        mockStatic(NodePropertiesTools.class);
-        when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
-                STRING);
+        when(
+                mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode,
+                        mockPredicate, mockNsMapping)).thenReturn(
+                mockPropertyName);
+        when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName))
+                .thenReturn(STRING);
         testObj.addedStatement(mockStatement);
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
+        LOGGER.debug("Finished testAddedStatement()");
     }
 
     @Test(expected = RuntimeException.class)
@@ -181,8 +190,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
                 .thenReturn(mockPropertyName);
         when(mockSubjectNode.hasProperty(mockPropertyName)).thenReturn(true);
-        mockStatic(NodePropertiesTools.class);
-        when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
+        when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.removedStatement(mockStatement);
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
@@ -215,8 +223,7 @@ public class JcrPropertyStatementListenerTest {
                 .thenReturn(mockPropertyName);
         when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
         when(mockSubjectNode.hasProperty(mockPropertyName)).thenReturn(true);
-        mockStatic(NodePropertiesTools.class);
-        when(getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
+        when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
                 STRING);
         testObj.removedStatement(mockStatement);
         verify(mockProblems).add(any(Resource.class), eq(COULD_NOT_STORE_PROPERTY), eq("x"));
@@ -287,8 +294,8 @@ public class JcrPropertyStatementListenerTest {
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
 
 
-        mockStatic(NodePropertiesTools.class);
-        when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(URI);
+        when(mockPropertiesTools.getPropertyType(mockSubjectNode, "rdf:type"))
+                .thenReturn(URI);
 
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");
