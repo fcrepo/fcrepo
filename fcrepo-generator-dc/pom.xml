@@ -7,7 +7,7 @@
   </parent>
   <artifactId>fcrepo-generator-dc</artifactId>
   <name>${project.artifactId}</name>
-  <description>Fedora Dublin Core generator</description>
+  <description>The Fedora Commons repository Dublin Core module: Provides Dublin Core presentations of repository resources from a variety of sources.</description>
   <packaging>bundle</packaging>
 
   <dependencies>

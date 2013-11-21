@@ -10,7 +10,12 @@
   <artifactId>fcrepo</artifactId>
   <version>4.0.0-alpha-3-SNAPSHOT</version>
   <name>fcrepo4</name>
-  <description>Parent project for fcrepo4</description>
+  <description>Parent project for Fedora Commons 4</description>
+  <organization>
+    <name>DuraSpace, Inc.</name>
+    <url>http://www.duraspace.org/</url>
+  </organization>
+  <inceptionYear>2013</inceptionYear>
   <packaging>pom</packaging>
   <properties>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
@@ -1318,11 +1323,6 @@
       <timezone>-7</timezone>
     </developer>
   </developers>
-  <organization>
-    <name>DuraSpace, Inc.</name>
-    <url>http://www.duraspace.org/</url>
-  </organization>
-  <inceptionYear>2013</inceptionYear>
   <issueManagement>
     <system>GitHub</system>
     <url>https://github.com/futures/fcrepo4/issues</url>

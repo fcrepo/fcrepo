@@ -9,7 +9,7 @@
 
   <artifactId>fcrepo-metrics</artifactId>
   <name>${project.artifactId}</name>
-  <description>Fedora metrics reporting</description>
+  <description>The Fedora Commons repository metrics module: Provides internal repository metrics reporting.</description>
   <packaging>bundle</packaging>
 
   <dependencies>

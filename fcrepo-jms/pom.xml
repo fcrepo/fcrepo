@@ -7,7 +7,7 @@
   </parent>
   <artifactId>fcrepo-jms</artifactId>
   <name>${project.artifactId}</name>
-  <description>Fedora event publication via JMS</description>
+  <description>The Fedora Commons repository JMS module: Provides repository event publication via Java Message Service.</description>
   <packaging>bundle</packaging>
 
   <dependencies>

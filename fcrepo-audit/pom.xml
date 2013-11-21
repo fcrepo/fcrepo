@@ -11,7 +11,7 @@
 
   <artifactId>fcrepo-audit</artifactId>
   <name>${project.artifactId}</name>
-  <description>Fedora audit module</description>
+  <description>The Fedora Commons repository audit module: Provides audit functionality for the Fedora Commons repository framework.</description>
   <packaging>bundle</packaging>
 
   <dependencies>
