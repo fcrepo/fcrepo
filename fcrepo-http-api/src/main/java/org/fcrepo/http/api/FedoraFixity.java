@@ -42,11 +42,11 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * Run a fixity check on a path
@@ -77,24 +77,19 @@ public class FedoraFixity extends AbstractResource {
     @Timed
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
-    public Dataset getDatastreamFixity(@PathParam("path")
-            final List<PathSegment> pathList,
-            @Context
-            final Request request,
-            @Context
-            final UriInfo uriInfo) throws RepositoryException {
+    public RdfStream getDatastreamFixity(@PathParam("path")
+        final List<PathSegment> pathList,
+        @Context
+        final Request request,
+        @Context
+        final UriInfo uriInfo) throws RepositoryException {
 
-        try {
-            final String path = toPath(pathList);
+        final String path = toPath(pathList);
 
-            final Datastream ds =
-                    datastreamService.getDatastream(session, path);
+        final Datastream ds = datastreamService.getDatastream(session, path);
 
-            return datastreamService.getFixityResultsModel(
-                    new HttpGraphSubjects(session, FedoraNodes.class, uriInfo),
-                    ds);
-        } finally {
-            session.logout();
-        }
+        return datastreamService.getFixityResultsModel(new HttpGraphSubjects(
+                session, FedoraNodes.class, uriInfo), ds);
+
     }
 }

@@ -37,12 +37,12 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,10 +51,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.update.GraphStoreFactory;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -186,25 +182,16 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getFixityResultsModel(final GraphSubjects subjects,
+    public RdfStream getFixityResultsModel(final GraphSubjects subjects,
             final Datastream datastream) throws RepositoryException {
 
         final Collection<FixityResult> blobs =
                 runFixityAndFixProblems(datastream);
 
-        final Model model =
-            JcrRdfTools
-                    .withContext(subjects, datastream.getNode().getSession())
-                    .getJcrTriples(datastream.getNode(), blobs).asModel();
-
-        final Dataset dataset = GraphStoreFactory.create(model).toDataset();
-
-        final String uri =
-                subjects.getGraphSubject(datastream.getNode()).getURI();
-        final Context context = dataset.getContext();
-        context.set(GraphProperties.URI_SYMBOL, uri);
-
-        return dataset;
+        return JcrRdfTools.withContext(subjects,
+                datastream.getNode().getSession()).getJcrTriples(
+                datastream.getNode(), blobs).topic(
+                subjects.getGraphSubject(datastream.getNode()).asNode());
     }
 
     /**

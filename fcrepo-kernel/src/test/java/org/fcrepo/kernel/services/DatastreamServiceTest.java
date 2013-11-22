@@ -66,8 +66,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -198,18 +196,17 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         when(
                 llStore.transformLowLevelCacheEntries(eq(mockContent),
                        Matchers.<Function<LowLevelCacheEntry,FixityResult>> any())).thenReturn(mockCollection);
-
         when(
                 mockJcrRdfTools.getJcrTriples(eq(mockNode), Matchers
                         .<Iterable<FixityResult>> any())).thenReturn(new RdfStream());
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));
-        final Dataset fixityResultsModel =
+        final RdfStream fixityResults =
                 testObj.getFixityResultsModel(mockSubjects, mockDatastream);
 
-        assertTrue(fixityResultsModel.getContext().isDefined(
-                Symbol.create("uri")));
+        assertEquals("Got wrong topic of fixity results!",
+                createResource("abc").asNode(), fixityResults.topic());
     }
 
     @Test
