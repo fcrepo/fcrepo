@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.responses;
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableMap.builder;
 import static com.hp.hpl.jena.graph.Node.ANY;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
@@ -44,6 +45,7 @@ import javax.annotation.PostConstruct;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeIterator;
+import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -77,6 +79,7 @@ import com.hp.hpl.jena.rdf.model.Model;
  * @date May 19, 2013
  */
 @Provider
+@Produces({TEXT_HTML, APPLICATION_XHTML_XML})
 public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
     @Autowired
@@ -258,7 +261,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
         LOGGER.debug(
                 "Checking to see if type: {} is serializable to mimeType: {}",
                 type.getName(), mediaType);
-        return mediaType.equals(TEXT_HTML_TYPE)
+        return (mediaType.equals(TEXT_HTML_TYPE) || mediaType
+                .equals(APPLICATION_XHTML_XML))
                 && Dataset.class.isAssignableFrom(type);
     }
 
