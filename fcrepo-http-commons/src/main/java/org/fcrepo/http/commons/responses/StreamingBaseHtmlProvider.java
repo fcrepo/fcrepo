@@ -16,6 +16,8 @@
 
 package org.fcrepo.http.commons.responses;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.fcrepo.kernel.rdf.SerializationUtils.subjectKey;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -26,6 +28,7 @@ import java.lang.reflect.Type;
 
 import javax.annotation.PostConstruct;
 import javax.jcr.RepositoryException;
+import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -48,6 +51,7 @@ import com.hp.hpl.jena.query.DatasetFactory;
  * @date Nov 19, 2013
  */
 @Provider
+@Produces({TEXT_HTML, APPLICATION_XHTML_XML})
 public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
         ApplicationContextAware {
 
