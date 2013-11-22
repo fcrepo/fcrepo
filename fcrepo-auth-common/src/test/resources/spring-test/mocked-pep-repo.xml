@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:p="http://www.springframework.org/schema/p"
+  xmlns:c="http://www.springframework.org/schema/c"
   xsi:schemaLocation="
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
@@ -12,18 +14,13 @@
   <context:component-scan base-package="org.fcrepo.kernel.services" />
 
   <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
-    depends-on="authenticationProvider">
-    <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:repository.json}" />
-  </bean>
+    depends-on="authenticationProvider" p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
+  
+  <bean name="pep" class="org.mockito.Mockito" factory-method="mock" c:classToMock="org.fcrepo.auth.FedoraPolicyEnforcementPoint"/>
 
-  <bean name="pep" class="org.mockito.Mockito" factory-method="mock">
-    <constructor-arg value="org.fcrepo.auth.FedoraPolicyEnforcementPoint" />
-  </bean>
-
-  <bean name="authenticationProvider" class="org.fcrepo.auth.ServletContainerAuthenticationProvider">
-    <property name="pep" ref="pep"/>
-  </bean>
-
+  <bean name="authenticationProvider" class="org.fcrepo.auth.ServletContainerAuthenticationProvider"
+    p:pep-ref="pep"/>
+  
   <bean class="org.modeshape.jcr.JcrRepositoryFactory" />
 
 </beans>
