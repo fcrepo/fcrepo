@@ -1,0 +1,59 @@
+.mode_root #action_delete {
+    display: none;
+}
+
+body {
+    padding-bottom: 40px;
+}
+
+.nt_file #action_create, .nt_resource #action_create {
+    display: none;
+}
+
+.nt_file #action_import, .nt_resource #action_import {
+    display: none;
+}
+
+dl {
+    padding-left: 19px;
+}
+
+dd {
+    padding-left: 38px;
+}
+
+.well dl {
+    padding-left: 0;
+}
+
+.well {
+    text-indent: -35px;
+    padding-left: 54px;
+}
+
+#metadata .panel-body {
+    word-wrap: break-word;
+    text-indent: -35px;
+    padding-left: 35px;
+}
+
+#datastream_payload_container {
+    display: none;
+}
+
+#actions.visible-lg.in, #actions.visible-lg.collapsing, #actions.visible-md.in, #actions.visible-md.collapsing  {
+    display: block !important;
+}
+
+#toggle-actions {
+    float:right;
+    margin-bottom: 1em;
+}
+
+#actions {
+    margin-bottom: 3em;
+}
+
+.namespace {
+    font-size: .8em;
+}

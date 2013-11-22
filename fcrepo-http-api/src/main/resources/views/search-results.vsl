@@ -1,0 +1,47 @@
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="subjects" type="com.hp.hpl.jena.rdf.model.ResIterator" *#
+#* @vtlvariable name="nodeany" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+<!DOCTYPE html>
+#parse("views/common.vsl")
+<html>
+  <head>
+    <title>Search results</title>
+    <meta charset="UTF-8">
+    #parse("views/common-head.vsl")
+  </head>
+  <body>
+
+  <div class="container"">
+      #parse("views/common-header.vsl")
+    <h1>Search</h1>
+
+
+    ## output actions
+    <div class="actions">
+        <form class="form-search" method="GET">
+            <div class="input-append">
+                <input class="search-query" type="text" name="q" />
+                <button type="submit" class="btn">Search</button>
+            </div>
+        </form>
+        <a class="btn" href="$uriInfo.baseUriBuilder.build()fcr:sparql">SPARQL</a>
+    </div>
+
+    ## output triples for the topic node
+  <div class="well" resource="$topic.getURI()">
+    #triples($topic)
+   </div>
+
+  <h2>Results</h2>
+      #foreach($subject in $model.listSubjects())
+          #if( $subject != $topic )
+          <div class="well" resource="$subject.getURI()">
+              <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+              #triples($subject.asNode())
+          </div>
+          #end
+      #end
+  </body>
+</div>
+</html>

@@ -1,0 +1,42 @@
+#* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
+#macro( triples $sub )
+        <dl>
+
+            #set ($last_quad = false)
+            #foreach($quad in $helpers.getSortedTriples($model, $rdf.find($nodeany, $sub, $nodeany, $nodeany)))
+
+                #if($last_quad == false || !$last_quad.getPredicate().equals($quad.getPredicate()))
+                    <dt>
+                        #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($quad.getPredicate().getNameSpace()))
+                        <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), false)</span>
+                        #else
+                        <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), true)</span>
+                        #end
+                        <span class="localName">$quad.getPredicate().getLocalName()</span>
+                    </dt>
+                #end
+                    <dd>
+                        #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
+                            <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</a>
+                        #elseif ($quad.getObject().isLiteral())
+                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject().getLiteral().getLexicalForm())</span>
+                        #else
+                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
+                        #end
+                        #if( $quad.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
+                            <a href="$topic/fcr:fixity">check fixity</a>
+                        #end
+                    </dd>
+                #set ($last_quad = $quad)
+
+            #end
+        </dl>
+#end
+
+#macro( isObject $sub )
+#set($type = $anynode.createURI("http://fedora.info/definitions/v4/repository#mixinTypes"))
+#set($object = $anynode.createLiteral("fedora:object"))
+$rdf.find($nodeany, $sub, $type, $object).hasNext()
+#end
