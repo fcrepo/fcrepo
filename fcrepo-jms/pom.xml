@@ -75,22 +75,9 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.abdera</groupId>
-      <artifactId>abdera-parser</artifactId>
-    </dependency>
-    <!-- axiom-api is a dependency of abdera-parser. It is only explicitly declared 
-      here because abdera-parser depends on an older version of jaxen (1.1.1) than axiom-api. 
-      If/when abdera-parser catches up, we can remove this explicit dependency on axiom-api -->
-    <dependency>
-      <groupId>org.apache.ws.commons.axiom</groupId>
-      <artifactId>axiom-api</artifactId>
-      <version>1.2.14</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>org.rometools</groupId>
+      <artifactId>rome-modules</artifactId>
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>org.infinispan</groupId>

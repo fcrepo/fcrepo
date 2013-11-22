@@ -41,8 +41,6 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
-import org.apache.abdera.model.Category;
-import org.apache.abdera.model.Entry;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.fcrepo.jms.legacy.LegacyMethod;
 import org.junit.After;
@@ -53,6 +51,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.sun.syndication.feed.atom.Category;
+import com.sun.syndication.feed.atom.Content;
+import com.sun.syndication.feed.atom.Entry;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/jms.xml", "/spring-test/repo.xml",
@@ -109,17 +111,20 @@ public class AtomJMSIT implements MessageListener {
         String title = null;
         String path = null;
         for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            List<Category> categories = copyOf(entry.getCategories());
+            if (categories == null) {
+              logger.error("categories null");
+            }
             String p = null;
             for (Category cat : categories) {
-                if (cat.getLabel().equals("fedora-types:pid")) {
+                if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
                     title = entry.getTitle();
                 }
             }
         }
-        assertEquals("Got wrong pid!", "test1", path);
+        assertEquals("Got wrong pid!", "/test1", path);
         assertEquals("Got wrong method!", "ingest", title);
     }
     
@@ -141,7 +146,7 @@ public class AtomJMSIT implements MessageListener {
         String path = null;
         assertEquals("Entries size not 2", entries.size(), 2);
         for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            List<Category> categories = copyOf(entry.getCategories());
             String p = null;
             for (Category cat : categories) {
                 if (cat.getLabel().equals("path")) {
@@ -171,20 +176,20 @@ public class AtomJMSIT implements MessageListener {
 
         String path = null;
         for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            List<Category> categories = copyOf(entry.getCategories());
 
             logger.trace("Matched {} categories with scheme xsd:string",
                          categories
                                  .size());
             for (Category cat : categories) {
-                if (cat.getLabel().equals("fedora-types:pid")) {
+                if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
                 }
             }
         }
         entries.clear();
-        assertEquals("Got wrong object PID!", "testDatastreamTerm", path);
+        assertEquals("Got wrong object PID!", "/testDatastreamTerm", path);
 
         final Node ds = object.addNode("DATASTREAM");
         ds.addMixin(FEDORA_DATASTREAM);
@@ -199,20 +204,24 @@ public class AtomJMSIT implements MessageListener {
 
         path = null;
         for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            List<Category> categories = copyOf(entry.getCategories());
 
             logger.trace("Matched {} categories with scheme xsd:string",
                          categories
                                  .size());
             for (Category cat : categories) {
-                if (cat.getLabel().equals("fedora-types:dsID")) {
+                List<Content> c = entry.getContents();
+                if (!c.get(0).getValue().equals("DATASTREAM")) {
+                   continue;
+                }
+                if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
                 }
             }
         }
 
-        assertEquals("Got wrong datastream ID!", "DATASTREAM", path);
+        assertEquals("Got wrong datastream ID!", "/testDatastreamTerm/DATASTREAM", path);
         logger.trace("END: testDatastreamTerm()");
     }
 

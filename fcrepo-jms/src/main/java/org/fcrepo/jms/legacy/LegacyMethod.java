@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -40,8 +41,16 @@ import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.apache.abdera.model.Category;
-import org.apache.abdera.model.Entry;
+import com.sun.syndication.feed.atom.Category;
+import com.sun.syndication.feed.atom.Content;
+import com.sun.syndication.feed.atom.Entry;
+import com.sun.syndication.feed.atom.Feed;
+import com.sun.syndication.feed.atom.Person;
+import com.sun.syndication.feed.synd.SyndFeed;
+import com.sun.syndication.feed.synd.SyndFeedImpl;
+import com.sun.syndication.io.FeedException;
+import com.sun.syndication.io.WireFeedOutput;
+
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
 
@@ -92,7 +101,7 @@ public class LegacyMethod {
         }
     }
 
-    private final Entry delegate;
+    private Entry delegate;
 
     /**
      * TODO
@@ -146,7 +155,11 @@ public class LegacyMethod {
      * @param atomEntry
      */
     public LegacyMethod(final String atomEntry) {
-        delegate = EntryFactory.parse(new StringReader(atomEntry));
+        try {
+            delegate = (Entry) EntryFactory.parse(new StringReader(atomEntry));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -164,7 +177,11 @@ public class LegacyMethod {
      * @param content
      */
     public void setContent(final String content) {
-        delegate.setContent(content);
+        List<Content> contentList = new java.util.ArrayList<Content>();
+        Content contentObj = new Content();
+        contentObj.setValue(content);
+        contentList.add(contentObj);
+        delegate.setContents(contentList);
     }
 
     /**
@@ -173,11 +190,21 @@ public class LegacyMethod {
      * @param val
      */
     public void setUserId(final String val) {
+        List<Person> authors = new java.util.ArrayList<Person>();
         if (val == null || "<anonymous>".equals(val)) {
-            delegate.addAuthor("unknown", null, getBaseURL());
+          //  delegate.addAuthor("unknown", null, getBaseURL());
+            Person p = new Person();
+            p.setName("unknown");
+            p.setUrl(getBaseURL());
+            authors.add(new Person());
         } else {
-            delegate.addAuthor(val, null, getBaseURL());
+            //delegate.addAuthor(val, null, getBaseURL());
+            Person p = new Person();
+            p.setName(val);
+            p.setUrl(getBaseURL());
+            authors.add(new Person());
         }
+        delegate.setAuthors(authors);
     }
 
     /**
@@ -186,7 +213,8 @@ public class LegacyMethod {
      * @return
      */
     public String getUserID() {
-        return delegate.getAuthor().getName();
+        //return delegate.getAuthor().getName();
+        return ( (Person) delegate.getAuthors().get(0)).getName();
     }
 
     /**
@@ -213,7 +241,8 @@ public class LegacyMethod {
      * @param val
      */
     public void setMethodName(final String val) {
-        delegate.setTitle(val).setBaseUri(getBaseURL());
+        //delegate.setTitle(val).setBaseUri(getBaseURL());
+        delegate.setTitle(val);
     }
 
     /**
@@ -226,23 +255,31 @@ public class LegacyMethod {
     }
 
     private void setLabelledCategory(final String label, final String val) {
-        final List<Category> vals = delegate.getCategories(FEDORA_ID_SCHEME);
-        Category found = null;
+        final List<Category> vals = delegate.getCategories();
+        //Category found = null;
+        boolean found = false;
         if (vals != null && !vals.isEmpty()) {
             for (final Category c : vals) {
                 if (label.equals(c.getLabel())) {
-                    found = c.setTerm(val);
+                    c.setTerm(val);
+                    found = true;
                 }
             }
         }
-        if (found == null) {
-            delegate.addCategory(FEDORA_ID_SCHEME, val, label);
+        if (found == false) {
+            Category c = new Category();
+            c.setScheme(FEDORA_ID_SCHEME);
+            c.setLabel(label);
+            c.setTerm(val);
+            delegate.setCategories(Collections.singletonList(c));
+            //delegate.addCategory(FEDORA_ID_SCHEME, val, label);
         }
     }
 
     private String getLabelledCategory(final String label) {
         final List<Category> categories =
-                delegate.getCategories(FEDORA_ID_SCHEME);
+                //delegate.getCategories(FEDORA_ID_SCHEME);
+                delegate.getCategories();
         for (final Category c : categories) {
             if (label.equals(c.getLabel())) {
                 return c.getTerm();
@@ -258,7 +295,9 @@ public class LegacyMethod {
      */
     public void setPid(final String val) {
         setLabelledCategory(PID_CATEGORY_LABEL, val);
-        delegate.setSummary(val);
+        Content content = new Content();
+        content.setValue(val);
+        delegate.setSummary(content);
     }
 
     /**
@@ -311,6 +350,18 @@ public class LegacyMethod {
         return url.toString();
     }
 
+
+    /**
+     * 
+     * @return
+     */
+    private Feed createFeed(List<Entry> entriesList) {
+        final Feed feed = new Feed();
+        feed.setFeedType("atom_1.0");
+        feed.setEntries(entriesList);
+        return feed;
+    }
+
     /**
      * TODO
      *
@@ -318,7 +369,18 @@ public class LegacyMethod {
      * @throws IOException
      */
     public void writeTo(final Writer writer) throws IOException {
-        delegate.writeTo(writer);
+        //delegate.writeTo(writer);
+        WireFeedOutput output = new WireFeedOutput();
+        SyndFeed syndFeed = new SyndFeedImpl();
+        syndFeed.setEntries(Collections.singletonList(delegate));
+        syndFeed.setFeedType("atom_1.0");
+        Feed feed = createFeed(Collections.singletonList(delegate));
+
+        try {
+            output.output(feed,writer);
+        } catch (FeedException e) {
+            LOGGER.error("Exception writing ATOM content: {}", e);
+        }
     }
 
     private static String getEntryContent(final String methodName,
