@@ -34,7 +34,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
-import org.w3c.dom.ElementTraversal;
 
 public class FedoraWorkspacesIT extends AbstractResourceIT {
 

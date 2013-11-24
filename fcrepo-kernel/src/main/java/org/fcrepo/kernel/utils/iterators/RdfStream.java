@@ -163,7 +163,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @param newTriples Triples to add.
      * @return This object for continued use.
      */
-    public <T extends Triple> RdfStream concat(final T... newTriples) {
+    public <T extends Triple> RdfStream concat(@SuppressWarnings("unchecked")
+        final T... newTriples) {
         triples = Iterators.concat(Iterators.forArray(newTriples), triples);
         return this;
     }
@@ -363,7 +364,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
 
     @Override
     public int hashCode() {
-        return namespaces().hashCode() + 2 * triples.hashCode();
+        return namespaces().hashCode() + 2 * triples.hashCode() + 3
+                * context.hashCode() + 5 * topic.hashCode();
     }
 
 }
