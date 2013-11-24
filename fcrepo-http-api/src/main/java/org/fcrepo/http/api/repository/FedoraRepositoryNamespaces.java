@@ -45,6 +45,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -82,7 +83,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 
         try {
             final Dataset dataset =
-                nodeService.getNamespaceRegistryGraph(session);
+                nodeService.getNamespaceRegistryDataset(session);
             parseExecute(IOUtils.toString(requestBodyStream), dataset);
             session.save();
             return status(SC_NO_CONTENT).build();
@@ -101,14 +102,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
     @HtmlTemplate("jcr:namespaces")
-    public Dataset getNamespaces() throws RepositoryException, IOException {
-
-        try {
-            final Dataset dataset =
-                nodeService.getNamespaceRegistryGraph(session);
-            return dataset;
-        } finally {
-            session.logout();
-        }
+    public RdfStream getNamespaces() throws RepositoryException, IOException {
+        return nodeService.getNamespaceRegistryStream(session).session(session);
     }
 }

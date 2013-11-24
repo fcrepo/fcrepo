@@ -81,7 +81,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Session session = repository.login();
 
         final Dataset registryGraph =
-            objectService.getNamespaceRegistryGraph(session);
+            objectService.getNamespaceRegistryDataset(session);
 
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
@@ -107,7 +107,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Session session = repository.login();
 
         final Dataset registryGraph =
-            objectService.getNamespaceRegistryGraph(session);
+            objectService.getNamespaceRegistryDataset(session);
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
 
