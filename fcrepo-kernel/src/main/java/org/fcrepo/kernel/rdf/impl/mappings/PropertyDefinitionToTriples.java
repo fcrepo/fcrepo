@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterators.emptyIterator;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdate;
@@ -96,6 +97,14 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
 
     @Override
     public Iterator<Triple> apply(final PropertyDefinition input) {
+
+        if (!input.getName().contains(":")) {
+            LOGGER.debug("Received property definition with no namespace: {}",
+                    input.getName());
+            LOGGER.debug("This cannot be serialized into several RDF formats, so we assume it is internal and discard it.");
+            // TODO find a better way...
+            return emptyIterator();
+        }
 
         try {
             // skip range declaration for unknown types

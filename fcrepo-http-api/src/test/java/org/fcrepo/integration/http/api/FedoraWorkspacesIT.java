@@ -16,17 +16,17 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
 import javax.jcr.RepositoryException;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -34,27 +34,16 @@ import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
-import org.w3c.dom.ElementTraversal;
 
 public class FedoraWorkspacesIT extends AbstractResourceIT {
 
     @Test
     public void testGetWorkspaces() throws Exception {
         final HttpGet httpGet = new HttpGet(serverAddress + "fcr:workspaces");
-        httpGet.setHeader("Accept", "text/html");
-        final HttpResponse response = execute(httpGet);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
-        final InputStream in = response.getEntity().getContent();
-        final List<String> lines = IOUtils.readLines(in);
-        boolean found = false;
-        for (final String line : lines) {
-            if (line.contains(serverAddress + "workspace:default")) {
-                found = true;
-                break;
-            }
-        }
-        assertTrue(serverAddress + "workspace:default, not found", found);
+        final GraphStore result = getGraphStore(httpGet);
+        assertTrue(serverAddress + "workspace:default, not found!", result
+                .contains(ANY, createURI(serverAddress + "workspace:default"),
+                        type.asNode(), NOT_IMPLEMENTED.asNode()));
     }
 
     @Test

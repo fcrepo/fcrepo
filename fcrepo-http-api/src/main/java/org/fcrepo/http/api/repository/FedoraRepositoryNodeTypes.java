@@ -17,11 +17,10 @@
 package org.fcrepo.http.api.repository;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +31,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +48,8 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+
+
 
 /**
  * Expose node types at a REST endpoint
@@ -70,13 +73,8 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
                   TEXT_HTML})
     @Timed
     @HtmlTemplate("jcr:nodetypes")
-    public Dataset getNodeTypes() throws RepositoryException {
-        try {
-            return DatasetFactory.create(nodeService.getNodeTypes(session).asModel());
-        } finally {
-            session.logout();
-        }
-
+    public RdfStream getNodeTypes(@Context final UriInfo uriInfo) throws RepositoryException {
+        return nodeService.getNodeTypes(session).session(session);
     }
 
     /**

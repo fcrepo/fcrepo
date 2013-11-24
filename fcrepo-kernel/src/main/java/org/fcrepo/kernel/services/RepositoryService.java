@@ -184,7 +184,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getNamespaceRegistryGraph(final Session session)
+    public Dataset getNamespaceRegistryDataset(final Session session)
         throws RepositoryException {
 
         final Model model =
@@ -198,6 +198,21 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return dataset;
 
     }
+
+    /**
+     * Serialize the JCR namespace information as an {@link RdfStream}
+     *
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getNamespaceRegistryStream(final Session session)
+        throws RepositoryException {
+
+        return JcrRdfTools.withContext(null, session).getNamespaceTriples();
+
+    }
+
 
     /**
      * Perform a full-text search on the whole repository and return the

@@ -33,6 +33,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -51,6 +52,8 @@ public class FedoraRepositoryNamespacesTest {
     @Mock
     private Dataset mockDataset;
 
+    private RdfStream testRdfStream = new RdfStream();
+
     private Session mockSession;
 
     @Before
@@ -66,9 +69,9 @@ public class FedoraRepositoryNamespacesTest {
 
     @Test
     public void testGetNamespaces() throws RepositoryException, IOException {
-        when(mockNodeService.getNamespaceRegistryGraph(mockSession))
-                .thenReturn(mockDataset);
-        assertEquals(mockDataset, testObj.getNamespaces());
+        when(mockNodeService.getNamespaceRegistryStream(mockSession))
+                .thenReturn(testRdfStream);
+        assertEquals(testRdfStream, testObj.getNamespaces());
     }
 
     @Test
@@ -76,7 +79,7 @@ public class FedoraRepositoryNamespacesTest {
 
         final Model model = createDefaultModel();
         final Dataset mockDataset = DatasetFactory.create(model);
-        when(mockNodeService.getNamespaceRegistryGraph(mockSession))
+        when(mockNodeService.getNamespaceRegistryDataset(mockSession))
                 .thenReturn(mockDataset);
 
         testObj.updateNamespaces(new ByteArrayInputStream(

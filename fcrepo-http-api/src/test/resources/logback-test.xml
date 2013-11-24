@@ -13,9 +13,9 @@
   <logger name="org.fcrepo.integration.http" additivity="false" level="TRACE">
     <appender-ref ref="STDOUT"/>
   </logger>
-<!--  <logger name="org.fcrepo.kernel.rdf.impl" additivity="false" level="TRACE">
+  <logger name="org.fcrepo.kernel.rdf.impl" additivity="false" level="TRACE">
     <appender-ref ref="STDOUT"/>
-  </logger>-->
+  </logger>
   <logger name="org.fcrepo" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>
