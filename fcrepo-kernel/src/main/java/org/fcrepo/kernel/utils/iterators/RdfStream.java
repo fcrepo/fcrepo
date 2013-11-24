@@ -369,20 +369,16 @@ public class RdfStream extends ForwardingIterator<Triple> implements
         final boolean namespaceMappingsEqual =
             equal(rdfo.namespaces(), this.namespaces());
 
-        final boolean sessionEqual =
-                equal(rdfo.session(), this.session());
-
         final boolean topicEqual =
                 equal(rdfo.topic(), this.topic());
 
-        return triplesEqual && namespaceMappingsEqual && sessionEqual
-                && topicEqual;
+        return triplesEqual && namespaceMappingsEqual && topicEqual;
 
     }
 
     @Override
     public int hashCode() {
-        return hash(namespaces(), triples, session(), topic());
+        return hash(namespaces(), triples, topic());
     }
 
 }

@@ -66,10 +66,9 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
                 LOGGER.trace("Adding RDFS:range for {} with primary types {}",
                              input.getName(),
                              requiredPrimaryTypes[0].getName());
-                final Triple nsTriple =
-                    create(propertyDefinitionNode, range.asNode(), getResource(
-                            requiredPrimaryTypes[0]).asNode());
-                return new RdfStream(nsTriple).concat(super.apply(input));
+                return new RdfStream(create(propertyDefinitionNode, range
+                        .asNode(), getResource(requiredPrimaryTypes[0])
+                        .asNode())).concat(super.apply(input));
             } else {
                 LOGGER.trace("Skipping RDFS:range for {} with no required primary types");
             }

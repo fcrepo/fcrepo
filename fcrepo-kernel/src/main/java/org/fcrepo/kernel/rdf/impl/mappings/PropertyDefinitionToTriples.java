@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterators.emptyIterator;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdate;
@@ -96,6 +97,12 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
 
     @Override
     public Iterator<Triple> apply(final PropertyDefinition input) {
+
+        if (!input.getName().contains(":")) {
+            // no namespace: can't be serialized in several kinds of RDF!
+            // TODO find a better way...
+            return emptyIterator();
+        }
 
         try {
             // skip range declaration for unknown types
