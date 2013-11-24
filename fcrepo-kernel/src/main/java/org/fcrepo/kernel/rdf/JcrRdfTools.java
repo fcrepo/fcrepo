@@ -42,6 +42,7 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
@@ -50,6 +51,7 @@ import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -297,6 +299,16 @@ public class JcrRdfTools {
      */
     public RdfStream getNamespaceTriples() throws RepositoryException {
         return new NamespaceRdfContext(session);
+    }
+
+    /**
+     * Get an {@link RdfStream} of the registered JCR workspaces
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getWorkspaceTriples(final UriInfo uriInfo) throws RepositoryException {
+        return new WorkspaceRdfContext(session, uriInfo);
     }
 
     /**
