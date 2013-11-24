@@ -43,7 +43,7 @@ import org.mockito.Mock;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
 
 public class FedoraIdentifiersTest {
 
@@ -94,10 +94,9 @@ public class FedoraIdentifiersTest {
         when(mockNode.getPath()).thenReturn("/asdf:123");
         when(mockSession.getNode("/asdf:123")).thenReturn(mockNode);
 
-        final Dataset np = testObj.getNextPid(createPathList(""), 2, uriInfo);
-
-        LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
-        assertTrue(np.getDefaultModel().contains(
+        final Model np = testObj.getNextPid(createPathList(""), 2, uriInfo).asModel();
+        LOGGER.debug("Got identifier results:\n{}", np.getGraph());
+        assertTrue(np.contains(
                 createResource("http://localhost/fcrepo/fcr:identifier"),
                 HAS_MEMBER_OF_RESULT,
                 createResource("http://localhost/fcrepo/asdf:123")));
@@ -123,11 +122,11 @@ public class FedoraIdentifiersTest {
         when(mockNode.getPath()).thenReturn("/objects/asdf:123");
         when(mockSession.getNode("/objects/asdf:123")).thenReturn(mockNode);
 
-        final Dataset np =
-            testObj.getNextPid(createPathList("objects"), 2, uriInfo);
+        final Model np =
+            testObj.getNextPid(createPathList("objects"), 2, uriInfo).asModel();
 
-        LOGGER.debug("Got dataset {}", np.getDefaultModel().toString());
-        assertTrue(np.getDefaultModel().contains(
+        LOGGER.debug("Got identifier results:\n{}", np.getGraph());
+        assertTrue(np.contains(
                 createResource("http://localhost/fcrepo/objects/fcr:identifier"),
                 HAS_MEMBER_OF_RESULT,
                 createResource("http://localhost/fcrepo/objects/asdf:123")));
