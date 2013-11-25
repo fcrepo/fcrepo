@@ -44,4 +44,8 @@ public interface FedoraJcrTypes {
     String FCR_CONTENT = "fcr:content";
 
     String ROOT = "mode:root";
+
+    String FROZEN_NODE = "nt:frozenNode";
+
+    String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
 }
