@@ -169,11 +169,12 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         final String dsChecksum = binary.getHexHash();
+        final URI uriChecksumString = ContentDigest.asURI("SHA-1", dsChecksum);
         if (checksum != null &&
-                !checksum.equals(ContentDigest.asURI("SHA-1", dsChecksum))) {
+                !checksum.equals(uriChecksumString)) {
             LOGGER.debug("Failed checksum test");
             throw new InvalidChecksumException("Checksum Mismatch of " +
-                                               dsChecksum + " and " + checksum);
+                 uriChecksumString + " and " + checksum);
         }
 
         decorateContentNode(contentNode);
