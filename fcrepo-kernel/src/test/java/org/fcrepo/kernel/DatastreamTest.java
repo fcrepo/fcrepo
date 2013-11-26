@@ -83,6 +83,9 @@ public class DatastreamTest implements FedoraJcrTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
+            NodeType mockNodeType = mock(NodeType.class);
+            when(mockNodeType.getName()).thenReturn("nt:file");
+            when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new Datastream(mockDsNode);
         } catch (final RepositoryException e) {
             e.printStackTrace();
@@ -187,6 +190,9 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
         when(mockObjectNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockNodeType});
+        final NodeType mockPrimaryNodeType = mock(NodeType.class);
+        when(mockPrimaryNodeType.getName()).thenReturn("nt:file");
+        when(mockObjectNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockDsNode.getParent()).thenReturn(mockObjectNode);
         final FedoraObject actual = testObj.getObject();
         assertNotNull(actual);
@@ -276,6 +282,9 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockNo.getName()).thenReturn("not" + FEDORA_DATASTREAM);
         final NodeType[] types = new NodeType[] {mockYes};
         final Node test = mock(Node.class);
+        final NodeType mockPrimaryNodeType = mock(NodeType.class);
+        when(mockPrimaryNodeType.getName()).thenReturn("nt:object");
+        when(test.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(test.getMixinNodeTypes()).thenReturn(types);
         assertEquals(true, hasMixin(test));
         types[0] = mockNo;

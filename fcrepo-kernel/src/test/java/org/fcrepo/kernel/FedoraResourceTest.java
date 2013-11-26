@@ -113,6 +113,9 @@ public class FedoraResourceTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         testObj = new FedoraResource(mockNode);
         assertEquals(mockNode, testObj.getNode());
     }

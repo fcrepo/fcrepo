@@ -508,6 +508,7 @@ public class JcrRdfToolsTest {
                 .thenReturn(mockVersionHistory);
 
         when(mockVersionIterator.hasNext()).thenReturn(true, false);
+        when(mockFrozenNode.getSession()).thenReturn(mockSession);
         when(mockFrozenNode.getPath()).thenReturn(
                 "/jcr:system/versions/test/jcr");
         when(mockFrozenNode.getPrimaryNodeType()).thenReturn(mockNodeType);

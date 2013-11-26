@@ -104,6 +104,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         testObj = new DatastreamService();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockNode.getSession()).thenReturn(mockSession);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:file");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         llStore = mock(LowLevelStorageService.class);
         testObj.setLlStoreService(llStore);
     }

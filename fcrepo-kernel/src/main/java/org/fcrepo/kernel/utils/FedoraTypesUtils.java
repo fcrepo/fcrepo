@@ -39,6 +39,7 @@ import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -52,6 +53,7 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -70,12 +72,12 @@ import com.google.common.collect.Iterators;
  * @author ajs6f
  * @date Feb 14, 2013
  */
-public abstract class FedoraTypesUtils {
+public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora object.
+     * Predicate for determining whether this {@link Node} is a Fedora resource.
      */
     public static Predicate<Node> isFedoraResource = new Predicate<Node>() {
 
@@ -85,6 +87,52 @@ public abstract class FedoraTypesUtils {
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_RESOURCE);
+            } catch (final RepositoryException e) {
+                throw propagate(e);
+            }
+        }
+    };
+
+    /**
+     * Predicate for determining whether this {@link Node} is a frozen node
+     * (a part of the system version history).
+     */
+    public static Predicate<Node> isFrozen = new Predicate<Node>() {
+
+        @Override
+        public boolean apply(final Node node) {
+            checkArgument(node != null, "null cannot be a Frozen node!");
+            try {
+                return node.getPrimaryNodeType().getName().equals(FROZEN_NODE);
+            } catch (final RepositoryException e) {
+                throw propagate(e);
+            }
+        }
+    };
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora resource
+     * or is a frozen node that was a fedora resource.
+     */
+    public static Predicate<Node> isOrWasFedoraResource = new Predicate<Node>() {
+        @Override
+        public boolean apply(final Node node) {
+            checkArgument(node != null, "null cannot be a Fedora object!");
+            try {
+                if (node.getPrimaryNodeType().getName().equals(FROZEN_NODE)) {
+                    PropertyIterator it = node.getProperties(FROZEN_MIXIN_TYPES);
+                    while (it.hasNext()) {
+                        for (Value v : it.nextProperty().getValues()) {
+                            if (v.getString().equals(FEDORA_RESOURCE)) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                } else {
+                    return map(node.getMixinNodeTypes(), nodetype2name).contains(
+                            FEDORA_RESOURCE);
+                }
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
