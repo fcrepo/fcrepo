@@ -20,7 +20,6 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.JcrTools;
@@ -180,6 +179,13 @@ public class JQLConverterIT {
                             " ORDER BY DESC(?subject) ?object LIMIT 10 OFFSET 20";
 
         JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
-        assertEquals("SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20", testObj.getStatement());
+
+        final String expectedNs1 = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20";
+        final String expectedNs2 = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns002:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns002:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns002:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns002:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns002:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns002:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns002:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns002:bb3652744n] ASC LIMIT 10 OFFSET 20";
+
+        final String stmt = testObj.getStatement();
+        if (!expectedNs1.equals(stmt) && !expectedNs2.equals(stmt)) {
+            assertEquals(expectedNs1, testObj.getStatement());
+        }
     }
 }

@@ -56,12 +56,16 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     @Before
     public void setUpTestData() throws RepositoryException {
         session = repo.login();
+        session.setNamespacePrefix("zz", "http://zz.com/");
         final ValueFactory valueFactory = session.getValueFactory();
         final FedoraResource fedoraResource = new FedoraResource(session, "/abc", JcrConstants.NT_FOLDER);
         final FedoraResource fedoraResource2 = new FedoraResource(session, "/xyz", JcrConstants.NT_FOLDER);
+        final FedoraResource fedoraResource3 = new FedoraResource(session, "/anobject", JcrConstants.NT_FOLDER);
+
         fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
         fedoraResource.getNode().setProperty("fedorarelsext:hasPart", new Value[] { valueFactory.createValue(fedoraResource2.getNode()) });
         fedoraResource2.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { valueFactory.createValue(fedoraResource.getNode()) });
+        fedoraResource3.getNode().setProperty("zz:name", new Value[] { valueFactory.createValue("junk") });
         session.save();
 
     }
@@ -86,16 +90,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT ?subject WHERE { ?subject dc:title \"xyz\"}";
 
-        HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
-        BasicHttpEntity entity =  new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream(sparql));
-        sparqlRequest.setEntity(entity);
-        HttpResponse response = client.execute(sparqlRequest);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
-        String content = EntityUtils.toString(response.getEntity());
-        logger.trace("Retrieved sparql feed:\n" + content);
-
+        String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -111,16 +106,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         final String sparql = "PREFIX  fedorarelsext:  <http://fedora.info/definitions/v4/rels-ext#> SELECT ?subject ?part WHERE { ?subject fedorarelsext:hasPart ?part }";
 
-        HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
-        BasicHttpEntity entity =  new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream(sparql));
-        sparqlRequest.setEntity(entity);
-        HttpResponse response = client.execute(sparqlRequest);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
-        String content = EntityUtils.toString(response.getEntity());
-        logger.trace("Retrieved sparql feed:\n" + content);
-
+        String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -141,16 +127,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
                               "SELECT ?part ?collectionTitle WHERE { ?part fedorarelsext:isPartOf ?collection .\n" +
                                   "  ?collection dc:title ?collectionTitle }";
 
-        HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
-        BasicHttpEntity entity =  new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream(sparql));
-        sparqlRequest.setEntity(entity);
-        HttpResponse response = client.execute(sparqlRequest);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
-        String content = EntityUtils.toString(response.getEntity());
-        logger.trace("Retrieved sparql feed:\n" + content);
-
+        String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -161,5 +138,30 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         final QuerySolution row = resultSet.next();
         assertEquals(serverAddress + "/xyz", row.get("part").toString());
         assertEquals("xyz", row.get("collectionTitle").asLiteral().getLexicalForm());
+    }
+
+    @Test
+    public void itShouldIndexCustomProperties() throws Exception {
+        final String sparql = "PREFIX zz: <http://zz.com/> SELECT ?subject WHERE { ?subject zz:name \"junk\"}";
+
+        String content = getResponseContent(sparql);
+
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+        assertTrue(resultSet.hasNext());
+        assertEquals("subject", resultSet.getResultVars().get(0));
+        assertEquals(serverAddress + "/anobject", resultSet.next().get("subject").toString());
+    }
+
+    private String getResponseContent(final String sparql) throws IOException {
+        HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
+        BasicHttpEntity entity =  new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream(sparql));
+        sparqlRequest.setEntity(entity);
+        HttpResponse response = client.execute(sparqlRequest);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        String content = EntityUtils.toString(response.getEntity());
+        logger.trace("Retrieved sparql feed:\n" + content);
+        return content;
     }
 }
