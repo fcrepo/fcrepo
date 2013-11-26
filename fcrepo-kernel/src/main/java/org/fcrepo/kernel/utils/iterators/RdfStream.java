@@ -130,7 +130,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).namespaces(namespaces());
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic());
     }
 
     /**
@@ -140,7 +140,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).namespaces(namespaces());
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic());
     }
 
     /**

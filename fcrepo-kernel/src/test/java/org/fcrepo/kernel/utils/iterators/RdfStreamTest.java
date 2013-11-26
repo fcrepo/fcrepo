@@ -45,6 +45,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -134,17 +135,21 @@ public class RdfStreamTest {
     @Test
     public void testWithThisContextIterator() {
         testStream.namespace(prefix1, uri1);
+        testStream.topic(NodeFactory.createAnon());
         final RdfStream testStream2 =
-            testStream.withThisContext((Iterator<Triple>) testStream);
+            testStream.withThisContext((Iterator<Triple>) new RdfStream());
         assertEquals(testStream.namespaces(), testStream2.namespaces());
+        assertEquals(testStream.topic(), testStream2.topic());
     }
 
     @Test
     public void testWithThisContextIterable() {
         testStream.namespace(prefix1, uri1);
+        testStream.topic(NodeFactory.createAnon());
         final RdfStream testStream2 =
-            testStream.withThisContext((Iterable<Triple>) testStream);
+            testStream.withThisContext((Iterable<Triple>) new RdfStream());
         assertEquals(testStream.namespaces(), testStream2.namespaces());
+        assertEquals(testStream.topic(), testStream2.topic());
     }
 
     @Test
