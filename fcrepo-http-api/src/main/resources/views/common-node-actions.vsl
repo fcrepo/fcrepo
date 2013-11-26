@@ -1,19 +1,30 @@
 #set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CONTENT, false))
+#set ($readonly = $helpers.isFrozenNode($rdf, $topic))
+
+#if ($readonly == true)
+<div class="alert alert-warning">
+    <span class="glyphicon glyphicon-warning-sign"></span>
+    This is a <strong>historic version</strong> and cannot be modified.
+</div>
+#end
 
 #if ($content != "")
     <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a>
-    
+
+    #if ($readonly == false)
     <h3>Update Content</h3>
-      <form action="javascript:updateFile()">
-        <div class="form-group">
-          <label for="update_file" class="control-label">File</label>
-          <input type="file" id="update_file"/>
-        </div>
-        <input type="submit" class="btn btn-primary" value="Update">
-      </form>
+    <form action="javascript:updateFile()">
+      <div class="form-group">
+        <label for="update_file" class="control-label">File</label>
+        <input type="file" id="update_file"/>
+      </div>
+      <input type="submit" class="btn btn-primary" value="Update">
+    </form>
+    #end
     <hr />
 #end
 
+#if ($readonly == false)
 <form id="action_create" name="action_create" method="POST" enctype="multipart/form-data">
     <h3>Create New Node</h3>
     <div class="form-group">
@@ -67,7 +78,7 @@ WHERE { }
     <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
     <hr />
 </form>
-
+#end
 
 #set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
@@ -90,6 +101,7 @@ WHERE { }
 #end
 
 
+#if ($readonly == false)
 #set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
@@ -137,4 +149,5 @@ WHERE { }
 <form  id="action_create_transaction" action="$uriInfo.baseUriBuilder.build()fcr:tx" method="POST">
     <button type="submit" class="btn btn-primary">Start Transaction</button>
 </form>
+#end
 #end

@@ -28,7 +28,9 @@ import static com.hp.hpl.jena.sparql.core.DatasetGraphFactory.createMem;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
@@ -83,6 +85,22 @@ public class ViewHelpersTest {
                     "http://somewhere/else/a/b/c").asNode());
 
         assertTrue(nodeBreadcrumbs.isEmpty());
+    }
+
+    @Test
+    public void testIsFrozenNode() {
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(),
+                createLiteral("nt:frozenNode"));
+        assertTrue("Node is a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testIsNotFrozenNode() {
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(),
+                createLiteral("nt:file"));
+        assertFalse("Node is not a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
     }
 
     @Test

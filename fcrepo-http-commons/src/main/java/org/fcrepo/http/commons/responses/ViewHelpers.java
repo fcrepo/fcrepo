@@ -30,6 +30,7 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 import org.fcrepo.http.commons.api.rdf.QuadOrdering;
+import org.fcrepo.kernel.RdfLexicon;
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableList;
@@ -108,6 +109,18 @@ public class ViewHelpers {
             return subject.toString();
         }
 
+    }
+
+    /**
+     * Determines whether the subject is of type nt:frozenNode.
+     */
+    public boolean isFrozenNode(final DatasetGraph dataset,
+        final Node subject) {
+        final Iterator<Quad> objects
+            = getObjects(dataset, subject, RdfLexicon.HAS_PRIMARY_TYPE);
+        return objects.hasNext()
+                && objects.next().getObject()
+                .getLiteralValue().toString().equals("nt:frozenNode");
     }
 
     /**
