@@ -108,8 +108,9 @@ public class FedoraIdentifiers extends AbstractResource {
                 new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
         return new RdfStream(transform(
-                transform(identifiers, absolutize(path)),
-                    identifier2triple(subjects, pidsResult))).topic(pidsResult);
+                transform(identifiers, absolutize(path)), identifier2triple(
+                        subjects, pidsResult))).topic(pidsResult).session(
+                session);
 
     }
 

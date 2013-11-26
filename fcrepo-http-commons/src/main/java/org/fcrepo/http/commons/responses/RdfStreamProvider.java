@@ -37,6 +37,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 import javax.annotation.PostConstruct;
+import javax.jcr.RepositoryException;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -44,6 +45,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.LogoutCallback;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.openrdf.rio.RDFFormat;
@@ -95,17 +97,24 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
 
     @Override
     public void writeTo(final RdfStream rdfStream, final Class<?> type,
-            final Type genericType, final Annotation[] annotations,
-            final MediaType mediaType,
-            final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException,
-                                            WebApplicationException {
+        final Type genericType, final Annotation[] annotations,
+        final MediaType mediaType,
+        final MultivaluedMap<String, Object> httpHeaders,
+        final OutputStream entityStream) throws IOException,
+        WebApplicationException {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
-        final RdfStreamStreamingOutput streamOutput =
-            new RdfStreamStreamingOutput(rdfStream, mediaType);
-        addCallback(streamOutput, new LogoutCallback(rdfStream.session()));
-        streamOutput.write(entityStream);
+        try {
+            final RdfStreamStreamingOutput streamOutput =
+                new RdfStreamStreamingOutput(rdfStream
+                        .concat(new NamespaceRdfContext(rdfStream.session())),
+                        mediaType);
+            addCallback(streamOutput, new LogoutCallback(rdfStream.session()));
+            streamOutput.write(entityStream);
+        } catch (final RepositoryException e) {
+            throw new WebApplicationException(e);
+        }
+
 
     }
 

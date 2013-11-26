@@ -22,19 +22,24 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -42,9 +47,23 @@ public class RdfStreamProviderTest {
 
     private RdfStreamProvider testProvider = new RdfStreamProvider();
 
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
+        initMocks(this);
         testProvider.registerMimeTypes();
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
+                mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[] {});
     }
 
     @Test
@@ -71,7 +90,7 @@ public class RdfStreamProviderTest {
         final Triple t =
             create(createURI("info:test"), createURI("property:test"),
                     createURI("info:test"));
-        final RdfStream rdfStream = new RdfStream(t).session(mock(Session.class));
+        final RdfStream rdfStream = new RdfStream(t).session(mockSession);
         byte[] result;
         try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream();) {
             testProvider.writeTo(rdfStream, RdfStream.class, null, null,
