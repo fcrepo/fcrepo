@@ -54,6 +54,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -142,37 +143,22 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
-    public static Predicate<Node> isFedoraObject = new Predicate<Node>() {
-
-        @Override
-        public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Fedora object!");
-            try {
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                        FEDORA_OBJECT);
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
+    public static Predicate<Node> isFedoraObject =
+            new AnyTypesPredicate(FEDORA_OBJECT);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora
      * datastream.
      */
-    public static Predicate<Node> isFedoraDatastream = new Predicate<Node>() {
+    public static Predicate<Node> isFedoraDatastream =
+            new AnyTypesPredicate(FEDORA_DATASTREAM);
 
-        @Override
-        public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Fedora datastream!");
-            try {
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                        FEDORA_DATASTREAM);
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
+    /**
+     * Predicate for objects, datastreams, whatever!
+     */
+
+    public static Predicate<Node> isFedoraObjectOrDatastream =
+            new AnyTypesPredicate(FEDORA_OBJECT, FEDORA_DATASTREAM);
 
     /**
      * Translates a {@link NodeType} to its {@link String} name.
