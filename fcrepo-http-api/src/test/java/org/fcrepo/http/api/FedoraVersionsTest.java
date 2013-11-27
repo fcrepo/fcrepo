@@ -30,10 +30,12 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -44,6 +46,7 @@ import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +60,9 @@ public class FedoraVersionsTest {
 
     @Mock
     private NodeService mockNodes;
+
+    @Mock
+    VersionService mockVersions;
 
     @Mock
     private Node mockNode;
@@ -85,6 +91,7 @@ public class FedoraVersionsTest {
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
+        setField(testObj, "versionService", mockVersions);
         when(mockNode.getPath()).thenReturn("/test/path");
         when(mockResource.getNode()).thenReturn(mockNode);
     }
@@ -116,6 +123,7 @@ public class FedoraVersionsTest {
         final Response response =
             testObj.addVersionLabel(createPathList(pid), versionLabel);
         verify(mockResource).addVersionLabel(anyString());
+        verify(mockVersions).createVersion(any(Workspace.class), any(Collection.class));
         assertNotNull(response);
     }
 

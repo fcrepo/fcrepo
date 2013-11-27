@@ -137,9 +137,9 @@ public class FedoraDatastreams extends AbstractResource {
             }
 
             session.save();
-            versionService.checkpoint(session, path);
+            versionService.nodeUpdated(session, path);
             for (String dsPath : pathsChanged) {
-                versionService.checkpoint(session, dsPath);
+                versionService.nodeUpdated(session, dsPath);
             }
 
             final HttpGraphSubjects subjects =
@@ -176,7 +176,7 @@ public class FedoraDatastreams extends AbstractResource {
                 nodeService.deleteObject(session, dsPath);
             }
             session.save();
-            versionService.checkpoint(session, path);
+            versionService.nodeUpdated(session, path);
             return noContent().build();
         } finally {
             session.logout();

@@ -29,6 +29,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
@@ -97,7 +98,7 @@ public class FedoraVersions extends AbstractResource {
     }
 
     /**
-     * Tag the current version of an object with the given label
+     * Create a new vesion checkpoint and tag it with the given label.
      *
      * @param pathList
      * @param versionLabel
@@ -115,6 +116,8 @@ public class FedoraVersions extends AbstractResource {
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
+            versionService.createVersion(session.getWorkspace(),
+                    Collections.singleton(path));
             resource.addVersionLabel(versionLabel);
 
             return noContent().build();
@@ -124,7 +127,7 @@ public class FedoraVersions extends AbstractResource {
     }
 
     /**
-     * Retrieve the tagged version of an object
+     * Retrieve the tagged version of an object.
      * @param pathList
      * @param versionLabel
      * @param uriInfo
