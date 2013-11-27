@@ -38,6 +38,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -81,6 +82,8 @@ public class FedoraFixityTest {
         when(mockDs.getNode()).thenReturn(mockNode);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
                 mockDs);
+        when(mockDatastreams.getFixityResultsModel(any(GraphSubjects.class),
+                eq(mockDs))).thenReturn(new RdfStream());
         testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"),
                 mockRequest, uriInfo);
         verify(mockDatastreams).getFixityResultsModel(any(GraphSubjects.class),

@@ -87,7 +87,8 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     public RdfStream getWorkspaces(@Context final UriInfo uriInfo)
         throws RepositoryException {
 
-        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(uriInfo);
+        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(
+                uriInfo).session(session);
 
     }
 
