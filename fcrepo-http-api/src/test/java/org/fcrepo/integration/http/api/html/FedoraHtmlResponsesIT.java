@@ -65,6 +65,13 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         checkForHeaderBranding(page);
         checkForHeaderSearch(page);
+
+        final String namespaceLabel = page
+            .getFirstByXPath("//span[@title='http://fedora.info/definitions/v4/repository#']/text()")
+            .toString();
+
+        assertEquals("Expected to find namespace URIs displayed as their prefixes", "fcrepo:",
+                        namespaceLabel);
     }
 
     @Test
