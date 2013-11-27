@@ -31,10 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.jcr.Item;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
@@ -79,6 +77,7 @@ public class SimpleObserver implements EventListener {
     @Inject
     private EventFilter eventFilter;
 
+    // THIS SESSION SHOULD NOT BE USED TO LOOK UP NODES
     private Session session;
 
     /**
@@ -94,6 +93,16 @@ public class SimpleObserver implements EventListener {
     }
 
     /**
+     * logout of the session
+     * @throws RepositoryException
+     */
+    @PreDestroy
+    public void stopListening() throws RepositoryException {
+        session.getWorkspace().getObservationManager().removeEventListener(this);
+        session.logout();
+    }
+
+    /**
      * Filter JCR events and transform them into our own FedoraEvents.
      *
      * @param events
@@ -101,30 +110,42 @@ public class SimpleObserver implements EventListener {
     @Override
     public void onEvent(final javax.jcr.observation.EventIterator events) {
         // keep track of nodes that trigger events to prevent duplicates
-        final Set<Node> posted = new HashSet<Node>();
+        // size to minimize resizing.
+        final Set<String> posted = new HashSet<String>((int)events.getSize() * 2 / 3);
 
         // post non-duplicate events approved by the filter
         for (final Event e : filter(new EventIterator(events), eventFilter)) {
             try {
-                final Item item = session.getItem(e.getPath());
-                Node n = null;
-                if ( item.isNode() ) {
-                    n = (Node)item;
-                } else {
-                    n = item.getParent();
+                String nPath = e.getPath();
+                int nType = e.getType();
+                // is jump table faster than two bitwise comparisons?
+                switch(nType) {
+                    case NODE_ADDED:
+                        break;
+                    case NODE_REMOVED:
+                        break;
+                    case PROPERTY_ADDED:
+                        nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                        break;
+                    case PROPERTY_REMOVED:
+                        nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                        break;
+                    case PROPERTY_CHANGED:
+                        nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                        break;
+                    case NODE_MOVED:
+                        break;
+                    default:
+                        nPath = null;
                 }
-                if ( n != null && !posted.contains(n) ) {
+                if ( nPath != null && !posted.contains(nPath) ) {
                     EVENT_COUNTER.inc();
-                    LOGGER.debug("Putting event: " + e.toString()
-                        + " on the bus.");
+                    LOGGER.debug("Putting event: {} ({}) on the bus", nPath, nType);
                     eventBus.post(new FedoraEvent(e));
-                    posted.add(n);
+                    posted.add(nPath);
                 } else {
-                    LOGGER.debug("Skipping: " + e);
+                    LOGGER.debug("Skipping event: {} ({}) on the bus", nPath, nType);
                 }
-            } catch (final PathNotFoundException ex) {
-                // we can ignore these
-                LOGGER.trace("Not a node in the Fedora workspace: " + e);
             } catch ( RepositoryException ex ) {
                 throw propagate(ex);
             }

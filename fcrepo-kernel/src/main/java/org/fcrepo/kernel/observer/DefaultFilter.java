@@ -16,13 +16,15 @@
 package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_MOVED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObjectOrDatastream;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.jcr.Item;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -46,10 +48,6 @@ public class DefaultFilter implements EventFilter {
     @Inject
     private Repository repository;
 
-    // it's safe to keep the session around, because this code does not mutate
-    // the state of the repository
-    private Session session;
-
     /**
      * Filter observer events to only include events on a FedoraObject or
      * Datastream, or properties of an FedoraObject or Datastream.
@@ -59,34 +57,43 @@ public class DefaultFilter implements EventFilter {
      */
     @Override
     public boolean apply(final Event event) {
+        Session session = null;
         try {
-            final Item item = session.getItem(event.getPath());
-            final Node n = item.isNode() ? (Node)item : item.getParent();
-            return isFedoraObject.apply(n) || isFedoraDatastream.apply(n);
+            String nPath = event.getPath();
+            int nType = event.getType();
+            switch(nType) {
+                case NODE_ADDED:
+                    break;
+                case NODE_REMOVED:
+                    return true;
+                case PROPERTY_ADDED:
+                    nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                    break;
+                case PROPERTY_REMOVED:
+                    nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                    break;
+                case PROPERTY_CHANGED:
+                    nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                    break;
+                case NODE_MOVED:
+                    break;
+                default:
+                    return false;
+            }
+
+            session = repository.login();
+            final Node n = session.getNode(nPath);
+            return isFedoraObjectOrDatastream.apply(n);
         } catch (final PathNotFoundException e) {
             // not a node in the fedora workspace
             return false;
         } catch (final RepositoryException e) {
             throw propagate(e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
         }
     }
 
-    /**
-     * Initialize a long-running read-only JCR session
-     * to use for filtering events
-     * @throws RepositoryException
-     */
-    @PostConstruct
-    public void acquireSession() throws RepositoryException {
-        session = repository.login();
-    }
-
-    /**
-     * Log-out of the read-only JCR session before destroying
-     * the filter.
-     */
-    @PreDestroy
-    public void releaseSession() {
-        session.logout();
-    }
 }
