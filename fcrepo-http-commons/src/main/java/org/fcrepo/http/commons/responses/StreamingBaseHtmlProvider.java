@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.base.Throwables.propagate;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.fcrepo.kernel.rdf.SerializationUtils.subjectKey;
@@ -35,6 +36,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
@@ -95,10 +97,16 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
             final MultivaluedMap<String, Object> httpHeaders,
             final OutputStream entityStream) throws IOException,
                                             WebApplicationException {
-        final Dataset dataset = DatasetFactory.create(rdfStream.asModel());
-        dataset.getContext().set(subjectKey, rdfStream.topic());
-        delegate.writeTo(dataset, type, genericType, annotations, mediaType,
-                httpHeaders, entityStream);
+        try {
+            final RdfStream nsRdfStream = new NamespaceRdfContext(rdfStream.session());
+            final Dataset dataset = DatasetFactory.create(rdfStream.namespaces(nsRdfStream.namespaces()).asModel());
+            dataset.getContext().set(subjectKey, rdfStream.topic());
+            delegate.writeTo(dataset, type, genericType, annotations, mediaType,
+                    httpHeaders, entityStream);
+
+        } catch (RepositoryException e) {
+            throw propagate(e);
+        }
     }
 
     @Override

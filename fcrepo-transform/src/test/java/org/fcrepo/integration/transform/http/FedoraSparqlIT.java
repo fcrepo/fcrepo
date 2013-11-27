@@ -83,6 +83,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         String content = EntityUtils.toString(response.getEntity());
         assertTrue(content.contains("SPARQL"));
+        assertTrue(content.contains("PREFIX dc: <http://purl.org/dc/elements/1.1/>"));
     }
 
     @Test

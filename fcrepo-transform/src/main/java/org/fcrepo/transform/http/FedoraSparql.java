@@ -30,6 +30,7 @@ import org.fcrepo.http.commons.responses.BaseHtmlProvider;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.LogoutCallback;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLConverter;
@@ -92,7 +93,7 @@ public class FedoraSparql extends AbstractResource {
     @GET
     @Timed
     @Produces({TEXT_HTML})
-    public Response sparqlQueryForm() throws IOException {
+    public Response sparqlQueryForm() throws IOException, RepositoryException {
 
         final Properties properties = new Properties();
         final URL propertiesUrl =
@@ -107,6 +108,7 @@ public class FedoraSparql extends AbstractResource {
             velocity.getTemplate(BaseHtmlProvider.templatesLocation + "/search-sparql" + BaseHtmlProvider.templateFilenameExtension);
         final org.apache.velocity.context.Context context = new VelocityContext();
         context.put("uriInfo", uriInfo);
+        context.put("model", new NamespaceRdfContext(session).asModel());
         context.put("helpers", ViewHelpers.getInstance());
 
         final StreamingOutput stream = new StreamingOutput() {

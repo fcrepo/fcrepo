@@ -18,7 +18,10 @@
     <form id="action_sparql_select" action="$uriInfo.baseUriBuilder.build()fcr:sparql" class="form-sparql" method="POST" role="search">
         <h2>SPARQL</h2>
         <div class="form-group">
-            <textarea name="q" id="sparql_select_query" class="form-control">SELECT ?pid FROM { }</textarea>
+            <textarea name="q" id="sparql_select_query" rows="15" class="form-control">
+$helpers.getPrefixPreamble($model)
+SELECT ?pid WHERE { }
+            </textarea>
         </div>
 
         <button type="submit" class="btn btn-primary">Search</button>
