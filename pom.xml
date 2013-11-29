@@ -26,7 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.9.0</activemq.version>
     <enunciate.version>1.27</enunciate.version>
-    <fcrepo-build-tools.version>1.3</fcrepo-build-tools.version>
+    <fcrepo-build-tools.version>1.4-SNAPSHOT</fcrepo-build-tools.version>
     <httpcomponents.version>4.3</httpcomponents.version>
     <httpclient.version>4.3.1</httpclient.version>
     <infinispan.version>5.3.0.Final</infinispan.version>
@@ -1040,8 +1040,9 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
-    
+
   </repositories>
+
   <pluginRepositories>
     <pluginRepository>
       <id>fcrepo-thirdparty</id>
@@ -1054,7 +1055,20 @@
         <enabled>false</enabled>
       </snapshots>
     </pluginRepository>
+
+    <pluginRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
   </pluginRepositories>
+
   <scm>
     <connection>scm:git:git://github.com/futures/${project_name}.git
     </connection>
