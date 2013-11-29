@@ -121,7 +121,10 @@ public class NodePropertiesTools {
 
     }
 
-    private void addReferencePlaceholders(final GraphSubjects subjects, final Node node, final Property property, final Value newValue) throws RepositoryException {
+    private void addReferencePlaceholders(final GraphSubjects subjects,
+                                          final Node node,
+                                          final Property property,
+                                          final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
@@ -139,7 +142,10 @@ public class NodePropertiesTools {
         }
     }
 
-    private void removeReferencePlaceholders(final GraphSubjects subjects, final Node node, final Property property, final Value newValue) throws RepositoryException {
+    private void removeReferencePlaceholders(final GraphSubjects subjects,
+                                             final Node node,
+                                             final Property property,
+                                             final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 

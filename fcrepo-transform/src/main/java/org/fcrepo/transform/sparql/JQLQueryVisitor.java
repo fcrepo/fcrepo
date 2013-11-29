@@ -451,7 +451,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         throw new NotImplementedException("Element path may not contain a variable predicate");
                     }
 
-                    final String propertyName = jcrTools.getPropertyNameFromPredicate(defaultModel.createProperty(predicate.getURI()));
+                    final String propertyName = jcrTools.getPropertyNameFromPredicate(defaultModel.createProperty(
+                            predicate.getURI()));
                     final int propertyType = jcrTools.getPropertyType(FEDORA_RESOURCE, propertyName);
 
                     if (object.isVariable()) {
@@ -507,7 +508,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     throw new NotImplementedException("Element path with constant subject and variable predicate");
 
                 } else if (object.isVariable()) {
-                    throw new NotImplementedException("Element path with constant subject and predicate, and a variable object");
+                    throw new NotImplementedException(
+                            "Element path with constant subject and predicate, and a variable object");
 
                 }
 
@@ -629,7 +631,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     break;
                 case "bound":
                     final Column column = variables.get(func.getArg());
-                    appendConstraint(queryFactory.propertyExistence(column.getSelectorName(), column.getPropertyName()));
+                    appendConstraint(queryFactory.propertyExistence(column.getSelectorName(),
+                                                                    column.getPropertyName()));
                 default:
                     throw new NotImplementedException(funcName);
             }
@@ -662,7 +665,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         break;
                 }
             } else if (!func.getArg2().isConstant()) {
-                throw new NotImplementedException("EXPRFUNCTION2 2nd argument must be a constant: " + func.getArg1() + "; " + func.getArg2());
+                throw new NotImplementedException("EXPRFUNCTION2 2nd argument must be a constant: " + func.getArg1() +
+                                                          "; " + func.getArg2());
             } else {
                 final String op;
                 String value = func.getArg2().getConstant().getString();
@@ -701,7 +705,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         throw new NotImplementedException(funcName);
                 }
 
-                appendConstraint(queryFactory.comparison(getPropertyValue(func.getArg1()), op, queryFactory.literal(getValue(value))));
+                appendConstraint(queryFactory.comparison(getPropertyValue(func.getArg1()),
+                                                         op,
+                                                         queryFactory.literal(getValue(value))));
 
             }
 
@@ -729,7 +735,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                 final Expr expr = args.get(0);
 
                 if (expr.isVariable()) {
-                    appendConstraint(queryFactory.comparison(getPropertyValue(expr), QueryObjectModelConstants.JCR_OPERATOR_LIKE, queryFactory.literal(getValue(args.get(1)))));
+                    appendConstraint(queryFactory.comparison(getPropertyValue(expr),
+                                                             QueryObjectModelConstants.JCR_OPERATOR_LIKE,
+                                                             queryFactory.literal(getValue(args.get(1)))));
                 } else {
                     throw new NotImplementedException("ExprFunctionN " + symbol);
                 }

@@ -65,6 +65,8 @@ import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
+import static org.fcrepo.http.commons.responses.BaseHtmlProvider.templateFilenameExtension;
+import static org.fcrepo.http.commons.responses.BaseHtmlProvider.templatesLocation;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -105,7 +107,7 @@ public class FedoraSparql extends AbstractResource {
         }
         velocity.init(properties);
         final Template template =
-            velocity.getTemplate(BaseHtmlProvider.templatesLocation + "/search-sparql" + BaseHtmlProvider.templateFilenameExtension);
+            velocity.getTemplate(templatesLocation + "/search-sparql" + templateFilenameExtension);
         final org.apache.velocity.context.Context context = new VelocityContext();
         context.put("uriInfo", uriInfo);
         context.put("model", new NamespaceRdfContext(session).asModel());
@@ -161,7 +163,8 @@ public class FedoraSparql extends AbstractResource {
 
         final ResultSet resultSet = jqlConverter.execute();
 
-        ResultSetStreamingOutput streamingOutput = new ResultSetStreamingOutput(resultSet, bestPossibleResponse.getMediaType());
+        ResultSetStreamingOutput streamingOutput = new ResultSetStreamingOutput(resultSet,
+                                                                                bestPossibleResponse.getMediaType());
 
         addCallback(streamingOutput, new LogoutCallback(session));
 

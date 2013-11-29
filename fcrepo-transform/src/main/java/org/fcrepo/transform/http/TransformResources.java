@@ -36,12 +36,19 @@ import javax.ws.rs.core.UriInfo;
 @Component
 public class TransformResources implements UriAwareResourceModelFactory {
     @Override
-    public Model createModelForResource(FedoraResource resource, UriInfo uriInfo, GraphSubjects graphSubjects) throws RepositoryException {
+    public Model createModelForResource(FedoraResource resource,
+                                        UriInfo uriInfo,
+                                        GraphSubjects graphSubjects) throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType(FedoraJcrTypes.ROOT)) {
-            model.add(s, RdfLexicon.HAS_SPARQL_ENDPOINT, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraSparql.class).build().toASCIIString()));
+            model.add(s,
+                      RdfLexicon.HAS_SPARQL_ENDPOINT,
+                      model.createResource(uriInfo.getBaseUriBuilder()
+                                                   .path(FedoraSparql.class)
+                                                   .build()
+                                                   .toASCIIString()));
         }
 
         return model;

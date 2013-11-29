@@ -76,7 +76,9 @@ public class JQLResultSet implements ResultSet {
      * @param queryResult
      * @throws RepositoryException
      */
-    public JQLResultSet(final Session session, final GraphSubjects subjects, final QueryResult queryResult) throws RepositoryException {
+    public JQLResultSet(final Session session,
+                        final GraphSubjects subjects,
+                        final QueryResult queryResult) throws RepositoryException {
         this.session = session;
         this.subjects = subjects;
 

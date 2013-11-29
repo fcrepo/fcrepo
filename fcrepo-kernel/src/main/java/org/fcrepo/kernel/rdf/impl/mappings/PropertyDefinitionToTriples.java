@@ -101,7 +101,8 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
         if (!input.getName().contains(":")) {
             LOGGER.debug("Received property definition with no namespace: {}",
                     input.getName());
-            LOGGER.debug("This cannot be serialized into several RDF formats, so we assume it is internal and discard it.");
+            LOGGER.debug("This cannot be serialized into several RDF formats, " +
+                                 "so we assume it is internal and discard it.");
             // TODO find a better way...
             return emptyIterator();
         }

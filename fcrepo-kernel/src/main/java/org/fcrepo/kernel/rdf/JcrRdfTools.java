@@ -511,7 +511,8 @@ public class JcrRdfTools {
     public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate,
                                                final Map<String, String> namespaceMapping) throws RepositoryException {
 
-        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry)session.getWorkspace().getNamespaceRegistry();
+        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace()
+                .getNamespaceRegistry();
 
         return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
     }
@@ -522,7 +523,8 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
+        throws RepositoryException {
 
 
         final Map<String, String> emptyNamespaceMapping = emptyMap();
@@ -538,8 +540,9 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry, final com.hp.hpl.jena.rdf.model.Property predicate,
-        final Map<String, String> namespaceMapping) throws RepositoryException {
+    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
+                                               final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map<String, String> namespaceMapping) throws RepositoryException {
 
         final String prefix;
 
