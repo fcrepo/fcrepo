@@ -47,7 +47,6 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.rdf.JcrRdfTools.setGetClusterConfiguration;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
@@ -102,7 +101,6 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -115,7 +113,6 @@ import org.slf4j.Logger;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -220,9 +217,6 @@ public class JcrRdfToolsTest {
                         mockCounter
 
                 ));
-        when(mockGetClusterConfiguration.apply(mockRepository)).thenReturn(
-                ImmutableMap.of("a", "b"));
-        setGetClusterConfiguration(mockGetClusterConfiguration);
 
         when(mockNode.getPath()).thenReturn("/");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -735,9 +729,6 @@ public class JcrRdfToolsTest {
 
     @Mock
     private Counter mockCounter;
-
-    @Mock
-    private GetClusterConfiguration mockGetClusterConfiguration;
 
     @Mock
     private NodeTypeManager mockNodeTypeManager;

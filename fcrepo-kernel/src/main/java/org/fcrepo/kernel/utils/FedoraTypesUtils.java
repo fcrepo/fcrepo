@@ -24,11 +24,6 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
@@ -121,9 +116,9 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             checkArgument(node != null, "null cannot be a Fedora object!");
             try {
                 if (node.getPrimaryNodeType().getName().equals(FROZEN_NODE)) {
-                    PropertyIterator it = node.getProperties(FROZEN_MIXIN_TYPES);
+                    final PropertyIterator it = node.getProperties(FROZEN_MIXIN_TYPES);
                     while (it.hasNext()) {
-                        for (Value v : it.nextProperty().getValues()) {
+                        for (final Value v : it.nextProperty().getValues()) {
                             if (v.getString().equals(FEDORA_RESOURCE)) {
                                 return true;
                             }

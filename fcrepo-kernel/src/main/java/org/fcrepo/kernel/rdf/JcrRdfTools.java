@@ -53,7 +53,6 @@ import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -92,9 +91,6 @@ public class JcrRdfTools {
      */
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
-
-    private static GetClusterConfiguration getClusterConfiguration =
-        new GetClusterConfiguration();
 
     private LowLevelStorageService llstore;
 
@@ -577,14 +573,6 @@ public class JcrRdfTools {
 
         return propertyName;
 
-    }
-
-    /**
-     * Set the function used to get the cluster configuration for Infinispan
-     */
-    public static void setGetClusterConfiguration(
-            final GetClusterConfiguration newClusterConfiguration) {
-        getClusterConfiguration = newClusterConfiguration;
     }
 
     /**

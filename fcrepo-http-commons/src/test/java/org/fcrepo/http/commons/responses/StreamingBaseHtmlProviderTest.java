@@ -18,25 +18,20 @@ package org.fcrepo.http.commons.responses;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.Map;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
@@ -54,7 +49,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
 
 public class StreamingBaseHtmlProviderTest {
 
@@ -109,7 +103,7 @@ public class StreamingBaseHtmlProviderTest {
         }
 
         // check that the BaseHtmlProvider gets a dataset with namespace prefixes set
-        ArgumentCaptor<Dataset> argument = ArgumentCaptor.forClass(Dataset.class);
+        final ArgumentCaptor<Dataset> argument = ArgumentCaptor.forClass(Dataset.class);
         verify(mockBaseHtmlProvider).writeTo(argument.capture(),
                                                 eq(RdfStream.class),
                                                 eq((Type)null),

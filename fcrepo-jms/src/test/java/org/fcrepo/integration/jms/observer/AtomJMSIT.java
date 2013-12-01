@@ -97,21 +97,22 @@ public class AtomJMSIT implements MessageListener {
     @Test
     public void testAtomStream() throws RepositoryException,
         InterruptedException {
-        Session session = repository.login();
+        final Session session = repository.login();
         session.getRootNode().addNode("test1").addMixin(FEDORA_OBJECT);
         session.save();
 
         waitForEntry(1);
         session.logout();
 
-        if (entries.isEmpty()) fail("Waited a second, got no messages");
+        if (entries.isEmpty()) {
+            fail("Waited a second, got no messages");
+        }
 
         String title = null;
         String path = null;
-        for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
-            String p = null;
-            for (Category cat : categories) {
+        for (final Entry entry : entries) {
+            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            for (final Category cat : categories) {
                 if (cat.getLabel().equals("fedora-types:pid")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
@@ -122,28 +123,29 @@ public class AtomJMSIT implements MessageListener {
         assertEquals("Got wrong pid!", "test1", path);
         assertEquals("Got wrong method!", "ingest", title);
     }
-    
+
 
     @Test
     public void testAtomStreamNodePath() throws RepositoryException,
         InterruptedException {
         final int minEntriesSize = 2;
-        Session session = repository.login();
+        final Session session = repository.login();
         session.getRootNode().addNode("test1/sigma").addMixin(FEDORA_OBJECT);
         session.save();
 
         waitForEntry(minEntriesSize);
         session.logout();
 
-        if (entries.isEmpty())
+        if (entries.isEmpty()) {
             fail("Waited a second, got no messages");
+        }
 
         String path = null;
         assertEquals("Entries size not 2", entries.size(), 2);
-        for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+        for (final Entry entry : entries) {
+            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
             String p = null;
-            for (Category cat : categories) {
+            for (final Category cat : categories) {
                 if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     p = cat.getTerm();
@@ -153,30 +155,32 @@ public class AtomJMSIT implements MessageListener {
                 path = p;
             }
         }
-        assertEquals("Got wrong path!", "/test1/sigma", path);        
+        assertEquals("Got wrong path!", "/test1/sigma", path);
     }
 
     @Test
     public void testDatastreamTerm() throws RepositoryException,
         InterruptedException {
         logger.trace("BEGIN: testDatastreamTerm()");
-        Session session = repository.login();
+        final Session session = repository.login();
         final Node object = session.getRootNode().addNode("testDatastreamTerm");
         object.addMixin(FEDORA_OBJECT);
         session.save();
         logger.trace("testDatastreamTerm called session.save()");
 
         waitForEntry(1);
-        if (entries.isEmpty()) fail("Waited a second, got no messages");
+        if (entries.isEmpty()) {
+            fail("Waited a second, got no messages");
+        }
 
         String path = null;
-        for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+        for (final Entry entry : entries) {
+            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
 
             logger.trace("Matched {} categories with scheme xsd:string",
                          categories
                                  .size());
-            for (Category cat : categories) {
+            for (final Category cat : categories) {
                 if (cat.getLabel().equals("fedora-types:pid")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
@@ -195,16 +199,18 @@ public class AtomJMSIT implements MessageListener {
         logger.trace("testDatastreamTerm called session.logout()");
 
         waitForEntry(2);
-        if (entries.isEmpty()) fail("Waited a second, got no messages");
+        if (entries.isEmpty()) {
+            fail("Waited a second, got no messages");
+        }
 
         path = null;
-        for (Entry entry : entries) {
-            List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+        for (final Entry entry : entries) {
+            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
 
             logger.trace("Matched {} categories with scheme xsd:string",
                          categories
                                  .size());
-            for (Category cat : categories) {
+            for (final Category cat : categories) {
                 if (cat.getLabel().equals("fedora-types:dsID")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
@@ -217,20 +223,20 @@ public class AtomJMSIT implements MessageListener {
     }
 
     @Override
-    public void onMessage(Message message) {
+    public void onMessage(final Message message) {
         logger.debug("Received JMS message: " + message.toString());
 
-        TextMessage tMessage = (TextMessage) message;
+        final TextMessage tMessage = (TextMessage) message;
         try {
             if (LegacyMethod.canParse(message)) {
-                LegacyMethod legacy = new LegacyMethod(tMessage.getText());
-                Entry entry = legacy.getEntry();
+                final LegacyMethod legacy = new LegacyMethod(tMessage.getText());
+                final Entry entry = legacy.getEntry();
                 entries.add(entry);
                 logger.debug("Parsed Entry: {}", entry.toString());
             } else {
                 logger.warn("Could not parse message: {}", message);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("Exception receiving message: {}", e);
             fail(e.getMessage());
         }
@@ -239,7 +245,7 @@ public class AtomJMSIT implements MessageListener {
         }
     }
 
-    private void waitForEntry(int size) throws InterruptedException {
+    private void waitForEntry(final int size) throws InterruptedException {
         for (int i = 0; i < 5; i++) {
             if (entries.size() < size) { // must not have rec'vd event yet
                 synchronized (this) {
