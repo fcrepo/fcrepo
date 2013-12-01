@@ -131,7 +131,7 @@ public class ContainerWrapper implements ApplicationContextAware {
     }
 
     public void stop() throws Exception {
-        server.stop();
+        server.shutdownNow();
     }
 
     @Override

@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthRuntimeException;
-import org.apache.oltu.oauth2.rsfilter.OAuthDecision;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,28 +38,28 @@ public class DefaultOAuthResourceProviderTest {
 
     private static final String DUMMY_RSID = "dummy-rsid";
     private static final String INVALID_TOKEN = "invalid-token";
-    
+
     private static final String VALID_TOKEN = "valid-token";
     @Mock
     private SessionFactory mockSessions;
-    
+
     @Mock
     private Session mockSession;
-    
+
     @Mock
     private Node mockNode;
-    
+
     @Mock
     private Property mockClientProperty;
-    
+
     @Mock
     private Property mockPrincipalProperty;
-    
+
     @Mock
     private HttpServletRequest mockRequest;
-    
+
     DefaultOAuthResourceProvider testObj;
-    
+
     @Before
     public void setUp() throws RepositoryException, NoSuchFieldException {
         initMocks(this);
@@ -79,22 +78,20 @@ public class DefaultOAuthResourceProviderTest {
         testObj = new DefaultOAuthResourceProvider();
         setField(testObj, "sessionFactory", mockSessions);
     }
-    
+
     @Test
     public void testAcceptsExistingTokenRequest()
         throws PathNotFoundException, RepositoryException, OAuthProblemException {
         when(mockSession.getNode("/tokens/" + VALID_TOKEN))
         .thenReturn(mockNode);
-        OAuthDecision actual =
-            testObj.validateRequest(DUMMY_RSID, VALID_TOKEN, mockRequest);
+        testObj.validateRequest(DUMMY_RSID, VALID_TOKEN, mockRequest);
         verify(mockSession).logout();
     }
-    
+
     @Test(expected=OAuthRuntimeException.class)
     public void testRejectsNonexistentTokenRequest()
         throws PathNotFoundException, RepositoryException, OAuthProblemException {
-        OAuthDecision actual =
-                testObj.validateRequest(DUMMY_RSID, INVALID_TOKEN, mockRequest);
+        testObj.validateRequest(DUMMY_RSID, INVALID_TOKEN, mockRequest);
         verify(mockSession).logout();
     }
 
