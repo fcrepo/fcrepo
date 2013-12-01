@@ -27,8 +27,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,7 +54,6 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -68,8 +65,6 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 @Path("/fcr:workspaces")
 public class FedoraRepositoryWorkspaces extends AbstractResource {
-
-    private static final Logger logger = getLogger(FedoraRepositoryWorkspaces.class);
 
     @InjectedSession
     protected Session session;

@@ -94,10 +94,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void oldVersionContentIsStillAccessible() throws Exception {
-        String objName = "fvt3";
-        String dsName = "ds";
-        String firstVersionText = "foo";
-        String secondVersionText = "bar";
+        final String objName = "fvt3";
+        final String dsName = "ds";
+        final String firstVersionText = "foo";
+        final String secondVersionText = "bar";
 
         final HttpPost createObjectMethod =
                 postObjMethod(objName);
@@ -136,9 +136,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-        Iterator<Quad> versionIt = results.find(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY);
-        String currentVersionUri = versionIt.next().getObject().getURI();
-        String firstVersionUri = versionIt.next().getObject().getURI();
+        final Iterator<Quad> versionIt = results.find(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY);
+        versionIt.next().getObject().getURI();
+        final String firstVersionUri = versionIt.next().getObject().getURI();
 
         final HttpGet retrieveFirstVersion = new HttpGet(firstVersionUri + "/fcr:content");
         assertEquals("First version wasn't preserved as expected!",
