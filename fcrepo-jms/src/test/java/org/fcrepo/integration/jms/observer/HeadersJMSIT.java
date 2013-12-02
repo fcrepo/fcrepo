@@ -104,7 +104,7 @@ public class HeadersJMSIT implements MessageListener {
         session.logout();
 
         if (messages.isEmpty()) {
-            fail("Waited a second, got no messages");
+            fail("Waited for " + TIMEOUT + ", got no messages");
         }
 
         Boolean success = false;
@@ -140,7 +140,7 @@ public class HeadersJMSIT implements MessageListener {
         session.logout();
 
         if (messages.isEmpty()) {
-            fail("Waited a second, got no messages");
+            fail("Waited for " + TIMEOUT + ", got no messages");
         }
         assertEquals("Entries size not " + minEntriesSize, minEntriesSize,
                 messages.size());
