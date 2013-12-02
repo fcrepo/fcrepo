@@ -120,6 +120,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private boolean distinct;
     private boolean inOptional;
     private Map<String, Source> joins;
+    private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
 
     private NodePropertiesTools propertiesTools = new NodePropertiesTools();
@@ -140,6 +141,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.constraint = null;
         this.variables = new HashMap<String, Column>();
         this.joins = new HashMap<String, Source>();
+        this.joinTypes = new HashMap<>();
         this.joinConditions = new HashMap<String, JoinCondition>();
     }
 
@@ -211,9 +213,17 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                 final Map.Entry<String, Source> next = iterator.next();
 
                 if (next.getValue() != parentSource) {
+                    final String joinType;
+
+                    if (joinTypes.containsKey(next.getKey())) {
+                        joinType = QueryObjectModelConstants.JCR_JOIN_TYPE_INNER;
+                    } else {
+                        joinType = QueryObjectModelConstants.JCR_JOIN_TYPE_LEFT_OUTER;
+                    }
+
                     this.source = queryFactory.join(this.source,
                                                     next.getValue(),
-                                                    QueryObjectModelConstants.JCR_JOIN_TYPE_LEFT_OUTER,
+                                                    joinType,
                                                     joinConditions.get(next.getKey()));
                 }
             }
@@ -453,6 +463,24 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
                     final String propertyName = jcrTools.getPropertyNameFromPredicate(defaultModel.createProperty(
                             predicate.getURI()));
+
+                    if (propertyName.equals("rdf:type") && object.isURI()) {
+                        final String mixinName =
+                            jcrTools.getPropertyNameFromPredicate(defaultModel.createProperty(object.getURI()));
+
+                        if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+                            final String selectorName = "ref_type_" + mixinName.replace(":", "_");
+
+                            this.joins.put(selectorName,
+                                              queryFactory.selector(mixinName, selectorName));
+
+                            joinTypes.put(selectorName, QueryObjectModelConstants.JCR_JOIN_TYPE_INNER);
+                            joinConditions.put(selectorName,
+                                queryFactory.sameNodeJoinCondition(c.getSelectorName(), selectorName, "."));
+                            continue;
+                        }
+                    }
+
                     final int propertyType = jcrTools.getPropertyType(FEDORA_RESOURCE, propertyName);
 
                     if (object.isVariable()) {

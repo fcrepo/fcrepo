@@ -66,6 +66,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         fedoraResource.getNode().setProperty("fedorarelsext:hasPart", new Value[] { valueFactory.createValue(fedoraResource2.getNode()) });
         fedoraResource2.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { valueFactory.createValue(fedoraResource.getNode()) });
         fedoraResource3.getNode().setProperty("zz:name", new Value[] { valueFactory.createValue("junk") });
+        fedoraResource3.getNode().setProperty("rdf:type", new Value[] { valueFactory.createValue("info:some-type") });
         session.save();
 
     }
@@ -100,6 +101,39 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         assertEquals("subject", resultSet.getResultVars().get(0));
 
         assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+    }
+
+    @Test
+    public void itShouldWorkWithRdfTypeMixins() throws IOException, RepositoryException {
+
+        final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#resource> . ?subject dc:title \"xyz\"}";
+
+        String content = getResponseContent(sparql);
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+
+
+        assertTrue(resultSet.hasNext());
+
+        assertEquals("subject", resultSet.getResultVars().get(0));
+
+        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+
+    }
+
+    @Test
+    public void itShouldWorkWithRdfTypeProperties() throws IOException, RepositoryException {
+
+        final String sparql = "SELECT ?subject WHERE { ?subject a <info:some-type> }";
+
+        String content = getResponseContent(sparql);
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+
+        assertTrue(resultSet.hasNext());
+
+        assertEquals("subject", resultSet.getResultVars().get(0));
+
+        assertEquals(serverAddress + "/anobject", resultSet.next().get("subject").toString());
+
     }
 
     @Test
