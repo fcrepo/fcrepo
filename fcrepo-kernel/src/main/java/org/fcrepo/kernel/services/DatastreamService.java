@@ -105,34 +105,37 @@ public class DatastreamService extends RepositoryService {
      */
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
+            final String originalFileName,
             final InputStream requestBodyStream) throws RepositoryException,
             IOException, InvalidChecksumException {
 
         return createDatastreamNode(session, dsPath, contentType,
-                requestBodyStream, null);
+                                       originalFileName, requestBodyStream, null);
     }
 
     /**
      * Create a new Datastream node in the JCR store
      *
+     *
      * @param session the jcr session to use
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
+     * @param originalFileName the original file name for the input stream
      * @param requestBodyStream binary payload for the datastream
-     * @param checksum the digest for the binary payload (as urn:sha1:xyz)
-     * @return
+     * @param checksum the digest for the binary payload (as urn:sha1:xyz)   @return
      * @throws RepositoryException
      * @throws IOException
      * @throws InvalidChecksumException
      */
     public Node createDatastreamNode(final Session session,
-        final String dsPath, final String contentType,
-        final InputStream requestBodyStream, final URI checksum)
+                                     final String dsPath, final String contentType,
+                                     final String originalFileName, final InputStream requestBodyStream,
+                                     final URI checksum)
         throws RepositoryException, IOException, InvalidChecksumException {
 
         final Datastream ds = createDatastream(session, dsPath);
         ds.setContent(requestBodyStream, contentType, checksum,
-                getStoragePolicyDecisionPoint());
+                         originalFileName, getStoragePolicyDecisionPoint());
         return ds.getNode();
     }
 

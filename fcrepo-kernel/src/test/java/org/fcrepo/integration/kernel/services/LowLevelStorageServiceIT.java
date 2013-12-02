@@ -61,7 +61,7 @@ public class LowLevelStorageServiceIT {
         objectService.createObject(session, "/testLLObject");
         datastreamService.createDatastreamNode(session,
                 "/testLLObject/testRepositoryContent", "image/tiff",
-                new ByteArrayInputStream(
+                null, new ByteArrayInputStream(
                         "0123456789987654321012345678900987654321".getBytes()));
 
         session.save();

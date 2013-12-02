@@ -83,6 +83,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
@@ -377,6 +378,7 @@ public class FedoraNodes extends AbstractResource {
             final String mixin,
             @QueryParam("checksum")
             final String checksum,
+            @HeaderParam("Content-Disposition") final String contentDisposition,
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
             @HeaderParam("Slug")
@@ -483,9 +485,17 @@ public class FedoraNodes extends AbstractResource {
                     result.replaceProperties(subjects, inputModel);
                 } else if (result instanceof Datastream) {
 
+                    final String originalFileName;
+
+                    if (contentDisposition != null) {
+                        final ContentDisposition disposition = new ContentDisposition(contentDisposition);
+                        originalFileName = disposition.getFileName();
+                    } else {
+                        originalFileName = null;
+                    }
+
                     datastreamService.createDatastreamNode(session,
-                            newObjectPath, contentTypeString,
-                            requestBodyStream, checksumURI);
+                            newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
 
                 }
             }
@@ -532,7 +542,7 @@ public class FedoraNodes extends AbstractResource {
                                                 @FormDataParam("file") final InputStream file
     ) throws Exception {
 
-        return createObject(pathList, mixin, null, null, slug, uriInfo, file);
+        return createObject(pathList, mixin, null, null, null, slug, uriInfo, file);
 
     }
 

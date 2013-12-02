@@ -29,6 +29,7 @@ import static javax.jcr.PropertyType.LONG;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
@@ -229,7 +230,7 @@ public class FedoraResourceIT extends AbstractIT {
         objectService.createObject(session, "/testDatastreamGraphParent");
 
         datastreamService.createDatastreamNode(session, "/testDatastreamGraph",
-                "text/plain", new ByteArrayInputStream("123456789test123456789"
+                "text/plain", null, new ByteArrayInputStream("123456789test123456789"
                         .getBytes()));
 
         final FedoraResource object =
@@ -284,7 +285,7 @@ public class FedoraResourceIT extends AbstractIT {
         o = createLiteral("text/plain");
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        p = createURI(RESTAPI_NAMESPACE + "size");
+        p = HAS_SIZE.asNode();
         o = createLiteral("22", createTypedLiteral(22L).getDatatype());
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 

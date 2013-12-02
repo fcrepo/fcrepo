@@ -180,7 +180,7 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
                 testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
-                        null, null, getUriInfoImpl(), null);
+                        null, null, null, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -200,7 +200,7 @@ public class FedoraNodesTest {
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
-            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
+            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, null, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -220,7 +220,7 @@ public class FedoraNodesTest {
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
-            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
+            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, "some-slug", getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -241,7 +241,7 @@ public class FedoraNodesTest {
 
         when(
                 mockDatastreams.createDatastreamNode(any(Session.class),
-                        eq(dsPath), anyString(), eq(dsContentStream),
+                        eq(dsPath), anyString(), eq((String)null), eq(dsContentStream),
                         any(URI.class))).thenReturn(mockNode);
         final Datastream mockDatastream = mock(Datastream.class);
         when(mockDatastream.getNode()).thenReturn(mockNode);
@@ -249,14 +249,44 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
-                        FEDORA_DATASTREAM, null, APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
+                        FEDORA_DATASTREAM, null, null, APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
                 .createDatastreamNode(any(Session.class), eq(dsPath),
-                        anyString(), any(InputStream.class), any(URI.class));
+                        anyString(), eq((String)null), any(InputStream.class), any(URI.class));
         verify(mockSession).save();
     }
+
+    @Test
+    public void testCreateDatastreamWithContentDisposition() throws Exception {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "testDS";
+        final String dsContent = "asdf";
+        final String dsPath = "/" + pid + "/" + dsId;
+        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
+        when(mockNode.getSession()).thenReturn(mockSession);
+
+
+        when(
+                mockDatastreams.createDatastreamNode(any(Session.class),
+                                                        eq(dsPath), anyString(), eq("xyz.jpg"), eq(dsContentStream),
+                                                        any(URI.class))).thenReturn(mockNode);
+        final Datastream mockDatastream = mock(Datastream.class);
+        when(mockDatastream.getNode()).thenReturn(mockNode);
+        when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
+        when(mockNode.getPath()).thenReturn(dsPath);
+        final Response actual =
+            testObj.createObject(createPathList(pid, dsId),
+                                    FEDORA_DATASTREAM, null, "inline; filename=\"xyz.jpg\"", APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
+                                    dsContentStream);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams)
+            .createDatastreamNode(any(Session.class), eq(dsPath),
+                                     anyString(), eq("xyz.jpg"), any(InputStream.class), any(URI.class));
+        verify(mockSession).save();
+    }
+
 
     @Test
     public void testDeleteObject() throws RepositoryException {
