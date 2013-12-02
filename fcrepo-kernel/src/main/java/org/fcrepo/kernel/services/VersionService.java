@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -57,6 +58,37 @@ public class VersionService extends RepositoryService {
      */
     public void checkpoint(final Session session, String absPath) throws RepositoryException {
         if (session.getNode(absPath).isNodeType(VERSIONABLE)) {
+            logger.trace("Setting checkpoint for {}", absPath);
+
+            String txId = TransactionService.getCurrentTransactionId(session);
+            if (txId != null) {
+                Transaction tx = txService.getTransaction(txId);
+                tx.addPathToVersion(absPath);
+            } else {
+                session.getWorkspace().getVersionManager().checkpoint(absPath);
+            }
+        } else {
+            logger.trace("No checkpoint set for unversionable {}", absPath);
+        }
+    }
+
+    /**
+     * Creates a version checkpoint for the given node if versioning is enabled
+     * for that node type.  When versioning is enabled this is the equivalent of
+     * VersionManager#checkpoint(node.getPath()), except that it is aware of
+     * TxSessions and queues these operations accordingly.
+     *
+     * @param node the node for whom a new version is
+     *                to be minted
+     * @throws RepositoryException
+     */
+    public void checkpoint(Node node) throws RepositoryException {
+        if (node == null) {
+            throw new RepositoryException("Cannot checkpoint null nodes");
+        }
+        Session session = node.getSession();
+        String absPath = node.getPath();
+        if (node.isNodeType(VERSIONABLE)) {
             logger.trace("Setting checkpoint for {}", absPath);
 
             String txId = TransactionService.getCurrentTransactionId(session);

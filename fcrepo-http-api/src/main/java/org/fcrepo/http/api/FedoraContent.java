@@ -150,7 +150,7 @@ public class FedoraContent extends AbstractResource {
                             uriInfo);
 
             session.save();
-            versionService.checkpoint(session, path);
+            versionService.checkpoint(datastreamNode);
             return created(
                     new URI(subjects.getGraphSubject(
                             datastreamNode.getNode(JCR_CONTENT)).getURI()))
