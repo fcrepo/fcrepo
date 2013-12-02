@@ -215,8 +215,8 @@ function updateFile()
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
 
-            if (xhr.status == 204) {
-                window.location = url;
+            if (xhr.status == 204 || xhr.status == 201) {
+                window.location.reload(true);
             } else {
                 ajaxErrorHandler(xhr, "", "Error creating datastream");
             }
