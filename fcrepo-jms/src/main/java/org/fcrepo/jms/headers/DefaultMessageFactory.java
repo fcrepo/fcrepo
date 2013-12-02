@@ -49,8 +49,8 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     @Override
     public Message getMessage(final Event jcrEvent, final Session jcrSession,
-            final javax.jms.Session jmsSession) throws RepositoryException,
-                                               IOException, JMSException {
+        final javax.jms.Session jmsSession) throws RepositoryException,
+        IOException, JMSException {
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
         message.setStringProperty(IDENTIFIER_HEADER_NAME, jcrEvent.getPath());
