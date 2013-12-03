@@ -17,10 +17,8 @@
 package org.fcrepo.transform.transformations;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -40,6 +38,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.Maps.transformValues;
 import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
 import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 
@@ -74,7 +74,7 @@ public class LDPathTransform implements Transformation  {
                                                        final String key)
         throws RepositoryException {
 
-        final Node programNode = node.getSession().getNode(LDPathTransform.CONFIGURATION_FOLDER + key);
+        final Node programNode = node.getSession().getNode(CONFIGURATION_FOLDER + key);
 
         final NodeType primaryNodeType = node.getPrimaryNodeType();
 
@@ -84,7 +84,7 @@ public class LDPathTransform implements Transformation  {
             Iterables.concat(ImmutableList.of(primaryNodeType),
                              ImmutableList.copyOf(supertypes));
 
-        for (NodeType nodeType : nodeTypes) {
+        for (final NodeType nodeType : nodeTypes) {
             if (programNode.hasNode(nodeType.toString())) {
                 return new LDPathTransform(programNode.getNode(nodeType.toString())
                                                .getNode("jcr:content")
@@ -120,7 +120,7 @@ public class LDPathTransform implements Transformation  {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(final Object other) {
         return other instanceof LDPathTransform &&
                    query.equals(((LDPathTransform)other).getQuery());
     }
@@ -137,7 +137,7 @@ public class LDPathTransform implements Transformation  {
 
         final GenericJenaBackend genericJenaBackend = new GenericJenaBackend(model);
 
-        LDPath<RDFNode> ldpath = new LDPath<RDFNode>(genericJenaBackend);
+        final LDPath<RDFNode> ldpath = new LDPath<RDFNode>(genericJenaBackend);
 
         return ldpath;
     }
@@ -148,30 +148,30 @@ public class LDPathTransform implements Transformation  {
      * @param collectionMap
      * @return
      */
-    private Map<String, Collection<Object>>
-    transformLdpathOutputToSomethingSerializable(Map<String, Collection<?>> collectionMap) {
+    private Map<String, Collection<Object>> transformLdpathOutputToSomethingSerializable(
+        final Map<String, Collection<?>> collectionMap) {
 
-        return Maps.transformValues(collectionMap,
-                                    WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
+        return transformValues(collectionMap,
+                WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
     }
 
     private static final Function<Collection<?>, Collection<Object>> WILDCARD_COLLECTION_TO_OBJECT_COLLECTION =
-            new Function<Collection<?>, Collection<Object>>() {
+        new Function<Collection<?>, Collection<Object>>() {
 
-                @Override
-                public Collection<Object> apply(Collection<?> input) {
-                    return Collections2.transform(input,
-                                                  ANYTHING_TO_OBJECT_FUNCTION);
-                }
-            };
+            @Override
+            public Collection<Object> apply(final Collection<?> input) {
+                return transform(input, ANYTHING_TO_OBJECT_FUNCTION);
+            }
+        };
 
 
-    private static final Function<Object,Object> ANYTHING_TO_OBJECT_FUNCTION =
-            new Function<Object, Object>() {
-                @Override
-                public Object apply(Object input) {
-                    return input;
-                }
-            };
+    private static final Function<Object, Object> ANYTHING_TO_OBJECT_FUNCTION =
+        new Function<Object, Object>() {
+
+            @Override
+            public Object apply(final Object input) {
+                return input;
+            }
+        };
 
 }

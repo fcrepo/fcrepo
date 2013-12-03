@@ -55,7 +55,7 @@ public class SparqlQueryTransform implements Transformation {
                 QueryFactory.create(IOUtils.toString(query));
 
             return QueryExecutionFactory.create(sparqlQuery, model);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -66,9 +66,9 @@ public class SparqlQueryTransform implements Transformation {
     }
 
     @Override
-    public boolean equals(Object other) {
-        return other instanceof SparqlQueryTransform &&
-                   query.equals(((SparqlQueryTransform)other).getQuery());
+    public boolean equals(final Object other) {
+        return other instanceof SparqlQueryTransform
+                && query.equals(((SparqlQueryTransform) other).getQuery());
     }
 
 }
