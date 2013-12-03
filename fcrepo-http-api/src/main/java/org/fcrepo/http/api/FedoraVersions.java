@@ -56,9 +56,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
- * Endpoint for retrieving previous versions of nodes
- *
- * @todo note that the versioning mechanics are not fully wired up yet
+ * Endpoint for managing versions of nodes
  */
 @Component
 @Scope("prototype")
@@ -98,7 +96,9 @@ public class FedoraVersions extends AbstractResource {
     }
 
     /**
-     * Create a new vesion checkpoint and tag it with the given label.
+     * Create a new version checkpoint and tag it with the given label.  If
+     * that label already describes another version it will silently be
+     * reassigned to describe this version.
      *
      * @param pathList
      * @param versionLabel
@@ -107,19 +107,31 @@ public class FedoraVersions extends AbstractResource {
      */
     @POST
     @Path("/{versionLabel}")
-    public Response addVersionLabel(@PathParam("path")
+    public Response addVersion(@PathParam("path")
             final List<PathSegment> pathList,
             @PathParam("versionLabel")
             final String versionLabel) throws RepositoryException {
+        return addVersion(toPath(pathList), versionLabel);
+    }
 
-        final String path = toPath(pathList);
+    /**
+     * Create a new version checkpoint with no label.
+     */
+    @POST
+    public Response addVersion(@PathParam("path")
+            final List<PathSegment> pathList) throws RepositoryException {
+        return addVersion(toPath(pathList), null);
+    }
+
+    private Response addVersion(String path, String label) throws RepositoryException {
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
             versionService.createVersion(session.getWorkspace(),
                     Collections.singleton(path));
-            resource.addVersionLabel(versionLabel);
-
+            if (label != null) {
+                resource.addVersionLabel(label);
+            }
             return noContent().build();
         } finally {
             session.logout();

@@ -79,6 +79,7 @@ public class VersionServiceTest {
         Property autoVersionProperty = mock(Property.class);
         Value autoVersionValue = mock(Value.class);
         when(autoVersionValue.getString()).thenReturn(VersionService.AUTO_VERSION);
+        when(autoVersionProperty.isMultiple()).thenReturn(true);
         when(autoVersionProperty.getValues()).thenReturn(new Value[] { autoVersionValue });
         when(autoversionedNode.hasProperty(VersionService.VERSION_POLICY)).thenReturn(true);
         when(autoversionedNode.getProperty(VersionService.VERSION_POLICY)).thenReturn(autoVersionProperty);

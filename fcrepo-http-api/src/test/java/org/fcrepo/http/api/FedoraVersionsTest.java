@@ -121,7 +121,7 @@ public class FedoraVersionsTest {
                 mockResource);
 
         final Response response =
-            testObj.addVersionLabel(createPathList(pid), versionLabel);
+            testObj.addVersion(createPathList(pid), versionLabel);
         verify(mockResource).addVersionLabel(anyString());
         verify(mockVersions).createVersion(any(Workspace.class), any(Collection.class));
         assertNotNull(response);

@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -46,7 +47,7 @@ public class VersionService extends RepositoryService {
 
     protected static final String VERSIONABLE = "mix:versionable";
 
-    protected static final String VERSION_POLICY = "fedora:versioning-policy";
+    protected static final String VERSION_POLICY = "fedora:versioningPolicy";
 
     protected static final String AUTO_VERSION = "auto-version";
 
@@ -93,10 +94,18 @@ public class VersionService extends RepositoryService {
         if (!n.hasProperty(VERSION_POLICY)) {
             return false;
         } else {
-            for (Value val : n.getProperty(VERSION_POLICY).getValues()) {
-                if (AUTO_VERSION.equals(val.getString())) {
-                    return true;
+            Property p = n.getProperty(VERSION_POLICY);
+            if (p == null) {
+                return false;
+            }
+            if (p.isMultiple()) {
+                for (Value val : p.getValues()) {
+                    if (AUTO_VERSION.equals(val.getString())) {
+                        return true;
+                    }
                 }
+            } else {
+                return (AUTO_VERSION.equals(p.getValue().getString()));
             }
             return false;
         }
