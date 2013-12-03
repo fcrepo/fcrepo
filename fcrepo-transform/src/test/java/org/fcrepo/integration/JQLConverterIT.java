@@ -65,6 +65,24 @@ public class JQLConverterIT {
     }
 
     @Test
+    public void testSimpleMixinRdfTypeFilter() throws RepositoryException {
+
+        final String sparql = "SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#datastream>}";
+        JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+        assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject FROM [fedora:resource] AS [fedoraResource_subject] INNER JOIN [fedora:datastream] AS [ref_type_fedora_datastream] ON ISSAMENODE([fedoraResource_subject],[ref_type_fedora_datastream],'.')", testObj.getStatement());
+
+    }
+
+    @Test
+    public void testSimplePropertyRdfTypeFilter() throws RepositoryException {
+
+        final String sparql = "SELECT ?subject WHERE { ?subject a <http://some/other/uri>}";
+        JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+        assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject FROM [fedora:resource] AS [fedoraResource_subject] WHERE [fedoraResource_subject].[rdf:type] = CAST('http://some/other/uri' AS URI)", testObj.getStatement());
+
+    }
+
+    @Test
     public void testDistinctFilterReturningJcrSubject() throws RepositoryException {
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT DISTINCT ?subject WHERE { ?subject dc:title \"xyz\"}";
         JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
