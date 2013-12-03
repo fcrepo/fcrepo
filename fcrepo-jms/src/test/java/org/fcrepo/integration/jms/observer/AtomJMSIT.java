@@ -51,12 +51,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({"/spring-test/jms.xml", "/spring-test/repo.xml",
+@ContextConfiguration({"/spring-test/atom-jms.xml", "/spring-test/repo.xml",
         "/spring-test/eventing.xml"})
+@DirtiesContext
 public class AtomJMSIT implements MessageListener {
 
     @Inject
