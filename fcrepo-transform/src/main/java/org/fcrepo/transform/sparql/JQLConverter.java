@@ -16,7 +16,8 @@
 
 package org.fcrepo.transform.sparql;
 
-import com.hp.hpl.jena.query.QueryFactory;
+import static com.hp.hpl.jena.query.QueryFactory.create;
+
 import com.hp.hpl.jena.query.ResultSet;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
@@ -45,7 +46,7 @@ public class JQLConverter {
      * @param sparqlQuery
      */
     public JQLConverter(final Session session, final GraphSubjects subjects, final String sparqlQuery ) {
-        this(session, subjects, QueryFactory.create(sparqlQuery));
+        this(session, subjects, create(sparqlQuery));
     }
 
     /**
@@ -68,7 +69,6 @@ public class JQLConverter {
      */
     public ResultSet execute() throws RepositoryException {
         final QueryResult queryResult = getQuery().execute();
-
         return new JQLResultSet(session, subjects, queryResult);
     }
 

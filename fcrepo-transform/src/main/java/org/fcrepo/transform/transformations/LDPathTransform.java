@@ -17,15 +17,11 @@
 package org.fcrepo.transform.transformations;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.apache.marmotta.ldpath.LDPath;
 import org.apache.marmotta.ldpath.backend.jena.GenericJenaBackend;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
@@ -40,6 +36,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.ImmutableList.of;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Maps.transformValues;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
 import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 
@@ -71,20 +73,18 @@ public class LDPathTransform implements Transformation  {
      * @throws RepositoryException
      */
     public static LDPathTransform getNodeTypeTransform(final Node node,
-                                                       final String key)
-        throws RepositoryException {
+        final String key) throws RepositoryException {
 
-        final Node programNode = node.getSession().getNode(LDPathTransform.CONFIGURATION_FOLDER + key);
+        final Node programNode = node.getSession().getNode(CONFIGURATION_FOLDER + key);
 
         final NodeType primaryNodeType = node.getPrimaryNodeType();
 
         final NodeType[] supertypes = primaryNodeType.getSupertypes();
 
         final Iterable<NodeType> nodeTypes =
-            Iterables.concat(ImmutableList.of(primaryNodeType),
-                             ImmutableList.copyOf(supertypes));
+            concat(of(primaryNodeType), copyOf(supertypes));
 
-        for (NodeType nodeType : nodeTypes) {
+        for (final NodeType nodeType : nodeTypes) {
             if (programNode.hasNode(nodeType.toString())) {
                 return new LDPathTransform(programNode.getNode(nodeType.toString())
                                                .getNode("jcr:content")
@@ -99,13 +99,15 @@ public class LDPathTransform implements Transformation  {
     @Override
     public List<Map<String, Collection<Object>>> apply(final Dataset dataset) {
         try {
-            final LDPath<RDFNode> ldpathForResource = getLdpathResource(dataset);
+            final LDPath<RDFNode> ldpathForResource =
+                getLdpathResource(dataset);
 
             final Resource context =
-                ResourceFactory.createResource(getDatasetSubject(dataset).getURI());
+                createResource(getDatasetSubject(dataset).getURI());
 
             final Map<String, Collection<?>> wildcardCollection =
-                ldpathForResource.programQuery(context, new InputStreamReader(query));
+                ldpathForResource.programQuery(context, new InputStreamReader(
+                        query));
 
             return ImmutableList.of(transformLdpathOutputToSomethingSerializable(wildcardCollection));
         } catch (LDPathParseException | RepositoryException e) {
@@ -113,14 +115,13 @@ public class LDPathTransform implements Transformation  {
         }
     }
 
-
     @Override
     public InputStream getQuery() {
         return query;
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(final Object other) {
         return other instanceof LDPathTransform &&
                    query.equals(((LDPathTransform)other).getQuery());
     }
@@ -137,7 +138,7 @@ public class LDPathTransform implements Transformation  {
 
         final GenericJenaBackend genericJenaBackend = new GenericJenaBackend(model);
 
-        LDPath<RDFNode> ldpath = new LDPath<RDFNode>(genericJenaBackend);
+        final LDPath<RDFNode> ldpath = new LDPath<RDFNode>(genericJenaBackend);
 
         return ldpath;
     }
@@ -148,30 +149,28 @@ public class LDPathTransform implements Transformation  {
      * @param collectionMap
      * @return
      */
-    private Map<String, Collection<Object>>
-    transformLdpathOutputToSomethingSerializable(Map<String, Collection<?>> collectionMap) {
+    private Map<String, Collection<Object>> transformLdpathOutputToSomethingSerializable(
+        final Map<String, Collection<?>> collectionMap) {
 
-        return Maps.transformValues(collectionMap,
-                                    WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
+        return transformValues(collectionMap,
+                WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
     }
 
     private static final Function<Collection<?>, Collection<Object>> WILDCARD_COLLECTION_TO_OBJECT_COLLECTION =
-            new Function<Collection<?>, Collection<Object>>() {
+        new Function<Collection<?>, Collection<Object>>() {
 
-                @Override
-                public Collection<Object> apply(Collection<?> input) {
-                    return Collections2.transform(input,
-                                                  ANYTHING_TO_OBJECT_FUNCTION);
-                }
-            };
+            @Override
+            public Collection<Object> apply(final Collection<?> input) {
+                return transform(input, ANYTHING_TO_OBJECT_FUNCTION);
+            }
+        };
 
+    private static final Function<Object, Object> ANYTHING_TO_OBJECT_FUNCTION =
+        new Function<Object, Object>() {
 
-    private static final Function<Object,Object> ANYTHING_TO_OBJECT_FUNCTION =
-            new Function<Object, Object>() {
-                @Override
-                public Object apply(Object input) {
-                    return input;
-                }
-            };
-
+            @Override
+            public Object apply(final Object input) {
+                return input;
+            }
+        };
 }

@@ -19,14 +19,12 @@ package org.fcrepo.transform.http;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.riot.WebContent;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.http.commons.responses.BaseHtmlProvider;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -63,10 +61,23 @@ import java.util.Properties;
 
 import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.ok;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
+import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
+import static org.apache.jena.riot.WebContent.contentTypeSSE;
+import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
+import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
+import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
 import static org.fcrepo.http.commons.responses.BaseHtmlProvider.templateFilenameExtension;
 import static org.fcrepo.http.commons.responses.BaseHtmlProvider.templatesLocation;
+import static org.fcrepo.http.commons.responses.BaseHtmlProvider.velocityPropertiesLocation;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -99,16 +110,18 @@ public class FedoraSparql extends AbstractResource {
 
         final Properties properties = new Properties();
         final URL propertiesUrl =
-            getClass().getResource(BaseHtmlProvider.velocityPropertiesLocation);
-        VelocityEngine velocity = new VelocityEngine();
+            getClass().getResource(velocityPropertiesLocation);
+        final VelocityEngine velocity = new VelocityEngine();
         LOGGER.debug("Using Velocity configuration from {}", propertiesUrl);
         try (final InputStream propertiesStream = propertiesUrl.openStream()) {
             properties.load(propertiesStream);
         }
         velocity.init(properties);
         final Template template =
-            velocity.getTemplate(templatesLocation + "/search-sparql" + templateFilenameExtension);
-        final org.apache.velocity.context.Context context = new VelocityContext();
+            velocity.getTemplate(templatesLocation + "/search-sparql"
+                    + templateFilenameExtension);
+        final org.apache.velocity.context.Context context =
+            new VelocityContext();
         context.put("uriInfo", uriInfo);
         context.put("model", new NamespaceRdfContext(session).asModel());
         context.put("helpers", ViewHelpers.getInstance());
@@ -123,7 +136,7 @@ public class FedoraSparql extends AbstractResource {
             }
         };
 
-        return Response.ok(stream).build();
+        return ok(stream).build();
     }
 
     /**
@@ -136,17 +149,13 @@ public class FedoraSparql extends AbstractResource {
      */
     @POST
     @Consumes({contentTypeSPARQLQuery})
-    @Produces({WebContent.contentTypeTextTSV,
-                  WebContent.contentTypeTextCSV, WebContent.contentTypeSSE,
-                  WebContent.contentTypeTextPlain,
-                  WebContent.contentTypeResultsJSON,
-                  WebContent.contentTypeResultsXML,
-                  WebContent.contentTypeResultsBIO,
-                  WebContent.contentTypeTurtle, WebContent.contentTypeN3,
-                  WebContent.contentTypeNTriples, WebContent.contentTypeRDFXML})
+    @Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeSSE,
+            contentTypeTextPlain, contentTypeResultsJSON,
+            contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
+            contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     public Response runSparqlQuery(final InputStream requestBodyStream,
-                                   @Context final Request request,
-                                   @Context final UriInfo uriInfo) throws IOException, RepositoryException {
+        @Context final Request request, @Context final UriInfo uriInfo)
+        throws IOException, RepositoryException {
 
         final GraphSubjects graphSubjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
@@ -163,11 +172,12 @@ public class FedoraSparql extends AbstractResource {
 
         final ResultSet resultSet = jqlConverter.execute();
 
-        ResultSetStreamingOutput streamingOutput = new ResultSetStreamingOutput(resultSet,
-                                                                                bestPossibleResponse.getMediaType());
+        final ResultSetStreamingOutput streamingOutput =
+            new ResultSetStreamingOutput(resultSet, bestPossibleResponse
+                    .getMediaType());
 
         addCallback(streamingOutput, new LogoutCallback(session));
 
-        return Response.ok(streamingOutput).build();
+        return ok(streamingOutput).build();
     }
 }

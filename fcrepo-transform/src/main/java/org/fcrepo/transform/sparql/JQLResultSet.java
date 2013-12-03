@@ -17,8 +17,6 @@
 package org.fcrepo.transform.sparql;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
@@ -41,6 +39,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.BOOLEAN;
@@ -64,9 +64,13 @@ public class JQLResultSet implements ResultSet {
     private final Logger logger = getLogger(JQLResultSet.class);
 
     private final RowIterator iterator;
+
     private Session session;
+
     private GraphSubjects subjects;
+
     private QueryResult queryResult;
+
     private int rowNumber = 0;
 
     /**
@@ -76,9 +80,8 @@ public class JQLResultSet implements ResultSet {
      * @param queryResult
      * @throws RepositoryException
      */
-    public JQLResultSet(final Session session,
-                        final GraphSubjects subjects,
-                        final QueryResult queryResult) throws RepositoryException {
+    public JQLResultSet(final Session session, final GraphSubjects subjects,
+        final QueryResult queryResult) throws RepositoryException {
         this.session = session;
         this.subjects = subjects;
 
@@ -131,8 +134,8 @@ public class JQLResultSet implements ResultSet {
     @Override
     public List<String> getResultVars() {
         try {
-            return ImmutableList.copyOf(queryResult.getColumnNames());
-        } catch (RepositoryException e) {
+            return copyOf(queryResult.getColumnNames());
+        } catch (final RepositoryException e) {
             throw propagate(e);
         }
     }
@@ -154,31 +157,31 @@ public class JQLResultSet implements ResultSet {
         }
 
         @Override
-        public RDFNode get(String varName) {
+        public RDFNode get(final String varName) {
             try {
                 return getRDFNode(row.getValue(varName));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 propagate(e);
             }
             return null;
         }
 
         @Override
-        public Resource getResource(String varName) {
+        public Resource getResource(final String varName) {
             return get(varName).asResource();
         }
 
         @Override
-        public Literal getLiteral(String varName) {
+        public Literal getLiteral(final String varName) {
             return get(varName).asLiteral();
         }
 
         @Override
-        public boolean contains(String varName) {
+        public boolean contains(final String varName) {
             try {
                 final Value value = row.getValue(varName);
                 return value != null;
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 return false;
             }
         }
@@ -190,7 +193,8 @@ public class JQLResultSet implements ResultSet {
 
         @Override
         public Iterator<Var> vars() {
-            return Iterators.transform(columns.iterator(), new Function<String, Var>() {
+            return transform(columns.iterator(), new Function<String, Var>() {
+
                 @Override
                 public Var apply(final String s) {
                     return Var.alloc(s);
@@ -199,12 +203,12 @@ public class JQLResultSet implements ResultSet {
         }
 
         @Override
-        public boolean contains(Var var) {
+        public boolean contains(final Var var) {
             return contains(var.getName());
         }
 
         @Override
-        public Node get(Var var) {
+        public Node get(final Var var) {
             return get(var.getName()).asNode();
         }
 
