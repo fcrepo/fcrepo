@@ -29,10 +29,14 @@ import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +105,36 @@ public class ViewHelpersTest {
         mem.add(createAnon(), createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(),
                 createLiteral("nt:file"));
         assertFalse("Node is not a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testGetLabeledVersion() {
+        final DatasetGraph mem = createMem();
+        String label = "testLabel";
+        mem.add(createAnon(), createURI("a/b/c"), HAS_VERSION_LABEL.asNode(),
+                createLiteral(label));
+        assertEquals("Version label should be available.", label, testObj.getVersionLabel(mem, createURI("a/b/c"), ""));
+    }
+
+    @Test
+    public void testGetUnlabeledVersion() {
+        final DatasetGraph mem = createMem();
+        assertEquals("Default version label should be used.", testObj.getVersionLabel(mem, createURI("a/b/c"), "default"), "default");
+    }
+
+    @Test
+    public void testGetVersionDate() {
+        final DatasetGraph mem = createMem();
+        String date = new Date().toString();
+        mem.add(createAnon(), createURI("a/b/c"), LAST_MODIFIED_DATE.asNode(),
+                createLiteral(date));
+        assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testGetMissingVersionDate() {
+        final DatasetGraph mem = createMem();
+        assertNull("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")));
     }
 
     @Test

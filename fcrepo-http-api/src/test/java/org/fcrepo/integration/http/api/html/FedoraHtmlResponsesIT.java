@@ -19,6 +19,8 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomAttr;
+import com.gargoylesoftware.htmlunit.html.DomText;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlFileInput;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -26,16 +28,24 @@ import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -76,9 +86,10 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     @Test
     public void testCreateNewNodeWithProvidedId() throws IOException, InterruptedException {
+        createAndVerifyObjectWithIdFromRootPage(randomUUID().toString());
+    }
 
-        final String pid = randomUUID().toString();
-
+    private HtmlPage createAndVerifyObjectWithIdFromRootPage(String pid) throws IOException {
         final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = form.getSelectByName("mixin");
@@ -93,10 +104,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         try {
             final HtmlPage page1 = webClient.getPage(serverAddress + pid);
             assertEquals("Page had wrong title!", serverAddress + pid, page1.getTitleText());
+            return page1;
         } catch (final FailingHttpStatusCodeException e) {
             fail("Did not successfully retrieve created page! Got HTTP code: " + e.getStatusCode());
+            return null;
         }
-
     }
 
     @Test
@@ -162,6 +174,75 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     public void testNodeTypes() throws IOException {
         final HtmlPage page = webClient.getPage(serverAddress + "fcr:nodetypes");
         assertTrue(page.asText().contains("fedora:object"));
+    }
+
+    /**
+     * This test walks through the steps for creating an object, setting some
+     * metadata, creating a version, updating that metadata, viewing the
+     * version history to find that old version.
+     */
+    @Test
+    public void testVersionCreationAndNavigation() throws IOException {
+        final String pid = randomUUID().toString();
+        createAndVerifyObjectWithIdFromRootPage(pid);
+
+        final String updateSparql = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+                "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#>\n" +
+                "\n" +
+                "INSERT DATA { <> fedora:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
+        postSparqlUpdateUsingHttpClient(updateSparql, pid);
+
+        final HtmlPage objectPage = webClient.getPage(serverAddress + pid);
+        assertEquals("Auto versioning should be set.", "auto-version", objectPage.getFirstByXPath("//span[@property='http://fedora.info/definitions/v4/rest-api#versioningPolicy']/text()").toString());
+        assertEquals("Title should be set.", "Object Title", objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()").toString());
+
+        final String updateSparql2 = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+                "\n" +
+                "DELETE { <> dc:title ?t }\n" +
+                "INSERT { <> dc:title \"Updated Title\" }" +
+                "WHERE { <> dc:title ?t }";
+        postSparqlUpdateUsingHttpClient(updateSparql2, pid);
+
+        final HtmlPage versions = webClient.getPage(serverAddress + pid + "/fcr:versions");
+        List<DomAttr> versionLinks = (List<DomAttr>) versions.getByXPath("//a[@class='version_link']/@href");
+        assertEquals("There should be two revisions.", 2, versionLinks.size());
+
+        final HtmlPage firstRevision = webClient.getPage(versionLinks.get(0).getNodeValue());
+        final List<DomText> v1Titles = (List<DomText>) firstRevision.getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()");
+        final HtmlPage secondRevision = webClient.getPage(versionLinks.get(1).getNodeValue());
+        final List<DomText> v2Titles = (List<DomText>) secondRevision.getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()");
+
+        assertEquals("Version one should have one title.", 1, v1Titles.size());
+        assertEquals("Version two should have one title.", 1, v2Titles.size());
+        assertNotEquals("Each version should have a different title.", v1Titles.get(0), v2Titles.get(0));
+        assertEquals("First version should be preserved.", "Object Title", v1Titles.get(0).getWholeText());
+        assertEquals("Second version should be preserved.", "Updated Title", v2Titles.get(0).getWholeText());
+    }
+
+    /**
+     * This doesn't work due to some incompatibility between HtmlUnit's
+     * "browser" and jquery 1.9.1.  Until that's corrected, or we change the
+     * javascript we use, consider using {@link
+     * #postSparqlUpdateUsingHttpClient(String, String)} instead.
+     */
+    private void postSparqlUpdateUsingHtml(String sparql, HtmlPage objectPage) throws IOException {
+        final HtmlForm form = (HtmlForm) objectPage.getElementById("action_sparql_update");
+        final HtmlTextArea sparql_update_query = (HtmlTextArea) objectPage.getElementById("sparql_update_query");
+        sparql_update_query.setText(sparql);
+        System.out.println(form.getFirstByXPath("button"));
+        final HtmlButton button = form.getFirstByXPath("button");
+        button.click();
+    }
+
+    private void postSparqlUpdateUsingHttpClient(String sparql, String pid) throws IOException {
+        final HttpPatch method = new HttpPatch(serverAddress + pid);
+        method.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        assertEquals("Expected successful response.", 204,
+                response.getStatusLine().getStatusCode());
     }
 
     @Test

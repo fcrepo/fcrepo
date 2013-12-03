@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+    #set( $title = $helpers.getObjectTitle($rdf, $topic) )
+
+    #parse("views/common.vsl")
+<html>
+<head>
+    <title>$title</title>
+    <meta charset="UTF-8">
+    #parse("views/common-head.vsl")
+</head>
+
+
+<body  class="nt_folder">
+  <div  id="main" class="container" resource="$topic.getURI()">
+    #parse("views/common-node-header.vsl")
+    <div class="col-md-12">
+      #parse("views/common-breadcrumb.vsl")
+    </div>
+    <div id="historic-versions">
+        <h2>Historic Versions</h2>
+        <div class="panel-group" id="accordion">
+            #foreach($subject in $model.listSubjects())
+                #if( $subject != $topic )
+                    #set($date = $helpers.getVersionDate($rdf, $subject.asNode()))
+                    #if ($date)
+                        <div class="panel panel-default" resource="$subject.getURI()">
+                            #set($label = $helpers.getVersionLabel($rdf, $subject.asNode(),"Version from $date"))
+                            <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
+                                <h3><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></h3>
+                            </div>
+                            <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
+                                <div class="panel-body">
+                                    #triples($subject.asNode())
+                                </div>
+                            </div>
+                        </div>
+                    #else
+                        <div class="panel panel-default" resource="$subject.getURI()">
+                            <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
+                                <h3><a href="$subject.getURI()" class="root_link">Root Version</a></h3>
+                            </div>
+                            <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
+                                <div class="panel-body">
+                                    #triples($subject.asNode())
+                                </div>
+                            </div>
+                        </div>
+                    #end
+                #end
+            #end
+        </div>
+
+  </div>
+</body>
+</html>

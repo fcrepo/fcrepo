@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -47,6 +48,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -78,7 +80,9 @@ public class FedoraVersions extends AbstractResource {
      * @throws RepositoryException
      */
     @GET
-    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
+    @HtmlTemplate(value = "fcr:versions")
+    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
+            TEXT_HTML})
     public RdfStream getVersionList(@PathParam("path")
             final List<PathSegment> pathList,
             @Context
@@ -92,7 +96,7 @@ public class FedoraVersions extends AbstractResource {
         final FedoraResource resource = nodeService.getObject(session, path);
 
         return resource.getVersionTriples(nodeTranslator()).session(session).topic(
-                translator().getGraphSubject(resource.getNode()).asNode());
+                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
     }
 
     /**
@@ -178,13 +182,6 @@ public class FedoraVersions extends AbstractResource {
      */
     protected GraphSubjects nodeTranslator() {
         return new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
-    }
-
-    /**
-     * A translator suitable for the fcr:versions subject.
-     */
-    protected GraphSubjects translator() {
-        return new HttpGraphSubjects(session, this.getClass(), uriInfo);
     }
 
 }
