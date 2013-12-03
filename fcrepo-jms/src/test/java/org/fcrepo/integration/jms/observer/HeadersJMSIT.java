@@ -26,9 +26,7 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashSet;
@@ -94,26 +92,30 @@ public class HeadersJMSIT implements MessageListener {
         final String expectedEventType =
             REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
         LOGGER.debug("Expecting a {} event", expectedEventType);
+        Boolean success = false;
 
         final Session session = repository.login();
-        final Node node = jcrTools.findOrCreateNode(session, pid);
-        node.addMixin(FEDORA_OBJECT);
-        session.save();
+        try {
+            final Node node = jcrTools.findOrCreateNode(session, pid);
+            node.addMixin(FEDORA_OBJECT);
+            session.save();
 
-        waitForEntry(1);
-        session.logout();
-
-        if (messages.isEmpty()) {
-            fail("Waited for " + TIMEOUT + ", got no messages");
-        }
-
-        Boolean success = false;
-        for (final Message message : messages) {
-            if (getIdentifier(message).equals(pid)) {
-                if (getEventType(message).equals(expectedEventType)) {
-                    success = true;
+            final Long start = currentTimeMillis();
+            synchronized (this) {
+                while ((currentTimeMillis() - start < TIMEOUT) && (!success)) {
+                    for (final Message message : messages) {
+                        if (getIdentifier(message).equals(pid)) {
+                            if (getEventType(message).equals(expectedEventType)) {
+                                success = true;
+                            }
+                        }
+                    }
+                    LOGGER.debug("Waiting for next message...");
+                    wait(1000);
                 }
             }
+        } finally {
+            session.logout();
         }
         assertTrue(
                 "Found no message with correct identifer and correct event type!",
@@ -128,30 +130,32 @@ public class HeadersJMSIT implements MessageListener {
         final String expectedEventType =
             REPOSITORY_NAMESPACE + EventType.valueOf(NODE_REMOVED).toString();
         LOGGER.debug("Expecting a {} event", expectedEventType);
-
-        final int minEntriesSize = 2;
-        final Session session = repository.login();
-        final Node node = jcrTools.findOrCreateNode(session, pid);
-        node.addMixin(FEDORA_OBJECT);
-        session.save();
-        node.remove();
-        session.save();
-        waitForEntry(minEntriesSize);
-        session.logout();
-
-        if (messages.isEmpty()) {
-            fail("Waited for " + TIMEOUT + ", got no messages");
-        }
-        assertEquals("Entries size not " + minEntriesSize, minEntriesSize,
-                messages.size());
-
         Boolean success = false;
-        for (final Message message : messages) {
-            if (getIdentifier(message).equals(pid)) {
-                if (getEventType(message).equals(expectedEventType)) {
-                    success = true;
+
+        final Session session = repository.login();
+        try {
+            final Node node = jcrTools.findOrCreateNode(session, pid);
+            node.addMixin(FEDORA_OBJECT);
+            session.save();
+            node.remove();
+            session.save();
+
+            final Long start = currentTimeMillis();
+            synchronized (this) {
+                while ((currentTimeMillis() - start < TIMEOUT) && (!success)) {
+                    for (final Message message : messages) {
+                        if (getIdentifier(message).equals(pid)) {
+                            if (getEventType(message).equals(expectedEventType)) {
+                                success = true;
+                            }
+                        }
+                    }
+                    LOGGER.debug("Waiting for next message...");
+                    wait(1000);
                 }
             }
+        } finally {
+            session.logout();
         }
         assertTrue(
                 "Found no message with correct identifer and correct event type!",
@@ -191,19 +195,6 @@ public class HeadersJMSIT implements MessageListener {
         consumer.close();
         session.close();
         connection.close();
-    }
-
-    private void waitForEntry(final int expectedNumOfMsgs)
-        throws InterruptedException {
-        // wait to recv event
-        final Long start = currentTimeMillis();
-        synchronized (this) {
-            while ((currentTimeMillis() - start < TIMEOUT)
-                    && (messages.size() < expectedNumOfMsgs)) {
-                LOGGER.debug("Waiting for next message...");
-                wait(1000);
-            }
-        }
     }
 
     private static String getIdentifier(final Message msg) throws JMSException {
