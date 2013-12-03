@@ -14,16 +14,21 @@ function addChild()
     }
 
     if (mixin == "fedora:datastream") {
-        var update_file = document.getElementById("datastream_payload").files[0];var reader = new FileReader();
+        var update_file = document.getElementById("datastream_payload").files[0];
+        var reader = new FileReader();
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
-                var loc = xhr.getResponseHeader('Location').replace("/fcr:content", "");
+                if (xhr.status == 201) {
+                    var loc = xhr.getResponseHeader('Location').replace("/fcr:content", "");
 
-                if (loc != null) {
-                    window.location = loc;
+                    if (loc != null) {
+                        window.location = loc;
+                    } else {
+                        window.location.reload();
+                    }
                 } else {
-                    window.location.reload();
+                    ajaxErrorHandler(xhr, "", "Error creating datastream");
                 }
             }
         }
@@ -47,7 +52,7 @@ function addChild()
     } else {
         $.post(postURI, function(data, textStatus, request) {
             window.location = request.getResponseHeader('Location');
-        });
+        }).fail( ajaxErrorHandler);
     }
 
     return false;
@@ -62,7 +67,12 @@ function sendImport() {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
-            window.location.reload();
+
+            if (xhr.status == 201) {
+                window.location.reload();
+            } else {
+                ajaxErrorHandler(xhr, "", "Error importing content");
+            }
         }
     }
 
@@ -112,7 +122,7 @@ function submitAndFollowLocation() {
 
     $.post(postURI, "some-data-to-make-chrome-happy", function(data, textStatus, request) {
         window.location = request.getResponseHeader('Location');
-    });
+    }).fail( ajaxErrorHandler);
 
     return false;
 }
@@ -125,7 +135,7 @@ function submitAndRedirectToBase() {
 
     $.post(postURI, "some-data-to-make-chrome-happy", function(data, textStatus, request) {
         window.location = $form.attr('data-redirect-after-submit');
-    });
+    }).fail( ajaxErrorHandler);
 
     return false;
 }
@@ -140,7 +150,7 @@ function registerNamespace() {
 
     $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: query, success: function(data, textStatus, request) {
         window.location.reload(true);
-    }});
+    }}).fail( ajaxErrorHandler);
 
     return false;
 }
@@ -192,7 +202,7 @@ function deleteItem()
 
     $.ajax({url: uri, type: "DELETE", success: function() {
         window.location = newURI;
-    }});
+    }}).fail( ajaxErrorHandler);
     return false;
 }
 
@@ -204,7 +214,12 @@ function updateFile()
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
-            window.location = url;
+
+            if (xhr.status == 204 || xhr.status == 201) {
+                window.location.reload(true);
+            } else {
+                ajaxErrorHandler(xhr, "", "Error creating datastream");
+            }
         }
     }
     xhr.open( "PUT", url );
