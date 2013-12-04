@@ -163,7 +163,7 @@ public class FedoraContent extends AbstractResource {
                             uriInfo);
 
             session.save();
-            versionService.nodeUpdated(session, path);
+            versionService.nodeUpdated(datastreamNode);
             return created(
                     new URI(subjects.getGraphSubject(
                             datastreamNode.getNode(JCR_CONTENT)).getURI()))
@@ -245,7 +245,7 @@ public class FedoraContent extends AbstractResource {
 
             final boolean isNew = datastreamNode.isNew();
             session.save();
-            versionService.nodeUpdated(session, path);
+            versionService.nodeUpdated(datastreamNode);
 
             if (isNew) {
                 final HttpGraphSubjects subjects =

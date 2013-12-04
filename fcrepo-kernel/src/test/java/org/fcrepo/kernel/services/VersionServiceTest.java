@@ -29,6 +29,8 @@ import javax.jcr.Value;
 import javax.jcr.Workspace;
 import javax.jcr.version.VersionManager;
 
+import static org.jgroups.util.Util.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.only;
@@ -50,6 +52,9 @@ public class VersionServiceTest {
     private Session s;
 
     @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
     private VersionManager mockVM;
 
     @Before
@@ -61,7 +66,7 @@ public class VersionServiceTest {
         txService.versionService = testObj;
 
         s = mock(Session.class);
-        final Workspace mockWorkspace = mock(Workspace.class);
+        mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getName()).thenReturn("default");
         when(s.getWorkspace()).thenReturn(mockWorkspace);
         mockVM = mock(VersionManager.class);
@@ -69,11 +74,15 @@ public class VersionServiceTest {
 
         // add a node that's versioned (but not auto-versioned)
         Node versionedNode = mock(Node.class);
+        when(versionedNode.getPath()).thenReturn("/example-versioned");
+        when(versionedNode.getSession()).thenReturn(s);
         when(versionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(true);
         when(s.getNode("/example-versioned")).thenReturn(versionedNode);
 
         // add a node that's autoversioned
         Node autoversionedNode = mock(Node.class);
+        when(autoversionedNode.getPath()).thenReturn("/example-auto-versioned");
+        when(autoversionedNode.getSession()).thenReturn(s);
         when(autoversionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(true);
         when(s.getNode("/example-auto-versioned")).thenReturn(autoversionedNode);
         Property autoVersionProperty = mock(Property.class);
@@ -87,6 +96,8 @@ public class VersionServiceTest {
 
         // add a node that's unversioned
         Node unversionedNode = mock(Node.class);
+        when(unversionedNode.getPath()).thenReturn("/example-unversioned");
+        when(unversionedNode.getSession()).thenReturn(s);
         when(unversionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(false);
         when(s.getNode("/example-unversioned")).thenReturn(unversionedNode);
     }
@@ -131,6 +142,12 @@ public class VersionServiceTest {
         // start a transaction
         Transaction t = txService.beginTransaction(s);
         s = t.getSession();
+        when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
+                .thenReturn(t.getId());
+
+        assertNotNull("Transaction must have started!",
+                txService.getTransaction(
+                        s.getNode("/example-auto-versioned").getSession()));
 
         // request a version be created
         testObj.nodeUpdated(s, "/example-versioned");
@@ -141,7 +158,7 @@ public class VersionServiceTest {
         // close the transaction
         txService.commit(t.getId());
 
-        // ensure that the version was made
+        // ensure that no version was made because none was explicitly requested
         verify(mockVM, never()).checkpoint("/example-versioned");
     }
 
@@ -150,6 +167,12 @@ public class VersionServiceTest {
         // start a transaction
         Transaction t = txService.beginTransaction(s);
         s = t.getSession();
+        when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
+                .thenReturn(t.getId());
+
+        assertNotNull("Transaction must have started!",
+                txService.getTransaction(
+                        s.getNode("/example-auto-versioned").getSession()));
 
         // request a version be created
         testObj.nodeUpdated(s, "/example-unversioned");
@@ -160,7 +183,7 @@ public class VersionServiceTest {
         // close the transaction
         txService.commit(t.getId());
 
-        // ensure that the version was made
+        // ensure that no version was made (because versioning is off)
         verify(mockVM, never()).checkpoint("/example-unversioned");
     }
 
@@ -169,6 +192,12 @@ public class VersionServiceTest {
         // start a transaction
         Transaction t = txService.beginTransaction(s);
         s = t.getSession();
+        when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
+                .thenReturn(t.getId());
+
+        assertNotNull("Transaction must have started!",
+                txService.getTransaction(
+                        s.getNode("/example-auto-versioned").getSession()));
 
         // request a version be created
         testObj.nodeUpdated(s, "/example-auto-versioned");

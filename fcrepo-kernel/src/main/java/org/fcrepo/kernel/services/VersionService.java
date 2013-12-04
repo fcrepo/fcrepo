@@ -57,19 +57,31 @@ public class VersionService extends RepositoryService {
     /**
      * Notifies the version manager that the node at a given path was updated
      * so that if automatic versioning is set for that node, a version
-     * checkpoint will be made.
+     * checkpoint will be made.  When a node object is available, use of
+     * {@link #nodeUpdated(javax.jcr.Node)} will save the overhead of a
+     * redundant node lookup.
      * @param session
      * @param absPath the absolute path to the node that was created or
      *                modified
      * @throws RepositoryException
      */
     public void nodeUpdated(final Session session, String absPath) throws RepositoryException {
-        Node n = session.getNode(absPath);
+        nodeUpdated(session.getNode(absPath));
+    }
+
+    /**
+     * Notifies the version manager that the given node was updated
+     * so that if automatic versioning is set for that node, a version
+     * checkpoint will be made.
+     * @param n the node that was updated
+     * @throws RepositoryException
+     */
+    public void nodeUpdated(Node n) throws RepositoryException {
         if (isVersioningEnabled(n)
                 && isImplicitVersioningEnabled(n)) {
-            queueOrCommitCheckpoint(session, absPath);
+            queueOrCommitCheckpoint(n.getSession(), n.getPath());
         } else {
-            logger.trace("No implicit version checkpoint set for {}", absPath);
+            logger.trace("No implicit version checkpoint set for {}", n.getPath());
         }
     }
 
@@ -80,17 +92,17 @@ public class VersionService extends RepositoryService {
      * @throws RepositoryException
      */
     public void createVersion(final Workspace workspace,
-            Collection<String> paths) throws RepositoryException {
+            final Collection<String> paths) throws RepositoryException {
         for (String absPath : paths) {
             checkpoint(workspace, absPath);
         }
     }
 
-    private boolean isVersioningEnabled(Node n) throws RepositoryException {
+    private boolean isVersioningEnabled(final Node n) throws RepositoryException {
         return n.isNodeType(VERSIONABLE);
     }
 
-    private boolean isImplicitVersioningEnabled(Node n) throws RepositoryException {
+    private boolean isImplicitVersioningEnabled(final Node n) throws RepositoryException {
         if (!n.hasProperty(VERSION_POLICY)) {
             return false;
         } else {

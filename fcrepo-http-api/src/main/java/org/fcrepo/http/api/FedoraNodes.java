@@ -283,7 +283,7 @@ public class FedoraNodes extends AbstractResource {
                 }
 
                 session.save();
-                versionService.nodeUpdated(session, path);
+                versionService.nodeUpdated(resource.getNode());
 
                 return status(SC_NO_CONTENT).build();
             } else {
@@ -355,7 +355,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             session.save();
-            versionService.nodeUpdated(session, path);
+            versionService.nodeUpdated(resource.getNode());
 
             return status(SC_NO_CONTENT).build();
         } finally {
@@ -501,7 +501,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             session.save();
-            versionService.nodeUpdated(session, newObjectPath);
+            versionService.nodeUpdated(result.getNode());
 
             logger.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 

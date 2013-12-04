@@ -109,7 +109,7 @@ public class FedoraDatastreams extends AbstractResource {
 
         final String path = toPath(pathList);
         try {
-            Set<String> pathsChanged = new HashSet<String>();
+            Set<Node> nodesChanged = new HashSet<Node>();
             for (final String dsid : dsidList) {
                 logger.debug("Purging datastream: " + dsid);
                 String dsPath = path + "/" + dsid;
@@ -131,15 +131,15 @@ public class FedoraDatastreams extends AbstractResource {
                 } else if (obj instanceof InputStream) {
                     src = (InputStream) obj;
                 }
-                datastreamService.createDatastreamNode(session, dsPath, part
-                        .getMediaType().toString(), null, src);
-                pathsChanged.add(dsPath);
+                nodesChanged.add(datastreamService.createDatastreamNode(
+                        session, dsPath, part.getMediaType().toString(), null,
+                        src));
             }
 
             session.save();
             versionService.nodeUpdated(session, path);
-            for (String dsPath : pathsChanged) {
-                versionService.nodeUpdated(session, dsPath);
+            for (Node n : nodesChanged) {
+                versionService.nodeUpdated(n);
             }
 
             final HttpGraphSubjects subjects =
