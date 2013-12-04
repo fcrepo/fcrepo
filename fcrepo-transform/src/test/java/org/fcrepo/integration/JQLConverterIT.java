@@ -191,19 +191,20 @@ public class JQLConverterIT {
 
 
     @Test
-    public void testIt() throws RepositoryException {
+    public void testComplexQuery() throws RepositoryException {
+
         String sparql = "PREFIX  ns:  <http://libraries.ucsd.edu/ark:/20775/>"
                             + " SELECT DISTINCT ?subject ?object WHERE  {?subject ns:bb2765355h 'bf2765355h' . ?subject ns:bb3652744n ?object . FILTER regex(?object, \"r\", \"i\") .FILTER (?object >= 'abc' && ?object < 'efg' || !(?object = 'efg')) } " +
                             " ORDER BY DESC(?subject) ?object LIMIT 10 OFFSET 20";
 
         JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
 
-        final String expectedNs1 = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20";
-        final String expectedNs2 = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns002:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns002:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns002:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns002:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns002:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns002:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns002:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns002:bb3652744n] ASC LIMIT 10 OFFSET 20";
+        final String statement = testObj.getStatement();
 
-        final String stmt = testObj.getStatement();
-        if (!expectedNs1.equals(stmt) && !expectedNs2.equals(stmt)) {
-            assertEquals(expectedNs1, testObj.getStatement());
-        }
+        final String namespacePrefix = session.getNamespacePrefix("http://libraries.ucsd.edu/ark:/20775/");
+
+        final String expectedQuery = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20";
+
+        assertEquals(expectedQuery.replaceAll("ns001", namespacePrefix), statement);
     }
 }
