@@ -38,6 +38,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 public class FedoraHtmlResponsesIT extends AbstractResourceIT {
@@ -179,6 +180,35 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final HtmlPage page1 = webClient.getPage(serverAddress + pid);
         assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
+    }
+
+    @Test
+    public void testCreateNewNamespace() throws IOException {
+        final HtmlPage page1 = webClient.getPage(serverAddress + "fcr:namespaces");
+        final HtmlForm form = (HtmlForm) page1.getElementById("action_register_namespace");
+        final HtmlInput prefix = form.getInputByName("prefix");
+        final HtmlInput uri = form.getInputByName("uri");
+        final String prefix_value = "asdf";
+        final String uri_value = "http://example.com/asdf";
+
+        // Doesn't have namespace defined.
+        assertFalse("Prefix is not already defined", page1.asText().contains(prefix_value));
+        assertFalse("URI is not already defined", page1.asText().contains(uri_value));
+
+        prefix.setValueAttribute(prefix_value);
+        uri.setValueAttribute(uri_value);
+
+        final HtmlButton button = form.getFirstByXPath("button");
+        button.click();
+
+        final HtmlPage page2 = webClient.getPage(serverAddress + "fcr:namespaces");
+
+        webClient.waitForBackgroundJavaScript(1000);
+        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
+
+        // Has namespace defined.
+        assertTrue("New prefix was found", page2.asText().contains(prefix_value));
+        assertTrue("New uri was found", page2.asText().contains(uri_value));
     }
 
     private void checkForHeaderSearch(final HtmlPage page) {
