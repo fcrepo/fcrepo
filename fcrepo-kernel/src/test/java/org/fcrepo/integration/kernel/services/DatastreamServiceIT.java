@@ -16,6 +16,7 @@
 
 package org.fcrepo.integration.kernel.services;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.PREMIS_FILE_NAME;
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
 import static org.junit.Assert.assertNotEquals;
@@ -56,7 +57,7 @@ public class DatastreamServiceIT extends AbstractIT {
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
         datastreamService.createDatastreamNode(session, "/testDatastreamNode",
-                "application/octet-stream", new ByteArrayInputStream("asdf"
+                "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()));
         session.save();
         session.logout();
@@ -69,13 +70,28 @@ public class DatastreamServiceIT extends AbstractIT {
     }
 
     @Test
+    public void testCreateDatastreamNodeWithfilename() throws Exception {
+        Session session = repository.login();
+        datastreamService.createDatastreamNode(session, "/testDatastreamNode",
+                                                  "application/octet-stream", "xyz.jpg", new ByteArrayInputStream("asdf"
+                                                                                                           .getBytes()));
+        session.save();
+        session.logout();
+        session = repository.login();
+
+        assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
+        assertEquals("xyz.jpg", session.getNode("/testDatastreamNode").getNode(JCR_CONTENT).getProperty(PREMIS_FILE_NAME).getString());
+        session.logout();
+    }
+
+    @Test
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
         objectService.createObject(session, "/testDatastreamServiceObject");
         datastreamService.createDatastreamNode(session,
                 "/testDatastreamServiceObject/" + "testDatastreamNode",
-                "application/octet-stream", is);
+                "application/octet-stream", null, is);
 
         session.save();
         session.logout();
@@ -94,7 +110,7 @@ public class DatastreamServiceIT extends AbstractIT {
         objectService.createObject(session, "/testLLObject");
         datastreamService.createDatastreamNode(session,
                 "/testLLObject/testRepositoryContent",
-                "application/octet-stream", new ByteArrayInputStream(
+                "application/octet-stream", null, new ByteArrayInputStream(
                         "0123456789".getBytes()));
 
         session.save();

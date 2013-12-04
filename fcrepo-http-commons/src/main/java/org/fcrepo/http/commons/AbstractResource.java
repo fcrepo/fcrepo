@@ -223,7 +223,7 @@ public abstract class AbstractResource {
 
                 final Node node =
                         datastreamService.createDatastreamNode(session, path,
-                                contentType.toString(), requestBodyStream,
+                                contentType.toString(), null, requestBodyStream,
                                 checksum);
                 result = new Datastream(node);
                 break;

@@ -135,6 +135,27 @@ public class DatastreamTest implements FedoraJcrTypes {
         testObj.setContent(mockStream);
     }
 
+    @Test
+    public void testSetContentWithFilename() throws RepositoryException,
+                                            InvalidChecksumException {
+        final org.modeshape.jcr.api.Binary mockBin =
+            mock(org.modeshape.jcr.api.Binary.class);
+        final InputStream mockStream = mock(InputStream.class);
+        final Node mockContent = getContentNodeMock(8);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockDsNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+            .thenReturn(mockBin);
+        final Property mockData = mock(Property.class);
+        when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
+        when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockData.getBinary()).thenReturn(mockBin);
+        testObj.setContent(mockStream, null, null, "xyz", null);
+        verify(mockContent).setProperty(PREMIS_FILE_NAME, "xyz");
+    }
+
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch()
         throws RepositoryException, InvalidChecksumException,
@@ -153,7 +174,7 @@ public class DatastreamTest implements FedoraJcrTypes {
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
-        testObj.setContent(mockStream, null, new URI("urn:sha1:xyz"), null);
+        testObj.setContent(mockStream, null, new URI("urn:sha1:xyz"), null, null);
     }
 
     @Test

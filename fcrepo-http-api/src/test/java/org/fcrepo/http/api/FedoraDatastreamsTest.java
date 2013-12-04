@@ -138,10 +138,10 @@ public class FedoraDatastreamsTest {
                     dsId2), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq("/" + pid + "/" + dsId1), anyString(),
+                eq("/" + pid + "/" + dsId1), anyString(), eq((String)null),
                 any(InputStream.class));
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq("/" + pid + "/" + dsId2), anyString(),
+                eq("/" + pid + "/" + dsId2), anyString(), eq((String)null),
                 any(InputStream.class));
         verify(mockSession).save();
     }

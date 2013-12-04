@@ -132,7 +132,7 @@ public class FedoraDatastreams extends AbstractResource {
                     src = (InputStream) obj;
                 }
                 datastreamService.createDatastreamNode(session, dsPath, part
-                        .getMediaType().toString(), src);
+                        .getMediaType().toString(), null, src);
                 pathsChanged.add(dsPath);
             }
 

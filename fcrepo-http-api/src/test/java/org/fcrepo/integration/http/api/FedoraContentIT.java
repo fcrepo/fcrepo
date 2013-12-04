@@ -16,6 +16,7 @@
 
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.TimeZone.getTimeZone;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
@@ -24,6 +25,12 @@ import static org.junit.Assert.assertTrue;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.sun.jersey.core.header.ContentDisposition;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -83,6 +90,33 @@ public class FedoraContentIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutDatastreamWithContentDisposition() throws Exception {
+
+        final String pid = randomUUID().toString();
+
+        final HttpPost objMethod = postObjMethod(pid);
+        assertEquals(201, getStatus(objMethod));
+        final HttpPut method =
+            putDSMethod(pid, "zxc", "foo");
+        method.addHeader("Content-Disposition", "inline; filename=\"some-name\"");
+        final HttpResponse response = client.execute(method);
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals(201, response.getStatusLine().getStatusCode());
+
+        final HttpGet getObjMethod = new HttpGet(serverAddress + pid + "/zxc");
+        final GraphStore results = getGraphStore(getObjMethod);
+        assertTrue("Didn't find original name!",
+                      results.contains(Node.ANY, NodeFactory.createURI(location), NodeFactory.createURI("http://www.loc.gov/premis/rdf/v1#hasOriginalName"), NodeFactory.createLiteral("some-name")));
+
+        final HttpGet getContentMethod = new HttpGet(location);
+        final HttpResponse contentResponse = client.execute(getContentMethod);
+
+        final ContentDisposition contentDisposition = new ContentDisposition(contentResponse.getFirstHeader("Content-Disposition").getValue());
+
+        assertEquals("some-name", contentDisposition.getFileName());
+    }
+
+    @Test
     public void testMutateDatastream() throws Exception {
         final HttpPost createObjectMethod =
                 postObjMethod("FedoraDatastreamsTest3");
@@ -133,6 +167,11 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
                 response.getFirstHeader("ETag").getValue().replace("\"", ""));
+
+        final ContentDisposition contentDisposition = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+
+        assertEquals("attachment", contentDisposition.getType());
+        assertEquals("ds1", contentDisposition.getFileName());
 
         logger.debug("Content was correct.");
     }
