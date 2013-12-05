@@ -18,6 +18,8 @@ package org.fcrepo.http.commons.responses;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -79,6 +81,43 @@ public class ViewHelpers {
     public Iterator<Quad> getObjects(final DatasetGraph dataset,
         final Node subject, final Resource predicate) {
         return dataset.find(ANY, subject, predicate.asNode(), ANY);
+    }
+
+    /**
+     * Gets a version label of a subject from the graph
+     *
+     * @param dataset
+     * @param subject
+     * @param defaultValue a value to be returned if no label is present in the
+     *                     graph
+     * @return the label of the version if one has been provided; otherwise
+     * the default is returned
+     */
+    public String getVersionLabel(final DatasetGraph dataset,
+                                 final Node subject, String defaultValue) {
+        final Iterator<Quad> objects = getObjects(dataset, subject,
+                HAS_VERSION_LABEL);
+        if (objects.hasNext()) {
+            return objects.next().getObject().getLiteralValue().toString();
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Gets a modification date of a subject from the graph
+     *
+     * @param dataset
+     * @param subject
+     * @return the modification date or null if none exists
+     */
+    public String getVersionDate(final DatasetGraph dataset,
+                                 final Node subject) {
+        final Iterator<Quad>  objects = getObjects(dataset, subject,
+                LAST_MODIFIED_DATE);
+        if (objects.hasNext()) {
+            return objects.next().getObject().getLiteralValue().toString();
+        }
+        return null;
     }
 
     /**
