@@ -6,9 +6,14 @@
 
             #set ($last_quad = false)
             #foreach($quad in $helpers.getSortedTriples($model, $rdf.find($nodeany, $sub, $nodeany, $nodeany)))
+                #if( $rdfLexicon.isManagedPredicateURI.apply($quad.getPredicate().toString()) )
+                  #set ($prop_status = ' class="text-info" title="managed predicate"')
+                #else
+                  #set ($prop_status = "")
+                #end
 
                 #if($last_quad == false || !$last_quad.getPredicate().equals($quad.getPredicate()))
-                    <dt>
+                    <dt$prop_status>
                         #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($quad.getPredicate().getNameSpace()))
                         <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), false)</span>
                         #else
