@@ -11,3 +11,4 @@ ObjectStore/
 .cache
 .DS_Store
 *~
+fcrepo4-data/

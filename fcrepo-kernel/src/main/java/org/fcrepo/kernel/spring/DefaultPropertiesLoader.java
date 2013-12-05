@@ -33,7 +33,7 @@ public class DefaultPropertiesLoader {
     private static final Logger LOGGER = getLogger(DefaultPropertiesLoader.class);
 
     final private static String SEP = getProperty("file.separator");
-    final private static String BASEDIR = getProperty("java.io.tmpdir") + SEP
+    final private static String BASEDIR = getProperty("user.dir") + SEP
             + "fcrepo4-data" + SEP;
 
     /**
