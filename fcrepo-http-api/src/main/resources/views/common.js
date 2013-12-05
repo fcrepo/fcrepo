@@ -145,7 +145,7 @@ function registerNamespace() {
     var postURI = $('#main').attr('resource');
 
 
-    var query = "INSERT { <" + $('#namespace_uri').val() + "> <http://fedora.info/definitions/v4/repository#hasNamespace> \"" + $('#namespace_prefix').val() + "\"} WHERE {}";
+    var query = "INSERT { <" + $('#namespace_uri').val() + "> <http://purl.org/vocab/vann/preferredNamespacePrefix> \"" + $('#namespace_prefix').val() + "\"} WHERE {}";
 
 
     $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: query, success: function(data, textStatus, request) {
