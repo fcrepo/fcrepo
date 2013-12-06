@@ -16,7 +16,7 @@
 
 package org.fcrepo.kernel.observer;
 
-import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.observer.SimpleObserver.EVENT_TYPES;
 import static javax.jcr.observation.Event.NODE_ADDED;
@@ -48,6 +48,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.EventBus;
 
@@ -58,6 +59,7 @@ public class SimpleObserverTest {
 
     private SimpleObserver testObj;
 
+    @Mock
     ObservationManager mockOM;
 
     @Mock
@@ -73,21 +75,24 @@ public class SimpleObserverTest {
     EventBus mockBus;
 
     @Mock
-    EventFilter mockFilter;
+    EventFilter mockFilterFactory;
+
+    @Mock
+    Function<Event, Event> mockFilter;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
+        when(mockWS.getObservationManager()).thenReturn(mockOM);
+        when(mockSession.getWorkspace()).thenReturn(mockWS);
+        when(mockRepository.login()).thenReturn(mockSession);
+        when(mockFilterFactory.getFilter(mockSession)).thenReturn(mockFilter);
         testObj = new SimpleObserver();
+        setField("repository", testObj, mockRepository);
     }
 
     @Test
     public void testBuildListener() throws Exception {
-        mockOM = mock(ObservationManager.class);
-        when(mockWS.getObservationManager()).thenReturn(mockOM);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockRepository.login()).thenReturn(mockSession);
-        setField("repository", testObj, mockRepository);
         testObj.buildListener();
         verify(mockOM).addEventListener(testObj, EVENT_TYPES, "/", true, null,
                 null, false);
@@ -97,7 +102,7 @@ public class SimpleObserverTest {
     @Test
     public void testOnEvent() throws Exception {
         setField("eventBus", testObj, mockBus);
-        setField("eventFilter", testObj, mockFilter);
+        setField("eventFilter", testObj, mockFilterFactory);
         setField("session", testObj, mockSession);
         final Event mockEvent = mock(Event.class);
         when(mockEvent.getPath()).thenReturn("/foo/bar");
@@ -108,7 +113,7 @@ public class SimpleObserverTest {
         final EventIterator mockEvents = mock(EventIterator.class);
         final List<Event> iterable = asList(new Event[] {mockEvent});
         mockStatic(Iterables.class);
-        when(filter(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
+        when(transform(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
         testObj.onEvent(mockEvents);
         verify(mockBus).post(any(Event.class));
     }
@@ -117,11 +122,11 @@ public class SimpleObserverTest {
     @Test
     public void testOnEventAllFiltered() throws Exception {
         setField("eventBus", testObj, mockBus);
-        setField("eventFilter", testObj, mockFilter);
+        setField("eventFilter", testObj, mockFilterFactory);
         final EventIterator mockEvents = mock(EventIterator.class);
         final List<Event> iterable = asList(new Event[0]);
         mockStatic(Iterables.class);
-        when(filter(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
+        when(transform(any(Iterable.class), eq(mockFilter))).thenReturn(iterable);
         testObj.onEvent(mockEvents);
         verify(mockBus, never()).post(any(Event.class));
     }

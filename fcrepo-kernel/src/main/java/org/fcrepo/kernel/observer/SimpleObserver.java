@@ -17,7 +17,7 @@ package org.fcrepo.kernel.observer;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
@@ -63,7 +63,7 @@ public class SimpleObserver implements EventListener {
      */
     static final Counter EVENT_COUNTER = getMetrics().counter(
             name(
-            SimpleObserver.class, "onEvent"));
+                    SimpleObserver.class, "onEvent"));
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
             PROPERTY_ADDED + PROPERTY_CHANGED + PROPERTY_REMOVED;
@@ -113,41 +113,49 @@ public class SimpleObserver implements EventListener {
         // size to minimize resizing.
         final Set<String> posted = new HashSet<String>((int)events.getSize() * 2 / 3);
 
-        // post non-duplicate events approved by the filter
-        for (final Event e : filter(new EventIterator(events), eventFilter)) {
-            try {
-                String nPath = e.getPath();
-                int nType = e.getType();
-                // is jump table faster than two bitwise comparisons?
-                switch(nType) {
-                    case NODE_ADDED:
-                        break;
-                    case NODE_REMOVED:
-                        break;
-                    case PROPERTY_ADDED:
-                        nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                        break;
-                    case PROPERTY_REMOVED:
-                        nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                        break;
-                    case PROPERTY_CHANGED:
-                        nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                        break;
-                    case NODE_MOVED:
-                        break;
-                    default:
-                        nPath = null;
+        Session lookupSession = null;
+        try {
+            // post non-duplicate events approved by the filter
+            lookupSession = repository.login();
+            for (final Event e : transform(new EventIterator(events), eventFilter.getFilter(lookupSession))) {
+                if (e != null) {
+                    String nPath = e.getPath();
+                    int nType = e.getType();
+                    // is jump table faster than two bitwise comparisons?
+                    switch(nType) {
+                        case NODE_ADDED:
+                            break;
+                        case NODE_REMOVED:
+                            break;
+                        case PROPERTY_ADDED:
+                            nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                            break;
+                        case PROPERTY_REMOVED:
+                            nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                            break;
+                        case PROPERTY_CHANGED:
+                            nPath = nPath.substring(0, nPath.lastIndexOf('/'));
+                            break;
+                        case NODE_MOVED:
+                            break;
+                        default:
+                            nPath = null;
+                    }
+                    if ( nPath != null && !posted.contains(nPath) ) {
+                        EVENT_COUNTER.inc();
+                        LOGGER.debug("Putting event: {} ({}) on the bus", nPath, nType);
+                        eventBus.post(e);
+                        posted.add(nPath);
+                    } else {
+                        LOGGER.debug("Skipping event: {} ({}) on the bus", nPath, nType);
+                    }
                 }
-                if ( nPath != null && !posted.contains(nPath) ) {
-                    EVENT_COUNTER.inc();
-                    LOGGER.debug("Putting event: {} ({}) on the bus", nPath, nType);
-                    eventBus.post(new FedoraEvent(e));
-                    posted.add(nPath);
-                } else {
-                    LOGGER.debug("Skipping event: {} ({}) on the bus", nPath, nType);
-                }
-            } catch ( RepositoryException ex ) {
-                throw propagate(ex);
+            }
+        } catch ( RepositoryException ex ) {
+            throw propagate(ex);
+        } finally {
+            if (lookupSession != null) {
+                lookupSession.logout();
             }
         }
     }

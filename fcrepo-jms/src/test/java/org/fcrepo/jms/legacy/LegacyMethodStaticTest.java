@@ -91,25 +91,20 @@ public class LegacyMethodStaticTest {
         String testName = "test:nodeName";
         long testDate = new Date().getTime();
         String testXSDDate = FedoraTypesUtils.convertDateToXSDString(testDate);
-        Node mockNode = mock(Node.class);
         Event mockEvent = mock(Event.class);
+        when(mockEvent.getPath()).thenReturn(testName);
         when(mockEvent.getDate()).thenReturn(testDate);
         when(mockEvent.getType()).thenReturn(NODE_ADDED);
-        when(mockNode.getName()).thenReturn(testName);
-        assertEquals(testName, LegacyMethod.getReturnValue(mockEvent, mockNode));
+        assertEquals(testName, LegacyMethod.getReturnValue(mockEvent));
         when(mockEvent.getType()).thenReturn(NODE_REMOVED);
-        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent,
-                mockNode));
+        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent));
         when(mockEvent.getType()).thenReturn(PROPERTY_ADDED);
-        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent,
-                mockNode));
+        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent));
         when(mockEvent.getType()).thenReturn(PROPERTY_CHANGED);
-        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent,
-                mockNode));
+        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent));
         when(mockEvent.getType()).thenReturn(PROPERTY_REMOVED);
-        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent,
-                mockNode));
+        assertEquals(testXSDDate, LegacyMethod.getReturnValue(mockEvent));
         when(mockEvent.getType()).thenReturn(Integer.MAX_VALUE);
-        assertEquals(null, LegacyMethod.getReturnValue(mockEvent, mockNode));
+        assertEquals(null, LegacyMethod.getReturnValue(mockEvent));
     }
 }

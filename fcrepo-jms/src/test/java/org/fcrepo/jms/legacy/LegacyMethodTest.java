@@ -29,12 +29,11 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
 import org.apache.abdera.model.Category;
@@ -42,6 +41,7 @@ import org.apache.abdera.model.Entry;
 import org.apache.abdera.model.Person;
 import org.apache.abdera.model.Text;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,8 +61,6 @@ public class LegacyMethodTest {
 
     private Event mockEvent;
 
-    private Node mockSource;
-
     private Category mockPidCategory;
 
     private Category mockDsidCategory;
@@ -75,18 +73,16 @@ public class LegacyMethodTest {
     public void setUp() throws RepositoryException {
         // set up the supporting mocks for the constructor
         mockEvent = mock(Event.class);
-        Node mockParent = mock(Node.class);
-        when(mockParent.getName()).thenReturn(SOURCE_PID);
-        mockSource = mock(Node.class);
-        when(mockSource.getName()).thenReturn(SOURCE_DSID);
-        when(mockSource.getParent()).thenReturn(mockParent);
-        NodeType mockDSType = mock(NodeType.class);
-        when(mockDSType.getName()).thenReturn(FedoraJcrTypes.FEDORA_DATASTREAM);
-        NodeType[] mockTypes = new NodeType[] {mockDSType};
-        when(mockSource.getMixinNodeTypes()).thenReturn(mockTypes);
+        when(mockEvent.getType()).thenReturn(javax.jcr.observation.Event.NODE_ADDED);
+        when(mockEvent.getPath()).thenReturn("/" + SOURCE_PID + "/" + SOURCE_DSID);
+        when(mockEvent.getInfo()).thenReturn(
+                Collections.singletonMap(
+                        FedoraEvent.NODE_TYPE_KEY,
+                        FedoraJcrTypes.FEDORA_DATASTREAM));
         mockDelegate = mock(Entry.class);
         Text mockText = mock(Text.class);
         when(mockDelegate.setTitle(anyString())).thenReturn(mockText);
+        when(mockDelegate.getTitle()).thenReturn("ingest");
         // make sure the delegate Entry can be instrumented for tests
         PowerMockito.mockStatic(EntryFactory.class);
         when(EntryFactory.newEntry()).thenReturn(mockDelegate);
@@ -103,7 +99,7 @@ public class LegacyMethodTest {
         when(mockDelegate.getCategories(LegacyMethod.FEDORA_ID_SCHEME))
                 .thenReturn(categories);
         // construct the test object
-        testObj = new LegacyMethod(mockEvent, mockSource);
+        testObj = new LegacyMethod(mockEvent);
     }
 
     @Test

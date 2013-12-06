@@ -141,7 +141,7 @@ public class FedoraWebhooks extends AbstractResource {
                     hook.getProperty(WEBHOOK_CALLBACK_PROPERTY).getString();
             final HttpPost method = new HttpPost(callbackUrl);
             final LegacyMethod eventSerialization =
-                    new LegacyMethod(event, resource);
+                    new LegacyMethod(event);
             final StringWriter writer = new StringWriter();
 
             try {

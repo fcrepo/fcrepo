@@ -23,7 +23,6 @@ import java.io.IOException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 import javax.jms.Connection;
@@ -48,9 +47,6 @@ public class JMSTopicPublisher {
     private EventBus eventBus;
 
     @Inject
-    private Repository repo;
-
-    @Inject
     private ActiveMQConnectionFactory connectionFactory;
 
     @Inject
@@ -63,8 +59,6 @@ public class JMSTopicPublisher {
     private MessageProducer producer;
 
     private final Logger LOGGER = getLogger(JMSTopicPublisher.class);
-
-    private javax.jcr.Session session;
 
     /**
      * When an EventBus mesage is received, map it to our JMS
@@ -80,7 +74,7 @@ public class JMSTopicPublisher {
         RepositoryException, IOException {
         LOGGER.debug("Received an event from the internal bus.");
         final Message tm =
-                eventFactory.getMessage(fedoraEvent, session, jmsSession);
+                eventFactory.getMessage(fedoraEvent, jmsSession);
         LOGGER.debug("Transformed the event to a JMS message.");
         producer.send(tm);
 
@@ -102,8 +96,6 @@ public class JMSTopicPublisher {
         jmsSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         producer = jmsSession.createProducer(jmsSession.createTopic("fedora"));
         eventBus.register(this);
-
-        session = repo.login();
     }
 
     /**
@@ -119,6 +111,5 @@ public class JMSTopicPublisher {
         jmsSession.close();
         connection.close();
         eventBus.unregister(this);
-        session.logout();
     }
 }

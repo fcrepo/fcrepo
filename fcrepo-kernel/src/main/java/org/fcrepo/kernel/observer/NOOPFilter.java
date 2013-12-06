@@ -15,7 +15,10 @@
  */
 package org.fcrepo.kernel.observer;
 
+import javax.jcr.Session;
 import javax.jcr.observation.Event;
+
+import com.google.common.base.Function;
 
 /**
  * Simple EventFilter that does no filtering.
@@ -25,13 +28,20 @@ import javax.jcr.observation.Event;
  */
 public class NOOPFilter implements EventFilter {
 
-    /**
-     * A no-op filter that passes every Event through.
-     * @param event
-     * @return true under all circumstances
-     */
+    private static final Filter FILTER = new Filter();
     @Override
-    public boolean apply(final Event event) {
-        return true;
+    public Function<Event, Event> getFilter(Session session) {
+        return FILTER;
+    }
+    static class Filter implements Function<Event, Event> {
+        /**
+         * A no-op filter that passes every Event through.
+         * @param event
+         * @return true under all circumstances
+         */
+        @Override
+        public Event apply(final Event event) {
+            return event;
+        }
     }
 }

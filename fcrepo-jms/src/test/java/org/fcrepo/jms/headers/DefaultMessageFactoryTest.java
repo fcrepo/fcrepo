@@ -69,7 +69,7 @@ public class DefaultMessageFactoryTest {
             REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
         when(mockEvent.getType()).thenReturn(testType);
         final Message testMessage =
-            testDefaultMessageFactory.getMessage(mockEvent, null, mockSession);
+            testDefaultMessageFactory.getMessage(mockEvent, mockSession);
         assertEquals("Got wrong date in message!", testDate, (Long) testMessage
                 .getLongProperty(TIMESTAMP_HEADER_NAME));
         assertEquals("Got wrong identifier in message!", testPath, testMessage

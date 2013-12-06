@@ -17,6 +17,7 @@ package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
@@ -32,15 +33,31 @@ import javax.jcr.observation.Event;
  */
 public class FedoraEvent implements Event {
 
+    public static final String NODE_TYPE_KEY = "fedora:nodeTypeKey";
+
     private Event e;
+
+    private String nodeType;
+
+    private Map<Object, Object> memoizedInfo;
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
      * @param e
      */
     public FedoraEvent(final Event e) {
+        this(e, null);
+    }
+
+    /**
+     * Wrap a JCR Event with our FedoraEvent decorators
+     * and include the type given in the info map
+     * @param e
+     */
+    public FedoraEvent(final Event e, String wrappedNodeType) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
         this.e = e;
+        this.nodeType = wrappedNodeType;
     }
 
     @Override
@@ -63,9 +80,14 @@ public class FedoraEvent implements Event {
         return e.getIdentifier();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Map<?, ?> getInfo() throws RepositoryException {
-        return e.getInfo();
+        if (memoizedInfo == null) {
+            memoizedInfo = new HashMap<Object,Object>(e.getInfo());
+            memoizedInfo.put(NODE_TYPE_KEY, this.nodeType);
+        }
+        return memoizedInfo;
     }
 
     @Override

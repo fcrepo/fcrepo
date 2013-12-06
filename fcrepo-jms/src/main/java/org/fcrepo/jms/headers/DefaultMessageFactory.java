@@ -21,7 +21,6 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import java.io.IOException;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -48,7 +47,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
             + "eventType";
 
     @Override
-    public Message getMessage(final Event jcrEvent, final Session jcrSession,
+    public Message getMessage(final Event jcrEvent,
         final javax.jms.Session jmsSession) throws RepositoryException,
         IOException, JMSException {
         final Message message = jmsSession.createMessage();
