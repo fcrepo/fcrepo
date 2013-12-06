@@ -36,6 +36,8 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import javax.jcr.RepositoryException;
+
 import org.fcrepo.kernel.utils.impl.CacheStoreEntry;
 import org.fcrepo.kernel.utils.impl.LocalBinaryStoreEntry;
 import org.fcrepo.kernel.utils.infinispan.StoreChunkInputStream;
@@ -50,7 +52,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -186,7 +187,7 @@ public class LowLevelCacheEntryTest {
     }
 
     @Test
-    public void testGetFixity() throws BinaryStoreException, IOException,
+    public void testGetFixity() throws RepositoryException, IOException,
             NoSuchAlgorithmException {
         final LowLevelCacheEntry ispnEntry =
                 new LocalBinaryStoreEntry(mockStore, testKey);

@@ -23,11 +23,12 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import javax.jcr.RepositoryException;
+
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
-import org.modeshape.jcr.value.binary.BinaryStoreException;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
@@ -71,7 +72,7 @@ public class CheckCacheEntryFixity implements
         FixityResult result = null;
         try {
             result = input.checkFixity(dsChecksum, dsSize);
-        } catch (final BinaryStoreException e) {
+        } catch (final RepositoryException e) {
             logger.error("Exception checking low-level fixity: {}", e);
             throw propagate(e);
         }

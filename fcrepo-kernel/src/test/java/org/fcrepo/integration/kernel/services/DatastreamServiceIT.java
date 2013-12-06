@@ -137,6 +137,35 @@ public class DatastreamServiceIT extends AbstractIT {
     }
 
     @Test
+    public void testChecksumBlobsForInMemoryValues() throws Exception {
+
+        final Session session = repository.login();
+        objectService.createObject(session, "/testLLObject");
+        datastreamService.createDatastreamNode(session,
+                                                  "/testLLObject/testMemoryContent",
+                                                  "application/octet-stream",
+                                                  null,
+                                                  new ByteArrayInputStream("0123456789".getBytes()));
+
+        session.save();
+
+        final Datastream ds =
+            datastreamService.getDatastream(session, "/testLLObject/"
+                                                         + "testMemoryContent");
+
+        final Collection<FixityResult> fixityResults =
+            datastreamService.getFixity(ds.getNode().getNode(JCR_CONTENT), ds
+                                                                               .getContentDigest(), ds.getContentSize());
+
+        assertNotEquals(0, fixityResults.size());
+
+        for (final FixityResult fixityResult : fixityResults) {
+            Assert.assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
+                                   fixityResult.computedChecksum.toString());
+        }
+    }
+
+    @Test
     public void testChecksumBlobsForValuesWithoutChecksums() throws Exception {
 
         final Session session = repository.login();
