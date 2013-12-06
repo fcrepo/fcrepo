@@ -19,6 +19,6 @@
     p:config="classpath:/config/activemq.xml" p:start="true"/>
 
   <!-- translates events from the internal bus to JMS, in Atom format-->
-  <bean class="org.fcrepo.jms.legacy.LegacyMethodEventFactory"/>
+  <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"/>
 
 </beans>
