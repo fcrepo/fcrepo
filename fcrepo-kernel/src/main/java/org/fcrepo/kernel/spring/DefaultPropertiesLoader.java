@@ -100,7 +100,7 @@ public class DefaultPropertiesLoader {
 
         for (final PROPERTIES prop : PROPERTIES.values()) {
             final String val = prop.getValue();
-            LOGGER.trace("{} = {}", val, getProperty(val));
+            LOGGER.info("{} = {}", val, getProperty(val));
         }
     }
 
