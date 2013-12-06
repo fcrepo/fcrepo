@@ -17,11 +17,15 @@
 package org.fcrepo.integration.http.api;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static junit.framework.TestCase.assertFalse;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -29,29 +33,30 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.update.GraphStore;
 
-public class FedoraDatastreamsIT extends AbstractResourceIT {
+public class FedoraBatchIT extends AbstractResourceIT {
 
     @Test
     public void testMultipleDatastreams() throws Exception {
-        createObject("FedoraDatastreamsTest7");
+        final String pid = randomUUID().toString();
+        createObject(pid);
 
-        createDatastream("FedoraDatastreamsTest7", "ds1", "marbles for everyone");
-        createDatastream("FedoraDatastreamsTest7", "ds2", "marbles for no one");
+        createDatastream(pid, "ds1", "marbles for everyone");
+        createDatastream(pid, "ds2", "marbles for no one");
 
         final HttpGet getDSesMethod =
-                new HttpGet(serverAddress + "FedoraDatastreamsTest7");
+                new HttpGet(serverAddress + pid);
         final GraphStore result = getGraphStore(getDSesMethod);
 
         logger.debug("Received triples: \n{}", result.toString());
-        final String subjectURI = serverAddress + "FedoraDatastreamsTest7";
+        final String subjectURI = serverAddress + pid;
 
         assertTrue("Didn't find the first datastream! ", result.contains(ANY,
                 createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
@@ -61,15 +66,20 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testModifyMultipleDatastreams() throws Exception {
-        createObject("FedoraDatastreamsTest8");
-        createDatastream("FedoraDatastreamsTest8", "ds_void", "marbles for everyone");
+        final String pid = randomUUID().toString();
+
+        createObject(pid);
+        createDatastream(pid, "ds_void", "marbles for everyone");
 
         final HttpPost post =
             new HttpPost(serverAddress
-                    + "FedoraDatastreamsTest8/fcr:datastreams?delete=ds_void");
+                    + pid + "/fcr:batch");
         final MultipartEntityBuilder multiPartEntityBuilder = MultipartEntityBuilder.create();
-        multiPartEntityBuilder.addPart("ds1", new StringBody("asdfg", TEXT_PLAIN));
-        multiPartEntityBuilder.addPart("ds2", new StringBody("qwerty", TEXT_PLAIN));
+        multiPartEntityBuilder.addTextBody(".", "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'xyz' } WHERE { }", ContentType.parse(contentTypeSPARQLUpdate));
+        multiPartEntityBuilder.addTextBody("obj1","<>  <http://purl.org/dc/elements/1.1/title> 'obj1-title' ", ContentType.parse(contentTypeTurtle));
+        multiPartEntityBuilder.addTextBody("ds1","asdfg", TEXT_PLAIN);
+        multiPartEntityBuilder.addTextBody("ds2", "qwerty", TEXT_PLAIN);
+        multiPartEntityBuilder.addTextBody("delete[]", "ds_void");
         post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = client.execute(post);
@@ -77,10 +87,13 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
         final HttpGet getDSesMethod =
-            new HttpGet(serverAddress + "FedoraDatastreamsTest8");
+            new HttpGet(serverAddress + pid);
         final GraphStore result = getGraphStore(getDSesMethod);
 
-        final String subjectURI = serverAddress + "FedoraDatastreamsTest8";
+        final String subjectURI = serverAddress + pid;
+
+        assertTrue("Didn't find the title! ", result.contains(ANY, createURI(subjectURI), createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("xyz")));
+        assertTrue("Didn't find the object title! ", result.contains(ANY, createURI(subjectURI + "/obj1"), createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("obj1-title")));
         assertTrue("Didn't find the first datastream! ", result.contains(ANY,
                 createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
         assertTrue("Didn't find the second datastream! ", result.contains(ANY,
@@ -92,15 +105,15 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testRetrieveMultipartDatastreams() throws Exception {
-        createObject("FedoraDatastreamsTest9");
+        final String pid = randomUUID().toString();
+        createObject(pid);
 
         final HttpPost post =
             new HttpPost(serverAddress
-                    + "FedoraDatastreamsTest9/fcr:datastreams/");
+                    + pid + "/fcr:batch/");
         final MultipartEntityBuilder multiPartEntityBuilder =
-            MultipartEntityBuilder.create().addPart("ds1",
-                    new StringBody("asdfg", TEXT_PLAIN)).addPart("ds2",
-                    new StringBody("qwerty", TEXT_PLAIN));
+            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN).addTextBody("ds2",
+                                                                                                   "qwerty", TEXT_PLAIN);
 
         post.setEntity(multiPartEntityBuilder.build());
 
@@ -111,7 +124,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         // things we're expecting
         final HttpGet getDSesMethod =
             new HttpGet(serverAddress
-                    + "FedoraDatastreamsTest9/fcr:datastreams");
+                    + pid + "/fcr:batch");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -125,16 +138,16 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testRetrieveFIlteredMultipartDatastreams() throws Exception {
-        createObject("FedoraDatastreamsTest10");
+        final String pid = randomUUID().toString();
+        createObject(pid);
 
         final HttpPost post =
             new HttpPost(serverAddress
-                    + "FedoraDatastreamsTest10/fcr:datastreams");
+                    + pid + "/fcr:batch");
 
         final MultipartEntityBuilder multiPartEntityBuilder =
-            MultipartEntityBuilder.create().addPart("ds1",
-                    new StringBody("asdfg", TEXT_PLAIN)).addPart("ds2",
-                    new StringBody("qwerty", TEXT_PLAIN));
+            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN).addTextBody("ds2",
+                                                                                                   "qwerty", TEXT_PLAIN);
 
         post.setEntity(multiPartEntityBuilder.build());
 
@@ -145,7 +158,7 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
         // things we're expecting
         final HttpGet getDSesMethod =
             new HttpGet(serverAddress
-                    + "FedoraDatastreamsTest10/fcr:datastreams?dsid=ds1");
+                    + pid + "/fcr:batch?child=ds1");
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -159,22 +172,23 @@ public class FedoraDatastreamsIT extends AbstractResourceIT {
 
     @Test
     public void testBatchDeleteDatastream() throws Exception {
-        createObject("FedoraDatastreamsTest12");
+        final String pid = randomUUID().toString();
+        createObject(pid);
 
-        createDatastream("FedoraDatastreamsTest12", "ds1", "foo1");
-        createDatastream("FedoraDatastreamsTest12", "ds2", "foo2");
+        createDatastream(pid, "ds1", "foo1");
+        createDatastream(pid, "ds2", "foo2");
 
         final HttpDelete dmethod =
             new HttpDelete(
                     serverAddress
-                            + "FedoraDatastreamsTest12/fcr:datastreams?dsid=ds1&dsid=ds2");
+                            + pid + "/fcr:batch?child=ds1&child=ds2");
         assertEquals(204, getStatus(dmethod));
 
         final HttpGet method_test_get1 =
-            new HttpGet(serverAddress + "FedoraDatastreamsTest12/ds1");
+            new HttpGet(serverAddress + pid + "/ds1");
         assertEquals(404, getStatus(method_test_get1));
         final HttpGet method_test_get2 =
-            new HttpGet(serverAddress + "FedoraDatastreamsTest12/ds2");
+            new HttpGet(serverAddress + pid + "/ds2");
         assertEquals(404, getStatus(method_test_get2));
     }
 }
