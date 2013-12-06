@@ -15,15 +15,28 @@
  */
 package org.fcrepo.kernel.observer;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.initMocks;
 
+import javax.jcr.observation.Event;
+
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class NOOPFilterTest {
 
+    @Mock
+    Event mockEvent;
+
+    @Before
+    public void setUp() throws Exception {
+        initMocks(this);
+    }
+
     @Test
     public void testApply() throws Exception {
-        assertTrue(new NOOPFilter().apply(null));
+        assertEquals(mockEvent, new NOOPFilter().getFilter(null).apply(mockEvent));
     }
 
 }

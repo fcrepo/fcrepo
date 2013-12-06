@@ -34,7 +34,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 import javax.jms.JMSException;
@@ -42,7 +41,8 @@ import javax.jms.Message;
 
 import org.apache.abdera.model.Category;
 import org.apache.abdera.model.Entry;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.slf4j.Logger;
 
 /**
@@ -101,25 +101,26 @@ public class LegacyMethod {
      * @param resource
      * @throws RepositoryException
      */
-    public LegacyMethod(final Event jcrEvent, final Node resource)
+    public LegacyMethod(final Event jcrEvent)
         throws RepositoryException {
         this(EntryFactory.newEntry());
 
+        String wrappedType = (String) jcrEvent.getInfo().get(FedoraEvent.NODE_TYPE_KEY);
         final boolean isDatastreamNode =
-                FedoraTypesUtils.isFedoraDatastream.apply(resource);
+                FedoraJcrTypes.FEDORA_DATASTREAM.equals(wrappedType);
         final boolean isObjectNode =
-                FedoraTypesUtils.isFedoraObject.apply(resource) &&
-                        !isDatastreamNode;
+                FedoraJcrTypes.FEDORA_OBJECT.equals(wrappedType);
 
+        String resource = getResource(jcrEvent);
         if (isDatastreamNode || isObjectNode) {
             setMethodName(mapMethodName(jcrEvent.getType(), isObjectNode));
-            final String returnValue = getReturnValue(jcrEvent, resource);
+            final String returnValue = getReturnValue(jcrEvent);
             setContent(getEntryContent(getMethodName(), returnValue));
             if (isDatastreamNode) {
-                setPid(resource.getParent().getName());
-                setDsId(resource.getName());
+                setPid(name(parentPath(resource)));
+                setDsId(name(resource));
             } else {
-                setPid(resource.getName());
+                setPid(name(resource));
             }
         } else {
             setMethodName(null);
@@ -128,7 +129,7 @@ public class LegacyMethod {
                 jcrEvent.getUserID() == null ? "unknown" : jcrEvent.getUserID();
         setUserId(userID);
         setModified(new Date(jcrEvent.getDate()));
-        setPath(resource.getPath());
+        setPath(resource);
     }
 
     /**
@@ -359,11 +360,10 @@ public class LegacyMethod {
         return term;
     }
 
-    protected static String getReturnValue(final Event jcrEvent,
-            final Node jcrNode) throws RepositoryException {
+    protected static String getReturnValue(final Event jcrEvent) throws RepositoryException {
         switch (jcrEvent.getType()) {
             case NODE_ADDED:
-                return jcrNode.getName();
+                return name(jcrEvent.getPath());
             case NODE_REMOVED:
             case PROPERTY_ADDED:
             case PROPERTY_CHANGED:
@@ -384,6 +384,28 @@ public class LegacyMethod {
             default :
                 return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
         }
+    }
+
+    protected static String name(String path) {
+        return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    protected static String getResource(final Event jcrEvent) throws RepositoryException {
+        switch (jcrEvent.getType()) {
+            case NODE_ADDED:
+            case NODE_REMOVED:
+                return jcrEvent.getPath();
+            case PROPERTY_ADDED:
+            case PROPERTY_CHANGED:
+            case PROPERTY_REMOVED:
+                return parentPath(jcrEvent.getPath());
+            default:
+                return null;
+        }
+    }
+
+    protected static String parentPath(String path) {
+        return path.substring(0,path.lastIndexOf('/'));
     }
 
     /**
