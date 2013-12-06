@@ -34,7 +34,11 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
@@ -42,6 +46,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -205,13 +210,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-        Iterator<Quad> versionIt = results.find(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY);
-        assertTrue("One version must be present!", versionIt.hasNext());
-        String currentVersionUri = versionIt.next().getObject().getURI();
-        assertTrue("Updated version must be present!", versionIt.hasNext());
-        String firstVersionUri = versionIt.next().getObject().getURI();
+        final List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
+        assertEquals("There must be a root version with two revisions.", 3, versionsInOrder.size());
 
-        final HttpGet retrieveFirstVersion = new HttpGet(firstVersionUri + "/fcr:content");
+        final HttpGet retrieveFirstVersion = new HttpGet(versionsInOrder.get(1) + "/fcr:content");
         assertEquals("First version wasn't preserved as expected!",
                 firstVersionText,
                 EntityUtils.toString(client.execute(
@@ -285,17 +287,54 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-        Iterator<Quad> versionIt = results.find(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY);
-        assertTrue("One version must be present!", versionIt.hasNext());
-        String currentVersionUri = versionIt.next().getObject().getURI();
-        assertTrue("Updated version must be present!", versionIt.hasNext());
-        String firstVersionUri = versionIt.next().getObject().getURI();
 
-        final HttpGet retrieveFirstVersion = new HttpGet(firstVersionUri + "/fcr:content");
+        List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
+        assertEquals("There must be a root version with two revisions.", 3, versionsInOrder.size());
+
+        final HttpGet retrieveFirstVersion = new HttpGet(versionsInOrder.get(1) + "/fcr:content");
         assertEquals("First version wasn't preserved as expected!",
                 firstVersionText,
                 EntityUtils.toString(client.execute(
                         retrieveFirstVersion).getEntity()));
+
+        final HttpGet retrieveSecondVersion = new HttpGet(versionsInOrder.get(2) + "/fcr:content");
+        assertEquals("Second version wasn't preserved as expected!",
+                secondVersionText,
+                EntityUtils.toString(client.execute(
+                        retrieveSecondVersion).getEntity()));
+    }
+
+    private List<String> getChronologicalyOrderedVersionUrls(final GraphStore graph, final Node subject) {
+        final List<String> versionUrls = new ArrayList<String>();
+        final Iterator<Quad> versionIt = graph.find(Node.ANY, subject, HAS_VERSION.asNode(), Node.ANY);
+        while (versionIt.hasNext()) {
+            versionUrls.add(versionIt.next().getObject().getURI());
+        }
+        Collections.sort(versionUrls, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                String d1 = getFirstLiteralIfExists(graph, createResource(o1).asNode(), LAST_MODIFIED_DATE.asNode(), "");
+                String d2 = getFirstLiteralIfExists(graph, createResource(o2).asNode(), LAST_MODIFIED_DATE.asNode(), "");
+                if (d1.equals(d2)) {
+                    d1 += o1;
+                    d2 += o2;
+                }
+                System.out.println("COMPARING: " + d1 + " compare with " + d2);
+                return d1.compareTo(d2);
+            }
+        });
+        for (String url : versionUrls) {
+            System.out.println(url + " " + getFirstLiteralIfExists(graph, createResource(url).asNode(), LAST_MODIFIED_DATE.asNode(), "(none)"));
+        }
+        return versionUrls;
+    }
+
+    private String getFirstLiteralIfExists(GraphStore graph, Node subject, Node predicate, String defaultValue) {
+        Iterator<Quad> quads = graph.find(Node.ANY, subject, predicate, Node.ANY);
+        if (quads.hasNext()) {
+            return quads.next().getObject().getLiteralValue().toString();
+        }
+        return defaultValue;
     }
 
     public void postNodeTypeCNDSnippet(String snippet) throws IOException {
