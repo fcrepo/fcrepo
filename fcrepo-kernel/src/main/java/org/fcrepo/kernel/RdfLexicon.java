@@ -167,6 +167,8 @@ public final class RdfLexicon {
             createProperty(RESTAPI_NAMESPACE + "hasNamespaces");
     public static final Property HAS_WORKSPACE_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasWorkspaces");
+    public static final Property HAS_ACCESS_ROLES_SERVICE =
+            createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
     public static final Property HAS_SEARCH_SERVICE =
             createProperty("http://www.whatwg.org/specs/web-apps/current-work/"
                                    + "#link-type-search");
