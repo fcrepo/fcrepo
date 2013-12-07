@@ -17,6 +17,7 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 import org.fcrepo.http.commons.api.rdf.QuadOrdering;
@@ -370,6 +372,15 @@ public class ViewHelpers {
      */
     public Resource rdfsClass() {
         return RDFS.Class;
+    }
+
+    /**
+     * Get the content-bearing node for the given subject
+     * @param subject
+     * @return
+     */
+    public Node getContentNode(final Node subject) {
+        return NodeFactory.createURI(subject + "/" + FCR_CONTENT);
     }
 
     /**

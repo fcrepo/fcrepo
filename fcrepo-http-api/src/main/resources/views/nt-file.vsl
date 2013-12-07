@@ -1,5 +1,10 @@
+#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
 <!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
+#set( $contentNode = $helpers.getContentNode($topic) )
+
 
 #parse("views/common.vsl")
 <html>
@@ -44,37 +49,50 @@
                 <div class="panel-body">
                     #triples($topic)
                 </div>
-            </div>
 
+            ## output triples for the content node
+
+            #if ($rdf.find($nodeany, $contentNode, $nodeany, $nodeany).hasNext())
+                <div class="panel-heading">
+                    <a href="$contentNode" class="btn btn-success pull-right"><span class="glyphicon glyphicon-download"></span> Download</a>
+                    <h4>Content Properties <br/><small><a href="$contentNode.getURI()">$esc.html($helpers.getObjectTitle($rdf, $contentNode))</a></small></h4>
+                </div>
+                <div class="panel-body">
+                    #triples($contentNode)
+                </div>
+            #end
+            </div>
 
         ## output other nodes
 
         <h2>Inlined Resources</h2>
         <div class="panel-group" id="accordion">
             #foreach($subject in $model.listSubjects())
-                #if( $subject != $topic )
-                    #if ( $subject.getURI() )
-                    <div class="panel panel-default" resource="$subject.getURI()">
-                        <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                            <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
-                        </div>
-                        <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
-                            <div class="panel-body">
-                                #triples($subject.asNode())
-                            </div>
-                        </div>
-                    </div>
-                    #else
-                        <div class="panel panel-default" resource="$subject.getId()">
-                            <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getId())_triples" >
+                #if ($subject.getURI() != $contentNode.getURI())
+                    #if( $subject != $topic)
+                        #if ( $subject.getURI() )
+                        <div class="panel panel-default" resource="$subject.getURI()">
+                            <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
                                 <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                             </div>
-                            <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getId())_triples">
+                            <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
                                 <div class="panel-body">
                                     #triples($subject.asNode())
                                 </div>
                             </div>
                         </div>
+                        #else
+                            <div class="panel panel-default" resource="$subject.getId()">
+                                <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getId())_triples" >
+                                    <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                                </div>
+                                <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getId())_triples">
+                                    <div class="panel-body">
+                                        #triples($subject.asNode())
+                                    </div>
+                                </div>
+                            </div>
+                        #end
                     #end
                 #end
             #end
