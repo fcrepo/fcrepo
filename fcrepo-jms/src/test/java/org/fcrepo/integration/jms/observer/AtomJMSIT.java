@@ -90,6 +90,9 @@ public class AtomJMSIT implements MessageListener {
 
     @After
     public void releaseConnection() throws JMSException {
+        // ignore any remaining or queued messages
+        consumer.setMessageListener(new NoopListener());
+        // and shut the listening machinery down
         logger.debug(this.getClass().getName() + " releasing JMS connection.");
         consumer.close();
         session.close();
@@ -260,10 +263,10 @@ public class AtomJMSIT implements MessageListener {
 
     @Override
     public void onMessage(final Message message) {
-        logger.debug("Received JMS message: " + message.toString());
 
         final TextMessage tMessage = (TextMessage) message;
         try {
+            logger.debug("Received JMS message: " + tMessage.getText());
             if (LegacyMethod.canParse(message)) {
                 final LegacyMethod legacy = new LegacyMethod(tMessage.getText());
                 final Entry entry = legacy.getEntry();
@@ -292,5 +295,4 @@ public class AtomJMSIT implements MessageListener {
             }
         }
     }
-
 }
