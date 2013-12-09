@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+  <context:property-placeholder/>
+
+  <!-- show stack traces for easier debugging -->
+  <bean id="wildcardExceptionmapper" class="org.fcrepo.http.commons.exceptionhandlers.WildcardExceptionMapper" >
+  	<property name="showStackTrace" value="true" />
+  </bean>
+  
+  <bean id="containerWrapper" class="org.fcrepo.http.commons.test.util.ContainerWrapper" init-method="start" destroy-method="stop" >
+    <property name="port" value="${test.port:8080}"/>
+    <property name="configLocation" value="classpath:web.xml" />
+  </bean>
+  
+</beans>

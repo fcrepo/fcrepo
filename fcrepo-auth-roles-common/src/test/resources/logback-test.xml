@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%p %d{HH:mm:ss.SSS} \(%c{0}\) %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.fcrepo" additivity="false" level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <root additivity="false" level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
