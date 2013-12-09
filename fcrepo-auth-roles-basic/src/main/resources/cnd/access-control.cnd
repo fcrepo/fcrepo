@@ -1,0 +1,14 @@
+/*
+ * Fedora role-based access control (RBAC) namespace
+ */
+<authz = 'http://fedora.info/definitions/v4/authorization#'>
+
+[authz:rbaclAssignable] mixin
+    + authz:rbacl (authz:Rbacl)
+    
+[authz:Rbacl] noquery 
+    + authz:assignment (authz:Assignment) sns
+    
+[authz:Assignment] > nt:unstructured noquery
+    - authz:principal (string) nofulltext
+    - authz:role (string) multiple nofulltext

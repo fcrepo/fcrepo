@@ -65,6 +65,8 @@
     <module>fcrepo-auth-oauth</module>
     <module>fcrepo-transform</module>
     <module>fcrepo-auth-common</module>
+    <module>fcrepo-auth-roles-common</module>
+    <module>fcrepo-auth-roles-basic</module>
   </modules>
   <dependencyManagement>
     <dependencies>
