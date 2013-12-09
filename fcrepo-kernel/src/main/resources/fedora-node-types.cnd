@@ -26,6 +26,12 @@
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 
+/*
+ * A fedora namespace for properties a user may set on a node that may
+ * enable or disable a fedora-specific behavior of that node.
+ */
+<fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
+
 <test = 'info:fedora/test/'>
 
 /*

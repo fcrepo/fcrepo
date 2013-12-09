@@ -223,7 +223,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     @Test
     public void testAddMixinAutoVersioning() throws IOException {
         postNodeTypeCNDSnippet("[fedora:autoVersioned] mixin\n" +
-                "  - fedora:versioningPolicy (STRING) = \"auto-version\" autocreated");
+                "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
 
         String objName = "testMixinAutoVersioning";
         String dsName = "datastream";
@@ -239,7 +239,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     @Test
     public void testRepositoryWideAutoVersioning() throws IOException {
         postNodeTypeCNDSnippet("[fedora:autoVersioned] mixin\n" +
-                "  - fedora:versioningPolicy (STRING) = \"auto-version\" autocreated");
+                "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
         postNodeTypeCNDSnippet("[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, fedora:autoVersioned, dc:describable mixin\n" +
                 "  - rdf:type (URI) multiple\n" +
                 "  - * (undefined) multiple\n" +
@@ -349,7 +349,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     private void setAutoVersioning(String url) throws IOException {
         patchLiteralProperty(url,
-                "http://fedora.info/definitions/v4/rest-api#versioningPolicy",
+                "http://fedora.info/definitions/v4/config#versioningPolicy",
                 "auto-version");
     }
 

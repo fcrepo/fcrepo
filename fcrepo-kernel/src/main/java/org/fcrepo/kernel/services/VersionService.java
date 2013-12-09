@@ -47,7 +47,7 @@ public class VersionService extends RepositoryService {
 
     protected static final String VERSIONABLE = "mix:versionable";
 
-    protected static final String VERSION_POLICY = "fedora:versioningPolicy";
+    protected static final String VERSION_POLICY = "fedoraconfig:versioningPolicy";
 
     protected static final String AUTO_VERSION = "auto-version";
 
