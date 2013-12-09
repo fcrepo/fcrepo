@@ -63,17 +63,16 @@ public class LegacyMethod {
 
     private static final String MODIFY_OBJ_METHOD = "modifyObject";
 
-    private static final String PURGE_OBJ_METHOD = "purgeObject";
+    // pending JCR 2.1, there is no way to detect Obj/DS node types
+    private static final String PURGE_METHOD = "purge";
 
     private static final String ADD_DS_METHOD = "addDatastream";
 
     private static final String MODIFY_DS_METHOD = "modifyDatastream";
 
-    private static final String PURGE_DS_METHOD = "purgeDatastream";
-
     private static final String[] METHODS = new String[] {INGEST_METHOD,
-        MODIFY_OBJ_METHOD, PURGE_OBJ_METHOD, ADD_DS_METHOD,
-        MODIFY_DS_METHOD, PURGE_DS_METHOD};
+        MODIFY_OBJ_METHOD, PURGE_METHOD, ADD_DS_METHOD,
+        MODIFY_DS_METHOD, };
 
     private static final List<String> METHOD_NAMES = Arrays.asList(METHODS);
 
@@ -110,9 +109,10 @@ public class LegacyMethod {
                 FedoraJcrTypes.FEDORA_DATASTREAM.equals(wrappedType);
         final boolean isObjectNode =
                 FedoraJcrTypes.FEDORA_OBJECT.equals(wrappedType);
+        final boolean isPurge = jcrEvent.getType() == Event.NODE_REMOVED;
 
         String resource = getResource(jcrEvent);
-        if (isDatastreamNode || isObjectNode) {
+        if (isDatastreamNode || isObjectNode || isPurge) {
             setMethodName(mapMethodName(jcrEvent.getType(), isObjectNode));
             final String returnValue = getReturnValue(jcrEvent);
             setContent(getEntryContent(getMethodName(), returnValue));
@@ -380,7 +380,7 @@ public class LegacyMethod {
             case NODE_ADDED:
                 return isObjectNode ? INGEST_METHOD : ADD_DS_METHOD;
             case NODE_REMOVED:
-                return isObjectNode ? PURGE_OBJ_METHOD : PURGE_DS_METHOD;
+                return PURGE_METHOD;
             default :
                 return isObjectNode ? MODIFY_OBJ_METHOD : MODIFY_DS_METHOD;
         }
