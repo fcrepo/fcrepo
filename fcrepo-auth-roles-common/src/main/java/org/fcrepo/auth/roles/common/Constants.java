@@ -45,6 +45,8 @@ public class Constants {
 
         private Property property;
 
+        public Property property;
+
         public static final String NS_URI =
                 "http://fedora.info/definitions/v4/authorization#";
 
@@ -76,7 +78,7 @@ public class Constants {
 
         /**
          * Get the property for this URI.
-         *
+         * 
          * @return a Jena property
          */
         public Property getProperty() {
