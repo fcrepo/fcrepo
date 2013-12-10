@@ -30,9 +30,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.vocabulary.RDF;
-import com.hp.hpl.jena.vocabulary.RDFS;
 import org.fcrepo.http.commons.api.rdf.QuadOrdering;
 import org.fcrepo.kernel.RdfLexicon;
 import org.slf4j.Logger;
@@ -41,12 +38,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
 
 /**
  * General view helpers for rendering HTML responses
@@ -96,7 +97,7 @@ public class ViewHelpers {
      * the default is returned
      */
     public String getVersionLabel(final DatasetGraph dataset,
-                                 final Node subject, String defaultValue) {
+                                 final Node subject, final String defaultValue) {
         final Iterator<Quad> objects = getObjects(dataset, subject,
                 HAS_VERSION_LABEL);
         if (objects.hasNext()) {
@@ -337,6 +338,16 @@ public class ViewHelpers {
      */
     public Node asNode(final Resource r) {
         return r.asNode();
+    }
+
+    /**
+     * Convert a URI string to an RDF node
+     *
+     * @param r
+     * @return
+     */
+    public Node asLiteralStringNode(final String r) {
+        return ResourceFactory.createPlainLiteral(r).asNode();
     }
 
     /**

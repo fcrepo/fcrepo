@@ -25,6 +25,6 @@
     <bean class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
 
     <context:component-scan
-        base-package="org.fcrepo.kernel.services, org.modeshape.web.jcr.rest, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.audit, org.fcrepo.auth.oauth.api, org.fcrepo.storage.policy, org.fcrepo.transform"/>
+        base-package="org.fcrepo.kernel.services, org.modeshape.web.jcr.rest, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.audit, org.fcrepo.auth.oauth.api, org.fcrepo.storage.policy, org.fcrepo.transform, org.fcrepo.auth.roles.common"/>
 
 </beans>

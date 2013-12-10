@@ -16,8 +16,12 @@
 
 package org.fcrepo.auth.roles.common;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
+import com.hp.hpl.jena.rdf.model.Property;
 
 /**
  * Reference values for access roles node types and paths.
@@ -35,9 +39,11 @@ public class Constants {
         rbaclAssignable(), Rbacl(), Assignment(), rbacl(), assignment(),
         principal(), role();
 
-        public String expandedName;
+        private String expandedName;
 
-        public String qualifiedName;
+        private String qualifiedName;
+
+        private Property property;
 
         public static final String NS_URI =
                 "http://fedora.info/definitions/v4/authorization#";
@@ -47,6 +53,7 @@ public class Constants {
         JcrName() {
             this.expandedName = '{' + NS_URI + '}' + this.name();
             this.qualifiedName = NS_PREFIX + ':' + this.name();
+            this.property = createProperty(NS_URI + this.name());
         }
 
         /**
@@ -65,6 +72,15 @@ public class Constants {
          */
         public String getQualified() {
             return this.qualifiedName;
+        }
+
+        /**
+         * Get the property for this URI.
+         *
+         * @return a Jena property
+         */
+        public Property getProperty() {
+            return this.property;
         }
 
         /*

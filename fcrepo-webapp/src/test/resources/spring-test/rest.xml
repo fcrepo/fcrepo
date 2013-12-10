@@ -20,6 +20,6 @@
     
   <context:annotation-config />
   
-  <context:component-scan base-package="org.fcrepo.kernel.services, org.fcrepo.exceptionhandlers, org.fcrepo.http.commons.responses, org.fcrepo.responses"/>
+  <context:component-scan base-package="org.fcrepo.kernel.services, org.fcrepo.exceptionhandlers, org.fcrepo.http.commons.responses, org.fcrepo.responses, org.fcrepo.auth.roles.common"/>
 
 </beans>

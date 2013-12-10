@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.auth.roles.common;
+
+import static java.util.Collections.singletonMap;
+
+import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
@@ -23,21 +28,25 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-
 /**
- * @author Gregory Jansen
+ * Exposes access roles endpoint for any resource.
  *
+ * @author Gregory Jansen
  */
+@Component
 public class AccessRolesResources implements UriAwareResourceModelFactory {
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory#createModelForResource(
-     * org.fcrepo.kernel.FedoraResource, javax.ws.rs.core.UriInfo, org.fcrepo.kernel.rdf.GraphSubjects)
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory#
+     * createModelForResource( org.fcrepo.kernel.FedoraResource,
+     * javax.ws.rs.core.UriInfo, org.fcrepo.kernel.rdf.GraphSubjects)
      */
     @Override
     public Model createModelForResource(final FedoraResource resource,
@@ -46,14 +55,14 @@ public class AccessRolesResources implements UriAwareResourceModelFactory {
         final Model model = ModelFactory.createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType(
-                FedoraJcrTypes.ROOT)) {
-            model.add(s, RdfLexicon.HAS_ACCESS_ROLES_SERVICE, model
-                    .createResource(uriInfo.getBaseUriBuilder().path(
-                            AccessRoles.class).build().toASCIIString()));
+        if (resource.getNode().isNodeType(
+                FedoraJcrTypes.FEDORA_RESOURCE)) {
+            final Map<String, String> pathMap =
+                    singletonMap("path", resource.getPath().substring(1));
+            final Resource acl = model.createResource(uriInfo.getBaseUriBuilder().path(
+                    AccessRoles.class).buildFromMap(pathMap).toASCIIString());
+            model.add(s, RdfLexicon.HAS_ACCESS_ROLES_SERVICE, acl);
         }
-
         return model;
     }
-
 }

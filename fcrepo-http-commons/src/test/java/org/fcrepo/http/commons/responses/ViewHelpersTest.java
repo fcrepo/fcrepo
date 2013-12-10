@@ -25,9 +25,9 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.sparql.core.DatasetGraphFactory.createMem;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
@@ -53,6 +53,7 @@ import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 
@@ -110,7 +111,7 @@ public class ViewHelpersTest {
     @Test
     public void testGetLabeledVersion() {
         final DatasetGraph mem = createMem();
-        String label = "testLabel";
+        final String label = "testLabel";
         mem.add(createAnon(), createURI("a/b/c"), HAS_VERSION_LABEL.asNode(),
                 createLiteral(label));
         assertEquals("Version label should be available.", label, testObj.getVersionLabel(mem, createURI("a/b/c"), ""));
@@ -125,7 +126,7 @@ public class ViewHelpersTest {
     @Test
     public void testGetVersionDate() {
         final DatasetGraph mem = createMem();
-        String date = new Date().toString();
+        final String date = new Date().toString();
         mem.add(createAnon(), createURI("a/b/c"), LAST_MODIFIED_DATE.asNode(),
                 createLiteral(date));
         assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")));
@@ -265,5 +266,12 @@ public class ViewHelpersTest {
     @Test
     public void shouldConvertRdfResourcesToNodes() {
         assertEquals(CREATED_BY.asNode(), testObj.asNode(CREATED_BY));
+    }
+
+    @Test
+    public void shouldConvertStringLiteralsToNodes() {
+        final String uri = "fedora:resource";
+        final Literal URIRES = ResourceFactory.createPlainLiteral(uri);
+        assertEquals(URIRES.asNode(), testObj.asLiteralStringNode(uri));
     }
 }
