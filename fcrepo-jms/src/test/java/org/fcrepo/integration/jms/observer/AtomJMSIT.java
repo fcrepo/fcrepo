@@ -41,8 +41,6 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
-import org.apache.abdera.model.Category;
-import org.apache.abdera.model.Entry;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.fcrepo.jms.legacy.LegacyMethod;
 import org.junit.After;
@@ -51,14 +49,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.sun.syndication.feed.atom.Category;
+import com.sun.syndication.feed.atom.Content;
+import com.sun.syndication.feed.atom.Entry;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/atom-jms.xml", "/spring-test/repo.xml",
         "/spring-test/eventing.xml"})
-@DirtiesContext
 public class AtomJMSIT implements MessageListener {
 
     @Inject
@@ -113,19 +113,23 @@ public class AtomJMSIT implements MessageListener {
         String title = null;
         String path = null;
         for (final Entry entry : entries) {
-            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            final List<Category> categories = copyOf(entry.getCategories());
+            if (categories == null) {
+              logger.error("categories null");
+            }
+            String p = null;
             for (final Category cat : categories) {
-                if (cat.getLabel().equals("fedora-types:pid")) {
+                if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
                     title = entry.getTitle();
                 }
             }
         }
-        assertEquals("Got wrong pid!", "test1", path);
+        assertEquals("Got wrong pid!", "/test1", path);
         assertEquals("Got wrong method!", "ingest", title);
     }
-
+    
 
     @Test
     public void testAtomStreamNodePath() throws RepositoryException,
@@ -145,7 +149,7 @@ public class AtomJMSIT implements MessageListener {
         String path = null;
         assertEquals("Entries size not 2", entries.size(), 2);
         for (final Entry entry : entries) {
-            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            final List<Category> categories = copyOf(entry.getCategories());
             String p = null;
             for (final Category cat : categories) {
                 if (cat.getLabel().equals("path")) {
@@ -157,7 +161,7 @@ public class AtomJMSIT implements MessageListener {
                 path = p;
             }
         }
-        assertEquals("Got wrong path!", "/test1/sigma", path);
+        assertEquals("Got wrong path!", "/test1/sigma", path);        
     }
 
     @Test
@@ -177,20 +181,20 @@ public class AtomJMSIT implements MessageListener {
 
         String path = null;
         for (final Entry entry : entries) {
-            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            final List<Category> categories = copyOf(entry.getCategories());
 
             logger.trace("Matched {} categories with scheme xsd:string",
                          categories
                                  .size());
             for (final Category cat : categories) {
-                if (cat.getLabel().equals("fedora-types:pid")) {
+                if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
                 }
             }
         }
         entries.clear();
-        assertEquals("Got wrong object PID!", "testDatastreamTerm", path);
+        assertEquals("Got wrong object PID!", "/testDatastreamTerm", path);
 
         final Node ds = object.addNode("DATASTREAM");
         ds.addMixin(FEDORA_DATASTREAM);
@@ -207,20 +211,24 @@ public class AtomJMSIT implements MessageListener {
 
         path = null;
         for (final Entry entry : entries) {
-            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            final List<Category> categories = copyOf(entry.getCategories());
 
             logger.trace("Matched {} categories with scheme xsd:string",
                          categories
                                  .size());
             for (final Category cat : categories) {
-                if (cat.getLabel().equals("fedora-types:dsID")) {
+                final List<Content> c = entry.getContents();
+                if (!c.get(0).getValue().equals("DATASTREAM")) {
+                   continue;
+                }
+                if (cat.getLabel().equals("path")) {
                     logger.debug("Found Category with term: " + cat.getTerm());
                     path = cat.getTerm();
                 }
             }
         }
 
-        assertEquals("Got wrong datastream ID!", "DATASTREAM", path);
+        assertEquals("Got wrong datastream ID!", "/testDatastreamTerm/DATASTREAM", path);
         logger.trace("END: testDatastreamTerm()");
     }
 
