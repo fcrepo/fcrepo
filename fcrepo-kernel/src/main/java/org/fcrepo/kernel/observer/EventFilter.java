@@ -25,12 +25,14 @@ import com.google.common.base.Function;
  * @author eddies
  * @date Feb 7, 2013
  */
-public interface EventFilter {
+public interface EventFilter extends Function<Event, Event> {
+
     /**
-     * Return a function to wrap Events, or transform to null
-     * if they should  be skipped
+     * Return a function to wrap Events, or transform to null if they should be
+     * skipped
+     *
      * @param session
      * @return
      */
-    public Function<Event, Event> getFilter(Session session);
+    public Function<Event, Event> getFilter(final Session session);
 }

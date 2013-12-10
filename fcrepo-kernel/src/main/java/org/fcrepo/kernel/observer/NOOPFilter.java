@@ -25,23 +25,22 @@ import com.google.common.base.Function;
  *
  * @author eddies
  * @date Feb 7, 2013
+ *
+ * @author ajs6f
+ * @author barmintor
+ * @date Dec 2013
+ *
  */
 public class NOOPFilter implements EventFilter {
 
-    private static final Filter FILTER = new Filter();
     @Override
-    public Function<Event, Event> getFilter(Session session) {
-        return FILTER;
+    public Function<Event, Event> getFilter(final Session session) {
+        return this;
     }
-    static class Filter implements Function<Event, Event> {
-        /**
-         * A no-op filter that passes every Event through.
-         * @param event
-         * @return true under all circumstances
-         */
-        @Override
-        public Event apply(final Event event) {
-            return event;
-        }
+
+    @Override
+    public Event apply(final Event event) {
+        return event;
     }
+
 }
