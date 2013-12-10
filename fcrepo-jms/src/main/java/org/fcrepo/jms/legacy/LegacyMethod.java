@@ -177,11 +177,9 @@ public class LegacyMethod {
      * @param content
      */
     public void setContent(final String content) {
-        List<Content> contentList = new java.util.ArrayList<Content>();
         Content contentObj = new Content();
         contentObj.setValue(content);
-        contentList.add(contentObj);
-        delegate.setContents(contentList);
+        delegate.setContents(Collections.singletonList(contentObj));
     }
 
     /**
@@ -192,13 +190,11 @@ public class LegacyMethod {
     public void setUserId(final String val) {
         List<Person> authors = new java.util.ArrayList<Person>();
         if (val == null || "<anonymous>".equals(val)) {
-          //  delegate.addAuthor("unknown", null, getBaseURL());
             Person p = new Person();
             p.setName("unknown");
             p.setUrl(getBaseURL());
             authors.add(new Person());
         } else {
-            //delegate.addAuthor(val, null, getBaseURL());
             Person p = new Person();
             p.setName(val);
             p.setUrl(getBaseURL());
@@ -213,7 +209,6 @@ public class LegacyMethod {
      * @return
      */
     public String getUserID() {
-        //return delegate.getAuthor().getName();
         return ( (Person) delegate.getAuthors().get(0)).getName();
     }
 
@@ -241,7 +236,7 @@ public class LegacyMethod {
      * @param val
      */
     public void setMethodName(final String val) {
-        //delegate.setTitle(val).setBaseUri(getBaseURL());
+        delegate.setTitle(val);
         delegate.setTitle(val);
     }
 
