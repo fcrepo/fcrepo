@@ -17,11 +17,11 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isBinaryContentProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.property2values;
@@ -117,8 +117,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
                         @Override
                         public Triple apply(final LowLevelCacheEntry llce) {
                             return create(contentSubject,
-                                    HAS_LOCATION.asNode(), createLiteral(llce
-                                            .getExternalIdentifier()));
+                                    HAS_CONTENT_LOCATION.asNode(),
+                                    createResource(llce.getExternalIdentifier()).asNode());
                         }
                     }));
 

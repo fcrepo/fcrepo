@@ -34,19 +34,20 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects.RESOURCE_NAMESPACE;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
@@ -468,11 +469,12 @@ public class JcrRdfToolsTest {
             testObj.getJcrTriples(mockNode, mockBlobs).asModel();
 
         logRDF(fixityResultsModel);
-        assertTrue(fixityResultsModel.contains(null, IS_FIXITY_RESULT_OF,
-                createResource(RESTAPI_NAMESPACE + "/test/jcr")));
-        assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_CHECKSUM,
+        assertTrue(fixityResultsModel.contains(createResource(RESOURCE_NAMESPACE + "test/jcr"),
+                                                  HAS_FIXITY_RESULT,
+                                                  (RDFNode)null));
+        assertTrue(fixityResultsModel.contains(null, HAS_MESSAGE_DIGEST,
                 createResource(testFixityUri)));
-        assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_SIZE,
+        assertTrue(fixityResultsModel.contains(null, HAS_SIZE,
                 createTypedLiteral(123)));
 
     }

@@ -18,7 +18,7 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -62,8 +62,8 @@ public class PropertiesRdfContextTest {
         assertTrue("Didn't find triple showing content has node!", results
                 .contains(mockContentSubject, IS_CONTENT_OF, mockSubject));
         assertTrue("Didn't find triple showing content has location!", results
-                .contains(mockContentSubject, HAS_LOCATION,
-                        MOCK_EXTERNAL_IDENTIFIER));
+                .contains(mockContentSubject, HAS_CONTENT_LOCATION,
+                        createResource(MOCK_EXTERNAL_IDENTIFIER)));
     }
 
     @Before
@@ -93,7 +93,7 @@ public class PropertiesRdfContextTest {
     }
 
     private static final String MOCK_EXTERNAL_IDENTIFIER =
-        "external-identifier";
+        "info:external-identifier";
 
     private static final Resource mockContentSubject =
         createResource("http://example.com/node/jcr:content");;
