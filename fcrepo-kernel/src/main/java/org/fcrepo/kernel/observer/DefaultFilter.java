@@ -22,20 +22,26 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObjectOrDatastream;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 
-import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import org.modeshape.jcr.api.Repository;
+import com.google.common.base.Function;
 
 /**
  * EventFilter that passes only events emitted from nodes with
  * a Fedora JCR type, or properties attached to them.
+ *
+ * @author ajs6f
+ * @author barmintor
+ * @date Dec 2013
  *
  * @author eddies
  * @date Feb 7, 2013
@@ -45,27 +51,36 @@ import org.modeshape.jcr.api.Repository;
  */
 public class DefaultFilter implements EventFilter {
 
-    @Inject
-    private Repository repository;
+    private Session session;
 
     /**
-     * Filter observer events to only include events on a FedoraObject or
-     * Datastream, or properties of an FedoraObject or Datastream.
-     *
-     * @param event the original event
-     * @return
+     * Default constructor.
      */
+    public DefaultFilter() {
+    }
+
+    /**
+     * @param session
+     */
+    private DefaultFilter(final Session session) {
+        this.session = session;
+    }
+
     @Override
-    public boolean apply(final Event event) {
-        Session session = null;
+    public Function<Event, Event> getFilter(final Session session) {
+        return new DefaultFilter(session);
+    }
+
+    @Override
+    public Event apply(final Event event) {
         try {
             String nPath = event.getPath();
-            int nType = event.getType();
-            switch(nType) {
+            final int nType = event.getType();
+            switch (nType) {
                 case NODE_ADDED:
                     break;
                 case NODE_REMOVED:
-                    return true;
+                    return event;
                 case PROPERTY_ADDED:
                     nPath = nPath.substring(0, nPath.lastIndexOf('/'));
                     break;
@@ -78,22 +93,23 @@ public class DefaultFilter implements EventFilter {
                 case NODE_MOVED:
                     break;
                 default:
-                    return false;
+                    return null;
             }
 
-            session = repository.login();
             final Node n = session.getNode(nPath);
-            return isFedoraObjectOrDatastream.apply(n);
+            if (isFedoraObject.apply(n)) {
+                return new FedoraEvent(event, FEDORA_OBJECT);
+            }
+            if (isFedoraDatastream.apply(n)) {
+                return new FedoraEvent(event, FEDORA_DATASTREAM);
+            }
         } catch (final PathNotFoundException e) {
             // not a node in the fedora workspace
-            return false;
+            return null;
         } catch (final RepositoryException e) {
             throw propagate(e);
-        } finally {
-            if (session != null) {
-                session.logout();
-            }
         }
+        return null;
     }
 
 }

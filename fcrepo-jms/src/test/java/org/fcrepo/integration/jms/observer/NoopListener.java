@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.observer;
+package org.fcrepo.integration.jms.observer;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.MockitoAnnotations.initMocks;
+import javax.jms.Message;
+import javax.jms.MessageListener;
 
-import javax.jcr.observation.Event;
+class NoopListener implements MessageListener {
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-public class NOOPFilterTest {
-
-    @Mock
-    Event mockEvent;
-
-    @Before
-    public void setUp() throws Exception {
-        initMocks(this);
+    @Override
+    public void onMessage(Message arg0) {
+        
     }
-
-    @Test
-    public void testApply() throws Exception {
-        assertEquals(mockEvent, new NOOPFilter().getFilter(null).apply(mockEvent));
-    }
-
+    
 }

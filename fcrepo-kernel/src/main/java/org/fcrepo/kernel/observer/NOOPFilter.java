@@ -15,23 +15,32 @@
  */
 package org.fcrepo.kernel.observer;
 
+import javax.jcr.Session;
 import javax.jcr.observation.Event;
+
+import com.google.common.base.Function;
 
 /**
  * Simple EventFilter that does no filtering.
  *
  * @author eddies
  * @date Feb 7, 2013
+ *
+ * @author ajs6f
+ * @author barmintor
+ * @date Dec 2013
+ *
  */
 public class NOOPFilter implements EventFilter {
 
-    /**
-     * A no-op filter that passes every Event through.
-     * @param event
-     * @return true under all circumstances
-     */
     @Override
-    public boolean apply(final Event event) {
-        return true;
+    public Function<Event, Event> getFilter(final Session session) {
+        return this;
     }
+
+    @Override
+    public Event apply(final Event event) {
+        return event;
+    }
+
 }
