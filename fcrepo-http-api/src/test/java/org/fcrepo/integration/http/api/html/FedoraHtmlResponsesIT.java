@@ -191,11 +191,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final String updateSparql = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#>\n" +
                 "\n" +
-                "INSERT DATA { <> fedora:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
+                "INSERT DATA { <> fedoraconfig:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
         final HtmlPage objectPage = webClient.getPage(serverAddress + pid);
-        assertEquals("Auto versioning should be set.", "auto-version", objectPage.getFirstByXPath("//span[@property='http://fedora.info/definitions/v4/rest-api#versioningPolicy']/text()").toString());
+        assertEquals("Auto versioning should be set.", "auto-version", objectPage.getFirstByXPath("//span[@property='http://fedora.info/definitions/v4/config#versioningPolicy']/text()").toString());
         assertEquals("Title should be set.", "Object Title", objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()").toString());
 
         final String updateSparql2 = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +

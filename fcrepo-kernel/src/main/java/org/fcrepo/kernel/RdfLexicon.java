@@ -52,6 +52,12 @@ public final class RdfLexicon {
     public static final String RESTAPI_NAMESPACE =
             "http://fedora.info/definitions/v4/rest-api#";
 
+    /**
+     * Fedora configuration namespace "fedora-config", used for user-settable
+     * configuration properties.
+     **/
+    public static final String FEDORA_CONFIG_NAMESPACE =
+            "http://fedora.info/definitions/v4/config#";
 
     /**
      * REST API namespace "fedora", used for internal API links and node
@@ -246,7 +252,7 @@ public final class RdfLexicon {
     public static final Property HAS_VERSION_LABEL =
             createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
     public static final Property VERSIONING_POLICY =
-            createProperty(RESTAPI_NAMESPACE + "versioningPolicy");
+            createProperty(FEDORA_CONFIG_NAMESPACE + "versioningPolicy");
 
     public static final Set<Property> versioningProperties = of(HAS_VERSION,
             HAS_VERSION_LABEL);
