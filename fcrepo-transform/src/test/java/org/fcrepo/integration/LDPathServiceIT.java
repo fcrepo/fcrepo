@@ -75,7 +75,8 @@ public class LDPathServiceIT {
 
         testObj = new LDPathTransform(stringReader);
 
-        final List<Map<String, Collection<Object>>> list = testObj.apply(object.getPropertiesDataset(new DefaultGraphSubjects(session)));
+        final DefaultGraphSubjects subjects = new DefaultGraphSubjects(session);
+        final List<Map<String, Collection<Object>>> list = testObj.apply(object.getPropertiesDataset(subjects));
 
         assert(list != null);
         assertEquals(1, list.size());
@@ -85,7 +86,7 @@ public class LDPathServiceIT {
         assertTrue(stuff.containsKey("title"));
 
         assertEquals(1, stuff.get("id").size());
-        assertEquals(RESTAPI_NAMESPACE + "/testObject",
+        assertEquals(subjects.getGraphSubject("/testObject").getURI(),
                 stuff.get("id").iterator().next());
         assertEquals("some-title", stuff.get("title").iterator().next());
         assertEquals(object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());

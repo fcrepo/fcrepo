@@ -18,7 +18,6 @@ package org.fcrepo.kernel.rdf.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -39,6 +38,12 @@ import com.hp.hpl.jena.rdf.model.Resource;
  */
 public class DefaultGraphSubjects implements GraphSubjects {
 
+
+    /**
+     * Default namespace to use for node URIs
+     */
+    public static final String RESOURCE_NAMESPACE = "info:fedora/";
+
     private final Resource context;
     private final Session session;
 
@@ -56,10 +61,10 @@ public class DefaultGraphSubjects implements GraphSubjects {
     @Override
     public Resource getGraphSubject(final String absPath) throws RepositoryException {
         if (absPath.endsWith(JCR_CONTENT)) {
-            return createResource(RESTAPI_NAMESPACE
-                    + absPath.replace(JCR_CONTENT, FCR_CONTENT));
+            return createResource(RESOURCE_NAMESPACE
+                    + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
         } else {
-            return createResource(RESTAPI_NAMESPACE + absPath);
+            return createResource(RESOURCE_NAMESPACE + absPath.substring(1));
         }
     }
 
@@ -98,7 +103,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
         }
 
         final String absPath = subject.getURI()
-                                   .substring(RESTAPI_NAMESPACE.length());
+                                   .substring(RESOURCE_NAMESPACE.length() - 1);
 
         if (absPath.endsWith(FCR_CONTENT)) {
             return absPath.replace(FCR_CONTENT, JCR_CONTENT);
@@ -111,7 +116,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
     public boolean isFedoraGraphSubject(final Resource subject) {
         checkNotNull(subject, "null cannot be a Fedora object!");
         return subject.isURIResource() &&
-            subject.getURI().startsWith(RESTAPI_NAMESPACE);
+            subject.getURI().startsWith(RESOURCE_NAMESPACE);
     }
 
 }

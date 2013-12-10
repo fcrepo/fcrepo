@@ -44,7 +44,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects.RESOURCE_NAMESPACE;
@@ -345,7 +344,7 @@ public class JcrRdfToolsTest {
         when(mockNode.getSession().getValueFactory()).thenReturn(
                 mockValueFactory);
 
-        RDFNode n = createResource(RESTAPI_NAMESPACE + "/abc");
+        RDFNode n = createResource(RESOURCE_NAMESPACE + "abc");
 
         // node references
         when(mockSession.getNode("/abc")).thenReturn(mockNode);
@@ -357,7 +356,7 @@ public class JcrRdfToolsTest {
 
         // uris
         testObj.createValue(mockNode, n, UNDEFINED);
-        verify(mockValueFactory).createValue(RESTAPI_NAMESPACE + "/abc",
+        verify(mockValueFactory).createValue(RESOURCE_NAMESPACE + "abc",
                 PropertyType.URI);
 
         // other random resources
@@ -424,7 +423,7 @@ public class JcrRdfToolsTest {
     public final void testJcrNodeIteratorAddsPredicatesForEachNode()
         throws RepositoryException {
         final Resource mockResource =
-            createResource(RESTAPI_NAMESPACE + "/search/resource");
+            createResource(RESOURCE_NAMESPACE + "search/resource");
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode1.getSession()).thenReturn(mockSession);
