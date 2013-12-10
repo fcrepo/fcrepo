@@ -142,4 +142,34 @@ public class VersionService extends RepositoryService {
         logger.trace("Queuing implicit version checkpoint set for {}", absPath);
         tx.addPathToVersion(absPath);
     }
+    /**
+     * Creates a version checkpoint for the given node if versioning is enabled
+     * for that node type.  When versioning is enabled this is the equivalent of
+     * VersionManager#checkpoint(node.getPath()), except that it is aware of
+     * TxSessions and queues these operations accordingly.
+     *
+     * @param node the node for whom a new version is
+     *                to be minted
+     * @throws RepositoryException
+     */
+    public void checkpoint(Node node) throws RepositoryException {
+        if (node == null) {
+            throw new RepositoryException("Cannot checkpoint null nodes");
+        }
+        Session session = node.getSession();
+        String absPath = node.getPath();
+        if (node.isNodeType(VERSIONABLE)) {
+            logger.trace("Setting checkpoint for {}", absPath);
+
+            String txId = TransactionService.getCurrentTransactionId(session);
+            if (txId != null) {
+                Transaction tx = txService.getTransaction(txId);
+                tx.addPathToVersion(absPath);
+            } else {
+                session.getWorkspace().getVersionManager().checkpoint(absPath);
+            }
+        } else {
+            logger.trace("No checkpoint set for unversionable {}", absPath);
+        }
+    }
 }

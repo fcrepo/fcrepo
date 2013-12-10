@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.observer;
+package org.fcrepo.integration.jms.observer;
 
-import javax.jcr.Session;
-import javax.jcr.observation.Event;
+import javax.jms.Message;
+import javax.jms.MessageListener;
 
-import com.google.common.base.Function;
+class NoopListener implements MessageListener {
 
-/**
- * Filter JCR events to remove extraneous events
- * @author eddies
- * @date Feb 7, 2013
- */
-public interface EventFilter {
-    /**
-     * Return a function to wrap Events, or transform to null
-     * if they should  be skipped
-     * @param session
-     * @return
-     */
-    public Function<Event, Event> getFilter(Session session);
+    @Override
+    public void onMessage(Message arg0) {
+        
+    }
+    
 }

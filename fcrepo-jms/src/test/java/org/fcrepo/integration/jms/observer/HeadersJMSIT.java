@@ -191,6 +191,9 @@ public class HeadersJMSIT implements MessageListener {
 
     @After
     public void releaseConnection() throws JMSException {
+        // ignore any remaining or queued messages
+        consumer.setMessageListener(new NoopListener());
+        // and shut the listening machinery down
         LOGGER.debug(this.getClass().getName() + " releasing JMS connection.");
         consumer.close();
         session.close();

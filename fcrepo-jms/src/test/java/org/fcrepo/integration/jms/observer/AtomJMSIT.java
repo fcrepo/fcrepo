@@ -90,6 +90,9 @@ public class AtomJMSIT implements MessageListener {
 
     @After
     public void releaseConnection() throws JMSException {
+        // ignore any remaining or queued messages
+        consumer.setMessageListener(new NoopListener());
+        // and shut the listening machinery down
         logger.debug(this.getClass().getName() + " releasing JMS connection.");
         consumer.close();
         session.close();
@@ -131,8 +134,9 @@ public class AtomJMSIT implements MessageListener {
     public void testAtomStreamNodePath() throws RepositoryException,
         InterruptedException {
         final int minEntriesSize = 2;
-        final Session session = repository.login();
-        session.getRootNode().addNode("test1/sigma").addMixin(FEDORA_OBJECT);
+        Session session = repository.login();
+        final String testPath = "/test1/sigma";
+        session.getRootNode().addNode(testPath.substring(1)).addMixin(FEDORA_OBJECT);
         session.save();
 
         waitForEntry(minEntriesSize);
@@ -143,6 +147,7 @@ public class AtomJMSIT implements MessageListener {
         }
 
         String path = null;
+        String title = null;
         assertEquals("Entries size not 2", entries.size(), 2);
         for (final Entry entry : entries) {
             final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
@@ -153,11 +158,43 @@ public class AtomJMSIT implements MessageListener {
                     p = cat.getTerm();
                 }
             }
-            if (p.equals("/test1/sigma")) {
+            if (testPath.equals(p)) {
                 path = p;
+                title = entry.getTitle();
             }
         }
-        assertEquals("Got wrong path!", "/test1/sigma", path);
+        assertEquals("Got wrong path!", testPath, path);
+        assertEquals("Got wrong title/method!", "ingest", title);
+        entries.clear();
+        path = null;
+        title = null;
+        session = repository.login();
+        session.removeItem(testPath);
+        session.save();
+        waitForEntry(2);
+        session.logout();
+        if (entries.isEmpty()) {
+            fail("Waited a second, got no messages");
+        }
+
+        // wait for both the parent update and the removal message
+        assertEquals("Entries size not 2", entries.size(), 2);
+        for (final Entry entry : entries) {
+            final List<Category> categories = copyOf(entry.getCategories("xsd:string"));
+            String p = null;
+            for (final Category cat : categories) {
+                if (cat.getLabel().equals("path")) {
+                    logger.debug("Found Category with term: " + cat.getTerm());
+                    p = cat.getTerm();
+                }
+            }
+            if (p.equals(testPath)) {
+                path = p;
+                title = entry.getTitle();
+            }
+        }
+        assertEquals("Got wrong path!", testPath, path);
+        assertEquals("Got wrong title/method!", "purge", title);
     }
 
     @Test
@@ -226,10 +263,10 @@ public class AtomJMSIT implements MessageListener {
 
     @Override
     public void onMessage(final Message message) {
-        logger.debug("Received JMS message: " + message.toString());
 
         final TextMessage tMessage = (TextMessage) message;
         try {
+            logger.debug("Received JMS message: " + tMessage.getText());
             if (LegacyMethod.canParse(message)) {
                 final LegacyMethod legacy = new LegacyMethod(tMessage.getText());
                 final Entry entry = legacy.getEntry();
@@ -258,5 +295,4 @@ public class AtomJMSIT implements MessageListener {
             }
         }
     }
-
 }
