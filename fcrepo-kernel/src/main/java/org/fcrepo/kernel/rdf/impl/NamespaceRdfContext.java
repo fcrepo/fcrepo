@@ -90,7 +90,7 @@ public class NamespaceRdfContext extends RdfStream {
                 nsTriples.add(create(nsSubject, HAS_NAMESPACE_PREFIX.asNode(),
                         createLiteral(prefix)));
                 nsTriples.add(create(nsSubject, HAS_NAMESPACE_URI.asNode(),
-                        createLiteral(nsURI)));
+                        createLiteral(rdfNsUri)));
             }
         }
         concat(nsTriples.build()).namespaces(namespaces.build());
