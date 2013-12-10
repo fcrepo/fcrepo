@@ -158,11 +158,11 @@ public class SelfHealingIT {
 
         datastreamService.createDatastreamNode(session,
                 "/testSelfHealingObject/testDatastreamNode4",
-                "application/octet-stream", new ByteArrayInputStream(contentA
+                "application/octet-stream", null, new ByteArrayInputStream(contentA
                         .getBytes()), shaA);
         datastreamService.createDatastreamNode(session,
                 "/testSelfHealingObject/testDatastreamNode5",
-                "application/octet-stream", new ByteArrayInputStream(contentB
+                "application/octet-stream", null, new ByteArrayInputStream(contentB
                         .getBytes()), shaB);
 
         session.save();

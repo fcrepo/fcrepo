@@ -52,9 +52,9 @@ import javax.jcr.query.qom.Source;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.NodeTypeRdfContext;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
@@ -184,7 +184,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getNamespaceRegistryGraph(final Session session)
+    public Dataset getNamespaceRegistryDataset(final Session session)
         throws RepositoryException {
 
         final Model model =
@@ -198,6 +198,21 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return dataset;
 
     }
+
+    /**
+     * Serialize the JCR namespace information as an {@link RdfStream}
+     *
+     * @param session
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getNamespaceRegistryStream(final Session session)
+        throws RepositoryException {
+
+        return JcrRdfTools.withContext(null, session).getNamespaceTriples();
+
+    }
+
 
     /**
      * Perform a full-text search on the whole repository and return the

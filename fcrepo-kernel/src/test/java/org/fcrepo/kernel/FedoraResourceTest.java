@@ -26,9 +26,9 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.FedoraResource.hasMixin;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getProblemsModel;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getProblemsModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -53,9 +53,9 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -113,6 +113,9 @@ public class FedoraResourceTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         testObj = new FedoraResource(mockNode);
         assertEquals(mockNode, testObj.getNode());
     }

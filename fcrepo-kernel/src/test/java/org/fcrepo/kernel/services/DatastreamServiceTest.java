@@ -46,10 +46,10 @@ import javax.jcr.nodetype.NodeType;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.infinispan.loaders.CacheLoaderException;
@@ -66,8 +66,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -106,6 +104,9 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         testObj = new DatastreamService();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockNode.getSession()).thenReturn(mockSession);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:file");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         llStore = mock(LowLevelStorageService.class);
         testObj.setLlStoreService(llStore);
     }
@@ -135,10 +136,11 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         final Node actual =
                 testObj.createDatastreamNode(mockSession, testPath,
-                        MOCK_CONTENT_TYPE, mockIS);
+                        MOCK_CONTENT_TYPE, "xyz.jpg", mockIS);
         assertEquals(mockNode, actual);
 
         verify(mockContent).setProperty(JCR_DATA, mockBinary);
+        verify(mockContent).setProperty(PREMIS_FILE_NAME, "xyz.jpg");
     }
 
     @Test
@@ -198,18 +200,17 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         when(
                 llStore.transformLowLevelCacheEntries(eq(mockContent),
                        Matchers.<Function<LowLevelCacheEntry,FixityResult>> any())).thenReturn(mockCollection);
-
         when(
                 mockJcrRdfTools.getJcrTriples(eq(mockNode), Matchers
                         .<Iterable<FixityResult>> any())).thenReturn(new RdfStream());
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));
-        final Dataset fixityResultsModel =
+        final RdfStream fixityResults =
                 testObj.getFixityResultsModel(mockSubjects, mockDatastream);
 
-        assertTrue(fixityResultsModel.getContext().isDefined(
-                Symbol.create("uri")));
+        assertEquals("Got wrong topic of fixity results!",
+                createResource("abc").asNode(), fixityResults.topic());
     }
 
     @Test

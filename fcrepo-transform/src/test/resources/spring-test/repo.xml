@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:context="http://www.springframework.org/schema/context"
-    xsi:schemaLocation="
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:p="http://www.springframework.org/schema/p"
+  xsi:schemaLocation="
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-    <!-- Context that supports the actual ModeShape JCR itself -->
+  <!-- Context that supports the actual ModeShape JCR itself -->
 
-    <context:annotation-config/>
+  <context:annotation-config/>
 
+  <context:property-placeholder/>
 
-    <context:property-placeholder/>
-
-    <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean">
-      <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:/config/rest-sessions/repository.json}"/>
-    </bean>
-
+  <bean name="modeshapeRepofactory"
+    class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+    p:repositoryConfiguration="${fcrepo.modeshape.configuration:/config/rest-sessions/repository.json}"/>
 
   <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 

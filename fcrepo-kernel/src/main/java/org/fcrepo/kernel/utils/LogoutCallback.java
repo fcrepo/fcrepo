@@ -44,13 +44,17 @@ public class LogoutCallback implements FutureCallback<Void> {
 
     @Override
     public void onSuccess(final Void finishedMarker) {
-        session.logout();
+        if (session != null) {
+            session.logout();
+        }
 
     }
 
     @Override
     public void onFailure(final Throwable t) {
-        session.logout();
+        if (session != null) {
+            session.logout();
+        }
         propagate(t);
 
     }

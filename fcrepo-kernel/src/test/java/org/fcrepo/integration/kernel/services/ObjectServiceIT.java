@@ -63,7 +63,7 @@ public class ObjectServiceIT extends AbstractIT {
 
         datastreamService.createDatastreamNode(session,
                 "testObjectServiceNode", "application/octet-stream",
-                new ByteArrayInputStream("asdf".getBytes()));
+                null, new ByteArrayInputStream("asdf".getBytes()));
         session.save();
         session.logout();
 
@@ -81,7 +81,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Session session = repository.login();
 
         final Dataset registryGraph =
-            objectService.getNamespaceRegistryGraph(session);
+            objectService.getNamespaceRegistryDataset(session);
 
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
@@ -107,7 +107,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Session session = repository.login();
 
         final Dataset registryGraph =
-            objectService.getNamespaceRegistryGraph(session);
+            objectService.getNamespaceRegistryDataset(session);
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
 
@@ -124,7 +124,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Session session = repository.login();
 
         datastreamService.createDatastreamNode(session,
-                "testObjectServiceNode0", "application/octet-stream",
+                "testObjectServiceNode0", "application/octet-stream", null,
                 new ByteArrayInputStream("asdfx".getBytes()));
         session.save();
 
@@ -142,7 +142,7 @@ public class ObjectServiceIT extends AbstractIT {
         final Session session = repository.login();
 
         datastreamService.createDatastreamNode(session,
-                "testObjectServiceNode1", "application/octet-stream",
+                "testObjectServiceNode1", "application/octet-stream", null,
                 new ByteArrayInputStream("asdfy".getBytes()));
         session.save();
 

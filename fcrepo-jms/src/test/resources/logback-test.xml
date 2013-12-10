@@ -10,6 +10,9 @@
   <logger name="org.fcrepo.jms" additivity="false" level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </logger>
+  <logger name="org.fcrepo.integration.jms" additivity="false" level="DEBUG">
+    <appender-ref ref="STDOUT"/>
+  </logger>
   <logger name="org.fcrepo" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>

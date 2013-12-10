@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.rdf;
 
 import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -42,17 +42,18 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
+import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.slf4j.Logger;
@@ -90,9 +91,6 @@ public class JcrRdfTools {
      */
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
-
-    private static GetClusterConfiguration getClusterConfiguration =
-        new GetClusterConfiguration();
 
     private LowLevelStorageService llstore;
 
@@ -300,6 +298,16 @@ public class JcrRdfTools {
     }
 
     /**
+     * Get an {@link RdfStream} of the registered JCR workspaces
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getWorkspaceTriples(final UriInfo uriInfo) throws RepositoryException {
+        return new WorkspaceRdfContext(session, uriInfo);
+    }
+
+    /**
      * Add the properties of a Node's parent and immediate children (as well as
      * the jcr:content of children) to the given {@link RdfStream}
      *
@@ -499,7 +507,8 @@ public class JcrRdfTools {
     public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate,
                                                final Map<String, String> namespaceMapping) throws RepositoryException {
 
-        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry)session.getWorkspace().getNamespaceRegistry();
+        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace()
+                .getNamespaceRegistry();
 
         return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
     }
@@ -510,7 +519,8 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate) throws RepositoryException {
+    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
+        throws RepositoryException {
 
 
         final Map<String, String> emptyNamespaceMapping = emptyMap();
@@ -526,8 +536,9 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry, final com.hp.hpl.jena.rdf.model.Property predicate,
-        final Map<String, String> namespaceMapping) throws RepositoryException {
+    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
+                                               final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map<String, String> namespaceMapping) throws RepositoryException {
 
         final String prefix;
 
@@ -562,14 +573,6 @@ public class JcrRdfTools {
 
         return propertyName;
 
-    }
-
-    /**
-     * Set the function used to get the cluster configuration for Infinispan
-     */
-    public static void setGetClusterConfiguration(
-            final GetClusterConfiguration newClusterConfiguration) {
-        getClusterConfiguration = newClusterConfiguration;
     }
 
     /**

@@ -16,10 +16,7 @@
 package org.fcrepo.auth.oauth.api;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.times;
@@ -48,26 +45,24 @@ import org.mockito.Mock;
 
 
 public class AuthzEndpointTest {
-    
-    private static final String DUMMY_TOKEN = "dummyOauthToken";
-    
+
     @Mock
     private HttpServletRequest mockRequest;
-    
+
     @Mock
     private SessionFactory mockSessions;
-    
+
     @Mock
     private Session mockSession;
-    
+
     @Mock
     private Node mockRootNode;
-    
+
     @Mock
     private Node mockCodeNode;
-    
+
     private AuthzEndpoint testObj;
-    
+
     @Before
     public void setUp() throws RepositoryException, NoSuchFieldException {
         initMocks(this);
@@ -85,69 +80,69 @@ public class AuthzEndpointTest {
     @Test
     public void testValidCodeRequest()
         throws URISyntaxException, OAuthSystemException, RepositoryException {
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getParameter("client_id")).thenReturn("bond");
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockRequest.getParameter("redirect_uri"))
         .thenReturn("http://fedora.info/redirect");
         when(mockRequest.getParameter(OAuth.OAUTH_RESPONSE_TYPE))
         .thenReturn("code");
-        Response actual = testObj.getAuthorization(mockRequest);
+        final Response actual = testObj.getAuthorization(mockRequest);
         assertEquals(302, actual.getStatus());
-        URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
+        final URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
         assertEquals(-1, redirect.getQuery().indexOf("error="));
         verify(mockSession).save();
         verify(mockSession).logout();
     }
-    
+
     @Test
     public void testMissingResponseType()
         throws URISyntaxException, OAuthSystemException, RepositoryException {
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockRequest.getParameter("redirect_uri"))
         .thenReturn("http://fedora.info/redirect");
         when(mockRequest.getParameter("client_id")).thenReturn("bond");
-        Response actual = testObj.getAuthorization(mockRequest);
+        final Response actual = testObj.getAuthorization(mockRequest);
         assertEquals(302, actual.getStatus());
-        URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
+        final URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
         assertEquals(0, redirect.getQuery().indexOf("error=invalid_request"));
         verify(mockSession, times(0)).save();
     }
-    
+
     @Test
     public void testUnsupportedResponseType()
         throws URISyntaxException, OAuthSystemException, RepositoryException {
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockRequest.getParameter("redirect_uri"))
         .thenReturn("http://fedora.info/redirect");
         when(mockRequest.getParameter("client_id")).thenReturn("bond");
         when(mockRequest.getParameter(OAuth.OAUTH_RESPONSE_TYPE))
         .thenReturn("token");
-        Response actual = testObj.getAuthorization(mockRequest);
+        final Response actual = testObj.getAuthorization(mockRequest);
         assertEquals(302, actual.getStatus());
-        URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
+        final URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
         assertEquals(0, redirect.getQuery().indexOf("error=unsupported_response_type"));
         verify(mockSession, times(0)).save();
     }
-    
+
     @Test
     public void testMissingClientId()
         throws URISyntaxException, OAuthSystemException, RepositoryException {
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockRequest.getParameter("redirect_uri"))
         .thenReturn("http://fedora.info/redirect");
         when(mockRequest.getParameter(OAuth.OAUTH_RESPONSE_TYPE))
         .thenReturn("token");
-        Response actual = testObj.getAuthorization(mockRequest);
+        final Response actual = testObj.getAuthorization(mockRequest);
         assertEquals(302, actual.getStatus());
-        URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
+        final URI redirect = URI.create(actual.getMetadata().getFirst("Location").toString());
         assertEquals(0, redirect.getQuery().indexOf("error=invalid_request"));
         verify(mockSession, times(0)).save();
     }
-    
+
     /**
      * Redirect uri parms are optional, but the error handling
      * for a bad request is different when it is absent
@@ -157,7 +152,7 @@ public class AuthzEndpointTest {
      */
     @Test(expected=WebApplicationException.class)
     public void testMissingRedirectUriAndClientId() throws URISyntaxException, OAuthSystemException, RepositoryException {
-        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+        final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockRequest.getParameter(OAuth.OAUTH_RESPONSE_TYPE))
         .thenReturn("code");

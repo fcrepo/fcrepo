@@ -16,6 +16,8 @@
 
 package org.fcrepo.kernel;
 
+import org.fcrepo.kernel.services.VersionService;
+
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.Transaction.State.COMMITED;
@@ -58,7 +60,7 @@ public class Transaction {
 
     private State state = State.NEW;
 
-    private Set<String> versionedPaths = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private Set<String> versionedPaths;
 
     /**
      * Create a transaction for the given Session
@@ -128,17 +130,27 @@ public class Transaction {
      *                checkpoint made
      */
     public void addPathToVersion(String absPath) {
+        if (versionedPaths == null) {
+            versionedPaths = Collections.newSetFromMap(
+                    new ConcurrentHashMap<String, Boolean>());
+        }
         versionedPaths.add(absPath);
     }
 
     /**
      * "Commit" the transaction by saving the backing-session
+     * @param vService a versionService
      * @throws RepositoryException
      */
-    public void commit() throws RepositoryException {
+    public void commit(VersionService vService) throws RepositoryException {
+
         this.session.save();
-        for (String path : versionedPaths) {
-            session.getWorkspace().getVersionManager().checkpoint(path);
+        if (this.versionedPaths != null) {
+            if (vService == null) {
+                throw new IllegalStateException("Versioned Paths were added," +
+                        " but no VersionService was provided!");
+            }
+            vService.createVersion(session.getWorkspace(), versionedPaths);
         }
         this.state = COMMITED;
         this.expire();

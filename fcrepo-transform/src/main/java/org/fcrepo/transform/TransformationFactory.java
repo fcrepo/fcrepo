@@ -16,7 +16,6 @@
 
 package org.fcrepo.transform;
 
-import org.apache.jena.riot.WebContent;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 
@@ -27,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.common.base.Throwables.propagate;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
+import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
 
 /**
  * Get a Transformation from a MediaType
@@ -39,9 +40,9 @@ public class TransformationFactory {
      * Get a new TransformationFactory with the default classes
      */
     public TransformationFactory() {
-        mimeToTransform = new HashMap<String, Class<?>>();
-        mimeToTransform.put(WebContent.contentTypeSPARQLQuery, SparqlQueryTransform.class);
-        mimeToTransform.put(LDPathTransform.APPLICATION_RDF_LDPATH, LDPathTransform.class);
+        mimeToTransform = new HashMap<>();
+        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform.class);
+        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform.class);
 
     }
 

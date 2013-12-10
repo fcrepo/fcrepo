@@ -7,7 +7,7 @@
   </parent>
   <artifactId>fcrepo-http-commons</artifactId>
   <name>${project.artifactId}</name>
-  <description>HTTP (JAX-RS) resources and helpers.</description>
+  <description>The Fedora Commons repository HTTP commons module: Provides HTTP (JAX-RS) resources and helpers for use in assembling HTTP APIs over the Fedora Commons repository framework.</description>
   <packaging>bundle</packaging>
 
   <dependencies>
@@ -230,6 +230,11 @@
     <dependency>
       <groupId>org.openrdf.sesame</groupId>
       <artifactId>sesame-rio-turtle</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.openrdf.sesame</groupId>
+      <artifactId>sesame-rio-n3</artifactId>
+      <version>2.7.7</version>
     </dependency>
   </dependencies>
 

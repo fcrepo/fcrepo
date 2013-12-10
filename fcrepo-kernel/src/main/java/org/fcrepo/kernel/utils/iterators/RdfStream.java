@@ -16,14 +16,16 @@
 
 package org.fcrepo.kernel.utils.iterators;
 
+import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.Objects.hash;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 import javax.jcr.Session;
 
 import com.google.common.base.Function;
@@ -31,6 +33,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -49,6 +52,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     protected Iterator<Triple> triples;
 
     protected Session context;
+
+    protected Node topic;
 
     private final static Triple[] NONE = new Triple[] {};
 
@@ -125,7 +130,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).namespaces(namespaces());
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic());
     }
 
     /**
@@ -135,7 +140,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @return
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).namespaces(namespaces());
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic());
     }
 
     /**
@@ -160,7 +165,8 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * @param newTriples Triples to add.
      * @return This object for continued use.
      */
-    public <T extends Triple> RdfStream concat(final T... newTriples) {
+    public <T extends Triple> RdfStream concat(@SuppressWarnings("unchecked")
+        final T... newTriples) {
         triples = Iterators.concat(Iterators.forArray(newTriples), triples);
         return this;
     }
@@ -251,8 +257,26 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      *
      * @param session The {@link Session} in context
      */
-    public void session(final Session session) {
+    public RdfStream session(final Session session) {
         this.context = session;
+        return this;
+    }
+
+    /**
+     * @return The {@link Node} topic in context
+     */
+    public Node topic() {
+        return this.topic;
+    }
+
+    /**
+     * Sets the topic of this stream
+     *
+     * @param topic The {@link Node} topic in context
+     */
+    public RdfStream topic(final Node topic) {
+        this.topic = topic;
+        return this;
     }
 
     /**
@@ -328,21 +352,33 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      */
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof RdfStream) {
-            final RdfStream rdfo = (RdfStream) o;
-            final boolean triplesEqual =
-                copyOf(rdfo.triples).equals(copyOf(this.triples));
-            final boolean namespaceMappingsEqual =
-                rdfo.namespaces().equals(this.namespaces());
-            return triplesEqual && namespaceMappingsEqual;
-        } else {
+        if (o == null) {
             return false;
         }
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof RdfStream)) {
+            return false;
+        }
+        final RdfStream rdfo = (RdfStream) o;
+
+        final boolean triplesEqual =
+            equal(copyOf(rdfo.triples), copyOf(this.triples));
+
+        final boolean namespaceMappingsEqual =
+            equal(rdfo.namespaces(), this.namespaces());
+
+        final boolean topicEqual =
+                equal(rdfo.topic(), this.topic());
+
+        return triplesEqual && namespaceMappingsEqual && topicEqual;
+
     }
 
     @Override
     public int hashCode() {
-        return namespaces().hashCode() + 2 * triples.hashCode();
+        return hash(namespaces(), triples, topic());
     }
 
 }

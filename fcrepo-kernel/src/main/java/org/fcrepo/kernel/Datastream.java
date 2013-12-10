@@ -120,11 +120,14 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     /**
      * Sets the content of this Datastream.
      *
+     *
      * @param content
+     * @param originalFileName
      * @throws RepositoryException
      */
     public void setContent(final InputStream content, final String contentType,
-        final URI checksum, final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+                           final URI checksum, final String originalFileName,
+                           final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
         throws RepositoryException, InvalidChecksumException {
 
         final Node contentNode =
@@ -138,6 +141,9 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
             contentNode.setProperty(JCR_MIME_TYPE, contentType);
         }
 
+        if (originalFileName != null) {
+            contentNode.setProperty(PREMIS_FILE_NAME, originalFileName);
+        }
 
         LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
@@ -169,11 +175,12 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
         final String dsChecksum = binary.getHexHash();
+        final URI uriChecksumString = ContentDigest.asURI("SHA-1", dsChecksum);
         if (checksum != null &&
-                !checksum.equals(ContentDigest.asURI("SHA-1", dsChecksum))) {
+                !checksum.equals(uriChecksumString)) {
             LOGGER.debug("Failed checksum test");
             throw new InvalidChecksumException("Checksum Mismatch of " +
-                                               dsChecksum + " and " + checksum);
+                 uriChecksumString + " and " + checksum);
         }
 
         decorateContentNode(contentNode);
@@ -191,7 +198,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      */
     public void setContent(final InputStream content) throws InvalidChecksumException,
                                                        RepositoryException {
-        setContent(content, null, null, null);
+        setContent(content, null, null, null, null);
     }
 
     /**
@@ -269,6 +276,19 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     public long getSize() throws RepositoryException {
         return getNodePropertySize(node) + getContentSize();
 
+    }
+
+    /**
+     * Return the file name for the binary content
+     * @return
+     * @throws RepositoryException
+     */
+    public String getFilename() throws RepositoryException {
+        if (node.hasNode(JCR_CONTENT) && node.getNode(JCR_CONTENT).hasProperty(PREMIS_FILE_NAME)) {
+            return node.getNode(JCR_CONTENT).getProperty(PREMIS_FILE_NAME).getString();
+        } else {
+            return getDsId();
+        }
     }
 
     private void decorateContentNode(final Node contentNode)

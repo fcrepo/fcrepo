@@ -34,6 +34,7 @@ import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.slf4j.Logger;
 
+import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 
 /**
@@ -41,9 +42,9 @@ import static javax.jcr.PropertyType.URI;
  * @author Chris Beer
  * @date May 10, 2013
  */
-public abstract class NodePropertiesTools {
+public class NodePropertiesTools {
 
-    private static final Logger logger = getLogger(NodePropertiesTools.class);
+    private static final Logger LOGGER = getLogger(NodePropertiesTools.class);
     public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 
     /**
@@ -57,7 +58,7 @@ public abstract class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public static void appendOrReplaceNodeProperty(final GraphSubjects subjects,
+    public void appendOrReplaceNodeProperty(final GraphSubjects subjects,
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
@@ -69,7 +70,7 @@ public abstract class NodePropertiesTools {
             final Property property = node.getProperty(propertyName);
 
             if (property.isMultiple()) {
-                logger.debug("Appending value {} to {} property {}", newValue,
+                LOGGER.debug("Appending value {} to {} property {}", newValue,
                              PropertyType.nameFromValue(property.getType()),
                              propertyName);
 
@@ -87,7 +88,7 @@ public abstract class NodePropertiesTools {
                 addReferencePlaceholders(subjects, node, property, newValue);
             } else {
                 // or we'll just overwrite it
-                logger.debug("Overwriting {} property {} with new value {}",
+                LOGGER.debug("Overwriting {} property {} with new value {}",
                              PropertyType.nameFromValue(property.getType()),
                              propertyName, newValue);
                 property.setValue(newValue);
@@ -102,14 +103,14 @@ public abstract class NodePropertiesTools {
                 // simply represents a new kind of property on this node
             }
             if (isMultiple) {
-                logger.debug("Creating new multivalued {} property {} with " +
+                LOGGER.debug("Creating new multivalued {} property {} with " +
                              "initial value [{}]",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
                 final Property property = node.setProperty(propertyName, new Value[]{newValue}, newValue.getType());
                 addReferencePlaceholders(subjects, node, property, newValue);
             } else {
-                logger.debug("Creating new single-valued {} property {} with " +
+                LOGGER.debug("Creating new single-valued {} property {} with " +
                              "initial value {}",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
@@ -120,7 +121,10 @@ public abstract class NodePropertiesTools {
 
     }
 
-    private static void addReferencePlaceholders(final GraphSubjects subjects, final Node node, final Property property, final Value newValue) throws RepositoryException {
+    private void addReferencePlaceholders(final GraphSubjects subjects,
+                                          final Node node,
+                                          final Property property,
+                                          final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
@@ -138,7 +142,10 @@ public abstract class NodePropertiesTools {
         }
     }
 
-    private static void removeReferencePlaceholders(final GraphSubjects subjects, final Node node, final Property property, final Value newValue) throws RepositoryException {
+    private void removeReferencePlaceholders(final GraphSubjects subjects,
+                                             final Node node,
+                                             final Property property,
+                                             final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
@@ -166,7 +173,7 @@ public abstract class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public static void removeNodeProperty(final GraphSubjects subjects,
+    public void removeNodeProperty(final GraphSubjects subjects,
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)
@@ -193,10 +200,10 @@ public abstract class NodePropertiesTools {
                 // we only need to update the property if we did anything.
                 if (remove) {
                     if (newValues.size() == 0) {
-                        logger.debug("Removing property {}", propertyName);
+                        LOGGER.debug("Removing property {}", propertyName);
                         property.setValue((Value[])null);
                     } else {
-                        logger.debug("Removing value {} from property {}",
+                        LOGGER.debug("Removing value {} from property {}",
                                      valueToRemove, propertyName);
                         property
                             .setValue(newValues
@@ -207,7 +214,7 @@ public abstract class NodePropertiesTools {
 
             } else {
                 if (property.getValue().equals(valueToRemove)) {
-                    logger.debug("Removing value {} property {}", propertyName);
+                    LOGGER.debug("Removing value {} property {}", propertyName);
                     property.setValue((Value)null);
 
                     if (property.getType() == URI && node.hasProperty(getReferencePropertyName(propertyName))) {
@@ -223,11 +230,11 @@ public abstract class NodePropertiesTools {
      * @param propertyName
      * @return
      */
-    public static String getReferencePropertyName(final String propertyName) {
+    public String getReferencePropertyName(final String propertyName) {
         return propertyName + REFERENCE_PROPERTY_SUFFIX;
     }
 
-    private static String getReferencePropertyName(final Property property) throws RepositoryException {
+    private String getReferencePropertyName(final Property property) throws RepositoryException {
         return getReferencePropertyName(property.getName());
     }
     /**
@@ -239,14 +246,15 @@ public abstract class NodePropertiesTools {
      * @return a PropertyType value
      * @throws RepositoryException
      */
-    public static int getPropertyType(final Node node,
-                                      final String propertyName)
+    public int getPropertyType(final Node node, final String propertyName)
         throws RepositoryException {
+        LOGGER.debug("Getting type of property: {} from node: {}",
+                propertyName, node);
         final PropertyDefinition def =
             getDefinitionForPropertyName(node, propertyName);
 
         if (def == null) {
-            return PropertyType.UNDEFINED;
+            return UNDEFINED;
         }
 
         return def.getRequiredType();
@@ -263,7 +271,7 @@ public abstract class NodePropertiesTools {
      * @return true if the property is (or could be) multivalued
      * @throws RepositoryException
      */
-    public static boolean isMultivaluedProperty(final Node node,
+    public boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
         throws RepositoryException {
         final PropertyDefinition def =

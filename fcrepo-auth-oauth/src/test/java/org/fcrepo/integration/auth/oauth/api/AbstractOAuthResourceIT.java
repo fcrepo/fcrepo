@@ -18,7 +18,6 @@ package org.fcrepo.integration.auth.oauth.api;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -30,8 +29,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -66,16 +64,13 @@ public abstract class AbstractOAuthResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/rest/";
 
-    protected final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
-
     protected static HttpClient client;
 
     public AbstractOAuthResourceIT() {
-        connectionManager.setMaxTotal(MAX_VALUE);
-        connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.closeIdleConnections(3, SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        final HttpClientBuilder b =
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
+                    .setMaxConnTotal(MAX_VALUE);
+        client = b.build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {

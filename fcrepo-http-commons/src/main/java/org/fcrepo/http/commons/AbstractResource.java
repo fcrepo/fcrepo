@@ -53,6 +53,7 @@ import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -222,7 +223,7 @@ public abstract class AbstractResource {
 
                 final Node node =
                         datastreamService.createDatastreamNode(session, path,
-                                contentType.toString(), requestBodyStream,
+                                contentType.toString(), null, requestBodyStream,
                                 checksum);
                 result = new Datastream(node);
                 break;
@@ -240,6 +241,16 @@ public abstract class AbstractResource {
         throws RepositoryException {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResource(dataset, resource,
+                    uriInfo, subjects);
+        }
+    }
+
+    protected void addResponseInformationToStream(
+            final FedoraResource resource, final RdfStream dataset,
+            final UriInfo uriInfo, final GraphSubjects subjects)
+        throws RepositoryException {
+        if (httpTripleUtil != null) {
+            httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
                     uriInfo, subjects);
         }
     }

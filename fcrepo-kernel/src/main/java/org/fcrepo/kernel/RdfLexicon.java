@@ -52,6 +52,15 @@ public final class RdfLexicon {
     public static final String RESTAPI_NAMESPACE =
             "http://fedora.info/definitions/v4/rest-api#";
 
+
+    /**
+     * REST API namespace "fedora", used for internal API links and node
+     * paths.
+     * Was "info:fedora/".
+     **/
+    public static final String PREMIS_NAMESPACE =
+        "http://www.loc.gov/premis/rdf/v1#";
+
     /**
      * The namespaces that the repository manages internally.
      */
@@ -167,6 +176,8 @@ public final class RdfLexicon {
             createProperty(RESTAPI_NAMESPACE + "hasNamespaces");
     public static final Property HAS_WORKSPACE_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasWorkspaces");
+    public static final Property HAS_ACCESS_ROLES_SERVICE =
+            createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
     public static final Property HAS_SEARCH_SERVICE =
             createProperty("http://www.whatwg.org/specs/web-apps/current-work/"
                                    + "#link-type-search");
@@ -220,11 +231,13 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasLocation");
     public static final Property HAS_MIME_TYPE =
             createProperty(REPOSITORY_NAMESPACE + "mimeType");
+    public static final Property HAS_ORIGINAL_NAME =
+            createProperty(PREMIS_NAMESPACE + "hasOriginalName");
     public static final Property HAS_SIZE =
-            createProperty(REPOSITORY_NAMESPACE + "hasSize");
+            createProperty(PREMIS_NAMESPACE + "hasSize");
 
     public static final Set<Property> contentProperties = of(HAS_CONTENT,
-            IS_CONTENT_OF, HAS_LOCATION, HAS_MIME_TYPE, HAS_SIZE);
+            IS_CONTENT_OF, HAS_LOCATION, HAS_MIME_TYPE, HAS_ORIGINAL_NAME, HAS_SIZE);
 
 
     // VERSIONING
@@ -232,6 +245,8 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasVersion");
     public static final Property HAS_VERSION_LABEL =
             createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
+    public static final Property VERSIONING_POLICY =
+            createProperty(RESTAPI_NAMESPACE + "versioningPolicy");
 
     public static final Set<Property> versioningProperties = of(HAS_VERSION,
             HAS_VERSION_LABEL);
@@ -304,6 +319,7 @@ public final class RdfLexicon {
     /**
      * Detects whether an RDF property is managed by the repository.
      */
+    @SuppressWarnings("unchecked")
     public static final Predicate<Property> isManagedPredicate = or(
             in(managedProperties), hasJcrNamespace, hasFedoraNamespace);
 

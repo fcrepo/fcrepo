@@ -37,12 +37,12 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.JcrRdfTools;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,10 +51,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Context;
-import com.hp.hpl.jena.update.GraphStoreFactory;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -109,34 +105,37 @@ public class DatastreamService extends RepositoryService {
      */
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
+            final String originalFileName,
             final InputStream requestBodyStream) throws RepositoryException,
             IOException, InvalidChecksumException {
 
         return createDatastreamNode(session, dsPath, contentType,
-                requestBodyStream, null);
+                                       originalFileName, requestBodyStream, null);
     }
 
     /**
      * Create a new Datastream node in the JCR store
      *
+     *
      * @param session the jcr session to use
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
+     * @param originalFileName the original file name for the input stream
      * @param requestBodyStream binary payload for the datastream
-     * @param checksum the digest for the binary payload (as urn:sha1:xyz)
-     * @return
+     * @param checksum the digest for the binary payload (as urn:sha1:xyz)   @return
      * @throws RepositoryException
      * @throws IOException
      * @throws InvalidChecksumException
      */
     public Node createDatastreamNode(final Session session,
-        final String dsPath, final String contentType,
-        final InputStream requestBodyStream, final URI checksum)
+                                     final String dsPath, final String contentType,
+                                     final String originalFileName, final InputStream requestBodyStream,
+                                     final URI checksum)
         throws RepositoryException, IOException, InvalidChecksumException {
 
         final Datastream ds = createDatastream(session, dsPath);
         ds.setContent(requestBodyStream, contentType, checksum,
-                getStoragePolicyDecisionPoint());
+                         originalFileName, getStoragePolicyDecisionPoint());
         return ds.getNode();
     }
 
@@ -186,25 +185,16 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
-    public Dataset getFixityResultsModel(final GraphSubjects subjects,
+    public RdfStream getFixityResultsModel(final GraphSubjects subjects,
             final Datastream datastream) throws RepositoryException {
 
         final Collection<FixityResult> blobs =
                 runFixityAndFixProblems(datastream);
 
-        final Model model =
-            JcrRdfTools
-                    .withContext(subjects, datastream.getNode().getSession())
-                    .getJcrTriples(datastream.getNode(), blobs).asModel();
-
-        final Dataset dataset = GraphStoreFactory.create(model).toDataset();
-
-        final String uri =
-                subjects.getGraphSubject(datastream.getNode()).getURI();
-        final Context context = dataset.getContext();
-        context.set(GraphProperties.URI_SYMBOL, uri);
-
-        return dataset;
+        return JcrRdfTools.withContext(subjects,
+                datastream.getNode().getSession()).getJcrTriples(
+                datastream.getNode(), blobs).topic(
+                subjects.getGraphSubject(datastream.getNode()).asNode());
     }
 
     /**

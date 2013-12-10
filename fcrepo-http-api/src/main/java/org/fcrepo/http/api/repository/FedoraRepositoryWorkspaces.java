@@ -16,8 +16,6 @@
 
 package org.fcrepo.http.api.repository;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.sun.jersey.api.Responses.clientError;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.created;
@@ -29,9 +27,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,15 +52,10 @@ import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.utils.JcrRdfTools;
-import org.slf4j.Logger;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * This class exposes the JCR workspace functionality. It may be
@@ -75,8 +65,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 @Scope("prototype")
 @Path("/fcr:workspaces")
 public class FedoraRepositoryWorkspaces extends AbstractResource {
-
-    private static final Logger logger = getLogger(FedoraRepositoryWorkspaces.class);
 
     @InjectedSession
     protected Session session;
@@ -91,30 +79,12 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
                TEXT_HTML})
     @HtmlTemplate("jcr:workspaces")
-    public Dataset getWorkspaces(@Context final UriInfo uriInfo)
+    public RdfStream getWorkspaces(@Context final UriInfo uriInfo)
         throws RepositoryException {
 
-        final Model workspaceModel =
-            JcrRdfTools.withContext(null, session).getNamespaceTriples().asModel();
+        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(
+                uriInfo).session(session);
 
-        final String[] workspaces =
-                session.getWorkspace().getAccessibleWorkspaceNames();
-
-        for (final String workspace : workspaces) {
-            final Resource resource =
-                    createResource(uriInfo.getBaseUriBuilder()
-                                           .path("/workspace:" + workspace)
-                                           .build()
-                                           .toString());
-            logger.debug("Discovered workspace: {}", resource);
-            workspaceModel.add(resource, type, NOT_IMPLEMENTED);
-        }
-
-        try {
-            return DatasetFactory.create(workspaceModel);
-        } finally {
-            session.logout();
-        }
     }
 
     /**

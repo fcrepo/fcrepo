@@ -24,12 +24,7 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -39,6 +34,7 @@ import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -52,6 +48,8 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -70,12 +68,12 @@ import com.google.common.collect.Iterators;
  * @author ajs6f
  * @date Feb 14, 2013
  */
-public abstract class FedoraTypesUtils {
+public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora object.
+     * Predicate for determining whether this {@link Node} is a Fedora resource.
      */
     public static Predicate<Node> isFedoraResource = new Predicate<Node>() {
 
@@ -92,16 +90,16 @@ public abstract class FedoraTypesUtils {
     };
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora object.
+     * Predicate for determining whether this {@link Node} is a frozen node
+     * (a part of the system version history).
      */
-    public static Predicate<Node> isFedoraObject = new Predicate<Node>() {
+    public static Predicate<Node> isFrozen = new Predicate<Node>() {
 
         @Override
         public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Fedora object!");
+            checkArgument(node != null, "null cannot be a Frozen node!");
             try {
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                        FEDORA_OBJECT);
+                return node.getPrimaryNodeType().getName().equals(FROZEN_NODE);
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
@@ -109,22 +107,53 @@ public abstract class FedoraTypesUtils {
     };
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora
-     * datastream.
+     * Predicate for determining whether this {@link Node} is a Fedora resource
+     * or is a frozen node that was a fedora resource.
      */
-    public static Predicate<Node> isFedoraDatastream = new Predicate<Node>() {
-
+    public static Predicate<Node> isOrWasFedoraResource = new Predicate<Node>() {
         @Override
         public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Fedora datastream!");
+            checkArgument(node != null, "null cannot be a Fedora object!");
             try {
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                        FEDORA_DATASTREAM);
+                if (node.getPrimaryNodeType().getName().equals(FROZEN_NODE)) {
+                    final PropertyIterator it = node.getProperties(FROZEN_MIXIN_TYPES);
+                    while (it.hasNext()) {
+                        for (final Value v : it.nextProperty().getValues()) {
+                            if (v.getString().equals(FEDORA_RESOURCE)) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                } else {
+                    return map(node.getMixinNodeTypes(), nodetype2name).contains(
+                            FEDORA_RESOURCE);
+                }
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
         }
     };
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora object.
+     */
+    public static Predicate<Node> isFedoraObject =
+            new AnyTypesPredicate(FEDORA_OBJECT);
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora
+     * datastream.
+     */
+    public static Predicate<Node> isFedoraDatastream =
+            new AnyTypesPredicate(FEDORA_DATASTREAM);
+
+    /**
+     * Predicate for objects, datastreams, whatever!
+     */
+
+    public static Predicate<Node> isFedoraObjectOrDatastream =
+            new AnyTypesPredicate(FEDORA_OBJECT, FEDORA_DATASTREAM);
 
     /**
      * Translates a {@link NodeType} to its {@link String} name.

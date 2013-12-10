@@ -26,12 +26,11 @@ import static com.hp.hpl.jena.vocabulary.RDFS.Class;
 import static com.hp.hpl.jena.vocabulary.RDFS.label;
 import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
 import static org.fcrepo.kernel.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -39,7 +38,6 @@ import org.fcrepo.kernel.rdf.impl.mappings.NodeDefinitionToTriples;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyDefinitionToTriples;
 import org.fcrepo.kernel.utils.iterators.NodeTypeIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
@@ -109,23 +107,15 @@ public class NodeTypeRdfContext extends RdfStream {
         throws RepositoryException {
         super();
 
-        final ImmutableCollection.Builder<Triple> nsTriples =
-            ImmutableSet.builder();
-
-        final Node nodeTypeResource =
-                getResource((Namespaced) nodeType).asNode();
+        final Node nodeTypeResource = getResource(nodeType).asNode();
         final String nodeTypeName = nodeType.getName();
 
         LOGGER.trace("Adding triples for nodeType: {} with URI: {}",
                 nodeTypeName, nodeTypeResource.getURI());
 
-        nsTriples.add(create(nodeTypeResource, type.asNode(), Class
-                .asNode()));
-        nsTriples.add(create(nodeTypeResource, label.asNode(),
-                createLiteral(nodeTypeName)));
+        concat(map(nodeType.getDeclaredSupertypes(),
 
-        concat(Iterators.transform(forArray(nodeType.getDeclaredSupertypes()),
-                new Function<NodeType, Triple>() {
+            new Function<NodeType, Triple>() {
 
                     @Override
                     public Triple apply(final NodeType input) {
@@ -156,7 +146,8 @@ public class NodeTypeRdfContext extends RdfStream {
                 not(isWildcardResidualDefinition)),
                 new PropertyDefinitionToTriples(nodeTypeResource))));
 
-        concat(nsTriples.build());
+        concat(create(nodeTypeResource, type.asNode(), Class.asNode()), create(
+                nodeTypeResource, label.asNode(), createLiteral(nodeTypeName)));
     }
 
 

@@ -20,7 +20,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.Collections.singletonList;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
 

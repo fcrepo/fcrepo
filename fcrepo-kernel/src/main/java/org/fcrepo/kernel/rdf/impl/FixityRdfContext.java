@@ -18,7 +18,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.builder;
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -31,6 +30,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
 
+import java.util.Calendar;
 import java.util.Iterator;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -72,9 +72,9 @@ public class FixityRdfContext extends NodeRdfContext {
 
                     @Override
                     public Iterator<Triple> apply(final FixityResult blob) {
-                        // fixity results are just blank nodes
                         final com.hp.hpl.jena.graph.Node resultSubject =
-                            createAnon();
+                            createURI(subject().getURI() + "/fixity/"
+                                    + Calendar.getInstance().getTimeInMillis());
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
                             b.add(create(resultSubject, IS_FIXITY_RESULT_OF

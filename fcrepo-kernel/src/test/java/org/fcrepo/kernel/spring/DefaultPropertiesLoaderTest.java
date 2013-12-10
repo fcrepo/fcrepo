@@ -20,6 +20,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+
 /**
  * @author Andrew Woods
  *         Date: 10/20/13
@@ -30,6 +32,7 @@ public class DefaultPropertiesLoaderTest {
 
     private static final String PROP_FLAG = "integration-test";
     private static final String PROP_TEST = "fcrepo.ispn.repo.CacheDirPath";
+    private static final String HOME_PROP = "fcrepo.home";
 
     @Before
     public void setUp() throws Exception {
@@ -38,8 +41,13 @@ public class DefaultPropertiesLoaderTest {
 
     @After
     public void tearDown() throws Exception {
+        clearProps();
+    }
+
+    private void clearProps() {
         System.clearProperty(PROP_FLAG);
         System.clearProperty(PROP_TEST);
+        System.clearProperty(HOME_PROP);
     }
 
     @Test
@@ -56,5 +64,63 @@ public class DefaultPropertiesLoaderTest {
         loader.loadSystemProperties();
         Assert.assertNull(System.getProperty(PROP_FLAG));
         Assert.assertNotNull(System.getProperty(PROP_TEST));
+    }
+
+    @Test
+    public void testContentIsInWorkingDir() {
+       loader.loadSystemProperties();
+       Assert.assertTrue("Default directories are within working directory.",
+               containsPath(System.getProperty(PROP_TEST),
+                       System.getProperty("user.dir")));
+    }
+
+    @Test
+    public void testCustomHomeDirWithRelativeSubdirs() {
+        System.setProperty(HOME_PROP, "/test");
+        System.setProperty(PROP_TEST, "sub");
+
+        loader.loadSystemProperties();
+
+        File home = new File("/test");
+        Assert.assertTrue("Relative subdirs are within fcrepo.home directory.",
+                containsPath(System.getProperty(PROP_TEST),
+                        home.getAbsolutePath()));
+        clearProps();
+    }
+
+    @Test
+    public void testCustomHomeDirWithAbsoluteSubdirs() {
+        System.setProperty(HOME_PROP, "/tmp/test");
+        System.setProperty(PROP_TEST, "/tmp/sub");
+
+        loader.loadSystemProperties();
+
+        File home = new File("/test");
+        Assert.assertFalse("Absolute subdirs are idependent of fcrepo.home.",
+                containsPath(System.getProperty(PROP_TEST),
+                        home.getAbsolutePath()));
+        clearProps();
+    }
+
+    @Test
+    public void relativePathsWorkForFedoraHome() {
+        System.setProperty(HOME_PROP, "test");
+        System.setProperty(PROP_TEST, "sub");
+
+        loader.loadSystemProperties();
+
+        Assert.assertEquals(new File(new File("test"), "sub"),
+                new File(System.getProperty(PROP_TEST)));
+        clearProps();
+    }
+
+    private boolean containsPath(String path, String parentPath) {
+        final File parent = new File(parentPath);
+        for (File f = new File(path) ; f.getParentFile() != null ; f = f.getParentFile()) {
+            if (f.getParentFile().equals(parent)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

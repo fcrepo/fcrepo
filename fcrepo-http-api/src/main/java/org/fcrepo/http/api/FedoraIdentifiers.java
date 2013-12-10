@@ -16,13 +16,12 @@
 
 package org.fcrepo.http.api;
 
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ContiguousSet.create;
 import static com.google.common.collect.DiscreteDomain.integers;
 import static com.google.common.collect.Range.closed;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.update.GraphStoreFactory.create;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
@@ -51,13 +50,15 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import com.google.common.base.Function;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * JAX-RS Resource offering identifier creation.
@@ -85,7 +86,7 @@ public class FedoraIdentifiers extends AbstractResource {
     @Timed
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
             TEXT_HTML})
-    public Dataset getNextPid(@PathParam("path")
+    public RdfStream getNextPid(@PathParam("path")
             final List<PathSegment> pathList,
             @QueryParam("count")
             @DefaultValue("1")
@@ -93,12 +94,11 @@ public class FedoraIdentifiers extends AbstractResource {
             @Context
             final UriInfo uriInfo) throws RepositoryException {
 
+
         final String path = toPath(pathList);
 
-        final Model model = createDefaultModel();
-
-        final Resource pidsResult =
-                createResource(uriInfo.getAbsolutePath().toASCIIString());
+        final Node pidsResult =
+            createURI(uriInfo.getAbsolutePath().toASCIIString());
 
         final Collection<String> identifiers =
             transform(create(closed(1, count), integers()), pidMinter
@@ -107,21 +107,40 @@ public class FedoraIdentifiers extends AbstractResource {
         final HttpGraphSubjects subjects =
                 new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
-        for (final String identifier : identifiers) {
+        return new RdfStream(transform(
+                transform(identifiers, absolutize(path)), identifier2triple(
+                        subjects, pidsResult))).topic(pidsResult).session(
+                session);
 
-            final String absPath;
-            if (path.equals("/")) {
-                absPath = "/" + identifier;
-            } else {
-                absPath = path + "/" + identifier;
+    }
+
+    private Function<String, String> absolutize(final String path) {
+        return new Function<String, String>() {
+
+            @Override
+            public String apply(final String identifier) {
+                return path.equals("/") ? "/" + identifier : path + "/"
+                        + identifier;
             }
+        };
+    }
 
-            final Resource s = subjects.getGraphSubject(absPath);
+    private Function<String, Triple> identifier2triple(
+        final GraphSubjects subjects, final Node pidsResult) {
+        return new Function<String, Triple>() {
 
-            model.add(pidsResult, HAS_MEMBER_OF_RESULT, s);
-        }
+            @Override
+            public Triple apply(final String identifier) {
 
-        return create(model).toDataset();
-
+                try {
+                    final Node s =
+                        subjects.getGraphSubject(identifier).asNode();
+                    return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT
+                            .asNode(), s);
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
+                }
+            }
+        };
     }
 }

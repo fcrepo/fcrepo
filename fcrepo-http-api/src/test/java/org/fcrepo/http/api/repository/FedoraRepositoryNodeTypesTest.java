@@ -15,25 +15,25 @@
  */
 package org.fcrepo.http.api.repository;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -52,10 +52,15 @@ public class FedoraRepositoryNodeTypesTest {
     @Mock
     private InputStream mockInputStream;
 
-    @Mock
-    private RdfStream mockRdfStream;
+    private RdfStream mockRdfStream = new RdfStream();
 
     private Session mockSession;
+
+    @Mock
+    private UriInfo mockUriInfo;
+
+    @Mock
+    private UriBuilder mockUriBuilder;
 
     @Before
     public void setUp() throws Exception {
@@ -65,19 +70,20 @@ public class FedoraRepositoryNodeTypesTest {
         setField(testObj, "uriInfo", getUriInfoImpl());
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+        when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.path(any(Class.class))).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.build(any(String.class))).thenReturn(
+                URI.create("mock:uri"));
     }
 
     @Test
-    public void itShouldRetrieveNodeTypesRdfStream() throws RepositoryException {
-        final Model mockModel = ModelFactory.createDefaultModel();
-
-        when(mockRdfStream.asModel()).thenReturn(mockModel);
+    public void itShouldRetrieveNodeTypes() throws RepositoryException {
         when(mockNodes.getNodeTypes(mockSession)).thenReturn(mockRdfStream);
 
-        final Dataset nodeTypes = testObj.getNodeTypes();
+        final RdfStream nodeTypes = testObj.getNodeTypes(mockUriInfo);
 
-        assertEquals(mockModel, nodeTypes.getDefaultModel());
-        verify(mockSession).logout();
+        assertEquals("Got wrong triples!", mockRdfStream, nodeTypes);
+
     }
 
     @Test

@@ -15,6 +15,34 @@
  */
 package org.fcrepo.kernel;
 
+import com.google.common.collect.Iterables;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.update.UpdateRequest;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
+import org.fcrepo.kernel.utils.iterators.RdfAdder;
+import org.fcrepo.kernel.utils.iterators.RdfRemover;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.PropertyIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.version.VersionHistory;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Set;
+
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
@@ -26,39 +54,12 @@ import static org.fcrepo.kernel.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFrozen;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.nodetype2name;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Set;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.version.VersionHistory;
-
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.JcrRdfTools;
-import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
-import org.fcrepo.kernel.utils.iterators.RdfAdder;
-import org.fcrepo.kernel.utils.iterators.RdfRemover;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-
-import com.google.common.collect.Iterables;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.UpdateRequest;
 
 /**
  * Common behaviors across FedoraObject and Datastream types; also used
@@ -99,13 +100,24 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         this.node = findOrCreateNode(
                 session, path, NT_FOLDER, nodeType);
 
-        if (!hasMixin(node)) {
+        if (!hasMixin(node) && !isFrozen(node)) {
             node.addMixin(FEDORA_RESOURCE);
         }
 
         if (node.isNew()) {
             node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
         }
+    }
+
+    /**
+     * Is the given node a frozen node?
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean isFrozen(final Node node) throws RepositoryException {
+        return isFrozen.apply(node);
     }
 
     /**
@@ -202,7 +214,16 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @throws javax.jcr.RepositoryException
      */
     public Collection<String> getModels() throws RepositoryException {
-        return map(node.getMixinNodeTypes(), nodetype2name);
+        if (isFrozen.apply(node)) {
+            Collection<String> results = new ArrayList<String>();
+            PropertyIterator pIt = node.getProperties(FROZEN_MIXIN_TYPES);
+            while (pIt.hasNext()) {
+                results.add(pIt.nextProperty().getString());
+            }
+            return results;
+        } else {
+            return map(node.getMixinNodeTypes(), nodetype2name);
+        }
     }
 
     /**
@@ -291,6 +312,20 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
                 JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
         return jcrRdfTools.getJcrTriples(getNode());
+    }
+
+    /**
+     * Return the JCR properties of this object as an {@link RdfStream}
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
+        throws RepositoryException {
+
+        final JcrRdfTools jcrRdfTools =
+                JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+
+        return jcrRdfTools.getTreeTriples(getNode());
     }
 
     /**

@@ -37,11 +37,17 @@ public interface FedoraJcrTypes {
 
     String JCR_CREATEDBY = "jcr:createdBy";
 
-    String CONTENT_SIZE = "fedora:size";
+    String PREMIS_FILE_NAME = "premis:hasOriginalName";
+
+    String CONTENT_SIZE = "premis:hasSize";
 
     String CONTENT_DIGEST = "fedora:digest";
 
     String FCR_CONTENT = "fcr:content";
 
     String ROOT = "mode:root";
+
+    String FROZEN_NODE = "nt:frozenNode";
+
+    String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
 }

@@ -17,6 +17,8 @@ package org.fcrepo.kernel.spring;
 
 import org.slf4j.Logger;
 
+import java.io.File;
+
 import static java.lang.System.getProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -24,6 +26,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * This class loads System Properties only if:
  * - the context is not an integration-test, and
  * - the property is not already set
+ * This class mutates explicitly specified system
+ * Properties only if:
+ * - they represent relative paths in order to
+ *   make them relative to the explicit or implicit
+ *   home directory
  *
  * @author Andrew Woods
  *         Date: 10/15/13
@@ -33,8 +40,6 @@ public class DefaultPropertiesLoader {
     private static final Logger LOGGER = getLogger(DefaultPropertiesLoader.class);
 
     final private static String SEP = getProperty("file.separator");
-    final private static String BASEDIR = getProperty("java.io.tmpdir") + SEP
-            + "fcrepo4-data" + SEP;
 
     /**
      * @author awoods
@@ -68,28 +73,46 @@ public class DefaultPropertiesLoader {
      * This method loads default System Properties if:
      * - the context is not an integration-test, and
      * - the property is not already set
+     * This method mutates explicitly specified system
+     * Properties only if:
+     * - they represent relative paths in order to
+     *   make them relative to the explicit or implicit
+     *   home directory
      */
     public void loadSystemProperties() {
         LOGGER.info("Loading properties");
 
         if (getProperty("integration-test") == null) {
             LOGGER.trace("Setting default properties, if necessary.");
-
+            final String fcrepoHome = getProperty("fcrepo.home");
+            final String baseDir = (fcrepoHome == null
+                    ? getProperty("user.dir") + SEP + "fcrepo4-data" + SEP
+                    : fcrepoHome + SEP);
             for (final PROPERTIES prop : PROPERTIES.values()) {
-                if (getProperty(prop.getValue()) == null) {
-                    setProperty(prop.getValue());
+                final String value = getProperty(prop.getValue());
+                if (value == null) {
+                    setProperty(prop.getValue(), baseDir);
+                } else {
+                    updateRelativePropertyPath(prop.getValue(), value, baseDir);
                 }
             }
         }
 
         for (final PROPERTIES prop : PROPERTIES.values()) {
             final String val = prop.getValue();
-            LOGGER.trace("{} = {}", val, getProperty(val));
+            LOGGER.info("{} = {}", val, getProperty(val));
         }
     }
 
-    private void setProperty(final String prop) {
-        System.setProperty(prop, BASEDIR + prop);
+    private void setProperty(final String prop, final String baseDir) {
+        System.setProperty(prop, baseDir + prop);
+    }
+
+    private void updateRelativePropertyPath(String prop, String value,
+                                            String baseDir) {
+        if (!new File(value).isAbsolute()) {
+            System.setProperty(prop, baseDir + value);
+        }
     }
 
 }

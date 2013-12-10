@@ -9,7 +9,7 @@
 
   <artifactId>fcrepo-kernel</artifactId>
   <name>${project.artifactId}</name>
-  <description>The Fedora Repository kernel</description>
+  <description>The Fedora Commons repository kernel: Provides the basic abstractions at the heart of the Fedora information architecture and machinery for manipulating them.</description>
   <packaging>bundle</packaging>
 
   <dependencies>

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -52,6 +53,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.domain.Range;
@@ -95,11 +97,12 @@ public class FedoraContent extends AbstractResource {
     public Response create(@PathParam("path")
             final List<PathSegment> pathList,
             @HeaderParam("Slug") final String slug,
+            @HeaderParam("Content-Disposition") final String contentDisposition,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType requestContentType,
                     final InputStream requestBodyStream)
         throws IOException, InvalidChecksumException,
-                    RepositoryException, URISyntaxException {
+                   RepositoryException, URISyntaxException, ParseException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -140,9 +143,19 @@ public class FedoraContent extends AbstractResource {
                 checksumURI = null;
             }
 
+            final String originalFileName;
+
+            if (contentDisposition != null) {
+                final ContentDisposition disposition = new ContentDisposition(contentDisposition);
+                originalFileName = disposition.getFileName();
+            } else {
+                originalFileName = null;
+            }
+
+
             final Node datastreamNode =
                     datastreamService.createDatastreamNode(session, newDatastreamPath,
-                            contentType.toString(), requestBodyStream,
+                            contentType.toString(), originalFileName, requestBodyStream,
                             checksumURI);
 
             final HttpGraphSubjects subjects =
@@ -150,7 +163,7 @@ public class FedoraContent extends AbstractResource {
                             uriInfo);
 
             session.save();
-            versionService.checkpoint(session, path);
+            versionService.nodeUpdated(datastreamNode);
             return created(
                     new URI(subjects.getGraphSubject(
                             datastreamNode.getNode(JCR_CONTENT)).getURI()))
@@ -176,10 +189,12 @@ public class FedoraContent extends AbstractResource {
     @Timed
     public Response modifyContent(@PathParam("path") final List<PathSegment> pathList,
                                   @QueryParam("checksum") final String checksum,
+                                  @HeaderParam("Content-Disposition") final String contentDisposition,
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
                                   final InputStream requestBodyStream,
-                                  @Context final Request request) throws RepositoryException,
-            IOException, InvalidChecksumException, URISyntaxException {
+                                  @Context final Request request)
+        throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException, ParseException {
+
         try {
             final String path = toPath(pathList);
             final MediaType contentType =
@@ -215,14 +230,22 @@ public class FedoraContent extends AbstractResource {
                 checksumURI = null;
             }
 
+            final String originalFileName;
+
+            if (contentDisposition != null) {
+                final ContentDisposition disposition = new ContentDisposition(contentDisposition);
+                originalFileName = disposition.getFileName();
+            } else {
+                originalFileName = null;
+            }
 
             final Node datastreamNode =
                 datastreamService.createDatastreamNode(session, path,
-                    contentType.toString(), requestBodyStream, checksumURI);
+                    contentType.toString(), originalFileName, requestBodyStream, checksumURI);
 
             final boolean isNew = datastreamNode.isNew();
             session.save();
-            versionService.checkpoint(session, path);
+            versionService.nodeUpdated(datastreamNode);
 
             if (isNew) {
                 final HttpGraphSubjects subjects =
@@ -325,11 +348,19 @@ public class FedoraContent extends AbstractResource {
                     new HttpGraphSubjects(session, FedoraNodes.class,
                             uriInfo);
 
+            final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
+                                                              .fileName(ds.getFilename())
+                                                              .creationDate(ds.getCreatedDate())
+                                                              .modificationDate(ds.getLastModifiedDate())
+                                                              .size(ds.getContentSize())
+                                                              .build();
+
             return builder.type(ds.getMimeType()).header(
                     "Link",
                     subjects.getGraphSubject(ds.getNode()) +
                             ";rel=\"meta\"").header("Accept-Ranges",
                     "bytes").cacheControl(cc).lastModified(date).tag(etag)
+                    .header("Content-Disposition", contentDisposition)
                     .build();
         } finally {
             session.logout();

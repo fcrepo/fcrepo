@@ -24,6 +24,7 @@
 <fedora = 'http://fedora.info/definitions/v4/rest-api#'>
 <fedorarelsext = 'http://fedora.info/definitions/v4/rels-ext#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+<premis = 'http://www.loc.gov/premis/rdf/v1#'>
 
 <test = 'info:fedora/test/'>
 
@@ -82,7 +83,7 @@
  * Any Fedora resource.
  */
 [fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
-
+  - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)
 
@@ -102,5 +103,6 @@
  * Some content that can have a checksum
  */
 [fedora:binary] mixin
-  - fedora:size (LONG) COPY
+  - premis:hasOriginalName (STRING)
+  - premis:hasSize (LONG) COPY
   - fedora:digest (URI) COPY

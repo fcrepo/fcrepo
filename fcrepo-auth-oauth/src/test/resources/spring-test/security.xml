@@ -2,33 +2,32 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:p="http://www.springframework.org/schema/p"
+  xmlns:u="http://www.springframework.org/schema/util"
   xsi:schemaLocation="
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <!-- Context that supports the actual ModeShape JCR itself -->
 
   <context:annotation-config/>
 
-  <bean name="oauthFilter" class="org.fcrepo.auth.oauth.filter.OAuthFilter">
-    <property name="realm" value="fedora"/>
-    <property name="provider">
-      <bean class="org.fcrepo.auth.oauth.DefaultOAuthResourceProvider">
-          <!-- mints JCR Sessions : needs to reappear here because it can't be autowired from the enclosed contexts-->
-      </bean>
-    </property>
-    <property name="parameterStyles">
-      <set
-        value-type="org.apache.oltu.oauth2.common.message.types.ParameterStyle">
-        <value>QUERY</value>
-        <value>HEADER</value>
-      </set>
-    </property>
+  <bean name="oauthFilter" class="org.fcrepo.auth.oauth.filter.OAuthFilter"
+    p:realm="fedora" p:provider-ref="defaultOAuthResourceProvider"
+    p:parameterStyles-ref="parameterStyles"/>
+  
+  <bean id="defaultOAuthResourceProvider" class="org.fcrepo.auth.oauth.DefaultOAuthResourceProvider">
+    <!-- mints JCR Sessions : needs to reappear here because it can't be autowired from the enclosed contexts-->
   </bean>
+
+  <u:set id="parameterStyles" value-type="org.apache.oltu.oauth2.common.message.types.ParameterStyle">
+    <value>QUERY</value>
+    <value>HEADER</value>
+  </u:set>
 
   <bean name="wrapFilter"
     class="org.fcrepo.auth.oauth.test.filter.AuthenticatedRequestWrappingFilter"/>
-
 
   <bean name="authNFilter"
     class="org.fcrepo.auth.oauth.filter.RestrictToAuthNFilter"/>

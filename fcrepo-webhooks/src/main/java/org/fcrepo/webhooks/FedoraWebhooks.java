@@ -16,14 +16,13 @@
 
 package org.fcrepo.webhooks;
 
+import static java.lang.Integer.MAX_VALUE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.concurrent.TimeUnit;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.jcr.Node;
@@ -41,8 +40,7 @@ import javax.ws.rs.core.Response;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.jms.legacy.LegacyMethod;
 import org.fcrepo.kernel.observer.FedoraEvent;
@@ -83,9 +81,6 @@ public class FedoraWebhooks extends AbstractResource {
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraWebhooks.class);
 
-    protected static final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
-
     protected static HttpClient client;
 
     @InjectedSession
@@ -97,10 +92,10 @@ public class FedoraWebhooks extends AbstractResource {
     private Session readOnlySession;
 
     static {
-        connectionManager.setMaxTotal(Integer.MAX_VALUE);
-        connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        final HttpClientBuilder b =
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
+                    .setMaxConnTotal(MAX_VALUE);
+        client = b.build();
     }
 
     /**

@@ -30,9 +30,12 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
+import java.util.Collection;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -41,7 +44,9 @@ import javax.ws.rs.core.Variant;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,10 +61,18 @@ public class FedoraVersionsTest {
     @Mock
     private NodeService mockNodes;
 
+    @Mock
+    VersionService mockVersions;
+
+    @Mock
+    private Node mockNode;
+
     private Session mockSession;
 
     @Mock
     private FedoraResource mockResource;
+
+    private RdfStream mockRdfStream = new RdfStream();
 
     @Mock
     private Request mockRequest;
@@ -78,6 +91,9 @@ public class FedoraVersionsTest {
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
+        setField(testObj, "versionService", mockVersions);
+        when(mockNode.getPath()).thenReturn("/test/path");
+        when(mockResource.getNode()).thenReturn(mockNode);
     }
 
     @Test
@@ -87,17 +103,14 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        final RdfStream testRdfStream = new RdfStream();
         when(mockResource.getVersionTriples(any(HttpGraphSubjects.class)))
-                .thenReturn(testRdfStream);
+                .thenReturn(mockRdfStream);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
-
         final RdfStream response =
             testObj.getVersionList(createPathList(pid), mockRequest,
                     getUriInfoImpl());
-        assertNotNull(response);
-        assertEquals("Got wrong RdfStream!", testRdfStream, response);
+        assertEquals("Got wrong RdfStream!", mockRdfStream, response);
     }
 
     @Test
@@ -108,8 +121,9 @@ public class FedoraVersionsTest {
                 mockResource);
 
         final Response response =
-            testObj.addVersionLabel(createPathList(pid), versionLabel);
+            testObj.addVersion(createPathList(pid), versionLabel);
         verify(mockResource).addVersionLabel(anyString());
+        verify(mockVersions).createVersion(any(Workspace.class), any(Collection.class));
         assertNotNull(response);
     }
 
@@ -124,9 +138,10 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
-        testObj.getVersion(createPathList(pid), versionLabel, mockRequest, TestHelpers
+        when(mockResource.getTriples(any(GraphSubjects.class))).thenReturn(mockRdfStream);
+        final RdfStream response = testObj.getVersion(createPathList(pid), versionLabel, mockRequest, TestHelpers
                 .getUriInfoImpl());
-        verify(mockResource).getTriples(any(HttpGraphSubjects.class));
+        assertEquals("Got wrong triples!", mockRdfStream, response);
     }
 
 }

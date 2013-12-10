@@ -37,12 +37,12 @@ import org.mockito.Mock;
 import com.google.common.collect.Sets;
 
 public class DefaultTokenRequestValidationsTest {
-    
+
     private static String INVALID_CODE = "invalid-code";
 
     private static String VALID_CODE = "valid-code";
 
-    private static String INVALID_CLIENT = "invalid-client";
+//    private static String INVALID_CLIENT = "invalid-client";
 
     private static String VALID_CLIENT = "valid-client";
 
@@ -51,24 +51,24 @@ public class DefaultTokenRequestValidationsTest {
     private static String VALID_SCOPE = "valid-scope";
 
     @Mock OAuthTokenRequest mockRequest;
-    
+
     @Mock
     private SessionFactory mockSessions;
-    
+
     @Mock
     private Session mockSession;
-    
+
     @Mock
     private Node mockNode;
-    
+
     @Mock
     Property mockProperty;
-    
+
     @Mock
     Property mockScopes;
 
     private DefaultTokenRequestValidations testObj;
-    
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -86,20 +86,20 @@ public class DefaultTokenRequestValidationsTest {
 
         testObj = new DefaultTokenRequestValidations(mockSessions);
     }
-    
+
     @Test
     public void testValidAuthCodeUnscoped() throws RepositoryException {
         when(mockRequest.getClientId()).thenReturn(VALID_CLIENT);
         when(mockRequest.getCode()).thenReturn(VALID_CODE);
-        
+
         assertTrue(testObj.isValidAuthCode(mockRequest));
     }
-    
+
     @Test
     public void testValidAuthCodeInScope() throws RepositoryException {
         when(mockRequest.getClientId()).thenReturn(VALID_CLIENT);
         when(mockRequest.getCode()).thenReturn(VALID_CODE);
-        
+
         when(mockRequest.getScopes()).thenReturn(Sets.newHashSet(VALID_SCOPE));
         when(mockNode.getProperty("oauth-scopes"))
         .thenReturn(mockScopes);
@@ -113,7 +113,7 @@ public class DefaultTokenRequestValidationsTest {
         when(mockRequest.getScopes()).thenReturn(Sets.newHashSet(INVALID_SCOPE));
         when(mockNode.getProperty("oauth-scopes"))
         .thenReturn(mockScopes);
-        
+
         assertFalse(testObj.isValidAuthCode(mockRequest));
     }
     @Test
@@ -126,23 +126,23 @@ public class DefaultTokenRequestValidationsTest {
     public void testValidClient() {
         assertTrue(testObj.isValidClient(mockRequest));
     }
-    
+
     @Test
     public void testInvalidClient() {
         assertFalse(testObj.isValidClient(null));
     }
-    
+
     @Test
     public void testMissingClient() throws RepositoryException {
         when(mockRequest.getClientId()).thenReturn(null);
         assertFalse(testObj.isValidAuthCode(mockRequest));
     }
-    
+
     @Test
     public void testValidSecret() {
         assertTrue(testObj.isValidSecret(mockRequest));
     }
-    
+
     @Test
     public void testInvalidSecret() {
         assertFalse(testObj.isValidSecret(null));

@@ -20,7 +20,6 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.JcrTools;
@@ -62,6 +61,24 @@ public class JQLConverterIT {
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT ?subject WHERE { ?subject dc:title \"xyz\"}";
         JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
         assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject FROM [fedora:resource] AS [fedoraResource_subject] WHERE [fedoraResource_subject].[dc:title] = 'xyz'", testObj.getStatement());
+
+    }
+
+    @Test
+    public void testSimpleMixinRdfTypeFilter() throws RepositoryException {
+
+        final String sparql = "SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#datastream>}";
+        JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+        assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject FROM [fedora:resource] AS [fedoraResource_subject] INNER JOIN [fedora:datastream] AS [ref_type_fedora_datastream] ON ISSAMENODE([fedoraResource_subject],[ref_type_fedora_datastream],'.')", testObj.getStatement());
+
+    }
+
+    @Test
+    public void testSimplePropertyRdfTypeFilter() throws RepositoryException {
+
+        final String sparql = "SELECT ?subject WHERE { ?subject a <http://some/other/uri>}";
+        JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+        assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject FROM [fedora:resource] AS [fedoraResource_subject] WHERE [fedoraResource_subject].[rdf:type] = CAST('http://some/other/uri' AS URI)", testObj.getStatement());
 
     }
 
@@ -174,12 +191,20 @@ public class JQLConverterIT {
 
 
     @Test
-    public void testIt() throws RepositoryException {
+    public void testComplexQuery() throws RepositoryException {
+
         String sparql = "PREFIX  ns:  <http://libraries.ucsd.edu/ark:/20775/>"
                             + " SELECT DISTINCT ?subject ?object WHERE  {?subject ns:bb2765355h 'bf2765355h' . ?subject ns:bb3652744n ?object . FILTER regex(?object, \"r\", \"i\") .FILTER (?object >= 'abc' && ?object < 'efg' || !(?object = 'efg')) } " +
                             " ORDER BY DESC(?subject) ?object LIMIT 10 OFFSET 20";
 
         JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
-        assertEquals("SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20", testObj.getStatement());
+
+        final String statement = testObj.getStatement();
+
+        final String namespacePrefix = session.getNamespacePrefix("http://libraries.ucsd.edu/ark:/20775/");
+
+        final String expectedQuery = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS [fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND [fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND (([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND [fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT ([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY [fedoraResource_subject].[jcr:path] DESC, [fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20";
+
+        assertEquals(expectedQuery.replaceAll("ns001", namespacePrefix), statement);
     }
 }

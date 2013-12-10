@@ -134,7 +134,7 @@ public class TransactionServiceTest {
     public void testCommitTx() throws Exception {
         final Transaction tx = service.commit(IS_A_TX);
         assertNotNull(tx);
-        verify(mockTx).commit();
+        verify(mockTx).commit(null);
     }
 
     @Test(expected = RepositoryException.class)

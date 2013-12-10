@@ -25,6 +25,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -45,23 +46,23 @@ public class HttpTripleUtil implements ApplicationContextAware {
     private ApplicationContext applicationContext;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext)
+    public void setApplicationContext(final ApplicationContext applicationContext)
         throws BeansException {
         this.applicationContext = applicationContext;
     }
 
     /**
      * Add additional models to the RDF dataset for the given resource
-     * 
+     *
      * @param dataset the source dataset we'll add named models to
      * @param resource the FedoraResource in question
      * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public void addHttpComponentModelsForResource(Dataset dataset,
-            FedoraResource resource, UriInfo uriInfo,
-            GraphSubjects graphSubjects) throws RepositoryException {
+    public void addHttpComponentModelsForResource(final Dataset dataset,
+            final FedoraResource resource, final UriInfo uriInfo,
+            final GraphSubjects graphSubjects) throws RepositoryException {
 
         LOGGER.debug("Adding additional HTTP context triples to dataset");
         for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()
@@ -75,6 +76,35 @@ public class HttpTripleUtil implements ApplicationContextAware {
                     uriAwareResourceModelFactory.createModelForResource(
                             resource, uriInfo, graphSubjects);
             dataset.addNamedModel(beanName, m);
+        }
+
+    }
+
+    /**
+     * Add additional models to the RDF dataset for the given resource
+     *
+     * @param rdfStream the source stream we'll add named models to
+     * @param resource the FedoraResource in question
+     * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
+     * @param graphSubjects
+     * @throws RepositoryException
+     */
+    public void addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
+            final FedoraResource resource, final UriInfo uriInfo,
+            final GraphSubjects graphSubjects) throws RepositoryException {
+
+        LOGGER.debug("Adding additional HTTP context triples to dataset");
+        for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()
+                .entrySet()) {
+            final String beanName = e.getKey();
+            final UriAwareResourceModelFactory uriAwareResourceModelFactory =
+                    e.getValue();
+            LOGGER.debug("Adding response information using: {}", beanName);
+
+            final Model m =
+                    uriAwareResourceModelFactory.createModelForResource(
+                            resource, uriInfo, graphSubjects);
+            rdfStream.concat(RdfStream.fromModel(m));
         }
 
     }

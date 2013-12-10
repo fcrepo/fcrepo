@@ -69,7 +69,7 @@ public class JMSTopicPublisher {
     /**
      * When an EventBus mesage is received, map it to our JMS
      * message payload and push it onto the queue.
-     * 
+     *
      * @param fedoraEvent
      * @throws JMSException
      * @throws RepositoryException
@@ -84,12 +84,12 @@ public class JMSTopicPublisher {
         LOGGER.debug("Transformed the event to a JMS message.");
         producer.send(tm);
 
-        LOGGER.debug("Put event: \n{}\n onto JMS.", tm.getJMSMessageID());
+        LOGGER.debug("Put event: {} onto JMS.", tm.getJMSMessageID());
     }
 
     /**
      * Connect to JCR Repostory and JMS queue
-     * 
+     *
      * @throws JMSException
      * @throws RepositoryException
      */
@@ -108,7 +108,7 @@ public class JMSTopicPublisher {
 
     /**
      * Close external connections
-     * 
+     *
      * @throws JMSException
      */
     @PreDestroy

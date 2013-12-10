@@ -15,13 +15,14 @@
  */
 package org.fcrepo.transform.http;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SPARQL_ENDPOINT;
+
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.springframework.stereotype.Component;
 
@@ -36,12 +37,16 @@ import javax.ws.rs.core.UriInfo;
 @Component
 public class TransformResources implements UriAwareResourceModelFactory {
     @Override
-    public Model createModelForResource(FedoraResource resource, UriInfo uriInfo, GraphSubjects graphSubjects) throws RepositoryException {
-        final Model model = ModelFactory.createDefaultModel();
+    public Model createModelForResource(final FedoraResource resource,
+                                        final UriInfo uriInfo,
+                                        final GraphSubjects graphSubjects) throws RepositoryException {
+        final Model model = createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType(FedoraJcrTypes.ROOT)) {
-            model.add(s, RdfLexicon.HAS_SPARQL_ENDPOINT, model.createResource(uriInfo.getBaseUriBuilder().path(FedoraSparql.class).build().toASCIIString()));
+        if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
+            model.add(s, HAS_SPARQL_ENDPOINT, model.createResource(uriInfo
+                    .getBaseUriBuilder().path(FedoraSparql.class).build()
+                    .toASCIIString()));
         }
 
         return model;

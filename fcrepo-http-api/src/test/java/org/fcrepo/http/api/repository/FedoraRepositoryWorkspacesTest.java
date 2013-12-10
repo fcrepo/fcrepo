@@ -20,6 +20,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockRepository;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,12 +35,13 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.sun.jersey.api.NotFoundException;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
-import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.modeshape.jcr.api.Repository;
 
@@ -100,14 +102,13 @@ public class FedoraRepositoryWorkspacesTest {
         when(mockUriBuilder.build()).thenReturn(uri);
 
         // Do the test.
-        final Dataset dataset = workspaces.getWorkspaces(mockUriInfo);
+        final Model result = workspaces.getWorkspaces(mockUriInfo).asModel();
 
-        final Resource resource =
-            dataset.getDefaultModel().getResource(uri.toString());
+        final Resource resource = result.getResource(uri.toString());
 
         final String resourceName = resource.toString();
 
-        org.junit.Assert.assertNotNull(resourceName);
+        assertNotNull(resourceName);
         assertEquals(uri.toString(), resourceName);
     }
 

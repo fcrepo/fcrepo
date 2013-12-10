@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -63,6 +64,9 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         final String testPath = "/foo";
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockNodeType});
 
@@ -75,6 +79,9 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @Test
     public void testGetObject() throws RepositoryException {
         when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockNodeType});
 

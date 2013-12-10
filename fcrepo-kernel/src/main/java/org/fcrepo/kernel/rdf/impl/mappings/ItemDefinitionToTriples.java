@@ -37,7 +37,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.Property;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.domain;
 import static com.hp.hpl.jena.vocabulary.RDFS.label;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -97,6 +97,9 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
         throws RepositoryException {
         // TODO find a better way to create an explicitly-namespaced resource
         // if Jena offers one, since this isn't actually a Property
+        LOGGER.trace("Creating RDF resource for {}:{}",
+                     namespacedObject.getNamespaceURI(),
+                     namespacedObject.getLocalName());
         return createProperty(
                 getRDFNamespaceForJcrNamespace(namespacedObject
                         .getNamespaceURI()), namespacedObject.getLocalName())

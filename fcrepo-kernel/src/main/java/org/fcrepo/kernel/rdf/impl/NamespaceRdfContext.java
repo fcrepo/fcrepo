@@ -24,7 +24,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.VOAF_VOCABULARY;
-import static org.fcrepo.kernel.utils.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.NamespaceRegistry;
