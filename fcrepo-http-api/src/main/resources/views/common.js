@@ -235,6 +235,25 @@ function updateFile()
     reader.readAsBinaryString(update_file);
 }
 
+function updateAccessRoles()
+{
+    var update_json = document.getElementById("rbacl_json").value;
+    var url = window.location + "/fcr:accessRoles";
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 204 || xhr.status == 201) {
+                window.location.reload(true);
+            } else {
+                ajaxErrorHandler(xhr, "", "Error creating datastream");
+            }
+        }
+    }
+    xhr.open( "POST", url );
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.send(update_json);
+}
+
 function ajaxErrorHandler(xhr, textStatus, errorThrown) {
     $('#errorLabel').text(errorThrown);
     $('#errorText').text(xhr.responseText);

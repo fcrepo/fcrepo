@@ -1,0 +1,4 @@
+{
+   "greg" : [ "reader", "writer" ],
+   "fred" : [ "admin" ]
+}
