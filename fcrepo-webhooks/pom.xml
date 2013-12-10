@@ -32,12 +32,6 @@ See: http://en.wikipedia.org/wiki/Webhook</description>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-jms</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>

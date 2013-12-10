@@ -19,6 +19,7 @@ package org.fcrepo.integration.webhooks;
 import static java.lang.Thread.sleep;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.integration.webhooks.TestEndpoint.lastBody;
 import static org.junit.Assert.assertEquals;
@@ -36,6 +37,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.kernel.utils.EventType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -75,7 +77,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
 
     }
 
-    public void deleteWebhookTest() throws Exception {
+    public void testDeleteWebhook() throws Exception {
         final HttpPost method =
                 new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
@@ -96,7 +98,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
     }
 
     @Test
-    public void FireWebhooksTest() throws IOException {
+    public void testFireWebhooks() throws IOException {
 
         final HttpPost method =
                 new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
@@ -132,7 +134,8 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
 
         assertNotNull("Our webhook wasn't called!", lastBody);
         assertTrue("Our webhook didn't have the content we expected!", compile(
-                "ingest", DOTALL).matcher(lastBody).find());
+                EventType.valueOf(NODE_ADDED).toString(), DOTALL).matcher(
+                lastBody).find());
 
     }
 }

@@ -15,13 +15,18 @@
  */
 package org.fcrepo.kernel.observer;
 
+import static com.google.common.base.Objects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
+
+import org.fcrepo.kernel.utils.EventType;
 
 /**
  * A very simple abstraction to prevent event-driven machinery
@@ -54,7 +59,7 @@ public class FedoraEvent implements Event {
      * and include the type given in the info map
      * @param e
      */
-    public FedoraEvent(final Event e, String wrappedNodeType) {
+    public FedoraEvent(final Event e, final String wrappedNodeType) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
         this.e = e;
         this.nodeType = wrappedNodeType;
@@ -98,6 +103,20 @@ public class FedoraEvent implements Event {
     @Override
     public long getDate() throws RepositoryException {
         return e.getDate();
+    }
+
+    @Override
+    public String toString() {
+        try {
+            return toStringHelper(this).add(
+                    "Event type:",
+                    REPOSITORY_NAMESPACE
+                            + EventType.valueOf(getType()).toString()).add(
+                    "Path:", getPath()).add("Date: ", getDate()).add("Info:",
+                    getInfo()).toString();
+        } catch (final RepositoryException e) {
+            throw propagate(e);
+        }
     }
 
 }

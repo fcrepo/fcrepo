@@ -17,12 +17,12 @@
 package org.fcrepo.webhooks;
 
 import static java.lang.Integer.MAX_VALUE;
+import static java.nio.charset.Charset.defaultCharset;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.jcr.Node;
@@ -42,7 +42,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.jms.legacy.LegacyMethod;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.slf4j.Logger;
@@ -140,16 +139,10 @@ public class FedoraWebhooks extends AbstractResource {
             final String callbackUrl =
                     hook.getProperty(WEBHOOK_CALLBACK_PROPERTY).getString();
             final HttpPost method = new HttpPost(callbackUrl);
-            final LegacyMethod eventSerialization =
-                    new LegacyMethod(event);
-            final StringWriter writer = new StringWriter();
+            final String eventSerialized = event.toString();
+            LOGGER.debug("Sending event serialization: {}", eventSerialized);
+            method.setEntity(new StringEntity(eventSerialized, defaultCharset()));
 
-            try {
-                eventSerialization.writeTo(writer);
-                method.setEntity(new StringEntity(writer.toString()));
-            } catch (final IOException e) {
-                LOGGER.warn("Got exception generating webhook body: {}", e);
-            }
 
             try {
                 LOGGER.debug("Firing callback for {}", hook.getName());
