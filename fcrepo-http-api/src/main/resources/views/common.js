@@ -238,7 +238,7 @@ function updateFile()
 function updateAccessRoles()
 {
     var update_json = document.getElementById("rbacl_json").value;
-    var url = window.location + "/fcr:accessRoles";
+    var url = window.location + "/fcr:accessroles";
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
