@@ -8,7 +8,7 @@
 
   <context:annotation-config/>
 
-  <!-- publishes events from the internal bus to JMS, in Atom format -->
+  <!-- publishes events from the internal bus to JMS -->
   <bean class="org.fcrepo.jms.observer.JMSTopicPublisher"/>
 
   <bean id="connectionFactory"
@@ -18,7 +18,7 @@
   <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean"
     p:config="classpath:/config/activemq.xml" p:start="true"/>
 
-  <!-- translates events from the internal bus to JMS, in Atom format-->
+  <!-- translates events into JMS header-only format-->
   <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"/>
 
 </beans>
