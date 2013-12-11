@@ -20,7 +20,7 @@ import java.security.Principal;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.fcrepo.auth.FedoraPolicyEnforcementPoint;
+import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

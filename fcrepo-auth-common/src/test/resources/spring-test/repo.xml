@@ -17,7 +17,7 @@
   
   <bean name="pep" class="org.fcrepo.auth.integration.PermitRootAndPathEndsWithPermitSuffixPEP"/>
 
-  <bean name="authenticationProvider" class="org.fcrepo.auth.ServletContainerAuthenticationProvider"
+  <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider"
     p:pep-ref="pep"/>
   
 
