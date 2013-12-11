@@ -20,10 +20,10 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
-import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.client.methods.HttpGet;
@@ -45,17 +45,19 @@ public class FedoraFixityIT extends AbstractResourceIT {
         final GraphStore graphStore = getGraphStore(method);
         logger.info("Got triples {}", graphStore);
 
-        assertTrue(graphStore.contains(ANY, ANY, IS_FIXITY_RESULT_OF.asNode(),
-                createResource(serverAddress + "FedoraDatastreamsTest11/zxc")
-                        .asNode()));
+        assertTrue(graphStore.contains(ANY,
+                                          createResource(serverAddress + "FedoraDatastreamsTest11/zxc").asNode(),
+                                          HAS_FIXITY_RESULT.asNode(),
+                                          ANY
+                ));
         assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(),
                 createPlainLiteral("SUCCESS").asNode()));
 
         assertTrue(graphStore.contains(ANY, ANY,
-                HAS_COMPUTED_CHECKSUM.asNode(), createResource(
+                HAS_MESSAGE_DIGEST.asNode(), createResource(
                         "urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33")
                         .asNode()));
-        assertTrue(graphStore.contains(ANY, ANY, HAS_COMPUTED_SIZE.asNode(),
+        assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(),
                 createTypedLiteral(3).asNode()));
     }
 }

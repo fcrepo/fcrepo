@@ -19,11 +19,14 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.or;
 import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+
 import java.util.Set;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use
@@ -101,16 +104,17 @@ public final class RdfLexicon {
             HAS_MEMBER_OF_RESULT, HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
 
     // FIXITY
-    public static final Property IS_FIXITY_RESULT_OF =
-            createProperty(REPOSITORY_NAMESPACE + "isFixityResultOf");
+
+    public static final Resource FIXITY_TYPE = createResource(PREMIS_NAMESPACE + "Fixity");
+    public static final Property HAS_MESSAGE_DIGEST =
+        createProperty(PREMIS_NAMESPACE + "hasMessageDigest");
+    public static final Property HAS_SIZE =
+        createProperty(PREMIS_NAMESPACE + "hasSize");
     public static final Property HAS_FIXITY_RESULT =
-            createProperty(REPOSITORY_NAMESPACE + "hasFixityResult");
+        createProperty(PREMIS_NAMESPACE + "hasFixity");
+
     public static final Property HAS_FIXITY_STATE =
             createProperty(REPOSITORY_NAMESPACE + "status");
-    public static final Property HAS_COMPUTED_CHECKSUM =
-            createProperty(REPOSITORY_NAMESPACE + "computedChecksum");
-    public static final Property HAS_COMPUTED_SIZE =
-            createProperty(REPOSITORY_NAMESPACE + "computedSize");
 
     public static final Property HAS_FIXITY_CHECK_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "numFixityChecks");
@@ -120,9 +124,8 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "numFixityRepaired");
 
     public static final Set<Property> fixityProperties = of(
-            IS_FIXITY_RESULT_OF, HAS_FIXITY_RESULT, HAS_FIXITY_STATE,
-            HAS_COMPUTED_CHECKSUM, HAS_COMPUTED_SIZE, HAS_FIXITY_CHECK_COUNT,
-            HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
+            HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE, HAS_FIXITY_STATE,
+            HAS_FIXITY_CHECK_COUNT, HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
 
     // SEARCH
     public static final Property SEARCH_PAGE = createProperty("http://sindice.com/vocab/search#Page");
@@ -233,17 +236,20 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasContent");
     public static final Property IS_CONTENT_OF =
             createProperty(REPOSITORY_NAMESPACE + "isContentOf");
-    public static final Property HAS_LOCATION =
-            createProperty(REPOSITORY_NAMESPACE + "hasLocation");
+    public static final Resource CONTENT_LOCATION_TYPE =
+            createResource(PREMIS_NAMESPACE + "ContentLocation");
+    public static final Property HAS_CONTENT_LOCATION =
+            createProperty(PREMIS_NAMESPACE + "hasContentLocation");
+    public static final Property HAS_CONTENT_LOCATION_VALUE =
+        createProperty(PREMIS_NAMESPACE + "hasContentLocationValue");
     public static final Property HAS_MIME_TYPE =
             createProperty(REPOSITORY_NAMESPACE + "mimeType");
     public static final Property HAS_ORIGINAL_NAME =
             createProperty(PREMIS_NAMESPACE + "hasOriginalName");
-    public static final Property HAS_SIZE =
-            createProperty(PREMIS_NAMESPACE + "hasSize");
 
     public static final Set<Property> contentProperties = of(HAS_CONTENT,
-            IS_CONTENT_OF, HAS_LOCATION, HAS_MIME_TYPE, HAS_ORIGINAL_NAME, HAS_SIZE);
+            IS_CONTENT_OF, HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
+            HAS_MIME_TYPE, HAS_ORIGINAL_NAME, HAS_SIZE);
 
 
     // VERSIONING

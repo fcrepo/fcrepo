@@ -34,19 +34,19 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects.RESOURCE_NAMESPACE;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
@@ -344,7 +344,7 @@ public class JcrRdfToolsTest {
         when(mockNode.getSession().getValueFactory()).thenReturn(
                 mockValueFactory);
 
-        RDFNode n = createResource(RESTAPI_NAMESPACE + "/abc");
+        RDFNode n = createResource(RESOURCE_NAMESPACE + "abc");
 
         // node references
         when(mockSession.getNode("/abc")).thenReturn(mockNode);
@@ -356,7 +356,7 @@ public class JcrRdfToolsTest {
 
         // uris
         testObj.createValue(mockNode, n, UNDEFINED);
-        verify(mockValueFactory).createValue(RESTAPI_NAMESPACE + "/abc",
+        verify(mockValueFactory).createValue(RESOURCE_NAMESPACE + "abc",
                 PropertyType.URI);
 
         // other random resources
@@ -423,7 +423,7 @@ public class JcrRdfToolsTest {
     public final void testJcrNodeIteratorAddsPredicatesForEachNode()
         throws RepositoryException {
         final Resource mockResource =
-            createResource(RESTAPI_NAMESPACE + "/search/resource");
+            createResource(RESOURCE_NAMESPACE + "search/resource");
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode1.getSession()).thenReturn(mockSession);
@@ -468,11 +468,12 @@ public class JcrRdfToolsTest {
             testObj.getJcrTriples(mockNode, mockBlobs).asModel();
 
         logRDF(fixityResultsModel);
-        assertTrue(fixityResultsModel.contains(null, IS_FIXITY_RESULT_OF,
-                createResource(RESTAPI_NAMESPACE + "/test/jcr")));
-        assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_CHECKSUM,
+        assertTrue(fixityResultsModel.contains(createResource(RESOURCE_NAMESPACE + "test/jcr"),
+                                                  HAS_FIXITY_RESULT,
+                                                  (RDFNode)null));
+        assertTrue(fixityResultsModel.contains(null, HAS_MESSAGE_DIGEST,
                 createResource(testFixityUri)));
-        assertTrue(fixityResultsModel.contains(null, HAS_COMPUTED_SIZE,
+        assertTrue(fixityResultsModel.contains(null, HAS_SIZE,
                 createTypedLiteral(123)));
 
     }

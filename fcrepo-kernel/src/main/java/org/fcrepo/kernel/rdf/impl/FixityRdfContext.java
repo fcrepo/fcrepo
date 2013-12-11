@@ -23,18 +23,21 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_CHECKSUM;
-import static org.fcrepo.kernel.RdfLexicon.HAS_COMPUTED_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.CONTENT_LOCATION_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.FIXITY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCATION;
-import static org.fcrepo.kernel.RdfLexicon.IS_FIXITY_RESULT_OF;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
 
 import java.util.Calendar;
 import java.util.Iterator;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -72,20 +75,24 @@ public class FixityRdfContext extends NodeRdfContext {
 
                     @Override
                     public Iterator<Triple> apply(final FixityResult blob) {
-                        final com.hp.hpl.jena.graph.Node resultSubject =
-                            createURI(subject().getURI() + "/fixity/"
-                                    + Calendar.getInstance().getTimeInMillis());
+                        final com.hp.hpl.jena.graph.Node resultSubject = getTransientFixitySubject();
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
-                            b.add(create(resultSubject, IS_FIXITY_RESULT_OF
-                                    .asNode(), graphSubjects.getGraphSubject(
-                                    node).asNode()));
+                            b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
                             b.add(create(graphSubjects.getGraphSubject(node)
                                     .asNode(), HAS_FIXITY_RESULT.asNode(),
                                     resultSubject));
-                            b.add(create(resultSubject, HAS_LOCATION.asNode(),
-                                    createResource(blob.getStoreIdentifier())
-                                            .asNode()));
+                            final String storeIdentifier = blob.getStoreIdentifier();
+                            final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
+                                                                     .asNode();
+                            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
+                                            contentLocation));
+                            b.add(create(contentLocation,
+                                            RDF.type.asNode(),
+                                            CONTENT_LOCATION_TYPE.asNode()));
+                            b.add(create(contentLocation,
+                                            HAS_CONTENT_LOCATION_VALUE.asNode(),
+                                            createLiteral(storeIdentifier)));
 
                             for (final FixityResult.FixityState state : blob.status) {
                                 b.add(create(resultSubject, HAS_FIXITY_STATE
@@ -94,9 +101,9 @@ public class FixityRdfContext extends NodeRdfContext {
                             }
                             final String checksum =
                                 blob.computedChecksum.toString();
-                            b.add(create(resultSubject, HAS_COMPUTED_CHECKSUM
+                            b.add(create(resultSubject, HAS_MESSAGE_DIGEST
                                     .asNode(), createURI(checksum)));
-                            b.add(create(resultSubject, HAS_COMPUTED_SIZE
+                            b.add(create(resultSubject, HAS_SIZE
                                     .asNode(), createTypedLiteral(blob.computedSize)
                                     .asNode()));
                             return b.build().iterator();
@@ -105,5 +112,9 @@ public class FixityRdfContext extends NodeRdfContext {
                         }
                     }
                 })));
+    }
+
+    private com.hp.hpl.jena.graph.Node getTransientFixitySubject() {
+        return createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
     }
 }

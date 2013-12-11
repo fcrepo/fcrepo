@@ -33,6 +33,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -83,9 +84,10 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
+        final GraphSubjects subjects = new DefaultGraphSubjects(session);
+        final Dataset graphStore = object.getPropertiesDataset(subjects);
 
-        final String graphSubject = RESTAPI_NAMESPACE + "/graphObject";
+        final String graphSubject = subjects.getGraphSubject("/graphObject").getURI();
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
@@ -162,8 +164,9 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final String graphSubject = RESTAPI_NAMESPACE + "/graphObject";
-        final Dataset graphStore = object.getPropertiesDataset(new DefaultGraphSubjects(session));
+        final GraphSubjects subjects = new DefaultGraphSubjects(session);
+        final String graphSubject = subjects.getGraphSubject("/graphObject").getURI();
+        final Dataset graphStore = object.getPropertiesDataset(subjects);
 
         parseExecute("PREFIX some: <info:some#>\n" +
                          "INSERT { <" + graphSubject + "> some:urlProperty " +
