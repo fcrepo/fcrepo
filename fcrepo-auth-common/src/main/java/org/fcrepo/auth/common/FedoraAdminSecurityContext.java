@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.auth;
+package org.fcrepo.auth.common;
 
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.security.AuthorizationProvider;
