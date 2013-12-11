@@ -67,7 +67,7 @@ public abstract class AbstractRolesIT {
 
     protected static final String HOSTNAME = "localhost";
 
-    protected static final String SUFFIX = "fcr:accessRoles";
+    protected static final String SUFFIX = "fcr:accessroles";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/rest/";
