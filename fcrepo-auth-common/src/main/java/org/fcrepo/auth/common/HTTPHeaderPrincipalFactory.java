@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.auth;
+package org.fcrepo.auth.common;
 
 import static java.util.Collections.emptySet;
 

@@ -34,8 +34,8 @@ import javax.jcr.security.Privilege;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.http.auth.BasicUserPrincipal;
-import org.fcrepo.auth.FedoraPolicyEnforcementPoint;
-import org.fcrepo.auth.ServletContainerAuthenticationProvider;
+import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
+import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Assert;
 import org.junit.Before;
