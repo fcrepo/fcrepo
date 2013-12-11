@@ -61,7 +61,7 @@ import com.codahale.metrics.annotation.Timed;
  */
 @Component
 @Scope("prototype")
-@Path("/{path: .*}/fcr:accessRoles")
+@Path("/{path: .*}/fcr:accessroles")
 public class AccessRoles extends AbstractResource {
 
     private static final Logger log = LoggerFactory
