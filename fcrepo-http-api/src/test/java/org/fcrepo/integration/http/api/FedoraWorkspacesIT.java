@@ -20,7 +20,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
+import static org.fcrepo.kernel.RdfLexicon.WORKSPACE_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -43,7 +43,7 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         final GraphStore result = getGraphStore(httpGet);
         assertTrue(serverAddress + "workspace:default, not found!", result
                 .contains(ANY, createURI(serverAddress + "workspace:default"),
-                        type.asNode(), NOT_IMPLEMENTED.asNode()));
+                        type.asNode(), WORKSPACE_TYPE.asNode()));
     }
 
     @Test

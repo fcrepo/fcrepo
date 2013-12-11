@@ -79,11 +79,13 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
                TEXT_HTML})
     @HtmlTemplate("jcr:workspaces")
-    public RdfStream getWorkspaces(@Context final UriInfo uriInfo)
+    public RdfStream getWorkspaces()
         throws RepositoryException {
 
-        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(
-                uriInfo).session(session);
+        final GraphSubjects subjects =
+            new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+
+        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(subjects).session(session);
 
     }
 

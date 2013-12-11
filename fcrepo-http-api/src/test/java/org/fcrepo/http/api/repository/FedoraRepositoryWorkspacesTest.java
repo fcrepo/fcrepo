@@ -16,11 +16,13 @@
 
 package org.fcrepo.http.api.repository;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockRepository;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +38,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.sun.jersey.api.NotFoundException;
 
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -73,15 +76,19 @@ public class FedoraRepositoryWorkspacesTest {
     @Mock
     private Workspace mockOtherWorkspace;
 
+    @Mock
+    private Repository mockRepository;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
+        mockUriInfo = getUriInfoImpl();
         workspaces = new FedoraRepositoryWorkspaces();
         setField(workspaces, "session", mockSession);
         setField(workspaces, "uriInfo", mockUriInfo);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
-        mockUriInfo = getUriInfoImpl();
+        when(mockSession.getRepository()).thenReturn(mockRepository);
     }
 
     @Test
@@ -89,33 +96,21 @@ public class FedoraRepositoryWorkspacesTest {
         when(mockWorkspace.getAccessibleWorkspaceNames()).thenReturn(
                 new String[] {"xxx"});
 
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
-                mockNamespaceRegistry);
-
-        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{"yyy"});
-        when(mockNamespaceRegistry.getURI("yyy")).thenReturn("http://example.com");
-
-        when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockUriBuilder);
-        when(mockUriBuilder.path(any(String.class))).thenReturn(mockUriBuilder);
-
-        final URI uri = new URI("http://base/workspaces");
-        when(mockUriBuilder.build()).thenReturn(uri);
 
         // Do the test.
-        final Model result = workspaces.getWorkspaces(mockUriInfo).asModel();
+        final Model result = workspaces.getWorkspaces().asModel();
 
-        final Resource resource = result.getResource(uri.toString());
+        assertTrue(result.contains(createResource("http://localhost/fcrepo/"),
+                                      RdfLexicon.HAS_WORKSPACE,
+                                      createResource("http://localhost/fcrepo/workspace:xxx" )));
 
-        final String resourceName = resource.toString();
-
-        assertNotNull(resourceName);
-        assertEquals(uri.toString(), resourceName);
     }
 
     @Test
     public void testCreateWorkspace() throws Exception {
         final Repository mockRepository = mockRepository();
         when(mockSession.getRepository()).thenReturn(mockRepository);
+        when(mockWorkspaceSession.getRepository()).thenReturn(mockRepository);
         when(mockRepository.login("xxx")).thenReturn(mockWorkspaceSession);
         when(mockWorkspaceSession.getWorkspace()).thenReturn(mockOtherWorkspace);
         when(mockOtherWorkspace.getName()).thenReturn("xxx");

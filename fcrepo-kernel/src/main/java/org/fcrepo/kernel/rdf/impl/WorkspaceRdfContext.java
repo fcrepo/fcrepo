@@ -16,15 +16,21 @@
 
 package org.fcrepo.kernel.rdf.impl;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.RdfLexicon.NOT_IMPLEMENTED;
+import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_DEFAULT_WORKSPACE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE;
+import static org.fcrepo.kernel.RdfLexicon.WORKSPACE_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.ws.rs.core.UriInfo;
 
+import com.google.common.base.Function;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -41,24 +47,39 @@ public class WorkspaceRdfContext extends RdfStream {
 
     private static Logger LOGGER = getLogger(WorkspaceRdfContext.class);
 
+    private Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
     /**
      * @param session
      * @param uriInfo
      * @throws RepositoryException
      */
-    public WorkspaceRdfContext(final Session session, final UriInfo uriInfo)
+    public WorkspaceRdfContext(final Session session, final GraphSubjects subjects)
         throws RepositoryException {
 
         final String[] workspaces =
             session.getWorkspace().getAccessibleWorkspaceNames();
 
+        final String defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
+        final Node repositorySubject = subjects.getGraphSubject("/").asNode();
+
         for (final String workspace : workspaces) {
-            final Node resource =
-                createURI(uriInfo.getBaseUriBuilder().path(
-                        "/workspace:" + workspace).build().toString());
+            final Node resource = subjects.getGraphSubject(
+                        "/workspace:" + workspace).asNode();
             LOGGER.debug("Discovered workspace: {}", resource);
-            concat(Triple.create(resource, type.asNode(), NOT_IMPLEMENTED
+
+            concat(Triple.create(resource, type.asNode(), WORKSPACE_TYPE
                     .asNode()));
+
+            concat(Triple.create(resource, DC_TITLE.asNode(), createLiteral(workspace)));
+
+
+            concat(Triple.create(repositorySubject, HAS_WORKSPACE.asNode(), resource));
+
+            if (defaultWorkspace.equals(workspace)) {
+                concat(Triple.create(repositorySubject, HAS_DEFAULT_WORKSPACE.asNode(), resource));
+            }
+
+
         }
     }
 
