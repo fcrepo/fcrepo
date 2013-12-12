@@ -30,7 +30,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.auth.FedoraPolicyEnforcementPoint;
+import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.modeshape.jcr.JcrSession;
 import org.modeshape.jcr.value.Path;

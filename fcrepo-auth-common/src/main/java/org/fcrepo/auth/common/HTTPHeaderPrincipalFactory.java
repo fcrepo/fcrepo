@@ -14,27 +14,35 @@
  * limitations under the License.
  */
 
-package org.fcrepo.auth;
+package org.fcrepo.auth.common;
 
 import java.security.Principal;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * These factories extract security principals from HTTP requests, often from
- * request headers. Principals that will be assigned roles or privileges
- * must have a unique name string.
+ * An example principal factory that extracts groups principals from request
+ * headers.
  * 
  * @author Gregory Jansen
  */
-public interface HTTPPrincipalFactory {
+public class HTTPHeaderPrincipalFactory implements HTTPPrincipalFactory {
 
-    /**
-     * Extract extra security principals from an HTTP request.
-     * 
-     * @param request the request
-     * @return a set of security principals
+    private Map<String, Map<String, String>> principalConfigs;
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.auth.GroupPrincipalFactory#getGroupPrincipals(javax.servlet
+     * .http.HttpServletRequest)
      */
-    public Set<Principal> getGroupPrincipals(HttpServletRequest request);
+    @Override
+    public Set<Principal>
+    getGroupPrincipals(final HttpServletRequest request) {
+        return Collections.EMPTY_SET;
+    }
+
 }
