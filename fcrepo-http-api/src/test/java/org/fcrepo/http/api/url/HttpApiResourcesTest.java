@@ -38,6 +38,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import java.util.HashSet;
 
 import javax.jcr.Node;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -74,14 +75,21 @@ public class HttpApiResourcesTest {
     @Mock
     private SerializerUtil mockSerializers;
 
+    @Mock
+    private Session mockSession;
+
+    @Mock
+    private Repository mockRepository;
+
     @Before
     public void setUp() throws NoSuchFieldException {
         initMocks(this);
         testObj = new HttpApiResources();
         mockResource = new FedoraResource(mockNode);
         uriInfo = getUriInfoImpl();
+        when(mockSession.getRepository()).thenReturn(mockRepository);
         mockSubjects =
-            new HttpGraphSubjects(mock(Session.class), FedoraNodes.class,
+            new HttpGraphSubjects(mockSession, FedoraNodes.class,
                     uriInfo);
         setField(testObj, "serializers", mockSerializers);
     }

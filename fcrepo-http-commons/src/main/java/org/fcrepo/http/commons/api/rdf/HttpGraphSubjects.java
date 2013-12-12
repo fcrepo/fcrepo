@@ -28,6 +28,7 @@ import java.net.URI;
 import java.util.Map;
 
 import javax.jcr.Node;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
@@ -35,7 +36,9 @@ import javax.jcr.Workspace;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.base.Function;
 import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -56,6 +59,10 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final Session session;
 
+    private final String defaultWorkspace;
+
+    private Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
+
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
      *
@@ -75,6 +82,7 @@ public class HttpGraphSubjects implements GraphSubjects {
         this.basePath = basePath;
         this.pathIx = basePath.length() - 1;
         this.session = session;
+        this.defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 basePath);
     }
@@ -221,7 +229,7 @@ public class HttpGraphSubjects implements GraphSubjects {
             if (txId != null) {
                 path = "tx:" + txId + "/" + path;
             } else if (workspace != null &&
-                    !workspace.getName().equals("default")) {
+                    !workspace.getName().equals(defaultWorkspace)) {
                 path = "workspace:" + workspace.getName() + "/" + path;
             }
         }

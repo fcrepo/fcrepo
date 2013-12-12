@@ -295,6 +295,10 @@ public final class RdfLexicon {
     public static final Property DC_TITLE =
             createProperty("http://purl.org/dc/elements/1.1/title");
 
+    public static final Resource WORKSPACE_TYPE = createResource(JCR_NAMESPACE + "#Workspace");
+    public static final Property HAS_WORKSPACE = createProperty(REPOSITORY_NAMESPACE + "hasWorkspace");
+    public static final Property HAS_DEFAULT_WORKSPACE = createProperty(REPOSITORY_NAMESPACE + "hasDefaultWorkspace");
+
     public static final Set<Property> managedProperties;
 
     static {
