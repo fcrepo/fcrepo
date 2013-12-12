@@ -39,11 +39,11 @@ public class Constants {
         rbaclAssignable(), Rbacl(), Assignment(), rbacl(), assignment(),
         principal(), role();
 
-        public String expandedName;
+        private String expandedName;
 
-        public String qualifiedName;
+        private String qualifiedName;
 
-        public Property property;
+        private Property property;
 
         public static final String NS_URI =
                 "http://fedora.info/definitions/v4/authorization#";
@@ -76,7 +76,7 @@ public class Constants {
 
         /**
          * Get the property for this URI.
-         * 
+         *
          * @return a Jena property
          */
         public Property getProperty() {

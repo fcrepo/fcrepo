@@ -28,7 +28,6 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -42,9 +41,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  */
 @Component
 public class AccessRolesResources implements UriAwareResourceModelFactory {
-
-    @Autowired
-    AccessRolesProvider accessRolesProvider;
 
     /*
      * (non-Javadoc)
