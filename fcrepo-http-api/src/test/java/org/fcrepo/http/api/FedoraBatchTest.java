@@ -294,6 +294,7 @@ public class FedoraBatchTest {
         when(mockDs.hasContent()).thenReturn(true);
         when(mockIterator.hasNext()).thenReturn(true, false);
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
+        when(mockIterator.getSize()).thenReturn(1L);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
         when(mockNodes.getObject(mockSession, "/FedoraDatastreamsTest1"))
@@ -325,6 +326,7 @@ public class FedoraBatchTest {
         final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockIterator.hasNext()).thenReturn(true, false);
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
+        when(mockIterator.getSize()).thenReturn(1L);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
         when(mockNodes.getObject(mockSession, "/FedoraDatastreamsTest1"))

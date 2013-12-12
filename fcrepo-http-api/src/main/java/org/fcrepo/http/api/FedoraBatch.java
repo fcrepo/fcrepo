@@ -23,6 +23,8 @@ import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -361,6 +363,11 @@ public class FedoraBatch extends AbstractResource {
                 ni =
                         node.getNodes(requestedChildren
                                 .toArray(new String[requestedChildren.size()]));
+            }
+
+            // complain if no children found
+            if ( ni.getSize() == 0 ) {
+                return status(Status.BAD_REQUEST).build();
             }
 
             // transform the nodes into datastreams, and calculate cache header
