@@ -42,7 +42,6 @@ import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
-import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
@@ -303,8 +302,8 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getWorkspaceTriples(final UriInfo uriInfo) throws RepositoryException {
-        return new WorkspaceRdfContext(session, uriInfo);
+    public RdfStream getWorkspaceTriples(final GraphSubjects subjects) throws RepositoryException {
+        return new WorkspaceRdfContext(session, subjects);
     }
 
     /**

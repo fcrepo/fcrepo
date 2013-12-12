@@ -27,6 +27,7 @@ import java.net.URI;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
@@ -55,6 +56,9 @@ public class HttpGraphSubjectsTest {
     private Session mockSession;
 
     @Mock
+    private Repository mockRepository;
+
+    @Mock
     private Workspace mockWorkspace;
 
     @Mock private  Resource mockSubject;
@@ -72,6 +76,7 @@ public class HttpGraphSubjectsTest {
         initMocks(this);
         uriInfo = getUriInfoImpl(testPath);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockSession.getRepository()).thenReturn(mockRepository);
         testObj =
             new HttpGraphSubjects(mockSession, MockNodeController.class,
                     uriInfo);
