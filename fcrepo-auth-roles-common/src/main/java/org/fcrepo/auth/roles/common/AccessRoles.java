@@ -140,7 +140,11 @@ public class AccessRoles extends AbstractResource {
         log.debug("POST Received request param: {}", request);
         Response.ResponseBuilder response;
 
-        validatePOST(data);
+        try {
+            validatePOST(data);
+        } catch (final IllegalArgumentException e) {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
