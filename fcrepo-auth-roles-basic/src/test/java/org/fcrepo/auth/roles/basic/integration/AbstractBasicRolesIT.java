@@ -16,21 +16,16 @@
 package org.fcrepo.auth.roles.basic.integration;
 
 import static org.fcrepo.auth.ServletContainerAuthenticationProvider.EVERYONE_NAME;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import org.fcrepo.auth.roles.common.integration.AbstractRolesIT;
 import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
-import org.slf4j.Logger;
 
 /**
  * @author Scott Prater
  */
 public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
-
-    private static Logger logger = getLogger(AbstractBasicRolesIT.class);
 
     protected final static List<RolesPepTestObjectBean> test_objs =
             defineTestObjects();

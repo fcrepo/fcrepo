@@ -46,6 +46,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -360,7 +361,8 @@ public abstract class AbstractRolesIT {
         logger.debug("content: {}", content);
         final ObjectMapper mapper = new ObjectMapper();
         final Map<String, List<String>> result =
-                mapper.readValue(content, Map.class);
+            mapper.readValue(content,
+                    new TypeReference<Map<String, List<String>>>() {});
         return result;
     }
 
@@ -377,7 +379,8 @@ public abstract class AbstractRolesIT {
         logger.debug("content: {}", content);
         final ObjectMapper mapper = new ObjectMapper();
         final Map<String, List<String>> result =
-                mapper.readValue(content, Map.class);
+            mapper.readValue(content,
+                    new TypeReference<Map<String, List<String>>>() {});
         return result;
     }
 
