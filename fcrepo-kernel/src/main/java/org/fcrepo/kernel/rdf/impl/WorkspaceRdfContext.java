@@ -42,6 +42,9 @@ import com.hp.hpl.jena.graph.Triple;
  *
  * @author ajs6f
  * @date Nov 24, 2013
+ *
+ * @author cbeer
+ * @date 12 Dec 2013
  */
 public class WorkspaceRdfContext extends RdfStream {
 
