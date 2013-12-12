@@ -21,7 +21,7 @@
             "useOnFailedLogin" : false
         },
         "providers" : [
-            { "classname" : "org.fcrepo.auth.ServletContainerAuthenticationProvider" }
+            { "classname" : "org.fcrepo.auth.common.ServletContainerAuthenticationProvider" }
         ]
     },
 	"node-types" : ["fedora-node-types.cnd"]

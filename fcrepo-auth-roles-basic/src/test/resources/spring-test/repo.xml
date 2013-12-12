@@ -16,7 +16,7 @@
     <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:repository.json}" />
   </bean>
 
-  <bean name="authenticationProvider" class="org.fcrepo.auth.ServletContainerAuthenticationProvider">
+  <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
     <property name="pep" ref="pep"/>
   </bean>
   

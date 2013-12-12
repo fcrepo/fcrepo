@@ -15,7 +15,7 @@
  */
 package org.fcrepo.auth.roles.basic.integration;
 
-import static org.fcrepo.auth.ServletContainerAuthenticationProvider.EVERYONE_NAME;
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE_NAME;
 import java.util.ArrayList;
 import java.util.List;
 
