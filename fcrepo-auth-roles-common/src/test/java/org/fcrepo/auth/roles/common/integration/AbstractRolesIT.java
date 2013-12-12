@@ -359,6 +359,7 @@ public abstract class AbstractRolesIT {
         final String content = EntityUtils.toString(entity);
         logger.debug("content: {}", content);
         final ObjectMapper mapper = new ObjectMapper();
+        @SuppressWarnings("unchecked")
         final Map<String, List<String>> result =
                 mapper.readValue(content, Map.class);
         return result;
@@ -376,6 +377,7 @@ public abstract class AbstractRolesIT {
         final String content = EntityUtils.toString(entity);
         logger.debug("content: {}", content);
         final ObjectMapper mapper = new ObjectMapper();
+        @SuppressWarnings("unchecked")
         final Map<String, List<String>> result =
                 mapper.readValue(content, Map.class);
         return result;
