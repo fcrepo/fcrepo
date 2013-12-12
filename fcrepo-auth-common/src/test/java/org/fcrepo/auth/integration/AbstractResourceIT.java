@@ -18,7 +18,6 @@ package org.fcrepo.auth.integration;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -26,8 +25,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -55,16 +53,12 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME +
             ":" + SERVER_PORT + "/";
 
-    protected final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
-
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        connectionManager.setMaxTotal(Integer.MAX_VALUE);
-        connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        client =
+            HttpClientBuilder.create().setMaxConnPerRoute(5).setMaxConnTotal(
+                    Integer.MAX_VALUE).build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {

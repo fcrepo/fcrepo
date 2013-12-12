@@ -44,8 +44,6 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     private Principal userPrincipal = null;
 
-    private ServletCredentials credentials = null;
-
     private FedoraPolicyEnforcementPoint pep = null;
 
     private boolean loggedIn = true;
@@ -61,7 +59,6 @@ public class FedoraUserSecurityContext implements SecurityContext,
             final ServletCredentials credentials,
             final Set<Principal> principals,
             final FedoraPolicyEnforcementPoint pep) {
-        this.credentials = credentials;
         this.principals = principals;
         this.pep = pep;
         if (credentials.getRequest() != null) {

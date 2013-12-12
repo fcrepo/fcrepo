@@ -27,17 +27,12 @@ import java.util.List;
 import org.apache.http.client.ClientProtocolException;
 import org.fcrepo.auth.roles.common.AccessRolesProvider;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Gregory Jansen
  * @author Scott Prater
  */
 public class AccessRolesIT extends AbstractCommonRolesIT {
-
-    private static final Logger logger = LoggerFactory
-            .getLogger(AccessRolesIT.class);
 
     @Override
     protected List<RolesPepTestObjectBean> getTestObjs() {

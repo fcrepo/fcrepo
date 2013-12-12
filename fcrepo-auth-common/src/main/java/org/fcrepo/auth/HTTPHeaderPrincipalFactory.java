@@ -16,9 +16,9 @@
 
 package org.fcrepo.auth;
 
+import static java.util.Collections.emptySet;
+
 import java.security.Principal;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,12 +26,10 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * An example principal factory that extracts groups principals from request
  * headers.
- * 
+ *
  * @author Gregory Jansen
  */
 public class HTTPHeaderPrincipalFactory implements HTTPPrincipalFactory {
-
-    private Map<String, Map<String, String>> principalConfigs;
 
     /*
      * (non-Javadoc)
@@ -40,9 +38,8 @@ public class HTTPHeaderPrincipalFactory implements HTTPPrincipalFactory {
      * .http.HttpServletRequest)
      */
     @Override
-    public Set<Principal>
-    getGroupPrincipals(final HttpServletRequest request) {
-        return Collections.EMPTY_SET;
+    public Set<Principal> getGroupPrincipals(final HttpServletRequest request) {
+        return emptySet();
     }
 
 }

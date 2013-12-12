@@ -15,22 +15,16 @@
  */
 package org.fcrepo.auth.roles.common.integration;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-
 /**
  * @author Scott Prater
  */
 public abstract class AbstractCommonRolesIT extends AbstractRolesIT {
-
-    private static Logger logger = getLogger(AbstractCommonRolesIT.class);
 
     protected final static List<RolesPepTestObjectBean> test_objs =
             defineTestObjects();

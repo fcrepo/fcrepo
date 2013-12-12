@@ -30,8 +30,6 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.http.client.ClientProtocolException;
 import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Verifies that role for writers is properly enforced.
@@ -40,9 +38,6 @@ import org.slf4j.LoggerFactory;
  * @author Gregory Jansen
  */
 public class BasicRolesWriterIT extends AbstractBasicRolesIT {
-
-    private static final Logger log = LoggerFactory
-            .getLogger(BasicRolesWriterIT.class);
 
     private final static String TESTDS = "writertestds";
 
