@@ -171,6 +171,42 @@ public class FedoraBatchIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testWrongChildren() throws Exception {
+        final String pid = randomUUID().toString();
+        createObject(pid);
+
+        final HttpPost post =
+            new HttpPost(serverAddress
+                    + pid + "/fcr:batch");
+
+        final MultipartEntityBuilder multiPartEntityBuilder =
+            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN).addTextBody("ds2",
+                                                                                                   "qwerty", TEXT_PLAIN);
+
+        post.setEntity(multiPartEntityBuilder.build());
+
+        final HttpResponse postResponse = client.execute(post);
+        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+
+        final HttpGet getDSesMethod =
+            new HttpGet(serverAddress
+                    + pid + "/fcr:batch?child=ds3");
+        final HttpResponse response = client.execute(getDSesMethod);
+        assertEquals(400, response.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testNoChildren() throws Exception {
+        final String pid = randomUUID().toString();
+        createObject(pid);
+
+        final HttpGet getDSesMethod = new HttpGet(serverAddress + pid
+                + "/fcr:batch");
+        final HttpResponse response = client.execute(getDSesMethod);
+        assertEquals(400, response.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testBatchDeleteDatastream() throws Exception {
         final String pid = randomUUID().toString();
         createObject(pid);
