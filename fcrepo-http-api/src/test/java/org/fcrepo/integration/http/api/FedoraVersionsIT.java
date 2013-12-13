@@ -28,7 +28,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -39,6 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -58,12 +58,11 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectVersionProfile() throws Exception {
-        final String pid = "FedoraDatastreamsTest1";
+        final String pid = UUID.randomUUID().toString();
 
         createObject(pid);
         final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject = createResource(serverAddress + pid);
@@ -73,24 +72,22 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testAddAndRetrieveVersion() throws Exception {
-        execute(postObjMethod("FedoraVersioningTest2"));
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + "FedoraVersioningTest2", "http://purl.org/dc/elements/1.1/title", "First Title");
+        patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "First Title");
 
-        final GraphStore nodeResults = getContent(serverAddress + "FedoraVersioningTest2");
+        final GraphStore nodeResults = getContent(serverAddress + pid);
         assertTrue("Should find original title", nodeResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), NodeFactory.createLiteral("First Title")));
 
         logger.info("Posting version v0.0.1");
-        final HttpPost postVersion =
-                postObjMethod("FedoraVersioningTest2/fcr:versions/v0.0.1");
-        execute(postVersion);
-        assertEquals(204, getStatus(postVersion));
+        postObjectVersion(pid, "v0.0.1");
 
         logger.info("Replacing the title");
-        patchLiteralProperty(serverAddress + "FedoraVersioningTest2", "http://purl.org/dc/elements/1.1/title", "Second Title");
+        patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "Second Title");
 
-        final GraphStore versionResults = getContent(serverAddress + "FedoraVersioningTest2/fcr:versions/v0.0.1");
+        final GraphStore versionResults = getContent(serverAddress + pid + "/fcr:versions/v0.0.1");
         logger.info("Got version profile:");
 
         assertTrue("Didn't find a version triple!",
@@ -103,21 +100,17 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testVersioningANodeWithAVersionableChild() throws Exception {
-        final String pid = "testVersioningANodeWithAChild";
-        execute(postObjMethod(pid));
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
 
         logger.info("Adding a child");
-        execute(postDSMethod(pid, "ds", "This DS will not be versioned"));
+        createDatastream(pid, "ds", "This DS will not be versioned");
 
         logger.info("Posting version");
-        final HttpPost postVersion =
-                postObjMethod(pid + "/fcr:versions");
-        execute(postVersion);
-        assertEquals(204, getStatus(postVersion));
+        postObjectVersion(pid);
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + pid + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -135,42 +128,33 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     @Test
     public void testCreateUnlabeledVersion() throws Exception {
         logger.info("Creating an object");
-        final String objId = "anonymousVersionTestObj";
-        execute(postObjMethod(objId));
+        final String objId = UUID.randomUUID().toString();
+        createObject(objId);
 
         logger.info("Setting a title");
         patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Example Title");
 
         logger.info("Posting an unlabeled version");
-        final HttpPost postVersion =
-                postObjMethod(objId + "/fcr:versions");
-        execute(postVersion);
-        assertEquals(204, getStatus(postVersion));
-
+        postObjectVersion(objId);
     }
 
     @Test
     public void testCreateTwoVersionsWithSameLabel() throws Exception {
         logger.info("creating an object");
-        final String objId = "duplicateLabelVersionTestObj";
-        execute(postObjMethod(objId));
+        final String objId = UUID.randomUUID().toString();
+        createObject(objId);
 
         logger.info("Setting a title");
         patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "First title");
 
         logger.info("posting a version with label \"label\"");
-        HttpPost postVersion =
-                postObjMethod(objId + "/fcr:versions/label");
-        execute(postVersion);
-        assertEquals(204, getStatus(postVersion));
+        postObjectVersion(objId, "label");
 
         logger.info("Resetting the title");
         patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Second title");
 
         logger.info("posting a version with label \"label\"");
-        postVersion = postObjMethod(objId + "/fcr:versions/label");
-        execute(postVersion);
-        assertEquals(204, getStatus(postVersion));
+        postObjectVersion(objId, "label");
 
         logger.info("Resetting the title");
         patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Third title");
@@ -185,7 +169,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastreamVersionNotFound() throws Exception {
-
         final String pid = randomUUID().toString();
 
         createObject(pid);
@@ -204,17 +187,17 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 putDSMethod(objName, dsName, contentText);
         final HttpResponse response = client.execute(mutateDataStreamMethod);
         final int status = response.getStatusLine().getStatusCode();
-        if (status != 204) {
+        if (status != NO_CONTENT.getStatusCode()) {
             logger.error(EntityUtils.toString(response.getEntity()));
         }
-        assertEquals("Couldn't mutate a datastream!", 204, status);
+        assertEquals("Couldn't mutate a datastream!", NO_CONTENT.getStatusCode(), status);
 
     }
 
     @Test
     public void isAutoVersionedContentStillAccessible() throws Exception {
-        final String objName = "fvt3";
-        final String dsName = "ds";
+        final String objName = UUID.randomUUID().toString();
+        final String dsName = UUID.randomUUID().toString();
         final String firstVersionText = "foo";
         final String secondVersionText = "bar";
 
@@ -235,7 +218,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -258,7 +240,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         postNodeTypeCNDSnippet("[fedora:autoVersioned] mixin\n" +
                 "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
 
-        final String objName = "testMixinAutoVersioning";
+        final String objName = UUID.randomUUID().toString();
+        final String dsName = UUID.randomUUID().toString();
+
         createObject(objName);
         addMixin(serverAddress + objName, "http://fedora.info/definitions/v4/rest-api#autoVersioned");
 
@@ -313,7 +297,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -378,7 +361,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         httpPost.setEntity(entity);
         final HttpResponse response = client.execute(httpPost);
 
-        assertEquals(204, response.getStatusLine().getStatusCode());
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
     private void setAutoVersioning(final String url) throws IOException {
@@ -420,8 +403,26 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     private GraphStore getContent(final String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         return getGraphStore(getVersion);
+    }
+
+    public void postObjectVersion(String pid) throws IOException {
+        postVersion(pid, null);
+    }
+
+    public void postObjectVersion(String pid, String versionLabel) throws IOException {
+        postVersion(pid, versionLabel);
+    }
+
+    public void postDsVersion(String pid, String dsId) throws IOException {
+        postVersion(pid + "/" + dsId, null);
+    }
+
+    public void postVersion(String path, String label) throws IOException {
+        logger.info("Posting version");
+        final HttpPost postVersion = postObjMethod(path + "/fcr:versions" + (label == null ? "" : "/" + label));
+        execute(postVersion);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(postVersion));
     }
 
 }
