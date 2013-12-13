@@ -111,7 +111,7 @@ public class DatastreamServiceIT extends AbstractIT {
         datastreamService.createDatastreamNode(session,
                 "/testLLObject/testRepositoryContent",
                 "application/octet-stream", null, new ByteArrayInputStream(
-                        "0123456789".getBytes()));
+                        "01234567890123456789012345678901234567890123456789".getBytes()));
 
         session.save();
 
@@ -127,7 +127,7 @@ public class DatastreamServiceIT extends AbstractIT {
 
         for (final FixityResult fixityResult : fixityResults) {
             Assert.assertEquals("urn:"
-                    + "sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
+                    + "sha1:9578f951955d37f20b601c26591e260c1e5389bf",
                     fixityResult.computedChecksum.toString());
         }
     }
