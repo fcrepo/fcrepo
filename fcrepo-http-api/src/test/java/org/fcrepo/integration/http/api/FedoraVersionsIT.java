@@ -100,6 +100,37 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testVersioningANodeWithAVersionableChild() throws Exception {
+        final String pid = "testVersioningANodeWithAChild";
+        execute(postObjMethod(pid));
+
+        logger.info("Adding a child");
+        execute(postDSMethod(pid, "ds", "This DS will not be versioned"));
+
+        logger.info("Posting version");
+        final HttpPost postVersion =
+                postObjMethod(pid + "/fcr:versions");
+        execute(postVersion);
+        assertEquals(204, getStatus(postVersion));
+
+        final HttpGet getVersion =
+                new HttpGet(serverAddress + pid + "/fcr:versions");
+        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
+        logger.debug("Retrieved version profile:");
+        final GraphStore results = getGraphStore(getVersion);
+        final Resource subject =
+                createResource(serverAddress + pid);
+        assertTrue("Didn't find a version triple!",
+                results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
+
+        List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
+        for (int i = 0; i < versionsInOrder.size(); i ++) {
+            assertEquals("Version " + i + " isn't accessible!",
+                    200, getStatus(new HttpGet(versionsInOrder.get(1))));
+        }
+    }
+
+    @Test
     public void testCreateUnlabeledVersion() throws Exception {
         logger.info("Creating an object");
         String objId = "anonymousVersionTestObj";

@@ -110,7 +110,8 @@ public class PropertyToTriple implements
     /**
      * @param p A JCR {@link Property}
      * @param v The {@link Value} of that Property to use (in the case of
-     *        multi-valued properties)
+     *        multi-valued properties)  For single valued properties this
+     *        must be that single value.
      * @return An RDF {@link Triple} representing that property.
      */
     private Triple propertyvalue2triple(final Property p, final Value v) {
@@ -162,16 +163,10 @@ public class PropertyToTriple implements
     private Node traverseLink(final Property p, final Value v)
         throws RepositoryException {
         final javax.jcr.Node refNode;
-        if (p.isMultiple()) {
-            if (v.getType() == PATH) {
-                refNode = p.getParent().getNode(v.getString());
-            } else {
-                refNode = p.getSession().getNodeByIdentifier(v.getString());
-            }
+        if (v.getType() == PATH) {
+            refNode = p.getParent().getNode(v.getString());
         } else {
-            // directly traverses the link
-            refNode = p.getNode();
-
+            refNode = p.getSession().getNodeByIdentifier(v.getString());
         }
         return getGraphSubject(refNode);
     }
