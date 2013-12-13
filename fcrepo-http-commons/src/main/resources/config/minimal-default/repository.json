@@ -7,7 +7,7 @@
         "allowCreation" : true
     },
     "query" : {
-        "enabled" : false,
+        "enabled" : true,
         "indexStorage" : {
             "type" : "filesystem",
             "location" : "${fcrepo.modeshape.index.location:target/indexes}",
