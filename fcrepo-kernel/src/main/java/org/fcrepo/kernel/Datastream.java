@@ -64,6 +64,10 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      */
     public Datastream(final Node n) {
         super(n);
+
+        if (node.isNew()) {
+            initializeNewDatastreamProperties();
+        }
     }
 
     /**
@@ -75,7 +79,10 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     public Datastream(final Session session, final String path,
                       final String nodeType) throws RepositoryException {
         super(session, path, nodeType);
-        mixinTypeSpecificCrap();
+
+        if (node.isNew()) {
+            initializeNewDatastreamProperties();
+        }
     }
 
     /**
@@ -89,7 +96,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         this(session, path, JcrConstants.NT_FILE);
     }
 
-    private void mixinTypeSpecificCrap() {
+    private void initializeNewDatastreamProperties() {
         try {
             if (node.isNew() || !hasMixin(node)) {
                 LOGGER.debug("Setting {} properties on a {} node...",
@@ -212,8 +219,8 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         } catch (final RepositoryException e) {
             LOGGER.error("Could not get contentSize() - " + e.getMessage());
         }
-        // TODO Size is not stored, recalculate size?
-        return 0L;
+
+        return -1L;
     }
 
     /**
@@ -226,17 +233,12 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         try {
             return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
         } catch (final RepositoryException e) {
-            LOGGER.error("Could not get content digest: ", e);
+            LOGGER.info("Could not get content digest: ", e);
         } catch (final URISyntaxException e) {
-            LOGGER.error("Could not get content digest: {}", e);
+            LOGGER.info("Could not get content digest: {}", e);
         }
-        //TODO checksum not stored. recalculating checksum,
-        //however, this would defeat the purpose validating against the checksum
-        final Binary binary = (Binary) contentNode.getProperty(JCR_DATA)
-            .getBinary();
-        final String dsChecksum = binary.getHexHash();
 
-        return ContentDigest.asURI("SHA-1",dsChecksum);
+        return ContentDigest.missingChecksum();
     }
 
     /**

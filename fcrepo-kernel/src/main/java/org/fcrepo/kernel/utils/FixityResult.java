@@ -20,6 +20,8 @@ import static java.util.Objects.hash;
 import java.net.URI;
 import java.util.EnumSet;
 
+import javax.jcr.RepositoryException;
+
 /**
  * Structure for presenting the results of a fixity check
  * (and any repair operations that may have occurred)
@@ -30,7 +32,7 @@ public class FixityResult {
      * The possible fixity states (which may be ORed together later)
      */
     public static enum FixityState {
-        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE
+        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE, MISSING_STORED_FIXITY
     }
 
     /**
@@ -59,7 +61,7 @@ public class FixityResult {
      */
     public URI computedChecksum;
 
-    private final LowLevelCacheEntry entry;
+    private final CacheEntry entry;
 
     /**
      * Initialize an empty fixity result
@@ -72,7 +74,7 @@ public class FixityResult {
      * Prepare a fixity result for a Low-Level cache entry
      * @param entry
      */
-    public FixityResult(final LowLevelCacheEntry entry) {
+    public FixityResult(final CacheEntry entry) {
         this.entry = entry;
     }
 
@@ -91,7 +93,7 @@ public class FixityResult {
      * @param size
      * @param checksum
      */
-    public FixityResult(final LowLevelCacheEntry entry, final long size,
+    public FixityResult(final CacheEntry entry, final long size,
                         final URI checksum) {
         this.entry = entry;
         computedSize = size;
@@ -102,7 +104,7 @@ public class FixityResult {
      * Get the identifier for the entry's store
      * @return
      */
-    public String getStoreIdentifier() {
+    public String getStoreIdentifier() throws RepositoryException {
         return entry.getExternalIdentifier();
     }
 
@@ -135,7 +137,7 @@ public class FixityResult {
      * Get the underlying Low-Level cache entry
      * @return
      */
-    public LowLevelCacheEntry getEntry() {
+    public CacheEntry getEntry() {
         return entry;
     }
 

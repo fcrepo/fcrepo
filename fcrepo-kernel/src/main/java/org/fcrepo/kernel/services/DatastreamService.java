@@ -23,6 +23,7 @@ import static com.google.common.collect.Sets.difference;
 import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -40,9 +42,14 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.BinaryCacheEntry;
+import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.ProjectedCacheEntry;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.value.binary.ExternalBinaryValue;
+import org.modeshape.jcr.value.binary.InMemoryBinaryValue;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,6 +58,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -187,9 +195,7 @@ public class DatastreamService extends RepositoryService {
      */
     public RdfStream getFixityResultsModel(final GraphSubjects subjects,
             final Datastream datastream) throws RepositoryException {
-
-        final Collection<FixityResult> blobs =
-                runFixityAndFixProblems(datastream);
+        final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
 
         return JcrRdfTools.withContext(subjects,
                 datastream.getNode().getSession()).getJcrTriples(
@@ -242,7 +248,7 @@ public class DatastreamService extends RepositoryService {
             return fixityResults;
         }
 
-        final LowLevelCacheEntry anyGoodCacheEntry =
+        final CacheEntry anyGoodCacheEntry =
                 goodEntries.iterator().next().getEntry();
 
         final Set<FixityResult> badEntries =
@@ -250,8 +256,10 @@ public class DatastreamService extends RepositoryService {
 
         for (final FixityResult result : badEntries) {
             try {
-                result.getEntry()
-                        .storeValue(anyGoodCacheEntry.getInputStream());
+                // we can safely cast to a LowLevelCacheEntry here, since
+                // other entries have to be filtered out before
+                LowLevelCacheEntry lle = (LowLevelCacheEntry) result.getEntry();
+                lle.storeValue(anyGoodCacheEntry.getInputStream());
                 final FixityResult newResult =
                         result.getEntry().checkFixity(digestUri, size);
                 if (newResult.isSuccess()) {
@@ -281,10 +289,23 @@ public class DatastreamService extends RepositoryService {
     public Collection<FixityResult> getFixity(final Node resource,
             final URI dsChecksum, final long dsSize) throws RepositoryException {
         logger.debug("Checking resource: " + resource.getPath());
-        final Function<LowLevelCacheEntry, FixityResult> checkCacheFunc =
+
+        final Binary bin = resource.getProperty(JCR_DATA).getBinary();
+
+        if (bin instanceof ExternalBinaryValue) {
+            return ImmutableSet.of(new ProjectedCacheEntry(bin, resource.getPath())
+                                    .checkFixity(dsChecksum, dsSize));
+
+        } else if (bin instanceof InMemoryBinaryValue) {
+            return ImmutableSet.of(new BinaryCacheEntry(bin, resource.getPath())
+                                    .checkFixity(dsChecksum, dsSize));
+        } else {
+            final Function<LowLevelCacheEntry, FixityResult> checkCacheFunc =
                 getCheckCacheFixityFunction(dsChecksum, dsSize);
-        return llStoreService.transformLowLevelCacheEntries(resource,
-                checkCacheFunc);
+            return llStoreService.transformLowLevelCacheEntries(resource,
+                                                                   checkCacheFunc);
+        }
+
     }
 
     /**

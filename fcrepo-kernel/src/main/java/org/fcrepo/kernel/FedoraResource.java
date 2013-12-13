@@ -97,14 +97,21 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     public FedoraResource(final Session session, final String path,
         final String nodeType) throws RepositoryException {
         this();
+        initializeNewResourceProperties(session, path, nodeType);
+    }
+
+    private void initializeNewResourceProperties(final Session session,
+                                                 final String path,
+                                                 final String nodeType) throws RepositoryException {
         this.node = findOrCreateNode(
                 session, path, NT_FOLDER, nodeType);
 
-        if (!hasMixin(node) && !isFrozen(node)) {
-            node.addMixin(FEDORA_RESOURCE);
-        }
-
         if (node.isNew()) {
+
+            if (!hasMixin(node) && !isFrozen(node)) {
+                node.addMixin(FEDORA_RESOURCE);
+            }
+
             node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
         }
     }

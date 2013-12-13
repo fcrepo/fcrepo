@@ -87,4 +87,11 @@ public abstract class ContentDigest {
         return encodeHexString(data);
     }
 
+    /**
+     * Placeholder checksum value.
+     * @return
+     */
+    public static URI missingChecksum() {
+        return asURI("SHA-1", "missing");
+    }
 }

@@ -61,6 +61,7 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
+import org.modeshape.jcr.value.binary.StoredBinaryValue;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -91,12 +92,24 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     @Mock
     private Node mockContent;
 
+    @Mock
+    private Property mockProperty;
+
+    @Mock
+    private StoredBinaryValue mockBinary;
+
     private DatastreamService testObj;
 
     private LowLevelStorageService llStore;
 
     @Mock
     private ValueFactory mockValueFactory;
+
+    @Mock
+    private Property mockData;
+
+    @Mock
+    private javax.jcr.Binary mockBinaryValue;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -192,6 +205,8 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         final Datastream mockDatastream = mock(Datastream.class);
 
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProperty);
+        when(mockProperty.getBinary()).thenReturn(mockBinary);
 
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastream.getContentDigest()).thenReturn(
@@ -221,6 +236,8 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         final long testSize = 4L;
 
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockData.getBinary()).thenReturn(mockBinaryValue);
 
         testObj.getFixity(mockContent, mockUri, testSize);
 
@@ -266,6 +283,8 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                 asList(mockGoodResult, mockBadResult);
 
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockData.getBinary()).thenReturn(mockBinaryValue);
 
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastream.getContentDigest()).thenReturn(

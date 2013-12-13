@@ -23,11 +23,12 @@ import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+import javax.jcr.RepositoryException;
+
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.value.binary.BinaryStoreException;
 
 public class CheckCacheEntryFixityTest {
 
@@ -40,7 +41,7 @@ public class CheckCacheEntryFixityTest {
     }
 
     @Test
-    public void testApply() throws BinaryStoreException,
+    public void testApply() throws RepositoryException,
         NoSuchAlgorithmException {
         final URI testUri = URI.create("sha1:foo:bar");
         final long testSize = new SecureRandom().nextLong();

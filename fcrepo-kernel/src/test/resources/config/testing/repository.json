@@ -9,7 +9,7 @@
     "storage" : {
         "binaryStorage" : {
             "type" : "transient",
-            "minimumBinarySizeInBytes" : 1
+            "minimumBinarySizeInBytes" : 40
         }
     },
     "security" : {

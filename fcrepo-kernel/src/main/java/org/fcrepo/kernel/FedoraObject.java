@@ -44,7 +44,10 @@ public class FedoraObject extends FedoraResource {
      */
     public FedoraObject(final Node node) {
         super(node);
-        mixinTypeSpecificCrap();
+
+        if (node.isNew()) {
+            initializeNewObjectProperties();
+        }
     }
 
     /**
@@ -56,7 +59,10 @@ public class FedoraObject extends FedoraResource {
     public FedoraObject(final Session session, final String path,
                         final String nodeType) throws RepositoryException {
         super(session, path, nodeType);
-        mixinTypeSpecificCrap();
+
+        if (node.isNew()) {
+            initializeNewObjectProperties();
+        }
     }
     /**
      * Create or find a FedoraDatastream at the given path
@@ -70,7 +76,7 @@ public class FedoraObject extends FedoraResource {
     }
 
 
-    private void mixinTypeSpecificCrap() {
+    private void initializeNewObjectProperties() {
         try {
             if (node.isNew() || !hasMixin(node)) {
                 logger.debug("Setting {} properties on a {} node {}...",
