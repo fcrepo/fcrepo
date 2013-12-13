@@ -30,7 +30,7 @@ public class FixityResult {
      * The possible fixity states (which may be ORed together later)
      */
     public static enum FixityState {
-        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE
+        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE, MISSING_STORED_FIXITY
     }
 
     /**
