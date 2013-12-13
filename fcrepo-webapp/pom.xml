@@ -29,6 +29,7 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.version>8.1.13.v20130916</jetty.version>
+    <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
   </properties>
 
   <dependencies>
@@ -146,6 +147,7 @@
                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               </manifest>
             </archive>
+            <packagingExcludes>WEB-INF/classes/spring/auth-repo.xml</packagingExcludes>
         </configuration>
       </plugin>
       <plugin>
@@ -228,7 +230,7 @@
           <loginServices>
             <loginService implementation="org.eclipse.jetty.security.HashLoginService">
               <name>fcrepo</name>
-              <config>${project.build.directory}/test-classes/jetty-users.properties</config>
+              <config>${jetty.users.file}</config>
             </loginService>
           </loginServices>
           <scanIntervalSeconds>2</scanIntervalSeconds>
@@ -359,6 +361,31 @@
                 <log>${jmeter.log.dir}</log>
               </propertiesUser>
               <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>auth-war</id>
+      <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+            <excludes>
+              <exclude>spring/repo.xml</exclude>
+            </excludes>
+          </resource>
+          <resource>
+            <directory>src/auth/resources</directory>
+          </resource>
+        </resources>
+        <plugins>
+          <plugin>
+            <artifactId>maven-war-plugin</artifactId>
+            <configuration>
+              <classifier>auth</classifier>
+              <packagingExcludes>WEB-INF/classes/spring/repo.xml</packagingExcludes>
             </configuration>
           </plugin>
         </plugins>
