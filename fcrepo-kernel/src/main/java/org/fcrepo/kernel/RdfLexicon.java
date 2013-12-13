@@ -327,7 +327,7 @@ public final class RdfLexicon {
             @Override
             public boolean apply(final Property p) {
                 return !p.isAnon()
-                        && p.getNameSpace().equals(REPOSITORY_NAMESPACE);
+                        && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
 
             }
         };
