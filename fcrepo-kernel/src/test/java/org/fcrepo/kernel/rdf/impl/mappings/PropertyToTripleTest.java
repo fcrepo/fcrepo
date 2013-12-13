@@ -102,8 +102,9 @@ public class PropertyToTripleTest {
 
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getType()).thenReturn(PATH);
-        when(mockProperty.getString()).thenReturn(TEST_VALUE);
-        when(mockProperty.getNode()).thenReturn(mockNode);
+        when(mockProperty.getString()).thenReturn(TEST_NODE_PATH);
+        when(mockProperty.getValue()).thenReturn(mockValue);
+        when(mockValue.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue.getType()).thenReturn(PATH);
         final Function<Iterator<Value>, Iterator<Triple>> mapping =
             testPropertyToTriple.apply(mockProperty);

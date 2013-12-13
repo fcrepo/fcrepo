@@ -63,7 +63,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         createObject(pid);
         final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject = createResource(serverAddress + pid);
@@ -99,6 +98,36 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Should find a title in historic version", versionResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), Node.ANY));
         assertTrue("Should find original title in historic version", versionResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), NodeFactory.createLiteral("First Title")));
         assertFalse("Should not find the updated title in historic version", versionResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), NodeFactory.createLiteral("Second Title")));
+    }
+
+    @Test
+    public void testVersioningANodeWithAVersionableChild() throws Exception {
+        final String pid = "testVersioningANodeWithAChild";
+        execute(postObjMethod(pid));
+
+        logger.info("Adding a child");
+        execute(postDSMethod(pid, "ds", "This DS will not be versioned"));
+
+        logger.info("Posting version");
+        final HttpPost postVersion =
+                postObjMethod(pid + "/fcr:versions");
+        execute(postVersion);
+        assertEquals(204, getStatus(postVersion));
+
+        final HttpGet getVersion =
+                new HttpGet(serverAddress + pid + "/fcr:versions");
+        logger.debug("Retrieved version profile:");
+        final GraphStore results = getGraphStore(getVersion);
+        final Resource subject =
+                createResource(serverAddress + pid);
+        assertTrue("Didn't find a version triple!",
+                results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
+
+        List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
+        for (int i = 0; i < versionsInOrder.size(); i ++) {
+            assertEquals("Version " + i + " isn't accessible!",
+                    200, getStatus(new HttpGet(versionsInOrder.get(1))));
+        }
     }
 
     @Test
@@ -204,7 +233,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -282,7 +310,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -389,7 +416,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     private GraphStore getContent(final String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         return getGraphStore(getVersion);
     }
 
