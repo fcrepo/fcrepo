@@ -16,7 +16,6 @@
 
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.TimeZone.getTimeZone;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
@@ -26,11 +25,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.update.GraphStore;
-import com.sun.jersey.core.header.ContentDisposition;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -38,6 +32,11 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import com.sun.jersey.core.header.ContentDisposition;
 
 public class FedoraContentIT extends AbstractResourceIT {
 

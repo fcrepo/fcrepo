@@ -64,11 +64,10 @@ public abstract class AbstractResourceIT {
 
     protected static HttpClient client;
 
-    public AbstractResourceIT() {
-        final HttpClientBuilder b =
+    static {
+        client =
             HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
-                    .setMaxConnTotal(MAX_VALUE);
-        client = b.build();
+                    .setMaxConnTotal(MAX_VALUE).build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {

@@ -669,13 +669,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeRdfCached() throws RepositoryException, IOException {
-        final CloseableHttpClient specialClient =
+        final CloseableHttpClient cachingClient =
             CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build();
         final String pid = "FedoraObjectsRdfTest2";
         final String path = "" + pid;
-        specialClient.execute(new HttpPost(serverAddress + path));
+        cachingClient.execute(new HttpPost(serverAddress + path));
         final HttpGet getObjMethod = new HttpGet(serverAddress + path);
-        HttpResponse response = specialClient.execute(getObjMethod);
+        HttpResponse response = cachingClient.execute(getObjMethod);
         assertEquals("Client didn't return a OK!", OK.getStatusCode(), response
                 .getStatusLine().getStatusCode());
         logger.debug("Found HTTP headers:\n{}", Joiner.on('\n').join(
@@ -688,7 +688,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpGet getObjMethod2 = new HttpGet(serverAddress + path);
         getObjMethod2.setHeader("If-Modified-Since", lastModed);
         getObjMethod2.setHeader("If-None-Match", etag);
-        response = specialClient.execute(getObjMethod2);
+        response = cachingClient.execute(getObjMethod2);
 
         assertEquals("Client didn't return a NOT_MODIFIED!", NOT_MODIFIED
                 .getStatusCode(), response.getStatusLine().getStatusCode());
