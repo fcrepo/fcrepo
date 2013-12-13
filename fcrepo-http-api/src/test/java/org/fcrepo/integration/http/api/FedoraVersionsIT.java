@@ -61,7 +61,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         createObject(pid);
         final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject = createResource(serverAddress + pid);
@@ -115,7 +114,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + pid + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -233,7 +231,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -310,7 +307,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersion =
                 new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
         final Resource subject =
@@ -417,7 +413,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     private GraphStore getContent(String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
-        getVersion.addHeader("Accept", RDFMediaType.RDF_XML);
         return getGraphStore(getVersion);
     }
 
