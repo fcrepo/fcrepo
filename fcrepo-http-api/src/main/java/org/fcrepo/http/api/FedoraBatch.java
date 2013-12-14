@@ -29,10 +29,10 @@ import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -93,6 +93,10 @@ import com.sun.jersey.multipart.MultiPart;
 @Path("/{path: .*}/fcr:batch")
 public class FedoraBatch extends AbstractResource {
 
+    public static final String ATTACHMENT = "attachment";
+    public static final String INLINE = "inline";
+    public static final String DELETE = "delete";
+    public static final String FORM_DATA_DELETE_PART_NAME = "delete[]";
     @InjectedSession
     protected Session session;
 
@@ -142,7 +146,7 @@ public class FedoraBatch extends AbstractResource {
     @Timed
     public Response batchModify(@PathParam("path") final List<PathSegment> pathList,
                                 final MultiPart multipart)
-        throws Exception, RepositoryException, InvalidChecksumException {
+        throws RepositoryException, InvalidChecksumException, IOException, URISyntaxException {
 
         final String path = toPath(pathList);
 
@@ -177,14 +181,14 @@ public class FedoraBatch extends AbstractResource {
                 if (contentDispositionType.equals("form-data")) {
 
                     if (contentDisposition.getFileName() != null) {
-                        realContentDisposition = "attachment";
+                        realContentDisposition = ATTACHMENT;
                     } else if (contentTypeString.equals(contentTypeSPARQLUpdate)
                         || contentTypeToLang(contentTypeString) != null) {
-                        realContentDisposition = "inline";
-                    } else if (partName.equals("delete[]")) {
-                        realContentDisposition = "delete";
+                        realContentDisposition = INLINE;
+                    } else if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
+                        realContentDisposition = DELETE;
                     } else {
-                        realContentDisposition = "attachment";
+                        realContentDisposition = ATTACHMENT;
                     }
 
                     logger.trace("Converted form-data to content disposition {}", realContentDisposition);
@@ -204,13 +208,13 @@ public class FedoraBatch extends AbstractResource {
                     src = (InputStream) entityBody;
                 } else {
                     logger.debug("Got unknown multipart entity for {}; ignoring it", partName);
-                    src = new ByteArrayInputStream("".getBytes());
+                    src = IOUtils.toInputStream("");
                 }
 
                 // convert the entity name to a node path
                 final String pathName;
 
-                if (partName.equals("delete[]")) {
+                if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
                     pathName = IOUtils.toString(src);
                 } else {
                     pathName = partName;
@@ -219,7 +223,7 @@ public class FedoraBatch extends AbstractResource {
                 final String objPath = pathFactory.create(jcrPath, pathName).getCanonicalPath().getString();
 
                 switch (realContentDisposition) {
-                    case "inline":
+                    case INLINE:
 
                         final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
@@ -254,7 +258,7 @@ public class FedoraBatch extends AbstractResource {
 
                         break;
 
-                    case "attachment":
+                    case ATTACHMENT:
 
                         final URI checksumURI;
 
@@ -272,9 +276,13 @@ public class FedoraBatch extends AbstractResource {
                                                                   src, checksumURI));
                         break;
 
-                    case "delete":
+                    case DELETE:
                         nodeService.deleteObject(session, objPath);
                         break;
+
+                    default:
+                        return status(Status.BAD_REQUEST)
+                                   .entity("Unknown Content-Disposition: " + realContentDisposition).build();
                 }
             }
 
@@ -413,7 +421,7 @@ public class FedoraBatch extends AbstractResource {
                             new BodyPart(ds.getContent(), MediaType.valueOf(ds
                                     .getMimeType()));
                     bodyPart.setContentDisposition(ContentDisposition.type(
-                            "attachment").fileName(ds.getPath()).creationDate(
+                            ATTACHMENT).fileName(ds.getPath()).creationDate(
                             ds.getCreatedDate()).modificationDate(
                             ds.getLastModifiedDate()).size(ds.getContentSize())
                             .build());

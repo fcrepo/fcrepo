@@ -328,16 +328,11 @@ public class DatastreamService extends RepositoryService {
     }
 
     /**
-     * Get the StoragePolicy Decision Point for this service. Initialize it if Spring
-     * didn't wire it in for us.
+     * Get the StoragePolicy Decision Point for this service.
      *
      * @return a PolicyDecisionPoint
      */
     private StoragePolicyDecisionPoint getStoragePolicyDecisionPoint() {
-        if (storagePolicyDecisionPoint == null) {
-            logger.debug("Using new PolicyDecisionPoint.");
-          //  storagePolicyDecisionPoint = new PolicyDecisionPoint();
-        }
 
         return storagePolicyDecisionPoint;
     }

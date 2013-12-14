@@ -16,36 +16,17 @@
 
 package org.fcrepo.http.commons;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.sun.jersey.api.Responses.notAcceptable;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.riot.WebContent.contentTypeToLang;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.InputStream;
-import java.net.URI;
 import java.util.List;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -59,7 +40,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -116,12 +96,6 @@ public abstract class AbstractResource {
     @Autowired
     protected PidMinter pidMinter;
 
-    @Context
-    private HttpServletRequest servletRequest;
-
-    @Context
-    private SecurityContext securityContext;
-
     /**
      * A convenience object provided by ModeShape for acting against the JCR
      * repository.
@@ -167,81 +141,6 @@ public abstract class AbstractResource {
             return "/";
         } else {
             return path;
-        }
-    }
-
-    protected FedoraResource createObjectOrDatastreamFromRequestContent(
-            final Session session,
-            final String path, final String mixin, final GraphSubjects subjects,
-            final InputStream requestBodyStream,
-            final MediaType requestContentType,
-            final URI checksum) throws Exception {
-
-        final FedoraResource result;
-
-        switch (mixin) {
-            case FEDORA_OBJECT:
-                result = objectService.createObject(session, path);
-
-                if (requestBodyStream != null &&
-                        requestContentType != null) {
-                    switch(requestContentType.toString()) {
-                        case contentTypeSPARQLUpdate:
-                            result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
-                            break;
-                        default:
-                            final String contentType = requestContentType.toString();
-
-                            final Lang lang = contentTypeToLang(contentType);
-
-                            if (lang == null) {
-                                throw new WebApplicationException(
-                                        notAcceptable().entity(
-                                                "Invalid Content type "
-                                                        + contentType).build());
-                            }
-
-                            final String format = lang.getName()
-                                                      .toUpperCase();
-
-                            final Model inputModel =
-                                createDefaultModel().read(
-                                        requestBodyStream,
-                                        subjects.getGraphSubject(
-                                                result.getNode()).toString(),
-                                        format);
-
-                            result.replaceProperties(subjects, inputModel);
-                    }
-                }
-
-                break;
-            case FEDORA_DATASTREAM:
-                final MediaType contentType =
-                        requestContentType != null ? requestContentType
-                                : APPLICATION_OCTET_STREAM_TYPE;
-
-                final Node node =
-                        datastreamService.createDatastreamNode(session, path,
-                                contentType.toString(), null, requestBodyStream,
-                                checksum);
-                result = new Datastream(node);
-                break;
-            default:
-                result = null;
-                break;
-        }
-
-        return result;
-    }
-
-    protected void addResponseInformationToDataset(
-            final FedoraResource resource, final Dataset dataset,
-            final UriInfo uriInfo, final GraphSubjects subjects)
-        throws RepositoryException {
-        if (httpTripleUtil != null) {
-            httpTripleUtil.addHttpComponentModelsForResource(dataset, resource,
-                    uriInfo, subjects);
         }
     }
 

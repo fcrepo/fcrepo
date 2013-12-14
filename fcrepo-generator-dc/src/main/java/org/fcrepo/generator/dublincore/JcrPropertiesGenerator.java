@@ -38,7 +38,7 @@ public class JcrPropertiesGenerator implements DCGenerator {
     private static final Logger LOGGER =
             getLogger(JcrPropertiesGenerator.class);
 
-    public static final String[] SALIENT_DC_PROPERTY_NAMESPACES =
+    protected static final String[] SALIENT_DC_PROPERTY_NAMESPACES =
             new String[] {"dc:*"};
 
     @Override

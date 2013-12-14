@@ -151,7 +151,7 @@ public class SessionFactory {
 
             final Session session;
 
-            if (transaction != null && creds != null) {
+            if (transaction != null) {
                 logger.debug(
                         "Returning a session in the transaction {} impersonating {}",
                         transaction, creds);
@@ -166,7 +166,7 @@ public class SessionFactory {
                 } else {
                     session = transaction.getSession().impersonate(creds);
                 }
-            } else if (creds != null) {
+            } else {
 
                 final String workspace =
                         getEmbeddedWorkspace(servletRequest);
@@ -180,9 +180,6 @@ public class SessionFactory {
                     logger.debug("Returning an authenticated session in the default workspace");
                     session = repo.login(creds);
                 }
-            } else {
-                logger.debug("Falling back on a unauthenticated session");
-                session = getSession(servletRequest);
             }
 
             return session;

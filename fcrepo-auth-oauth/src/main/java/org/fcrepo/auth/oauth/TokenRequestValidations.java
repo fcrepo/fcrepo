@@ -27,7 +27,7 @@ public interface TokenRequestValidations {
      * @return
      * @throws RepositoryException
      */
-    public boolean isValidAuthCode(final OAuthTokenRequest oauthRequest)
+    boolean isValidAuthCode(final OAuthTokenRequest oauthRequest)
         throws RepositoryException;
 
     /**
@@ -36,7 +36,7 @@ public interface TokenRequestValidations {
      * @return
      * @throws RepositoryException
      */
-    public boolean isValidClient(final OAuthTokenRequest oauthRequest);
+    boolean isValidClient(final OAuthTokenRequest oauthRequest);
 
     /**
      * Checks the validity of the secret given with the given request
@@ -44,7 +44,7 @@ public interface TokenRequestValidations {
      * @return
      * @throws RepositoryException
      */
-    public boolean isValidSecret(final OAuthTokenRequest oauthRequest);
+    boolean isValidSecret(final OAuthTokenRequest oauthRequest);
 
     /**
      * Checks the validity of the authN credentials
@@ -53,6 +53,6 @@ public interface TokenRequestValidations {
      * @return
      * @throws RepositoryException
      */
-    public boolean isValidCredentials(final OAuthTokenRequest oauthRequest);
+    boolean isValidCredentials(final OAuthTokenRequest oauthRequest);
 
 }

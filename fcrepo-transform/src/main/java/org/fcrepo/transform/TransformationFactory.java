@@ -74,7 +74,7 @@ public class TransformationFactory {
                         | InvocationTargetException
                         | InstantiationException
                         | IllegalAccessException e) {
-                    propagate(e);
+                    throw propagate(e);
                 }
             }
 

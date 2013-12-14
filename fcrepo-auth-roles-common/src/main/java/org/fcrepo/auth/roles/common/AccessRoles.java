@@ -16,6 +16,7 @@
 
 package org.fcrepo.auth.roles.common;
 
+import static com.sun.jersey.api.Responses.notFound;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.util.List;
@@ -89,14 +90,14 @@ public class AccessRoles extends AbstractResource {
      *
      * @param pathList
      * @return JSON representation of assignment map
-     * @throws Exception
+     * @throws RepositoryException
      */
     @GET
     @Produces(APPLICATION_JSON)
     @Timed
     public Response get(@PathParam("path")
         final List<PathSegment> pathList, @QueryParam("effective")
-        final String effective) throws Exception {
+        final String effective) throws RepositoryException {
         final String path = toPath(pathList);
         log.debug("Get access roles for: {}", path);
         log.debug("effective: {}", effective);
@@ -113,7 +114,7 @@ public class AccessRoles extends AbstractResource {
                 response = Response.ok(data);
             }
         } catch (final PathNotFoundException e) {
-            response = Response.status(404).entity(e.getMessage());
+            response = notFound().entity(e.getMessage());
         } catch (final AccessDeniedException e) {
             response = Response.status(Status.FORBIDDEN);
         } finally {
@@ -128,14 +129,14 @@ public class AccessRoles extends AbstractResource {
      * @param pathList
      * @param data
      * @return
-     * @throws Exception
+     * @throws RepositoryException
      */
     @POST
     @Consumes(APPLICATION_JSON)
     @Timed
     public Response post(@PathParam("path")
         final List<PathSegment> pathList, final Map<String, Set<String>> data)
-        throws Exception {
+        throws RepositoryException {
         final String path = toPath(pathList);
         log.debug("POST Received request param: {}", request);
         Response.ResponseBuilder response;
@@ -172,16 +173,16 @@ public class AccessRoles extends AbstractResource {
             throw new IllegalArgumentException(
                     "Posted access roles must include role assignments");
         }
-        for (final String key : data.keySet()) {
-            if (key == null || data.get(key) == null || data.get(key).isEmpty()) {
+        for (final Map.Entry<String, Set<String>> entry : data.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null || entry.getValue().isEmpty()) {
                 throw new IllegalArgumentException(
                         "Assignments must include principal name and one or more roles");
             }
-            if (key.trim().length() == 0) {
+            if (entry.getKey().trim().length() == 0) {
                 throw new IllegalArgumentException(
                         "Principal names cannot be an empty strings or whitespace.");
             }
-            for (final String r : data.get(key)) {
+            for (final String r : entry.getValue()) {
                 if (r.trim().length() == 0) {
                     throw new IllegalArgumentException(
                             "Role names cannot be an empty strings or whitespace.");

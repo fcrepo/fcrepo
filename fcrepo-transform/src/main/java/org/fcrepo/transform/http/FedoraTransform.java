@@ -116,8 +116,8 @@ public class FedoraTransform extends AbstractResource {
             logger.debug("Transforming node: {}", node.getPath());
             // register an initial demo program
             if (!node.hasNode(NT_BASE)) {
-                final Node base_config = node.addNode(NT_BASE, NT_FILE);
-                jcrTools.uploadFile(session, base_config.getPath(), getClass()
+                final Node baseConfig = node.addNode(NT_BASE, NT_FILE);
+                jcrTools.uploadFile(session, baseConfig.getPath(), getClass()
                         .getResourceAsStream(
                                 "/ldpath/default/nt_base_ldpath_program.txt"));
             }

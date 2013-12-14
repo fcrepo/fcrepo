@@ -36,5 +36,5 @@ public interface HTTPPrincipalFactory {
      * @param request the request
      * @return a set of security principals
      */
-    public Set<Principal> getGroupPrincipals(HttpServletRequest request);
+    Set<Principal> getGroupPrincipals(HttpServletRequest request);
 }

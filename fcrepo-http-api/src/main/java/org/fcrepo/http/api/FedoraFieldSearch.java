@@ -81,6 +81,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class FedoraFieldSearch extends AbstractResource implements
         FedoraJcrTypes {
 
+    public static final String OFFSET_PARAM = "offset";
+    public static final String QUERY_PARAM = "q";
+    public static final String LIMIT_PARAM = "limit";
     @InjectedSession
     protected Session session;
 
@@ -93,10 +96,10 @@ public class FedoraFieldSearch extends AbstractResource implements
      * {@link #searchSubmitHtml(String, long, int, javax.ws.rs.core.Request,
      * javax.ws.rs.core.UriInfo)}
      *
+     *
      * @param terms
      * @param offset
      * @param limit
-     * @param request
      * @param uriInfo
      * @return
      * @throws RepositoryException
@@ -105,18 +108,16 @@ public class FedoraFieldSearch extends AbstractResource implements
     @Timed
     @HtmlTemplate("search:results")
     @Produces({TEXT_HTML})
-    public Dataset searchSubmitHtml(@QueryParam("q")
-            final String terms,
-            @QueryParam("offset") @DefaultValue("0")
-            final long offset,
-            @QueryParam("limit")
-            @DefaultValue("25")
-            final int limit,
-            @Context
-            final Request request,
-            @Context final HttpServletResponse servletResponse,
-            @Context
-            final UriInfo uriInfo) throws RepositoryException {
+    public Dataset searchSubmitHtml(@QueryParam(QUERY_PARAM)
+                                        final String terms,
+                                    @QueryParam(OFFSET_PARAM) @DefaultValue("0")
+                                    final long offset,
+                                    @QueryParam(LIMIT_PARAM)
+                                    @DefaultValue("25")
+                                    final int limit,
+                                    @Context final HttpServletResponse servletResponse,
+                                    @Context
+                                    final UriInfo uriInfo) throws RepositoryException {
         return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);
     }
 
@@ -136,9 +137,9 @@ public class FedoraFieldSearch extends AbstractResource implements
     @GET
     @Timed
     @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
-    public Dataset searchSubmitRdf(@QueryParam("q") final String terms,
-            @QueryParam("offset") @DefaultValue("0") final long offset,
-            @QueryParam("limit") @DefaultValue("25") final int limit,
+    public Dataset searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
+            @QueryParam(OFFSET_PARAM) @DefaultValue("0") final long offset,
+            @QueryParam(LIMIT_PARAM) @DefaultValue("25") final int limit,
             @Context final Request request,
             @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException {
@@ -173,7 +174,7 @@ public class FedoraFieldSearch extends AbstractResource implements
             } else {
                 searchResult = createResource(uriInfo.getBaseUriBuilder()
                                                   .path(FedoraFieldSearch.class)
-                                                  .queryParam("q", terms)
+                                                  .queryParam(QUERY_PARAM, terms)
                                                   .build().toString());
             }
 
@@ -208,9 +209,9 @@ public class FedoraFieldSearch extends AbstractResource implements
                         searchModel.createResource(uriInfo
                                                        .getBaseUriBuilder()
                                                        .path(FedoraFieldSearch.class)
-                                                       .queryParam("q", terms)
-                                                       .queryParam("offset", offset + limit)
-                                                       .queryParam("limit", limit)
+                                                       .queryParam(QUERY_PARAM, terms)
+                                                       .queryParam(OFFSET_PARAM, offset + limit)
+                                                       .queryParam(LIMIT_PARAM, limit)
                                                        .build()
                                                        .toString());
                     searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
@@ -221,9 +222,9 @@ public class FedoraFieldSearch extends AbstractResource implements
                 final String firstPage = uriInfo
                                        .getBaseUriBuilder()
                                        .path(FedoraFieldSearch.class)
-                                       .queryParam("q", terms)
-                                       .queryParam("offset", 0)
-                                       .queryParam("limit", limit)
+                                       .queryParam(QUERY_PARAM, terms)
+                                       .queryParam(OFFSET_PARAM, 0)
+                                       .queryParam(LIMIT_PARAM, limit)
                                        .build()
                                        .toString();
                 final Resource firstPageResource =

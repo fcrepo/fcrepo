@@ -35,7 +35,7 @@ public interface CacheEntry {
      * @return a {@link FixityResult} containing the relevant data
      * @throws RepositoryException
      */
-    public FixityResult checkFixity(URI checksum, long size)
+    FixityResult checkFixity(URI checksum, long size)
         throws RepositoryException;
 
     /**
@@ -43,7 +43,7 @@ public interface CacheEntry {
      * @return the content for this entry
      * @throws RepositoryException
      */
-    public abstract InputStream getInputStream() throws RepositoryException;
+    abstract InputStream getInputStream() throws RepositoryException;
 
     /**
      * Generate a human-readable identifier for the location of this entry
@@ -51,5 +51,5 @@ public interface CacheEntry {
      * @return
      * @throws RepositoryException
      */
-    public abstract String getExternalIdentifier();
+    abstract String getExternalIdentifier();
 }

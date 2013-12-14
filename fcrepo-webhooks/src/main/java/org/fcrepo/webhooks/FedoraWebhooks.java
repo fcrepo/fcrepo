@@ -80,7 +80,7 @@ public class FedoraWebhooks extends AbstractResource {
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraWebhooks.class);
 
-    protected static HttpClient client;
+    protected static final HttpClient client;
 
     @InjectedSession
     protected Session session;

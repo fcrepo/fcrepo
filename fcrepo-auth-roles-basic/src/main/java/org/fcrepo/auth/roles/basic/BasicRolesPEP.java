@@ -16,8 +16,6 @@
 
 package org.fcrepo.auth.roles.basic;
 
-
-
 import java.security.Principal;
 import java.util.Set;
 
@@ -53,7 +51,7 @@ public class BasicRolesPEP extends AbstractRolesPEP {
             return true;
         }
         if (roles.contains("writer")) {
-            if (absPath.toString().contains(AUTHZ_DETECTION)) {
+            if (absPath.contains(AUTHZ_DETECTION)) {
                 log.debug("Denying writer role permission to perform an action on an ACL node.");
                 return false;
             } else {

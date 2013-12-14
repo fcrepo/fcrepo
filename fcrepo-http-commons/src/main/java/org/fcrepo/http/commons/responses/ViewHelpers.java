@@ -283,14 +283,14 @@ public class ViewHelpers {
 
         if (nsURIPrefix == null) {
             if (compact) {
-                final int hashIdx = namespace.lastIndexOf("#");
+                final int hashIdx = namespace.lastIndexOf('#');
 
                 final int split;
 
                 if (hashIdx > 0) {
-                    split = namespace.substring(0, hashIdx).lastIndexOf("/");
+                    split = namespace.substring(0, hashIdx).lastIndexOf('/');
                 } else {
-                    split = namespace.lastIndexOf("/");
+                    split = namespace.lastIndexOf('/');
                 }
 
                 if (split > 0) {

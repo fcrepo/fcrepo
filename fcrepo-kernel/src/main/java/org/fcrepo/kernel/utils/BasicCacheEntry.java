@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.utils;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
@@ -25,6 +26,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import static com.google.common.base.Throwables.propagate;
+import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.MISSING_STORED_FIXITY;
@@ -61,9 +63,7 @@ abstract public class BasicCacheEntry implements CacheEntry {
 
         try {
 
-            while (fixityInputStream.read() != -1) {
-                // noop; we're just reading the stream for the checksum and size
-            }
+            IOUtils.copy(fixityInputStream, NULL_OUTPUT_STREAM);
 
             final URI calculatedChecksum = ContentDigest.asURI(digest,
                                                                   fixityInputStream.getMessageDigest().digest());

@@ -38,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import static com.google.common.collect.Iterables.toArray;
+
 /**
  * Provides the effective access roles for authorization.
  *
@@ -175,13 +177,12 @@ public class AccessRolesProvider {
             }
         }
 
-        for (final String key : data.keySet()) {
+        for (final Map.Entry<String, Set<String>> entry : data.entrySet()) {
             final Node assign =
                     acl.addNode(JcrName.assignment.getQualified(),
                             JcrName.Assignment.getQualified());
-            assign.setProperty(JcrName.principal.getQualified(), key);
-            assign.setProperty(JcrName.role.getQualified(), data.get(key)
-                    .toArray(new String[] {}));
+            assign.setProperty(JcrName.principal.getQualified(), entry.getKey());
+            assign.setProperty(JcrName.role.getQualified(), toArray(entry.getValue(), String.class));
         }
     }
 

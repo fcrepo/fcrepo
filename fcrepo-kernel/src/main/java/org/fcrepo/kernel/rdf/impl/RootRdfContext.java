@@ -112,9 +112,9 @@ public class RootRdfContext extends NodeRdfContext {
                 new GetClusterConfiguration().apply(repository);
             assert (config != null);
 
-            for (final String key : config.keySet()) {
-                b.add(create(subject(), createURI(REPOSITORY_NAMESPACE + key),
-                        createLiteral(config.get(key))));
+            for (final Map.Entry<String, String> entry : config.entrySet()) {
+                b.add(create(subject(), createURI(REPOSITORY_NAMESPACE + entry.getKey()),
+                        createLiteral(entry.getValue())));
             }
         }
 

@@ -16,6 +16,9 @@
 
 package org.fcrepo.storage.policy;
 
+import static com.sun.jersey.api.Responses.methodNotAllowed;
+import static com.sun.jersey.api.Responses.notFound;
+import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -68,6 +71,7 @@ import java.io.IOException;
 @Path("/{path: .*}/fcr:storagepolicy")
 public class FedoraStoragePolicy extends AbstractResource {
 
+    public static final String FEDORA_STORAGE_POLICY_PATH = "/fedora:system/fedora:storage_policy";
     @InjectedSession
     protected Session session;
 
@@ -97,11 +101,9 @@ public class FedoraStoragePolicy extends AbstractResource {
         try {
             session = sessions.getInternalSession();
             jcrTools.findOrCreateNode(session,
-                "/fedora:system/fedora:storage_policy", null);
+                                         FEDORA_STORAGE_POLICY_PATH, null);
             session.save();
             LOGGER.debug("Created configuration node");
-        } catch (final Exception e) {
-            throw e;
         } finally {
             if (session != null) {
                 session.logout();
@@ -121,13 +123,12 @@ public class FedoraStoragePolicy extends AbstractResource {
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Timed
     public Response post(final @PathParam("path") String path,
-                         final String request) throws Exception {
+                         final String request) throws RepositoryException {
         LOGGER.debug("POST Received request param: {}", request);
         Response.ResponseBuilder response;
 
         if (!path.equalsIgnoreCase(POLICY_RESOURCE)) {
-            response = Response.status(405);
-            return response.entity(
+            return methodNotAllowed().entity(
                     "POST method not allowed on " + getUriInfo().getAbsolutePath() +
                             ", try /policies/fcr:storagepolicy")
                     .build();
@@ -139,13 +140,13 @@ public class FedoraStoragePolicy extends AbstractResource {
         try {
             final Node node =
                 jcrTools.findOrCreateNode(session,
-                    "/fedora:system/fedora:storage_policy", "test");
+                                             FEDORA_STORAGE_POLICY_PATH, "test");
             if (isValidNodeTypeProperty(session, str[0]) ||
                 isValidConfigurationProperty(str[0])) {
                 node.setProperty(str[0], new String[] {str[1] + ":" + str[2]});
 
                 // TODO (for now) instantiate PolicyType based on mix:mimeType
-                StoragePolicy policy = newPolicyInstance(str[0], str[1], str[2]);
+                final StoragePolicy policy = newPolicyInstance(str[0], str[1], str[2]);
                 // TODO (for now) based on object comparison using equals()
                 if (storagePolicyDecisionPoint.contains(policy)) {
                     throw new StoragePolicyTypeException("Property already exists!");
@@ -155,15 +156,12 @@ public class FedoraStoragePolicy extends AbstractResource {
                 LOGGER.debug("Saved PDS hint {}", request);
 
                 response = Response.created(getUriInfo().getBaseUriBuilder()
-                                                    .path(str[0])
-                                                    .path("fcr:storagepolicy")
-                                                    .build());
+                                                .path(FedoraStoragePolicy.class)
+                                                .buildFromMap(singletonMap("path", str[0])));
             } else {
                 throw new StoragePolicyTypeException(
                         "Invalid property type specified: " + str[0]);
             }
-        } catch (final Exception e) {
-            response = Response.serverError().entity(e.getMessage());
         } finally {
             session.logout();
         }
@@ -203,12 +201,10 @@ public class FedoraStoragePolicy extends AbstractResource {
     public Response deleteNodeType(@PathParam("path") final String nodeType)
         throws RepositoryException {
         try {
-            // final String[] str = StringUtils.split(request);
-            // validateArgs(str.length);
             LOGGER.debug("Deleting node property{}", nodeType);
             final Node node =
                 jcrTools.findOrCreateNode(session,
-                    "/fedora:system/fedora:storage_policy", "test");
+                                             FEDORA_STORAGE_POLICY_PATH, "test");
             if (isValidNodeTypeProperty(session, nodeType)) {
                 node.getProperty(nodeType).remove();
                 session.save();
@@ -237,7 +233,7 @@ public class FedoraStoragePolicy extends AbstractResource {
     @GET
     @Produces(APPLICATION_JSON)
     @Timed
-    public Response get(final @PathParam("path") String path) throws Exception {
+    public Response get(final @PathParam("path") String path) {
         if (POLICY_RESOURCE.equalsIgnoreCase(path)) {
             return getAllStoragePolicies();
         } else {
@@ -245,7 +241,7 @@ public class FedoraStoragePolicy extends AbstractResource {
         }
     }
 
-    private Response getAllStoragePolicies() throws Exception {
+    private Response getAllStoragePolicies() {
         if (storagePolicyDecisionPoint == null ||
             storagePolicyDecisionPoint.size() == 0) {
             return Response.ok("No Policies Found").build();
@@ -259,7 +255,7 @@ public class FedoraStoragePolicy extends AbstractResource {
         try {
             final Node node =
                     jcrTools.findOrCreateNode(session,
-                                              "/fedora:system/fedora:storage_policy",
+                                                 FEDORA_STORAGE_POLICY_PATH,
                                               "test");
 
             Property prop = node.getProperty(nodeType);
@@ -275,7 +271,7 @@ public class FedoraStoragePolicy extends AbstractResource {
             }
 
         } catch (PathNotFoundException e) {
-            response = Response.status(404).entity(e.getMessage());
+            response = notFound().entity(e.getMessage());
         } catch (Exception e) {
             response = Response.serverError().entity(e.getMessage());
 

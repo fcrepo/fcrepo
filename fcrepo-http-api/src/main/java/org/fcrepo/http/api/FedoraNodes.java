@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -95,6 +96,7 @@ import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrConstants;
@@ -114,6 +116,9 @@ import com.hp.hpl.jena.rdf.model.Model;
 @Scope("prototype")
 @Path("/{path: .*}")
 public class FedoraNodes extends AbstractResource {
+
+    public static final int NO_LIMIT = -1;
+    public static final int NO_MEMBER_PROPERTIES = -2;
 
     @InjectedSession
     protected Session session;
@@ -171,8 +176,8 @@ public class FedoraNodes extends AbstractResource {
             new HttpGraphSubjects(session, this.getClass(), uriInfo);
 
         final int realLimit;
-        if (nonMemberProperties != null && limit == -1) {
-            realLimit = -2;
+        if (nonMemberProperties != null && limit == NO_LIMIT) {
+            realLimit = NO_MEMBER_PROPERTIES;
         } else {
             realLimit = limit;
         }
@@ -314,7 +319,7 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
             final InputStream requestBodyStream,
-            @Context final Request request) throws Exception {
+            @Context final Request request) throws RepositoryException {
         final String path = toPath(pathList);
         logger.debug("Attempting to replace path: {}", path);
         try {
@@ -385,7 +390,8 @@ public class FedoraNodes extends AbstractResource {
             final String slug,
             @Context
             final UriInfo uriInfo, final InputStream requestBodyStream)
-        throws Exception {
+        throws RepositoryException, ParseException, IOException,
+                   InvalidChecksumException, URISyntaxException {
 
         final String newObjectPath;
         final String path = toPath(pathList);

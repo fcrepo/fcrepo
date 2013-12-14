@@ -42,7 +42,7 @@ public interface FedoraPolicyEnforcementPoint {
      * @param allPrincipals
      * @return
      */
-    public boolean hasModeShapePermission(Path absPath, String[] actions,
+    boolean hasModeShapePermission(Path absPath, String[] actions,
             Set<Principal> allPrincipals, Principal userPrincipal);
 
     /**
@@ -54,7 +54,7 @@ public interface FedoraPolicyEnforcementPoint {
      * @param userPrincipal the user principal
      * @return an iterator of permitted paths
      */
-    public Iterator<Path> filterPathsForReading(Iterator<Path> paths,
+    Iterator<Path> filterPathsForReading(Iterator<Path> paths,
             Set<Principal> allPrincipals, Principal userPrincipal);
 
 }

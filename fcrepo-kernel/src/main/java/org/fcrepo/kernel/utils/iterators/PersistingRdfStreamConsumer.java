@@ -109,7 +109,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     }
 
     @Override
-    public void consume() throws Exception {
+    public void consume() throws RepositoryException {
         while (stream.hasNext()) {
             final Statement t = m.asStatement(stream.next());
             LOGGER.debug("Operating on triple {}.", t);
@@ -162,13 +162,13 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         if (streamNSMap.containsValue(namespace)) {
             LOGGER.debug("Found namespace: {} in stream namespace mapping.",
                     namespace);
-            for (final String prefix : streamNSMap.keySet()) {
-                final String streamNamespace = streamNSMap.get(prefix);
+            for (final Map.Entry<String, String> entry : streamNSMap.entrySet()) {
+                final String streamNamespace = entry.getValue();
                 if (namespace.equals(streamNamespace)) {
                     LOGGER.debug(
                             "Found namespace: {} in stream namespace mapping with prefix: {}.",
                             namespace, namespacePrefix);
-                    namespacePrefix = prefix;
+                    namespacePrefix = entry.getKey();
                 }
             }
         } else {
@@ -180,7 +180,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             } catch (final NamespaceException e) {
                 throw new MalformedRdfException(
                         "Unable to resolve registered namespace for resource "
-                                + mixinResource.toString());
+                                + mixinResource.toString(), e);
 
             }
         }

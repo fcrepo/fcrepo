@@ -89,7 +89,7 @@ public class Transaction {
      * @return
      */
     public Date getCreated() {
-        return created;
+        return new Date(created.getTime());
     }
 
     /**

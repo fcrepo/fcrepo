@@ -34,5 +34,5 @@ public interface EventFilter extends Function<Event, Event> {
      * @param session
      * @return
      */
-    public Function<Event, Event> getFilter(final Session session);
+    Function<Event, Event> getFilter(final Session session);
 }

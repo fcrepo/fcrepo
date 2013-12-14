@@ -227,7 +227,6 @@ public class JQLResultSet implements ResultSet {
          * don't have Property nodes.
          * @param v
          * @return
-         * @throws Exception
          */
         private RDFNode getRDFNode(final Value v) {
 

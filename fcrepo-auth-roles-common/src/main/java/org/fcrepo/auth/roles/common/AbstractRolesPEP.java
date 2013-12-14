@@ -133,9 +133,9 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
     public boolean hasModeShapePermission(final Path absPath,
             final String[] actions, final Set<Principal> allPrincipals,
             final Principal userPrincipal) {
-        final boolean newNode = false;
-        Set<String> roles = null;
-        JcrSession session = null;
+        final Set<String> roles;
+        final JcrSession session;
+
         try {
             session = (JcrSession)sessionFactory.getInternalSession();
             final Map<String, List<String>> acl =
@@ -148,28 +148,26 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
         }
 
         if (log.isDebugEnabled()) {
-            final StringBuilder msg = new StringBuilder();
-            msg.append(roles.toString()).append("\t").append(
-                    Arrays.toString(actions)).append("\t").append(
-                    newNode ? "NEW" : "OLD").append("\t").append(
-                    (absPath == null ? absPath : absPath.toString()));
-            log.debug(msg.toString());
+            log.debug("{}\t{}\t{}", roles, actions, absPath);
             if (actions.length > 1) { // have yet to see more than one
                 log.debug("FOUND MULTIPLE ACTIONS: {}", Arrays
                         .toString(actions));
             }
         }
+
         if (actions.length == 1 && "remove_child_nodes".equals(actions[0])) {
             // in roles-based ACLs, the permission to remove children is
             // conferred by earlier check for "remove_node" on the child node
             // itself.
             return true;
         }
+
         if (!rolesHaveModeShapePermission(absPath.toString(), actions,
                 allPrincipals,
                 userPrincipal, roles)) {
             return false;
         }
+
         if (actions.length == 1 && "remove".equals(actions[0])) {
             // you must be able to delete all the children
             // TODO make recursive/ACL-query-based check configurable

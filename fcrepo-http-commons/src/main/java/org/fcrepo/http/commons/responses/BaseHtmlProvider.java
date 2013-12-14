@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableMap.builder;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.kernel.rdf.SerializationUtils.getDatasetSubject;
@@ -263,7 +264,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
                 "Checking to see if type: {} is serializable to mimeType: {}",
                 type.getName(), mediaType);
         return (mediaType.equals(TEXT_HTML_TYPE) || mediaType
-                .equals(APPLICATION_XHTML_XML))
+                .equals(APPLICATION_XHTML_XML_TYPE))
                 && Dataset.class.isAssignableFrom(type);
     }
 

@@ -154,9 +154,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
                 final String currentTxId = getCurrentTransactionId(session);
 
-                if (currentTxId != null && tx.equals(currentTxId)) {
-                    // no-op
-                } else {
+                if (currentTxId == null || !tx.equals(currentTxId)) {
                     throw new RepositoryException(
                             "Subject is not in this transaction");
                 }

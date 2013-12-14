@@ -47,6 +47,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import com.google.common.collect.Iterables;
 import org.apache.oltu.oauth2.as.issuer.MD5Generator;
 import org.apache.oltu.oauth2.as.issuer.OAuthIssuerImpl;
 import org.apache.oltu.oauth2.as.request.OAuthAuthzRequest;
@@ -82,7 +83,7 @@ public class AuthzEndpoint extends AbstractResource {
     public Response getAuthorization(@Context final HttpServletRequest request)
         throws URISyntaxException, OAuthSystemException, RepositoryException {
 
-        OAuthAuthzRequest oauthRequest = null;
+        final OAuthAuthzRequest oauthRequest;
 
         final OAuthIssuerImpl oauthIssuerImpl =
                 new OAuthIssuerImpl(new MD5Generator());
@@ -118,13 +119,6 @@ public class AuthzEndpoint extends AbstractResource {
                     builder.setParam("client_secret", "YOUR_SECRET");
                 }
 
-                /** as far as I can tell from spec and a number of docs,
-                 * "token" is not a valid response type for the authCode
-                 * endpoint
-                 */
-//            } else if (responseType.equals(TOKEN.toString())) {
-//                builder.setAccessToken(oauthIssuerImpl.accessToken());
-//                builder.setExpiresIn(EXPIRATION_TIMEOUT);
             } else {
                 String errorDesc =
                     "Invalid response_type parameter value \"" +
@@ -189,8 +183,7 @@ public class AuthzEndpoint extends AbstractResource {
                     jcrTools.findOrCreateNode(session, "/authorization-codes/" +
                             authCode);
             codeNode.setProperty(CLIENT_PROPERTY, client);
-            codeNode.setProperty(Constants.SCOPES_PROPERTY, scopes
-                    .toArray(new String[0]));
+            codeNode.setProperty(Constants.SCOPES_PROPERTY, Iterables.toArray(scopes, String.class));
             session.save();
         } finally {
             session.logout();

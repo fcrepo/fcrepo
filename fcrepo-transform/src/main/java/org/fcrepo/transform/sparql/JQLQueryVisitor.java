@@ -103,6 +103,7 @@ import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LESS_TH
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LIKE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_NOT_EQUAL_TO;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -235,7 +236,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
 
         } catch (final RepositoryException e) {
-            e.printStackTrace();
+            logger.info(e.getMessage());
         }
         return this.source;
     }
@@ -438,7 +439,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                             FEDORA_RESOURCE, selectorName));
 
                     final Column c =
-                        queryFactory.column(selectorName, "jcr:path", subject
+                        queryFactory.column(selectorName, JCR_PATH, subject
                                 .getName());
                     variables.put(subject.getName(), c);
                 }
@@ -550,11 +551,13 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     throw new NotImplementedException(
                             "Element path with constant subject and predicate, and a variable object");
 
+                } else {
+                    throw new NotImplementedException("Element path with constant subject/predicate/object");
                 }
 
             }
         } catch (final RepositoryException e) {
-            propagate(e);
+            throw propagate(e);
         }
     }
 
@@ -669,7 +672,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     appendConstraint(queryFactory.not(subVisitor1.getConstraint()));
                     break;
                 case "bound":
-                    final Column column = variables.get(func.getArg());
+                    final Column column = variables.get(func.getArg().getVarName());
                     appendConstraint(queryFactory.propertyExistence(column.getSelectorName(),
                                                                     column.getPropertyName()));
                 default:
@@ -677,7 +680,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
 
         } catch (final RepositoryException e) {
-            e.printStackTrace();
+            logger.info(e.getMessage());
         }
     }
 
@@ -704,6 +707,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         appendConstraint(queryFactory.or(subVisitor1
                                 .getConstraint(), subVisitor2.getConstraint()));
                         break;
+                    default:
+                        throw new NotImplementedException(funcName);
                 }
             } else if (!func.getArg2().isConstant()) {
                 throw new NotImplementedException(
@@ -753,7 +758,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
 
         } catch (final RepositoryException e) {
-            propagate(e);
+            throw propagate(e);
         }
 
 
@@ -788,7 +793,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
 
         } catch (final RepositoryException e) {
-            propagate(e);
+            throw propagate(e);
         }
     }
 
@@ -820,9 +825,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         try {
             return queryFactory.propertyValue(column.getSelectorName(), column.getPropertyName());
         } catch (final RepositoryException e) {
-            propagate(e);
+            throw propagate(e);
         }
-        return null;
     }
 
     private PropertyValue getPropertyValue(final Expr expr) {

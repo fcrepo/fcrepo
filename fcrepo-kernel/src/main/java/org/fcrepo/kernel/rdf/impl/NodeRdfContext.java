@@ -120,7 +120,7 @@ public class NodeRdfContext extends RdfStream {
         return lowLevelStorageService;
     }
 
-    private final Function<NodeType, Triple> nodetype2triple() {
+    private Function<NodeType, Triple> nodetype2triple() {
         return new Function<NodeType, Triple>() {
 
             @Override

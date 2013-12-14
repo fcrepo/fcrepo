@@ -375,10 +375,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param subjects
      * @param inputModel
      * @return
-     * @throws Exception
+     * @throws RepositoryException
      */
     public RdfStream replaceProperties(final GraphSubjects graphSubjects,
-        final Model inputModel) throws Exception {
+        final Model inputModel) throws RepositoryException {
         final RdfStream originalTriples = getTriples(graphSubjects);
 
         final RdfStream replacementStream = RdfStream.fromModel(inputModel);
