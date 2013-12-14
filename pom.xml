@@ -477,7 +477,7 @@
         <plugin>
           <groupId>com.github.github</groupId>
           <artifactId>site-maven-plugin</artifactId>
-          <version>0.8</version>
+          <version>0.9</version>
           <configuration>
             <message>Creating site for ${project.artifactId},
               ${project.version}</message>
@@ -849,7 +849,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <executions>
           <execution>
             <goals>
@@ -905,7 +905,7 @@
             Fix me!
           -->
           <argLine>${argLine}</argLine>
-          <jacoco-agent.destFile>${project.basedir}/target/jacoco-it.exec</jacoco-agent.destFile>
+          <jacoco-agent.destFile>${project.basedir}/target/jacoco.exec</jacoco-agent.destFile>
         </configuration>
       </plugin>
       <plugin>
