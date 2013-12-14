@@ -49,7 +49,7 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class NamespaceRdfContext extends RdfStream {
 
-    private static Logger LOGGER = getLogger(NamespaceRdfContext.class);
+    private static final Logger LOGGER = getLogger(NamespaceRdfContext.class);
 
     /**
      * Default constructor. Loads context with RDF describing namespaces in

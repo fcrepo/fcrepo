@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class FedoraUserSecurityContext implements SecurityContext,
         AdvancedAuthorizationProvider {
 
-    private static Logger log = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
 
     private Set<Principal> principals = null;
@@ -65,7 +65,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
             this.userPrincipal = credentials.getRequest().getUserPrincipal();
         }
         if (this.pep == null) {
-            log.warn("This security context must have a PEP injected");
+            LOGGER.warn("This security context must have a PEP injected");
             throw new Error("This security context must have a PEP injected");
         }
     }

@@ -42,7 +42,7 @@ public class BasicRolesPEP extends AbstractRolesPEP {
     public boolean rolesHaveModeShapePermission(final String absPath,
             final String[] actions, final Set<Principal> allPrincipals,
             final Principal userPrincipal, final Set<String> roles) {
-        if (roles.size() == 0) {
+        if (roles.isEmpty()) {
             log.debug("A caller without content roles can do nothing in the repository.");
             return false;
         }

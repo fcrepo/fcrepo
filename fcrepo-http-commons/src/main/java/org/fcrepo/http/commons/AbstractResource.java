@@ -109,7 +109,7 @@ public abstract class AbstractResource {
      * @return
      */
     public static final String toPath(final List<PathSegment> paths) {
-        final StringBuffer result = new StringBuffer();
+        final StringBuilder result = new StringBuilder();
         LOGGER.trace("converting URI path to JCR path: {}", paths);
 
         int i = 0;

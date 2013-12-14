@@ -52,7 +52,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class ItemDefinitionToTriples<T extends ItemDefinition> implements Function<T, Iterator<Triple>> {
 
-    private static Logger LOGGER = getLogger(ItemDefinitionToTriples.class);
+    private static final Logger LOGGER = getLogger(ItemDefinitionToTriples.class);
 
     private Node context;
 

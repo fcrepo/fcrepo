@@ -58,7 +58,7 @@ public class JMSTopicPublisher {
 
     private MessageProducer producer;
 
-    private final Logger LOGGER = getLogger(JMSTopicPublisher.class);
+    private static final Logger LOGGER = getLogger(JMSTopicPublisher.class);
 
     /**
      * When an EventBus mesage is received, map it to our JMS

@@ -80,7 +80,7 @@ public class FedoraTransform extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private final Logger logger = getLogger(FedoraTransform.class);
+    private static final Logger LOGGER = getLogger(FedoraTransform.class);
 
     @Autowired(required = false)
     private TransformationFactory transformationFactory;
@@ -113,7 +113,7 @@ public class FedoraTransform extends AbstractResource {
             final Node node =
                 jcrTools.findOrCreateNode(session, CONFIGURATION_FOLDER
                         + "default", NT_FOLDER, NT_FOLDER);
-            logger.debug("Transforming node: {}", node.getPath());
+            LOGGER.debug("Transforming node: {}", node.getPath());
             // register an initial demo program
             if (!node.hasNode(NT_BASE)) {
                 final Node baseConfig = node.addNode(NT_BASE, NT_FILE);

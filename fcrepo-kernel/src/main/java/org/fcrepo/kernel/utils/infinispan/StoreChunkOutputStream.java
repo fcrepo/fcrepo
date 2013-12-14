@@ -27,6 +27,8 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.modeshape.common.logging.Logger;
 
+import static org.modeshape.common.logging.Logger.getLogger;
+
 /**
  * A near-copy of a Modeshape class (of the same name, but is
  * unfortunately hidden from us) that takes a single OutputStream
@@ -37,7 +39,7 @@ import org.modeshape.common.logging.Logger;
  */
 public class StoreChunkOutputStream extends OutputStream {
 
-    protected final Logger logger;
+    private static final Logger LOGGER = getLogger(StoreChunkOutputStream.class);
 
     // 1 MB
     public static final int CHUNKSIZE = 1024 * 1024 * 1;
@@ -65,7 +67,6 @@ public class StoreChunkOutputStream extends OutputStream {
      */
     public StoreChunkOutputStream(final CacheStore blobCache,
                                   final String keyPrefix) {
-        logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.keyPrefix = keyPrefix;
         chunkBuffer = new ByteArrayOutputStream(CHUNK_BUFFER_SIZE);
@@ -101,9 +102,9 @@ public class StoreChunkOutputStream extends OutputStream {
 
     @Override
     public void close() throws IOException {
-        logger.debug("Close. Buffer size at close: {0}", chunkBuffer.size());
+        LOGGER.debug("Close. Buffer size at close: {0}", chunkBuffer.size());
         if (closed) {
-            logger.debug("Stream already closed.");
+            LOGGER.debug("Stream already closed.");
             return;
         }
         closed = true;
@@ -129,7 +130,7 @@ public class StoreChunkOutputStream extends OutputStream {
                 cacheEntry = entryFactory.create(chunkKey, chunk, c);
             }
 
-            logger.debug("Store chunk {0}", chunkKey);
+            LOGGER.debug("Store chunk {0}", chunkKey);
             blobCache.store(cacheEntry);
             chunkIndex++;
             chunkBuffer.reset();

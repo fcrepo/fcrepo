@@ -83,7 +83,7 @@ public class FedoraContent extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private final Logger logger = getLogger(FedoraContent.class);
+    private static final Logger LOGGER = getLogger(FedoraContent.class);
 
     /**
      * Create an anonymous DS with a newly minted name and content from request
@@ -126,7 +126,7 @@ public class FedoraContent extends AbstractResource {
         }
 
 
-        logger.debug("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
+        LOGGER.debug("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
 
         try {
 
@@ -220,7 +220,7 @@ public class FedoraContent extends AbstractResource {
                 }
             }
 
-            logger.debug("create Datastream {}", path);
+            LOGGER.debug("create Datastream {}", path);
 
             final URI checksumURI;
 

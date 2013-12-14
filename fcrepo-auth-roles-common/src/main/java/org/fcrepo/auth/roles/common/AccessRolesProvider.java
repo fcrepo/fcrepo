@@ -86,9 +86,8 @@ public class AccessRolesProvider {
                             }
                             getAssignments(node, data);
                             if (log.isDebugEnabled()) {
-                                for (final String key : data.keySet()) {
-                                    log.debug("{} has role(s) {}", key, data
-                                            .get(key));
+                                for (final Map.Entry<String, List<String>> entry : data.entrySet()) {
+                                    log.debug("{} has role(s) {}", entry.getKey(), entry.getValue());
                                 }
                             }
                             return data;

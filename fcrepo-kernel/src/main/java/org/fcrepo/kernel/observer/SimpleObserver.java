@@ -140,6 +140,7 @@ public class SimpleObserver implements EventListener {
                             break;
                         default:
                             nPath = null;
+                            break;
                     }
                     if ( nPath != null && !posted.contains(nPath) ) {
                         EVENT_COUNTER.inc();

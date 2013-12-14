@@ -15,11 +15,13 @@
  */
 package org.fcrepo.kernel.utils;
 
+import static com.google.common.collect.Iterables.toArray;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -75,14 +77,13 @@ public class NodePropertiesTools {
                              propertyName);
 
                 // if the property is multi-valued, go ahead and append to it.
-                final ArrayList<Value> newValues = new ArrayList<Value>();
+                final List<Value> newValues = new ArrayList<Value>();
                 Collections.addAll(newValues,
                                    node.getProperty(propertyName).getValues());
 
                 if (!newValues.contains(newValue)) {
                     newValues.add(newValue);
-                    property.setValue(newValues
-                                      .toArray(new Value[newValues.size()]));
+                    property.setValue(toArray(newValues, Value.class));
                 }
 
                 addReferencePlaceholders(subjects, node, property, newValue);
@@ -185,7 +186,7 @@ public class NodePropertiesTools {
 
             if (FedoraTypesUtils.isMultipleValuedProperty.apply(property)) {
 
-                final ArrayList<Value> newValues = new ArrayList<Value>();
+                final List<Value> newValues = new ArrayList<Value>();
 
                 boolean remove = false;
 
@@ -199,15 +200,14 @@ public class NodePropertiesTools {
 
                 // we only need to update the property if we did anything.
                 if (remove) {
-                    if (newValues.size() == 0) {
+                    if (newValues.isEmpty()) {
                         LOGGER.debug("Removing property {}", propertyName);
                         property.setValue((Value[])null);
                     } else {
                         LOGGER.debug("Removing value {} from property {}",
                                      valueToRemove, propertyName);
                         property
-                            .setValue(newValues
-                                      .toArray(new Value[newValues.size()]));
+                            .setValue(toArray(newValues, Value.class));
                     }
                     removeReferencePlaceholders(subjects, node, property, valueToRemove);
                 }

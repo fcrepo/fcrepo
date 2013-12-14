@@ -100,7 +100,7 @@ public class FedoraBatch extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private final Logger logger = getLogger(FedoraBatch.class);
+    private static final Logger LOGGER = getLogger(FedoraBatch.class);
 
     /**
      * Apply batch modifications relative to the node.
@@ -171,7 +171,7 @@ public class FedoraBatch extends AbstractResource {
 
                 final String contentTypeString = part.getMediaType().toString();
 
-                logger.trace("Processing {} part {} with media type {}",
+                LOGGER.trace("Processing {} part {} with media type {}",
                                 contentDispositionType, partName, contentTypeString);
 
                 final String realContentDisposition;
@@ -191,7 +191,7 @@ public class FedoraBatch extends AbstractResource {
                         realContentDisposition = ATTACHMENT;
                     }
 
-                    logger.trace("Converted form-data to content disposition {}", realContentDisposition);
+                    LOGGER.trace("Converted form-data to content disposition {}", realContentDisposition);
                 } else {
                     realContentDisposition = contentDispositionType;
                 }
@@ -207,7 +207,7 @@ public class FedoraBatch extends AbstractResource {
                 } else if (entityBody instanceof InputStream) {
                     src = (InputStream) entityBody;
                 } else {
-                    logger.debug("Got unknown multipart entity for {}; ignoring it", partName);
+                    LOGGER.debug("Got unknown multipart entity for {}; ignoring it", partName);
                     src = IOUtils.toInputStream("");
                 }
 
@@ -320,7 +320,7 @@ public class FedoraBatch extends AbstractResource {
             final String path = toPath(pathList);
             for (final String dsid : childList) {
                 String dsPath = path + "/" + dsid;
-                logger.debug("purging node {}", dsPath);
+                LOGGER.debug("purging node {}", dsPath);
                 nodeService.deleteObject(session, dsPath);
             }
             session.save();
@@ -351,7 +351,7 @@ public class FedoraBatch extends AbstractResource {
                                       @Context final Request request) throws RepositoryException, IOException,
         NoSuchAlgorithmException {
 
-        final ArrayList<Datastream> datastreams = new ArrayList<Datastream>();
+        final List<Datastream> datastreams = new ArrayList<Datastream>();
 
         try {
             final String path = toPath(pathList);

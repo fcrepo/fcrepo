@@ -37,7 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinition> {
 
-    private static Logger LOGGER = getLogger(NodeDefinitionToTriples.class);
+    private static final Logger LOGGER = getLogger(NodeDefinitionToTriples.class);
 
     /**
      * Translate ItemDefinitions into triples. The definitions will hang off

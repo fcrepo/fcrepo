@@ -243,7 +243,7 @@ public class FedoraStoragePolicy extends AbstractResource {
 
     private Response getAllStoragePolicies() {
         if (storagePolicyDecisionPoint == null ||
-            storagePolicyDecisionPoint.size() == 0) {
+            storagePolicyDecisionPoint.isEmpty()) {
             return Response.ok("No Policies Found").build();
         }
         return Response.ok(storagePolicyDecisionPoint.toString()).build();

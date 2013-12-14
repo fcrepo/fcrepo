@@ -61,7 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class JQLResultSet implements ResultSet {
 
-    private final Logger logger = getLogger(JQLResultSet.class);
+    private static final Logger LOGGER = getLogger(JQLResultSet.class);
 
     private final RowIterator iterator;
 
@@ -111,7 +111,7 @@ public class JQLResultSet implements ResultSet {
     public QuerySolution next() {
         rowNumber++;
         final JQLQuerySolution jqlQuerySolution = new JQLQuerySolution(subjects, iterator.nextRow(), getResultVars());
-        logger.trace("Getting QuerySolution (#{}): {}", rowNumber, jqlQuerySolution);
+        LOGGER.trace("Getting QuerySolution (#{}): {}", rowNumber, jqlQuerySolution);
 
         return jqlQuerySolution;
     }

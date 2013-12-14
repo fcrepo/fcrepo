@@ -88,7 +88,7 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
                                 .getValues(),
                                 value2string));
                     // and if there is at least one scope in common
-                    return (storedScopes.size() == 0 || intersection(storedScopes, scopes).size() > 0);
+                    return (storedScopes.isEmpty() || !intersection(storedScopes, scopes).isEmpty());
                 } else {
                     return true;
                 }

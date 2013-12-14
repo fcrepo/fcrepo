@@ -278,7 +278,7 @@ public class FedoraNodes extends AbstractResource {
 
 
                 final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
-                if (problems.size() > 0) {
+                if (!problems.isEmpty()) {
                     logger.info(
                             "Found these problems updating the properties for {}: {}",
                             path, problems);
@@ -546,7 +546,7 @@ public class FedoraNodes extends AbstractResource {
                                                 @FormDataParam("slug") final String slug,
                                                 @Context final UriInfo uriInfo,
                                                 @FormDataParam("file") final InputStream file
-    ) throws Exception {
+    ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
 
         return createObject(pathList, mixin, null, null, null, slug, uriInfo, file);
 

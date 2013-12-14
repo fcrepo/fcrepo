@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 public class RepositoryExceptionMapper implements
         ExceptionMapper<RepositoryException> {
 
-    private final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
+    private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
 
     Boolean showStackTrace = true;
 

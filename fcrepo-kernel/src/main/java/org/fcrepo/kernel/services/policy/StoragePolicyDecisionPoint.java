@@ -72,4 +72,9 @@ public interface StoragePolicyDecisionPoint {
      * @return policies size
      */
     int size();
+
+    /**
+     * @return policies size
+     */
+    boolean isEmpty();
 }

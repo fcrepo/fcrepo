@@ -39,7 +39,7 @@ public class ZippingIterator<FromType, ToType> extends AbstractIterator<ToType> 
 
     private Iterator<Function<FromType, ToType>> through;
 
-    private static Logger LOGGER = getLogger(ZippingIterator.class);
+    private static final Logger LOGGER = getLogger(ZippingIterator.class);
 
     /**
      * Default constructor.

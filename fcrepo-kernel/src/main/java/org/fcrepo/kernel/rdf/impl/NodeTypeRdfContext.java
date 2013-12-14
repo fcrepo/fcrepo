@@ -52,7 +52,7 @@ import javax.jcr.nodetype.NodeTypeManager;
  */
 public class NodeTypeRdfContext extends RdfStream {
 
-    private static Logger LOGGER = getLogger(NodeTypeRdfContext.class);
+    private static final Logger LOGGER = getLogger(NodeTypeRdfContext.class);
 
     private static final Predicate<ItemDefinition> isWildcardResidualDefinition =
         new Predicate<ItemDefinition>() {

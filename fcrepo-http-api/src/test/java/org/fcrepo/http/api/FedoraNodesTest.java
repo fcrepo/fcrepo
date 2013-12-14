@@ -368,6 +368,7 @@ public class FedoraNodesTest {
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
         when(mockDataset.getNamedModel(PROBLEMS_MODEL_NAME))
         .thenReturn(mockModel);
+        when(mockModel.isEmpty()).thenReturn(true);
         testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest);
 
         verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),

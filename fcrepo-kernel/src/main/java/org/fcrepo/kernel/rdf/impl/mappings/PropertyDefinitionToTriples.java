@@ -61,7 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<PropertyDefinition> {
 
-    private static Logger LOGGER = getLogger(PropertyDefinitionToTriples.class);
+    private static final Logger LOGGER = getLogger(PropertyDefinitionToTriples.class);
 
     /**
      * A JCR type for which we know no RDF equivalent.

@@ -54,7 +54,7 @@ import com.hp.hpl.jena.vocabulary.RDFS;
  */
 public class ViewHelpers {
 
-    private final Logger LOGGER = getLogger(ViewHelpers.class);
+    private static final Logger LOGGER = getLogger(ViewHelpers.class);
 
     private static ViewHelpers instance = null;
 

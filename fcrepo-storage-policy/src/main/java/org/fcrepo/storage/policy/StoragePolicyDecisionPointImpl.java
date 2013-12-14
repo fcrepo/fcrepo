@@ -125,4 +125,9 @@ public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoin
     public int size() {
         return policies.size();
     }
+
+    @Override
+    public boolean isEmpty() {
+        return size() == 0;
+    }
 }

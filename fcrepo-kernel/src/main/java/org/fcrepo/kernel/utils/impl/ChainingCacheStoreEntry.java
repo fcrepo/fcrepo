@@ -71,7 +71,7 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
      */
     public Set<LowLevelCacheEntry> chainedEntries() {
         Set<CacheStore> stores = this.store.getStores().keySet();
-        HashSet<LowLevelCacheEntry> result = new HashSet<LowLevelCacheEntry>(stores.size());
+        Set<LowLevelCacheEntry> result = new HashSet<LowLevelCacheEntry>(stores.size());
         for (CacheStore store: stores) {
             String cacheName = null;
             CacheStoreConfiguration config = this.store.getStores().get(store);

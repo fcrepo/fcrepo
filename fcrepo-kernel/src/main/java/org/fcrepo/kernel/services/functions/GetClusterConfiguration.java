@@ -64,7 +64,7 @@ public class GetClusterConfiguration implements
     public Map<String, String> apply(final Repository input) {
         checkArgument(input != null, "null cannot have a BinaryStore!");
 
-        LinkedHashMap<String, String> result =
+        Map<String, String> result =
                 new LinkedHashMap<String, String>();
         try {
             BinaryStore store = getBinaryStore.apply(input);

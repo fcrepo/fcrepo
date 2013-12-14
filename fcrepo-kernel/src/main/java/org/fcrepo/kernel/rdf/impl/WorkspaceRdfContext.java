@@ -48,7 +48,7 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class WorkspaceRdfContext extends RdfStream {
 
-    private static Logger LOGGER = getLogger(WorkspaceRdfContext.class);
+    private static final Logger LOGGER = getLogger(WorkspaceRdfContext.class);
 
     private Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
     /**

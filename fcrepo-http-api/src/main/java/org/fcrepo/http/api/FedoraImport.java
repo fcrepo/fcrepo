@@ -62,7 +62,7 @@ public class FedoraImport extends AbstractResource {
     @Autowired
     protected SerializerUtil serializers;
 
-    private final Logger logger = getLogger(this.getClass());
+    private static final Logger LOGGER = getLogger(FedoraImport.class);
 
     /**
      * Deserialize a serialized object at the current path POST
@@ -85,7 +85,7 @@ public class FedoraImport extends AbstractResource {
         URISyntaxException {
 
         final String path = toPath(pathList);
-        logger.debug("Deserializing at {}", path);
+        LOGGER.debug("Deserializing at {}", path);
 
         final HttpGraphSubjects subjects =
             new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);

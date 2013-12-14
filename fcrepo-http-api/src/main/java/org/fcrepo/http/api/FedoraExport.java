@@ -58,7 +58,7 @@ public class FedoraExport extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private final Logger logger = getLogger(this.getClass());
+    private static final Logger LOGGER = getLogger(FedoraExport.class);
 
     /**
      * Export an object with the given format, e.g.: GET
@@ -75,8 +75,8 @@ public class FedoraExport extends AbstractResource {
 
         final String path = toPath(pathList);
 
-        logger.debug("Requested object serialization for: " + path
-                + " using serialization format " + format);
+        LOGGER.debug("Requested object serialization for: " + path
+                         + " using serialization format " + format);
 
         final FedoraObjectSerializer serializer =
             serializers.getSerializer(format);
@@ -89,14 +89,14 @@ public class FedoraExport extends AbstractResource {
                         throws IOException {
 
                         try {
-                            logger.debug("Selecting from serializer map: "
-                                    + serializers);
-                            logger.debug("Retrieved serializer for format: "
-                                    + format);
+                            LOGGER.debug("Selecting from serializer map: "
+                                             + serializers);
+                            LOGGER.debug("Retrieved serializer for format: "
+                                             + format);
                             serializer.serialize(objectService.getObject(
                                     session, path), out);
-                            logger.debug("Successfully serialized object: "
-                                    + path);
+                            LOGGER.debug("Successfully serialized object: "
+                                             + path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
                         } finally {

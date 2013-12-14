@@ -242,7 +242,7 @@ public class DatastreamService extends RepositoryService {
             context.stop();
         }
 
-        if (goodEntries.size() == 0) {
+        if (goodEntries.isEmpty()) {
             logger.error("ALL COPIES OF " + datastream.getNode().getPath() +
                     " HAVE FAILED FIXITY CHECKS.");
             return fixityResults;

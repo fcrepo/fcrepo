@@ -306,7 +306,7 @@ public class LowLevelStorageService {
                         new Unroll<T>(transform)));
         final Set<T> results = new HashSet<T>(futures.size());
 
-        while (futures.size() > 0) {
+        while (!futures.isEmpty()) {
             final Iterator<Future<Collection<T>>> futureIter =
                     futures.iterator();
             while (futureIter.hasNext()) {

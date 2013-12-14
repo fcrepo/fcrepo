@@ -19,6 +19,7 @@ import static java.util.Objects.hash;
 
 import java.net.URI;
 import java.util.EnumSet;
+import java.util.Set;
 
 import javax.jcr.RepositoryException;
 
@@ -46,7 +47,7 @@ public class FixityResult {
      * - REPAIRED and BAD_*: the checksum or size failed to match, but it
      *       was automatically recovered from a different copy
      */
-    public EnumSet<FixityState> status = EnumSet.noneOf(FixityState.class);
+    public Set<FixityState> status = EnumSet.noneOf(FixityState.class);
 
 
     /**

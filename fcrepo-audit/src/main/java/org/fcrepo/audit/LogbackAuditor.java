@@ -38,7 +38,7 @@ public class LogbackAuditor implements Auditor {
     /**
      * Logger for this class.
      */
-    private final Logger logger = LoggerFactory.getLogger(LogbackAuditor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogbackAuditor.class);
 
     @Inject
     private EventBus eventBus;
@@ -48,14 +48,13 @@ public class LogbackAuditor implements Auditor {
      */
     @PostConstruct
     public void register() {
-        logger.debug("Initializing: " + this.getClass().getCanonicalName());
+        LOGGER.debug("Initializing: {}", this.getClass().getCanonicalName());
         eventBus.register(this);
     }
 
     @Override
     @Subscribe
     public void recordEvent(final Event e) throws RepositoryException {
-        logger.info(e.getUserID() + " " + EventType.valueOf(e.getType()).getName() + " " +
-                e.getPath());
+        LOGGER.info("{} {} {}", e.getUserID(), EventType.valueOf(e.getType()).getName(), e.getPath());
     }
 }

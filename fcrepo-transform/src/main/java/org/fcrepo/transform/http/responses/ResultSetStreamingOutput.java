@@ -141,7 +141,8 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
 
             case contentTypeRDFXML:
                 return FMT_RDF_XML;
+            default:
+                return FMT_UNKNOWN;
         }
-        return FMT_UNKNOWN;
     }
 }

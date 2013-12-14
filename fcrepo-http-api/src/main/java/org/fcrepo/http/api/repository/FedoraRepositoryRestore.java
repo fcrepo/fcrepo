@@ -47,7 +47,7 @@ import org.springframework.stereotype.Component;
 @Path("/fcr:restore")
 public class FedoraRepositoryRestore extends AbstractResource {
 
-    private final Logger LOGGER = getLogger(FedoraRepositoryRestore.class);
+    private static final Logger LOGGER = getLogger(FedoraRepositoryRestore.class);
 
     @InjectedSession
     protected Session session;
