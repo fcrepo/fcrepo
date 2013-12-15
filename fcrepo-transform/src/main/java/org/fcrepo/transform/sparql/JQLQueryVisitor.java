@@ -60,6 +60,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 import org.apache.commons.lang.NotImplementedException;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.NodePropertiesTools;
+import org.fcrepo.transform.exception.JQLParsingException;
 import org.modeshape.common.collection.Collections;
 import org.modeshape.jcr.api.query.qom.Limit;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
@@ -214,7 +215,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             parentSource = joins.get(unmatchedJoins.next());
             this.source = parentSource;
         } else {
-            throw new RuntimeException("No source columns found");
+            throw new JQLParsingException("No primary source column found in query");
         }
 
         try {

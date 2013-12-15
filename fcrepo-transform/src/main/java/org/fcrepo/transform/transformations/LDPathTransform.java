@@ -26,6 +26,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.marmotta.ldpath.LDPath;
 import org.apache.marmotta.ldpath.backend.jena.GenericJenaBackend;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.transform.Transformation;
 import org.slf4j.Logger;
 
@@ -149,8 +150,10 @@ public class LDPathTransform implements Transformation  {
                         query));
 
             return ImmutableList.of(transformLdpathOutputToSomethingSerializable(wildcardCollection));
-        } catch (LDPathParseException | RepositoryException e) {
+        } catch (LDPathParseException e) {
             throw new RuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException("Error applying dataset transform", e);
         }
     }
 

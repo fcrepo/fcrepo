@@ -37,6 +37,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.base.Function;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
@@ -125,8 +126,7 @@ public class HttpGraphSubjects implements GraphSubjects {
             LOGGER.trace("RDF resource {} maps to JCR node {}", subject, node);
         } else {
             node = null;
-            LOGGER.debug(
-                            "RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
+            LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
                             subject);
         }
 
@@ -197,7 +197,7 @@ public class HttpGraphSubjects implements GraphSubjects {
         } catch (final ValueFormatException e) {
             return false;
         } catch (final RepositoryException e) {
-            throw new RuntimeException(e);
+            throw new RepositoryRuntimeException("Unable to validate JCR path", e);
         }
     }
 

@@ -32,6 +32,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.JcrSession;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
@@ -101,7 +102,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
         try {
             session = sessionFactory.getInternalSession();
         } catch (final RepositoryException e) {
-            throw new Error("PEP cannot obtain an internal session", e);
+            throw new RepositoryRuntimeException("PEP cannot obtain an internal session", e);
         }
         return new PathIterator(session, paths,
                 userPrincipal, allPrincipals);
@@ -142,7 +143,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             roles = resolveUserRoles(acl, allPrincipals);
             LOGGER.debug("roles for this request: {}", roles);
         } catch (final RepositoryException e) {
-            throw new Error("Cannot look up node information on " + absPath +
+            throw new RepositoryRuntimeException("Cannot look up node information on " + absPath +
                     " for permissions check.", e);
         }
 
@@ -199,7 +200,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             while (ni.hasNext()) {
                 final Node n = ni.nextNode();
                 // are there unique roles?
-                Set<String> roles = null;
+                final Set<String> roles;
                 Map<String, List<String>> acl = null;
                 try {
                     acl = accessRolesProvider.getRoles(n, false);
@@ -224,7 +225,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             }
             return true;
         } catch (final RepositoryException e) {
-            throw new Error(
+            throw new RepositoryRuntimeException(
                     "Cannot lookup child permission check information for " +
                             parentPath, e);
         }
@@ -308,7 +309,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
                         break;
                     }
                 } catch (final RepositoryException e) {
-                    throw new Error("Cannot look up node information on " + p +
+                    throw new RepositoryRuntimeException("Cannot look up node information on " + p +
                             " for permissions check.", e);
                 }
             }
