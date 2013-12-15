@@ -17,7 +17,6 @@
 package org.fcrepo.storage.policy;
 
 import static com.sun.jersey.api.Responses.methodNotAllowed;
-import static com.sun.jersey.api.Responses.notFound;
 import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;

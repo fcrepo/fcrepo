@@ -170,7 +170,7 @@ public class LDPathTransform implements Transformation  {
 
     @Override
     public int hashCode() {
-        return 3 + 5*query.hashCode();
+        return 3 + 5 * query.hashCode();
     }
 
     /**

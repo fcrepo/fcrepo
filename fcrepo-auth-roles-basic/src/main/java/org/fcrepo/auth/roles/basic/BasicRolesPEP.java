@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BasicRolesPEP extends AbstractRolesPEP {
 
-    public static final Logger LOGGER = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(BasicRolesPEP.class);
 
     /*

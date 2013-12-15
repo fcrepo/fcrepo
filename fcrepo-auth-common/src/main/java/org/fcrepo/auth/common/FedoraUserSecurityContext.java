@@ -66,7 +66,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
         }
         if (this.pep == null) {
             LOGGER.warn("This security context must have a PEP injected");
-            throw new Error("This security context must have a PEP injected");
+            throw new IllegalArgumentException("This security context must have a PEP injected");
         }
     }
 

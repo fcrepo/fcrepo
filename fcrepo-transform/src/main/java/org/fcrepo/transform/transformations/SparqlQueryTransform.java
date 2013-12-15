@@ -73,7 +73,7 @@ public class SparqlQueryTransform implements Transformation {
 
     @Override
     public int hashCode() {
-        return 5 + 7*query.hashCode();
+        return 5 + 7 * query.hashCode();
     }
 
 }

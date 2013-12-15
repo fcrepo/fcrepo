@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ObjectService extends RepositoryService implements FedoraJcrTypes {
 
-    private static final Logger logger = getLogger(ObjectService.class);
+    private static final Logger LOGGER = getLogger(ObjectService.class);
 
     /**
      * @param session A JCR Session
@@ -68,7 +68,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraObject getObject(final Session session, final String path)
         throws RepositoryException {
-        logger.trace("Executing getObject() with path: {}", path);
+        LOGGER.trace("Executing getObject() with path: {}", path);
         return new FedoraObject(getObjectNode(session, path));
     }
 
