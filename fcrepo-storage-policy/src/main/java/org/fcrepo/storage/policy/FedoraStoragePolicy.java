@@ -233,7 +233,7 @@ public class FedoraStoragePolicy extends AbstractResource {
     @GET
     @Produces(APPLICATION_JSON)
     @Timed
-    public Response get(final @PathParam("path") String path) {
+    public Response get(final @PathParam("path") String path) throws RepositoryException {
         if (POLICY_RESOURCE.equalsIgnoreCase(path)) {
             return getAllStoragePolicies();
         } else {
@@ -249,7 +249,7 @@ public class FedoraStoragePolicy extends AbstractResource {
         return Response.ok(storagePolicyDecisionPoint.toString()).build();
     }
 
-    private Response getStoragePolicy(final String nodeType) {
+    private Response getStoragePolicy(final String nodeType) throws RepositoryException {
         LOGGER.debug("Get storage policy for: {}", nodeType);
         Response.ResponseBuilder response;
         try {
@@ -269,11 +269,6 @@ public class FedoraStoragePolicy extends AbstractResource {
             } else {
                 throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
             }
-
-        } catch (PathNotFoundException e) {
-            response = notFound().entity(e.getMessage());
-        } catch (Exception e) {
-            response = Response.serverError().entity(e.getMessage());
 
         } finally {
             session.logout();
