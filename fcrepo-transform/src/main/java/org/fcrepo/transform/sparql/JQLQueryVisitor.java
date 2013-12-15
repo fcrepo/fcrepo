@@ -682,7 +682,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
 
         } catch (final RepositoryException e) {
-            LOGGER.info(e.getMessage());
+            LOGGER.info("Got exception visiting ExprFunction1 method {}", funcName, e);
         }
     }
 

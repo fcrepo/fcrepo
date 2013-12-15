@@ -197,6 +197,7 @@ public class HttpGraphSubjects implements GraphSubjects {
             session.getValueFactory().createValue(absPath, PATH);
             return true;
         } catch (final ValueFormatException e) {
+            LOGGER.trace("Unable to validate JCR path", e);
             return false;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException("Unable to validate JCR path", e);

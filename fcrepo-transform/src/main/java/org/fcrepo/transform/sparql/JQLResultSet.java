@@ -29,6 +29,7 @@ import com.hp.hpl.jena.sparql.engine.binding.Binding;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.slf4j.Logger;
 
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -180,8 +181,11 @@ public class JQLResultSet implements ResultSet {
             try {
                 final Value value = row.getValue(varName);
                 return value != null;
-            } catch (final RepositoryException e) {
+            } catch (final ItemNotFoundException e) {
+                LOGGER.trace("Unabel to find var {} in result set", varName, e);
                 return false;
+            } catch (final RepositoryException e) {
+                throw propagate(e);
             }
         }
 
