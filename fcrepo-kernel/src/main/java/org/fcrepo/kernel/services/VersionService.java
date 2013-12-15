@@ -43,7 +43,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Component
 public class VersionService extends RepositoryService {
 
-    private static final Logger logger = getLogger(VersionService.class);
+    private static final Logger LOGGER = getLogger(VersionService.class);
 
     protected static final String VERSIONABLE = "mix:versionable";
 
@@ -81,7 +81,7 @@ public class VersionService extends RepositoryService {
                 && isImplicitVersioningEnabled(n)) {
             queueOrCommitCheckpoint(n.getSession(), n.getPath());
         } else {
-            logger.trace("No implicit version checkpoint set for {}", n.getPath());
+            LOGGER.trace("No implicit version checkpoint set for {}", n.getPath());
         }
     }
 
@@ -133,13 +133,13 @@ public class VersionService extends RepositoryService {
     }
 
     private void checkpoint(Workspace workspace, String absPath) throws RepositoryException {
-        logger.trace("Setting implicit version checkpoint set for {}", absPath);
+        LOGGER.trace("Setting implicit version checkpoint set for {}", absPath);
         workspace.getVersionManager().checkpoint(absPath);
     }
 
     private void queueCheckpoint(String txId, String absPath) throws TransactionMissingException {
         Transaction tx = txService.getTransaction(txId);
-        logger.trace("Queuing implicit version checkpoint set for {}", absPath);
+        LOGGER.trace("Queuing implicit version checkpoint set for {}", absPath);
         tx.addPathToVersion(absPath);
     }
     /**
@@ -159,7 +159,7 @@ public class VersionService extends RepositoryService {
         Session session = node.getSession();
         String absPath = node.getPath();
         if (node.isNodeType(VERSIONABLE)) {
-            logger.trace("Setting checkpoint for {}", absPath);
+            LOGGER.trace("Setting checkpoint for {}", absPath);
 
             String txId = TransactionService.getCurrentTransactionId(session);
             if (txId != null) {
@@ -169,7 +169,7 @@ public class VersionService extends RepositoryService {
                 session.getWorkspace().getVersionManager().checkpoint(absPath);
             }
         } else {
-            logger.trace("No checkpoint set for unversionable {}", absPath);
+            LOGGER.trace("No checkpoint set for unversionable {}", absPath);
         }
     }
 }

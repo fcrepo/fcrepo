@@ -123,7 +123,7 @@ public class FedoraNodes extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private static final Logger logger = getLogger(FedoraNodes.class);
+    private static final Logger LOGGER = getLogger(FedoraNodes.class);
 
     /**
      * Retrieve the node profile
@@ -150,7 +150,7 @@ public class FedoraNodes extends AbstractResource {
             @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException, IOException {
         final String path = toPath(pathList);
-        logger.trace("Getting profile for: {}", path);
+        LOGGER.trace("Getting profile for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
@@ -247,7 +247,7 @@ public class FedoraNodes extends AbstractResource {
         throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
-        logger.debug("Attempting to update path: {}", path);
+        LOGGER.debug("Attempting to update path: {}", path);
 
         try {
 
@@ -279,9 +279,9 @@ public class FedoraNodes extends AbstractResource {
 
                 final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
                 if (!problems.isEmpty()) {
-                    logger.info(
-                            "Found these problems updating the properties for {}: {}",
-                            path, problems);
+                    LOGGER.info(
+                                   "Found these problems updating the properties for {}: {}",
+                                   path, problems);
                     return status(FORBIDDEN).entity(problems.toString())
                             .build();
 
@@ -321,7 +321,7 @@ public class FedoraNodes extends AbstractResource {
             final InputStream requestBodyStream,
             @Context final Request request) throws RepositoryException {
         final String path = toPath(pathList);
-        logger.debug("Attempting to replace path: {}", path);
+        LOGGER.debug("Attempting to replace path: {}", path);
         try {
             final FedoraResource resource =
                 nodeService.getObject(session, path);
@@ -411,7 +411,7 @@ public class FedoraNodes extends AbstractResource {
             newObjectPath = path;
         }
 
-        logger.debug("Attempting to ingest with path: {}", newObjectPath);
+        LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
 
         try {
             if (nodeService.exists(session, newObjectPath)) {
@@ -509,7 +509,7 @@ public class FedoraNodes extends AbstractResource {
             session.save();
             versionService.nodeUpdated(result.getNode());
 
-            logger.debug("Finished creating {} with path: {}", mixin, newObjectPath);
+            LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
             final URI location;
             if (result.hasContent()) {

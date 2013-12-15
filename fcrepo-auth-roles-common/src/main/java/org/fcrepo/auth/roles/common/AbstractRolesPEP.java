@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
 
-    private static final Logger log = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(AbstractRolesPEP.class);
 
     protected static final String AUTHZ_DETECTION = "/{" +
@@ -121,8 +121,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
         for (final Principal p : principals) {
             final List<String> matchedRoles = acl.get(p.getName());
             if (matchedRoles != null) {
-                log.debug("request principal matched role assignment: {}", p
-                        .getName());
+                LOGGER.debug("request principal matched role assignment: {}", p.getName());
                 roles.addAll(matchedRoles);
             }
         }
@@ -141,16 +140,16 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             final Map<String, List<String>> acl =
                     accessRolesProvider.findRolesForPath(absPath, session);
             roles = resolveUserRoles(acl, allPrincipals);
-            log.debug("roles for this request: {}", roles);
+            LOGGER.debug("roles for this request: {}", roles);
         } catch (final RepositoryException e) {
             throw new Error("Cannot look up node information on " + absPath +
                     " for permissions check.", e);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("{}\t{}\t{}", roles, actions, absPath);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("{}\t{}\t{}", roles, actions, absPath);
             if (actions.length > 1) { // have yet to see more than one
-                log.debug("FOUND MULTIPLE ACTIONS: {}", Arrays
+                LOGGER.debug("FOUND MULTIPLE ACTIONS: {}", Arrays
                         .toString(actions));
             }
         }
@@ -190,8 +189,8 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             final JcrSession session, final Set<Principal> allPrincipals,
             final Principal userPrincipal, final Set<String> parentRoles) {
         try {
-            log.debug("Recursive child remove permission checks for: {}",
-                    parentPath);
+            LOGGER.debug("Recursive child remove permission checks for: {}",
+                         parentPath);
             final Node parent = session.getNode(parentPath);
             if (!parent.hasNodes()) {
                 return true;
@@ -219,8 +218,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
                         return false;
                     }
                 } else {
-                    log.info("Remove permission denied at {} with roles {}", n
-                            .getPath(), roles);
+                    LOGGER.info("Remove permission denied at {} with roles {}", n.getPath(), roles);
                     return false;
                 }
             }

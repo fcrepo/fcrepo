@@ -46,7 +46,7 @@ import com.hp.hpl.jena.sparql.util.Context;
  */
 public class RdfSerializationUtils {
 
-    private static final Logger logger = getLogger(RdfSerializationUtils.class);
+    private static final Logger LOGGER = getLogger(RdfSerializationUtils.class);
 
     /**
      * The RDF predicate that will indicate the primary node type.
@@ -86,11 +86,11 @@ public class RdfSerializationUtils {
         // we'll take the first one we get
         if (statements.hasNext()) {
             final Quad statement = statements.next();
-            logger.trace("Checking statement: {}", statement);
+            LOGGER.trace("Checking statement: {}", statement);
             return statement.asTriple().getObject().getLiteral()
                     .getLexicalForm();
         } else {
-            logger.trace("No value found for predicate: {}", predicate);
+            LOGGER.trace("No value found for predicate: {}", predicate);
             return null;
         }
     }
@@ -104,7 +104,7 @@ public class RdfSerializationUtils {
     static Node getDatasetSubject(final Dataset rdf) {
         final Context context = rdf.getContext();
         final String uri = context.getAsString(GraphProperties.URI_SYMBOL);
-        logger.debug("uri from context: {}", uri);
+        LOGGER.debug("uri from context: {}", uri);
         if (uri != null) {
             return createURI(uri);
         } else {
@@ -124,7 +124,7 @@ public class RdfSerializationUtils {
         httpHeaders.put("Cache-Control", singletonList((Object) "max-age=0"));
         httpHeaders.put("Cache-Control", singletonList((Object) "must-revalidate"));
 
-        logger.trace("Attempting to discover the last-modified date of the node for the resource in question...");
+        LOGGER.trace("Attempting to discover the last-modified date of the node for the resource in question...");
         final Iterator<Quad> iterator =
             rdf.asDatasetGraph().find(ANY, getDatasetSubject(rdf),
                     lastModifiedPredicate, ANY);
@@ -136,14 +136,14 @@ public class RdfSerializationUtils {
         final Object dateObject = iterator.next().getObject().getLiteralValue();
 
         if (!(dateObject instanceof XSDDateTime)) {
-            logger.debug("Found last-modified date, but it was"
-                    + "not an XSDDateTime: {}", dateObject);
+            LOGGER.debug("Found last-modified date, but it was"
+                             + "not an XSDDateTime: {}", dateObject);
 
             return;
         }
 
         final XSDDateTime lastModified = (XSDDateTime) dateObject;
-        logger.debug("Found last-modified date: {}", lastModified);
+        LOGGER.debug("Found last-modified date: {}", lastModified);
         final String lastModifiedAsRdf2822 =
                 RFC2822DATEFORMAT
                         .print(new DateTime(lastModified.asCalendar()));

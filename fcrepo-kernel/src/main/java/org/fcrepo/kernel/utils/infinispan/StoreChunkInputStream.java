@@ -45,7 +45,9 @@ import java.io.InputStream;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.modeshape.common.logging.Logger;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 /**
@@ -56,7 +58,7 @@ import org.modeshape.common.logging.Logger;
  */
 public class StoreChunkInputStream extends InputStream {
 
-    private final Logger logger;
+    private static final Logger LOGGER = getLogger(StoreChunkInputStream.class);
 
     private final CacheStore blobCache;
 
@@ -74,7 +76,6 @@ public class StoreChunkInputStream extends InputStream {
      * @param key
      */
     public StoreChunkInputStream(final CacheStore blobCache, final String key) {
-        logger = Logger.getLogger(getClass());
         this.blobCache = blobCache;
         this.key = key;
     }
@@ -164,13 +165,13 @@ public class StoreChunkInputStream extends InputStream {
 
     protected byte[] nextChunk() throws IOException {
         final String chunkKey = key + "-" + chunkNumber++;
-        logger.debug("Read chunk {0} from cache {1}", chunkKey, blobCache);
+        LOGGER.debug("Read chunk {0} from cache {1}", chunkKey, blobCache);
 
         try {
             final CacheEntry cacheEntry = blobCache.load(chunkKey);
 
             if (cacheEntry == null) {
-                logger.trace("Unable to read chunk {0}", chunkKey);
+                LOGGER.trace("Unable to read chunk {0}", chunkKey);
                 return null;
             }
 

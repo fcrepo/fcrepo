@@ -70,7 +70,7 @@ import com.google.common.collect.Iterators;
  */
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
-    static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
+    private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora resource.

@@ -54,7 +54,7 @@ import com.hp.hpl.jena.query.Dataset;
 @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
 public class RdfProvider implements MessageBodyWriter<Dataset> {
 
-    private static final Logger logger = getLogger(RdfProvider.class);
+    private static final Logger LOGGER = getLogger(RdfProvider.class);
 
     @Override
     public void writeTo(final Dataset rdf, final Class<?> type,
@@ -64,8 +64,8 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
             final OutputStream entityStream) throws IOException,
         WebApplicationException {
 
-        logger.debug("Writing a response for: {} with MIMEtype: {}", rdf,
-                mediaType);
+        LOGGER.debug("Writing a response for: {} with MIMEtype: {}", rdf,
+                        mediaType);
 
         // add standard headers
         httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));

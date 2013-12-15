@@ -72,7 +72,7 @@ public class ServletContainerAuthenticationProvider implements
      */
     public static final String FEDORA_USER_ROLE = "fedoraUser";
 
-    private static final Logger logger = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(ServletContainerAuthenticationProvider.class);
 
     private Set<HTTPPrincipalFactory> principalFactories = Collections
@@ -91,7 +91,7 @@ public class ServletContainerAuthenticationProvider implements
             return _instance;
         } else {
             _instance = new ServletContainerAuthenticationProvider();
-            logger.warn("Security is MINIMAL, no Policy Enforcement Point configured.");
+            LOGGER.warn("Security is MINIMAL, no Policy Enforcement Point configured.");
             return _instance;
         }
     }
@@ -121,7 +121,7 @@ public class ServletContainerAuthenticationProvider implements
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
-        logger.debug("in authenticate: {}; PEP: {}", credentials, pep);
+        LOGGER.debug("in authenticate: {}; PEP: {}", credentials, pep);
 
         if (!(credentials instanceof ServletCredentials)) {
             return null;

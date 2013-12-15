@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class SessionFactory {
 
-    private static final Logger logger = getLogger(SessionFactory.class);
+    private static final Logger LOGGER = getLogger(SessionFactory.class);
 
     @Autowired
     private Repository repo;
@@ -116,15 +116,15 @@ public class SessionFactory {
         final Session session;
 
         if (transaction != null) {
-            logger.debug("Returning a session in the transaction {}",
-                    transaction);
+            LOGGER.debug("Returning a session in the transaction {}",
+                            transaction);
             session = transaction.getSession();
         } else if (workspace != null) {
-            logger.debug("Returning a session in the workspace {}",
-                    workspace);
+            LOGGER.debug("Returning a session in the workspace {}",
+                            workspace);
             session = repo.login(workspace);
         } else {
-            logger.debug("Returning a session in the default workspace");
+            LOGGER.debug("Returning a session in the default workspace");
             session = repo.login();
         }
 
@@ -152,9 +152,9 @@ public class SessionFactory {
             final Session session;
 
             if (transaction != null) {
-                logger.debug(
-                        "Returning a session in the transaction {} impersonating {}",
-                        transaction, creds);
+                LOGGER.debug(
+                                "Returning a session in the transaction {} impersonating {}",
+                                transaction, creds);
                 // No need to impersonate if we have a servlet session tied to
                 // the Tx.
                 final HttpSession httpSession =
@@ -172,12 +172,12 @@ public class SessionFactory {
                         getEmbeddedWorkspace(servletRequest);
 
                 if (workspace != null) {
-                    logger.debug(
-                            "Returning an authenticated session in the workspace {}",
-                            workspace);
+                    LOGGER.debug(
+                                    "Returning an authenticated session in the workspace {}",
+                                    workspace);
                     session = repo.login(creds, workspace);
                 } else {
-                    logger.debug("Returning an authenticated session in the default workspace");
+                    LOGGER.debug("Returning an authenticated session in the default workspace");
                     session = repo.login(creds);
                 }
             }

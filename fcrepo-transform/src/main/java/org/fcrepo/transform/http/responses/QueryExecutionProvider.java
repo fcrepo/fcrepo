@@ -47,7 +47,7 @@ import com.hp.hpl.jena.query.ResultSet;
 @Component
 public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution> {
 
-    private static final Logger logger = getLogger(QueryExecutionProvider.class);
+    private static final Logger LOGGER = getLogger(QueryExecutionProvider.class);
 
     @Override
     public void writeTo(final QueryExecution qexec, final Class<?> type,
@@ -57,8 +57,8 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
             final OutputStream entityStream) throws IOException,
         WebApplicationException {
 
-        logger.debug("Writing a response for: {} with MIMEtype: {}", qexec,
-                mediaType);
+        LOGGER.debug("Writing a response for: {} with MIMEtype: {}", qexec,
+                        mediaType);
 
         // add standard headers
         httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));

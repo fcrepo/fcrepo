@@ -87,7 +87,7 @@ public class DatastreamService extends RepositoryService {
     static final Counter fixityErrorCounter = getMetrics().counter(
             name(LowLevelStorageService.class, "fixity-error-counter"));
 
-    private static final Logger logger = getLogger(DatastreamService.class);
+    private static final Logger LOGGER = getLogger(DatastreamService.class);
 
     /**
      * Create a stub datastream without content
@@ -156,9 +156,9 @@ public class DatastreamService extends RepositoryService {
      */
     public Node getDatastreamNode(final Session session, final String path)
         throws RepositoryException {
-        logger.trace("Executing getDatastreamNode() with path: {}", path);
+        LOGGER.trace("Executing getDatastreamNode() with path: {}", path);
         final Node dsNode = getDatastream(session, path).getNode();
-        logger.trace("Retrieved datastream node: {}", dsNode.getName());
+        LOGGER.trace("Retrieved datastream node: {}", dsNode.getName());
         return dsNode;
     }
 
@@ -243,8 +243,8 @@ public class DatastreamService extends RepositoryService {
         }
 
         if (goodEntries.isEmpty()) {
-            logger.error("ALL COPIES OF " + datastream.getNode().getPath() +
-                    " HAVE FAILED FIXITY CHECKS.");
+            LOGGER.error("ALL COPIES OF " + datastream.getNode().getPath() +
+                             " HAVE FAILED FIXITY CHECKS.");
             return fixityResults;
         }
 
@@ -269,7 +269,7 @@ public class DatastreamService extends RepositoryService {
                     fixityErrorCounter.inc();
                 }
             } catch (final IOException e) {
-                logger.warn("Exception repairing low-level cache entry: {}", e);
+                LOGGER.warn("Exception repairing low-level cache entry: {}", e);
             }
         }
 
@@ -288,7 +288,7 @@ public class DatastreamService extends RepositoryService {
      */
     public Collection<FixityResult> getFixity(final Node resource,
             final URI dsChecksum, final long dsSize) throws RepositoryException {
-        logger.debug("Checking resource: " + resource.getPath());
+        LOGGER.debug("Checking resource: " + resource.getPath());
 
         final Binary bin = resource.getProperty(JCR_DATA).getBinary();
 

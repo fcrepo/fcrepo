@@ -49,7 +49,7 @@ public class SessionProvider extends
     @Context
     private HttpServletRequest request;
 
-    private static final Logger logger = getLogger(SessionProvider.class);
+    private static final Logger LOGGER = getLogger(SessionProvider.class);
 
     /**
      * Yes, this provider really provides sessions
@@ -61,7 +61,7 @@ public class SessionProvider extends
     @Override
     public Injectable<Session> getInjectable(final ComponentContext ic,
             final InjectedSession a) {
-        logger.trace("Returning new InjectableSession...");
+        LOGGER.trace("Returning new InjectableSession...");
         return new InjectableSession(sessionFactory, secContext, request);
     }
 }

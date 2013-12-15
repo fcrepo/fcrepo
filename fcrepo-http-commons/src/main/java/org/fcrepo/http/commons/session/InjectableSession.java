@@ -38,7 +38,7 @@ public class InjectableSession implements Injectable<Session> {
 
     private HttpServletRequest request;
 
-    private static final Logger logger = getLogger(InjectableSession.class);
+    private static final Logger LOGGER = getLogger(InjectableSession.class);
 
     /**
      * Construct our request-context and authorization-context aware session
@@ -54,9 +54,8 @@ public class InjectableSession implements Injectable<Session> {
         checkNotNull(sessionFactory, "SessionFactory cannot be null!");
         checkNotNull(reqContext, "HttpRequestContext cannot be null!");
         checkNotNull(request, "HttpServletRequest cannot be null!");
-        logger.debug(
-                "Initializing an InjectableSession with SessionFactory {}.",
-                sessionFactory);
+        LOGGER.debug("Initializing an InjectableSession with SessionFactory {}.",
+                        sessionFactory);
         this.sessionFactory = sessionFactory;
         this.secContext = reqContext;
         this.request = request;

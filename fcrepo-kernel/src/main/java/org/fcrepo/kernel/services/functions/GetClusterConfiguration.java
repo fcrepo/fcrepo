@@ -42,7 +42,7 @@ import com.google.common.base.Function;
 public class GetClusterConfiguration implements
         Function<Repository, Map<String, String>> {
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
             getLogger(GetClusterConfiguration.class);
 
     public static final String CLUSTER_NAME = "clusterName";
@@ -80,7 +80,7 @@ public class GetClusterConfiguration implements
                     (DefaultCacheManager) caches.get(0).getCacheManager();
 
             if (cm == null) {
-                logger.debug("Could not get cluster configuration information");
+                LOGGER.debug("Could not get cluster configuration information");
                 return result;
             }
 
@@ -101,8 +101,8 @@ public class GetClusterConfiguration implements
             result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
             return result;
         } catch (Exception e) {
-            logger.debug("Could not get cluster configuration information: {}",
-                         e);
+            LOGGER.debug("Could not get cluster configuration information: {}",
+                            e);
             return result;
         }
     }

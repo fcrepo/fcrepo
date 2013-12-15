@@ -40,7 +40,7 @@ import com.codahale.metrics.graphite.GraphiteReporter;
  */
 public class ReporterFactory {
 
-    private static final Logger logger = getLogger(ReporterFactory.class);
+    private static final Logger LOGGER = getLogger(ReporterFactory.class);
 
     /**
      * Start a new GraphiteReporter, with reports every minute
@@ -56,7 +56,7 @@ public class ReporterFactory {
                         .convertRatesTo(SECONDS).convertDurationsTo(
                                 MILLISECONDS).filter(ALL).build(g);
         reporter.start(1, MINUTES);
-        logger.debug("Started GraphiteReporter");
+        LOGGER.debug("Started GraphiteReporter");
         return reporter;
     }
 
@@ -74,7 +74,7 @@ public class ReporterFactory {
                         .convertDurationsTo(MILLISECONDS).convertRatesTo(
                                 SECONDS).filter(ALL).build();
         reporter.start();
-        logger.debug("Started JmxReporter");
+        LOGGER.debug("Started JmxReporter");
         return reporter;
     }
 

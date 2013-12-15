@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccessRolesTypes {
 
-    private static final Logger log = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(AccessRolesTypes.class);
 
     @Autowired
@@ -79,11 +79,11 @@ public class AccessRolesTypes {
                             mgr.registerNodeTypes(cnd, true);
                     while (nti.hasNext()) {
                         final NodeType nt = nti.nextNodeType();
-                        log.debug("registered node type: {}", nt.getName());
+                        LOGGER.debug("registered node type: {}", nt.getName());
                     }
                     session.save();
                     registered = true;
-                    log.debug("Registered access role node types");
+                    LOGGER.debug("Registered access role node types");
                 } catch (final RepositoryException | IOException e) {
                     throw e;
                 } finally {

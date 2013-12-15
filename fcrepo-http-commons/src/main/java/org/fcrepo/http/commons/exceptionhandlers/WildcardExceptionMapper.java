@@ -37,16 +37,16 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
     Boolean showStackTrace = true;
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
         getLogger(WildcardExceptionMapper.class);
 
     @Override
     public Response toResponse(final Exception e) {
 
         if (WebApplicationException.class.isAssignableFrom(e.getClass())) {
-            logger.debug(
-                    "WebApplicationException intercepted by WildcardExceptionMapper: \n",
-                    e);
+            LOGGER.debug(
+                            "WebApplicationException intercepted by WildcardExceptionMapper: \n",
+                            e);
             return ((WebApplicationException) e).getResponse();
         }
 
@@ -66,7 +66,7 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
                     .toResponse((TransactionMissingException) e.getCause());
         }
 
-        logger.info("Exception intercepted by WildcardExceptionMapper: \n", e);
+        LOGGER.info("Exception intercepted by WildcardExceptionMapper: \n", e);
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();
     }

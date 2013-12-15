@@ -50,7 +50,7 @@ public class CheckCacheEntryFixity implements
      */
     private static final long serialVersionUID = 4701589005571818110L;
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
             getLogger(LowLevelStorageService.class);
 
     private final URI dsChecksum;
@@ -67,16 +67,14 @@ public class CheckCacheEntryFixity implements
 
     @Override
     public FixityResult apply(final LowLevelCacheEntry input) {
-        logger.debug("Checking fixity for resource in cache store " +
-                input.toString());
-        FixityResult result = null;
+        LOGGER.debug("Checking fixity for resource in cache store: {} ", input);
+
         try {
-            result = input.checkFixity(dsChecksum, dsSize);
+            return input.checkFixity(dsChecksum, dsSize);
         } catch (final RepositoryException e) {
-            logger.error("Exception checking low-level fixity: {}", e);
+            LOGGER.error("Exception checking low-level fixity: {}", e);
             throw propagate(e);
         }
-        return result;
     }
 
     /**

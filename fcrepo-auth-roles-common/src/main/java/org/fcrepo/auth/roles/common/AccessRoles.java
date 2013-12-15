@@ -65,7 +65,7 @@ import com.codahale.metrics.annotation.Timed;
 @Path("/{path: .*}/fcr:accessroles")
 public class AccessRoles extends AbstractResource {
 
-    private static final Logger log = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(AccessRoles.class);
 
     @InjectedSession
@@ -99,8 +99,8 @@ public class AccessRoles extends AbstractResource {
         final List<PathSegment> pathList, @QueryParam("effective")
         final String effective) throws RepositoryException {
         final String path = toPath(pathList);
-        log.debug("Get access roles for: {}", path);
-        log.debug("effective: {}", effective);
+        LOGGER.debug("Get access roles for: {}", path);
+        LOGGER.debug("effective: {}", effective);
         Response.ResponseBuilder response;
         try {
             final Node node = nodeService.getObject(session, path).getNode();
@@ -108,7 +108,7 @@ public class AccessRoles extends AbstractResource {
                     this.getAccessRolesProvider().getRoles(node,
                             (effective != null));
             if (data == null) {
-                log.debug("no content response");
+                LOGGER.debug("no content response");
                 response = Response.noContent();
             } else {
                 response = Response.ok(data);
@@ -138,7 +138,7 @@ public class AccessRoles extends AbstractResource {
         final List<PathSegment> pathList, final Map<String, Set<String>> data)
         throws RepositoryException {
         final String path = toPath(pathList);
-        log.debug("POST Received request param: {}", request);
+        LOGGER.debug("POST Received request param: {}", request);
         Response.ResponseBuilder response;
 
         try {
@@ -151,7 +151,7 @@ public class AccessRoles extends AbstractResource {
                     nodeService.getObject(session, path);
             this.getAccessRolesProvider().postRoles(resource.getNode(), data);
             session.save();
-            log.debug("Saved access roles {}", data);
+            LOGGER.debug("Saved access roles {}", data);
             response =
                     Response.created(getUriInfo().getBaseUriBuilder()
                             .path(path).path("fcr:accessroles").build());

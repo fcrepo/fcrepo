@@ -81,7 +81,7 @@ import com.hp.hpl.jena.sparql.util.Context;
 @Component
 public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
-    private static final Logger logger = getLogger(RepositoryService.class);
+    private static final Logger LOGGER = getLogger(RepositoryService.class);
 
     private final Timer objectSizeCalculationTimer = getMetrics().timer(
             name(RepositoryService.class, "objectSizeCalculation"));
@@ -110,7 +110,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         try {
 
             final Timer.Context context = objectSizeCalculationTimer.time();
-            logger.debug("Calculating repository size from index");
+            LOGGER.debug("Calculating repository size from index");
 
             try {
                 return FedoraTypesUtils.getRepositorySize(repo);

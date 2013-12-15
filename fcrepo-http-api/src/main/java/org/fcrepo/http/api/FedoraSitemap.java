@@ -66,7 +66,7 @@ public class FedoraSitemap extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private static final Logger logger = getLogger(FedoraSitemap.class);
+    private static final Logger LOGGER = getLogger(FedoraSitemap.class);
 
     public static final long entriesPerPage = 50000;
 
@@ -81,7 +81,7 @@ public class FedoraSitemap extends AbstractResource {
     @Produces(TEXT_XML)
     public SitemapIndex getSitemapIndex() throws RepositoryException {
 
-        logger.trace("Executing getSitemapIndex()...");
+        LOGGER.trace("Executing getSitemapIndex()...");
 
         try {
             final long count =
@@ -96,7 +96,7 @@ public class FedoraSitemap extends AbstractResource {
                                 .path(FedoraSitemap.class, "getSitemap").build(
                                         i + 1)));
             }
-            logger.trace("Executed getSitemapIndex().");
+            LOGGER.trace("Executed getSitemapIndex().");
             return sitemapIndex;
         } finally {
             session.logout();
@@ -163,7 +163,7 @@ public class FedoraSitemap extends AbstractResource {
         final String path = r.getNode().getPath();
 
         if (lkDateValue == null) {
-            logger.warn("no value for {} on {}", JCR_LASTMODIFIED, path);
+            LOGGER.warn("no value for {} on {}", JCR_LASTMODIFIED, path);
             lkDateValue = r.getValue(JCR_CREATED);
         }
         final Calendar lastKnownDate =

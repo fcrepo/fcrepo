@@ -36,7 +36,7 @@ import org.slf4j.Logger;
  */
 public class FedoraObject extends FedoraResource {
 
-    static final Logger logger = getLogger(FedoraObject.class);
+    private static final Logger LOGGER = getLogger(FedoraObject.class);
 
     /**
      * Construct a FedoraObject from an existing JCR Node
@@ -79,13 +79,13 @@ public class FedoraObject extends FedoraResource {
     private void initializeNewObjectProperties() {
         try {
             if (node.isNew() || !hasMixin(node)) {
-                logger.debug("Setting {} properties on a {} node {}...",
-                        FEDORA_OBJECT, NT_FOLDER, node.getPath());
+                LOGGER.debug("Setting {} properties on a {} node {}...",
+                                FEDORA_OBJECT, NT_FOLDER, node.getPath());
                 node.addMixin(FEDORA_OBJECT);
             }
         } catch (final RepositoryException e) {
-            logger.warn("Could not decorate {} with {} properties: {} ",
-                    JCR_CONTENT, FEDORA_OBJECT, e);
+            LOGGER.warn("Could not decorate {} with {} properties: {} ",
+                           JCR_CONTENT, FEDORA_OBJECT, e);
         }
     }
 

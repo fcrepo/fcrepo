@@ -48,7 +48,7 @@ import static com.google.common.collect.Iterables.toArray;
 @Component
 public class AccessRolesProvider {
 
-    private static final Logger log = LoggerFactory
+    private static final Logger LOGGER = LoggerFactory
             .getLogger(AccessRolesProvider.class);
 
     public static final Map<String, List<String>> DEFAULT_ACCESS_ROLES =
@@ -79,15 +79,14 @@ public class AccessRolesProvider {
                             node.getParent()) {
                         if (node.isNodeType(JcrName.rbaclAssignable
                                 .getQualified())) {
-                            if (log.isDebugEnabled()) {
-                                log.debug(
-                                        "effective roles are assigned at node: {}",
-                                        node.getPath());
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("effective roles are assigned at node: {}",
+                                             node.getPath());
                             }
                             getAssignments(node, data);
-                            if (log.isDebugEnabled()) {
+                            if (LOGGER.isDebugEnabled()) {
                                 for (final Map.Entry<String, List<String>> entry : data.entrySet()) {
-                                    log.debug("{} has role(s) {}", entry.getKey(), entry.getValue());
+                                    LOGGER.debug("{} has role(s) {}", entry.getKey(), entry.getValue());
                                 }
                             }
                             return data;
@@ -113,7 +112,7 @@ public class AccessRolesProvider {
         if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
             try {
                 final Node rbacl = node.getNode(JcrName.rbacl.getQualified());
-                log.debug("got rbacl: {}", rbacl);
+                LOGGER.debug("got rbacl: {}", rbacl);
                 for (final NodeIterator ni = rbacl.getNodes(); ni.hasNext();) {
                     final Node assign = ni.nextNode();
                     final String principalName =
@@ -121,8 +120,8 @@ public class AccessRolesProvider {
                                     .getString();
                     if (principalName == null ||
                             principalName.trim().length() == 0) {
-                        log.warn("found empty principal name on node {}",
-                                node.getPath());
+                        LOGGER.warn("found empty principal name on node {}",
+                                    node.getPath());
                     } else {
                         List<String> roles = data.get(principalName);
                         if (roles == null) {
@@ -132,8 +131,8 @@ public class AccessRolesProvider {
                         for (final Value v : assign.getProperty(
                                 JcrName.role.getQualified()).getValues()) {
                             if (v == null || v.toString().trim().length() == 0) {
-                                log.warn("found empty role name on node {}",
-                                        node.getPath());
+                                LOGGER.warn("found empty role name on node {}",
+                                            node.getPath());
                             } else {
                                 roles.add(v.toString());
                             }
@@ -141,10 +140,10 @@ public class AccessRolesProvider {
                     }
                 }
             } catch (final PathNotFoundException e) {
-                log.error(
-                        "Found rbaclAssignable mixin without a corresponding node at {}",
-                                node.getPath(),
-                        e);
+                LOGGER.error(
+                             "Found rbaclAssignable mixin without a corresponding node at {}",
+                             node.getPath(),
+                             e);
             }
         }
     }
@@ -161,7 +160,7 @@ public class AccessRolesProvider {
         Constants.registerPrefixes(session);
         if (!node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
             node.addMixin(JcrName.rbaclAssignable.getQualified());
-            log.debug("added rbaclAssignable type");
+            LOGGER.debug("added rbaclAssignable type");
         }
 
         Node acl = null;
@@ -224,7 +223,7 @@ public class AccessRolesProvider {
                 }
                 break;
             } catch (final PathNotFoundException e) {
-                log.debug("Cannot find node: {}", p);
+                LOGGER.debug("Cannot find node: {}", p);
             }
         }
         return this.getRoles(node, true);

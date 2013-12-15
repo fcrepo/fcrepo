@@ -38,7 +38,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
  */
 public final class SerializationUtils {
 
-    private static final Logger logger = getLogger(SerializationUtils.class);
+    private static final Logger LOGGER = getLogger(SerializationUtils.class);
 
     public static final Symbol subjectKey = Symbol.create("uri");
 
@@ -67,7 +67,7 @@ public final class SerializationUtils {
     public static Node getDatasetSubject(final Dataset rdf) {
         final Context context = rdf.getContext();
         final String uri = context.getAsString(subjectKey);
-        logger.debug("uri from context: {}", uri);
+        LOGGER.debug("uri from context: {}", uri);
         if (uri != null) {
             return createURI(uri);
         } else {
@@ -90,7 +90,7 @@ public final class SerializationUtils {
 
         while (iterator.hasNext()) {
             final String modelName = iterator.next();
-            logger.debug("Serializing model {}", modelName);
+            LOGGER.debug("Serializing model {}", modelName);
             model = model.union(dataset.getNamedModel(modelName));
         }
 

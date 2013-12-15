@@ -60,7 +60,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     @InjectedSession
     protected Session session;
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
         getLogger(FedoraRepositoriesProperties.class);
 
     /**
@@ -89,9 +89,8 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                 if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {
                     final Model problems = dataset.getNamedModel(PROBLEMS_MODEL_NAME);
 
-                    logger.info(
-                            "Found these problems updating the properties for {}: {}",
-                            "/", problems.toString());
+                    LOGGER.info("Found these problems updating the properties for {}: {}",
+                                   "/", problems.toString());
                     return status(FORBIDDEN).entity(problems.toString())
                             .build();
                 }

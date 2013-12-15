@@ -25,9 +25,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.modeshape.common.logging.Logger;
+import org.slf4j.Logger;
 
-import static org.modeshape.common.logging.Logger.getLogger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * A near-copy of a Modeshape class (of the same name, but is

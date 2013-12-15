@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BasicRolesPEP extends AbstractRolesPEP {
 
-    public static final Logger log = LoggerFactory
+    public static final Logger LOGGER = LoggerFactory
             .getLogger(BasicRolesPEP.class);
 
     /*
@@ -43,34 +43,33 @@ public class BasicRolesPEP extends AbstractRolesPEP {
             final String[] actions, final Set<Principal> allPrincipals,
             final Principal userPrincipal, final Set<String> roles) {
         if (roles.isEmpty()) {
-            log.debug("A caller without content roles can do nothing in the repository.");
+            LOGGER.debug("A caller without content roles can do nothing in the repository.");
             return false;
         }
         if (roles.contains("admin")) {
-            log.debug("Granting an admin role permission to perform any action.");
+            LOGGER.debug("Granting an admin role permission to perform any action.");
             return true;
         }
         if (roles.contains("writer")) {
             if (absPath.contains(AUTHZ_DETECTION)) {
-                log.debug("Denying writer role permission to perform an action on an ACL node.");
+                LOGGER.debug("Denying writer role permission to perform an action on an ACL node.");
                 return false;
             } else {
-                log.debug("Granting writer role permission to perform any action on a non-ACL nodes.");
+                LOGGER.debug("Granting writer role permission to perform any action on a non-ACL nodes.");
                 return true;
             }
         }
         if (roles.contains("reader")) {
             if (actions.length == 1 && "read".equals(actions[0])) {
-                log.debug("Granting reader role permission to perform a read action.");
+                LOGGER.debug("Granting reader role permission to perform a read action.");
                 return true;
             } else {
-                log.debug("Denying reader role permission to perform a non-read action.");
+                LOGGER.debug("Denying reader role permission to perform a non-read action.");
                 return false;
             }
         }
-        log.error(
-                "There are roles in session that aren't recognized by this PEP: {}",
-                roles);
+        LOGGER.error("There are roles in session that aren't recognized by this PEP: {}",
+                     roles);
         return false;
     }
 

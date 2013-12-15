@@ -35,14 +35,14 @@ import org.slf4j.Logger;
 public class InvalidChecksumExceptionMapper implements
         ExceptionMapper<InvalidChecksumException> {
 
-    private static final Logger logger =
+    private static final Logger LOGGER =
         getLogger(InvalidChecksumExceptionMapper.class);
 
     @Override
     public Response toResponse(final InvalidChecksumException e) {
 
-        logger.warn("InvalidChecksumExceptionMapper intercepted exception: \n",
-                e);
+        LOGGER.warn("InvalidChecksumExceptionMapper intercepted exception: \n",
+                       e);
 
         return status(CONFLICT).entity(e.getMessage()).build();
     }

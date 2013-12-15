@@ -46,7 +46,7 @@ import com.google.common.collect.ImmutableSet;
 @Component
 public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
-    private static final Logger logger = getLogger(NodeService.class);
+    private static final Logger LOGGER = getLogger(NodeService.class);
 
     /**
      * Find or create a new Fedora resource at the given path
@@ -127,8 +127,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
         while (i.hasNext()) {
             final Node n = i.nextNode();
-            logger.trace("Child of type {} is named {} at {}", n
-                    .getPrimaryNodeType(), n.getName(), n.getPath());
+            LOGGER.trace("Child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
             if (mixin == null || n.isNodeType(mixin)) {
                 b.add(n.getName());
             }
