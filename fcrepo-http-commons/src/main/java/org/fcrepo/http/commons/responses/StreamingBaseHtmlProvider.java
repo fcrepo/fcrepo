@@ -16,7 +16,6 @@
 
 package org.fcrepo.http.commons.responses;
 
-import static com.google.common.base.Throwables.propagate;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.fcrepo.kernel.rdf.SerializationUtils.subjectKey;
@@ -39,7 +38,6 @@ import javax.ws.rs.ext.Provider;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -95,8 +93,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException,
-                                            WebApplicationException {
+            final OutputStream entityStream) throws IOException {
         try {
             final RdfStream nsRdfStream = new NamespaceRdfContext(rdfStream.session());
             final Dataset dataset = DatasetFactory.create(rdfStream.namespaces(nsRdfStream.namespaces()).asModel());
@@ -105,13 +102,12 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
                     httpHeaders, entityStream);
 
         } catch (RepositoryException e) {
-            throw propagate(e);
+            throw new WebApplicationException(e);
         }
     }
 
     @Override
-    public void setApplicationContext(
-            final ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(final ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
 
     }

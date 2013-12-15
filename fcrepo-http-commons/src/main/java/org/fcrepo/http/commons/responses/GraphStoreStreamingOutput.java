@@ -23,7 +23,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -75,7 +74,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     /**
      * Construct the StreamingOutput machinery to serialize
      * an RdfStream to the mime type given
-     * @param dataset
+     * @param stream
      * @param mediaType
      */
     public GraphStoreStreamingOutput(final RdfStream stream,
@@ -86,8 +85,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     }
 
     @Override
-    public void write(final OutputStream out) throws IOException,
-        WebApplicationException {
+    public void write(final OutputStream out) throws IOException {
         LOGGER.debug("Serializing graph  as {}", format);
         LOGGER.debug("Serializing default model");
         final Model model = unifyDatasetModel(dataset);

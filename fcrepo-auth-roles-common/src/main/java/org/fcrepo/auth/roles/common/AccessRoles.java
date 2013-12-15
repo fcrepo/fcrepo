@@ -167,8 +167,7 @@ public class AccessRoles extends AbstractResource {
     /**
      * @param data
      */
-    private void validatePOST(final Map<String, Set<String>> data)
-        throws IllegalArgumentException {
+    private void validatePOST(final Map<String, Set<String>> data) {
         if (data.isEmpty()) {
             throw new IllegalArgumentException(
                     "Posted access roles must include role assignments");

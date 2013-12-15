@@ -91,8 +91,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     }
 
     @Override
-    public void write(final OutputStream output) throws IOException,
-        WebApplicationException {
+    public void write(final OutputStream output) throws IOException {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
             Rio.write(asStatements(), output, format);

@@ -181,7 +181,7 @@ public class FedoraStoragePolicy extends AbstractResource {
      * @throws StoragePolicyTypeException
      */
     protected StoragePolicy newPolicyInstance(final String propertyType,
-        final String itemType, final String value) throws StoragePolicyTypeException {
+        final String itemType, final String value) {
 
         switch (propertyType) {
             case NodeType.MIX_MIMETYPE:
@@ -307,8 +307,7 @@ public class FedoraStoragePolicy extends AbstractResource {
      * @return
      * @throws StoragePolicyTypeException
      */
-    private boolean isValidConfigurationProperty(String property)
-        throws StoragePolicyTypeException {
+    private boolean isValidConfigurationProperty(final String property) {
         // TODO (for now) returns false. For future, need to represent & eval.
         // non node type props
         return false;
@@ -320,7 +319,7 @@ public class FedoraStoragePolicy extends AbstractResource {
      * @param inputSize
      * @throws IllegalArgumentException
      */
-    private void validateArgs(int inputSize) throws IllegalArgumentException {
+    private void validateArgs(int inputSize) {
         if (inputSize != InputPattern.valueOf(request.getMethod()).requiredLength) {
             throw new IllegalArgumentException("Invalid Arg");
         }

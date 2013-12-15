@@ -34,7 +34,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
@@ -61,8 +60,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException,
-        WebApplicationException {
+            final OutputStream entityStream) throws IOException {
 
         LOGGER.debug("Writing a response for: {} with MIMEtype: {}", rdf,
                         mediaType);

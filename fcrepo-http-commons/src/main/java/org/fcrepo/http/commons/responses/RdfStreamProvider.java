@@ -100,8 +100,7 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
         final Type genericType, final Annotation[] annotations,
         final MediaType mediaType,
         final MultivaluedMap<String, Object> httpHeaders,
-        final OutputStream entityStream) throws IOException,
-        WebApplicationException {
+        final OutputStream entityStream) throws IOException {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
         try {

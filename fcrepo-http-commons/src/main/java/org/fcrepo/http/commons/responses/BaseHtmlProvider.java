@@ -47,7 +47,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -182,8 +181,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException,
-        WebApplicationException {
+            final OutputStream entityStream) throws IOException {
 
         LOGGER.debug("Writing an HTML response for: {}", rdf);
         LOGGER.trace("Attempting to discover our subject");
