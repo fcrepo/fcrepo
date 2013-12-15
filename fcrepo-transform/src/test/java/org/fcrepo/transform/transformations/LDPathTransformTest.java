@@ -31,6 +31,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.WebApplicationException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -38,9 +39,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static org.fcrepo.transform.transformations.LDPathTransform.CONFIGURATION_FOLDER;
+import static org.fcrepo.transform.transformations.LDPathTransform.getNodeTypeTransform;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -62,36 +65,36 @@ public class LDPathTransformTest {
         when(mockNode.getSession()).thenReturn(mockSession);
     }
 
-    @Test
+    @Test(expected=WebApplicationException.class)
     public void testGetNodeTypeSpecificLdpathProgramForMissingProgram() throws RepositoryException {
         final Node mockConfigNode = mock(Node.class);
-        when(mockSession.getNode(LDPathTransform.CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
+        when(mockSession.getNode(CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
 
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         final NodeType mockNodeType = mock(NodeType.class);
         final NodeType mockNtBase = mock(NodeType.class);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] { mockNtBase });
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        final LDPathTransform nodeTypeSpecificLdpathProgramStream = LDPathTransform.getNodeTypeTransform(mockNode, "some-program");
-
-        assertNull(nodeTypeSpecificLdpathProgramStream);
+        getNodeTypeTransform(mockNode, "some-program");
     }
 
     @Test
     public void testGetNodeTypeSpecificLdpathProgramForNodeTypeProgram() throws RepositoryException {
         final Node mockConfigNode = mock(Node.class);
-        final Node mockTypeConfigNode = mock(Node.class, Mockito.RETURNS_DEEP_STUBS);
-        when(mockSession.getNode(LDPathTransform.CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
+        final Node mockTypeConfigNode = mock(Node.class, RETURNS_DEEP_STUBS);
+        when(mockSession.getNode(CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
 
         final NodeType mockNodeType = mock(NodeType.class);
         final NodeType mockNtBase = mock(NodeType.class);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] { mockNtBase });
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockNodeType.toString()).thenReturn("custom:type");
         when(mockConfigNode.hasNode("custom:type")).thenReturn(true);
         when(mockConfigNode.getNode("custom:type")).thenReturn(mockTypeConfigNode);
         final InputStream mockInputStream = mock(InputStream.class);
         when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(mockInputStream);
-        final LDPathTransform nodeTypeSpecificLdpathProgramStream = LDPathTransform.getNodeTypeTransform(mockNode, "some-program");
+        final LDPathTransform nodeTypeSpecificLdpathProgramStream = getNodeTypeTransform(mockNode, "some-program");
 
         assertEquals(new LDPathTransform(mockInputStream), nodeTypeSpecificLdpathProgramStream);
     }
@@ -108,7 +111,7 @@ public class LDPathTransformTest {
         when(mockNodeType.toString()).thenReturn("custom:type");
         when(mockNtBase.toString()).thenReturn("nt:base");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockConfigNode.hasNode("custom:type")).thenReturn(false);
 
         when(mockConfigNode.hasNode("nt:base")).thenReturn(true);
