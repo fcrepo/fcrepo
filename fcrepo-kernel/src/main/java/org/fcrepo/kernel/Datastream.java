@@ -217,7 +217,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
             return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
                 .getLong();
         } catch (final RepositoryException e) {
-            LOGGER.error("Could not get contentSize() - " + e.getMessage());
+            LOGGER.info("Could not get contentSize()", e);
         }
 
         return -1L;
@@ -232,10 +232,8 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         final Node contentNode = node.getNode(JCR_CONTENT);
         try {
             return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
-        } catch (final RepositoryException e) {
+        } catch (final RepositoryException | URISyntaxException e) {
             LOGGER.info("Could not get content digest: ", e);
-        } catch (final URISyntaxException e) {
-            LOGGER.info("Could not get content digest: {}", e);
         }
 
         return ContentDigest.missingChecksum();

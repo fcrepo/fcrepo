@@ -47,6 +47,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -180,8 +181,8 @@ public class TokenEndpoint extends AbstractResource {
         } catch (final OAuthProblemException e) {
             final OAuthResponse res =
                     errorResponse(SC_BAD_REQUEST).error(e).buildJSONMessage();
-            return status(res.getResponseStatus()).entity(res.getBody())
-                    .build();
+            throw new WebApplicationException(e, status(res.getResponseStatus()).entity(res.getBody())
+                    .build());
         }
     }
 

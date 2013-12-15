@@ -84,8 +84,6 @@ public class AccessRolesTypes {
                     session.save();
                     registered = true;
                     LOGGER.debug("Registered access role node types");
-                } catch (final RepositoryException | IOException e) {
-                    throw e;
                 } finally {
                     if (session != null) {
                         session.logout();

@@ -31,6 +31,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthRuntimeException;
 import org.apache.oltu.oauth2.rsfilter.OAuthDecision;
 import org.apache.oltu.oauth2.rsfilter.OAuthRSProvider;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,34 +59,45 @@ public class DefaultOAuthResourceProvider implements OAuthRSProvider {
     public OAuthDecision validateRequest(final String rsId, final String token,
             final HttpServletRequest req) throws OAuthProblemException {
         // first check validity of token
+        final Session session;
+
         try {
-            final Session session = sessionFactory.getInternalSession(OAUTH_WORKSPACE);
-            try {
-                if (!session.itemExists("/tokens/" + token)) {
-                    throw new OAuthRuntimeException("Invalid token!");
-                } else {
-                    final Node tokenNode = session.getNode("/tokens/" + token);
-                    LOGGER.debug("Retrieved token from: {}", tokenNode
-                            .getPath());
-                    final String client =
-                            tokenNode.getProperty(CLIENT_PROPERTY).getString();
-                    LOGGER.debug("Retrieved client: {}", client);
-                    String principal = null;
-                    if (tokenNode.hasProperty(PRINCIPAL_PROPERTY)) {
-                        principal = tokenNode.getProperty(PRINCIPAL_PROPERTY)
-                                .getString();
-                    }
-                    LOGGER.debug("Retrieved principal: {}", principal);
-                    return new Decision(client, principal);
-                }
-            } finally {
-                session.logout();
-            }
+            session = sessionFactory.getInternalSession(OAUTH_WORKSPACE);
         } catch (final RepositoryException e) {
-            propagate(e);
+            throw propagate(e);
         }
 
-        return null;
+        try {
+            if (!session.itemExists(getTokenPath(token))) {
+                throw new OAuthRuntimeException("Invalid token!");
+            } else {
+                final Node tokenNode = session.getNode(getTokenPath(token));
+                LOGGER.debug("Retrieved token from: {}", tokenNode.getPath());
+
+                final String client =
+                    tokenNode.getProperty(CLIENT_PROPERTY).getString();
+                LOGGER.debug("Retrieved client: {}", client);
+
+                final String principal;
+                if (tokenNode.hasProperty(PRINCIPAL_PROPERTY)) {
+                    principal = tokenNode.getProperty(PRINCIPAL_PROPERTY).getString();
+                } else {
+                    principal = null;
+                }
+                LOGGER.debug("Retrieved principal: {}", principal);
+                return new Decision(client, principal);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException("Exception validating OAuth request", e);
+        } finally {
+            session.logout();
+        }
+
+
+    }
+
+    private String getTokenPath(String token) {
+        return "/tokens/" + token;
     }
 
 }

@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jcr.ItemExistsException;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -93,6 +92,7 @@ public class AccessRolesProvider {
                         }
                     }
                 } catch (final ItemNotFoundException e) {
+                    LOGGER.trace("Subject not found, using default access roles", e);
                     return DEFAULT_ACCESS_ROLES;
                 }
             }
@@ -163,16 +163,16 @@ public class AccessRolesProvider {
             LOGGER.debug("added rbaclAssignable type");
         }
 
-        Node acl = null;
-        try {
-            acl =
-                    node.addNode(JcrName.rbacl.getQualified(), JcrName.Rbacl
-                            .getQualified());
-        } catch (final ItemExistsException e) {
+        Node acl;
+
+        if (node.hasNode(JcrName.rbacl.getQualified())) {
             acl = node.getNode(JcrName.rbacl.getQualified());
             for (final NodeIterator ni = acl.getNodes(); ni.hasNext();) {
                 ni.nextNode().remove();
             }
+        } else {
+            acl = node.addNode(JcrName.rbacl.getQualified(), JcrName.Rbacl
+                                                                 .getQualified());
         }
 
         for (final Map.Entry<String, Set<String>> entry : data.entrySet()) {
@@ -198,6 +198,7 @@ public class AccessRolesProvider {
                 final Node rbacl = node.getNode(JcrName.rbacl.getQualified());
                 rbacl.remove();
             } catch (final PathNotFoundException e) {
+                LOGGER.debug("Cannot find node: {}", node, e);
             }
             // remove mixin
             node.removeMixin(JcrName.rbaclAssignable.getQualified());
@@ -223,7 +224,7 @@ public class AccessRolesProvider {
                 }
                 break;
             } catch (final PathNotFoundException e) {
-                LOGGER.debug("Cannot find node: {}", p);
+                LOGGER.debug("Cannot find node: {}", p, e);
             }
         }
         return this.getRoles(node, true);

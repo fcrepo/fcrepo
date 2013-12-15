@@ -295,7 +295,7 @@ public class FedoraStoragePolicy extends AbstractResource {
             return session.getWorkspace().getNodeTypeManager()
                 .getNodeType(type).getName().equals(type);
         } catch (NoSuchNodeTypeException e) {
-            LOGGER.debug("No corresponding Node type found for: {}", type);
+            LOGGER.debug("No corresponding Node type found for: {}", type, e);
             return false;
         }
     }

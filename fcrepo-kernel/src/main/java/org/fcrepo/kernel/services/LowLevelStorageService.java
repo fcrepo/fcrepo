@@ -316,7 +316,7 @@ public class LowLevelStorageService {
                     futureIter.remove();
                     results.addAll(result);
                 } catch (final TimeoutException e) {
-                    // we're just going to ignore this and try again!
+                    LOGGER.trace("Going to retry cluster transform after timeout", e);
                 }
             }
         }

@@ -20,13 +20,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.slf4j.Logger;
@@ -74,21 +71,6 @@ public class CheckCacheEntryFixity implements
         } catch (final RepositoryException e) {
             LOGGER.error("Exception checking low-level fixity: {}", e);
             throw propagate(e);
-        }
-    }
-
-    /**
-     * Returns the digest to be used in checksum verification.
-     */
-    public MessageDigest getDigest() {
-        try {
-            return MessageDigest.getInstance(ContentDigest.getAlgorithm(dsChecksum));
-        } catch (NoSuchAlgorithmException e) {
-            /**
-             * @todo this really shouldn't ever happen, since it is derived from
-             * an existing MessageDigest
-             */
-            return null;
         }
     }
 

@@ -155,7 +155,7 @@ public class AuthzEndpoint extends AbstractResource {
             final String redirectUri = e.getRedirectUri();
 
             if (isEmpty(redirectUri)) {
-                throw new WebApplicationException(responseBuilder.entity(
+                throw new WebApplicationException(e, responseBuilder.entity(
                         "OAuth callback url needs to be provided by client!")
                         .build());
             }

@@ -237,7 +237,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
 
         } catch (final RepositoryException e) {
-            LOGGER.info(e.getMessage());
+            LOGGER.info("Repository exception building query source", e);
         }
         return this.source;
     }

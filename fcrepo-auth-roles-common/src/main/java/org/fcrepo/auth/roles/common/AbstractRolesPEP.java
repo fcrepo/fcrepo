@@ -98,7 +98,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
     @Override
     public Iterator<Path> filterPathsForReading(final Iterator<Path> paths,
             final Set<Principal> allPrincipals, final Principal userPrincipal) {
-        Session session = null;
+        Session session;
         try {
             session = sessionFactory.getInternalSession();
         } catch (final RepositoryException e) {
@@ -205,6 +205,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
                 try {
                     acl = accessRolesProvider.getRoles(n, false);
                 } catch (final PathNotFoundException ignored) {
+                    LOGGER.trace("Path not found when removing roles", ignored);
                 }
                 if (acl != null) {
                     roles = resolveUserRoles(acl, allPrincipals);

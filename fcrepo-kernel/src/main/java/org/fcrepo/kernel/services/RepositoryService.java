@@ -170,9 +170,8 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
                         try {
                             return reg.getURI(p);
                         } catch (final RepositoryException e) {
-                            propagate(e);
+                            throw propagate(e);
                         }
-                        return null;
                     }
                 });
     }

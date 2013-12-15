@@ -68,6 +68,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
                 subjectNode.removeMixin(mixinName);
             } catch (final NoSuchNodeTypeException e) {
                 LOGGER.debug("which that node turned out not to have.");
+                LOGGER.trace("Backtrace: ", e);
             }
         }
     }

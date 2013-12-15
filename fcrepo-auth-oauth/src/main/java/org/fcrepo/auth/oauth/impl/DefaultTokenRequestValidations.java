@@ -95,6 +95,7 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
             }
         } catch (final PathNotFoundException e) {
             // this wasn't a code we stored
+            LOGGER.trace("Missing authorization token for code {}", code, e);
             return false;
         } finally {
             session.logout();

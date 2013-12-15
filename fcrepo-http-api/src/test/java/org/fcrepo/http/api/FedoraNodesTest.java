@@ -59,6 +59,7 @@ import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.version.VersionManager;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -435,7 +436,7 @@ public class FedoraNodesTest {
         assertEquals(SC_BAD_GATEWAY, response.getStatus());
     }
 
-    @Test
+    @Test(expected = WebApplicationException.class)
     public void testCopyObjectToExistingDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
@@ -480,7 +481,7 @@ public class FedoraNodesTest {
         assertEquals(CONFLICT.getStatusCode(), response.getStatus());
     }
 
-    @Test
+    @Test(expected = WebApplicationException.class)
     public void testMoveObjectToExistingDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);

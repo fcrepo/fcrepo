@@ -58,7 +58,7 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
                 }
             }
         } catch (RepositoryException e) {
-            propagate(e);
+            throw propagate(e);
         }
         return test(matched);
     }

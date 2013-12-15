@@ -26,6 +26,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -34,6 +35,7 @@ import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
 import com.google.common.base.Function;
+import org.slf4j.Logger;
 
 /**
  * EventFilter that passes only events emitted from nodes with
@@ -50,6 +52,8 @@ import com.google.common.base.Function;
  * @date Oct 3, 2013
  */
 public class DefaultFilter implements EventFilter {
+
+    private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     private Session session;
 
@@ -104,7 +108,7 @@ public class DefaultFilter implements EventFilter {
                 return new FedoraEvent(event, FEDORA_DATASTREAM);
             }
         } catch (final PathNotFoundException e) {
-            // not a node in the fedora workspace
+            LOGGER.trace("Dropping event from outside our assigned workspace", e);
             return null;
         } catch (final RepositoryException e) {
             throw propagate(e);

@@ -555,7 +555,7 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Deletes an object.
      *
-     * @param path
+     * @param pathList
      * @return
      * @throws RepositoryException
      */
@@ -626,11 +626,12 @@ public class FedoraNodes extends AbstractResource {
             versionService.nodeUpdated(session, destination);
             return created(new URI(destinationUri)).build();
         } catch (final ItemExistsException e) {
-            return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+            throw new WebApplicationException(e,
+                status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
         } catch (final PathNotFoundException e) {
-            return status(SC_CONFLICT).entity(
+            throw new WebApplicationException(e, status(SC_CONFLICT).entity(
                     "There is no node that will serve as the parent of the moved item")
-                    .build();
+                    .build());
         } finally {
             session.logout();
         }
@@ -690,11 +691,12 @@ public class FedoraNodes extends AbstractResource {
             versionService.nodeUpdated(session, destination);
             return created(new URI(destinationUri)).build();
         } catch (final ItemExistsException e) {
-            return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+            throw new WebApplicationException(e,
+                status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
         } catch (final PathNotFoundException e) {
-            return status(SC_CONFLICT).entity(
+            throw new WebApplicationException(e, status(SC_CONFLICT).entity(
                     "There is no node that will serve as the parent of the moved item")
-                    .build();
+                    .build());
         } finally {
             session.logout();
         }

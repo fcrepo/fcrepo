@@ -98,6 +98,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             set(finishedMarker);
         } catch (final RDFHandlerException e) {
             setException(e);
+            LOGGER.debug("Error serializing RDF", e);
             throw new WebApplicationException(e);
         }
     }
