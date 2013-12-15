@@ -47,6 +47,12 @@
     <!-- Until MCHECKSTYLE-169 is resolved, we're using our own, patched version 
       of checkstyle deployed to fcrepo.maven.org -->
     <checkstyle.plugin.version>2.10-fcrepo</checkstyle.plugin.version>
+
+    <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
+    <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
+    <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
+    <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
+    <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
   </properties>
   <modules>
     <module>fcrepo-kernel</module>
@@ -805,12 +811,23 @@
               <goals>
                 <goal>prepare-agent</goal>
               </goals>
+
+              <configuration>
+                <destFile>${sonar.jacoco.reportPath}</destFile>
+                <propertyName>jacoco.agent.unit.arg</propertyName>
+                <append>true</append>
+              </configuration>
             </execution>
             <execution>
               <id>default-prepare-agent-integration</id>
               <goals>
                 <goal>prepare-agent-integration</goal>
               </goals>
+              <configuration>
+                <destFile>${sonar.jacoco.itReportPath}</destFile>
+                <propertyName>jacoco.agent.it.arg</propertyName>
+                <append>true</append>
+              </configuration>
             </execution>
             <execution>
               <id>default-report</id>
@@ -880,7 +897,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>${failsafe.argLine}</argLine>
+          <argLine>${jacoco.agent.it.arg}</argLine>
         </configuration>
         <executions>
           <execution>
@@ -904,8 +921,7 @@
             This line enables code-coverage. However, it also blows the build's permgen.
             Fix me!
           -->
-          <argLine>${argLine}</argLine>
-          <jacoco-agent.destFile>${project.basedir}/target/jacoco.exec</jacoco-agent.destFile>
+          <argLine>${jacoco.agent.unit.arg}</argLine>
         </configuration>
       </plugin>
       <plugin>
