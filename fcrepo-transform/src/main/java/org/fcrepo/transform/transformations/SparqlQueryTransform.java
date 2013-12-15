@@ -71,4 +71,9 @@ public class SparqlQueryTransform implements Transformation {
                    query.equals(((SparqlQueryTransform)other).getQuery());
     }
 
+    @Override
+    public int hashCode() {
+        return 5 + 7*query.hashCode();
+    }
+
 }

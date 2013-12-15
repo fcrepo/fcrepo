@@ -168,6 +168,11 @@ public class LDPathTransform implements Transformation  {
                    query.equals(((LDPathTransform)other).getQuery());
     }
 
+    @Override
+    public int hashCode() {
+        return 3 + 5*query.hashCode();
+    }
+
     /**
      * Get the LDPath resource for an object
      * @param dataset
