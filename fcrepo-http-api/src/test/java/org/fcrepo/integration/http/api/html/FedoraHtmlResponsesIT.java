@@ -274,12 +274,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlForm form = (HtmlForm) page1.getElementById("action_register_namespace");
         final HtmlInput prefix = form.getInputByName("prefix");
         final HtmlInput uri = form.getInputByName("uri");
-        final String prefix_value = "asdf";
-        final String uri_value = "http://example.com/asdf";
-
-        // Doesn't have namespace defined.
-        assertFalse("Prefix is not already defined", page1.asText().contains(prefix_value));
-        assertFalse("URI is not already defined", page1.asText().contains(uri_value));
+        final String prefix_value = "prefix" + randomUUID().toString();
+        final String uri_value = "http://example.com/" + prefix_value;
 
         prefix.setValueAttribute(prefix_value);
         uri.setValueAttribute(uri_value);
@@ -287,14 +283,14 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page2 = webClient.getPage(serverAddress + "fcr:namespaces");
-
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
+        final HtmlPage page2 = webClient.getPage(serverAddress + "fcr:namespaces");
+
         // Has namespace defined.
-        assertTrue("New prefix was found", page2.asText().contains(prefix_value));
-        assertTrue("New uri was found", page2.asText().contains(uri_value));
+        assertTrue("New prefix was not found", page2.asText().contains(prefix_value));
+        assertTrue("New uri was not found", page2.asText().contains(uri_value));
     }
 
     private void checkForHeaderSearch(final HtmlPage page) {

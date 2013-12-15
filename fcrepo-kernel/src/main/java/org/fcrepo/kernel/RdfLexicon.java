@@ -214,7 +214,7 @@ public final class RdfLexicon {
     public static final Property HAS_VERSION_HISTORY =
             createProperty(RESTAPI_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasFixity");
+            createProperty(RESTAPI_NAMESPACE + "hasFixityService");
     public static final Property HAS_FEED =
             createProperty(
                     "http://www.whatwg.org/specs/web-apps/current-work/#",
