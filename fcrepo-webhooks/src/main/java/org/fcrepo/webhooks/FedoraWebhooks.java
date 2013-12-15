@@ -62,11 +62,6 @@ import com.google.common.eventbus.Subscribe;
 public class FedoraWebhooks extends AbstractResource {
 
     /**
-     * Prefix to use to find webhooks callback-bearing nodes
-     */
-    public static final String WEBHOOK_SEARCH = "webhook:*";
-
-    /**
      * Property to look for Webhooks callback at
      */
     public static final String WEBHOOK_CALLBACK_PROPERTY =
@@ -81,6 +76,7 @@ public class FedoraWebhooks extends AbstractResource {
             .getLogger(FedoraWebhooks.class);
 
     protected static final HttpClient client;
+    public static final String WEBHOOK_PREFIX = "webhook:";
 
     @InjectedSession
     protected Session session;
@@ -131,8 +127,7 @@ public class FedoraWebhooks extends AbstractResource {
             return;
         }
 
-        final NodeIterator webhooksIterator =
-                resource.getSession().getRootNode().getNodes(WEBHOOK_SEARCH);
+        final NodeIterator webhooksIterator = getWebhooksIterator(resource.getSession());
 
         while (webhooksIterator.hasNext()) {
             final Node hook = webhooksIterator.nextNode();
@@ -168,14 +163,13 @@ public class FedoraWebhooks extends AbstractResource {
     @GET
     public Response showWebhooks() throws RepositoryException {
 
-        final NodeIterator webhooksIterator =
-                session.getRootNode().getNodes("webhook:*");
+        final NodeIterator webhooksIterator = getWebhooksIterator(session);
         final StringBuilder str = new StringBuilder();
 
         while (webhooksIterator.hasNext()) {
             final Node hook = webhooksIterator.nextNode();
             final String callbackUrl =
-                    hook.getProperty("webhook:callbackUrl").getString();
+                    hook.getProperty(WEBHOOK_CALLBACK_PROPERTY).getString();
             str.append(hook.getIdentifier() + ": " + callbackUrl + ", ");
         }
 
@@ -198,10 +192,9 @@ public class FedoraWebhooks extends AbstractResource {
             final String callbackUrl) throws RepositoryException {
 
         final Node n =
-                jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" +
-                        id, "webhook:callback");
+                jcrTools.findOrCreateChild(session.getRootNode(), getWebhookName(id), WEBHOOK_JCR_TYPE);
 
-        n.setProperty("webhook:callbackUrl", callbackUrl);
+        n.setProperty(WEBHOOK_CALLBACK_PROPERTY, callbackUrl);
 
         session.save();
         session.logout();
@@ -220,8 +213,7 @@ public class FedoraWebhooks extends AbstractResource {
     public Response registerWebhook(@PathParam("id")
         final String id) throws RepositoryException {
         final Node n =
-                jcrTools.findOrCreateChild(session.getRootNode(), "webhook:" +
-                        id, WEBHOOK_JCR_TYPE);
+                jcrTools.findOrCreateChild(session.getRootNode(), getWebhookName(id), WEBHOOK_JCR_TYPE);
         n.remove();
 
         session.save();
@@ -268,5 +260,13 @@ public class FedoraWebhooks extends AbstractResource {
     public final void logoutSession() {
         eventBus.unregister(this);
         readOnlySession.logout();
+    }
+
+    private String getWebhookName(String id) {
+        return WEBHOOK_PREFIX + id;
+    }
+
+    private NodeIterator getWebhooksIterator(final Session session) throws RepositoryException {
+        return session.getRootNode().getNodes(getWebhookName("*"));
     }
 }

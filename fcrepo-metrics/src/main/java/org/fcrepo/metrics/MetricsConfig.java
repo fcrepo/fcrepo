@@ -52,6 +52,8 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 @Configuration
 public class MetricsConfig {
 
+    public static final String METRIC_PREFIX = getProperty("fcrepo.metrics.prefix", "org.fcrepo");
+
     /**
      * Provide the reporter factory to Spring
      * 
@@ -102,8 +104,7 @@ public class MetricsConfig {
         @Bean
         public GraphiteReporter graphiteReporter() {
             final MetricsConfig cfg = new MetricsConfig();
-            final String prefix =
-                    getProperty("fcrepo.metrics.prefix", "org.fcrepo");
+            final String prefix = METRIC_PREFIX;
             return cfg.reporterFactory().getGraphiteReporter(prefix,
                     graphiteClient());
         }
@@ -122,14 +123,13 @@ public class MetricsConfig {
     @Profile({"metrics", "metrics.jmx"})
     public static class JmxConfig {
 
-        String prefix = getProperty("fcrepo.metrics.prefix", "org.fcrepo");
-
         /**
          * @return a Reporter that exposes metrics under the "org.fcrepo" prefix
          */
         @Bean
         public JmxReporter jmxReporter() {
             final MetricsConfig cfg = new MetricsConfig();
+            final String prefix = METRIC_PREFIX;
             return cfg.reporterFactory().getJmxReporter(prefix);
         }
     }

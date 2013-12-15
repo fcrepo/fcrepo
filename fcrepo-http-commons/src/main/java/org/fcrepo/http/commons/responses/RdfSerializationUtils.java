@@ -20,6 +20,9 @@ import static com.google.common.collect.ImmutableList.of;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.Collections.singletonList;
+import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
+import static javax.ws.rs.core.HttpHeaders.LAST_MODIFIED;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -52,14 +55,14 @@ public class RdfSerializationUtils {
      * The RDF predicate that will indicate the primary node type.
      */
     public static Node primaryTypePredicate =
-            createURI(getRDFNamespaceForJcrNamespace("http://www.jcp.org/jcr/1.0") +
+            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                     "primaryType");
 
     /**
      * The RDF predicate that will indicate the last-modified date of the node.
      */
     public static Node lastModifiedPredicate =
-            createURI(getRDFNamespaceForJcrNamespace("http://www.jcp.org/jcr/1.0") +
+            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                     "lastModified");
 
     /**
@@ -121,8 +124,8 @@ public class RdfSerializationUtils {
      */
     static void setCachingHeaders(final MultivaluedMap<String,
             Object> httpHeaders, final Dataset rdf) {
-        httpHeaders.put("Cache-Control", singletonList((Object) "max-age=0"));
-        httpHeaders.put("Cache-Control", singletonList((Object) "must-revalidate"));
+        httpHeaders.put(CACHE_CONTROL, singletonList((Object) "max-age=0"));
+        httpHeaders.put(CACHE_CONTROL, singletonList((Object) "must-revalidate"));
 
         LOGGER.trace("Attempting to discover the last-modified date of the node for the resource in question...");
         final Iterator<Quad> iterator =
@@ -147,7 +150,7 @@ public class RdfSerializationUtils {
         final String lastModifiedAsRdf2822 =
                 RFC2822DATEFORMAT
                         .print(new DateTime(lastModified.asCalendar()));
-        httpHeaders.put("Last-Modified", of((Object) lastModifiedAsRdf2822));
+        httpHeaders.put(LAST_MODIFIED, of((Object) lastModifiedAsRdf2822));
     }
 
 }

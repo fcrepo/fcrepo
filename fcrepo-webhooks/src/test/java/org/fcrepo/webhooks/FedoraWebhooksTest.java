@@ -16,6 +16,9 @@
 
 package org.fcrepo.webhooks;
 
+import static org.fcrepo.webhooks.FedoraWebhooks.WEBHOOK_CALLBACK_PROPERTY;
+import static org.fcrepo.webhooks.FedoraWebhooks.WEBHOOK_JCR_TYPE;
+import static org.fcrepo.webhooks.FedoraWebhooks.WEBHOOK_PREFIX;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,13 +83,13 @@ public class FedoraWebhooksTest {
 
         final Node mockHook = mock(Node.class);
         final Property mockProp = mock(Property.class);
-        when(mockHook.getProperty(FedoraWebhooks.WEBHOOK_CALLBACK_PROPERTY))
+        when(mockHook.getProperty(WEBHOOK_CALLBACK_PROPERTY))
                 .thenReturn(mockProp);
 
         when(mockNodes.hasNext()).thenReturn(true, false);
         when(mockNodes.nextNode()).thenReturn(mockHook).thenThrow(
                new IndexOutOfBoundsException());
-        when(mockRoot.getNodes(FedoraWebhooks.WEBHOOK_SEARCH)).thenReturn(
+        when(mockRoot.getNodes(WEBHOOK_PREFIX + "*")).thenReturn(
                 mockNodes);
 
         testObj.showWebhooks();
@@ -97,7 +100,7 @@ public class FedoraWebhooksTest {
         final String mockPath = "/webhook:foo";
         final Node mockNode = mock(Node.class);
         final NodeType mockType = mock(NodeType.class);
-        when(mockType.getName()).thenReturn(FedoraWebhooks.WEBHOOK_JCR_TYPE);
+        when(mockType.getName()).thenReturn(WEBHOOK_JCR_TYPE);
         final NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
         when(mockSession.getNode(mockPath)).thenReturn(mockNode);
@@ -114,7 +117,7 @@ public class FedoraWebhooksTest {
         when(mockEvent.getPath()).thenReturn(mockPath);
         final Node mockNode = mock(Node.class);
         final NodeType mockType = mock(NodeType.class);
-        when(mockType.getName()).thenReturn(FedoraWebhooks.WEBHOOK_JCR_TYPE);
+        when(mockType.getName()).thenReturn(WEBHOOK_JCR_TYPE);
         final NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
         when(mockSession.getNode(mockPath)).thenReturn(mockNode);
@@ -124,14 +127,14 @@ public class FedoraWebhooksTest {
         // let's say we have one webhook node
         final Node mockHook = mock(Node.class);
         final Property mockProp = mock(Property.class);
-        when(mockHook.getProperty(FedoraWebhooks.WEBHOOK_CALLBACK_PROPERTY))
+        when(mockHook.getProperty(WEBHOOK_CALLBACK_PROPERTY))
                 .thenReturn(mockProp);
         when(mockProp.getString()).thenReturn(
                 "http://fedora.gov/secrets/plans/takeovers/global");
         when(mockNodes.hasNext()).thenReturn(true, false);
         when(mockNodes.nextNode()).thenReturn(mockHook).thenThrow(
                 IndexOutOfBoundsException.class);
-        when(mockRoot.getNodes(FedoraWebhooks.WEBHOOK_SEARCH)).thenReturn(
+        when(mockRoot.getNodes(WEBHOOK_PREFIX + "*")).thenReturn(
                 mockNodes);
         testObj.onEvent(mockEvent);
     }

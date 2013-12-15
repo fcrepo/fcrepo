@@ -49,6 +49,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class HttpGraphSubjects implements GraphSubjects {
 
     private static final Logger LOGGER = getLogger(HttpGraphSubjects.class);
+    public static final String WORKSPACE_PREFIX = "workspace:";
+    public static final String TX_PREFIX = "tx:";
 
     private final UriBuilder nodesBuilder;
 
@@ -149,8 +151,8 @@ public class HttpGraphSubjects implements GraphSubjects {
                 subject.getURI().substring(pathIx).split("/");
 
         for (final String segment : pathSegments) {
-            if (segment.startsWith("tx:")) {
-                final String tx = segment.substring("tx:".length());
+            if (segment.startsWith(TX_PREFIX)) {
+                final String tx = segment.substring(TX_PREFIX.length());
 
                 final String currentTxId = getCurrentTransactionId(session);
 
@@ -159,8 +161,8 @@ public class HttpGraphSubjects implements GraphSubjects {
                             "Subject is not in this transaction");
                 }
 
-            } else if (segment.startsWith("workspace:")) {
-                final String workspace = segment.substring("workspace:".length());
+            } else if (segment.startsWith(WORKSPACE_PREFIX)) {
+                final String workspace = segment.substring(WORKSPACE_PREFIX.length());
                 if (!session.getWorkspace().getName().equals(workspace)) {
                     throw new RepositoryException(
                             "Subject is not in this workspace");
@@ -225,10 +227,10 @@ public class HttpGraphSubjects implements GraphSubjects {
             final String txId = getCurrentTransactionId(session);
 
             if (txId != null) {
-                path = "tx:" + txId + "/" + path;
+                path = TX_PREFIX + txId + "/" + path;
             } else if (workspace != null &&
                     !workspace.getName().equals(defaultWorkspace)) {
-                path = "workspace:" + workspace.getName() + "/" + path;
+                path = WORKSPACE_PREFIX + workspace.getName() + "/" + path;
             }
         }
 
