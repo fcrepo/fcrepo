@@ -7,12 +7,17 @@
         "allowCreation" : true
     },
     "query" : {
-        "enabled" : true,
+        "enabled" : "${fcrepo.modeshape.query.enabled:true}",
         "indexStorage" : {
             "type" : "filesystem",
             "location" : "${fcrepo.modeshape.index.location:target/indexes}",
             "lockingStrategy" : "native",
             "fileSystemAccessType" : "auto"
+        },
+        "rebuildUponStartup" : "if_missing",
+
+        "indexing" : {
+            "mode" : "${fcrepo.modeshape.query.mode:sync}"
         }
     },
     "storage" : {

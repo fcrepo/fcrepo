@@ -95,7 +95,7 @@ public class LowLevelCacheEntryIT {
     public void testEqualsIspn() throws Exception {
 
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
+                new DefaultCacheManager("config/testing/infinispan-basic.xml");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
@@ -115,7 +115,7 @@ public class LowLevelCacheEntryIT {
     public void testHashCodeIspn() throws Exception {
 
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
+                new DefaultCacheManager("config/testing/infinispan-basic.xml");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
@@ -135,7 +135,7 @@ public class LowLevelCacheEntryIT {
     public void testGetExternalIdentifierWithInfinispan() throws Exception {
 
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
+                new DefaultCacheManager("config/testing/infinispan-basic.xml");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()
@@ -155,7 +155,7 @@ public class LowLevelCacheEntryIT {
 
         final EmbeddedCacheManager cm =
                 new DefaultCacheManager(
-                        "config/infinispan/chained/infinispan.xml");
+                        "config/testing/infinispan-chained.xml");
 
         final CacheStore ispn =
                 cm.getCache("FedoraRepository").getAdvancedCache()

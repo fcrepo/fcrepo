@@ -35,7 +35,7 @@ public class StoreChunkInputStreamIT {
     @Test
     public void tryRetrievingContentFromInfinispanIT() throws IOException {
         final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/infinispan/basic/infinispan.xml");
+                new DefaultCacheManager("config/infinispan/leveldb-default/infinispan.xml");
 
         final Cache<String, byte[]> ispn = cm.getCache("FedoraRepository");
 
