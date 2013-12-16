@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
+ * Policy enforcement point for roles-based authentication
  * @author Gregory Jansen
  */
 public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
@@ -247,6 +248,9 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             String[] actions, Set<Principal> allPrincipals,
             Principal userPrincipal, Set<String> roles);
 
+    /**
+     * Filter paths for reading
+     */
     public class PathIterator implements Iterator<Path> {
 
         private Path next = null;

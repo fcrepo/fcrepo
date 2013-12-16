@@ -74,6 +74,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * Create or find a FedoraDatastream at the given path
      * @param session the JCR session to use to retrieve the object
      * @param path the absolute path to the object
+     * @param nodeType primary type to assign to node
      * @throws RepositoryException
      */
     public Datastream(final Session session, final String path,
@@ -127,10 +128,13 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     /**
      * Sets the content of this Datastream.
      *
-     *
-     * @param content
-     * @param originalFileName
+     * @param content  InputStream of binary content to be stored
+     * @param contentType MIME type of content (optional)
+     * @param checksum Checksum URI of the content (optional)
+     * @param originalFileName Original file name of the content (optional)
+     * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
      * @throws RepositoryException
+     * @throws InvalidChecksumException
      */
     public void setContent(final InputStream content, final String contentType,
                            final URI checksum, final String originalFileName,
@@ -199,7 +203,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     /**
      * Set the content of this datastream
-     * @param content
+     * @param content Binary content to be stored
      * @throws InvalidChecksumException
      * @throws RepositoryException
      */
@@ -210,7 +214,6 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     /**
      * @return The size in bytes of content associated with this datastream.
-     * @throws RepositoryException
      */
     public long getContentSize() {
         try {
@@ -269,7 +272,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     /**
      * Return the calculated size of the DS node
-     * @return
+     * @return combined size of the properties and binary content
      * @throws RepositoryException
      */
     @Override
@@ -280,7 +283,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     /**
      * Return the file name for the binary content
-     * @return
+     * @return original file name for the binary content, or the object's id.
      * @throws RepositoryException
      */
     public String getFilename() throws RepositoryException {
@@ -316,8 +319,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
 
     /**
      * Check if the node has a fedora:datastream mixin
-     * @param node
-     * @return
+     * @param node node to check
      * @throws RepositoryException
      */
     public static boolean hasMixin(final Node node) throws RepositoryException {

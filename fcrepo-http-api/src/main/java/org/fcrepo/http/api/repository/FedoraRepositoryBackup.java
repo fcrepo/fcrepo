@@ -37,6 +37,9 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+/**
+ * Repository-wide backup endpoint
+ */
 @Component
 @Scope("prototype")
 @Path("/fcr:backup")
@@ -57,7 +60,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
     @POST
     public String runBackup(final InputStream bodyStream) throws RepositoryException, IOException {
 
-        File backupDirectory = null;
+        File backupDirectory;
         if (null != bodyStream) {
             final String body = IOUtils.toString(bodyStream).trim();
 

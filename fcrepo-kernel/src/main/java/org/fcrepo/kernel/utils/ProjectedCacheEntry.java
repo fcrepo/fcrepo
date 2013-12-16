@@ -20,6 +20,9 @@ import org.modeshape.connector.filesystem.FileSystemConnector;
 
 import javax.jcr.Binary;
 
+/**
+ * Cache entry for a projected binary
+ */
 public class ProjectedCacheEntry extends BinaryCacheEntry {
 
     /**

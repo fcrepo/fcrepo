@@ -21,6 +21,10 @@ import com.hp.hpl.jena.query.Dataset;
 
 import java.io.InputStream;
 
+/**
+ * Generic interface for transforming a resource's property dataset
+ * to an implementation-defined type
+ */
 public interface Transformation extends Function<Dataset, Object> {
 
     /**

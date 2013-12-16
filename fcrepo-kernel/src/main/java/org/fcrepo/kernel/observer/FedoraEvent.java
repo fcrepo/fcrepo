@@ -58,6 +58,7 @@ public class FedoraEvent implements Event {
      * Wrap a JCR Event with our FedoraEvent decorators
      * and include the type given in the info map
      * @param e
+     * @param wrappedNodeType type of node for the event
      */
     public FedoraEvent(final Event e, final String wrappedNodeType) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");

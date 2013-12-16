@@ -23,6 +23,8 @@ package org.fcrepo.storage.policy;
 
 public class StoragePolicyTypeException extends RuntimeException {
     /**
+     * Ordinary constructor
+     *
      * @param arg0
      */
     public StoragePolicyTypeException(final String arg0) {

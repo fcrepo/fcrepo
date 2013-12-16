@@ -146,11 +146,20 @@ public class JQLResultSet implements ResultSet {
         return null;
     }
 
+    /**
+     * Maps a JCR Query's Row to a QuerySolution
+     */
     private class JQLQuerySolution implements QuerySolution, Binding {
         private GraphSubjects subjects;
         private Row row;
         private List<String> columns;
 
+        /**
+         * Create a new query solution to translate a JCR Row to a SPARQL Binding
+         * @param subjects
+         * @param row
+         * @param columns
+         */
         public JQLQuerySolution(final GraphSubjects subjects, final Row row, final List<String> columns) {
             this.subjects = subjects;
             this.row = row;

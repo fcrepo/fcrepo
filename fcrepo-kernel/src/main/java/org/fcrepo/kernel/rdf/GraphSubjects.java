@@ -53,13 +53,14 @@ public interface GraphSubjects {
     String getPathFromGraphSubject(final Resource subject) throws RepositoryException;
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora object.
+     * Predicate for determining whether this {@link Resource} is a Fedora object.
+     * @param subject
+     * @return
      */
     boolean isFedoraGraphSubject(final Resource subject);
 
     /**
      * Get the RDF resource for an absolute path
-     *
      *
      * @param absPath the absolute path to the JCR node
      * @return an RDF URI resource

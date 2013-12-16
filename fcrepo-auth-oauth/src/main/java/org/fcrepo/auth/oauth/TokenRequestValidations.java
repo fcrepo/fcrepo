@@ -20,6 +20,9 @@ import javax.jcr.RepositoryException;
 import org.apache.oltu.oauth2.as.request.OAuthTokenRequest;
 
 
+/**
+ * Validations for OAuth token requests
+ */
 public interface TokenRequestValidations {
     /**
      * Checks the validity of the auth code attached to the given request

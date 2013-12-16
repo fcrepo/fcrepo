@@ -121,7 +121,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     /**
      * Is the given node a frozen node?
      *
-     * @param node
+     * @param node Node to check
      * @return
      * @throws RepositoryException
      */
@@ -133,7 +133,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * Is the given node a Fedora resource
      * (because it has a fedora:resource mixin)?
      *
-     * @param node
+     * @param node Node to check
      * @return
      * @throws RepositoryException
      */
@@ -258,7 +258,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
      *
-     * @param subjects
+     * @param graphSubjects
      * @param offset
      * @param limit
      * @return
@@ -298,6 +298,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
+     * @param graphSubjects
      * @return
      * @throws RepositoryException
      */
@@ -308,6 +309,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
+     * @param graphSubjects
      * @return
      * @throws RepositoryException
      */
@@ -322,6 +324,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
+     * @param graphSubjects
      * @return
      * @throws RepositoryException
      */
@@ -371,7 +374,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * Replace the properties of this object with the properties from the given
      * model
      *
-     * @param subjects
+     * @param graphSubjects
      * @param inputModel
      * @return
      * @throws RepositoryException

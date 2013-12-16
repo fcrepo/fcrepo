@@ -42,6 +42,9 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+/**
+ * Restore a backup of the repository
+ */
 @Component
 @Scope("prototype")
 @Path("/fcr:restore")

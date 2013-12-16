@@ -48,15 +48,28 @@ public class BypassSecurityServletAuthenticationProvider implements
             final Map<String, Object> sessionAttributes) {
         if (credentials instanceof ServletCredentials) {
             return repositoryContext
-                    .with(new AnonymousAdminSecurityContext());
+                    .with(new AnonymousAdminSecurityContext("bypassAdmin"));
         } else {
             return null;
         }
 
     }
 
+    /**
+     * Security context with complete
+     */
     public static class AnonymousAdminSecurityContext implements
             SecurityContext {
+
+        private String userName;
+
+        /*
+         * Create a new security context with the given user name
+         */
+        public AnonymousAdminSecurityContext(final String userName) {
+
+            this.userName = userName;
+        }
 
         /*
          * (non-Javadoc)
@@ -73,7 +86,7 @@ public class BypassSecurityServletAuthenticationProvider implements
          */
         @Override
         public String getUserName() {
-            return "bypassAdmin";
+            return userName;
         }
 
         /*

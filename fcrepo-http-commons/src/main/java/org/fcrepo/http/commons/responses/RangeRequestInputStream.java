@@ -48,7 +48,20 @@ public class RangeRequestInputStream extends FilterInputStream {
     }
 
 
+    /**
+     * An InputStream wrapper that skips bytes
+     * @param in
+     * @param skip
+     * @throws IOException
+     */
     private static class SkipInputStream extends ProxyInputStream {
+
+        /**
+         * An InputStream wrapper that always skips the first N bytes
+         * @param in
+         * @param skip
+         * @throws IOException
+         */
         public SkipInputStream(final InputStream in,
                                final long skip) throws IOException {
             super(in);

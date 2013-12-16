@@ -37,7 +37,9 @@ import org.fcrepo.auth.oauth.TokenRequestValidations;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.slf4j.Logger;
 
-
+/**
+ * Default audits and validations for an OAuth token request
+ */
 public class DefaultTokenRequestValidations implements TokenRequestValidations {
 
     private static final Logger LOGGER =

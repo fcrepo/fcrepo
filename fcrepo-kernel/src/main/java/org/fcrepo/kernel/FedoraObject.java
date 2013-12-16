@@ -54,6 +54,7 @@ public class FedoraObject extends FedoraResource {
      * Create or find a FedoraObject at the given path
      * @param session the JCR session to use to retrieve the object
      * @param path the absolute path to the object
+     * @param nodeType primary type to assign to created object
      * @throws RepositoryException
      */
     public FedoraObject(final Session session, final String path,

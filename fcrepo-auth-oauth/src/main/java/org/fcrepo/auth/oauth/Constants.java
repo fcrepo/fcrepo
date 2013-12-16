@@ -15,6 +15,9 @@
  */
 package org.fcrepo.auth.oauth;
 
+/**
+ * OAuth constants
+ */
 public interface Constants {
 
     static final String OAUTH_WORKSPACE = "oauth";

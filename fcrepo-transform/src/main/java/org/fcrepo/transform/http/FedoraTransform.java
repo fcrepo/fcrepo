@@ -72,6 +72,10 @@ import org.springframework.stereotype.Component;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * Endpoint for transforming object properties using stored
+ * or POSTed transformations.
+ */
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:transform")

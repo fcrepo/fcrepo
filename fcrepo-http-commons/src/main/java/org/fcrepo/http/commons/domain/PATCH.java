@@ -24,6 +24,9 @@ import java.lang.annotation.Target;
 
 import javax.ws.rs.HttpMethod;
 
+/**
+ * PATCH HTTP method
+ */
 @Target({METHOD})
 @Retention(RUNTIME)
 @HttpMethod("PATCH")

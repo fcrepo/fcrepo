@@ -43,8 +43,9 @@ public class MalformedRdfException extends RepositoryException {
      * Ordinary constructor.
      *
      * @param msg
+     * @param rootCause
      */
-    public MalformedRdfException(final String msg, Throwable rootCause) {
+    public MalformedRdfException(final String msg, final Throwable rootCause) {
         super(msg, rootCause);
     }
 

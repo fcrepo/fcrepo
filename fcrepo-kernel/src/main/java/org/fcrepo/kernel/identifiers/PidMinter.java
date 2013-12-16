@@ -29,11 +29,13 @@ public interface PidMinter {
 
     /**
      * Mint a new PID
+     * @return a new identifier
      */
     String mintPid();
 
     /**
      * Provide a helpful function to mint any number of PIDs
+     * @return a function for minting new identifiers
      */
     Function<Object, String> makePid();
 }
