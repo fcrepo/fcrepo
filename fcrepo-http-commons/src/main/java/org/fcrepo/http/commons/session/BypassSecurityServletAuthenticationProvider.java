@@ -63,11 +63,11 @@ public class BypassSecurityServletAuthenticationProvider implements
 
         private String userName;
 
-        /*
+        /**
          * Create a new security context with the given user name
+         * @param userName User name to assign to the anonymous admin
          */
         public AnonymousAdminSecurityContext(final String userName) {
-
             this.userName = userName;
         }
 
