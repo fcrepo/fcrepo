@@ -13,7 +13,7 @@
 
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration:config/rest-sessions/repository.json}"/>
+        p:repositoryConfiguration="${fcrepo.modeshape.configuration:config/minimal-default/repository.json}"/>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
