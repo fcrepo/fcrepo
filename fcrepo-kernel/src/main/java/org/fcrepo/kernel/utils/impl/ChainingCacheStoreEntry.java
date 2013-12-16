@@ -70,28 +70,30 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
      * Get the set of LowLevelCacheEntries for each of the Chained cache stores
      */
     public Set<LowLevelCacheEntry> chainedEntries() {
-        Set<CacheStore> stores = this.store.getStores().keySet();
-        Set<LowLevelCacheEntry> result = new HashSet<LowLevelCacheEntry>(stores.size());
+        final Set<CacheStore> stores = this.store.getStores().keySet();
+        final Set<LowLevelCacheEntry> result = new HashSet<LowLevelCacheEntry>(stores.size());
+
         for (CacheStore store: stores) {
-            String cacheName = null;
-            CacheStoreConfiguration config = this.store.getStores().get(store);
+            final CacheStoreConfiguration config = this.store.getStores().get(store);
+
+            String cacheStoreName = null;
 
             if (config instanceof FileCacheStoreConfiguration) {
-                cacheName = ((FileCacheStoreConfiguration)config).location();
+                cacheStoreName = ((FileCacheStoreConfiguration)config).location();
             }
 
-            if (config instanceof AbstractStoreConfiguration && cacheName == null) {
+            if (config instanceof AbstractStoreConfiguration && cacheStoreName == null) {
                 Object name = ((AbstractStoreConfiguration)config).properties().get("id");
                 if (name != null) {
-                    cacheName = name.toString();
+                    cacheStoreName = name.toString();
                 }
             }
 
-            if (cacheName == null) {
-                cacheName = this.cacheName;
+            if (cacheStoreName == null) {
+                cacheStoreName = this.cacheName;
             }
 
-            result.add(new CacheStoreEntry(store, cacheName, key));
+            result.add(new CacheStoreEntry(store, cacheStoreName, key));
         }
         return result;
     }

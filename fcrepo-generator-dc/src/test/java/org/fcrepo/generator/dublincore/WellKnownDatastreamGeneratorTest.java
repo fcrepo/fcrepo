@@ -17,7 +17,7 @@
 package org.fcrepo.generator.dublincore;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,7 +47,7 @@ public class WellKnownDatastreamGeneratorTest {
     public void testGetStreamAbsent() {
         final Node mockNode = mock(Node.class);
         final InputStream actual = testObj.getStream(mockNode);
-        assertTrue(actual == null);
+        assertNull(actual);
     }
 
     @Test

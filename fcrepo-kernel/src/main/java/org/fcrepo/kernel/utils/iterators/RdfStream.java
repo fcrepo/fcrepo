@@ -55,7 +55,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
 
     protected Node topic;
 
-    private final static Triple[] NONE = new Triple[] {};
+    private static final Triple[] NONE = new Triple[] {};
 
     /**
      * Constructor that begins the stream with proffered triples.

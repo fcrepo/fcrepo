@@ -16,6 +16,8 @@
 package org.fcrepo.kernel;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
@@ -33,11 +35,9 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -57,6 +57,8 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFrozen;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.nodetype2name;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.property2values;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -222,12 +224,9 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      */
     public Collection<String> getModels() throws RepositoryException {
         if (isFrozen.apply(node)) {
-            Collection<String> results = new ArrayList<String>();
-            PropertyIterator pIt = node.getProperties(FROZEN_MIXIN_TYPES);
-            while (pIt.hasNext()) {
-                results.add(pIt.nextProperty().getString());
-            }
-            return results;
+            return Lists.newArrayList(
+                Iterators.transform(
+                    property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string));
         } else {
             return map(node.getMixinNodeTypes(), nodetype2name);
         }
@@ -412,7 +411,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         final Date lastModifiedDate = getLastModifiedDate();
 
         if (lastModifiedDate != null) {
-            return shaHex(node.getPath() + lastModifiedDate.toString());
+            return shaHex(node.getPath() + lastModifiedDate);
         } else {
             return "";
         }

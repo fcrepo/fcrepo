@@ -34,6 +34,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
@@ -137,8 +138,9 @@ public class AccessRoles extends AbstractResource {
         try {
             validatePOST(data);
         } catch (final IllegalArgumentException e) {
-            return Response.status(Status.BAD_REQUEST).build();
+            throw new WebApplicationException(e, Response.status(Status.BAD_REQUEST).build());
         }
+
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);

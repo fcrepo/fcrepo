@@ -130,7 +130,7 @@ public class FixityResult {
 
     @Override
     public String toString() {
-        return "Fixity: checksum: " + computedChecksum.toString() + " / " +
+        return "Fixity: checksum: " + computedChecksum + " / " +
             Long.toString(computedSize);
     }
 

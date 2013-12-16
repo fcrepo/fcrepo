@@ -16,7 +16,7 @@
 
 package org.fcrepo.generator.dublincore;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import java.io.InputStream;
@@ -48,6 +48,6 @@ public class WorstCaseGeneratorTest {
         final InputStream out = testObj.getStream(mockNode);
         final OaiDublinCore actual =
                 (OaiDublinCore) context.createUnmarshaller().unmarshal(out);
-        assertTrue(actual != null);
+        assertNotNull(actual);
     }
 }

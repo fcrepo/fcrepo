@@ -39,7 +39,7 @@ public class DefaultPropertiesLoader {
 
     private static final Logger LOGGER = getLogger(DefaultPropertiesLoader.class);
 
-    final private static String SEP = getProperty("file.separator");
+    private static final String SEP = getProperty("file.separator");
 
     /**
      * @author awoods

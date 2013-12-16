@@ -156,7 +156,7 @@ public class FedoraBatch extends AbstractResource {
 
         try {
 
-            Set<Node> nodesChanged = new HashSet<Node>();
+            final Set<Node> nodesChanged = new HashSet<Node>();
 
             // iterate through the multipart entities
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -319,7 +319,7 @@ public class FedoraBatch extends AbstractResource {
         try {
             final String path = toPath(pathList);
             for (final String dsid : childList) {
-                String dsPath = path + "/" + dsid;
+                final String dsPath = path + "/" + dsid;
                 LOGGER.debug("purging node {}", dsPath);
                 nodeService.deleteObject(session, dsPath);
             }

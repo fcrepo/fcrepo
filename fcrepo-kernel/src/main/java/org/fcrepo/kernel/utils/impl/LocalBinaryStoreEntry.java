@@ -94,7 +94,7 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
             return getExternalId() + "/" + store.getClass().getName() + ":" +
                 fsStore.getDirectory().toPath();
         } else {
-            return getExternalId() + "/" + store.toString();
+            return getExternalId() + "/" + store;
         }
     }
 

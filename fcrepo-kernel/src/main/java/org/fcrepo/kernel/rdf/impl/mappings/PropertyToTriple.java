@@ -55,7 +55,7 @@ public class PropertyToTriple implements
 
     private GraphSubjects graphSubjects;
 
-    private final static Logger LOGGER = getLogger(PropertyToTriple.class);
+    private static final Logger LOGGER = getLogger(PropertyToTriple.class);
 
     /**
      * Default constructor. We require a {@link GraphSubjects} in order to

@@ -214,7 +214,7 @@ public class NodePropertiesTools {
 
             } else {
                 if (property.getValue().equals(valueToRemove)) {
-                    LOGGER.debug("Removing value {} property {}", propertyName);
+                    LOGGER.debug("Removing value from property {}", propertyName);
                     property.setValue((Value)null);
 
                     if (property.getType() == URI && node.hasProperty(getReferencePropertyName(propertyName))) {

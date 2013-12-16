@@ -47,7 +47,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
     private final Resource context;
     private final Session session;
 
-    private final static Logger LOGGER = getLogger(DefaultGraphSubjects.class);
+    private static final Logger LOGGER = getLogger(DefaultGraphSubjects.class);
 
 
     /**

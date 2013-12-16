@@ -15,6 +15,7 @@
  */
 package org.fcrepo.auth.oauth.api;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_FOUND;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.oltu.oauth2.as.response.OAuthASResponse
@@ -112,7 +113,7 @@ public class AuthzEndpoint extends AbstractResource {
                     builder.setParam("client_id", client);
                 }
 
-                String clientSecret = oauthRequest.getClientSecret();
+                final String clientSecret = oauthRequest.getClientSecret();
                 if (null != clientSecret) {
                     builder.setParam("client_secret", clientSecret);
                 } else {
@@ -120,7 +121,7 @@ public class AuthzEndpoint extends AbstractResource {
                 }
 
             } else {
-                String errorDesc =
+                final String errorDesc =
                     "Invalid response_type parameter value \"" +
                     responseType + "\"";
                 LOGGER.debug(errorDesc);
@@ -155,9 +156,10 @@ public class AuthzEndpoint extends AbstractResource {
             final String redirectUri = e.getRedirectUri();
 
             if (isEmpty(redirectUri)) {
-                throw new WebApplicationException(e, responseBuilder.entity(
-                        "OAuth callback url needs to be provided by client!")
-                        .build());
+                throw new WebApplicationException(e,
+                    responseBuilder.status(SC_BAD_REQUEST)
+                                   .entity("OAuth callback url needs to be provided by client!")
+                                   .build());
             }
             final OAuthResponse response =
                     errorResponse(SC_FOUND).error(e).location(redirectUri)

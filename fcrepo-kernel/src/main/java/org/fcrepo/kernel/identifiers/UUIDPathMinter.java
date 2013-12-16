@@ -56,6 +56,7 @@ public class UUIDPathMinter extends BasePidMinter {
      * @param count how many branch nodes should be inserted
      */
     public UUIDPathMinter(final int length, final int count) {
+        super();
         this.length = length;
         this.count = count;
     }

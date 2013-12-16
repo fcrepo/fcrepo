@@ -187,7 +187,7 @@ public class FedoraNodes extends AbstractResource {
                     resource.getHierarchyTriples(subjects)).session(session)
                     .topic(subjects.getGraphSubject(resource.getNode())
                             .asNode());
-        if (realLimit != -2) {
+        if (realLimit != NO_MEMBER_PROPERTIES) {
             final Node firstPage =
                 createURI(uriInfo.getRequestUriBuilder().replaceQueryParam(
                         "offset", 0).replaceQueryParam("limit", limit).build()

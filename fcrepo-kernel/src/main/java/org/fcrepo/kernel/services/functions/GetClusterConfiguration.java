@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.services.functions;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.LinkedHashMap;
@@ -52,6 +52,7 @@ public class GetClusterConfiguration implements
     public static final String NODE_VIEW = "clusterNodeView";
     public static final String CLUSTER_SIZE = "clusterSize";
     public static final String CLUSTER_MEMBERS = "clusterMembers";
+    public static final int UNKNOWN_NODE_VIEW = -1;
 
     private GetBinaryStore getBinaryStore = new GetBinaryStore();
 
@@ -62,49 +63,46 @@ public class GetClusterConfiguration implements
      */
     @Override
     public Map<String, String> apply(final Repository input) {
-        checkArgument(input != null, "null cannot have a BinaryStore!");
+        checkNotNull(input, "null cannot have a BinaryStore!");
 
-        Map<String, String> result =
-                new LinkedHashMap<String, String>();
-        try {
-            BinaryStore store = getBinaryStore.apply(input);
+        final Map<String, String> result =
+            new LinkedHashMap<String, String>();
+        final BinaryStore store = getBinaryStore.apply(input);
 
-            if (!(store instanceof InfinispanBinaryStore)) {
-                return result;
-
-            }
-            InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
-
-            List<Cache<?, ?>> caches = ispnStore.getCaches();
-            DefaultCacheManager cm =
-                    (DefaultCacheManager) caches.get(0).getCacheManager();
-
-            if (cm == null) {
-                LOGGER.debug("Could not get cluster configuration information");
-                return result;
-            }
-
-            int nodeView = -1;
-            if (cm.getTransport() != null) {
-                nodeView = cm.getTransport().getViewId() + 1;
-            }
-
-            result.put(CLUSTER_NAME, cm.getClusterName());
-            result.put(CACHE_MODE, cm.getCache().getCacheConfiguration()
-                    .clustering().cacheMode().toString());
-            result.put(NODE_ADDRESS, cm.getNodeAddress());
-            result.put(PHYSICAL_ADDRESS, cm.getPhysicalAddresses());
-            result.put(NODE_VIEW, nodeView == -1 ?
-                       "Unknown" :
-                       String.valueOf(nodeView));
-            result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));
-            result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
-            return result;
-        } catch (Exception e) {
-            LOGGER.debug("Could not get cluster configuration information: {}",
-                            e);
+        if (!(store instanceof InfinispanBinaryStore)) {
             return result;
         }
+
+        final InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
+
+        final List<Cache<?, ?>> caches = ispnStore.getCaches();
+        final DefaultCacheManager cm =
+            (DefaultCacheManager) caches.get(0).getCacheManager();
+
+        if (cm == null) {
+            LOGGER.debug("Could not get cluster configuration information");
+            return result;
+        }
+
+        final int nodeView;
+
+        if (cm.getTransport() != null) {
+            nodeView = cm.getTransport().getViewId() + 1;
+        } else {
+            nodeView = UNKNOWN_NODE_VIEW;
+        }
+
+        result.put(CLUSTER_NAME, cm.getClusterName());
+        result.put(CACHE_MODE, cm.getCache().getCacheConfiguration()
+                                   .clustering().cacheMode().toString());
+        result.put(NODE_ADDRESS, cm.getNodeAddress());
+        result.put(PHYSICAL_ADDRESS, cm.getPhysicalAddresses());
+        result.put(NODE_VIEW, nodeView == UNKNOWN_NODE_VIEW ?
+                                  "Unknown" :
+                                  String.valueOf(nodeView));
+        result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));
+        result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
+        return result;
     }
 
 }

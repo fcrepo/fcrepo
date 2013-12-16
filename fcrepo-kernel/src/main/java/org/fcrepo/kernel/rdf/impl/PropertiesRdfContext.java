@@ -57,7 +57,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
 
     private PropertyToTriple property2triple;
 
-    private final static Logger LOGGER = getLogger(PropertiesRdfContext.class);
+    private static final Logger LOGGER = getLogger(PropertiesRdfContext.class);
 
     /**
      * Default constructor.

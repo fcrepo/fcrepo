@@ -33,7 +33,7 @@ import static org.fcrepo.kernel.utils.FixityResult.FixityState.MISSING_STORED_FI
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-abstract public class BasicCacheEntry implements CacheEntry {
+public abstract class BasicCacheEntry implements CacheEntry {
 
     private static final Logger LOGGER = getLogger(BasicCacheEntry.class);
 

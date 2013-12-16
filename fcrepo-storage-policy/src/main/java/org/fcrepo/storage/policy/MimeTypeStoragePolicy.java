@@ -108,7 +108,9 @@ public class MimeTypeStoragePolicy implements StoragePolicy {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        MimeTypeStoragePolicy other = (MimeTypeStoragePolicy) obj;
+
+        final MimeTypeStoragePolicy other = (MimeTypeStoragePolicy) obj;
+
         if (hint == null) {
             if (other.hint != null) {
                 return false;

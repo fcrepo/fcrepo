@@ -18,11 +18,11 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.commons.exceptionhandlers.WildcardExceptionMapper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,6 +44,6 @@ public class WildcardExceptionMapperTest {
         testObj.showStackTrace = false;
         actual = testObj.toResponse(input);
         assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
-        assertEquals(null, actual.getEntity());
+        assertNull(actual.getEntity());
     }
 }

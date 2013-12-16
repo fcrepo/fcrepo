@@ -99,32 +99,32 @@ public class FedoraTransform extends AbstractResource {
             transformationFactory = new TransformationFactory();
         }
 
-        final Session session = sessions.getInternalSession();
+        final Session internalSession = sessions.getInternalSession();
         try {
             final JcrTools jcrTools = new JcrTools(true);
 
             // register our CND
-            jcrTools.registerNodeTypes(session, "ldpath.cnd");
+            jcrTools.registerNodeTypes(internalSession, "ldpath.cnd");
 
             // create the configuration base path
-            jcrTools.findOrCreateNode(session,
+            jcrTools.findOrCreateNode(internalSession,
                     "/fedora:system/fedora:transform", "fedora:configuration",
                     "fedora:node_type_configuration");
             final Node node =
-                jcrTools.findOrCreateNode(session, CONFIGURATION_FOLDER
+                jcrTools.findOrCreateNode(internalSession, CONFIGURATION_FOLDER
                         + "default", NT_FOLDER, NT_FOLDER);
             LOGGER.debug("Transforming node: {}", node.getPath());
             // register an initial demo program
             if (!node.hasNode(NT_BASE)) {
                 final Node baseConfig = node.addNode(NT_BASE, NT_FILE);
-                jcrTools.uploadFile(session, baseConfig.getPath(), getClass()
+                jcrTools.uploadFile(internalSession, baseConfig.getPath(), getClass()
                         .getResourceAsStream(
                                 "/ldpath/default/nt_base_ldpath_program.txt"));
             }
 
-            session.save();
+            internalSession.save();
         } finally {
-            session.logout();
+            internalSession.logout();
         }
     }
 

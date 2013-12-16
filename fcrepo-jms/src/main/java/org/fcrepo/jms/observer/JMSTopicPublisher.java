@@ -89,7 +89,7 @@ public class JMSTopicPublisher {
      */
     @PostConstruct
     public void acquireConnections() throws JMSException, RepositoryException {
-        LOGGER.debug("Initializing: " + this.getClass().getCanonicalName());
+        LOGGER.debug("Initializing: {}", this.getClass().getCanonicalName());
 
         connection = connectionFactory.createConnection();
         connection.start();
@@ -105,7 +105,7 @@ public class JMSTopicPublisher {
      */
     @PreDestroy
     public void releaseConnections() throws JMSException {
-        LOGGER.debug("Tearing down: " + this.getClass().getCanonicalName());
+        LOGGER.debug("Tearing down: {}", this.getClass().getCanonicalName());
 
         producer.close();
         jmsSession.close();

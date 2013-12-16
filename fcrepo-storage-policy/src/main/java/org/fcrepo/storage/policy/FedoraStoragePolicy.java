@@ -95,17 +95,16 @@ public class FedoraStoragePolicy extends AbstractResource {
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException,
         IOException {
-        final JcrTools jcrTools = getJcrTools();
-        Session session = null;
+        Session internalSession = null;
         try {
-            session = sessions.getInternalSession();
-            jcrTools.findOrCreateNode(session,
+            internalSession = sessions.getInternalSession();
+            getJcrTools().findOrCreateNode(internalSession,
                                          FEDORA_STORAGE_POLICY_PATH, null);
-            session.save();
+            internalSession.save();
             LOGGER.debug("Created configuration node");
         } finally {
-            if (session != null) {
-                session.logout();
+            if (internalSession != null) {
+                internalSession.logout();
             }
         }
     }
@@ -124,7 +123,7 @@ public class FedoraStoragePolicy extends AbstractResource {
     public Response post(final @PathParam("path") String path,
                          final String request) throws RepositoryException {
         LOGGER.debug("POST Received request param: {}", request);
-        Response.ResponseBuilder response;
+        final Response.ResponseBuilder response;
 
         if (!path.equalsIgnoreCase(POLICY_RESOURCE)) {
             return methodNotAllowed().entity(
@@ -133,12 +132,11 @@ public class FedoraStoragePolicy extends AbstractResource {
                     .build();
         }
 
-        final JcrTools jcrTools = getJcrTools();
         final String[] str = StringUtils.split(request); // simple split for now
         validateArgs(str.length);
         try {
             final Node node =
-                jcrTools.findOrCreateNode(session,
+                getJcrTools().findOrCreateNode(session,
                                              FEDORA_STORAGE_POLICY_PATH, "test");
             if (isValidNodeTypeProperty(session, str[0]) ||
                 isValidConfigurationProperty(str[0])) {
@@ -202,7 +200,7 @@ public class FedoraStoragePolicy extends AbstractResource {
         try {
             LOGGER.debug("Deleting node property{}", nodeType);
             final Node node =
-                jcrTools.findOrCreateNode(session,
+                getJcrTools().findOrCreateNode(session,
                                              FEDORA_STORAGE_POLICY_PATH, "test");
             if (isValidNodeTypeProperty(session, nodeType)) {
                 node.getProperty(nodeType).remove();
@@ -253,16 +251,16 @@ public class FedoraStoragePolicy extends AbstractResource {
         Response.ResponseBuilder response;
         try {
             final Node node =
-                    jcrTools.findOrCreateNode(session,
+                getJcrTools().findOrCreateNode(session,
                                                  FEDORA_STORAGE_POLICY_PATH,
                                               "test");
 
-            Property prop = node.getProperty(nodeType);
+            final Property prop = node.getProperty(nodeType);
             if (null == prop) {
                 throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
             }
 
-            Value[] values = prop.getValues();
+            final Value[] values = prop.getValues();
             if (values != null && values.length > 0) {
                 response = Response.ok(values[0].getString());
             } else {

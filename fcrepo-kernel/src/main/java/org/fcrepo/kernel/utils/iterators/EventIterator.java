@@ -39,6 +39,7 @@ public class EventIterator extends ForwardingIterator<Event> implements Iterable
      * @param i
      */
     public EventIterator(final javax.jcr.observation.EventIterator i) {
+        super();
         this.i = i;
     }
 

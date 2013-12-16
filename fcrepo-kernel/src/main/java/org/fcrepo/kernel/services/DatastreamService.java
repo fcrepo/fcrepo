@@ -258,7 +258,7 @@ public class DatastreamService extends RepositoryService {
             try {
                 // we can safely cast to a LowLevelCacheEntry here, since
                 // other entries have to be filtered out before
-                LowLevelCacheEntry lle = (LowLevelCacheEntry) result.getEntry();
+                final LowLevelCacheEntry lle = (LowLevelCacheEntry) result.getEntry();
                 lle.storeValue(anyGoodCacheEntry.getInputStream());
                 final FixityResult newResult =
                         result.getEntry().checkFixity(digestUri, size);

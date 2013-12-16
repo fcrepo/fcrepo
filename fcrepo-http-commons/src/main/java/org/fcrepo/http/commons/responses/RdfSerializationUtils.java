@@ -139,8 +139,7 @@ public class RdfSerializationUtils {
         final Object dateObject = iterator.next().getObject().getLiteralValue();
 
         if (!(dateObject instanceof XSDDateTime)) {
-            LOGGER.debug("Found last-modified date, but it was"
-                             + "not an XSDDateTime: {}", dateObject);
+            LOGGER.debug("Found last-modified date, but it was not an XSDDateTime: {}", dateObject);
 
             return;
         }

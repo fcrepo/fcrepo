@@ -79,6 +79,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     private JcrPropertyStatementListener(final GraphSubjects subjects,
             final Session session, final Model problems) throws RepositoryException {
+        super();
         this.session = session;
         this.subjects = subjects;
         this.problems = problems;

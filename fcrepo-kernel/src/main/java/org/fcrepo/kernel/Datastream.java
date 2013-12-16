@@ -294,7 +294,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
     private void decorateContentNode(final Node contentNode)
         throws RepositoryException {
         if (contentNode == null) {
-            LOGGER.warn("{}/{} appears to be null!", JCR_CONTENT);
+            LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
             return;
         }
         if (contentNode.canAddMixin(FEDORA_BINARY)) {
@@ -311,8 +311,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
         contentNode.setProperty(CONTENT_DIGEST, ContentDigest.
                                 asURI("SHA-1", dsChecksum).toString());
 
-        LOGGER.debug("Decorated data property at path: " +
-                     dataProperty.getPath());
+        LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
     }
 
     /**

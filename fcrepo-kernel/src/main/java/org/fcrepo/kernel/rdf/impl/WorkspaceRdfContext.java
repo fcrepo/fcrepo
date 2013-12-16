@@ -58,6 +58,7 @@ public class WorkspaceRdfContext extends RdfStream {
      */
     public WorkspaceRdfContext(final Session session, final GraphSubjects subjects)
         throws RepositoryException {
+        super();
 
         final String[] workspaces =
             session.getWorkspace().getAccessibleWorkspaceNames();

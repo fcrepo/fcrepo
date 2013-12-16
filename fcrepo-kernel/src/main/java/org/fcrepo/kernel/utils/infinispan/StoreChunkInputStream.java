@@ -76,6 +76,7 @@ public class StoreChunkInputStream extends InputStream {
      * @param key
      */
     public StoreChunkInputStream(final CacheStore blobCache, final String key) {
+        super();
         this.blobCache = blobCache;
         this.key = key;
     }
@@ -141,7 +142,7 @@ public class StoreChunkInputStream extends InputStream {
         }
         // do not load a new buffer if skippable bytes remain in current buffer
         if (indexInBuffer + n >= buffer.length) {
-            long skipped = buffer.length - indexInBuffer;
+            final long skipped = buffer.length - indexInBuffer;
             // but make sure a new buffer is loaded on next skip/read
             buffer = null;
             indexInBuffer = 0;

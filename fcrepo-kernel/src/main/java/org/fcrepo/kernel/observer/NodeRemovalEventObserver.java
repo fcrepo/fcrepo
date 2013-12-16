@@ -99,17 +99,16 @@ public class NodeRemovalEventObserver implements EventListener {
         // emit node removal events
         while (events.hasNext()) {
             final Event e = events.nextEvent();
-            String ePath;
             try {
-                ePath = e.getPath();
-                int ls = ePath.lastIndexOf('/');
+                final String ePath = e.getPath();
+                final int ls = ePath.lastIndexOf('/');
                 // only propagate non-jcr node removals
                 if (!ePath.startsWith("jcr:", ls + 1)) {
                     LOGGER.debug("Putting event: {} on the bus", e);
                     EVENT_COUNTER.inc();
                     eventBus.post(e);
                 }
-            } catch (RepositoryException ex) {
+            } catch (final RepositoryException ex) {
                 throw propagate(ex);
             }
         }

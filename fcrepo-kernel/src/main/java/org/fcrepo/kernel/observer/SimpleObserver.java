@@ -119,36 +119,32 @@ public class SimpleObserver implements EventListener {
             lookupSession = repository.login();
             for (final Event e : transform(new EventIterator(events), eventFilter.getFilter(lookupSession))) {
                 if (e != null) {
-                    String nPath = e.getPath();
-                    int nType = e.getType();
+                    final String nodePath;
+                    final String eventPath = e.getPath();
+                    final int nType = e.getType();
                     // is jump table faster than two bitwise comparisons?
                     switch(nType) {
                         case NODE_ADDED:
-                            break;
                         case NODE_REMOVED:
+                        case NODE_MOVED:
+                            nodePath = eventPath;
                             break;
                         case PROPERTY_ADDED:
-                            nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                            break;
                         case PROPERTY_REMOVED:
-                            nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                            break;
                         case PROPERTY_CHANGED:
-                            nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                            break;
-                        case NODE_MOVED:
+                            nodePath = eventPath.substring(0, eventPath.lastIndexOf('/'));
                             break;
                         default:
-                            nPath = null;
+                            nodePath = null;
                             break;
                     }
-                    if ( nPath != null && !posted.contains(nPath) ) {
+                    if ( nodePath != null && !posted.contains(nodePath) ) {
                         EVENT_COUNTER.inc();
-                        LOGGER.debug("Putting event: {} ({}) on the bus", nPath, nType);
+                        LOGGER.debug("Putting event: {} ({}) on the bus", nodePath, nType);
                         eventBus.post(e);
-                        posted.add(nPath);
+                        posted.add(nodePath);
                     } else {
-                        LOGGER.debug("Skipping event: {} ({}) on the bus", nPath, nType);
+                        LOGGER.debug("Skipping event: {} ({}) on the bus", nodePath, nType);
                     }
                 }
             }

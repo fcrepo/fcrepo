@@ -51,6 +51,7 @@ import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -416,7 +417,7 @@ public class JcrRdfToolsTest {
             testObj.getJcrPropertiesModel(
                     new org.fcrepo.kernel.utils.iterators.NodeIterator(
                             mockNodes), mockResource).asModel();
-        assertTrue(model != null);
+        assertNotNull(model);
     }
 
     @Test

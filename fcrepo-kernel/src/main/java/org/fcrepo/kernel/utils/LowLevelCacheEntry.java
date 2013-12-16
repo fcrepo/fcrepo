@@ -39,6 +39,7 @@ public abstract class LowLevelCacheEntry extends BasicCacheEntry {
     protected final BinaryKey key;
 
     protected LowLevelCacheEntry(final BinaryKey key) {
+        super();
         this.key = key;
         this.externalId = "";
     }

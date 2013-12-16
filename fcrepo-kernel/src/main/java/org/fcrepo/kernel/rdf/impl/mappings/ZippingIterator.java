@@ -49,6 +49,7 @@ public class ZippingIterator<FromType, ToType> extends AbstractIterator<ToType> 
      */
     public ZippingIterator(final Iterator<FromType> from,
             final Iterator<Function<FromType, ToType>> through) {
+        super();
         this.from = from;
         this.through = through;
     }

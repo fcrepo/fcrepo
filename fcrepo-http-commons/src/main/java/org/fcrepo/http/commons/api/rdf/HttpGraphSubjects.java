@@ -78,16 +78,16 @@ public class HttpGraphSubjects implements GraphSubjects {
     public HttpGraphSubjects(final Session session, final Class<?> relativeTo, final UriInfo uris) {
         this.context = uris.getRequestUri();
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
-        String basePath = nodesBuilder.build("").toString();
-        if (!basePath.endsWith("/")) {
-            basePath = basePath + "/";
+        String normalizedBasePath = nodesBuilder.build("").toString();
+        if (!normalizedBasePath.endsWith("/")) {
+            normalizedBasePath = normalizedBasePath + "/";
         }
-        this.basePath = basePath;
-        this.pathIx = basePath.length() - 1;
+        this.basePath = normalizedBasePath;
+        this.pathIx = normalizedBasePath.length() - 1;
         this.session = session;
         this.defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
-                basePath);
+                normalizedBasePath);
     }
 
     @Override

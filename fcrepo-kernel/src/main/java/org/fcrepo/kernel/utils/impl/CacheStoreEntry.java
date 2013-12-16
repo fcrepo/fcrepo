@@ -71,7 +71,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
      */
     @Override
     public InputStream getInputStream() throws BinaryStoreException {
-        return new StoreChunkInputStream(store, key.toString() +
+        return new StoreChunkInputStream(store, key +
                                              DATA_SUFFIX);
     }
 
@@ -91,7 +91,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
                     getExternalIdentifier(), key);
 
         final OutputStream outputStream =
-                new StoreChunkOutputStream(store, key.toString() +
+                new StoreChunkOutputStream(store, key +
                                            DATA_SUFFIX);
         IOUtils.copy(stream, outputStream);
         outputStream.close();
@@ -125,7 +125,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
             return getExternalId() + "/" + store.getClass().getName() + ":" +
                     cacheName + ":" +
                     AbstractCacheStoreConfig.class.getPackage() +
-                    "ChainingCacheStoreConfig:" + ispnExternalId;
+                    "ChainingCacheStoreConfig";
         }
 
         if (ispnExternalId == null) {

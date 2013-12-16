@@ -111,7 +111,7 @@ public class FedoraEvent implements Event {
             return toStringHelper(this).add(
                     "Event type:",
                     REPOSITORY_NAMESPACE
-                            + EventType.valueOf(getType()).toString()).add(
+                            + EventType.valueOf(getType())).add(
                     "Path:", getPath()).add("Date: ", getDate()).add("Info:",
                     getInfo()).toString();
         } catch (final RepositoryException e) {

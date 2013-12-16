@@ -59,7 +59,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     }
 
     private static String getEventURI(final int type) {
-        return REPOSITORY_NAMESPACE + EventType.valueOf(type).toString();
+        return REPOSITORY_NAMESPACE + EventType.valueOf(type);
     }
 
 }

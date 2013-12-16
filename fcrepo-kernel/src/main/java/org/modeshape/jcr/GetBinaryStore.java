@@ -15,8 +15,7 @@
  */
 package org.modeshape.jcr;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Throwables.propagate;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import javax.jcr.Repository;
 
@@ -38,16 +37,11 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
      */
     @Override
     public BinaryStore apply(final Repository input) {
-        checkArgument(input != null, "null cannot have a BinaryStore!");
-        try {
-            assert(input != null);
-            JcrRepository.RunningState runningState = ((JcrRepository)input).
-                runningState();
+        checkNotNull(input, "null cannot have a BinaryStore!");
+        final JcrRepository.RunningState runningState = ((JcrRepository)input).runningState();
 
-            return runningState.binaryStore();
-        } catch (final Exception e) {
-            throw propagate(e);
-        }
+        return runningState.binaryStore();
+
     }
 
 }

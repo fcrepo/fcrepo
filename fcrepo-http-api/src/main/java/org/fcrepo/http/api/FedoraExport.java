@@ -75,8 +75,7 @@ public class FedoraExport extends AbstractResource {
 
         final String path = toPath(pathList);
 
-        LOGGER.debug("Requested object serialization for: " + path
-                         + " using serialization format " + format);
+        LOGGER.debug("Requested object serialization for {} using serialization format {}", path, format);
 
         final FedoraObjectSerializer serializer =
             serializers.getSerializer(format);
@@ -89,14 +88,11 @@ public class FedoraExport extends AbstractResource {
                         throws IOException {
 
                         try {
-                            LOGGER.debug("Selecting from serializer map: "
-                                             + serializers);
-                            LOGGER.debug("Retrieved serializer for format: "
-                                             + format);
+                            LOGGER.debug("Selecting from serializer map: {}", serializers);
+                            LOGGER.debug("Retrieved serializer for format: {}", format);
                             serializer.serialize(objectService.getObject(
                                     session, path), out);
-                            LOGGER.debug("Successfully serialized object: "
-                                             + path);
+                            LOGGER.debug("Successfully serialized object: {}", path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
                         } finally {

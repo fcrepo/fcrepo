@@ -61,7 +61,7 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class RootRdfContext extends NodeRdfContext {
 
-    private final static Logger LOGGER = getLogger(RootRdfContext.class);
+    private static final Logger LOGGER = getLogger(RootRdfContext.class);
 
     /**
      * Ordinary constructor.

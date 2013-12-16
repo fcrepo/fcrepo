@@ -161,7 +161,7 @@ public class JQLResultSet implements ResultSet {
         public RDFNode get(final String varName) {
             try {
                 return getRDFNode(row.getValue(varName));
-            } catch (final Exception e) {
+            } catch (final RepositoryException e) {
                 throw propagate(e);
             }
         }

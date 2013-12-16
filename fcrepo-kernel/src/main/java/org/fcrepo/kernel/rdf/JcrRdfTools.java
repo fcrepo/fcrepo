@@ -27,6 +27,8 @@ import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -82,7 +84,7 @@ public class JcrRdfTools {
      * A map of JCR namespaces to Fedora's RDF namespaces
      */
     public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
-        ImmutableBiMap.of("http://www.jcp.org/jcr/1.0",
+        ImmutableBiMap.of(JCR_NAMESPACE,
                 RdfLexicon.REPOSITORY_NAMESPACE);
 
     /**
@@ -351,8 +353,8 @@ public class JcrRdfTools {
             final Resource predicate) {
         switch (predicate.getNameSpace()) {
             case REPOSITORY_NAMESPACE:
-            case "http://www.jcp.org/jcr/1.0":
-            case "http://www.w3.org/ns/ldp#":
+            case JCR_NAMESPACE:
+            case LDP_NAMESPACE:
                 return true;
             default:
                 return false;
@@ -554,7 +556,7 @@ public class JcrRdfTools {
             final ImmutableBiMap<String, String> nsMap =
                 ImmutableBiMap.copyOf(namespaceMapping);
             if (nsMap.containsValue(namespace)) {
-                LOGGER.debug("Discovered namespace: {} in namespace map: {}.",
+                LOGGER.debug("Discovered namespace: {} in namespace map: {}.", namespace,
                         nsMap);
                 prefix = nsMap.inverse().get(namespace);
                 namespaceRegistry.registerNamespace(prefix, namespace);
@@ -567,8 +569,7 @@ public class JcrRdfTools {
 
         final String propertyName = prefix + ":" + localName;
 
-        LOGGER.debug("Took RDF predicate {} and translated it to "
-                + "JCR property {}", predicate, propertyName);
+        LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", predicate, propertyName);
 
         return propertyName;
 

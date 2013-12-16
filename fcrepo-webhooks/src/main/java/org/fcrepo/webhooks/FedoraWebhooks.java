@@ -105,10 +105,10 @@ public class FedoraWebhooks extends AbstractResource {
 
         eventBus.register(this);
 
-        final Session session = sessions.getInternalSession();
-        jcrTools.registerNodeTypes(session, "webhooks.cnd");
-        session.save();
-        session.logout();
+        final Session internalSession = sessions.getInternalSession();
+        jcrTools.registerNodeTypes(internalSession, "webhooks.cnd");
+        internalSession.save();
+        internalSession.logout();
     }
 
     /**

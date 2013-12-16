@@ -74,10 +74,13 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     public RdfStreamStreamingOutput(final RdfStream rdfStream,
             final MediaType mediaType) {
         super();
-        for (final RDFFormat format : RDFWriterRegistry.getInstance().getKeys()) {
-            LOGGER.debug("Discovered RDF writer format: {} with mimeTypes: {}",
-                    format.getName(), Joiner.on(" ")
-                            .join(format.getMIMETypes()));
+
+        if (LOGGER.isDebugEnabled()) {
+            for (final RDFFormat writeableFormats : RDFWriterRegistry.getInstance().getKeys()) {
+                LOGGER.debug("Discovered RDF writer writeableFormats: {} with mimeTypes: {}",
+                        writeableFormats.getName(), Joiner.on(" ")
+                                .join(writeableFormats.getMIMETypes()));
+            }
         }
         final RDFFormat format = Rio.getWriterFormatForMIMEType(mediaType.toString());
         if (format != null) {

@@ -69,6 +69,7 @@ public class VersionsRdfContext extends RdfStream {
     public VersionsRdfContext(final Node node, final GraphSubjects graphSubjects,
         final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
+        super();
         this.lowLevelStorageService = lowLevelStorageService;
         this.graphSubjects = graphSubjects;
         this.subject = graphSubjects.getGraphSubject(node).asNode();

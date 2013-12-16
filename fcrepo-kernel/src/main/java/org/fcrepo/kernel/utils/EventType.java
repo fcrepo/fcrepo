@@ -41,7 +41,7 @@ public enum EventType {
     NODE_MOVED(javax.jcr.observation.Event.NODE_MOVED, "node moved"),
     PERSIST(javax.jcr.observation.Event.PERSIST, "persist");
 
-    private final static Map<Integer, EventType> translation;
+    private static final Map<Integer, EventType> translation;
 
     private final Integer jcrEventType;
 

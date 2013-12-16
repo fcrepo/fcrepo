@@ -34,9 +34,11 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isMultipleValuedProperty;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
@@ -227,7 +229,7 @@ public class FedoraTypesUtilsTest {
         actual =
                 getDefinitionForPropertyName(mockNode, mockPropertyName +
                         ":fail");
-        assertEquals(null, actual);
+        assertNull(actual);
 
     }
 
@@ -337,7 +339,7 @@ public class FedoraTypesUtilsTest {
         when(mockIterator.getSize()).thenReturn(3L);
 
         final long count = getRepositoryCount(mockRepository);
-        assertTrue(count == 3L);
+        assertEquals(3L, count);
         verify(mockSession).logout();
         verify(mockSession, never()).save();
     }
@@ -377,7 +379,7 @@ public class FedoraTypesUtilsTest {
             value2string.apply(null);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion with null argument!");
-        } catch (final IllegalArgumentException e) {} // expected
+        } catch (final NullPointerException e) {} // expected
     }
 
     @Test
@@ -395,5 +397,27 @@ public class FedoraTypesUtilsTest {
         assertEquals("Found wrong Value!", testIterator.next(), mockValue);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
 
+    }
+
+    @Test
+    public void testPropertyContainsWithNull() throws RepositoryException {
+        assertFalse(propertyContains(null, "any-string"));
+    }
+
+    @Test
+    public void testSingleValuedPropertyContains() throws RepositoryException {
+        when(mockProperty.isMultiple()).thenReturn(false);
+        when(mockProperty.getString()).thenReturn("some-string");
+        assertTrue(propertyContains(mockProperty, "some-string"));
+        assertFalse(propertyContains(mockProperty, "some-other-string"));
+    }
+
+    @Test
+    public void testMultiValuedPropertyContains() throws RepositoryException {
+        when(mockProperty.isMultiple()).thenReturn(true);
+        when(mockProperty.getValues()).thenReturn(new Value[] { mockValue });
+        when(mockValue.getString()).thenReturn("some-string");
+        assertTrue(propertyContains(mockProperty, "some-string"));
+        assertFalse(propertyContains(mockProperty, "some-other-string"));
     }
 }

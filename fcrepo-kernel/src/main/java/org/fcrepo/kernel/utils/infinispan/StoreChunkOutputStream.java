@@ -67,6 +67,7 @@ public class StoreChunkOutputStream extends OutputStream {
      */
     public StoreChunkOutputStream(final CacheStore blobCache,
                                   final String keyPrefix) {
+        super();
         this.blobCache = blobCache;
         this.keyPrefix = keyPrefix;
         chunkBuffer = new ByteArrayOutputStream(CHUNK_BUFFER_SIZE);

@@ -184,10 +184,10 @@ public class LowLevelStorageService {
                 return getClusterResults((InfinispanBinaryStore) store, key,
                         transform);
             } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error("Interrupted getting cluster results for binary key {} ", key, e);
                 return emptySet();
             } catch (final ExecutionException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error("Execution exception getting cluster results for binary key {}", key, e);
                 return emptySet();
             }
         } else {
@@ -276,10 +276,10 @@ public class LowLevelStorageService {
         try {
             return getClusterResults(ispnStore, key, this.echo);
         } catch (final InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("Interrupted getting cluster results for binary key {} ", key, e);
             return emptySet();
         } catch (final ExecutionException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("Execution exception getting cluster results for binary key {}", key, e);
             return emptySet();
         }
     }

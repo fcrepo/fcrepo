@@ -26,10 +26,11 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.jcr.Workspace;
 import java.util.Collection;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -93,7 +94,7 @@ public class VersionService extends RepositoryService {
      */
     public void createVersion(final Workspace workspace,
             final Collection<String> paths) throws RepositoryException {
-        for (String absPath : paths) {
+        for (final String absPath : paths) {
             checkpoint(workspace, absPath);
         }
     }
@@ -106,25 +107,15 @@ public class VersionService extends RepositoryService {
         if (!n.hasProperty(VERSION_POLICY)) {
             return false;
         } else {
-            Property p = n.getProperty(VERSION_POLICY);
-            if (p == null) {
-                return false;
-            }
-            if (p.isMultiple()) {
-                for (Value val : p.getValues()) {
-                    if (AUTO_VERSION.equals(val.getString())) {
-                        return true;
-                    }
-                }
-            } else {
-                return (AUTO_VERSION.equals(p.getValue().getString()));
-            }
-            return false;
+            final Property p = n.getProperty(VERSION_POLICY);
+
+            return propertyContains(p, AUTO_VERSION);
         }
     }
 
     private void queueOrCommitCheckpoint(Session session, String absPath) throws RepositoryException {
-        String txId = TransactionService.getCurrentTransactionId(session);
+        final String txId = TransactionService.getCurrentTransactionId(session);
+
         if (txId == null) {
             checkpoint(session.getWorkspace(), absPath);
         } else {
@@ -138,7 +129,7 @@ public class VersionService extends RepositoryService {
     }
 
     private void queueCheckpoint(String txId, String absPath) throws TransactionMissingException {
-        Transaction tx = txService.getTransaction(txId);
+        final Transaction tx = txService.getTransaction(txId);
         LOGGER.trace("Queuing implicit version checkpoint set for {}", absPath);
         tx.addPathToVersion(absPath);
     }
@@ -153,17 +144,17 @@ public class VersionService extends RepositoryService {
      * @throws RepositoryException
      */
     public void checkpoint(Node node) throws RepositoryException {
-        if (node == null) {
-            throw new RepositoryException("Cannot checkpoint null nodes");
-        }
-        Session session = node.getSession();
-        String absPath = node.getPath();
+
+        checkNotNull(node, "Cannot checkpoint null nodes");
+
+        final Session session = node.getSession();
+        final String absPath = node.getPath();
         if (node.isNodeType(VERSIONABLE)) {
             LOGGER.trace("Setting checkpoint for {}", absPath);
 
-            String txId = TransactionService.getCurrentTransactionId(session);
+            final String txId = TransactionService.getCurrentTransactionId(session);
             if (txId != null) {
-                Transaction tx = txService.getTransaction(txId);
+                final Transaction tx = txService.getTransaction(txId);
                 tx.addPathToVersion(absPath);
             } else {
                 session.getWorkspace().getVersionManager().checkpoint(absPath);

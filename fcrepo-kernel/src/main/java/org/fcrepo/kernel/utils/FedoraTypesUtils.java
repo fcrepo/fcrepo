@@ -16,7 +16,6 @@
 
 package org.fcrepo.kernel.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
@@ -79,7 +78,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
         @Override
         public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Fedora object!");
+            checkNotNull(node, "null cannot be a Fedora object!");
             try {
                 return map(node.getMixinNodeTypes(), nodetype2name).contains(
                         FEDORA_RESOURCE);
@@ -97,7 +96,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
         @Override
         public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Frozen node!");
+            checkNotNull(node, "null cannot be a Frozen node!");
             try {
                 return node.getPrimaryNodeType().getName().equals(FROZEN_NODE);
             } catch (final RepositoryException e) {
@@ -113,7 +112,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static Predicate<Node> isOrWasFedoraResource = new Predicate<Node>() {
         @Override
         public boolean apply(final Node node) {
-            checkArgument(node != null, "null cannot be a Fedora object!");
+            checkNotNull(node, "null cannot be a Fedora object!");
             try {
                 if (node.getPrimaryNodeType().getName().equals(FROZEN_NODE)) {
                     final PropertyIterator it = node.getProperties(FROZEN_MIXIN_TYPES);
@@ -163,7 +162,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
             @Override
             public String apply(final NodeType t) {
-                checkArgument(t != null, "null has no name!");
+                checkNotNull(t, "null has no name!");
                 return t.getName();
             }
         };
@@ -177,8 +176,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             @Override
             public String apply(final Value v) {
                 try {
-                    checkArgument(v != null, "null has no appropriate "
-                            + "String representation!");
+                    checkNotNull(v, "null has no appropriate "
+                                        + "String representation!");
                     return v.getString();
                 } catch (final RepositoryException e) {
                     throw propagate(e);
@@ -201,7 +200,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                         return Iterators.forArray(p.getValues());
                     } else {
                         LOGGER.debug("Found single-valued property: {}", p);
-                        return Iterators.forArray(new Value[] {p.getValue()});
+                        return Iterators.forArray(p.getValue());
                     }
                 } catch (final RepositoryException e) {
                     throw propagate(e);
@@ -451,5 +450,25 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         session.logout();
 
         return sum;
+    }
+
+    /**
+     * Check if the property contains the given string value
+     * @param p
+     * @param value
+     * @return
+     */
+    public static boolean propertyContains(final Property p, final String value) throws RepositoryException {
+
+        if (p == null) {
+            return false;
+        }
+
+        if (p.isMultiple()) {
+            return Iterators.contains(Iterators.transform(Iterators.forArray(p.getValues()), value2string), value);
+        } else {
+            return value.equals(p.getString());
+        }
+
     }
 }
