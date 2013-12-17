@@ -26,5 +26,14 @@ $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
 
+### Jacoco Properties
+The Properties passed to the JVM used by the JaCoCo code coverage plugin can be set via 
+`jacoco.agent.it.arg` for integration tests  and `jacoco.agent.ut.arg` for unit tests:
+
+```bash
+$ MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=1024m" mvn -Djacoco.agent.it.arg="-XX:MaxPermSize=1024m -Xmx1024m" -Djacoco.agent.ut.arg="-XX:MaxPermSize=256m -Xmx1024m"  clean install
+```
+
+
 That's it! Your Fedora repository is up and running at: [http://localhost:8080/rest/](http://localhost:8080/rest/)
 

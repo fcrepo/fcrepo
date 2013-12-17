@@ -897,7 +897,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>${jacoco.agent.it.arg}</argLine>
+          <argLine>-XX:MaxPermSize=128m ${jacoco.agent.it.arg}</argLine>
         </configuration>
         <executions>
           <execution>
