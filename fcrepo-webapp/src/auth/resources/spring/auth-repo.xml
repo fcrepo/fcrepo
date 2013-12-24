@@ -18,7 +18,7 @@
                                                                                                                                                             
     <bean name="pep" class="org.fcrepo.auth.roles.basic.BasicRolesPEP"/>                                                                                      
                                                                                                                                                             
-    <bean name="authenticationProvider" class="org.fcrepo.auth.ServletContainerAuthenticationProvider">                                                       
+    <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
         <property name="pep" ref="pep"/>                                                                                                                      
     </bean>
 
