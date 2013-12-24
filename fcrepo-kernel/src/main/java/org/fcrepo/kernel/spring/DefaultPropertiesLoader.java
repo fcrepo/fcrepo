@@ -51,6 +51,7 @@ public class DefaultPropertiesLoader {
         OBJECT_STORE("com.arjuna.ats.arjuna.objectstore.objectStoreDir"),
         ISPN_CACHE("fcrepo.ispn.CacheDirPath"),
         ISPN_BIN_CACHE("fcrepo.ispn.binary.CacheDirPath"),
+        BIN_STORE_PATH("fcrepo.binary-store-path"),
         MODE_INDEX("fcrepo.modeshape.index.location"),
         ISPN_ALT_CACHE("fcrepo.ispn.alternative.CacheDirPath"),
         ISPN_BIN_ALT_CACHE("fcrepo.ispn.binary.alternative.CacheDirPath"),

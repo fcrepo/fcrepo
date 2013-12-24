@@ -20,7 +20,7 @@
         <div class="form-group">
             <textarea name="q" id="sparql_select_query" rows="15" class="form-control">
 $helpers.getPrefixPreamble($model)
-SELECT ?pid WHERE { }
+SELECT ?subject WHERE { }
             </textarea>
         </div>
 

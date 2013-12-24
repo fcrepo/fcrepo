@@ -12,3 +12,4 @@ ObjectStore/
 .DS_Store
 *~
 fcrepo4-data/
+*.iml

@@ -65,7 +65,7 @@ public class ModeShapeRepositoryFactoryBean implements
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
         if (repositoryConfiguration instanceof ClassPathResource) {
-            LOGGER.debug("Using repo config: {}",
+            LOGGER.info("Using repo config: {}",
                     ((ClassPathResource) repositoryConfiguration).getPath());
         }
 
