@@ -20,11 +20,13 @@ import static com.sun.jersey.api.Responses.methodNotAllowed;
 import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.http.commons.session.InjectedSession;
@@ -98,8 +100,7 @@ public class FedoraStoragePolicy extends AbstractResource {
         Session internalSession = null;
         try {
             internalSession = sessions.getInternalSession();
-            getJcrTools().findOrCreateNode(internalSession,
-                                         FEDORA_STORAGE_POLICY_PATH, null);
+            new FedoraResource(internalSession, FEDORA_STORAGE_POLICY_PATH, NT_FOLDER);
             internalSession.save();
             LOGGER.debug("Created configuration node");
         } finally {
