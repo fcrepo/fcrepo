@@ -32,6 +32,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -147,7 +148,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     @Test
     public void testCreateDoStuffAndCommitTransaction() throws Exception {
         /* create a tx */
-
         final String objectInTxCommit = randomUUID().toString();
 
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
@@ -181,7 +181,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 "Expected to not find our object within the scope of the transaction",
                 404, resp.getStatusLine().getStatusCode());
 
-        /* and rollback */
+        /* and commit */
         final HttpPost commitTx =
             new HttpPost(txLocation + "/fcr:tx/fcr:commit");
         resp = execute(commitTx);
@@ -196,6 +196,66 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertTrue("Expected to  find our object after the transaction was committed",
                       graphStore.toDataset().asDatasetGraph()
                           .contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
+
+    }
+
+    @Ignore("Until ticket is resolved: https://www.pivotaltracker.com/story/show/63029852")
+    @Test
+    public void testCreateDoStuffAndCommitTransactionSeparateConnections() throws Exception {
+        /* create a tx */
+        final String objectInTxCommit = randomUUID().toString();
+
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+
+        final HttpResponse response = execute(createTx);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+
+        final String txLocation =
+                response.getFirstHeader("Location").getValue();
+
+        /* create a new object inside the tx */
+        client = createClient();
+        final HttpPost postNew =
+                new HttpPost(txLocation + "/" + objectInTxCommit);
+        HttpResponse resp = execute(postNew);
+        assertEquals(201, resp.getStatusLine().getStatusCode());
+
+        /* fetch the created tx from the endpoint */
+        client = createClient();
+        final HttpGet getTx = new HttpGet(txLocation + "/" + objectInTxCommit);
+        GraphStore graphStore = getGraphStore(getTx);
+
+        logger.debug(graphStore.toString());
+
+        assertTrue(graphStore.toDataset().asDatasetGraph().contains(ANY,
+                                                                    createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
+
+        /* fetch the object-in-tx outside of the tx */
+        client = createClient();
+        final HttpGet getObj =
+                new HttpGet(serverAddress + objectInTxCommit);
+        resp = execute(getObj);
+        assertEquals(
+                "Expected to not find our object within the scope of the transaction",
+                404, resp.getStatusLine().getStatusCode());
+
+        /* and commit */
+        client = createClient();
+        final HttpPost commitTx =
+                new HttpPost(txLocation + "/fcr:tx/fcr:commit");
+        resp = execute(commitTx);
+
+        assertEquals(204, resp.getStatusLine().getStatusCode());
+
+        /* fetch the object-in-tx outside of the tx after it has been committed */
+        client = createClient();
+        final HttpGet getObjCommitted =
+                new HttpGet(serverAddress + objectInTxCommit);
+        graphStore = getGraphStore(getObjCommitted);
+
+        assertTrue("Expected to  find our object after the transaction was committed",
+                   graphStore.toDataset().asDatasetGraph()
+                           .contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
 
     }
 

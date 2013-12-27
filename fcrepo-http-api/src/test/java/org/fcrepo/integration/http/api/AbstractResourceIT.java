@@ -62,12 +62,11 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/";
 
-    protected static HttpClient client;
+    protected static HttpClient client = createClient();
 
-    static {
-        client =
-            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
-                    .setMaxConnTotal(MAX_VALUE).build();
+    protected static HttpClient createClient() {
+        return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
+                .setMaxConnTotal(MAX_VALUE).build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {
