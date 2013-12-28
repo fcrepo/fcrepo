@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.rdf.impl</a> &gt; <span class="el_source">NodeRdfContext.java</span></div><h1>NodeRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.rdf.impl;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterators.forArray;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.services.LowLevelStorageService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+
+/**
+ * {@link RdfStream} that holds contexts related to a specific {@link Node}.
+ *
+ * @author ajs6f
+ * @date Oct 10, 2013
+ */
+public class NodeRdfContext extends RdfStream {
+
+    private final Node node;
+
+    private final GraphSubjects graphSubjects;
+
+    private final com.hp.hpl.jena.graph.Node subject;
+
+    private final LowLevelStorageService lowLevelStorageService;
+
+<span class="fc" id="L58">    private static final Logger LOGGER = getLogger(NodeRdfContext.class);</span>
+
+    /**
+     * Default constructor.
+     *
+     * @param node
+     * @param graphSubjects
+     * @throws RepositoryException
+     */
+    public NodeRdfContext(final Node node, final GraphSubjects graphSubjects,
+        final LowLevelStorageService lowLevelStorageService)
+        throws RepositoryException {
+<span class="fc" id="L70">        super();</span>
+<span class="fc" id="L71">        this.node = node;</span>
+<span class="fc" id="L72">        this.graphSubjects = graphSubjects;</span>
+<span class="fc" id="L73">        this.subject = graphSubjects.getGraphSubject(node).asNode();</span>
+
+        // TODO fix GraphProperties to allow for LowLevelStorageServices to pass
+        // through it
+        // this is horribly ugly. LowLevelStorageServices are supposed to be
+        // managed beans.
+        // but the contract of GraphProperties isn't wide enough to pass one in,
+        // so rather than
+        // alter GraphProperties right now, I'm just spinning one on the fly.
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        if (lowLevelStorageService == null) {</span>
+<span class="fc" id="L83">            this.lowLevelStorageService = new LowLevelStorageService();</span>
+<span class="fc" id="L84">            this.lowLevelStorageService.setRepository(node.getSession()</span>
+                    .getRepository());
+        } else {
+<span class="fc" id="L87">            this.lowLevelStorageService = lowLevelStorageService;</span>
+        }
+
+        // add JCR mixins as rdf:type triples
+<span class="fc" id="L91">        final Iterator&lt;NodeType&gt; nodeTypes = forArray(node.getMixinNodeTypes());</span>
+<span class="fc" id="L92">        concat(Iterators.transform(nodeTypes, nodetype2triple()));</span>
+<span class="fc" id="L93">    }</span>
+
+    /**
+     * @return The {@link Node} in question
+     */
+    public Node node() {
+<span class="fc" id="L99">        return node;</span>
+    }
+
+    /**
+     * @return local {@link GraphSubjects}
+     */
+    public GraphSubjects graphSubjects() {
+<span class="fc" id="L106">        return graphSubjects;</span>
+    }
+
+    /**
+     * @return the RDF subject at the center of this context
+     */
+    public com.hp.hpl.jena.graph.Node subject() {
+<span class="fc" id="L113">        return subject;</span>
+    }
+
+    /**
+     * @return the {@link LowLevelStorageService} in scope
+     */
+    public LowLevelStorageService lowLevelStorageService() {
+<span class="fc" id="L120">        return lowLevelStorageService;</span>
+    }
+
+    private Function&lt;NodeType, Triple&gt; nodetype2triple() {
+<span class="fc" id="L124">        return new Function&lt;NodeType, Triple&gt;() {</span>
+
+            @Override
+            public Triple apply(final NodeType nodeType) {
+                try {
+<span class="fc" id="L129">                    final String fullTypeName = nodeType.getName();</span>
+<span class="fc" id="L130">                    LOGGER.trace(&quot;Translating JCR mixin name: {}&quot;, fullTypeName);</span>
+<span class="fc" id="L131">                    final String prefix = fullTypeName.split(&quot;:&quot;)[0];</span>
+<span class="fc" id="L132">                    final String typeName = fullTypeName.split(&quot;:&quot;)[1];</span>
+<span class="fc" id="L133">                    final String namespace = getJcrUri(prefix);</span>
+<span class="fc" id="L134">                    LOGGER.trace(&quot;with JCR namespace: {}&quot;, namespace);</span>
+<span class="fc" id="L135">                    final com.hp.hpl.jena.graph.Node rdfType =</span>
+                        createURI(getRDFNamespaceForJcrNamespace(namespace)
+                                + typeName);
+<span class="fc" id="L138">                    LOGGER.trace(&quot;into RDF resource: {}&quot;, rdfType);</span>
+<span class="fc" id="L139">                    return create(subject(), type.asNode(), rdfType);</span>
+<span class="nc" id="L140">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L141">                    throw propagate(e);</span>
+                }
+            }
+
+        };
+    }
+
+    private String getJcrUri(final String prefix) throws RepositoryException {
+<span class="fc" id="L149">        return node().getSession().getWorkspace().getNamespaceRegistry()</span>
+                .getURI(prefix);
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

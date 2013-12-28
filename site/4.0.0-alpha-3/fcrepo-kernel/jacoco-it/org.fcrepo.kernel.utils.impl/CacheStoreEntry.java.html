@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>CacheStoreEntry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.utils.impl</a> &gt; <span class="el_source">CacheStoreEntry.java</span></div><h1>CacheStoreEntry.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.utils.impl;
+
+import static java.util.Objects.hash;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Properties;
+
+import org.apache.poi.util.IOUtils;
+import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.infinispan.StoreChunkInputStream;
+import org.fcrepo.kernel.utils.infinispan.StoreChunkOutputStream;
+import org.infinispan.loaders.AbstractCacheStoreConfig;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.file.FileCacheStoreConfig;
+import org.modeshape.jcr.value.BinaryKey;
+import org.modeshape.jcr.value.binary.BinaryStoreException;
+import org.slf4j.Logger;
+
+/**
+ * An entry in a specific BinaryStore
+ */
+public class CacheStoreEntry extends LowLevelCacheEntry {
+
+<span class="fc" id="L43">    private static final Logger LOGGER = getLogger(CacheStoreEntry.class);</span>
+
+    private final CacheStore store;
+    private final String cacheName;
+
+    /**
+     * An entry in an infinispan CacheStore
+     */
+    public CacheStoreEntry(final CacheStore store,
+            final String cacheName,
+            final BinaryKey key) {
+<span class="fc" id="L54">        super(key);</span>
+<span class="fc" id="L55">        this.store = store;</span>
+<span class="fc" id="L56">        this.cacheName = cacheName;</span>
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Get the low-level cache store this entry is contained in
+     * @return
+     */
+    public CacheStore getLowLevelStore() {
+<span class="fc" id="L64">        return store;</span>
+    }
+
+    /**
+     * Get a raw input stream from the underlying store
+     * @return the content for this entry
+     * @throws BinaryStoreException
+     */
+    @Override
+    public InputStream getInputStream() throws BinaryStoreException {
+<span class="fc" id="L74">        return new StoreChunkInputStream(store, key +</span>
+                                             DATA_SUFFIX);
+    }
+
+    /**
+     * Send a raw input stream to the underlying store for this entry; used for
+     * fixing e.g. fixity failures.
+     *
+     * @param stream binary content to REPLACE the content in the store
+     * @throws BinaryStoreException
+     * @throws IOException
+     */
+    @Override
+    public void storeValue(final InputStream stream)
+        throws BinaryStoreException, IOException {
+        // TODO this is probably an auditable action.
+<span class="fc" id="L90">        LOGGER.info(&quot;Doing a low-level write to store {} for key {}&quot;,</span>
+                    getExternalIdentifier(), key);
+
+<span class="fc" id="L93">        final OutputStream outputStream =</span>
+                new StoreChunkOutputStream(store, key +
+                                           DATA_SUFFIX);
+<span class="fc" id="L96">        IOUtils.copy(stream, outputStream);</span>
+<span class="fc" id="L97">        outputStream.close();</span>
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * Generate a human-readable identifier for the location of this entry
+     *
+     * @return
+     */
+    @Override
+    public String getExternalIdentifier() {
+
+<span class="fc" id="L108">        final CacheStoreConfig config = store.getCacheStoreConfig();</span>
+
+<span class="fc" id="L110">        String ispnExternalId = null;</span>
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (config instanceof AbstractCacheStoreConfig) {</span>
+<span class="fc" id="L113">            ispnExternalId = getStoreIdentifier((AbstractCacheStoreConfig)config);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">            if (ispnExternalId != null) {</span>
+<span class="nc" id="L115">                return ispnExternalId;</span>
+            }
+        }
+
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">        if (config instanceof FileCacheStoreConfig) {</span>
+<span class="fc" id="L120">            ispnExternalId = getStoreIdentifier((FileCacheStoreConfig) config);</span>
+        }
+
+        // ChainingCacheStore's have a null config
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (config == null) {</span>
+<span class="nc" id="L125">            return getExternalId() + &quot;/&quot; + store.getClass().getName() + &quot;:&quot; +</span>
+                    cacheName + &quot;:&quot; +
+                    AbstractCacheStoreConfig.class.getPackage() +
+                    &quot;ChainingCacheStoreConfig&quot;;
+        }
+
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (ispnExternalId == null) {</span>
+<span class="nc" id="L132">            ispnExternalId = config.toString();</span>
+        }
+
+<span class="fc" id="L135">        return getExternalId() + &quot;/&quot; + store.getClass().getName() + &quot;:&quot; +</span>
+            cacheName + &quot;:&quot; +
+            config.getCacheLoaderClassName() +
+            &quot;:&quot; + ispnExternalId;
+    }
+
+    private static String getStoreIdentifier(final AbstractCacheStoreConfig config) {
+<span class="fc" id="L142">        final Properties properties =</span>
+                config.getProperties();
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        if (properties.containsKey(&quot;id&quot;)) {</span>
+<span class="nc" id="L145">            return properties.getProperty(&quot;id&quot;);</span>
+        }
+<span class="fc" id="L147">        return null;</span>
+    }
+
+    private static String getStoreIdentifier(final FileCacheStoreConfig config) {
+<span class="fc" id="L151">        return config.getLocation();</span>
+    }
+
+
+    /**
+     * Two LowLevelCacheEntries are the same if they have the same key,
+     * come from the same CacheStore, with the same cache name,
+     * and have the same underlying store configuration
+     * @param other
+     * @return
+     */
+    @Override
+    public boolean equals(final Object other) {
+<span class="pc bpc" id="L164" title="1 of 2 branches missed.">        if (other instanceof CacheStoreEntry) {</span>
+<span class="fc" id="L165">            final CacheStoreEntry that = (CacheStoreEntry) other;</span>
+
+<span class="pc bpc" id="L167" title="7 of 12 branches missed.">            return key.equals(that.getKey()) &amp;&amp;</span>
+                           cacheName.equals(that.cacheName) &amp;&amp;
+                           ((store == null &amp;&amp; that.store == null) ||
+                                    (store != null &amp;&amp; store.equals(that.store)));
+        } else {
+<span class="nc" id="L172">            return false;</span>
+        }
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L178">        return hash(store, key);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

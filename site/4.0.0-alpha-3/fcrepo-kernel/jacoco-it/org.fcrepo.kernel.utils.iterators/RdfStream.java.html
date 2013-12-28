@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RdfStream.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.utils.iterators</a> &gt; <span class="el_source">RdfStream.java</span></div><h1>RdfStream.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.utils.iterators;
+
+import static com.google.common.base.Objects.equal;
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.singletonIterator;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.Objects.hash;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import javax.jcr.Session;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ForwardingIterator;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+/**
+ * A stream of RDF triples along with some useful context.
+ *
+ * @author ajs6f
+ * @date Oct 9, 2013
+ */
+public class RdfStream extends ForwardingIterator&lt;Triple&gt; implements
+        Iterable&lt;Triple&gt; {
+
+<span class="fc" id="L50">    private Map&lt;String, String&gt; namespaces = new HashMap&lt;String, String&gt;();</span>
+
+    protected Iterator&lt;Triple&gt; triples;
+
+    protected Session context;
+
+    protected Node topic;
+
+<span class="fc" id="L58">    private static final Triple[] NONE = new Triple[] {};</span>
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
+    public &lt;Tr extends Triple, T extends Iterator&lt;Tr&gt;&gt; RdfStream(final T triples) {
+<span class="fc" id="L66">        super();</span>
+<span class="fc" id="L67">        this.triples = Iterators.transform(triples, cast());</span>
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
+    public &lt;Tr extends Triple, T extends Iterable&lt;Tr&gt;&gt; RdfStream(final T triples) {
+<span class="fc" id="L76">        this(triples.iterator());</span>
+<span class="fc" id="L77">    }</span>
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
+    public &lt;Tr extends Triple, T extends Collection&lt;Tr&gt;&gt; RdfStream(
+            final T triples) {
+<span class="nc" id="L86">        this(triples.iterator());</span>
+<span class="nc" id="L87">    }</span>
+
+    /**
+     * Constructor that begins the stream with proffered triples.
+     *
+     * @param triples
+     */
+    @SafeVarargs
+    public &lt;T extends Triple&gt; RdfStream(final T... triples) {
+<span class="fc" id="L96">        this(Iterators.forArray(triples));</span>
+<span class="fc" id="L97">    }</span>
+
+    /**
+     * Constructor that begins the stream with proffered statements.
+     *
+     * @param statements
+     */
+    @SafeVarargs
+    public &lt;T extends Statement&gt; RdfStream(final T... statements) {
+<span class="nc" id="L106">        this(Iterators.transform(Iterators.forArray(statements),</span>
+                statement2triple));
+<span class="nc" id="L108">    }</span>
+
+    /**
+     * Constructor that begins the stream with proffered triple.
+     *
+     * @param triple
+     */
+    public &lt;T extends Triple&gt; RdfStream(final T triple) {
+<span class="nc" id="L116">        this(Iterators.forArray(new Triple[] {triple}));</span>
+<span class="nc" id="L117">    }</span>
+
+    /**
+     * Constructor that begins the stream without any triples.
+     */
+    public RdfStream() {
+<span class="fc" id="L123">        this(NONE);</span>
+<span class="fc" id="L124">    }</span>
+
+    /**
+     * Returns the proffered {@link Triple}s with the context of this RdfStream.
+     *
+     * @param stream
+     * @return
+     */
+    public &lt;Tr extends Triple, T extends Iterator&lt;Tr&gt;&gt; RdfStream withThisContext(final T stream) {
+<span class="nc" id="L133">        return new RdfStream(stream).namespaces(namespaces()).topic(topic());</span>
+    }
+
+    /**
+     * Returns the proffered {@link Triple}s with the context of this RdfStream.
+     *
+     * @param stream
+     * @return
+     */
+    public &lt;Tr extends Triple, T extends Iterable&lt;Tr&gt;&gt; RdfStream withThisContext(final T stream) {
+<span class="fc" id="L143">        return new RdfStream(stream).namespaces(namespaces()).topic(topic());</span>
+    }
+
+    /**
+     * @param newTriples Triples to add.
+     * @return This object for continued use.
+     */
+    public RdfStream concat(final Iterator&lt;? extends Triple&gt; newTriples) {
+<span class="fc" id="L151">        triples = Iterators.concat(newTriples, triples);</span>
+<span class="fc" id="L152">        return this;</span>
+    }
+
+    /**
+     * @param newTriple Triples to add.
+     * @return This object for continued use.
+     */
+    public &lt;T extends Triple&gt; RdfStream concat(final T newTriple) {
+<span class="fc" id="L160">        triples = Iterators.concat(singletonIterator(newTriple), triples);</span>
+<span class="fc" id="L161">        return this;</span>
+    }
+
+    /**
+     * @param newTriples Triples to add.
+     * @return This object for continued use.
+     */
+    public &lt;T extends Triple&gt; RdfStream concat(@SuppressWarnings(&quot;unchecked&quot;)
+        final T... newTriples) {
+<span class="fc" id="L170">        triples = Iterators.concat(Iterators.forArray(newTriples), triples);</span>
+<span class="fc" id="L171">        return this;</span>
+    }
+
+    /**
+     * @param newTriples Triples to add.
+     * @return This object for continued use.
+     */
+    public RdfStream concat(final Collection&lt;? extends Triple&gt; newTriples) {
+<span class="fc" id="L179">        triples = Iterators.concat(newTriples.iterator(), triples);</span>
+<span class="fc" id="L180">        return this;</span>
+    }
+
+    /**
+     * As {@link Iterables#limit(Iterable, int)} while maintaining context.
+     *
+     * @param limit
+     * @return
+     */
+    public RdfStream limit(final Integer limit) {
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">        if (limit &lt; 0) {</span>
+<span class="fc" id="L191">            return this;</span>
+        }
+<span class="nc" id="L193">        return withThisContext(Iterables.limit(this, limit));</span>
+    }
+
+    /**
+     * As {@link Iterables#skip(Iterable, int)} while maintaining context.
+     *
+     * @param skipNum
+     * @return
+     */
+    public RdfStream skip(final Integer skipNum) {
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if (skipNum &lt; 0) {</span>
+<span class="nc" id="L204">            return this;</span>
+        }
+<span class="fc" id="L206">        return withThisContext(Iterables.skip(this, skipNum));</span>
+    }
+
+    /**
+     * As {@link Iterables#filter(Iterable, Predicate)} while maintaining context.
+     *
+     * @param predicate
+     * @return
+     */
+    public RdfStream filter(final Predicate&lt;? super Triple&gt; predicate) {
+<span class="nc" id="L216">        return withThisContext(Iterables.filter(this, predicate));</span>
+    }
+
+    /**
+     * As {@link Iterators#transform(Iterator, Function)}.
+     *
+     * @param f
+     * @return
+     */
+    public &lt;ToType&gt; Iterator&lt;ToType&gt; transform(final Function&lt;? super Triple, ToType&gt; f) {
+<span class="nc" id="L226">        return Iterators.transform(this, f);</span>
+    }
+
+    /**
+     * @param prefix
+     * @param uri
+     * @return This object for continued use.
+     */
+    public RdfStream namespace(final String prefix, final String uri) {
+<span class="nc" id="L235">        namespaces.put(prefix, uri);</span>
+<span class="nc" id="L236">        return this;</span>
+    }
+
+    /**
+     * @param nses
+     * @return This object for continued use.
+     */
+    public RdfStream namespaces(final Map&lt;String, String&gt; nses) {
+<span class="fc" id="L244">        namespaces.putAll(nses);</span>
+<span class="fc" id="L245">        return this;</span>
+    }
+
+    /**
+     * @return The {@link Session} in context
+     */
+    public Session session() {
+<span class="nc" id="L252">        return this.context;</span>
+    }
+
+    /**
+     * Sets the JCR context of this stream
+     *
+     * @param session The {@link Session} in context
+     */
+    public RdfStream session(final Session session) {
+<span class="nc" id="L261">        this.context = session;</span>
+<span class="nc" id="L262">        return this;</span>
+    }
+
+    /**
+     * @return The {@link Node} topic in context
+     */
+    public Node topic() {
+<span class="fc" id="L269">        return this.topic;</span>
+    }
+
+    /**
+     * Sets the topic of this stream
+     *
+     * @param topic The {@link Node} topic in context
+     */
+    public RdfStream topic(final Node topic) {
+<span class="fc" id="L278">        this.topic = topic;</span>
+<span class="fc" id="L279">        return this;</span>
+    }
+
+    /**
+     * WARNING!
+     *
+     * This method exhausts the RdfStream on which it is called!
+     *
+     * @return A {@link Model} containing the prefix mappings and triples in
+     *         this stream of RDF
+     */
+    public Model asModel() {
+<span class="fc" id="L291">        final Model model = createDefaultModel();</span>
+<span class="fc" id="L292">        model.setNsPrefixes(namespaces());</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        for (final Triple t : this) {</span>
+<span class="fc" id="L294">            model.add(model.asStatement(t));</span>
+<span class="fc" id="L295">        }</span>
+<span class="fc" id="L296">        return model;</span>
+    }
+
+    /**
+     * @param model A {@link Model} containing the prefix mappings and triples to be put into
+     *         this stream of RDF
+     * @return
+     */
+    public static RdfStream fromModel(final Model model) {
+<span class="nc" id="L305">        final Iterator&lt;Triple&gt; triples = Iterators.transform(model.listStatements(), statement2triple);</span>
+<span class="nc" id="L306">        return new RdfStream(triples).namespaces(model.getNsPrefixMap());</span>
+    }
+
+<span class="fc" id="L309">    private static Function&lt;Statement, Triple&gt; statement2triple = new Function&lt;Statement, Triple&gt;() {</span>
+
+        @Override
+        public Triple apply(final Statement s) {
+<span class="nc" id="L313">            return s.asTriple();</span>
+        }
+
+    };
+
+    @Override
+    protected Iterator&lt;Triple&gt; delegate() {
+<span class="fc" id="L320">        return triples;</span>
+    }
+
+    @Override
+    public Iterator&lt;Triple&gt; iterator() {
+<span class="fc" id="L325">        return this;</span>
+    }
+
+    /**
+     * @return Namespaces in scope for this stream.
+     */
+    public Map&lt;String, String&gt; namespaces() {
+<span class="fc" id="L332">        return namespaces;</span>
+    }
+
+
+    private static &lt;T extends Triple&gt; Function&lt;T, Triple&gt; cast() {
+<span class="fc" id="L337">        return new Function&lt;T, Triple&gt;() {</span>
+
+            @Override
+            public Triple apply(final T prototriple) {
+<span class="fc" id="L341">                return prototriple;</span>
+            }
+
+        };
+    }
+
+    /*
+     * We ignore duplicated triples for equality.
+     *
+     * (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object o) {
+<span class="nc bnc" id="L355" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc" id="L356">            return false;</span>
+        }
+<span class="nc bnc" id="L358" title="All 2 branches missed.">        if (o == this) {</span>
+<span class="nc" id="L359">            return true;</span>
+        }
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        if (!(o instanceof RdfStream)) {</span>
+<span class="nc" id="L362">            return false;</span>
+        }
+<span class="nc" id="L364">        final RdfStream rdfo = (RdfStream) o;</span>
+
+<span class="nc" id="L366">        final boolean triplesEqual =</span>
+            equal(copyOf(rdfo.triples), copyOf(this.triples));
+
+<span class="nc" id="L369">        final boolean namespaceMappingsEqual =</span>
+            equal(rdfo.namespaces(), this.namespaces());
+
+<span class="nc" id="L372">        final boolean topicEqual =</span>
+                equal(rdfo.topic(), this.topic());
+
+<span class="nc bnc" id="L375" title="All 6 branches missed.">        return triplesEqual &amp;&amp; namespaceMappingsEqual &amp;&amp; topicEqual;</span>
+
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L381">        return hash(namespaces(), triples, topic());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
