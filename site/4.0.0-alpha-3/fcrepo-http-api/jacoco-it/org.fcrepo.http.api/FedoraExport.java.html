@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraExport.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraExport.java</span></div><h1>FedoraExport.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.Response.ok;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.SerializerUtil;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+/**
+ * Serialization for nodes
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:export&quot;)
+<span class="fc" id="L53">public class FedoraExport extends AbstractResource {</span>
+
+    @Autowired
+    protected SerializerUtil serializers;
+
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L61">    private static final Logger LOGGER = getLogger(FedoraExport.class);</span>
+
+    /**
+     * Export an object with the given format, e.g.: GET
+     * /path/to/object/fcr:export?format=jcr/xml -&gt; the node as JCR/XML
+     *
+     * @param pathList
+     * @param format
+     * @return
+     */
+    @GET
+    public Response exportObject(
+        @PathParam(&quot;path&quot;) final List&lt;PathSegment&gt; pathList,
+        @QueryParam(&quot;format&quot;) @DefaultValue(&quot;jcr/xml&quot;) final String format) {
+
+<span class="fc" id="L76">        final String path = toPath(pathList);</span>
+
+<span class="fc" id="L78">        LOGGER.debug(&quot;Requested object serialization for {} using serialization format {}&quot;, path, format);</span>
+
+<span class="fc" id="L80">        final FedoraObjectSerializer serializer =</span>
+            serializers.getSerializer(format);
+
+<span class="fc" id="L83">        return ok().type(serializer.getMediaType()).entity(</span>
+<span class="fc" id="L84">                new StreamingOutput() {</span>
+
+                    @Override
+                    public void write(final OutputStream out)
+                        throws IOException {
+
+                        try {
+<span class="fc" id="L91">                            LOGGER.debug(&quot;Selecting from serializer map: {}&quot;, serializers);</span>
+<span class="fc" id="L92">                            LOGGER.debug(&quot;Retrieved serializer for format: {}&quot;, format);</span>
+<span class="fc" id="L93">                            serializer.serialize(objectService.getObject(</span>
+                                    session, path), out);
+<span class="fc" id="L95">                            LOGGER.debug(&quot;Successfully serialized object: {}&quot;, path);</span>
+<span class="nc" id="L96">                        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L97">                            throw new WebApplicationException(e);</span>
+                        } finally {
+<span class="pc" id="L99">                            session.logout();</span>
+<span class="fc" id="L100">                        }</span>
+<span class="fc" id="L101">                    }</span>
+                }).build();
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

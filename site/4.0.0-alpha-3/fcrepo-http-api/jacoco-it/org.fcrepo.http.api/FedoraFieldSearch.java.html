@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraFieldSearch.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraFieldSearch.java</span></div><h1>FedoraFieldSearch.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.http.api;
+
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.PAGE;
+import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_ITEMS_PER_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_OFFSET;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_TERMS;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+/**
+ * Basic administrative search across the repository
+ *
+ * @author Frank Asseg
+ * @author ajs6f
+ */
+
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/fcr:search&quot;)
+<span class="nc" id="L81">public class FedoraFieldSearch extends AbstractResource implements</span>
+        FedoraJcrTypes {
+
+    public static final String OFFSET_PARAM = &quot;offset&quot;;
+    public static final String QUERY_PARAM = &quot;q&quot;;
+    public static final String LIMIT_PARAM = &quot;limit&quot;;
+    @InjectedSession
+    protected Session session;
+
+<span class="nc" id="L90">    private static final Logger LOGGER = getLogger(FedoraFieldSearch.class);</span>
+
+    /**
+     * A stub method so we can return a text/html representation using
+     * the right template.
+     *
+     * {@link #searchSubmitHtml(String, long, int, javax.ws.rs.core.Request,
+     * javax.ws.rs.core.UriInfo)}
+     *
+     *
+     * @param terms
+     * @param offset
+     * @param limit
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    @Timed
+    @HtmlTemplate(&quot;search:results&quot;)
+    @Produces({TEXT_HTML})
+    public Dataset searchSubmitHtml(@QueryParam(QUERY_PARAM)
+                                        final String terms,
+                                    @QueryParam(OFFSET_PARAM) @DefaultValue(&quot;0&quot;)
+                                    final long offset,
+                                    @QueryParam(LIMIT_PARAM)
+                                    @DefaultValue(&quot;25&quot;)
+                                    final int limit,
+                                    @Context final HttpServletResponse servletResponse,
+                                    @Context
+                                    final UriInfo uriInfo) throws RepositoryException {
+<span class="nc" id="L121">        return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);</span>
+    }
+
+    /**
+     * Execute a basic full-text search across the repository
+     *
+     * GET /fcr:search?q=term
+     *
+     * @param terms
+     * @param offset
+     * @param limit
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    @Timed
+    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
+    public Dataset searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
+            @QueryParam(OFFSET_PARAM) @DefaultValue(&quot;0&quot;) final long offset,
+            @QueryParam(LIMIT_PARAM) @DefaultValue(&quot;25&quot;) final int limit,
+            @Context final Request request,
+            @Context final HttpServletResponse servletResponse,
+            @Context final UriInfo uriInfo) throws RepositoryException {
+
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (terms == null) {</span>
+<span class="nc" id="L148">            LOGGER.trace(&quot;Received search request, but terms were empty. Aborting.&quot;);</span>
+<span class="nc" id="L149">            throw new WebApplicationException(status(BAD_REQUEST).entity(</span>
+                    &quot;q parameter is mandatory&quot;).build());
+        }
+
+<span class="nc" id="L153">        return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);</span>
+    }
+
+    private Dataset getSearchDataset(final String terms,
+                                     final long offset,
+                                     final int limit,
+                                     final HttpServletResponse servletResponse,
+                                     final UriInfo uriInfo)
+        throws RepositoryException {
+
+        try {
+<span class="nc" id="L164">            LOGGER.debug(</span>
+                    &quot;Received search request with search terms {}, offset {}, and limit {}&quot;,
+                    terms, offset, limit);
+
+            final Resource searchResult;
+
+<span class="nc bnc" id="L170" title="All 2 branches missed.">            if (terms == null) {</span>
+<span class="nc" id="L171">                searchResult = createResource(uriInfo.getBaseUriBuilder()</span>
+                                                  .path(FedoraFieldSearch.class)
+                                                  .build().toString());
+            } else {
+<span class="nc" id="L175">                searchResult = createResource(uriInfo.getBaseUriBuilder()</span>
+                                                  .path(FedoraFieldSearch.class)
+                                                  .queryParam(QUERY_PARAM, terms)
+                                                  .build().toString());
+            }
+
+<span class="nc" id="L181">            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);</span>
+
+<span class="nc" id="L183">            final Dataset dataset =</span>
+                    nodeService.searchRepository(subjects, searchResult,
+                            session, terms, limit, offset);
+
+<span class="nc" id="L187">            final Model searchModel = createDefaultModel();</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            if (terms != null) {</span>
+<span class="nc" id="L189">                final Resource pageResource = createResource(uriInfo.getRequestUri().toASCIIString());</span>
+<span class="nc" id="L190">                searchModel.add(pageResource, type, SEARCH_PAGE);</span>
+<span class="nc" id="L191">                searchModel.add(pageResource, type, PAGE);</span>
+<span class="nc" id="L192">                searchModel.add(pageResource, PAGE_OF, searchResult);</span>
+
+
+<span class="nc" id="L195">                searchModel.add(pageResource,</span>
+                                   SEARCH_ITEMS_PER_PAGE,
+                                   searchModel.createTypedLiteral(limit));
+<span class="nc" id="L198">                searchModel.add(pageResource,</span>
+                                   SEARCH_OFFSET,
+                                   searchModel.createTypedLiteral(offset));
+<span class="nc" id="L201">                searchModel.add(pageResource, SEARCH_TERMS, terms);</span>
+
+<span class="nc bnc" id="L203" title="All 2 branches missed.">                if (dataset.getDefaultModel()</span>
+                        .contains(searchResult,
+                                     SEARCH_HAS_MORE,
+                                     searchModel.createTypedLiteral(true))) {
+
+<span class="nc" id="L208">                    final Resource nextPageResource =</span>
+                        searchModel.createResource(uriInfo
+                                                       .getBaseUriBuilder()
+                                                       .path(FedoraFieldSearch.class)
+                                                       .queryParam(QUERY_PARAM, terms)
+                                                       .queryParam(OFFSET_PARAM, offset + limit)
+                                                       .queryParam(LIMIT_PARAM, limit)
+                                                       .build()
+                                                       .toString());
+<span class="nc" id="L217">                    searchModel.add(pageResource, NEXT_PAGE, nextPageResource);</span>
+<span class="nc" id="L218">                } else {</span>
+<span class="nc" id="L219">                    searchModel.add(pageResource, NEXT_PAGE, nil);</span>
+                }
+
+<span class="nc" id="L222">                final String firstPage = uriInfo</span>
+                                       .getBaseUriBuilder()
+                                       .path(FedoraFieldSearch.class)
+                                       .queryParam(QUERY_PARAM, terms)
+                                       .queryParam(OFFSET_PARAM, 0)
+                                       .queryParam(LIMIT_PARAM, limit)
+                                       .build()
+                                       .toString();
+<span class="nc" id="L230">                final Resource firstPageResource =</span>
+                    searchModel.createResource(firstPage);
+<span class="nc" id="L232">                searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);</span>
+
+<span class="nc" id="L234">                servletResponse.addHeader(&quot;Link&quot;, firstPage + &quot;;rel=\&quot;first\&quot;&quot;);</span>
+
+<span class="nc" id="L236">                dataset.addNamedModel(&quot;search-pagination&quot;, searchModel);</span>
+            }
+
+<span class="nc" id="L239">            return dataset;</span>
+
+        } finally {
+<span class="nc" id="L242">            session.logout();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
