@@ -1,0 +1,4 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+fcrepo-rss,org.fcrepo.syndication,RSSPublisher.new Function() {...},4,46,0,0,2,11,0,2,0,2
+fcrepo-rss,org.fcrepo.syndication,RSSPublisher,14,85,1,1,4,16,2,5,1,5
+fcrepo-rss,org.fcrepo.syndication,RssResources,30,3,2,0,5,1,2,1,1,1
