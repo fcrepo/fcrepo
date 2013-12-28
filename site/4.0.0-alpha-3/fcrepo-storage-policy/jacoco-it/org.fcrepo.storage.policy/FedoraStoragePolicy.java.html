@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraStoragePolicy.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-storage-policy</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.storage.policy</a> &gt; <span class="el_source">FedoraStoragePolicy.java</span></div><h1>FedoraStoragePolicy.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.storage.policy;
+
+import static com.sun.jersey.api.Responses.methodNotAllowed;
+import static java.util.Collections.singletonMap;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.codahale.metrics.annotation.Timed;
+import org.apache.commons.lang.StringUtils;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.services.policy.StoragePolicy;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
+import javax.jcr.nodetype.NodeType;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import java.io.IOException;
+
+/**
+ * RESTful interface to create and manage storage policies
+ * 
+ * 
+ * @author osmandin
+ * @date Aug 14, 2013
+ */
+
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:storagepolicy&quot;)
+<span class="fc" id="L73">public class FedoraStoragePolicy extends AbstractResource {</span>
+
+    public static final String FEDORA_STORAGE_POLICY_PATH = &quot;/fedora:system/fedora:storage_policy&quot;;
+    @InjectedSession
+    protected Session session;
+
+    @Context
+    protected HttpServletRequest request;
+
+    @Autowired(required = true)
+    protected StoragePolicyDecisionPoint storagePolicyDecisionPoint;
+
+    private JcrTools jcrTools;
+
+    public static final String POLICY_RESOURCE = &quot;policies&quot;;
+
+<span class="fc" id="L89">    private static final Logger LOGGER = getLogger(FedoraStoragePolicy.class);</span>
+
+    /**
+     * Initialize
+     * 
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @PostConstruct
+    public void setUpRepositoryConfiguration() throws RepositoryException,
+        IOException {
+<span class="fc" id="L100">        Session internalSession = null;</span>
+        try {
+<span class="fc" id="L102">            internalSession = sessions.getInternalSession();</span>
+<span class="fc" id="L103">            new FedoraResource(internalSession, FEDORA_STORAGE_POLICY_PATH, NT_FOLDER);</span>
+<span class="fc" id="L104">            internalSession.save();</span>
+<span class="fc" id="L105">            LOGGER.debug(&quot;Created configuration node&quot;);</span>
+        } finally {
+<span class="pc bpc" id="L107" title="3 of 4 branches missed.">            if (internalSession != null) {</span>
+<span class="pc" id="L108">                internalSession.logout();</span>
+            }
+        }
+<span class="fc" id="L111">    }</span>
+
+    /**
+     * POST to store nodeType and hint
+     * 
+     * @param request For now, follows pattern: mix:mimeType image/tiff
+     *        store-hint
+     * @return status
+     */
+
+    @POST
+    @Consumes(APPLICATION_FORM_URLENCODED)
+    @Timed
+    public Response post(final @PathParam(&quot;path&quot;) String path,
+                         final String request) throws RepositoryException {
+<span class="fc" id="L126">        LOGGER.debug(&quot;POST Received request param: {}&quot;, request);</span>
+        final Response.ResponseBuilder response;
+
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (!path.equalsIgnoreCase(POLICY_RESOURCE)) {</span>
+<span class="nc" id="L130">            return methodNotAllowed().entity(</span>
+                    &quot;POST method not allowed on &quot; + getUriInfo().getAbsolutePath() +
+                            &quot;, try /policies/fcr:storagepolicy&quot;)
+                    .build();
+        }
+
+<span class="fc" id="L136">        final String[] str = StringUtils.split(request); // simple split for now</span>
+<span class="fc" id="L137">        validateArgs(str.length);</span>
+        try {
+<span class="fc" id="L139">            final Node node =</span>
+                getJcrTools().findOrCreateNode(session,
+                                             FEDORA_STORAGE_POLICY_PATH, &quot;test&quot;);
+<span class="pc bpc" id="L142" title="1 of 4 branches missed.">            if (isValidNodeTypeProperty(session, str[0]) ||</span>
+                isValidConfigurationProperty(str[0])) {
+<span class="fc" id="L144">                node.setProperty(str[0], new String[] {str[1] + &quot;:&quot; + str[2]});</span>
+
+                // TODO (for now) instantiate PolicyType based on mix:mimeType
+<span class="fc" id="L147">                final StoragePolicy policy = newPolicyInstance(str[0], str[1], str[2]);</span>
+                // TODO (for now) based on object comparison using equals()
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">                if (storagePolicyDecisionPoint.contains(policy)) {</span>
+<span class="nc" id="L150">                    throw new StoragePolicyTypeException(&quot;Property already exists!&quot;);</span>
+                }
+<span class="fc" id="L152">                storagePolicyDecisionPoint.addPolicy(policy);</span>
+<span class="fc" id="L153">                session.save();</span>
+<span class="fc" id="L154">                LOGGER.debug(&quot;Saved PDS hint {}&quot;, request);</span>
+
+<span class="fc" id="L156">                response = Response.created(getUriInfo().getBaseUriBuilder()</span>
+                                                .path(FedoraStoragePolicy.class)
+                                                .buildFromMap(singletonMap(&quot;path&quot;, str[0])));
+<span class="fc" id="L159">            } else {</span>
+<span class="fc" id="L160">                throw new StoragePolicyTypeException(</span>
+                        &quot;Invalid property type specified: &quot; + str[0]);
+            }
+        } finally {
+<span class="fc" id="L164">            session.logout();</span>
+<span class="fc" id="L165">        }</span>
+
+<span class="fc" id="L167">        return response.build();</span>
+    }
+
+    /**
+     * For nodeType n or runtime property p get org.fcrepo.binary.StoragePolicy
+     * implementation. Note: Signature might need to change, or a more
+     * sophisticated method used, as implementation evolves.
+     * 
+     * @param propertyType
+     * @param itemType
+     * @param value
+     * @return
+     * @throws StoragePolicyTypeException
+     */
+    protected StoragePolicy newPolicyInstance(final String propertyType,
+        final String itemType, final String value) {
+
+<span class="pc bpc" id="L184" title="6 of 9 branches missed.">        switch (propertyType) {</span>
+            case NodeType.MIX_MIMETYPE:
+            case &quot;mix:mimeType&quot;:
+<span class="fc" id="L187">                return new MimeTypeStoragePolicy(itemType, value);</span>
+            default:
+<span class="nc" id="L189">                throw new StoragePolicyTypeException(&quot;Mapping not found&quot;);</span>
+        }
+    }
+
+    /**
+     * Delete NodeType. TODO for deleting multiple values with in a NodeType,
+     * the design of how things are stored will need to change.
+     */
+    @DELETE
+    @Timed
+    public Response deleteNodeType(@PathParam(&quot;path&quot;) final String nodeType)
+        throws RepositoryException {
+        try {
+<span class="fc" id="L202">            LOGGER.debug(&quot;Deleting node property{}&quot;, nodeType);</span>
+<span class="fc" id="L203">            final Node node =</span>
+                getJcrTools().findOrCreateNode(session,
+                                             FEDORA_STORAGE_POLICY_PATH, &quot;test&quot;);
+<span class="pc bpc" id="L206" title="1 of 2 branches missed.">            if (isValidNodeTypeProperty(session, nodeType)) {</span>
+<span class="fc" id="L207">                node.getProperty(nodeType).remove();</span>
+<span class="fc" id="L208">                session.save();</span>
+
+                // remove all MimeType intances (since thats only the stored
+                // StoragePolicy for now.
+                // TODO Once StoragePolicy is updated to display StoragePolicy type, this
+                // would change
+<span class="fc" id="L214">                storagePolicyDecisionPoint.removeAll();</span>
+<span class="fc" id="L215">                return Response.noContent().build();</span>
+            } else {
+<span class="nc" id="L217">                throw new RepositoryException(</span>
+                    &quot;Invalid property type specified.&quot;);
+            }
+        } finally {
+<span class="fc" id="L221">            session.logout();</span>
+        }
+    }
+
+    /**
+     * TODO (for now) prints org.fcrepo.binary.StoragePolicyDecisionPointImpl
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    @Produces(APPLICATION_JSON)
+    @Timed
+    public Response get(final @PathParam(&quot;path&quot;) String path) throws RepositoryException {
+<span class="fc bfc" id="L235" title="All 2 branches covered.">        if (POLICY_RESOURCE.equalsIgnoreCase(path)) {</span>
+<span class="fc" id="L236">            return getAllStoragePolicies();</span>
+        } else {
+<span class="fc" id="L238">            return getStoragePolicy(path);</span>
+        }
+    }
+
+    private Response getAllStoragePolicies() {
+<span class="pc bpc" id="L243" title="1 of 4 branches missed.">        if (storagePolicyDecisionPoint == null ||</span>
+            storagePolicyDecisionPoint.isEmpty()) {
+<span class="fc" id="L245">            return Response.ok(&quot;No Policies Found&quot;).build();</span>
+        }
+<span class="fc" id="L247">        return Response.ok(storagePolicyDecisionPoint.toString()).build();</span>
+    }
+
+    private Response getStoragePolicy(final String nodeType) throws RepositoryException {
+<span class="fc" id="L251">        LOGGER.debug(&quot;Get storage policy for: {}&quot;, nodeType);</span>
+        Response.ResponseBuilder response;
+        try {
+<span class="fc" id="L254">            final Node node =</span>
+                getJcrTools().findOrCreateNode(session,
+                                                 FEDORA_STORAGE_POLICY_PATH,
+                                              &quot;test&quot;);
+
+<span class="fc" id="L259">            final Property prop = node.getProperty(nodeType);</span>
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">            if (null == prop) {</span>
+<span class="nc" id="L261">                throw new PathNotFoundException(&quot;StoragePolicy not found: &quot; + nodeType);</span>
+            }
+
+<span class="fc" id="L264">            final Value[] values = prop.getValues();</span>
+<span class="pc bpc" id="L265" title="2 of 4 branches missed.">            if (values != null &amp;&amp; values.length &gt; 0) {</span>
+<span class="fc" id="L266">                response = Response.ok(values[0].getString());</span>
+            } else {
+<span class="nc" id="L268">                throw new PathNotFoundException(&quot;StoragePolicy not found: &quot; + nodeType);</span>
+            }
+
+        } finally {
+<span class="fc" id="L272">            session.logout();</span>
+<span class="fc" id="L273">        }</span>
+<span class="fc" id="L274">        return response.build();</span>
+    }
+
+    /**
+     * Verifies whether node type is valid
+     * 
+     * @param session
+     * @param type
+     * @return
+     * @throws RepositoryException
+     */
+    private boolean isValidNodeTypeProperty(final Session session,
+        final String type) throws RepositoryException {
+        try {
+<span class="fc" id="L288">            return session.getWorkspace().getNodeTypeManager()</span>
+                .getNodeType(type).getName().equals(type);
+<span class="fc" id="L290">        } catch (NoSuchNodeTypeException e) {</span>
+<span class="fc" id="L291">            LOGGER.debug(&quot;No corresponding Node type found for: {}&quot;, type, e);</span>
+<span class="fc" id="L292">            return false;</span>
+        }
+    }
+
+    /**
+     * Consult some list of configuration of non JCR properties (e.g. list of
+     * applicable runtime configurations)
+     * 
+     * @return
+     * @throws StoragePolicyTypeException
+     */
+    private boolean isValidConfigurationProperty(final String property) {
+        // TODO (for now) returns false. For future, need to represent &amp; eval.
+        // non node type props
+<span class="fc" id="L306">        return false;</span>
+    }
+
+    /**
+     * TODO (for now) Simple validation
+     * 
+     * @param inputSize
+     * @throws IllegalArgumentException
+     */
+    private void validateArgs(int inputSize) {
+<span class="pc bpc" id="L316" title="1 of 2 branches missed.">        if (inputSize != InputPattern.valueOf(request.getMethod()).requiredLength) {</span>
+<span class="nc" id="L317">            throw new IllegalArgumentException(&quot;Invalid Arg&quot;);</span>
+        }
+        // could do further checking here
+<span class="fc" id="L320">    }</span>
+
+<span class="fc" id="L322">    private enum InputPattern {</span>
+<span class="fc" id="L323">        POST(3), DELETE(3);</span>
+
+        private final int requiredLength;
+
+<span class="fc" id="L327">        private InputPattern(int l) {</span>
+<span class="fc" id="L328">            requiredLength = l;</span>
+<span class="fc" id="L329">        }</span>
+    }
+
+    private JcrTools getJcrTools() {
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">        if (null == jcrTools) {</span>
+<span class="fc" id="L334">            this.jcrTools = new JcrTools(true);</span>
+        }
+<span class="fc" id="L336">        return jcrTools;</span>
+    }
+
+    /**
+     * Only for UNIT TESTING
+     * @param jcrTools
+     */
+    public void setJcrTools(JcrTools jcrTools) {
+<span class="nc" id="L344">        this.jcrTools = jcrTools;</span>
+<span class="nc" id="L345">    }</span>
+
+    private UriInfo getUriInfo() {
+<span class="fc" id="L348">        return this.uriInfo;</span>
+    }
+
+    /**
+     * Only for UNIT TESTING
+     * @param uriInfo
+     */
+    public void setUriInfo(UriInfo uriInfo) {
+<span class="nc" id="L356">        this.uriInfo = uriInfo;</span>
+<span class="nc" id="L357">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
