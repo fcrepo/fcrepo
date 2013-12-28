@@ -76,7 +76,7 @@ fcrepo-kernel,org.fcrepo.kernel.exception,NoSuchPropertyDefinitionException,0,3,
 fcrepo-kernel,org.fcrepo.kernel.exception,RepositoryRuntimeException,9,0,0,0,4,0,2,0,2,0
 fcrepo-kernel,org.fcrepo.kernel.exception,InvalidChecksumException,4,0,0,0,2,0,1,0,1,0
 fcrepo-kernel,org.fcrepo.kernel.exception,MalformedRdfException,9,0,0,0,4,0,2,0,2,0
-fcrepo-kernel,org.fcrepo.kernel.utils.impl,CacheStoreEntry,42,174,14,12,5,30,13,10,0,10
+fcrepo-kernel,org.fcrepo.kernel.utils.impl,CacheStoreEntry,41,175,13,13,5,30,12,11,0,10
 fcrepo-kernel,org.fcrepo.kernel.utils.impl,ChainingCacheStoreEntry,26,67,6,6,7,16,8,3,3,2
 fcrepo-kernel,org.fcrepo.kernel.utils.impl,LocalBinaryStoreEntry,35,87,8,6,6,12,9,6,2,6
 fcrepo-kernel,org.fcrepo.kernel.utils.infinispan,StoreChunkInputStream,109,145,20,12,24,34,14,10,2,6

@@ -164,7 +164,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
 <span class="pc bpc" id="L164" title="1 of 2 branches missed.">        if (other instanceof CacheStoreEntry) {</span>
 <span class="fc" id="L165">            final CacheStoreEntry that = (CacheStoreEntry) other;</span>
 
-<span class="pc bpc" id="L167" title="7 of 12 branches missed.">            return key.equals(that.getKey()) &amp;&amp;</span>
+<span class="pc bpc" id="L167" title="6 of 12 branches missed.">            return key.equals(that.getKey()) &amp;&amp;</span>
                            cacheName.equals(that.cacheName) &amp;&amp;
                            ((store == null &amp;&amp; that.store == null) ||
                                     (store != null &amp;&amp; store.equals(that.store)));
