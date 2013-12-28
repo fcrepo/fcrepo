@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TokenEndpoint.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-auth-oauth</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.oauth.api</a> &gt; <span class="el_source">TokenEndpoint.java</span></div><h1>TokenEndpoint.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.oauth.api;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.oltu.oauth2.as.response.OAuthASResponse.tokenResponse;
+import static org.apache.oltu.oauth2.common.OAuth.OAUTH_GRANT_TYPE;
+import static org.apache.oltu.oauth2.common.error.OAuthError.TokenResponse
+    .INVALID_CLIENT;
+import static org.apache.oltu.oauth2.common.error.OAuthError.TokenResponse
+    .INVALID_GRANT;
+import static org.apache.oltu.oauth2.common.error.OAuthError.TokenResponse
+    .UNAUTHORIZED_CLIENT;
+import static org.apache.oltu.oauth2.common.message.OAuthResponse.errorResponse;
+import static org.apache.oltu.oauth2.common.message.types.GrantType
+    .AUTHORIZATION_CODE;
+import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
+import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
+import static org.fcrepo.auth.oauth.Constants.PRINCIPAL_PROPERTY;
+import static org.fcrepo.auth.oauth.api.Util.createOauthWorkspace;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+
+import org.apache.oltu.oauth2.as.issuer.MD5Generator;
+import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
+import org.apache.oltu.oauth2.as.issuer.OAuthIssuerImpl;
+import org.apache.oltu.oauth2.as.request.OAuthTokenRequest;
+import org.apache.oltu.oauth2.as.response.OAuthASResponse;
+import org.apache.oltu.oauth2.common.OAuth;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.apache.oltu.oauth2.common.message.OAuthResponse;
+import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.auth.oauth.TokenRequestValidations;
+import org.fcrepo.auth.oauth.impl.DefaultTokenRequestValidations;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author ajs6f
+ * @date Jul 1, 2013
+ */
+@Component
+@Path(&quot;/token&quot;)
+<span class="fc" id="L77">public class TokenEndpoint extends AbstractResource {</span>
+
+    public static final String INVALID_CLIENT_DESCRIPTION =
+        &quot;Client authentication failed (e.g., unknown client, &quot; +
+        &quot;no client authentication included, &quot; +
+        &quot;or unsupported authentication method).&quot;;
+
+<span class="fc" id="L84">    private static final Logger LOGGER = getLogger(TokenEndpoint.class);</span>
+
+    @Autowired(required = false)
+    private TokenRequestValidations requestValidator;
+
+    @PostConstruct
+    void defaultValidations() {
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (requestValidator == null) {</span>
+<span class="fc" id="L92">            requestValidator = new DefaultTokenRequestValidations(sessions);</span>
+        }
+<span class="fc" id="L94">    }</span>
+
+    /**
+     * @param request An HTTP request
+     * @return A token-bearing HTTP response
+     * @throws OAuthSystemException
+     * @throws RepositoryException
+     */
+    @POST
+    @Consumes(APPLICATION_FORM_URLENCODED)
+    @Produces(APPLICATION_JSON)
+    public Response getToken(@Context final HttpServletRequest request) throws
+        OAuthSystemException, RepositoryException {
+<span class="fc" id="L107">        LOGGER.debug(&quot;Received request for token carried on request: {}&quot;,</span>
+                request);
+<span class="fc" id="L109">        OAuthTokenRequest oauthRequest = null;</span>
+
+<span class="fc" id="L111">        final OAuthIssuer oauthIssuerImpl =</span>
+                new OAuthIssuerImpl(new MD5Generator());
+
+        try {
+<span class="fc" id="L115">            oauthRequest = new OAuthTokenRequest(request);</span>
+
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">            if (!requestValidator.isValidClient(oauthRequest)) {</span>
+<span class="nc" id="L118">                final OAuthResponse response =</span>
+                        OAuthASResponse.errorResponse(SC_BAD_REQUEST).setError(
+                                INVALID_CLIENT).setErrorDescription(
+                                INVALID_CLIENT_DESCRIPTION).buildJSONMessage();
+<span class="nc" id="L122">                return status(response.getResponseStatus()).entity(</span>
+                        response.getBody()).build();
+            }
+
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">            if (!requestValidator.isValidSecret(oauthRequest)) {</span>
+<span class="nc" id="L127">                final OAuthResponse response =</span>
+                        OAuthASResponse
+                                .errorResponse(SC_UNAUTHORIZED)
+                                .setError(UNAUTHORIZED_CLIENT)
+                                .setErrorDescription(INVALID_CLIENT_DESCRIPTION)
+                                .buildJSONMessage();
+<span class="nc" id="L133">                return status(response.getResponseStatus()).entity(</span>
+                        response.getBody()).build();
+            }
+
+<span class="fc bfc" id="L137" title="All 2 branches covered.">            if (oauthRequest.getParam(OAUTH_GRANT_TYPE).equals(</span>
+                    AUTHORIZATION_CODE.toString())) {
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">                if (!requestValidator.isValidAuthCode(oauthRequest)) {</span>
+<span class="nc" id="L140">                    final OAuthResponse response =</span>
+                            errorResponse(SC_BAD_REQUEST).setError(
+                                    INVALID_GRANT).setErrorDescription(
+                                    &quot;invalid authorization code&quot;)
+                                    .buildJSONMessage();
+<span class="nc" id="L145">                    return status(response.getResponseStatus()).entity(</span>
+                            response.getBody()).build();
+                }
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">            } else if (oauthRequest.getParam(OAUTH_GRANT_TYPE).equals(</span>
+                    GrantType.PASSWORD.toString())) {
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">                if (!requestValidator.isValidCredentials(oauthRequest)) {</span>
+<span class="nc" id="L151">                    final OAuthResponse response =</span>
+                            errorResponse(SC_BAD_REQUEST).setError(
+                                    INVALID_GRANT).setErrorDescription(
+                                    &quot;invalid username or password&quot;)
+                                    .buildJSONMessage();
+<span class="nc" id="L156">                    return status(response.getResponseStatus()).entity(</span>
+                            response.getBody()).build();
+                }
+<span class="nc bnc" id="L159" title="All 2 branches missed.">            } else if (oauthRequest.getParam(OAuth.OAUTH_GRANT_TYPE).equals(</span>
+                    GrantType.REFRESH_TOKEN.toString())) {
+                // refresh token is not supported in this implementation
+<span class="nc" id="L162">                final OAuthResponse response =</span>
+                        errorResponse(SC_BAD_REQUEST).setError(INVALID_GRANT)
+                                .setErrorDescription(
+                                        &quot;invalid username or password&quot;)
+                                .buildJSONMessage();
+<span class="nc" id="L167">                return status(response.getResponseStatus()).entity(</span>
+                        response.getBody()).build();
+            }
+
+<span class="fc" id="L171">            final String token = oauthIssuerImpl.accessToken();</span>
+<span class="fc" id="L172">            LOGGER.debug(&quot;Created token: {}&quot;, token);</span>
+<span class="fc" id="L173">            saveToken(token, oauthRequest.getClientId(), oauthRequest</span>
+                    .getUsername());
+<span class="fc" id="L175">            final OAuthResponse response =</span>
+                    tokenResponse(SC_OK).setAccessToken(token).setExpiresIn(
+                            &quot;3600&quot;).buildJSONMessage();
+<span class="fc" id="L178">            return status(response.getResponseStatus()).entity(</span>
+                    response.getBody()).build();
+
+<span class="nc" id="L181">        } catch (final OAuthProblemException e) {</span>
+<span class="nc" id="L182">            final OAuthResponse res =</span>
+                    errorResponse(SC_BAD_REQUEST).error(e).buildJSONMessage();
+<span class="nc" id="L184">            throw new WebApplicationException(e, status(res.getResponseStatus()).entity(res.getBody())</span>
+                    .build());
+        }
+    }
+
+    /**
+     * Stores a token for later use by the configured {@link OAuthRSProvider}
+     * 
+     * @param token
+     * @param client
+     * @param username
+     * @throws RepositoryException
+     */
+    private void saveToken(final String token, final String client,
+            final String username) throws RepositoryException {
+<span class="fc" id="L199">        final Session session = sessions.getInternalSession(OAUTH_WORKSPACE);</span>
+        try {
+<span class="fc" id="L201">            final Node tokenNode =</span>
+                    jcrTools.findOrCreateNode(session, &quot;/tokens/&quot; + token);
+<span class="fc" id="L203">            tokenNode.setProperty(CLIENT_PROPERTY, client);</span>
+<span class="fc" id="L204">            tokenNode.setProperty(PRINCIPAL_PROPERTY, username);</span>
+<span class="fc" id="L205">            session.save();</span>
+        } finally {
+<span class="pc" id="L207">            session.logout();</span>
+<span class="fc" id="L208">        }</span>
+
+<span class="fc" id="L210">    }</span>
+
+    /**
+     * Create the OAuth workspace in JCR to store all our tokens
+     * @throws RepositoryException
+     */
+    @PostConstruct
+    public void init() throws RepositoryException {
+<span class="fc" id="L218">        createOauthWorkspace(sessions);</span>
+<span class="fc" id="L219">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

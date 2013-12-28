@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AuthzEndpoint.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-auth-oauth</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.oauth.api</a> &gt; <span class="el_source">AuthzEndpoint.java</span></div><h1>AuthzEndpoint.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.oauth.api;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_FOUND;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.oltu.oauth2.as.response.OAuthASResponse
+    .authorizationResponse;
+import static org.apache.oltu.oauth2.common.OAuth.OAUTH_REDIRECT_URI;
+import static org.apache.oltu.oauth2.common.OAuth.OAUTH_RESPONSE_TYPE;
+import static org.apache.oltu.oauth2.common.OAuth.OAUTH_STATE;
+import static org.apache.oltu.oauth2.common.error.OAuthError.CodeResponse
+    .UNSUPPORTED_RESPONSE_TYPE;
+import static org.apache.oltu.oauth2.common.message.OAuthResponse.errorResponse;
+import static org.apache.oltu.oauth2.common.message.types.ResponseType.CODE;
+import static org.apache.oltu.oauth2.common.utils.OAuthUtils.isEmpty;
+import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
+import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
+import static org.fcrepo.auth.oauth.api.Util.createOauthWorkspace;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Set;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+
+import com.google.common.collect.Iterables;
+import org.apache.oltu.oauth2.as.issuer.MD5Generator;
+import org.apache.oltu.oauth2.as.issuer.OAuthIssuerImpl;
+import org.apache.oltu.oauth2.as.request.OAuthAuthzRequest;
+import org.apache.oltu.oauth2.as.response.OAuthASResponse
+    .OAuthAuthorizationResponseBuilder;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.apache.oltu.oauth2.common.message.OAuthResponse;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.auth.oauth.Constants;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author ajs6f
+ * @date Jul 1, 2013
+ */
+@Component
+@Path(&quot;/authorization&quot;)
+<span class="fc" id="L71">public class AuthzEndpoint extends AbstractResource {</span>
+
+<span class="fc" id="L73">    private static final Logger LOGGER = getLogger(AuthzEndpoint.class);</span>
+
+    /**
+     * @param request An HTTP request
+     * @return An authorization code for later use with the
+     *         {@link TokenEndpoint}
+     * @throws URISyntaxException
+     * @throws OAuthSystemException
+     * @throws RepositoryException
+     */
+    @GET
+    public Response getAuthorization(@Context final HttpServletRequest request)
+        throws URISyntaxException, OAuthSystemException, RepositoryException {
+
+        final OAuthAuthzRequest oauthRequest;
+
+<span class="fc" id="L89">        final OAuthIssuerImpl oauthIssuerImpl =</span>
+                new OAuthIssuerImpl(new MD5Generator());
+
+        try {
+<span class="fc" id="L93">            oauthRequest = new OAuthAuthzRequest(request);</span>
+
+            // build response according to response_type
+<span class="fc" id="L96">            final String responseType =</span>
+                    oauthRequest.getParam(OAUTH_RESPONSE_TYPE);
+
+<span class="fc" id="L99">            final OAuthAuthorizationResponseBuilder builder =</span>
+                    authorizationResponse(request, SC_FOUND);
+
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">            if (responseType.equals(CODE.toString())) {</span>
+<span class="fc" id="L103">                final String authCode = oauthIssuerImpl.authorizationCode();</span>
+<span class="fc" id="L104">                LOGGER.debug(&quot;Created authorization code: {}&quot;, authCode);</span>
+<span class="fc" id="L105">                final String client = oauthRequest.getClientId();</span>
+<span class="fc" id="L106">                final Set&lt;String&gt; scopes = oauthRequest.getScopes();</span>
+<span class="fc" id="L107">                saveAuthCode(authCode, scopes, client);</span>
+<span class="fc" id="L108">                builder.setCode(authCode);</span>
+
+<span class="fc" id="L110">                builder.setParam(&quot;grant_type&quot;, &quot;authorization_code&quot;);</span>
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">                if (null != client) {</span>
+<span class="fc" id="L113">                    builder.setParam(&quot;client_id&quot;, client);</span>
+                }
+
+<span class="fc" id="L116">                final String clientSecret = oauthRequest.getClientSecret();</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">                if (null != clientSecret) {</span>
+<span class="nc" id="L118">                    builder.setParam(&quot;client_secret&quot;, clientSecret);</span>
+                } else {
+<span class="fc" id="L120">                    builder.setParam(&quot;client_secret&quot;, &quot;YOUR_SECRET&quot;);</span>
+                }
+
+<span class="fc" id="L123">            } else {</span>
+<span class="nc" id="L124">                final String errorDesc =</span>
+                    &quot;Invalid response_type parameter value \&quot;&quot; +
+                    responseType + &quot;\&quot;&quot;;
+<span class="nc" id="L127">                LOGGER.debug(errorDesc);</span>
+<span class="nc" id="L128">                OAuthProblemException e =</span>
+                    OAuthProblemException
+                    .error(UNSUPPORTED_RESPONSE_TYPE,errorDesc);
+
+<span class="nc" id="L132">                e.setRedirectUri(oauthRequest.getParam(OAUTH_REDIRECT_URI));</span>
+<span class="nc" id="L133">                throw e;</span>
+            }
+
+<span class="fc" id="L136">            final String redirectURI =</span>
+                    oauthRequest.getParam(OAUTH_REDIRECT_URI);
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">            if (null != redirectURI) {</span>
+<span class="fc" id="L139">                builder.setParam(OAUTH_REDIRECT_URI, redirectURI);</span>
+            }
+
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">            if (oauthRequest.getState() != null) {</span>
+<span class="nc" id="L143">                builder.setParam(OAUTH_STATE, oauthRequest.getState());</span>
+            }
+
+<span class="fc" id="L146">            final OAuthResponse response =</span>
+                    builder.location(redirectURI).buildQueryMessage() ;
+<span class="fc" id="L148">            final URI url = new URI(response.getLocationUri());</span>
+
+<span class="fc" id="L150">            return status(response.getResponseStatus()).location(url).build();</span>
+
+<span class="nc" id="L152">        } catch (final OAuthProblemException e) {</span>
+
+<span class="nc" id="L154">            final Response.ResponseBuilder responseBuilder = status(SC_FOUND);</span>
+
+<span class="nc" id="L156">            final String redirectUri = e.getRedirectUri();</span>
+
+<span class="nc bnc" id="L158" title="All 2 branches missed.">            if (isEmpty(redirectUri)) {</span>
+<span class="nc" id="L159">                throw new WebApplicationException(e,</span>
+                    responseBuilder.status(SC_BAD_REQUEST)
+                                   .entity(&quot;OAuth callback url needs to be provided by client!&quot;)
+                                   .build());
+            }
+<span class="nc" id="L164">            final OAuthResponse response =</span>
+                    errorResponse(SC_FOUND).error(e).location(redirectUri)
+                            .buildQueryMessage();
+<span class="nc" id="L167">            final URI location = new URI(response.getLocationUri());</span>
+<span class="nc" id="L168">            return responseBuilder.location(location).build();</span>
+        }
+    }
+
+    /**
+     * Saves an authorization code for later retrieval at the token endpoint.
+     * 
+     * @param authCode
+     * @param scopes
+     * @param client
+     * @throws RepositoryException
+     */
+    private void saveAuthCode(final String authCode, final Set&lt;String&gt; scopes,
+            final String client) throws RepositoryException {
+<span class="fc" id="L182">        final Session session = sessions.getInternalSession(OAUTH_WORKSPACE);</span>
+        try {
+<span class="fc" id="L184">            final Node codeNode =</span>
+                    jcrTools.findOrCreateNode(session, &quot;/authorization-codes/&quot; +
+                            authCode);
+<span class="fc" id="L187">            codeNode.setProperty(CLIENT_PROPERTY, client);</span>
+<span class="fc" id="L188">            codeNode.setProperty(Constants.SCOPES_PROPERTY, Iterables.toArray(scopes, String.class));</span>
+<span class="fc" id="L189">            session.save();</span>
+        } finally {
+<span class="pc" id="L191">            session.logout();</span>
+<span class="fc" id="L192">        }</span>
+
+<span class="fc" id="L194">    }</span>
+
+    /**
+     * Ensures the existence of the workspace into which authorization codes are
+     * stored.
+     * 
+     * @throws RepositoryException
+     */
+    @PostConstruct
+    public void init() throws RepositoryException {
+<span class="fc" id="L204">        createOauthWorkspace(sessions);</span>
+<span class="fc" id="L205">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
