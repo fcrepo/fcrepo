@@ -1,0 +1,19 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+fcrepo-transform,org.fcrepo.transform.http.responses,QueryExecutionProvider,35,30,2,6,8,4,4,5,2,3
+fcrepo-transform,org.fcrepo.transform.http.responses,ResultSetStreamingOutput,136,51,54,6,11,14,40,6,0,4
+fcrepo-transform,org.fcrepo.transform.sparql,JQLResultSet.JQLQuerySolution.new Function() {...},9,0,0,0,2,0,2,0,2,0
+fcrepo-transform,org.fcrepo.transform.sparql,JQLResultSet.JQLQuerySolution,93,51,8,3,24,11,15,6,8,4
+fcrepo-transform,org.fcrepo.transform.sparql,JQLQueryVisitor,394,1084,57,91,95,232,73,67,23,33
+fcrepo-transform,org.fcrepo.transform.sparql,JQLConverter,0,64,0,0,0,15,0,5,0,5
+fcrepo-transform,org.fcrepo.transform.sparql,JQLResultSet,19,63,0,0,7,15,5,6,5,6
+fcrepo-transform,org.fcrepo.transform.exception,JQLParsingException,4,0,0,0,2,0,1,0,1,0
+fcrepo-transform,org.fcrepo.transform.http,FedoraSparql.new StreamingOutput() {...},0,26,0,0,0,5,0,2,0,2
+fcrepo-transform,org.fcrepo.transform.http,FedoraTransform,17,143,1,3,0,29,1,6,0,5
+fcrepo-transform,org.fcrepo.transform.http,TransformResources,30,3,2,0,5,1,2,1,1,1
+fcrepo-transform,org.fcrepo.transform.http,FedoraSparql,30,135,6,2,0,27,4,4,0,4
+fcrepo-transform,org.fcrepo.transform,TransformationFactory,12,55,2,2,6,9,3,2,1,2
+fcrepo-transform,org.fcrepo.transform.transformations,LDPathTransform.new Function() {...},0,5,0,0,0,2,0,2,0,2
+fcrepo-transform,org.fcrepo.transform.transformations,LDPathTransform.new Function() {...},0,7,0,0,0,2,0,2,0,2
+fcrepo-transform,org.fcrepo.transform.transformations,SparqlQueryTransform,31,18,4,0,5,6,5,2,3,2
+fcrepo-transform,org.fcrepo.transform.transformations,LDPathTransform,59,165,5,5,8,31,6,8,3,6
+fcrepo-transform,org.fcrepo.transform.transformations,LDPathTransform.new Comparator() {...},0,9,0,0,0,2,0,2,0,2

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TransformationFactory.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-transform</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.transform</a> &gt; <span class="el_source">TransformationFactory.java</span></div><h1>TransformationFactory.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.transform;
+
+import org.fcrepo.transform.transformations.LDPathTransform;
+import org.fcrepo.transform.transformations.SparqlQueryTransform;
+
+import javax.ws.rs.core.MediaType;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.google.common.base.Throwables.propagate;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
+import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
+
+/**
+ * Get a Transformation from a MediaType
+ */
+public class TransformationFactory {
+
+    private Map&lt;String, Class&lt;?&gt;&gt; mimeToTransform;
+
+    /**
+     * Get a new TransformationFactory with the default classes
+     */
+<span class="fc" id="L42">    public TransformationFactory() {</span>
+<span class="fc" id="L43">        mimeToTransform = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L44">        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform.class);</span>
+<span class="fc" id="L45">        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform.class);</span>
+
+<span class="fc" id="L47">    }</span>
+
+    /**
+     * Get a new TransformationFactory using the provided mapping
+     * @param mimeToTransform
+     */
+<span class="nc" id="L53">    public TransformationFactory(final Map&lt;String, Class&lt;?&gt;&gt; mimeToTransform) {</span>
+<span class="nc" id="L54">        this.mimeToTransform = mimeToTransform;</span>
+<span class="nc" id="L55">    }</span>
+
+    /**
+     * Get a Transformation from a MediaType and an InputStream with
+     * the transform program
+     * @param contentType
+     * @param inputStream
+     * @return
+     */
+    public Transformation getTransform(final MediaType contentType,
+                                              final InputStream inputStream) {
+
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        if (mimeToTransform.containsKey(contentType.toString())) {</span>
+<span class="fc" id="L68">            final Class&lt;?&gt; transform = mimeToTransform.get(contentType.toString());</span>
+
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">            if (Transformation.class.isAssignableFrom(transform)) {</span>
+                try {
+<span class="fc" id="L72">                    return (Transformation)(transform.getConstructor(InputStream.class).newInstance(inputStream));</span>
+<span class="nc" id="L73">                } catch (NoSuchMethodException</span>
+                        | InvocationTargetException
+                        | InstantiationException
+                        | IllegalAccessException e) {
+<span class="nc" id="L77">                    throw propagate(e);</span>
+                }
+            }
+
+        }
+
+<span class="nc" id="L83">        return null;</span>
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
