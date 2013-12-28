@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AccessRolesProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-auth-roles-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.roles.common</a> &gt; <span class="el_source">AccessRolesProvider.java</span></div><h1>AccessRolesProvider.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.auth.roles.common;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+
+import org.fcrepo.auth.roles.common.Constants.JcrName;
+import org.modeshape.jcr.value.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import static com.google.common.collect.Iterables.toArray;
+
+/**
+ * Provides the effective access roles for authorization.
+ *
+ * @author Gregory Jansen
+ */
+@Component
+<span class="fc" id="L48">public class AccessRolesProvider {</span>
+
+<span class="fc" id="L50">    private static final Logger LOGGER = LoggerFactory</span>
+            .getLogger(AccessRolesProvider.class);
+
+<span class="fc" id="L53">    public static final Map&lt;String, List&lt;String&gt;&gt; DEFAULT_ACCESS_ROLES =</span>
+            Collections.emptyMap();
+
+    /**
+     * Get the roles assigned to this Node. Optionally search up the tree for
+     * the effective roles.
+     *
+     * @param node the subject Node
+     * @param effective if true then search for effective roles
+     * @return a set of roles for each principal
+     */
+    public Map&lt;String, List&lt;String&gt;&gt;
+    getRoles(Node node, final boolean effective)
+        throws RepositoryException {
+<span class="fc" id="L67">        final Map&lt;String, List&lt;String&gt;&gt; data =</span>
+                new HashMap&lt;String, List&lt;String&gt;&gt;();
+<span class="fc" id="L69">        final Session session = node.getSession();</span>
+<span class="fc" id="L70">        Constants.registerPrefixes(session);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {</span>
+<span class="fc" id="L72">            getAssignments(node, data);</span>
+<span class="fc" id="L73">            return data;</span>
+        } else {
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            if (effective) { // look up the tree</span>
+                try {
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">                    for (node = node.getParent(); node != null; node =</span>
+                            node.getParent()) {
+<span class="fc bfc" id="L79" title="All 2 branches covered.">                        if (node.isNodeType(JcrName.rbaclAssignable</span>
+                                .getQualified())) {
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                            if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L82">                                LOGGER.debug(&quot;effective roles are assigned at node: {}&quot;,</span>
+                                             node.getPath());
+                            }
+<span class="fc" id="L85">                            getAssignments(node, data);</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">                            if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                                for (final Map.Entry&lt;String, List&lt;String&gt;&gt; entry : data.entrySet()) {</span>
+<span class="nc" id="L88">                                    LOGGER.debug(&quot;{} has role(s) {}&quot;, entry.getKey(), entry.getValue());</span>
+<span class="nc" id="L89">                                }</span>
+                            }
+<span class="fc" id="L91">                            return data;</span>
+                        }
+                    }
+<span class="fc" id="L94">                } catch (final ItemNotFoundException e) {</span>
+<span class="fc" id="L95">                    LOGGER.trace(&quot;Subject not found, using default access roles&quot;, e);</span>
+<span class="fc" id="L96">                    return DEFAULT_ACCESS_ROLES;</span>
+<span class="nc" id="L97">                }</span>
+            }
+<span class="fc" id="L99">            return null;</span>
+        }
+    }
+
+    /**
+     * @param node
+     * @param data
+     * @throws RepositoryException
+     */
+    private void getAssignments(final Node node,
+            final Map&lt;String, List&lt;String&gt;&gt; data)
+        throws RepositoryException {
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {</span>
+            try {
+<span class="fc" id="L114">                final Node rbacl = node.getNode(JcrName.rbacl.getQualified());</span>
+<span class="fc" id="L115">                LOGGER.debug(&quot;got rbacl: {}&quot;, rbacl);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">                for (final NodeIterator ni = rbacl.getNodes(); ni.hasNext();) {</span>
+<span class="fc" id="L117">                    final Node assign = ni.nextNode();</span>
+<span class="fc" id="L118">                    final String principalName =</span>
+                            assign.getProperty(JcrName.principal.getQualified())
+                                    .getString();
+<span class="pc bpc" id="L121" title="2 of 4 branches missed.">                    if (principalName == null ||</span>
+                            principalName.trim().length() == 0) {
+<span class="nc" id="L123">                        LOGGER.warn(&quot;found empty principal name on node {}&quot;,</span>
+                                    node.getPath());
+                    } else {
+<span class="fc" id="L126">                        List&lt;String&gt; roles = data.get(principalName);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">                        if (roles == null) {</span>
+<span class="fc" id="L128">                            roles = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L129">                            data.put(principalName, roles);</span>
+                        }
+<span class="fc bfc" id="L131" title="All 2 branches covered.">                        for (final Value v : assign.getProperty(</span>
+                                JcrName.role.getQualified()).getValues()) {
+<span class="pc bpc" id="L133" title="2 of 4 branches missed.">                            if (v == null || v.toString().trim().length() == 0) {</span>
+<span class="nc" id="L134">                                LOGGER.warn(&quot;found empty role name on node {}&quot;,</span>
+                                            node.getPath());
+                            } else {
+<span class="fc" id="L137">                                roles.add(v.toString());</span>
+                            }
+                        }
+                    }
+<span class="fc" id="L141">                }</span>
+<span class="nc" id="L142">            } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L143">                LOGGER.error(</span>
+                             &quot;Found rbaclAssignable mixin without a corresponding node at {}&quot;,
+                             node.getPath(),
+                             e);
+<span class="fc" id="L147">            }</span>
+        }
+<span class="fc" id="L149">    }</span>
+
+    /**
+     * Assigns the given set of roles to each principal.
+     *
+     * @param node the Node to edit
+     * @param data the roles to assign
+     */
+    public void postRoles(final Node node, final Map&lt;String, Set&lt;String&gt;&gt; data)
+        throws RepositoryException {
+<span class="fc" id="L159">        final Session session = node.getSession();</span>
+<span class="fc" id="L160">        Constants.registerPrefixes(session);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        if (!node.isNodeType(JcrName.rbaclAssignable.getQualified())) {</span>
+<span class="fc" id="L162">            node.addMixin(JcrName.rbaclAssignable.getQualified());</span>
+<span class="fc" id="L163">            LOGGER.debug(&quot;added rbaclAssignable type&quot;);</span>
+        }
+
+        Node acl;
+
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (node.hasNode(JcrName.rbacl.getQualified())) {</span>
+<span class="fc" id="L169">            acl = node.getNode(JcrName.rbacl.getQualified());</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">            for (final NodeIterator ni = acl.getNodes(); ni.hasNext();) {</span>
+<span class="fc" id="L171">                ni.nextNode().remove();</span>
+            }
+        } else {
+<span class="fc" id="L174">            acl = node.addNode(JcrName.rbacl.getQualified(), JcrName.Rbacl</span>
+                                                                 .getQualified());
+        }
+
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        for (final Map.Entry&lt;String, Set&lt;String&gt;&gt; entry : data.entrySet()) {</span>
+<span class="fc" id="L179">            final Node assign =</span>
+                    acl.addNode(JcrName.assignment.getQualified(),
+                            JcrName.Assignment.getQualified());
+<span class="fc" id="L182">            assign.setProperty(JcrName.principal.getQualified(), entry.getKey());</span>
+<span class="fc" id="L183">            assign.setProperty(JcrName.role.getQualified(), toArray(entry.getValue(), String.class));</span>
+<span class="fc" id="L184">        }</span>
+<span class="fc" id="L185">    }</span>
+
+    /**
+     * Deletes all roles assigned on this node and removes the mixin type.
+     *
+     * @param node
+     */
+    public void deleteRoles(final Node node) throws RepositoryException {
+<span class="fc" id="L193">        final Session session = node.getSession();</span>
+<span class="fc" id="L194">        Constants.registerPrefixes(session);</span>
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {</span>
+            // remove rbacl child
+            try {
+<span class="fc" id="L198">                final Node rbacl = node.getNode(JcrName.rbacl.getQualified());</span>
+<span class="fc" id="L199">                rbacl.remove();</span>
+<span class="nc" id="L200">            } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L201">                LOGGER.debug(&quot;Cannot find node: {}&quot;, node, e);</span>
+<span class="fc" id="L202">            }</span>
+            // remove mixin
+<span class="fc" id="L204">            node.removeMixin(JcrName.rbaclAssignable.getQualified());</span>
+        }
+<span class="fc" id="L206">    }</span>
+
+    /**
+     * Finds effective roles assigned to a path, using first real ancestor node.
+     *
+     * @param absPath the real or potential node path
+     * @return the roles assigned to each principal
+     * @throws RepositoryException
+     */
+    public Map&lt;String, List&lt;String&gt;&gt; findRolesForPath(final Path absPath,
+            final Session session) throws RepositoryException {
+<span class="nc" id="L217">        Node node = null;</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        for (Path p = absPath; p != null; p = p.getParent()) {</span>
+            try {
+<span class="nc bnc" id="L220" title="All 2 branches missed.">                if (p.isRoot()) {</span>
+<span class="nc" id="L221">                    node = session.getRootNode();</span>
+                } else {
+<span class="nc" id="L223">                    node = session.getNode(p.getString());</span>
+                }
+<span class="nc" id="L225">                break;</span>
+<span class="nc" id="L226">            } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L227">                LOGGER.debug(&quot;Cannot find node: {}&quot;, p, e);</span>
+            }
+        }
+<span class="nc" id="L230">        return this.getRoles(node, true);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

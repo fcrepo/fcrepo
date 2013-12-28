@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AbstractRolesPEP.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">fcrepo-auth-roles-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.roles.common</a> &gt; <span class="el_source">AbstractRolesPEP.java</span></div><h1>AbstractRolesPEP.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.auth.roles.common;
+
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.modeshape.jcr.JcrSession;
+import org.modeshape.jcr.value.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Policy enforcement point for roles-based authentication
+ * @author Gregory Jansen
+ */
+<span class="nc" id="L46">public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {</span>
+
+<span class="nc" id="L48">    private static final Logger LOGGER = LoggerFactory</span>
+            .getLogger(AbstractRolesPEP.class);
+
+    protected static final String AUTHZ_DETECTION = &quot;/{&quot; +
+            Constants.JcrName.NS_URI + &quot;}&quot;;
+
+<span class="nc" id="L54">    private static final String[] READ_ACTIONS = {&quot;read&quot;};</span>
+
+<span class="nc" id="L56">    private static final String[] REMOVE_ACTIONS = {&quot;remove&quot;};</span>
+
+<span class="nc" id="L58">    @Autowired</span>
+    private AccessRolesProvider accessRolesProvider = null;
+
+    /**
+     * @return the accessRolesProvider
+     */
+    public AccessRolesProvider getAccessRolesProvider() {
+<span class="nc" id="L65">        return accessRolesProvider;</span>
+    }
+
+    /**
+     * @param accessRolesProvider the accessRolesProvider to set
+     */
+    public void setAccessRolesProvider(
+            final AccessRolesProvider accessRolesProvider) {
+<span class="nc" id="L73">        this.accessRolesProvider = accessRolesProvider;</span>
+<span class="nc" id="L74">    }</span>
+
+<span class="nc" id="L76">    @Autowired</span>
+    private SessionFactory sessionFactory = null;
+
+    /**
+     * @return the sessionFactory
+     */
+    public SessionFactory getSessionFactory() {
+<span class="nc" id="L83">        return sessionFactory;</span>
+    }
+
+    /**
+     * @param sessionFactory the sessionFactory to set
+     */
+    public void setSessionFactory(final SessionFactory sessionFactory) {
+<span class="nc" id="L90">        this.sessionFactory = sessionFactory;</span>
+<span class="nc" id="L91">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.auth.FedoraPolicyEnforcementPoint#filterPathsForReading(java
+     * .util.Collection, java.util.Set, java.security.Principal)
+     */
+    @Override
+    public Iterator&lt;Path&gt; filterPathsForReading(final Iterator&lt;Path&gt; paths,
+            final Set&lt;Principal&gt; allPrincipals, final Principal userPrincipal) {
+        Session session;
+        try {
+<span class="nc" id="L104">            session = sessionFactory.getInternalSession();</span>
+<span class="nc" id="L105">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L106">            throw new RepositoryRuntimeException(&quot;PEP cannot obtain an internal session&quot;, e);</span>
+<span class="nc" id="L107">        }</span>
+<span class="nc" id="L108">        return new PathIterator(session, paths,</span>
+                userPrincipal, allPrincipals);
+    }
+
+    /**
+     * Gather effectives roles
+     *
+     * @param principals effective principals
+     * @return set of effective content roles
+     * @throws RepositoryException if role discovery fails
+     */
+    public static Set&lt;String&gt;
+    resolveUserRoles(final Map&lt;String, List&lt;String&gt;&gt; acl,
+                    final Set&lt;Principal&gt; principals) throws RepositoryException {
+<span class="nc" id="L122">        final Set&lt;String&gt; roles = new HashSet&lt;String&gt;();</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        for (final Principal p : principals) {</span>
+<span class="nc" id="L124">            final List&lt;String&gt; matchedRoles = acl.get(p.getName());</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">            if (matchedRoles != null) {</span>
+<span class="nc" id="L126">                LOGGER.debug(&quot;request principal matched role assignment: {}&quot;, p.getName());</span>
+<span class="nc" id="L127">                roles.addAll(matchedRoles);</span>
+            }
+<span class="nc" id="L129">        }</span>
+<span class="nc" id="L130">        return roles;</span>
+    }
+
+    @Override
+    public boolean hasModeShapePermission(final Path absPath,
+            final String[] actions, final Set&lt;Principal&gt; allPrincipals,
+            final Principal userPrincipal) {
+        final Set&lt;String&gt; roles;
+        final JcrSession session;
+
+        try {
+<span class="nc" id="L141">            session = (JcrSession)sessionFactory.getInternalSession();</span>
+<span class="nc" id="L142">            final Map&lt;String, List&lt;String&gt;&gt; acl =</span>
+                    accessRolesProvider.findRolesForPath(absPath, session);
+<span class="nc" id="L144">            roles = resolveUserRoles(acl, allPrincipals);</span>
+<span class="nc" id="L145">            LOGGER.debug(&quot;roles for this request: {}&quot;, roles);</span>
+<span class="nc" id="L146">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L147">            throw new RepositoryRuntimeException(&quot;Cannot look up node information on &quot; + absPath +</span>
+                    &quot; for permissions check.&quot;, e);
+<span class="nc" id="L149">        }</span>
+
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L152">            LOGGER.debug(&quot;{}\t{}\t{}&quot;, roles, actions, absPath);</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">            if (actions.length &gt; 1) { // have yet to see more than one</span>
+<span class="nc" id="L154">                LOGGER.debug(&quot;FOUND MULTIPLE ACTIONS: {}&quot;, Arrays</span>
+                        .toString(actions));
+            }
+        }
+
+<span class="nc bnc" id="L159" title="All 4 branches missed.">        if (actions.length == 1 &amp;&amp; &quot;remove_child_nodes&quot;.equals(actions[0])) {</span>
+            // in roles-based ACLs, the permission to remove children is
+            // conferred by earlier check for &quot;remove_node&quot; on the child node
+            // itself.
+<span class="nc" id="L163">            return true;</span>
+        }
+
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (!rolesHaveModeShapePermission(absPath.toString(), actions,</span>
+                allPrincipals,
+                userPrincipal, roles)) {
+<span class="nc" id="L169">            return false;</span>
+        }
+
+<span class="nc bnc" id="L172" title="All 4 branches missed.">        if (actions.length == 1 &amp;&amp; &quot;remove&quot;.equals(actions[0])) {</span>
+            // you must be able to delete all the children
+            // TODO make recursive/ACL-query-based check configurable
+<span class="nc" id="L175">            return canRemoveChildrenRecursive(absPath.toString(), session,</span>
+                    allPrincipals,
+                    userPrincipal, roles);
+        } else {
+<span class="nc" id="L179">            return true;</span>
+        }
+    }
+
+    /**
+     * @param absPath
+     * @param actions
+     * @param allPrincipals
+     * @param userPrincipal
+     * @return
+     */
+    private boolean canRemoveChildrenRecursive(final String parentPath,
+            final JcrSession session, final Set&lt;Principal&gt; allPrincipals,
+            final Principal userPrincipal, final Set&lt;String&gt; parentRoles) {
+        try {
+<span class="nc" id="L194">            LOGGER.debug(&quot;Recursive child remove permission checks for: {}&quot;,</span>
+                         parentPath);
+<span class="nc" id="L196">            final Node parent = session.getNode(parentPath);</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            if (!parent.hasNodes()) {</span>
+<span class="nc" id="L198">                return true;</span>
+            }
+<span class="nc" id="L200">            final NodeIterator ni = parent.getNodes();</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">            while (ni.hasNext()) {</span>
+<span class="nc" id="L202">                final Node n = ni.nextNode();</span>
+                // are there unique roles?
+                final Set&lt;String&gt; roles;
+<span class="nc" id="L205">                Map&lt;String, List&lt;String&gt;&gt; acl = null;</span>
+                try {
+<span class="nc" id="L207">                    acl = accessRolesProvider.getRoles(n, false);</span>
+<span class="nc" id="L208">                } catch (final PathNotFoundException ignored) {</span>
+<span class="nc" id="L209">                    LOGGER.trace(&quot;Path not found when removing roles&quot;, ignored);</span>
+<span class="nc" id="L210">                }</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">                if (acl != null) {</span>
+<span class="nc" id="L212">                    roles = resolveUserRoles(acl, allPrincipals);</span>
+                } else {
+<span class="nc" id="L214">                    roles = parentRoles;</span>
+                }
+<span class="nc bnc" id="L216" title="All 2 branches missed.">                if (rolesHaveModeShapePermission(n.getPath(), REMOVE_ACTIONS,</span>
+                        allPrincipals, userPrincipal, roles)) {
+
+<span class="nc bnc" id="L219" title="All 2 branches missed.">                    if (!canRemoveChildrenRecursive(n.getPath(), session,</span>
+                            allPrincipals, userPrincipal, roles)) {
+<span class="nc" id="L221">                        return false;</span>
+                    }
+                } else {
+<span class="nc" id="L224">                    LOGGER.info(&quot;Remove permission denied at {} with roles {}&quot;, n.getPath(), roles);</span>
+<span class="nc" id="L225">                    return false;</span>
+                }
+<span class="nc" id="L227">            }</span>
+<span class="nc" id="L228">            return true;</span>
+<span class="nc" id="L229">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L230">            throw new RepositoryRuntimeException(</span>
+                    &quot;Cannot lookup child permission check information for &quot; +
+                            parentPath, e);
+        }
+    }
+
+    /**
+     * Subclasses must override this method to determine permissions based on
+     * supplied roles.
+     *
+     * @param absPath path to the object
+     * @param actions requested action
+     * @param userPrincipal
+     * @param allPrincipals
+     * @param roles effective roles for this request and content
+     * @return true if role has permission
+     */
+    public abstract boolean rolesHaveModeShapePermission(String absPath,
+            String[] actions, Set&lt;Principal&gt; allPrincipals,
+            Principal userPrincipal, Set&lt;String&gt; roles);
+
+    /**
+     * Filter paths for reading
+     */
+<span class="nc" id="L254">    public class PathIterator implements Iterator&lt;Path&gt; {</span>
+
+<span class="nc" id="L256">        private Path next = null;</span>
+
+<span class="nc" id="L258">        private Session session = null;</span>
+
+<span class="nc" id="L260">        private Iterator&lt;Path&gt; wrapped = null;</span>
+
+<span class="nc" id="L262">        private Principal userPrincipal = null;</span>
+
+<span class="nc" id="L264">        private Set&lt;Principal&gt; principals = null;</span>
+
+        /**
+         * @param session
+         * @param paths
+         * @param allPrincipals
+         */
+        public PathIterator(final Session session,
+                final Iterator&lt;Path&gt; paths, final Principal userPrincipal,
+<span class="nc" id="L273">                final Set&lt;Principal&gt; allPrincipals) {</span>
+<span class="nc" id="L274">            this.wrapped = paths;</span>
+<span class="nc" id="L275">            this.session = session;</span>
+<span class="nc" id="L276">            this.userPrincipal = userPrincipal;</span>
+<span class="nc" id="L277">            this.principals = allPrincipals;</span>
+<span class="nc" id="L278">        }</span>
+
+        @Override
+        public boolean hasNext() {
+<span class="nc bnc" id="L282" title="All 2 branches missed.">            if (next == null) {</span>
+<span class="nc" id="L283">                findNext();</span>
+            }
+<span class="nc bnc" id="L285" title="All 2 branches missed.">            return next != null;</span>
+        }
+
+        @Override
+        public Path next() {
+<span class="nc bnc" id="L290" title="All 2 branches missed.">            if (next == null) {</span>
+<span class="nc" id="L291">                findNext();</span>
+            }
+<span class="nc" id="L293">            return next;</span>
+        }
+
+        @Override
+        public void remove() {
+<span class="nc" id="L298">            throw new UnsupportedOperationException(</span>
+                    &quot;This API is for reads only&quot;);
+        }
+
+        private void findNext() {
+<span class="nc bnc" id="L303" title="All 2 branches missed.">            while (wrapped.hasNext()) {</span>
+<span class="nc" id="L304">                final Path p = wrapped.next();</span>
+                // lookup roles
+                try {
+<span class="nc" id="L307">                    final Map&lt;String, List&lt;String&gt;&gt; acl =</span>
+                            accessRolesProvider.findRolesForPath(p, session);
+<span class="nc" id="L309">                    final Set&lt;String&gt; roles = resolveUserRoles(acl, principals);</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">                    if (rolesHaveModeShapePermission(p.getString(),</span>
+                            READ_ACTIONS,
+                            principals, userPrincipal, roles)) {
+<span class="nc" id="L313">                        next = p;</span>
+<span class="nc" id="L314">                        break;</span>
+                    }
+<span class="nc" id="L316">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L317">                    throw new RepositoryRuntimeException(&quot;Cannot look up node information on &quot; + p +</span>
+                            &quot; for permissions check.&quot;, e);
+<span class="nc" id="L319">                }</span>
+<span class="nc" id="L320">            }</span>
+<span class="nc" id="L321">        }</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
