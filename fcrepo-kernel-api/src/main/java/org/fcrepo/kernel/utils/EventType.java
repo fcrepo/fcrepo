@@ -28,10 +28,6 @@ import com.google.common.collect.ImmutableMap;
  * @author ajs6f
  * @date Feb 7, 2013
  */
-/**
- * @author ajs6f
- * @date Oct 22, 2013
- */
 public enum EventType {
     NODE_ADDED(javax.jcr.observation.Event.NODE_ADDED, "node added"),
     NODE_REMOVED(javax.jcr.observation.Event.NODE_REMOVED, "node removed"),
