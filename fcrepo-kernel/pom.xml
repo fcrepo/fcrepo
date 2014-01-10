@@ -13,6 +13,13 @@
   <packaging>bundle</packaging>
 
   <dependencies>
+ 
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+      <type>bundle</type>
+    </dependency>
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
@@ -73,12 +80,14 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-
-
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
