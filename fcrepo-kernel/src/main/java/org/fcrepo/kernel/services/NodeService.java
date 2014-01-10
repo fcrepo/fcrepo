@@ -30,6 +30,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.FedoraResource;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -58,7 +59,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraResource findOrCreateObject(final Session session,
             final String path) throws RepositoryException {
-        return new FedoraResource(findOrCreateNode(session, path));
+        return new FedoraResourceImpl(findOrCreateNode(session, path));
     }
 
     /**
@@ -71,7 +72,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraResource getObject(final Session session, final String path)
         throws RepositoryException {
-        return new FedoraResource(session.getNode(path));
+        return new FedoraResourceImpl(session.getNode(path));
     }
 
     /**
@@ -97,7 +98,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
         }
 
         final Version version = versionHistory.getVersionByLabel(versionId);
-        return new FedoraResource(version.getFrozenNode());
+        return new FedoraResourceImpl(version.getFrozenNode());
     }
 
     /**

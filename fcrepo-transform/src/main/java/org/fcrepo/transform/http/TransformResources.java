@@ -38,8 +38,7 @@ import javax.ws.rs.core.UriInfo;
 public class TransformResources implements UriAwareResourceModelFactory {
     @Override
     public Model createModelForResource(final FedoraResource resource,
-                                        final UriInfo uriInfo,
-                                        final GraphSubjects graphSubjects) throws RepositoryException {
+         final UriInfo uriInfo, final GraphSubjects graphSubjects) throws RepositoryException {
         final Model model = createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());
 

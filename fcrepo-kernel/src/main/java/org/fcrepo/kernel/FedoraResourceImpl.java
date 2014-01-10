@@ -15,33 +15,6 @@
  */
 package org.fcrepo.kernel;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.UpdateRequest;
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
-import org.fcrepo.kernel.utils.iterators.RdfAdder;
-import org.fcrepo.kernel.utils.iterators.RdfRemover;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.version.VersionHistory;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -63,20 +36,50 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.version.VersionHistory;
+
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
+import org.fcrepo.kernel.utils.iterators.RdfAdder;
+import org.fcrepo.kernel.utils.iterators.RdfRemover;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.update.UpdateRequest;
+
 /**
  * Common behaviors across FedoraObject and Datastream types; also used
  * when the exact type of an object is irrelevant
  */
-public class FedoraResource extends JcrTools implements FedoraJcrTypes {
+public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, FedoraResource {
 
-    private static final Logger LOGGER = getLogger(FedoraResource.class);
+    private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     protected Node node;
 
     /**
      * Construct a FedoraObject without a backing JCR Node
      */
-    public FedoraResource() {
+    public FedoraResourceImpl() {
         super(false);
         node = null;
     }
@@ -85,7 +88,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * Construct a FedoraObject from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
-    public FedoraResource(final Node node) {
+    public FedoraResourceImpl(final Node node) {
         this();
         this.node = node;
     }
@@ -96,7 +99,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
      * @param path the absolute path to the object
      * @throws RepositoryException
      */
-    public FedoraResource(final Session session, final String path,
+    public FedoraResourceImpl(final Session session, final String path,
         final String nodeType) throws RepositoryException {
         this();
         initializeNewResourceProperties(session, path, nodeType);
@@ -110,7 +113,7 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
 
         if (node.isNew()) {
 
-            if (!hasMixin(node) && !isFrozen(node)) {
+            if (!isFedoraResource.apply(node) && !isFrozen.apply(node)) {
                 node.addMixin(FEDORA_RESOURCE);
             }
 
@@ -118,59 +121,34 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * Is the given node a frozen node?
-     *
-     * @param node Node to check
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#hasContent()
      */
-    public static boolean isFrozen(final Node node) throws RepositoryException {
-        return isFrozen.apply(node);
-    }
-
-    /**
-     * Is the given node a Fedora resource
-     * (because it has a fedora:resource mixin)?
-     *
-     * @param node Node to check
-     * @return
-     * @throws RepositoryException
-     */
-    public static boolean hasMixin(final Node node) throws RepositoryException {
-        return isFedoraResource.apply(node);
-    }
-
-    /**
-     * Does the resource have a jcr:content child node?
-     * @return
-     * @throws RepositoryException
-     */
+    @Override
     public boolean hasContent() throws RepositoryException {
         return node.hasNode(JCR_CONTENT);
     }
 
-    /**
-     * @return The JCR node that backs this object.
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getNode()
      */
+    @Override
     public Node getNode() {
         return node;
     }
 
-    /**
-     * Get the path to the JCR node
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getPath()
      */
+    @Override
     public String getPath() throws RepositoryException {
         return node.getPath();
     }
 
-    /**
-     * Get the date this datastream was created
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getCreatedDate()
      */
+    @Override
     public Date getCreatedDate() throws RepositoryException {
         if (node.hasProperty(JCR_CREATED)) {
             return new Date(node.getProperty(JCR_CREATED).getDate()
@@ -181,11 +159,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * Get the date this datastream was last modified
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getLastModifiedDate()
      */
+    @Override
     public Date getLastModifiedDate() throws RepositoryException {
         if (node.hasProperty(JCR_LASTMODIFIED)) {
             return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
@@ -208,20 +185,18 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return null;
     }
 
-    /**
-     * Get the total size of this object and its datastreams
-     * @return size in bytes
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getSize()
      */
-    public long getSize() throws RepositoryException {
+    @Override
+    public Long getSize() throws RepositoryException {
         return getObjectSize(node);
     }
 
-    /**
-     * Get the mixins this object uses
-     * @return a collection of mixin names
-     * @throws javax.jcr.RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getModels()
      */
+    @Override
     public Collection<String> getModels() throws RepositoryException {
         if (isFrozen.apply(node)) {
             return Lists.newArrayList(
@@ -232,18 +207,11 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * Update the properties Dataset with a SPARQL Update query. The updated
-     * properties may be serialized to the JCR store.
-     *
-     * After applying the statement, clients SHOULD check the result
-     * of #getDatasetProblems, which may include problems when attempting to
-     * serialize the data to JCR.
-     *
-     * @param subjects
-     * @param sparqlUpdateStatement
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#updatePropertiesDataset
+     *     (org.fcrepo.kernel.rdf.GraphSubjects, java.lang.String)
      */
+    @Override
     public Dataset updatePropertiesDataset(final GraphSubjects subjects,
             final String sparqlUpdateStatement) throws RepositoryException {
         final Dataset dataset = getPropertiesDataset(subjects);
@@ -255,15 +223,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return dataset;
     }
 
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     *
-     * @param graphSubjects
-     * @param offset
-     * @param limit
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.GraphSubjects, int, int)
      */
+    @Override
     public Dataset getPropertiesDataset(final GraphSubjects graphSubjects,
         final int offset, final int limit)
         throws RepositoryException {
@@ -296,23 +259,19 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return dataset;
     }
 
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     * @param graphSubjects
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.GraphSubjects)
      */
+    @Override
     public Dataset getPropertiesDataset(final GraphSubjects subjects)
         throws RepositoryException {
         return getPropertiesDataset(subjects, 0, -1);
     }
 
-    /**
-     * Return the JCR properties of this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getTriples(org.fcrepo.kernel.rdf.GraphSubjects)
      */
+    @Override
     public RdfStream getTriples(final GraphSubjects graphSubjects)
         throws RepositoryException {
 
@@ -322,12 +281,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return jcrRdfTools.getJcrTriples(getNode());
     }
 
-    /**
-     * Return the JCR properties of this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getHierarchyTriples(org.fcrepo.kernel.rdf.GraphSubjects)
      */
+    @Override
     public RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
         throws RepositoryException {
 
@@ -337,48 +294,39 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
         return jcrRdfTools.getTreeTriples(getNode());
     }
 
-    /**
-     * Serialize the JCR versions information as an RDF dataset
-     * @param subjects
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getVersionTriples(org.fcrepo.kernel.rdf.GraphSubjects)
      */
+    @Override
     public RdfStream getVersionTriples(final GraphSubjects graphSubjects)
         throws RepositoryException {
         return JcrRdfTools.withContext(graphSubjects, node.getSession())
                 .getVersionTriples(node);
     }
 
-    /**
-     * Tag the current version of the Node with a version label that
-     * can be retrieved by name later.
-     *
-     * @param label
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#addVersionLabel(java.lang.String)
      */
+    @Override
     public void addVersionLabel(final String label) throws RepositoryException {
         final VersionHistory versionHistory = getVersionHistory(node);
         versionHistory.addVersionLabel(getBaseVersion(node).getName(), label,
                                        true);
     }
 
-    /**
-     * Check if a resource was created in this session
-     * @return
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#isNew()
      */
-    public boolean isNew() {
+    @Override
+    public Boolean isNew() {
         return node.isNew();
     }
 
-    /**
-     * Replace the properties of this object with the properties from the given
-     * model
-     *
-     * @param graphSubjects
-     * @param inputModel
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#replaceProperties
+     *     (org.fcrepo.kernel.rdf.GraphSubjects, com.hp.hpl.jena.rdf.model.Model)
      */
+    @Override
     public RdfStream replaceProperties(final GraphSubjects graphSubjects,
         final Model inputModel) throws RepositoryException {
         final RdfStream originalTriples = getTriples(graphSubjects);
@@ -401,15 +349,10 @@ public class FedoraResource extends JcrTools implements FedoraJcrTypes {
                 .common(), differencer.notCommon()));
     }
 
-    /**
-     * Construct an ETag value from the last modified date and path. JCR has a
-     * mix:etag type, but it only takes into account binary properties. We
-     * actually want whole-object etag data. TODO : construct and store an ETag
-     * value on object modify
-     *
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getEtagValue()
      */
+    @Override
     public String getEtagValue() throws RepositoryException {
         final Date lastModifiedDate = getLastModifiedDate();
 

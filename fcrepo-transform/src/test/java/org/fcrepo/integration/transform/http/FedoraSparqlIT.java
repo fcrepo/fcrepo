@@ -26,7 +26,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.integration.AbstractResourceIT;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,9 +58,9 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         session = repo.login();
         session.setNamespacePrefix("zz", "http://zz.com/");
         final ValueFactory valueFactory = session.getValueFactory();
-        final FedoraResource fedoraResource = new FedoraResource(session, "/abc", JcrConstants.NT_FOLDER);
-        final FedoraResource fedoraResource2 = new FedoraResource(session, "/xyz", JcrConstants.NT_FOLDER);
-        final FedoraResource fedoraResource3 = new FedoraResource(session, "/anobject", JcrConstants.NT_FOLDER);
+        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(session, "/abc", JcrConstants.NT_FOLDER);
+        final FedoraResourceImpl fedoraResource2 = new FedoraResourceImpl(session, "/xyz", JcrConstants.NT_FOLDER);
+        final FedoraResourceImpl fedoraResource3 = new FedoraResourceImpl(session, "/anobject", JcrConstants.NT_FOLDER);
 
         fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
         fedoraResource.getNode().setProperty("fedorarelsext:hasPart", new Value[] { valueFactory.createValue(fedoraResource2.getNode()) });

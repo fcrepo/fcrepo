@@ -95,6 +95,7 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -446,7 +447,7 @@ public class FedoraNodes extends AbstractResource {
                 }
             }
 
-            final FedoraResource result;
+            final FedoraResourceImpl result;
 
             switch (objectType) {
                 case FEDORA_OBJECT:

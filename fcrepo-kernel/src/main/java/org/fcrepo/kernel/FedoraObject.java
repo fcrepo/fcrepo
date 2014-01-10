@@ -34,7 +34,7 @@ import org.slf4j.Logger;
  * @author ajs6f
  * @date Feb 21, 2013
  */
-public class FedoraObject extends FedoraResource {
+public class FedoraObject extends FedoraResourceImpl {
 
     private static final Logger LOGGER = getLogger(FedoraObject.class);
 

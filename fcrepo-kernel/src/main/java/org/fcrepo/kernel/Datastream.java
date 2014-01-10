@@ -51,7 +51,7 @@ import com.codahale.metrics.Histogram;
  * @author ajs6f
  * @date Feb 21, 2013
  */
-public class Datastream extends FedoraResource implements FedoraJcrTypes {
+public class Datastream extends FedoraResourceImpl implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(Datastream.class);
 
@@ -276,7 +276,7 @@ public class Datastream extends FedoraResource implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     @Override
-    public long getSize() throws RepositoryException {
+    public Long getSize() throws RepositoryException {
         return getNodePropertySize(node) + getContentSize();
 
     }

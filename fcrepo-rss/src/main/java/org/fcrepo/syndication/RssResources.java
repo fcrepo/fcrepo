@@ -37,8 +37,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class RssResources implements UriAwareResourceModelFactory {
 
     @Override
-    public Model createModelForResource(FedoraResource resource,
-            UriInfo uriInfo, GraphSubjects graphSubjects)
+    public Model createModelForResource(final FedoraResource resource,
+            final UriInfo uriInfo, final GraphSubjects graphSubjects)
         throws RepositoryException {
 
         final Model model = ModelFactory.createDefaultModel();

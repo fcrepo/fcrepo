@@ -36,8 +36,8 @@ import javax.ws.rs.core.UriInfo;
 public class WebhooksResources implements UriAwareResourceModelFactory {
 
     @Override
-    public Model createModelForResource(FedoraResource resource,
-            UriInfo uriInfo, GraphSubjects graphSubjects)
+    public Model createModelForResource(final FedoraResource resource,
+            final UriInfo uriInfo, final GraphSubjects graphSubjects)
         throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());

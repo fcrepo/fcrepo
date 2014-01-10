@@ -43,7 +43,7 @@ import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
@@ -71,7 +71,7 @@ public class FedoraVersionsTest {
     private Session mockSession;
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     private RdfStream mockRdfStream = new RdfStream();
 

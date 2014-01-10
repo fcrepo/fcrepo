@@ -16,13 +16,11 @@
 
 package org.fcrepo.kernel;
 
-import static org.junit.Assert.assertTrue;
-import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.PREMIS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicateURI;
+import static org.junit.Assert.assertTrue;
 
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
 public class RdfLexiconTest {
