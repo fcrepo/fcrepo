@@ -73,7 +73,7 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-auth-roles-common</module>
     <module>fcrepo-auth-roles-basic</module>
-    <module>fcrepo-api</module>
+    <module>fcrepo-kernel-api</module>
   </modules>
   <dependencyManagement>
     <dependencies>
