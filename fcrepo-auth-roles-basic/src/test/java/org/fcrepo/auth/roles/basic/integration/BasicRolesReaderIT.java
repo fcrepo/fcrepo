@@ -46,7 +46,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCanReadOpenObj()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader can read testparent1", OK.getStatusCode(),
+        assertEquals("Reader cannot read testparent1!", OK.getStatusCode(),
                 canRead("examplereader", "testparent1", true));
     }
 
@@ -54,7 +54,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotWriteDatastreamOnOpenObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot write datastream to testparent1", FORBIDDEN
+                "Reader should not be allowed to write datastream to testparent1!",
+                FORBIDDEN
                 .getStatusCode(), canAddDS("examplereader", "testparent1",
                         TESTDS, true));
     }
@@ -62,7 +63,9 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotAddACLToOpenObj()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot add an ACL to testparent1", FORBIDDEN
+        assertEquals(
+                "Reader should not be allowed to add an ACL to testparent1!",
+                FORBIDDEN
                 .getStatusCode(), canAddACL("examplereader", "testparent1",
                         "everyone", "admin", true));
     }
@@ -73,7 +76,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void
     testReaderCanReadOpenObjWithRestrictedDatastream()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader can read testparent2", OK.getStatusCode(),
+        assertEquals("Reader cannot read testparent2!", OK.getStatusCode(),
                 canRead("examplereader", "testparent2", true));
     }
 
@@ -82,7 +85,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadOpenObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read datastream testparent2/tsp1_data", OK
+                "Reader cannot read datastream testparent2/tsp1_data!", OK
                 .getStatusCode(), canRead("examplereader",
                         "testparent2/tsp1_data",
                         true));
@@ -93,7 +96,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     testReaderCannotUpdateOpenObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent2/tsp1_data",
+                "Reader should not be allowed to update datastream testparent2/tsp1_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent2",
                         "tsp1_data", true));
@@ -103,7 +106,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToOpenObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent2/tsp1_data",
+                "Reader should not be allowed to add an ACL to datastream testparent2/tsp1_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent2/tsp1_data", "everyone", "admin", true));
     }
@@ -113,7 +116,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadOpenObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read restricted datastream testparent2/tsp2_data",
+                "Reader cannot read restricted datastream testparent2/tsp2_data!",
                 OK.getStatusCode(), canRead("examplereader",
                         "testparent2/tsp2_data", true));
     }
@@ -122,7 +125,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateOpenObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update restricted datastream testparent2/tsp2_data",
+                "Reader should not be allowed to update restricted datastream testparent2/tsp2_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent2",
                         "tsp2_data", true));
@@ -132,7 +135,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToOpenObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to restricted datastream testparent2/tsp2_data",
+                "Reader should not be allowed to add an ACL to restricted datastream testparent2/tsp2_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent2/tsp2_data", "everyone", "admin", true));
     }
@@ -142,7 +145,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadInheritedACLChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read testparent1/testchild1NoACL", OK
+                "Reader cannot read testparent1/testchild1NoACL!", OK
                 .getStatusCode(), canRead("examplereader",
                         "testparent1/testchild1NoACL",
                         true));
@@ -152,7 +155,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotWriteDatastreamOnInheritedACLChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot write datastream to testparent1/testchild1NoACL",
+                "Reader should not be allowed to write datastream to testparent1/testchild1NoACL!",
                 FORBIDDEN.getStatusCode(), canAddDS("examplereader",
                         "testparent1/testchild1NoACL", TESTDS, true));
     }
@@ -161,7 +164,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToInheritedACLChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to testparent1/testchild1NoACL",
+                "Reader should not be allowed to add an ACL to testparent1/testchild1NoACL!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild1NoACL", "everyone", "admin",
                         true));
@@ -171,7 +174,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadInheritedACLChildObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read datastream testparent1/testchild1NoACL/tsc1_data",
+                "Reader cannot read datastream testparent1/testchild1NoACL/tsc1_data!",
                 OK.getStatusCode(), canRead("examplereader",
                         "testparent1/testchild1NoACL/tsc1_data", true));
     }
@@ -180,7 +183,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateInheritedACLChildObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent1/testchild1NoACL/tsc1_data",
+                "Reader should not be allowed to update datastream testparent1/testchild1NoACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent1/testchild1NoACL", "tsc1_data", true));
     }
@@ -190,7 +193,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     void testReaderCannotAddACLToInheritedACLChildObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent1/testchild1NoACL/tsc1_data",
+                "Reader should not be allowed to add an ACL to datastream testparent1/testchild1NoACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild1NoACL/tsc1_data", "everyone",
                         "admin", true));
@@ -201,7 +204,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadRestrictedChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read testparent1/testchild2WithACL", OK
+                "Reader cannot read testparent1/testchild2WithACL!", OK
                 .getStatusCode(), canRead("examplereader",
                         "testparent1/testchild2WithACL", true));
     }
@@ -210,7 +213,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotWriteDatastreamOnRestrictedChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot write datastream to testparent1/testchild2WithACL",
+                "Reader should not be allowed to write a datastream to testparent1/testchild2WithACL!",
                 FORBIDDEN.getStatusCode(), canAddDS("examplereader",
                         "testparent1/testchild2WithACL", TESTDS, true));
     }
@@ -219,7 +222,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToRestrictedChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to testparent1/testchild2WithACL",
+                "Reader should not be allowed to add an ACL to testparent1/testchild2WithACL!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild2WithACL", "everyone", "admin",
                         true));
@@ -229,7 +232,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadRestrictedChildObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read datastream testparent1/testchild2WithACL/tsc1_data",
+                "Reader cannot read datastream testparent1/testchild2WithACL/tsc1_data!",
                 OK.getStatusCode(), canRead("examplereader",
                         "testparent1/testchild2WithACL/tsc1_data", true));
     }
@@ -238,7 +241,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateRestrictedChildObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent1/testchild2WithACL/tsc1_data",
+                "Reader should not be allowed to update datastream testparent1/testchild2WithACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent1/testchild2WithACL", "tsc1_data", true));
     }
@@ -247,7 +250,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToRestrictedChildObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent1/testchild2WithACL/tsc1_data",
+                "Reader should not be allowed to add an ACL to datastream testparent1/testchild2WithACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild2WithACL/tsc1_data", "everyone",
                         "admin", true));
@@ -258,7 +261,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotReadRestrictedChildObjReallyRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot read datastream testparent1/testchild2WithACL/tsc2_data",
+                "Reader should not be allowed to read datastream testparent1/testchild2WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canRead("examplereader",
                         "testparent1/testchild2WithACL/tsc2_data", true));
     }
@@ -267,7 +270,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateRestrictedChildObjReallyRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent1/testchild2WithACL/tsc2_data",
+                "Reader should not be allowed to update datastream testparent1/testchild2WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent1/testchild2WithACL", "tsc2_data", true));
     }
@@ -276,7 +279,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToRestrictedChildObjReallyRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent1/testchild2WithACL/tsc2_data",
+                "Reader should not be allowed to add an ACL to datastream testparent1/testchild2WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild2WithACL/tsc2_data", "everyone",
                         "admin", true));
@@ -286,7 +289,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotReadWriterRestrictedChildObj()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot read testparent1/testchild4WithACL",
+        assertEquals(
+                "Reader should not be allowed to read testparent1/testchild4WithACL!",
                 FORBIDDEN.getStatusCode(), canRead("examplereader",
                         "testparent1/testchild4WithACL", true));
     }
@@ -295,7 +299,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotWriteDatastreamOnWriterRestrictedChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot write datastream to testparent1/testchild4WithACL",
+                "Reader should not be allowed to write a datastream to testparent1/testchild4WithACL!",
                 FORBIDDEN.getStatusCode(), canAddDS("examplereader",
                         "testparent1/testchild4WithACL", TESTDS, true));
     }
@@ -304,7 +308,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToWriterRestrictedChildObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to testparent1/testchild4WithACL",
+                "Reader should not be allowed to add an ACL to testparent1/testchild4WithACL!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild4WithACL", "everyone", "admin",
                         true));
@@ -314,7 +318,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotReadWriterRestrictedChildObjWriterRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot read datastream testparent1/testchild4WithACL/tsc1_data",
+                "Reader should not be allowed to read datastream testparent1/testchild4WithACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canRead("examplereader",
                         "testparent1/testchild4WithACL/tsc1_data", true));
     }
@@ -323,7 +327,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateWriterRestrictedChildObjWriterRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent1/testchild4WithACL/tsc1_data",
+                "Reader should not be allowed to update datastream testparent1/testchild4WithACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent1/testchild4WithACL", "tsc1_data", true));
     }
@@ -332,7 +336,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToWriterRestrictedChildObjWriterRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent1/testchild4WithACL/tsc1_data",
+                "Reader should not be allowed to add an ACL to datastream testparent1/testchild4WithACL/tsc1_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild4WithACL/tsc1_data", "everyone",
                         "admin", true));
@@ -343,7 +347,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotReadWriterRestrictedChildObjReallyWriterRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot read datastream testparent1/testchild4WithACL/tsc2_data",
+                "Reader should not be allowed to read datastream testparent1/testchild4WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canRead("examplereader",
                         "testparent1/testchild4WithACL/tsc2_data", true));
     }
@@ -352,7 +356,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateWriterRestrictedChildObjReallyWriterRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent1/testchild4WithACL/tsc2_data",
+                "Reader should not be allowed to update datastream testparent1/testchild4WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent1/testchild4WithACL", "tsc2_data", true));
     }
@@ -361,7 +365,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToWriterRestrictedChildObjReallyWriterRestrictedDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent1/testchild4WithACL/tsc2_data",
+                "Reader should not be allowed to add an ACL to datastream testparent1/testchild4WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent1/testchild4WithACL/tsc2_data", "everyone",
                         "admin", true));
@@ -371,7 +375,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotReadAdminObj() throws ClientProtocolException,
     IOException {
-        assertEquals("Reader cannot read testparent2/testchild5WithACL",
+        assertEquals(
+                "Reader should not be allowed to read testparent2/testchild5WithACL!",
                 FORBIDDEN.getStatusCode(), canRead("examplereader",
                         "testparent2/testchild5WithACL", true));
     }
@@ -380,7 +385,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotWriteDatastreamOnAdminObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot write datastream to testparent2/testchild5WithACL",
+                "Reader should not be allowed to write a datastream to testparent2/testchild5WithACL!",
                 FORBIDDEN.getStatusCode(), canAddDS("examplereader",
                         "testparent2/testchild5WithACL", TESTDS, true));
     }
@@ -389,7 +394,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToAdminObj()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to testparent2/testchild5WithACL",
+                "Reader should not be allowed to add an ACL to testparent2/testchild5WithACL!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent2/testchild5WithACL", "everyone", "admin",
                         true));
@@ -399,7 +404,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCanReadAdminObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader can read datastream testparent2/testchild5WithACL/tsc2_data",
+                "Reader cannot read datastream testparent2/testchild5WithACL/tsc2_data!",
                 OK.getStatusCode(), canRead("examplereader",
                         "testparent2/tsp1_data", true));
     }
@@ -408,7 +413,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotUpdateAdminObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot update datastream testparent2/testchild5WithACL/tsc2_data",
+                "Reader should not be allowed to update datastream testparent2/testchild5WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canUpdateDS("examplereader",
                         "testparent2/testchild5WithACL", "tsc2_data", true));
     }
@@ -417,7 +422,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotAddACLToAdminObjPublicDatastream()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot add an ACL to datastream testparent2/testchild5WithACL/tsc2_data",
+                "Reader should not be allowed to add an ACL to datastream testparent2/testchild5WithACL/tsc2_data!",
                 FORBIDDEN.getStatusCode(), canAddACL("examplereader",
                         "testparent2/testchild5WithACL/tsc2_data", "everyone",
                         "admin", true));
@@ -427,7 +432,9 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotDeleteOpenObj() throws ClientProtocolException,
     IOException {
-        assertEquals("Reader cannot delete object testparent3", FORBIDDEN
+        assertEquals(
+                "Reader should not be allowed to delete object testparent3!",
+                FORBIDDEN
                 .getStatusCode(), canDelete("examplereader", "testparent3",
                         true));
     }
@@ -435,7 +442,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotDeleteOpenObjPublicDatastream()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot delete datastream testparent3/tsp1_data",
+        assertEquals(
+                "Reader should not be allowed to delete datastream testparent3/tsp1_data!",
                 FORBIDDEN.getStatusCode(), canDelete("examplereader",
                         "testparent3/tsp1_data", true));
     }
@@ -443,7 +451,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotDeleteOpenObjRestrictedDatastream()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot delete datastream testparent3/tsp2_data",
+        assertEquals(
+                "Reader should not be allowed to delete datastream testparent3/tsp2_data!",
                 FORBIDDEN.getStatusCode(), canDelete("examplereader",
                         "testparent3/tsp2_data", true));
     }
@@ -451,7 +460,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotDeleteRestrictedChildObj()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot delete object testparent3/testchild3a",
+        assertEquals(
+                "Reader should not be allowed to delete object testparent3/testchild3a!",
                 FORBIDDEN.getStatusCode(), canDelete("examplereader",
                         "testparent3/testchild3a", true));
     }
@@ -459,7 +469,8 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotDeleteInheritedACLChildObj()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot delete object testparent3/testchild3b",
+        assertEquals(
+                "Reader should not be allowed to delete object testparent3/testchild3b!",
                 FORBIDDEN.getStatusCode(), canDelete("examplereader",
                         "testparent3/testchild3b", true));
     }
@@ -468,7 +479,9 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     @Test
     public void testReaderCannotReadRootNode()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot read root node", FORBIDDEN.getStatusCode(),
+        assertEquals("Reader should not be allowed to read root node!",
+                FORBIDDEN
+                .getStatusCode(),
                 canRead("examplereader", "/", true));
     }
 
@@ -476,14 +489,17 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     public void testReaderCannotWriteDatastreamOnRootNode()
             throws ClientProtocolException, IOException {
         assertEquals(
-                "Reader cannot write datastream to root node", FORBIDDEN
+                "Reader should not be allowed to write a datastream to root node!",
+                FORBIDDEN
                 .getStatusCode(), canAddDS("examplereader", "/", TESTDS, true));
     }
 
     @Test
     public void testReaderCannotAddACLToRootNode()
             throws ClientProtocolException, IOException {
-        assertEquals("Reader cannot add an ACL to root node", FORBIDDEN
+        assertEquals(
+                "Reader should not be allowed to add an ACL to root node!",
+                FORBIDDEN
                 .getStatusCode(), canAddACL("examplereader", "/", "everyone",
                         "admin", true));
     }
