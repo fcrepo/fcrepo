@@ -48,7 +48,7 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
      */
     @Test
     public void testGetEmptyRoles() throws ClientProtocolException, IOException {
-        assertEquals("Can get empty role list from object with no roles",
+        assertEquals("Cannot get empty role list from object with no roles!",
                 NO_CONTENT.getStatusCode(), canGetRoles(null, "testcommonobj1",
                         false));
     }
@@ -68,19 +68,20 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
                 test_json_roles));
 
         // Get the roles
-        assertEquals("Can get role list from object with roles", OK
+        assertEquals("Cannot get role list from object with roles!", OK
                 .getStatusCode(),
                 canGetRoles(null, "testcommonobj1", false));
 
-        assertEquals("result must equal test data", t_roles,
+        assertEquals("Result does not equal test data!", t_roles,
                 getRoles("testcommonobj1"));
 
         // delete the roles
-        assertEquals("Can delete role list from object with roles", NO_CONTENT
+        assertEquals("Cannot delete role list from object with roles!",
+                NO_CONTENT
                 .getStatusCode(), canDeleteRoles(null, "testcommonobj1", false));
 
         // verify that roles are gone
-        assertEquals("Can get empty role list from object with no roles",
+        assertEquals("Cannot get empty role list from object with no roles!",
                 NO_CONTENT.getStatusCode(), canGetRoles(null, "testcommonobj1",
                         false));
 
@@ -99,11 +100,11 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
     IOException {
         // verify that default roles are returned
         // Get the roles
-        assertEquals("Can get effective role list from object", OK
+        assertEquals("Cannot get effective role list from object!", OK
                 .getStatusCode(), canGetEffectiveRoles(null, "testcommonobj1",
                         false));
 
-        assertEquals("result must equal test data",
+        assertEquals("Result does not equal test data!",
                 AccessRolesProvider.DEFAULT_ACCESS_ROLES,
                 getEffectiveRoles("testcommonobj1"));
 
@@ -113,27 +114,27 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
 
         // see that parent roles are effective for child
         assertEquals(
-                "Can get effective role list from child object with inherited roles",
+                "Cannot get effective role list from child object with inherited roles!",
                 OK
                 .getStatusCode(), canGetEffectiveRoles(null,
                         "testcommonobj1/testchildobj1", false));
 
-        assertEquals("result must equal test data", t_roles,
+        assertEquals("Result does not equal test data!", t_roles,
                 getEffectiveRoles("testcommonobj1/testchildobj1"));
 
 
         // post different acl with fewer roles on the child
-        assertEquals("Can post admin ACL on child object", CREATED
+        assertEquals("Cannot post admin ACL on child object!", CREATED
                 .getStatusCode(), postRoles("testcommonobj1/testchildobj1",
                         admin_json_role));
 
         // see that only child roles are effective for child
         assertEquals(
-                "Can get effective role list from child object with own role",
+                "Cannot get effective role list from child object with own role!",
                 OK.getStatusCode(), canGetEffectiveRoles(null,
                         "testcommonobj1/testchildobj1", false));
 
-        assertEquals("result must equal test data", admin_role,
+        assertEquals("Result does not equal test data!", admin_role,
                 getEffectiveRoles("testcommonobj1/testchildobj1"));
 
     }
