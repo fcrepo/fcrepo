@@ -176,16 +176,16 @@ public class FedoraNodesTest {
     public void testCreateObject() throws Exception {
         final String pid = "testObject";
         final String path = "/" + pid;
-        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObjects.createObject(mockSession, path, null)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
-                testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
+                testObj.createObject(createPathList(pid), null, FEDORA_OBJECT, null,
                         null, null, null, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
-        verify(mockObjects).createObject(mockSession, path);
+        verify(mockObjects).createObject(mockSession, path, null);
         verify(mockSession).save();
     }
 
@@ -197,16 +197,16 @@ public class FedoraNodesTest {
         final String path = "/" + pid + "/a";
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
         when(mockPidMinter.mintPid()).thenReturn("a");
-        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObjects.createObject(mockSession, path, null)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
-            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
+            testObj.createObject(createPathList(pid), null, FEDORA_OBJECT, null, null,
                                     null, null, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("a"));
-        verify(mockObjects).createObject(mockSession, path);
+        verify(mockObjects).createObject(mockSession, path, null);
         verify(mockSession).save();
     }
 
@@ -217,16 +217,16 @@ public class FedoraNodesTest {
         final String pid = "testObject";
         final String path = "/" + pid + "/some-slug";
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
-        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObjects.createObject(mockSession, path, null)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
-            testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
+            testObj.createObject(createPathList(pid), null, FEDORA_OBJECT, null, null,
                                     null, "some-slug", getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("some-slug"));
-        verify(mockObjects).createObject(mockSession, path);
+        verify(mockObjects).createObject(mockSession, path, null);
         verify(mockSession).save();
     }
 
@@ -249,7 +249,7 @@ public class FedoraNodesTest {
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
-                testObj.createObject(createPathList(pid, dsId),
+                testObj.createObject(createPathList(pid, dsId), null,
                         FEDORA_DATASTREAM, null, null, APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -278,7 +278,7 @@ public class FedoraNodesTest {
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
         final Response actual =
-            testObj.createObject(createPathList(pid, dsId),
+            testObj.createObject(createPathList(pid, dsId), null,
                                     FEDORA_DATASTREAM, null, "inline; filename=\"xyz.jpg\"", APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
                                     dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());

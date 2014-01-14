@@ -379,6 +379,8 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response createObject(@PathParam("path")
             final List<PathSegment> pathList,
+            @QueryParam("primaryType")
+            final String primaryType,
             @QueryParam("mixin")
             final String mixin,
             @QueryParam("checksum")
@@ -450,7 +452,7 @@ public class FedoraNodes extends AbstractResource {
 
             switch (objectType) {
                 case FEDORA_OBJECT:
-                    result = objectService.createObject(session, newObjectPath);
+                    result = objectService.createObject(session, newObjectPath, primaryType);
                     break;
                 case FEDORA_DATASTREAM:
                     result = datastreamService.createDatastream(session, newObjectPath);
@@ -542,13 +544,14 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response createObjectFromFormPost(
                                                 @PathParam("path") final List<PathSegment> pathList,
+                                                @FormDataParam("primaryType") final String primaryType,
                                                 @FormDataParam("mixin") final String mixin,
                                                 @FormDataParam("slug") final String slug,
                                                 @Context final UriInfo uriInfo,
                                                 @FormDataParam("file") final InputStream file
     ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
 
-        return createObject(pathList, mixin, null, null, null, slug, uriInfo, file);
+        return createObject(pathList, primaryType, mixin, null, null, null, slug, uriInfo, file);
 
     }
 
