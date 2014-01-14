@@ -23,10 +23,10 @@ import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.security.AccessControlException;
 import java.security.Principal;
 import java.util.Set;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -116,7 +116,7 @@ public class ModeShapeHonorsPEPResponseIT {
                 any(Principal.class));
     }
 
-    @Test(expected = AccessControlException.class)
+    @Test(expected = AccessDeniedException.class)
     public void testRestrictivePEP() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
         when(request.getUserPrincipal()).thenReturn(
