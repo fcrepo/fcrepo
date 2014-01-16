@@ -45,7 +45,7 @@ public class AccessRolesResources implements UriAwareResourceModelFactory {
     /*
      * (non-Javadoc)
      * @see org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory#
-     * createModelForResource( org.fcrepo.kernel.FedoraResource,
+     * createModelForResource( org.fcrepo.kernel.FedoraResourceImpl,
      * javax.ws.rs.core.UriInfo, org.fcrepo.kernel.rdf.GraphSubjects)
      */
     @Override

@@ -27,7 +27,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
@@ -44,7 +44,7 @@ public class WebhooksResourcesTest {
 
     private Node mockNode;
 
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     private UriInfo uriInfo;
 
@@ -54,7 +54,7 @@ public class WebhooksResourcesTest {
     public void setUp() {
         testObj = new WebhooksResources();
         mockNode = mock(Node.class);
-        mockResource = new FedoraResource(mockNode);
+        mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
         mockSubjects = new DefaultGraphSubjects(mock(Session.class));

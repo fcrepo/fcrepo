@@ -21,7 +21,7 @@ import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.WebContent;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.http.commons.test.util.TestHelpers;
@@ -54,7 +54,7 @@ public class FedoraTransformTest {
     NodeService mockNodeService;
 
     @Mock
-    FedoraResource mockResource;
+    FedoraResourceImpl mockResource;
 
     @Mock
     Node mockNode;

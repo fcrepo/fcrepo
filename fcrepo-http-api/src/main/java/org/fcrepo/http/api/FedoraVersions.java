@@ -127,7 +127,7 @@ public class FedoraVersions extends AbstractResource {
         return addVersion(toPath(pathList), null);
     }
 
-    private Response addVersion(String path, String label) throws RepositoryException {
+    private Response addVersion(final String path, final String label) throws RepositoryException {
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);

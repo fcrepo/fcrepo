@@ -77,7 +77,7 @@ import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class FedoraResourceIT extends AbstractIT {
+public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
     Repository repo;

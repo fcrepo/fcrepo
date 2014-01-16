@@ -62,7 +62,7 @@ import javax.ws.rs.core.Response;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
@@ -95,7 +95,7 @@ public class FedoraBatchTest {
     private Node mockDsNode;
 
     @Mock
-    private FedoraResource mockObject;
+    private FedoraResourceImpl mockObject;
 
     @Mock
     private NodeIterator mockIterator;

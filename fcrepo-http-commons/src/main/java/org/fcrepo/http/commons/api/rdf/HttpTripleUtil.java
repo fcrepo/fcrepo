@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -53,13 +54,13 @@ public class HttpTripleUtil implements ApplicationContextAware {
      * Add additional models to the RDF dataset for the given resource
      *
      * @param dataset the source dataset we'll add named models to
-     * @param resource the FedoraResource in question
+     * @param resource the FedoraResourceImpl in question
      * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
      * @param graphSubjects
      * @throws RepositoryException
      */
     public void addHttpComponentModelsForResource(final Dataset dataset,
-            final FedoraResource resource, final UriInfo uriInfo,
+            final FedoraResourceImpl resource, final UriInfo uriInfo,
             final GraphSubjects graphSubjects) throws RepositoryException {
 
         LOGGER.debug("Adding additional HTTP context triples to dataset");
@@ -82,7 +83,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      * Add additional models to the RDF dataset for the given resource
      *
      * @param rdfStream the source stream we'll add named models to
-     * @param resource the FedoraResource in question
+     * @param resource the FedoraResourceImpl in question
      * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
      * @param graphSubjects
      * @throws RepositoryException

@@ -31,7 +31,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
@@ -63,7 +63,7 @@ public class DublinCoreGeneratorTest {
     public void testGetObjectAsDublinCore() throws RepositoryException {
         testObj.dcgenerators = asList(mockGenerator);
         final InputStream mockIS = mock(InputStream.class);
-        final FedoraResource mockResource = mock(FedoraResource.class);
+        final FedoraResourceImpl mockResource = mock(FedoraResourceImpl.class);
         when(mockResource.getNode()).thenReturn(mock(Node.class));
         when(mockNodeService.getObject(mockSession, "/objects/foo"))
                 .thenReturn(mockResource);
