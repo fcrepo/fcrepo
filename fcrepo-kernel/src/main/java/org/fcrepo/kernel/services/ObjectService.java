@@ -16,7 +16,7 @@
 
 package org.fcrepo.kernel.services;
 
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+/*import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;*/
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -38,6 +38,7 @@ import org.springframework.stereotype.Component;
 public class ObjectService extends RepositoryService implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(ObjectService.class);
+    private static final String DEFAULT_NT = "fedora:baseObject";
 
     /**
      * @param session A JCR Session
@@ -47,7 +48,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraObject createObject(final Session session, final String path)
         throws RepositoryException {
-        return createObject(session, path, NT_FOLDER);
+        return createObject(session, path, DEFAULT_NT);
     }
 
     /**
@@ -61,7 +62,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
     public FedoraObject createObject(final Session session, final String path, final String primaryType)
         throws RepositoryException {
         if (null == primaryType || primaryType.isEmpty()) {
-            return new FedoraObject(session, path, NT_FOLDER);
+            return new FedoraObject(session, path, DEFAULT_NT);
         } else {
             return new FedoraObject(session, path, primaryType);
         }
