@@ -51,22 +51,6 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
         return createObject(session, path, DEFAULT_NT);
     }
 
-    /**
-     * @param session     A JCR Session
-     * @param path        The path to use to create the object
-     * @param primaryType The primary node type
-     * @return The created object
-     * @throws RepositoryException
-     * @author Stefano Cossu
-     */
-    public FedoraObject createObject(final Session session, final String path, final String primaryType)
-        throws RepositoryException {
-        if (null == primaryType || primaryType.isEmpty()) {
-            return new FedoraObject(session, path, DEFAULT_NT);
-        } else {
-            return new FedoraObject(session, path, primaryType);
-        }
-    }
 
     /**
      * @param path
