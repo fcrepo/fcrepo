@@ -4,7 +4,7 @@
 <jcr = 'http://www.jcp.org/jcr/1.0'>
 <nt = 'http://www.jcp.org/jcr/nt/1.0'>
 <mix = 'http://www.jcp.org/jcr/mix/1.0'>
-<image='http://www.modeshape.org/images/1.0'>
+<image = 'http://www.modeshape.org/images/1.0'>
 
 /*
  * Friend-of-a-Friend
@@ -23,6 +23,8 @@
  */
 <fedora = 'http://fedora.info/definitions/v4/rest-api#'>
 <fedorarelsext = 'http://fedora.info/definitions/v4/rels-ext#'>
+// Defining fcrepo namespace here messes up things big time for some reason, hence fcr.
+<fcr= 'http://fedora.info/definitions/v4/repository#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 
@@ -33,6 +35,11 @@
 <fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
 <test = 'info:fedora/test/'>
+
+/*
+ * LDP
+ */
+<ldp = 'http://www.w3.org/ns/ldp#'>
 
 /*
  * The following relationship properties are made available in support of legacy graph constructions from the
@@ -85,25 +92,81 @@
   - dc:title (STRING) multiple
   - dc:type (STRING) multiple
 
+
 /*
- * Any Fedora resource.
+ * Fedora default primary type for objects.
+ * This can be redefined by the repo manager
+ * to suit initial restriction needs.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
-  - rdf:type (URI) multiple
+[fedora:baseObject] > nt:hierarchyNode
+  // The following 2 lines allow for any property to be added. Commenting them out
+  // we can define exactly which properties a node with no attached mix-ins can have.
   - * (undefined) multiple
   - * (undefined)
+
+
+/*
+ * Fedora repository ontology
+ */
+[fcr:resource] mixin
+  // Generic property definitions
+  - fcr:primaryType (STRING) // Not URI?
+  - fcr:uuid (STRING)
+  - fcr:versionHistory (URI)
+
+  // Property definitions for Resource class
+  - fcr:baseVersion (URI)
+  - fcr:created (STRING)
+  - fcr:createdBy (STRING)
+  - fcr:isCheckedOut (undefined) multiple
+  - fcr:lastModified (STRING)
+  - fcr:lastModifiedBy (STRING)
+  - fcr:mixinTypes (STRING) multiple // Not URI?
+  - fcr:predecessors (URI) multiple
+
+
+/*
+ * LDP property declarations.
+ */
+[ldp:resource] mixin
+  - ldp:firstPage (URI)
+  - ldp:inlinedResource (URI) multiple
+  - ldp:nextPage (URI)
+  - ldp:pageOf (URI) multiple
+  - ldp:membershipObject (URI)
+  - ldp:membershipPredicate (URI)
+  - ldp:membershipSubject (URI)
+  - ldp:membersInlined (STRING) // BOOLEAN?
+
+
+/*
+ * This mix-in defines the basic properties necessary for Fedora to function.
+ * TODO Adjust code to only auto-assign fedora:object, fedora:datastream, etc.
+ */
+[fedora:resource] > fcr:resource, ldp:resource, fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
+  - rdf:type (URI) multiple
+
+  // Property definitions for all classes in Fedora rest-api ontology.
+  - fedora:hasVersions (URI) multiple
+  - fedora:exportAs (URI) multiple
+  - fedora:hasAccessRoles (URI) multiple
+
 
 /*
  * A Fedora object.
  */
 [fedora:object] > fedora:resource mixin
+  // Property definitions for Object class in Fedora repository ontology.
+  - fcr:hasChild (undefined) multiple
+  - fcr:hasParent (undefined) multiple
 
 
 /*
  * A Fedora datastream.
  */
 [fedora:datastream] > fedora:resource mixin
-   + image:metadata (nt:unstructured) multiple
+  - fedora:hasFixityService (URI) multiple
+  + image:metadata (nt:unstructured) multiple
 
 /*
  * Some content that can have a checksum
