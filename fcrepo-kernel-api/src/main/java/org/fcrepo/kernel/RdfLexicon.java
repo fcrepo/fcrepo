@@ -90,6 +90,13 @@ public final class RdfLexicon {
     public static final String RELATIONS_NAMESPACE =
             "http://fedora.info/definitions/v4/rels-ext#";
 
+    /**
+     * Default primary type for Fedora objects.
+    **/
+    public static final String FEDORA_DEFAULT_NT =
+            "fedora:baseObject";
+
+
     // MEMBERSHIP
     public static final Property HAS_MEMBER_OF_RESULT =
             createProperty(REPOSITORY_NAMESPACE + "hasMember");
