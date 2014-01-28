@@ -141,8 +141,6 @@
 
 /*
  * This mix-in defines the basic properties necessary for Fedora to function.
- * I might have made some assumptions with data types and multiple attributes,
- * but it seems to work in tests.
  * TODO Adjust code to only auto-assign fedora:object, fedora:datastream, etc.
  */
 [fedora:resource] > fcr:resource, ldp:resource, fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
