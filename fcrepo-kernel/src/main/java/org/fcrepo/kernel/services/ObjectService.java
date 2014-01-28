@@ -16,7 +16,7 @@
 
 package org.fcrepo.kernel.services;
 
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.fcrepo.kernel.RdfLexicon.FEDORA_DEFAULT_NT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -47,8 +47,9 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraObject createObject(final Session session, final String path)
         throws RepositoryException {
-        return new FedoraObject(session, path, NT_FOLDER);
+        return new FedoraObject(session, path, FEDORA_DEFAULT_NT);
     }
+
 
     /**
      * @param path
