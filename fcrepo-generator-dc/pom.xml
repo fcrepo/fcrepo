@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-generator-dc</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository Dublin Core Module</name>
   <description>The Fedora Commons repository Dublin Core module: Provides Dublin Core presentations of repository resources from a variety of sources.</description>
   <packaging>bundle</packaging>
 

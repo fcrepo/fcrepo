@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-auth-roles-common</artifactId>
-  <name>fcrepo-auth-roles-common</name>
+  <name>Fedora Repository Authorization Roles Commons Module</name>
   <description>This module adds access roles to the repository tree. It creates a REST/JSON API for post and get of access roles on Fedora objects and datastreams. It supports the querying of effective roles by policy enforcement points (PEPs).</description>
 
   <dependencies>
