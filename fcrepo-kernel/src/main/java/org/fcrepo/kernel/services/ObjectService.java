@@ -48,7 +48,7 @@ public class ObjectService extends RepositoryService implements FedoraJcrTypes {
      */
     public FedoraObject createObject(final Session session, final String path)
         throws RepositoryException {
-        return createObject(session, path, DEFAULT_NT);
+        return new FedoraObject(session, path, DEFAULT_NT);
     }
 
 
