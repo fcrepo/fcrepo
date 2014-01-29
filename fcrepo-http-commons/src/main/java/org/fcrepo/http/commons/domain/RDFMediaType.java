@@ -20,9 +20,7 @@ import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
-import static org.apache.jena.riot.WebContent.contentTypeNQuads;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
-import static org.apache.jena.riot.WebContent.contentTypeRDFJSON;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
 import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
@@ -31,8 +29,8 @@ import static org.apache.jena.riot.WebContent.contentTypeSSE;
 import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
 import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
-import static org.apache.jena.riot.WebContent.contentTypeTriG;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 
 import java.util.List;
 
@@ -64,29 +62,21 @@ public abstract class RDFMediaType extends MediaType {
 
     public static final MediaType TURTLE_TYPE = typeFromString(TURTLE);
 
+    public static final String TURTLE_X = contentTypeTurtleAlt2;
+
+    public static final MediaType TURTLE_X_TYPE = typeFromString(TURTLE_X);
+
     public static final String RDF_XML = contentTypeRDFXML;
 
     public static final MediaType RDF_XML_TYPE = typeFromString(RDF_XML);
-
-    public static final String RDF_JSON = contentTypeRDFJSON;
-
-    public static final MediaType RDF_JSON_TYPE = typeFromString(RDF_JSON);
 
     public static final String NTRIPLES = contentTypeNTriples;
 
     public static final MediaType NTRIPLES_TYPE = typeFromString(NTRIPLES);
 
-    public static final String TRI_G = contentTypeTriG;
-
-    public static final MediaType TRI_G_TYPE = typeFromString(TRI_G);
-
-    public static final String NQUADS = contentTypeNQuads;
-
-    public static final MediaType NQUADS_TYPE = typeFromString(NQUADS);
-
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
-            RDF_XML_TYPE, NTRIPLES_TYPE, TURTLE_TYPE, RDF_JSON_TYPE, N3_TYPE,
-            N3_ALT1_TYPE, N3_ALT2_TYPE, TRI_G_TYPE, NQUADS_TYPE).add().build();
+            TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, RDF_XML_TYPE, NTRIPLES_TYPE, APPLICATION_XML_TYPE, TEXT_PLAIN_TYPE,
+            TURTLE_X_TYPE).add().build();
 
 
     public static final String TSV = contentTypeTextTSV;

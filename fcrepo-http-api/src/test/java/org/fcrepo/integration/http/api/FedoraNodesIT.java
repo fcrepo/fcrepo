@@ -61,6 +61,8 @@ import java.util.Iterator;
 import java.util.UUID;
 
 import javax.jcr.RepositoryException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Variant;
 
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
@@ -78,6 +80,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -298,6 +301,27 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved: {}", content);
+    }
+
+    @Test
+    public void testGetObjectGraphVariants() throws Exception {
+        createObject("FedoraDescribeTestGraph");
+
+        for (Variant variant : RDFMediaType.POSSIBLE_RDF_VARIANTS) {
+
+            final HttpGet getObjMethod =
+                    new HttpGet(serverAddress + "FedoraDescribeTestGraph");
+
+            final String type = variant.getMediaType().getType();
+
+            getObjMethod.addHeader("Accept", type);
+            final HttpResponse response = client.execute(getObjMethod);
+
+            final int expected = OK.getStatusCode();
+            final int found = response.getStatusLine().getStatusCode();
+
+            assertEquals("Expected: " + expected + ", recieved: " + found + ", " + type, expected, found);
+        }
     }
 
     @Test

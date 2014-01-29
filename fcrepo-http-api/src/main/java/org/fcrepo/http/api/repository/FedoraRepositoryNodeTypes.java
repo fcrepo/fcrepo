@@ -38,16 +38,18 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
 /**
  * Expose node types at a REST endpoint
@@ -67,8 +69,8 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
      * @throws RepositoryException
      */
     @GET
-    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
-                  TEXT_HTML})
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+                      TEXT_HTML, APPLICATION_XHTML_XML})
     @Timed
     @HtmlTemplate("jcr:nodetypes")
     public RdfStream getNodeTypes(@Context final UriInfo uriInfo) throws RepositoryException {

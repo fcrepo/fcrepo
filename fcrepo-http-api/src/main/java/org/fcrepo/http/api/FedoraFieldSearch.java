@@ -20,16 +20,17 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
@@ -136,7 +137,7 @@ public class FedoraFieldSearch extends AbstractResource implements
      */
     @GET
     @Timed
-    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X})
     public Dataset searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
             @QueryParam(OFFSET_PARAM) @DefaultValue("0") final long offset,
             @QueryParam(LIMIT_PARAM) @DefaultValue("25") final int limit,
