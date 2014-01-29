@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-http-commons</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository HTTP Commons Module</name>
   <description>The Fedora Commons repository HTTP commons module: Provides HTTP (JAX-RS) resources and helpers for use in assembling HTTP APIs over the Fedora Commons repository framework.</description>
   <packaging>bundle</packaging>
 

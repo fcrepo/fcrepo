@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>fcrepo-webapp</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository Deployable Web Application</name>
   <description>The Fedora web application</description>
   <packaging>war</packaging>
 

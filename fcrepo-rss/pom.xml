@@ -7,7 +7,7 @@
   </parent>
   
   <artifactId>fcrepo-rss</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository RSS Module</name>
   <description>The Fedora Commons repository RSS module: Provides a limited RSS feed of repository events.</description>
   <packaging>bundle</packaging>
 

@@ -9,7 +9,7 @@
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
   <version>4.0.0-alpha-4-SNAPSHOT</version>
-  <name>fcrepo4</name>
+  <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons 4</description>
   <organization>
     <name>DuraSpace, Inc.</name>
@@ -1125,6 +1125,28 @@
         </plugins>
       </build>
     </profile>
+     <profile>
+      <id>graph-dependencies</id>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>mvnplugins.fusesource.org</id>
+          <url>http://mvnplugins.fusesource.org/repo/release</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+        </pluginRepository>
+      </pluginRepositories>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.fusesource.mvnplugins</groupId>
+            <artifactId>maven-graph-plugin</artifactId>
+            <version>1.4</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
   </profiles>
   <licenses>
     <license>

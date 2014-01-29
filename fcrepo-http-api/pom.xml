@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>fcrepo-http-api</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository HTTP API Module</name>
   <description>The Fedora Commons repository HTTP API: Provides a RESTful HTTP API to interact with the Fedora Commons repository.</description>
   <packaging>bundle</packaging>
 

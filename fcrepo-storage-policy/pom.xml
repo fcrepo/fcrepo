@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-storage-policy</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository Storage Strategies Module</name>
   <description>Provides store strategy hints based on policy evaluation.</description>
   <packaging>bundle</packaging>
 

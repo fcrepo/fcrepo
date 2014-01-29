@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-auth-oauth</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository OAuth 2.0 Module</name>
   <description>Fedora OAuth 2.0 module</description>
   <packaging>bundle</packaging>
   <properties>

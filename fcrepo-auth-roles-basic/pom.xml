@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-auth-roles-basic</artifactId>
-  <name>fcrepo-auth-roles-basic</name>
+  <name>Fedora Repository Authorization Basic Role Module</name>
   <description>A basic implementation of a Fedora policy enforcement point (PEP) that uses the access roles of reader, writer and admin.</description>
 
   <dependencies>

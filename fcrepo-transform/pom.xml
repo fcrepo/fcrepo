@@ -8,7 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>fcrepo-transform</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository RDF Transformations Module</name>
   <description>The Fedora Commons repository transformations module: Provides facilities to use SPARQL or LDPath to tranform repository RDF into desired forms.</description>
   <packaging>bundle</packaging>
 
