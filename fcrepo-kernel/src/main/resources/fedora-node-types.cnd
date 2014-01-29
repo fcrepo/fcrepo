@@ -98,7 +98,7 @@
  * This can be redefined by the repo manager
  * to suit initial restriction needs.
  */
-[fedora:baseObject] > nt:hierarchyNode
+[fedora:baseObject] > nt:folder
   // The following 2 lines allow for any property to be added. Commenting them out
   // we can define exactly which properties a node with no attached mix-ins can have.
   - * (undefined) multiple
