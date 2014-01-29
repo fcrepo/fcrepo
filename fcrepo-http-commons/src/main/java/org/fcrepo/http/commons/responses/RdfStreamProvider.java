@@ -18,14 +18,15 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.openrdf.rio.RDFFormat.NO_CONTEXTS;
 import static org.openrdf.rio.RDFFormat.NO_NAMESPACES;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -62,7 +63,7 @@ import org.springframework.stereotype.Component;
  */
 @Provider
 @Component
-@Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
+@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X})
 public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
 
     private static final Logger LOGGER = getLogger(RdfStreamProvider.class);
