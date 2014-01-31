@@ -18,7 +18,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-api</artifactId>
       <version>${project.version}</version>
-      <type>bundle</type>
     </dependency>
     <dependency>
       <groupId>javax.inject</groupId>
