@@ -24,7 +24,7 @@
 <fedora = 'http://fedora.info/definitions/v4/rest-api#'>
 <fedorarelsext = 'http://fedora.info/definitions/v4/rels-ext#'>
 // Defining fcrepo namespace here messes up things big time for some reason, hence fcr.
-<fcr= 'http://fedora.info/definitions/v4/repository#'>
+//<fcrepo = 'http://fedora.info/definitions/v4/repository#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 
@@ -106,26 +106,6 @@
 
 
 /*
- * Fedora repository ontology
- */
-[fcr:resource] mixin
-  // Generic property definitions
-  - fcr:primaryType (STRING) // Not URI?
-  - fcr:uuid (STRING)
-  - fcr:versionHistory (URI)
-
-  // Property definitions for Resource class
-  - fcr:baseVersion (URI)
-  - fcr:created (STRING)
-  - fcr:createdBy (STRING)
-  - fcr:isCheckedOut (undefined) multiple
-  - fcr:lastModified (STRING)
-  - fcr:lastModifiedBy (STRING)
-  - fcr:mixinTypes (STRING) multiple // Not URI?
-  - fcr:predecessors (URI) multiple
-
-
-/*
  * LDP property declarations.
  */
 [ldp:resource] mixin
@@ -140,16 +120,24 @@
 
 
 /*
- * This mix-in defines the basic properties necessary for Fedora to function.
- * TODO Adjust code to only auto-assign fedora:object, fedora:datastream, etc.
+ * Common Fedora attributes.
+ * TODO These could be in fedora:resource directly but tests fail if they are there. Find out why.
  */
-[fedora:resource] > fcr:resource, ldp:resource, fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
-  - rdf:type (URI) multiple
-
-  // Property definitions for all classes in Fedora rest-api ontology.
+[fedora:common] mixin
   - fedora:hasVersions (URI) multiple
   - fedora:exportAs (URI) multiple
   - fedora:hasAccessRoles (URI) multiple
+
+  // fedoraconfig properties
+  - fedoraconfig:versioningPolicy (STRING) = "auto-version" aut
+
+
+/*
+ * This mix-in defines the basic properties necessary for Fedora to function.
+ * TODO Adjust code to only auto-assign fedora:object, fedora:datastream, etc.
+ */
+[fedora:resource] > fedora:common, ldp:resource, fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
+  - rdf:type (URI) multiple
 
 
 /*
@@ -157,8 +145,8 @@
  */
 [fedora:object] > fedora:resource mixin
   // Property definitions for Object class in Fedora repository ontology.
-  - fcr:hasChild (undefined) multiple
-  - fcr:hasParent (undefined) multiple
+  - jcr:hasChild (undefined) multiple
+  - jcr:hasParent (undefined) multiple
 
 
 /*
