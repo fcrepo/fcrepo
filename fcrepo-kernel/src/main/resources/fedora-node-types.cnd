@@ -145,8 +145,8 @@
  */
 [fedora:object] > fedora:resource mixin
   // Property definitions for Object class in Fedora repository ontology.
-  - jcr:hasChild (undefined) multiple
-  - jcr:hasParent (undefined) multiple
+  - jcr:hasChild (reference) mul
+  - jcr:hasParent (reference)
 
 
 /*
