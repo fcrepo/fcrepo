@@ -171,6 +171,15 @@ public class ViewHelpersTest {
     }
 
     @Test
+    public void shouldGetSerializationFormat() {
+        final Node subject = createURI("subject/fcr:export?format=jcr/xml");
+        final DatasetGraph mem = createMem();
+
+        mem.add(createAnon(), subject, createLiteral("predicate"),createLiteral("abc"));
+        assertEquals("jcr/xml", testObj.getObjectTitle(mem, subject));
+    }
+
+    @Test
     public void shouldConvertRdfObjectsToStrings() {
 
         final DatasetGraph mem = createMem();
