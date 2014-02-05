@@ -144,6 +144,19 @@ public class ViewHelpers {
         }
 
         if (subject.isURI()) {
+            // FIXME: The following hack should be removed/resolved with:
+            //  https://www.pivotaltracker.com/story/show/65221404
+            //
+            // For /fcr:export endpoints, there should be a way to look up the serialization format and find the
+            //  appropriate label to return here.
+            // This method is used (among other places?) in "fcrepo-http-api/common-node-actions.vsl#95"
+            final String uri = subject.getURI();
+            final String target = "fcr:export?format=";
+            if (uri.contains(target)) {
+                // Return the value of the query param "format".
+                return uri.substring(uri.indexOf(target) + target.length());
+            }
+
             return subject.getURI();
         } else if (subject.isBlank()) {
             return subject.getBlankNodeLabel();
