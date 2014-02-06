@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.connector.file;
 
 import org.junit.AfterClass;
-import org.junit.Assert;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.infinispan.schematic.document.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.modeshape.jcr.ExecutionContext;
-import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
 import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
@@ -35,28 +31,40 @@ import org.modeshape.jcr.value.NameFactory;
 import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.ValueFactories;
 import org.modeshape.jcr.value.basic.BasicName;
+import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 
+import static java.nio.file.Files.createTempDirectory;
+import static java.nio.file.Files.createTempFile;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.eq;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * @author Andrew Woods
- *         Date: 2/3/14
+ * @author Andrew Woods Date: 2/3/14
  */
 public class FedoraFileSystemConnectorTest {
 
     private FedoraFileSystemConnector connector;
 
-    private final static String directoryPath = System.getProperty("java.io.tmpdir");
-    private final static File tmpFile = new File(directoryPath, "fedora-filesystemtest.txt");
+    private static Path directoryPath;
+
+    private static File tmpFile;
 
     @Mock
     private NamespaceRegistry mockRegistry;
@@ -76,17 +84,28 @@ public class FedoraFileSystemConnectorTest {
     @Mock
     private ExtraPropertiesStore mockExtraPropertiesStore;
 
+    @Mock
+    private Property binaryProperty;
+
+    @Mock
+    private BinaryValue binaryValue;
+
     private ExecutionContext mockContext = new ExecutionContext();
 
+    private static final Logger logger =
+        getLogger(FedoraFileSystemConnectorTest.class);
 
     @BeforeClass
-    public static void beforeClass()
-    {
-        try {
-            FileOutputStream outputStream = new FileOutputStream(tmpFile);
+    public static void beforeClass() throws IOException {
+        directoryPath = createTempDirectory("fedora-filesystemtest");
+        tmpFile =
+            createTempFile(directoryPath, "fedora-filesystemtestfile",
+                    "txt").toFile();
+        try (FileOutputStream outputStream = new FileOutputStream(tmpFile)) {
             outputStream.write("hello".getBytes());
-        } catch (IOException e) {
-            System.err.println("Error creating: " + tmpFile.getAbsolutePath() + " - " + e.getMessage());
+        } catch (final IOException e) {
+            logger.error("Error creating: {} - {}", tmpFile.getAbsolutePath(),
+                    e.getMessage());
         }
     }
 
@@ -94,52 +113,55 @@ public class FedoraFileSystemConnectorTest {
     public static void afterClass() {
         try {
             tmpFile.delete();
-        } catch (Exception e) {
-            System.err.println("Error deleting: " + tmpFile.getAbsolutePath() + " - " + e.getMessage());
+        } catch (final Exception e) {
+            logger.error("Error deleting: " + tmpFile.getAbsolutePath()
+                    + " - " + e.getMessage());
         }
     }
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        initMocks(this);
 
         connector = new FedoraFileSystemConnector();
-        TestHelpers.setField(connector, "directoryPath", directoryPath);
-        TestHelpers.setField(connector, "translator", mockTranslator);
-        TestHelpers.setField(connector, "context", mockContext);
-        TestHelpers.setField(connector, "extraPropertiesStore", mockExtraPropertiesStore);
-
-        TestHelpers.setField(mockTranslator, "names", mockNameFactory);
+        setField(connector, "directoryPath", directoryPath.toString());
+        setField(connector, "translator", mockTranslator);
+        setField(connector, "context", mockContext);
+        setField(connector, "extraPropertiesStore", mockExtraPropertiesStore);
+        setField(mockTranslator, "names", mockNameFactory);
         connector.initialize(mockRegistry, mockNodeTypeManager);
     }
 
     @Test
     public void testGetDocumentByIdNull() throws Exception {
-        Document doc = connector.getDocumentById(null);
-        Assert.assertNull(doc);
+        final Document doc = connector.getDocumentById(null);
+        assertNull(doc);
     }
 
     @Test
     public void testGetDocumentByIdDatastream() throws Exception {
-        when(mockTranslator.getPrimaryTypeName(any(Document.class))).thenReturn(JcrConstants.NT_FILE);
-        when(mockNameFactory.create(anyString())).thenReturn(new BasicName("", tmpFile.getName()));
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn(NT_FILE);
+        when(mockNameFactory.create(anyString())).thenReturn(
+                new BasicName("", tmpFile.getName()));
 
-        Document doc = connector.getDocumentById("/" + tmpFile.getName());
-        Assert.assertNotNull(doc);
+        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        assertNotNull(doc);
     }
 
     @Test
     public void testGetDocumentByIdContent() throws Exception {
-        when(mockTranslator.getPrimaryTypeName(any(Document.class))).thenReturn(JcrConstants.NT_RESOURCE);
-        when(mockNameFactory.create(anyString())).thenReturn(new BasicName("", tmpFile.getName()));
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn(NT_RESOURCE);
+        when(mockNameFactory.create(anyString())).thenReturn(
+                new BasicName("", tmpFile.getName()));
 
-        Property binaryProperty = Mockito.mock(Property.class, "BinaryProperty");
-        BinaryValue binaryValue = Mockito.mock(BinaryValue.class, "BinayValue");
         when(binaryProperty.getFirstValue()).thenReturn(binaryValue);
-        when(mockTranslator.getProperty(any(Document.class), Mockito.eq(JCR_DATA))).thenReturn(binaryProperty);
+        when(mockTranslator.getProperty(any(Document.class), eq(JCR_DATA)))
+                .thenReturn(binaryProperty);
 
-        Document doc = connector.getDocumentById("/" + tmpFile.getName());
-        Assert.assertNotNull(doc);
+        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        assertNotNull(doc);
     }
 
 }
