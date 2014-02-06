@@ -74,6 +74,7 @@
     <module>fcrepo-auth-roles-common</module>
     <module>fcrepo-auth-roles-basic</module>
     <module>fcrepo-kernel-api</module>
+    <module>fcrepo-connector-file</module>
   </modules>
   <dependencyManagement>
     <dependencies>
