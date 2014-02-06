@@ -16,24 +16,26 @@
 
 package org.fcrepo.integration.connector.file;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
-import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.utils.ContentDigest;
-import org.fcrepo.kernel.utils.FixityResult;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.services.NodeService;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.modeshape.common.util.SecureHash;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import static java.lang.System.clearProperty;
+import static java.lang.System.getProperty;
+import static java.lang.System.setProperty;
+import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.kernel.utils.ContentDigest.asURI;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.modeshape.common.util.SecureHash.getHash;
+import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Iterator;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -42,15 +44,20 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.Iterator;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 
 /**
@@ -80,32 +87,32 @@ public class FedoraFileSystemConnectorIT {
     @BeforeClass
     public static void beforeClass() {
         // Note: This property is used in the repository.json
-        System.setProperty(PROP_TEST_DIR, new File("target/test-classes").getAbsolutePath());
+        setProperty(PROP_TEST_DIR, new File("target/test-classes").getAbsolutePath());
     }
 
     @AfterClass
     public static void afterClass() {
-        System.clearProperty(PROP_TEST_DIR);
+        clearProperty(PROP_TEST_DIR);
     }
 
     @Test
     public void testGetFederatedObject() throws RepositoryException {
-        Session session = repo.login();
+        final Session session = repo.login();
 
         final FedoraObject object = objectService.getObject(session, testFile);
-        Assert.assertNotNull(object);
+        assertNotNull(object);
 
         final Node node = object.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
-        Assert.assertEquals(2, mixins.length);
+        assertEquals(2, mixins.length);
 
         boolean found = false;
-        for (NodeType nodeType : mixins) {
+        for (final NodeType nodeType : mixins) {
             if (nodeType.getName().equals(FEDORA_DATASTREAM)) {
                 found = true;
             }
         }
-        Assert.assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
+        assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
 
         session.save();
         session.logout();
@@ -113,27 +120,27 @@ public class FedoraFileSystemConnectorIT {
 
     @Test
     public void testGetFederatedContent() throws RepositoryException {
-        Session session = repo.login();
+        final Session session = repo.login();
 
         final Node node = datastreamService.getDatastreamNode(session, testFile + "/jcr:content");
-        Assert.assertNotNull(node);
+        assertNotNull(node);
 
         final NodeType[] mixins = node.getMixinNodeTypes();
-        Assert.assertEquals(2, mixins.length);
+        assertEquals(2, mixins.length);
 
         boolean found = false;
-        for (NodeType nodeType : mixins) {
+        for (final NodeType nodeType : mixins) {
             if (nodeType.getName().equals(FEDORA_BINARY)) {
                 found = true;
             }
         }
-        Assert.assertTrue("Mixin not found: " + FEDORA_BINARY, found);
+        assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
-        final Property size = node.getProperty(FedoraJcrTypes.CONTENT_SIZE);
+        final Property size = node.getProperty(CONTENT_SIZE);
 
         final File file = new File(testFile.replace("/federated", "target/test-classes"));
-        Assert.assertTrue(file.getAbsolutePath(), file.exists());
-        Assert.assertEquals(file.length(), size.getLong());
+        assertTrue(file.getAbsolutePath(), file.exists());
+        assertEquals(file.length(), size.getLong());
 
         session.save();
         session.logout();
@@ -141,10 +148,10 @@ public class FedoraFileSystemConnectorIT {
 
     @Test
     public void testWriteProperty() throws RepositoryException {
-        Session session = repo.login();
+        final Session session = repo.login();
 
         final FedoraResource object = nodeService.getObject(session, testFile);
-        Assert.assertNotNull(object);
+        assertNotNull(object);
 
         final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
                 "INSERT DATA { " +
@@ -153,13 +160,13 @@ public class FedoraFileSystemConnectorIT {
                 "'some-test-name' }";
 
         // Write the properties
-        final GraphSubjects graphSubjects = new DefaultGraphSubjects(session);
-        object.updatePropertiesDataset(graphSubjects, sparql);
+        object.updatePropertiesDataset(new DefaultGraphSubjects(session),
+                sparql);
 
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
-        Assert.assertNotNull(property);
-        Assert.assertEquals("some-test-name", property.getValues()[0].toString());
+        assertNotNull(property);
+        assertEquals("some-test-name", property.getValues()[0].toString());
 
         session.save();
         session.logout();
@@ -167,25 +174,29 @@ public class FedoraFileSystemConnectorIT {
 
     @Test
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
-        Session session = repo.login();
+        final Session session = repo.login();
 
         final Node node = datastreamService.getDatastreamNode(session, testFile + "/jcr:content");
-        Assert.assertNotNull(node);
+        assertNotNull(node);
 
-        final File file = new File(System.getProperty(PROP_TEST_DIR), testFile.replace("federated", ""));
-        final byte[] hash = SecureHash.getHash(SecureHash.Algorithm.SHA_1, file);
+        final File file =
+            new File(getProperty(PROP_TEST_DIR), testFile.replace("federated",
+                    ""));
+        final byte[] hash = getHash(SHA_1, file);
 
-        final URI calculatedChecksum = ContentDigest.asURI(SecureHash.Algorithm.SHA_1.toString(), hash);
+        final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = datastreamService.getFixity(node, calculatedChecksum, file.length());
-        Assert.assertNotNull(results);
+        final Collection<FixityResult> results =
+            datastreamService
+                    .getFixity(node, calculatedChecksum, file.length());
+        assertNotNull(results);
 
-        Assert.assertTrue(!results.isEmpty());
+        assertFalse("Found no results!", results.isEmpty());
 
         final Iterator<FixityResult> resultIterator = results.iterator();
         while (resultIterator.hasNext()) {
             final FixityResult result = resultIterator.next();
-            Assert.assertTrue(result.isSuccess());
+            assertTrue(result.isSuccess());
         }
 
         session.save();

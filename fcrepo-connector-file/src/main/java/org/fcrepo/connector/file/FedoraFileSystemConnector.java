@@ -15,20 +15,6 @@
  */
 package org.fcrepo.connector.file;
 
-import org.fcrepo.kernel.utils.ContentDigest;
-import org.infinispan.schematic.document.Document;
-import org.modeshape.connector.filesystem.FileSystemConnector;
-import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.federation.spi.DocumentReader;
-import org.modeshape.jcr.federation.spi.DocumentWriter;
-import org.modeshape.jcr.value.BinaryValue;
-import org.modeshape.jcr.value.Name;
-import org.modeshape.jcr.value.Property;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
@@ -36,8 +22,23 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+
+import java.util.Map;
+
+import org.infinispan.schematic.document.Document;
+import org.modeshape.connector.filesystem.FileSystemConnector;
+import org.modeshape.jcr.federation.spi.DocumentReader;
+import org.modeshape.jcr.federation.spi.DocumentWriter;
+import org.modeshape.jcr.value.BinaryValue;
+import org.modeshape.jcr.value.Name;
+import org.modeshape.jcr.value.Property;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class extends the {@link FileSystemConnector} to enable the autocreation of Fedora-specific datastream and
@@ -58,7 +59,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
      * implementation.
      */
     @Override
-    public Document getDocumentById(String id) {
+    public Document getDocumentById(final String id) {
         LOGGER.debug("Getting Federated document: {}", id);
         if (null == id || id.isEmpty()) {
             LOGGER.warn("Can not get document with null id");
@@ -78,11 +79,11 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         // Is Fedora Datastream?
-        if (primaryType.equals(JcrConstants.NT_FILE)) {
+        if (primaryType.equals(NT_FILE)) {
             decorateDatastreamNode(docReader, docWriter);
 
-            // Is Fedora Content?
-        } else if (primaryType.equals(JcrConstants.NT_RESOURCE)) {
+        // Is Fedora Content?
+        } else if (primaryType.equals(NT_RESOURCE)) {
             decorateContentNode(docReader, docWriter);
         }
 
@@ -94,14 +95,14 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         return docWriter.document();
     }
 
-    private void decorateDatastreamNode(DocumentReader docReader, DocumentWriter docWriter) {
+    private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_DATASTREAM)) {
             LOGGER.trace("Adding mixin: {}, to {}", FEDORA_DATASTREAM, docReader.getDocumentId());
             docWriter.addMixinType(FEDORA_DATASTREAM);
         }
     }
 
-    private void decorateContentNode(DocumentReader docReader, DocumentWriter docWriter) {
+    private static void decorateContentNode(final DocumentReader docReader, final DocumentWriter docWriter) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_BINARY)) {
             LOGGER.trace("Adding mixin: {}, to {}", FEDORA_BINARY, docReader.getDocumentId());
             docWriter.addMixinType(FEDORA_BINARY);
@@ -110,7 +111,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         if (null == docReader.getProperty(CONTENT_DIGEST)) {
             final BinaryValue binaryValue = getBinaryValue(docReader);
             final String dsChecksum = binaryValue.getHexHash();
-            final String dsURI = ContentDigest.asURI("SHA-1", dsChecksum).toString();
+            final String dsURI = asURI("SHA-1", dsChecksum).toString();
 
             LOGGER.trace("Adding {} property of {} to {}", CONTENT_DIGEST, dsURI, docReader.getDocumentId());
             docWriter.addProperty(CONTENT_DIGEST, dsURI);
@@ -127,12 +128,12 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         LOGGER.debug("Decorated data property at path: {}", docReader.getDocumentId());
     }
 
-    private BinaryValue getBinaryValue(DocumentReader docReader) {
+    private static BinaryValue getBinaryValue(final DocumentReader docReader) {
         final Property binaryProperty = docReader.getProperty(JCR_DATA);
         return (BinaryValue) binaryProperty.getFirstValue();
     }
 
-    private void saveProperties(DocumentReader docReader) {
+    private void saveProperties(final DocumentReader docReader) {
         LOGGER.trace("Persisting properties for {}", docReader.getDocumentId());
         final Map<Name, Property> properties = docReader.getProperties();
         final ExtraProperties extraProperties = extraPropertiesFor(docReader.getDocumentId(), true);
