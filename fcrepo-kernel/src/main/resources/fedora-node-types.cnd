@@ -99,7 +99,7 @@
  * to suit initial restriction needs.
  */
 [fedora:baseObject] > nt:folder
-  // The following 2 lines allow for any property to be added. Commenting them out
+  // The following 2 lines allow for any property to be added. By commenting them out
   // we can define exactly which properties a node with no attached mix-ins can have.
   - * (undefined) multiple
   - * (undefined)
@@ -117,6 +117,16 @@
   - ldp:membershipPredicate (URI)
   - ldp:membershipSubject (URI)
   - ldp:membersInlined (STRING) // BOOLEAN?
+
+
+/*
+ * Fedora hierarchy-related properties
+ */
+[fedora:hierarchyNode] mixin
+  - jcr:hasChild (reference) mul
+  - jcr:hasParent (reference)
+  - jcr:numberOfChildren (undefined)
+  - jcr:hasMember (reference) multiple
 
 
 /*
@@ -152,7 +162,7 @@
  * This mix-in defines the basic properties necessary for Fedora to function.
  * TODO Adjust code to only auto-assign fedora:object, fedora:datastream, etc.
  */
-[fedora:resource] > ldp:resource, fedora:relations, mix:created, mix:lastModified, mix:lockable, fedora:versionable, fedora:exportable, fedora:rbac, dc:describable mixin
+[fedora:resource] > ldp:resource, fedora:hierarchyNode, fedora:relations, mix:created, mix:lastModified, mix:lockable, fedora:versionable, fedora:exportable, fedora:rbac, dc:describable mixin
   - rdf:type (URI) multiple
 
 
@@ -160,9 +170,6 @@
  * A Fedora object.
  */
 [fedora:object] > fedora:resource mixin
-  // Property definitions for Object class in Fedora repository ontology.
-  - jcr:hasChild (reference) mul
-  - jcr:hasParent (reference)
 
 
 /*
