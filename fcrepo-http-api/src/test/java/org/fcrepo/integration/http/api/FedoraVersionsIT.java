@@ -226,7 +226,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
         final List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
-        assertEquals("There must be a root version with two revisions.", 4, versionsInOrder.size());
+        assertEquals("There must be a root version with two revisions.", 3, versionsInOrder.size());
 
         final HttpGet retrieveFirstVersion = new HttpGet(versionsInOrder.get(1) + "/fcr:content");
         assertEquals("First version wasn't preserved as expected!",
