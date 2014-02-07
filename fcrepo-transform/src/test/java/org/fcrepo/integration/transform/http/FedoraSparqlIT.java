@@ -44,6 +44,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.fcrepo.kernel.RdfLexicon.FEDORA_DEFAULT_NT;
 
 @ContextConfiguration({"/spring-test/master.xml", "/spring-test/test-container.xml"})
 public class FedoraSparqlIT  extends AbstractResourceIT {
@@ -58,9 +59,9 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         session = repo.login();
         session.setNamespacePrefix("zz", "http://zz.com/");
         final ValueFactory valueFactory = session.getValueFactory();
-        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(session, "/abc", JcrConstants.NT_FOLDER);
-        final FedoraResourceImpl fedoraResource2 = new FedoraResourceImpl(session, "/xyz", JcrConstants.NT_FOLDER);
-        final FedoraResourceImpl fedoraResource3 = new FedoraResourceImpl(session, "/anobject", JcrConstants.NT_FOLDER);
+        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(session, "/abc", FEDORA_DEFAULT_NT );
+        final FedoraResourceImpl fedoraResource2 = new FedoraResourceImpl(session, "/xyz", FEDORA_DEFAULT_NT );
+        final FedoraResourceImpl fedoraResource3 = new FedoraResourceImpl(session, "/anobject", FEDORA_DEFAULT_NT );
 
         fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
         fedoraResource.getNode().setProperty("fedorarelsext:hasPart", new Value[] { valueFactory.createValue(fedoraResource2.getNode()) });
