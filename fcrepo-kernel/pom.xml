@@ -8,11 +8,17 @@
   </parent>
 
   <artifactId>fcrepo-kernel</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository Kernel</name>
   <description>The Fedora Commons repository kernel: Provides the basic abstractions at the heart of the Fedora information architecture and machinery for manipulating them.</description>
   <packaging>bundle</packaging>
 
   <dependencies>
+ 
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
@@ -73,12 +79,14 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-
-
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

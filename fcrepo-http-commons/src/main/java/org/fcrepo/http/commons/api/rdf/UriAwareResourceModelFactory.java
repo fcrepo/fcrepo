@@ -25,7 +25,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
- * Helper to generate an RDF model for a FedoraResource that (likely) creates
+ * Helper to generate an RDF model for a FedoraResourceImpl that (likely) creates
  * relations from our resource to other HTTP components
  */
 public interface UriAwareResourceModelFactory {
@@ -42,6 +42,6 @@ public interface UriAwareResourceModelFactory {
      * @throws RepositoryException
      */
     Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, GraphSubjects graphSubjects)
+            final UriInfo uriInfo, final GraphSubjects graphSubjects)
         throws RepositoryException;
 }

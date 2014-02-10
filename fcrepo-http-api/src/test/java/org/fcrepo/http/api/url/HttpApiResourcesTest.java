@@ -46,7 +46,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
@@ -63,7 +63,7 @@ public class HttpApiResourcesTest {
     @Mock
     private Node mockNode;
 
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     private UriInfo uriInfo;
 
@@ -85,7 +85,7 @@ public class HttpApiResourcesTest {
     public void setUp() throws NoSuchFieldException {
         initMocks(this);
         testObj = new HttpApiResources();
-        mockResource = new FedoraResource(mockNode);
+        mockResource = new FedoraResourceImpl(mockNode);
         uriInfo = getUriInfoImpl();
         when(mockSession.getRepository()).thenReturn(mockRepository);
         mockSubjects =

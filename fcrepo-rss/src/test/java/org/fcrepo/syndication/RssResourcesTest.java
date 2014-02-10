@@ -17,7 +17,7 @@ package org.fcrepo.syndication;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 public class RssResourcesTest {
     private RssResources testObj;
     private Node mockNode;
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
     private UriInfo uriInfo;
     private GraphSubjects mockSubjects;
 
@@ -47,7 +47,7 @@ public class RssResourcesTest {
     public void setUp() {
         testObj = new RssResources();
         mockNode = mock(Node.class);
-        mockResource = new FedoraResource(mockNode);
+        mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
         mockSubjects = new DefaultGraphSubjects(mock(Session.class));

@@ -288,7 +288,7 @@ public class FedoraBatch extends AbstractResource {
 
             session.save();
             versionService.nodeUpdated(session, path);
-            for (Node n : nodesChanged) {
+            for (final Node n : nodesChanged) {
                 versionService.nodeUpdated(n);
             }
 

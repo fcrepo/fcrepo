@@ -8,7 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>fcrepo-webhooks</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository Webhooks Module</name>
   <description>The Fedora Commons repository Webhooks module: Provides the ability for a Fedora Commons repository to accept Webhooks for workflow automation.
 
 See: http://en.wikipedia.org/wiki/Webhook</description>

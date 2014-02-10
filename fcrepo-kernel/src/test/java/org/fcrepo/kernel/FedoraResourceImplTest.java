@@ -15,7 +15,6 @@
  */
 
 package org.fcrepo.kernel;
-
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -25,10 +24,10 @@ import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
-import static org.fcrepo.kernel.FedoraResource.hasMixin;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getProblemsModel;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -85,7 +84,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
   "com.codahale.metrics.*"
   })
 @PrepareForTest({JcrRdfTools.class, FedoraTypesUtils.class})
-public class FedoraResourceTest {
+public class FedoraResourceImplTest {
 
     private FedoraResource testObj;
 
@@ -113,10 +112,10 @@ public class FedoraResourceTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
-        NodeType mockNodeType = mock(NodeType.class);
+        final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        testObj = new FedoraResource(mockNode);
+        testObj = new FedoraResourceImpl(mockNode);
         assertEquals(mockNode, testObj.getNode());
     }
 
@@ -126,7 +125,7 @@ public class FedoraResourceTest {
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
-        new FedoraResource(mockSession, "/foo/bar", null);
+        new FedoraResourceImpl(mockSession, "/foo/bar", null);
     }
 
     @Test
@@ -135,10 +134,10 @@ public class FedoraResourceTest {
         final NodeType mockType = mock(NodeType.class);
         final NodeType[] mockTypes = new NodeType[] {mockType};
         when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
-        actual = hasMixin(mockNode);
+        actual = isFedoraResource.apply(mockNode);
         assertEquals(false, actual);
         when(mockType.getName()).thenReturn(FEDORA_RESOURCE);
-        actual = hasMixin(mockNode);
+        actual = isFedoraResource.apply(mockNode);
         assertEquals(true, actual);
     }
 

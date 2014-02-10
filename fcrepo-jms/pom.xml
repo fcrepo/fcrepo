@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-jms</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository JMS Module</name>
   <description>The Fedora Commons repository JMS module: Provides repository event publication via Java Message Service.</description>
   <packaging>bundle</packaging>
 

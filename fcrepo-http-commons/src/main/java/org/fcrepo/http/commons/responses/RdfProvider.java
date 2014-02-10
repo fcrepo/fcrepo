@@ -17,14 +17,15 @@
 package org.fcrepo.http.commons.responses;
 
 import static java.util.Collections.singletonList;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.setCachingHeaders;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -50,7 +51,7 @@ import com.hp.hpl.jena.query.Dataset;
  */
 @Provider
 @Component
-@Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
+@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X})
 public class RdfProvider implements MessageBodyWriter<Dataset> {
 
     private static final Logger LOGGER = getLogger(RdfProvider.class);

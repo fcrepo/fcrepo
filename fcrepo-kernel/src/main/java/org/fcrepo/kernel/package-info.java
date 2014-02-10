@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
-This package contains abstractions for <code>FedoraResource</code> types and
+This package contains abstractions for <code>FedoraResourceImpl</code> types and
 some types and functionality for Transactions.
  */
 

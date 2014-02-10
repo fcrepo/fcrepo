@@ -16,17 +16,19 @@
 
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_JSON;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -81,8 +83,8 @@ public class FedoraVersions extends AbstractResource {
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
-    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES,
-            TEXT_HTML})
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+                      TEXT_HTML, APPLICATION_XHTML_XML})
     public RdfStream getVersionList(@PathParam("path")
             final List<PathSegment> pathList,
             @Context
@@ -127,7 +129,7 @@ public class FedoraVersions extends AbstractResource {
         return addVersion(toPath(pathList), null);
     }
 
-    private Response addVersion(String path, String label) throws RepositoryException {
+    private Response addVersion(final String path, final String label) throws RepositoryException {
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
@@ -153,7 +155,8 @@ public class FedoraVersions extends AbstractResource {
      */
     @Path("/{versionLabel}")
     @GET
-    @Produces({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, RDF_JSON, NTRIPLES})
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+                      TEXT_HTML, APPLICATION_XHTML_XML})
     public RdfStream getVersion(@PathParam("path")
             final List<PathSegment> pathList,
             @PathParam("versionLabel")

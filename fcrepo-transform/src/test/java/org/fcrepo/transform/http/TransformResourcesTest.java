@@ -19,7 +19,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
@@ -45,7 +45,7 @@ public class TransformResourcesTest {
 
     private Node mockNode;
 
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     private UriInfo uriInfo;
 
@@ -55,7 +55,7 @@ public class TransformResourcesTest {
     public void setUp() {
         testObj = new TransformResources();
         mockNode = mock(Node.class);
-        mockResource = new FedoraResource(mockNode);
+        mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
         mockSubjects = new DefaultGraphSubjects(mock(Session.class));

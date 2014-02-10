@@ -1,0 +1,32 @@
+{
+    "name" : "repo",
+    "jndiName" : "",
+    "workspaces" : {
+        "predefined" : [],
+        "default" : "default",
+        "allowCreation" : true
+    },
+    "externalSources" : {
+        "federated-directory" : {
+            "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
+            "directoryPath" : "${fcrepo.test.dir:must-be-provided}",
+            "projections" : [ "default:/federated => /" ],
+            "contentBasedSha1" : "false",
+            "readonly" : false,
+            "extraPropertiesStorage" : "json"
+        }
+    },
+    "storage" : {
+        "binaryStorage" : {
+            "type" : "transient",
+            "minimumBinarySizeInBytes" : 40
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : true
+        }
+    },
+    "node-types" : ["fedora-node-types.cnd"]
+}

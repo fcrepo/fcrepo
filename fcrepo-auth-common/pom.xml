@@ -6,7 +6,7 @@
     <version>4.0.0-alpha-4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-auth-common</artifactId>
-  <name>${project.artifactId}</name>
+  <name>Fedora Repository Authorization Commons Module</name>
   <description>Provides unified policy enforcement points for various access control implementations.</description>
   <packaging>bundle</packaging>
 

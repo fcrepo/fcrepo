@@ -26,7 +26,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.integration.AbstractResourceIT;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +44,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.fcrepo.kernel.RdfLexicon.FEDORA_DEFAULT_NT;
 
 @ContextConfiguration({"/spring-test/master.xml", "/spring-test/test-container.xml"})
 public class FedoraSparqlIT  extends AbstractResourceIT {
@@ -58,9 +59,9 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         session = repo.login();
         session.setNamespacePrefix("zz", "http://zz.com/");
         final ValueFactory valueFactory = session.getValueFactory();
-        final FedoraResource fedoraResource = new FedoraResource(session, "/abc", JcrConstants.NT_FOLDER);
-        final FedoraResource fedoraResource2 = new FedoraResource(session, "/xyz", JcrConstants.NT_FOLDER);
-        final FedoraResource fedoraResource3 = new FedoraResource(session, "/anobject", JcrConstants.NT_FOLDER);
+        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(session, "/abc", FEDORA_DEFAULT_NT );
+        final FedoraResourceImpl fedoraResource2 = new FedoraResourceImpl(session, "/xyz", FEDORA_DEFAULT_NT );
+        final FedoraResourceImpl fedoraResource3 = new FedoraResourceImpl(session, "/anobject", FEDORA_DEFAULT_NT );
 
         fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
         fedoraResource.getNode().setProperty("fedorarelsext:hasPart", new Value[] { valueFactory.createValue(fedoraResource2.getNode()) });
