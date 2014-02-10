@@ -23,6 +23,7 @@
  */
 <fedora = 'http://fedora.info/definitions/v4/rest-api#'>
 <fedorarelsext = 'http://fedora.info/definitions/v4/rels-ext#'>
+<indexing = 'http://fedora.info/definitions/v4/indexing#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 
@@ -177,6 +178,7 @@
   - fedora:hasFixityService (URI) multiple
   + image:metadata (nt:unstructured) multiple
 
+
 /*
  * Some content that can have a checksum
  */
@@ -184,3 +186,11 @@
   - premis:hasOriginalName (STRING)
   - premis:hasSize (LONG) COPY
   - fedora:digest (URI) COPY
+
+
+/*
+ * Indexable node
+ */
+[indexing:indexable] mixin
+  - indexing:hasIndexingTransformation (STRING) multiple COPY nofulltext noqueryorder
+
