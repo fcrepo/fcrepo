@@ -23,8 +23,6 @@
  */
 <fedora = 'http://fedora.info/definitions/v4/rest-api#'>
 <fedorarelsext = 'http://fedora.info/definitions/v4/rels-ext#'>
-// Defining fcrepo namespace here messes up things big time for some reason, hence fcr.
-//<fcrepo = 'http://fedora.info/definitions/v4/repository#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 
@@ -99,20 +97,16 @@
  * to suit initial restriction needs.
  */
 [fedora:baseObject] > nt:folder
-  // The following 2 lines allow for any property to be added. By commenting them out
-  // we can define exactly which properties a node with no attached mix-ins can have.
-  - * (undefined) multiple
-  - * (undefined)
 
 
 /*
  * LDP property declarations.
  */
 [ldp:resource] mixin
-  - ldp:firstPage (URI)
-  - ldp:inlinedResource (URI) multiple
-  - ldp:nextPage (URI)
-  - ldp:pageOf (URI) multiple
+  - ldp:firstPage (reference)
+  - ldp:inlinedResource (reference) multiple
+  - ldp:nextPage (reference)
+  - ldp:pageOf (reference) multiple
   - ldp:membershipObject (URI)
   - ldp:membershipPredicate (URI)
   - ldp:membershipSubject (URI)
@@ -125,7 +119,7 @@
 [fedora:hierarchyNode] mixin
   - jcr:hasChild (reference) mul
   - jcr:hasParent (reference)
-  - jcr:numberOfChildren (undefined)
+  - jcr:numberOfChildren (long)
   - jcr:hasMember (reference) multiple
 
 
@@ -152,7 +146,7 @@
 
 
 /*
- * Auto-versioned node
+ * Auto-versioned node -- optional
  */
 [fedora:autoversioned]
   - fedoraconfig:versioningPolicy (STRING) = "auto-version" aut
@@ -164,6 +158,10 @@
  */
 [fedora:resource] > ldp:resource, fedora:hierarchyNode, fedora:relations, mix:created, mix:lastModified, mix:lockable, fedora:versionable, fedora:exportable, fedora:rbac, dc:describable mixin
   - rdf:type (URI) multiple
+  // The following 2 lines allow for any property to be added. By commenting them out
+  // we can define exactly which properties a node with no attached mix-ins can have.
+  - * (undefined) multiple
+  - * (undefined)
 
 
 /*
