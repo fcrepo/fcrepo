@@ -148,7 +148,7 @@
 /*
  * Auto-versioned node -- optional
  */
-[fedora:autoversioned]
+[fedora:autoversioned] mixin
   - fedoraconfig:versioningPolicy (STRING) = "auto-version" aut
 
 
