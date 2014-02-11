@@ -84,8 +84,8 @@
             max_msg_batch_size="100"/>
   <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
   <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
-  <UFC max_credits="200k" min_threshold="0.20"/>
-  <MFC max_credits="200k" min_threshold="0.20"/>
+  <UFC min_credits="64k" max_credits="200k" min_threshold="0.20"/>
+  <MFC min_credits="64k" max_credits="200k" min_threshold="0.20"/>
   <FRAG2 frag_size="60000"/>
   <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 </config>
