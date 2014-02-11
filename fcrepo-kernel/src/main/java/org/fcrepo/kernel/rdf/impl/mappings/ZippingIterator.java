@@ -64,9 +64,8 @@ public class ZippingIterator<FromType, ToType> extends AbstractIterator<ToType> 
             LOGGER.trace("Supplying from next element {} through function {}",
                     f, t);
             return t.apply(f);
-        } else {
-            return endOfData();
         }
+        return endOfData();
 
     }
 

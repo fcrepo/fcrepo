@@ -77,7 +77,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
     private NodeType[] mockNodetypes;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         final String relPath = "/" + testPid;
         final NodeType[] types = new NodeType[0];
@@ -85,7 +85,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
             when(mockObjNode.getName()).thenReturn(testPid);
             when(mockObjNode.getSession()).thenReturn(mockSession);
             when(mockObjNode.getMixinNodeTypes()).thenReturn(types);
-            NodeType mockNodeType = mock(NodeType.class);
+            final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:folder");
             when(mockObjNode.getPrimaryNodeType()).thenReturn(mockNodeType);
             when(mockSession.getRootNode()).thenReturn(mockRootNode);

@@ -98,10 +98,9 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                 session.save();
 
                 return status(SC_NO_CONTENT).build();
-            } else {
-                return status(SC_BAD_REQUEST).entity(
-                        "SPARQL-UPDATE requests must have content ").build();
             }
+            return status(SC_BAD_REQUEST).entity(
+                    "SPARQL-UPDATE requests must have content ").build();
         } finally {
             session.logout();
         }

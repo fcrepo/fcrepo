@@ -54,18 +54,10 @@ public abstract class BasicCacheEntry implements CacheEntry {
     public FixityResult checkFixity(final URI checksum, final long size)
         throws RepositoryException {
 
-        final FixityInputStream fixityInputStream;
-
         final String digest = ContentDigest.getAlgorithm(checksum);
-        try {
-            fixityInputStream = new FixityInputStream(this.getInputStream(),
-                                          MessageDigest.getInstance(digest));
-        } catch (NoSuchAlgorithmException e) {
-            LOGGER.warn("Could not create MessageDigest: {}", e);
-            throw propagate(e);
-        }
 
-        try {
+        try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),
+                MessageDigest.getInstance(digest))) {
 
             IOUtils.copy(fixityInputStream, NULL_OUTPUT_STREAM);
 
@@ -96,13 +88,10 @@ public abstract class BasicCacheEntry implements CacheEntry {
 
             return result;
         } catch (final IOException e) {
+            LOGGER.debug("Got error closing input stream: {}", e);
             throw propagate(e);
-        } finally {
-            try {
-                fixityInputStream.close();
-            } catch (IOException e) {
-                LOGGER.debug("Got error closing input stream: {}", e);
-            }
+        } catch (final NoSuchAlgorithmException e1) {
+            throw propagate(e1);
         }
 
     }

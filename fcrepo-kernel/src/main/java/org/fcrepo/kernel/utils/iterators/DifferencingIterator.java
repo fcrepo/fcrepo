@@ -69,15 +69,13 @@ public class DifferencingIterator<E> extends AbstractIterator<E> {
                 // move onto the next candidate
                 if (!source.hasNext()) {
                     return endOfData();
-                } else {
-                    next = source.next();
                 }
+                next = source.next();
             }
             // it was not common so return it
             return next;
-        } else {
-            return endOfData();
         }
+        return endOfData();
     }
 
     /**

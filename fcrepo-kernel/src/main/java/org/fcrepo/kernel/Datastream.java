@@ -34,7 +34,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
@@ -51,7 +50,7 @@ import com.codahale.metrics.Histogram;
  * @author ajs6f
  * @date Feb 21, 2013
  */
-public class Datastream extends FedoraResourceImpl implements FedoraJcrTypes {
+public class Datastream extends FedoraResourceImpl {
 
     private static final Logger LOGGER = getLogger(Datastream.class);
 
@@ -289,12 +288,11 @@ public class Datastream extends FedoraResourceImpl implements FedoraJcrTypes {
     public String getFilename() throws RepositoryException {
         if (node.hasNode(JCR_CONTENT) && node.getNode(JCR_CONTENT).hasProperty(PREMIS_FILE_NAME)) {
             return node.getNode(JCR_CONTENT).getProperty(PREMIS_FILE_NAME).getString();
-        } else {
-            return getDsId();
         }
+        return getDsId();
     }
 
-    private void decorateContentNode(final Node contentNode)
+    private static void decorateContentNode(final Node contentNode)
         throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
@@ -320,9 +318,8 @@ public class Datastream extends FedoraResourceImpl implements FedoraJcrTypes {
     /**
      * Check if the node has a fedora:datastream mixin
      * @param node node to check
-     * @throws RepositoryException
      */
-    public static boolean hasMixin(final Node node) throws RepositoryException {
+    public static boolean hasMixin(final Node node) {
         return isFedoraDatastream.apply(node);
     }
 

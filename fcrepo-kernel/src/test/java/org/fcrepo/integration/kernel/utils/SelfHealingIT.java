@@ -30,7 +30,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -115,13 +114,11 @@ public class SelfHealingIT {
             store =
                 ((ChainingCacheStore) store).getStores().keySet().iterator()
                         .next();
-            final OutputStream outputStream =
-                new StoreChunkOutputStream(store, entryToTamper.getKey()
-                        .toString()
-                        + "-data");
-            IOUtils.copy(new ByteArrayInputStream("qwerty".getBytes()),
-                    outputStream);
-            outputStream.close();
+            try (
+                final OutputStream outputStream =
+                    new StoreChunkOutputStream(store, entryToTamper.getKey().toString() + "-data")) {
+                IOUtils.copy(new ByteArrayInputStream("qwerty".getBytes()), outputStream);
+            }
         } else {
             entryToTamper.storeValue(new ByteArrayInputStream("qwerty"
                     .getBytes()));
@@ -131,8 +128,7 @@ public class SelfHealingIT {
     }
 
     private Collection<FixityResult>
-            getNodeFixity(final Datastream ds) throws NoSuchAlgorithmException,
-                                              RepositoryException {
+            getNodeFixity(final Datastream ds) throws RepositoryException {
 
         return datastreamService.getFixity(ds.getNode().getNode(JCR_CONTENT),
                 ds.getContentDigest(), ds.getContentSize());

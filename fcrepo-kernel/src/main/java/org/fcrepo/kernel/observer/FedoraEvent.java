@@ -90,7 +90,7 @@ public class FedoraEvent implements Event {
     @Override
     public Map<?, ?> getInfo() throws RepositoryException {
         if (memoizedInfo == null) {
-            memoizedInfo = new HashMap<Object,Object>(e.getInfo());
+            memoizedInfo = new HashMap<>(e.getInfo());
             memoizedInfo.put(NODE_TYPE_KEY, this.nodeType);
         }
         return memoizedInfo;

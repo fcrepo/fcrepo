@@ -97,14 +97,13 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     /**
      * @return
      * @throws RepositoryException
-     * @throws IOException
      */
     @GET
     @Timed
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML})
     @HtmlTemplate("jcr:namespaces")
-    public RdfStream getNamespaces() throws RepositoryException, IOException {
+    public RdfStream getNamespaces() throws RepositoryException {
         return nodeService.getNamespaceRegistryStream(session).session(session);
     }
 }

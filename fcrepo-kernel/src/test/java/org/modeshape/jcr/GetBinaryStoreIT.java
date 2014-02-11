@@ -19,8 +19,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.value.binary.BinaryStore;
@@ -36,7 +34,7 @@ public class GetBinaryStoreIT {
     javax.jcr.Repository repo;
 
     @Test
-    public void testApply() throws RepositoryException {
+    public void testApply() {
         final GetBinaryStore testObj = new GetBinaryStore();
 
         final BinaryStore binaryStore = testObj.apply(repo);

@@ -56,7 +56,7 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
     }
 
     @Override
-    public void storeValue(InputStream stream) throws BinaryStoreException,
+    public void storeValue(final InputStream stream) throws BinaryStoreException,
             IOException {
         throw new UnsupportedOperationException("storeValue must be called on chained entries");
     }
@@ -71,9 +71,9 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
      */
     public Set<LowLevelCacheEntry> chainedEntries() {
         final Set<CacheStore> stores = this.store.getStores().keySet();
-        final Set<LowLevelCacheEntry> result = new HashSet<LowLevelCacheEntry>(stores.size());
+        final Set<LowLevelCacheEntry> result = new HashSet<>(stores.size());
 
-        for (CacheStore store: stores) {
+        for (final CacheStore store: stores) {
             final CacheStoreConfiguration config = this.store.getStores().get(store);
 
             String cacheStoreName = null;
@@ -83,7 +83,7 @@ public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
             }
 
             if (config instanceof AbstractStoreConfiguration && cacheStoreName == null) {
-                Object name = ((AbstractStoreConfiguration)config).properties().get("id");
+                final Object name = ((AbstractStoreConfiguration)config).properties().get("id");
                 if (name != null) {
                     cacheStoreName = name.toString();
                 }

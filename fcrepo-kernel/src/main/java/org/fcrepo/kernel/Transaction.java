@@ -129,7 +129,7 @@ public class Transaction {
      * @param absPath the object path to the resource to have a version
      *                checkpoint made
      */
-    public void addPathToVersion(String absPath) {
+    public void addPathToVersion(final String absPath) {
         if (versionedPaths == null) {
             versionedPaths = Collections.newSetFromMap(
                     new ConcurrentHashMap<String, Boolean>());
@@ -142,7 +142,7 @@ public class Transaction {
      * @param vService a versionService
      * @throws RepositoryException
      */
-    public void commit(VersionService vService) throws RepositoryException {
+    public void commit(final VersionService vService) throws RepositoryException {
 
         this.session.save();
         if (this.versionedPaths != null) {
@@ -158,9 +158,8 @@ public class Transaction {
 
     /**
      * End the session, and mark for reaping
-     * @throws RepositoryException
      */
-    public void expire() throws RepositoryException {
+    public void expire() {
         this.session.logout();
         this.expires.setTimeInMillis(currentTimeMillis());
     }

@@ -21,8 +21,6 @@ import java.net.URI;
 import java.util.EnumSet;
 import java.util.Set;
 
-import javax.jcr.RepositoryException;
-
 /**
  * Structure for presenting the results of a fixity check
  * (and any repair operations that may have occurred)
@@ -105,7 +103,7 @@ public class FixityResult {
      * Get the identifier for the entry's store
      * @return
      */
-    public String getStoreIdentifier() throws RepositoryException {
+    public String getStoreIdentifier() {
         return entry.getExternalIdentifier();
     }
 

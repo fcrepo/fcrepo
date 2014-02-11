@@ -34,7 +34,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.junit.Before;
@@ -198,7 +197,7 @@ public class RdfStreamTest {
     }
 
     @Test
-    public void testAsModel() throws RepositoryException {
+    public void testAsModel() {
         testStream = new RdfStream(singletonList(triple));
         testStream.namespaces(testNamespaces);
 

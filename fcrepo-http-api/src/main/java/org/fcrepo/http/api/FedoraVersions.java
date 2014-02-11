@@ -31,7 +31,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -151,7 +150,6 @@ public class FedoraVersions extends AbstractResource {
      * @param uriInfo
      * @return
      * @throws RepositoryException
-     * @throws IOException
      */
     @Path("/{versionLabel}")
     @GET
@@ -164,7 +162,7 @@ public class FedoraVersions extends AbstractResource {
             @Context
             final Request request,
             @Context
-            final UriInfo uriInfo) throws RepositoryException, IOException {
+            final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 versionLabel);
@@ -174,10 +172,9 @@ public class FedoraVersions extends AbstractResource {
 
         if (resource == null) {
             throw new WebApplicationException(status(NOT_FOUND).build());
-        } else {
-            return resource.getTriples(nodeTranslator()).session(session).topic(
-                    nodeTranslator().getGraphSubject(resource.getNode()).asNode());
         }
+        return resource.getTriples(nodeTranslator()).session(session).topic(
+                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
     }
 
     /**

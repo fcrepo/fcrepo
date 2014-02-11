@@ -94,7 +94,7 @@ public class FedoraIdentifiers extends AbstractResource {
             @DefaultValue("1")
             final Integer count,
             @Context
-            final UriInfo uriInfo) throws RepositoryException {
+            final UriInfo uriInfo) {
 
 
         final String path = toPath(pathList);
@@ -127,7 +127,7 @@ public class FedoraIdentifiers extends AbstractResource {
         };
     }
 
-    private Function<String, Triple> identifier2triple(
+    private static Function<String, Triple> identifier2triple(
         final GraphSubjects subjects, final Node pidsResult) {
         return new Function<String, Triple>() {
 

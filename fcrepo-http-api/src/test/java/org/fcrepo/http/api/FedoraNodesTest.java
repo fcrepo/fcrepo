@@ -164,7 +164,7 @@ public class FedoraNodesTest {
 
     @Test
     @Ignore
-    public void testIngestAndMint() throws RepositoryException {
+    public void testIngestAndMint() {
         // final Response actual =
         // testObj.ingestAndMint(createPathList("objects"));
         // assertNotNull(actual);
@@ -306,7 +306,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testDescribeObject() throws RepositoryException, IOException {
+    public void testDescribeObject() throws RepositoryException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 
@@ -331,7 +331,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testDescribeObjectNoInlining() throws RepositoryException, IOException {
+    public void testDescribeObjectNoInlining() throws RepositoryException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 

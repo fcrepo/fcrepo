@@ -180,7 +180,7 @@ public class FedoraBatchTest {
         multipart.bodyPart(part);
 
         testObj.batchModify(createPathList(pid), multipart);
-        ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
+        final ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
         verify(mockObject).replaceProperties(any(GraphSubjects.class), captor.capture());
         final Model capturedModel = captor.getValue();
         assertTrue(capturedModel.contains(capturedModel.createResource("http://localhost/fcrepo/" + pid),
@@ -271,7 +271,7 @@ public class FedoraBatchTest {
     }
 
     @Test
-    public void testDeleteDatastreams() throws RepositoryException, IOException {
+    public void testDeleteDatastreams() throws RepositoryException {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/" + pid;
         final List<String> dsidList = asList("ds1", "ds2");
@@ -318,7 +318,6 @@ public class FedoraBatchTest {
 
     @Test
     public void testGetDatastreamsContentsCached() throws RepositoryException,
-                                                  IOException,
                                                   NoSuchAlgorithmException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";

@@ -273,7 +273,7 @@ public class JcrRdfToolsTest {
 
     @Test
     public final void shouldIncludeContainerInfoWithMixinTypeContainer()
-        throws RepositoryException, IOException {
+        throws RepositoryException {
         when(mockPrimaryNodeType.getChildNodeDefinitions()).thenReturn(
                 new NodeDefinition[] {});
         when(mockPrimaryNodeType.getName()).thenReturn("jcr:someType");
@@ -614,7 +614,7 @@ public class JcrRdfToolsTest {
                 mockNode, p));
     }
 
-    private void logRDF(final Model rdf) throws IOException {
+    private static void logRDF(final Model rdf) throws IOException {
         try (final Writer writer = new StringWriter()) {
             rdf.write(writer);
             LOGGER.debug("Found model: {}", writer);

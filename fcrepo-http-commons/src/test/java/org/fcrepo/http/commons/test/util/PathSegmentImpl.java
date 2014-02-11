@@ -57,7 +57,7 @@ public class PathSegmentImpl implements PathSegment {
 
     public static List<PathSegment> createPathList(final String... strings) {
         final ArrayList<PathSegment> result =
-            new ArrayList<PathSegment>(strings.length);
+            new ArrayList<>(strings.length);
         for (final String string : strings) {
             result.add(new PathSegmentImpl(string, false));
         }

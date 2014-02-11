@@ -31,7 +31,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -72,7 +71,7 @@ public class ItemDefinitionToTriplesTest {
     }
 
     @Test
-    public void testGoodDefinition() throws IOException, RepositoryException {
+    public void testGoodDefinition() throws RepositoryException {
         final Set<Triple> results =
             copyOf(testMapper.apply(mockItemDefinition));
         LOGGER.debug("Created RDF: ");

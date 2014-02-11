@@ -56,7 +56,7 @@ public class FedoraTransactionsTest {
     private TransactionService mockTxService;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraTransactions();
         mockSession = TxAwareSession.newInstance(mockSession(testObj), "123");
@@ -67,8 +67,7 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldStartANewTransaction() throws RepositoryException,
-                                            NoSuchFieldException {
+    public void shouldStartANewTransaction() throws RepositoryException {
         setField(testObj, "session", regularSession);
         when(mockTxService.beginTransaction(regularSession)).thenReturn(mockTx);
         testObj.createTransaction(createPathList(), mockRequest);
@@ -94,8 +93,7 @@ public class FedoraTransactionsTest {
     public
             void
             shouldErrorIfTheContextSessionIsNotATransaction()
-                                                             throws RepositoryException,
-                                                             NoSuchFieldException {
+                                                             throws RepositoryException {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.commit(createPathList());
         assertEquals(400, commit.getStatus());
@@ -105,8 +103,7 @@ public class FedoraTransactionsTest {
     public
             void
             shouldErrorIfCommitIsNotCalledAtTheRepoRoot()
-                                                         throws RepositoryException,
-                                                         NoSuchFieldException {
+                                                         throws RepositoryException {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.commit(createPathList("a"));
         assertEquals(400, commit.getStatus());
@@ -122,8 +119,7 @@ public class FedoraTransactionsTest {
     public
             void
             shouldErrorIfTheContextSessionIsNotATransactionAtRollback()
-                                                                       throws RepositoryException,
-                                                                       NoSuchFieldException {
+                                                                       throws RepositoryException {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback(createPathList());
         assertEquals(400, commit.getStatus());
@@ -133,8 +129,7 @@ public class FedoraTransactionsTest {
     public
             void
             shouldErrorIfRollbackIsNotCalledAtTheRepoRoot()
-                                                           throws RepositoryException,
-                                                           NoSuchFieldException {
+                                                           throws RepositoryException {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback(createPathList("a"));
         assertEquals(400, commit.getStatus());

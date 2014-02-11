@@ -18,13 +18,10 @@ package org.fcrepo.integration.kernel;
 import static com.hp.hpl.jena.update.UpdateAction.parseExecute;
 import static java.util.regex.Pattern.compile;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -51,7 +48,7 @@ public class FedoraObjectIT extends AbstractIT {
     ObjectService objectService;
 
     @Test
-    public void testCreatedObject() throws RepositoryException, IOException {
+    public void testCreatedObject() throws RepositoryException {
         Session session = repo.login();
         objectService.createObject(session, "/testObject");
         session.save();

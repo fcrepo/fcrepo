@@ -74,8 +74,7 @@ public class FedoraIdentifiersTest {
     }
 
     @Test
-    public void testGetNextPidAtRoot() throws NoSuchFieldException,
-                                      RepositoryException, URISyntaxException {
+    public void testGetNextPidAtRoot() throws RepositoryException, URISyntaxException {
         when(mockPidMinter.makePid()).thenReturn(
                 new Function<Object, String>() {
 

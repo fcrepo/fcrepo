@@ -25,7 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import javax.jcr.RepositoryException;
 import javax.ws.rs.WebApplicationException;
 
 import org.junit.Test;
@@ -44,8 +43,7 @@ public class GraphStreamingOutputTest {
         getLogger(GraphStreamingOutputTest.class);
 
     @Test
-    public void testStuff() throws WebApplicationException, IOException,
-        RepositoryException {
+    public void testStuff() throws WebApplicationException, IOException {
         final GraphStore graphStore =
                 new GraphStoreBasic(DatasetFactory.create(createDefaultModel()));
         final Graph g = new GraphMem();

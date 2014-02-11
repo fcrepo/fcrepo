@@ -30,7 +30,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.jcr.RepositoryException;
@@ -99,13 +98,12 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
      * @param uriInfo
      * @return
      * @throws RepositoryException
-     * @throws MalformedURLException
      */
     @POST
     @Path("{path}")
     public Response createWorkspace(@PathParam("path") final String path,
             @Context final UriInfo uriInfo)
-        throws RepositoryException, MalformedURLException, URISyntaxException {
+        throws RepositoryException, URISyntaxException {
 
         try {
             final Workspace workspace = session.getWorkspace();

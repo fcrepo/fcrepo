@@ -155,7 +155,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         initMocks(this);
         final String relPath = "/" + TESTPID + "/" + TESTDSID;
         final String[] mockPrefixes = {MOCKPREFIX};
-        expectedNS = new HashMap<String, String>();
+        expectedNS = new HashMap<>();
         try {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
             when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
@@ -198,7 +198,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetRepositorySize() throws RepositoryException {
+    public void testGetRepositorySize() {
         final Long actual = testObj.getRepositorySize();
         assertEquals(EXPECTED_SIZE, actual);
     }

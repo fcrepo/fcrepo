@@ -82,7 +82,7 @@ public class HttpApiResourcesTest {
     private Repository mockRepository;
 
     @Before
-    public void setUp() throws NoSuchFieldException {
+    public void setUp() {
         initMocks(this);
         testObj = new HttpApiResources();
         mockResource = new FedoraResourceImpl(mockNode);

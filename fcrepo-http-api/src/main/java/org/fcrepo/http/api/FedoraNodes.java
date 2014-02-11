@@ -141,7 +141,6 @@ public class FedoraNodes extends AbstractResource {
      * @param uriInfo
      * @return
      * @throws RepositoryException
-     * @throws IOException
      */
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
@@ -152,7 +151,7 @@ public class FedoraNodes extends AbstractResource {
             @QueryParam("non-member-properties") final String nonMemberProperties,
             @Context final Request request,
             @Context final HttpServletResponse servletResponse,
-            @Context final UriInfo uriInfo) throws RepositoryException, IOException {
+            @Context final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
         LOGGER.trace("Getting profile for: {}", path);
 
@@ -295,10 +294,9 @@ public class FedoraNodes extends AbstractResource {
                 versionService.nodeUpdated(resource.getNode());
 
                 return status(SC_NO_CONTENT).build();
-            } else {
-                return status(SC_BAD_REQUEST).entity(
-                        "SPARQL-UPDATE requests must have content!").build();
             }
+            return status(SC_BAD_REQUEST).entity(
+                    "SPARQL-UPDATE requests must have content!").build();
 
         } finally {
             session.logout();

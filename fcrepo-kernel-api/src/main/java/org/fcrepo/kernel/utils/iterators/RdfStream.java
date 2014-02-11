@@ -47,7 +47,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class RdfStream extends ForwardingIterator<Triple> implements
         Iterable<Triple> {
 
-    private Map<String, String> namespaces = new HashMap<String, String>();
+    private Map<String, String> namespaces = new HashMap<>();
 
     protected Iterator<Triple> triples;
 

@@ -49,9 +49,8 @@ public class BypassSecurityServletAuthenticationProvider implements
         if (credentials instanceof ServletCredentials) {
             return repositoryContext
                     .with(new AnonymousAdminSecurityContext("bypassAdmin"));
-        } else {
-            return null;
         }
+        return null;
 
     }
 

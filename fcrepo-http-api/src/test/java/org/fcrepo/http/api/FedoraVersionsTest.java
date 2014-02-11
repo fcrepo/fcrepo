@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.io.IOException;
 import java.util.Collection;
 
 import javax.jcr.Node;
@@ -130,7 +129,7 @@ public class FedoraVersionsTest {
     }
 
     @Test
-    public void testGetVersion() throws RepositoryException, IOException {
+    public void testGetVersion() throws RepositoryException {
         final String pid = "FedoraVersioningTest";
         final String versionLabel = "v0.0.1";
         when(

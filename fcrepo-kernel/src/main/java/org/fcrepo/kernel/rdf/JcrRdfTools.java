@@ -155,9 +155,8 @@ public class JcrRdfTools {
         final Session session) {
         if (graphSubjects == null) {
             return new JcrRdfTools(new DefaultGraphSubjects(session), session);
-        } else {
-            return new JcrRdfTools(graphSubjects, session);
         }
+        return new JcrRdfTools(graphSubjects, session);
     }
 
     /**
@@ -184,9 +183,8 @@ public class JcrRdfTools {
             final String rdfNamespaceUri) {
         if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {
             return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);
-        } else {
-            return rdfNamespaceUri;
         }
+        return rdfNamespaceUri;
     }
 
     /**
@@ -200,9 +198,8 @@ public class JcrRdfTools {
             final String jcrNamespaceUri) {
         if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {
             return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);
-        } else {
-            return jcrNamespaceUri;
         }
+        return jcrNamespaceUri;
     }
 
     /**
@@ -599,9 +596,8 @@ public class JcrRdfTools {
      * @param nodeType
      * @param propertyName
      * @return
-     * @throws RepositoryException
      */
-    public int getPropertyType(final NodeType nodeType, final String propertyName) throws RepositoryException {
+    public int getPropertyType(final NodeType nodeType, final String propertyName) {
         final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
         int type = UNDEFINED;
         for (final PropertyDefinition propertyDefinition : propertyDefinitions) {

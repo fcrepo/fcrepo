@@ -23,19 +23,18 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraObject;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 /**
  * Service for creating and retrieving FedoraObjects without using the JCR API.
- * 
+ *
  * @author cbeer
  * @date Feb 11, 2013
  */
 @Component
-public class ObjectService extends RepositoryService implements FedoraJcrTypes {
+public class ObjectService extends RepositoryService {
 
     private static final Logger LOGGER = getLogger(ObjectService.class);
 

@@ -118,7 +118,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-        List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
+        final List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
         for (int i = 0; i < versionsInOrder.size(); i ++) {
             assertEquals("Version " + i + " isn't accessible!",
                     200, getStatus(new HttpGet(versionsInOrder.get(1))));
@@ -241,7 +241,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
 
         final String objName = UUID.randomUUID().toString();
-        final String dsName = UUID.randomUUID().toString();
 
         createObject(objName);
         addMixin(serverAddress + objName, "http://fedora.info/definitions/v4/rest-api#autoVersioned");
@@ -321,8 +320,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                         retrieveSecondVersion).getEntity()));
     }
 
-    private List<String> getChronologicalyOrderedVersionUrls(final GraphStore graph, final Node subject) {
-        final List<String> versionUrls = new ArrayList<String>();
+    private static List<String> getChronologicalyOrderedVersionUrls(final GraphStore graph, final Node subject) {
+        final List<String> versionUrls = new ArrayList<>();
         final Iterator<Quad> versionIt = graph.find(Node.ANY, subject, HAS_VERSION.asNode(), Node.ANY);
         while (versionIt.hasNext()) {
             versionUrls.add(versionIt.next().getObject().getURI());
@@ -346,7 +345,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         return versionUrls;
     }
 
-    private String getFirstLiteralIfExists(final GraphStore graph, final Node subject, final Node predicate, final String defaultValue) {
+    private static String getFirstLiteralIfExists(final GraphStore graph, final Node subject, final Node predicate,
+        final String defaultValue) {
         final Iterator<Quad> quads = graph.find(Node.ANY, subject, predicate, Node.ANY);
         if (quads.hasNext()) {
             return quads.next().getObject().getLiteralValue().toString();
@@ -364,13 +364,13 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
-    private void setAutoVersioning(final String url) throws IOException {
+    private static void setAutoVersioning(final String url) throws IOException {
         patchLiteralProperty(url,
                 "http://fedora.info/definitions/v4/config#versioningPolicy",
                 "auto-version");
     }
 
-    private void patchLiteralProperty(final String url, final String predicate, final String literal) throws IOException {
+    private static void patchLiteralProperty(final String url, final String predicate, final String literal) throws IOException {
         final HttpPatch updateObjectGraphMethod =
                 new HttpPatch(url);
         updateObjectGraphMethod.addHeader("Content-Type",
@@ -385,7 +385,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 .getStatusCode());
     }
 
-    private void addMixin(final String url, final String mixinUrl) throws IOException {
+    private static void addMixin(final String url, final String mixinUrl) throws IOException {
         final HttpPatch updateObjectGraphMethod =
                 new HttpPatch(url);
         updateObjectGraphMethod.addHeader("Content-Type",
@@ -406,19 +406,19 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         return getGraphStore(getVersion);
     }
 
-    public void postObjectVersion(String pid) throws IOException {
+    public void postObjectVersion(final String pid) throws IOException {
         postVersion(pid, null);
     }
 
-    public void postObjectVersion(String pid, String versionLabel) throws IOException {
+    public void postObjectVersion(final String pid, final String versionLabel) throws IOException {
         postVersion(pid, versionLabel);
     }
 
-    public void postDsVersion(String pid, String dsId) throws IOException {
+    public void postDsVersion(final String pid, final String dsId) throws IOException {
         postVersion(pid + "/" + dsId, null);
     }
 
-    public void postVersion(String path, String label) throws IOException {
+    public void postVersion(final String path, final String label) throws IOException {
         logger.info("Posting version");
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions" + (label == null ? "" : "/" + label));
         execute(postVersion);

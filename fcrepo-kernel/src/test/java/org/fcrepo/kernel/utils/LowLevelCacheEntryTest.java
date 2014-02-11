@@ -30,7 +30,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -187,8 +186,7 @@ public class LowLevelCacheEntryTest {
     }
 
     @Test
-    public void testGetFixity() throws RepositoryException, IOException,
-            NoSuchAlgorithmException {
+    public void testGetFixity() throws RepositoryException, NoSuchAlgorithmException {
         final LowLevelCacheEntry ispnEntry =
                 new LocalBinaryStoreEntry(mockStore, testKey);
         final byte[] bytes = new byte[] {0, 1, 2, 3, 4};

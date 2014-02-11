@@ -21,8 +21,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.LoginException;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
@@ -66,7 +64,7 @@ public class GetCacheStoreTest {
     }
 
     @Test
-    public void testApply() throws LoginException {
+    public void testApply() {
         final GetCacheStore testObj = new GetCacheStore();
         testObj.apply(mockCache);
         verify(mockCR).getComponent((Class<?>) any(Class.class));

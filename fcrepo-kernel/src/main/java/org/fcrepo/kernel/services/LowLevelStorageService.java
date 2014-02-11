@@ -102,12 +102,10 @@ public class LowLevelStorageService {
      *
      * @param jcrBinaryProperty a binary property (e.g. jcr:data)
      * @param transform a Function to transform the underlying cache entry with
-     * @throws RepositoryException
      */
     public <T> Collection<T> transformLowLevelCacheEntries(
         final Property jcrBinaryProperty,
-        final Function<LowLevelCacheEntry, T> transform)
-        throws RepositoryException {
+        final Function<LowLevelCacheEntry, T> transform) {
 
         return transformLowLevelCacheEntries(getBinaryKey
                 .apply(jcrBinaryProperty), transform);
@@ -119,11 +117,9 @@ public class LowLevelStorageService {
      *
      * @param key a BinaryKey in the cache store
      * @param transform a Function to transform the underlying cache entry with
-     * @throws RepositoryException
      */
     public <T> Collection<T> transformLowLevelCacheEntries(final BinaryKey key,
-        final Function<LowLevelCacheEntry, T> transform)
-        throws RepositoryException {
+        final Function<LowLevelCacheEntry, T> transform) {
 
         final BinaryStore store = getBinaryStore.apply(repo);
 
@@ -216,11 +212,9 @@ public class LowLevelStorageService {
      *
      * @param jcrBinaryProperty a JCR Binary property (e.g. jcr:data)
      * @return a map of binary stores and input streams
-     * @throws RepositoryException if the binary key for property isn't found, a
-     *         RepositoryException is thrown
      */
     public Set<LowLevelCacheEntry> getLowLevelCacheEntries(
-            final Property jcrBinaryProperty) throws RepositoryException {
+            final Property jcrBinaryProperty) {
 
         return getLowLevelCacheEntries(getBinaryKey.apply(jcrBinaryProperty));
     }
@@ -303,8 +297,8 @@ public class LowLevelStorageService {
         @SuppressWarnings({"synthetic-access", "unchecked", "rawtypes"})
         final List<Future<Collection<T>>> futures =
                 exec.submitEverywhere(new CacheLocalTransform(key,
-                        new Unroll<T>(transform)));
-        final Set<T> results = new HashSet<T>(futures.size());
+                        new Unroll<>(transform)));
+        final Set<T> results = new HashSet<>(futures.size());
 
         while (!futures.isEmpty()) {
             final Iterator<Future<Collection<T>>> futureIter =
@@ -417,9 +411,8 @@ public class LowLevelStorageService {
                                 .chainedEntries(), transform);
                 entries.addAll(transformResult);
                 return entries.build();
-            } else {
-                return of(transform.apply(input));
             }
+            return of(transform.apply(input));
         }
     }
 }

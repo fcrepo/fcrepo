@@ -63,7 +63,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
         getLogger(StreamingBaseHtmlProvider.class);
 
     @PostConstruct
-    void init() throws IOException, RepositoryException {
+    void init() {
         delegate = applicationContext.getBean(BaseHtmlProvider.class);
     }
 
@@ -101,7 +101,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream>,
             delegate.writeTo(dataset, type, genericType, annotations, mediaType,
                     httpHeaders, entityStream);
 
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new WebApplicationException(e);
         }
     }

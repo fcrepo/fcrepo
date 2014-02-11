@@ -74,12 +74,11 @@ public class FedoraSitemap extends AbstractResource {
      * Get the sitemap index for the repository GET /sitemap
      *
      * @return
-     * @throws RepositoryException
      */
     @GET
     @Timed
     @Produces(TEXT_XML)
-    public SitemapIndex getSitemapIndex() throws RepositoryException {
+    public SitemapIndex getSitemapIndex() {
 
         LOGGER.trace("Executing getSitemapIndex()...");
 

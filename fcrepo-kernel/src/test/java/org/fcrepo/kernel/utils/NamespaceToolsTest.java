@@ -41,7 +41,7 @@ public class NamespaceToolsTest {
     private Workspace mockWork;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
     }
 

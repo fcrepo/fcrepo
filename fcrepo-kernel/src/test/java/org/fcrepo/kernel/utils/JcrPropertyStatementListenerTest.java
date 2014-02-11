@@ -112,7 +112,7 @@ public class JcrPropertyStatementListenerTest {
     private NodePropertiesTools mockPropertiesTools;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         mockStatic(JcrRdfTools.class);
 
@@ -127,7 +127,7 @@ public class JcrPropertyStatementListenerTest {
     }
 
     @Test
-    public void testAddedIrrelevantStatement() throws RepositoryException {
+    public void testAddedIrrelevantStatement() {
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(false);
         testObj.addedStatement(mockStatement);
         // this was ignored, but not a problem
@@ -230,7 +230,7 @@ public class JcrPropertyStatementListenerTest {
     }
 
     @Test
-    public void testRemovedIrrelevantStatement() throws RepositoryException {
+    public void testRemovedIrrelevantStatement() {
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(false);
         testObj.removedStatement(mockStatement);
         // this was ignored, but not a problem

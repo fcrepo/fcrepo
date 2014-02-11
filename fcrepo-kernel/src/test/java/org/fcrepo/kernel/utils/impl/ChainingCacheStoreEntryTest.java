@@ -51,7 +51,7 @@ public class ChainingCacheStoreEntryTest {
 
     @Mock
     private BinaryKey mockKey;
-    
+
     private ChainingCacheStoreEntry testObj;
 
     @Before
@@ -68,15 +68,15 @@ public class ChainingCacheStoreEntryTest {
             testObj.getInputStream();
             fail("Unexpected completion of " +
                  "ChainingCacheStoreEntry#getInputStream");
-        } catch (UnsupportedOperationException e) {
+        } catch (final UnsupportedOperationException e) {
             // expected
         }
         try {
-            InputStream mockStream = mock(InputStream.class);
+            final InputStream mockStream = mock(InputStream.class);
             testObj.storeValue(mockStream);
             fail("Unexpected completion of " +
                  "ChainingCacheStoreEntry#storeValue");
-        } catch (UnsupportedOperationException e) {
+        } catch (final UnsupportedOperationException e) {
             // expected
         }
         assertNull("Unexpected non-null return from ChainingCacheStoreEntry#" +
@@ -86,29 +86,29 @@ public class ChainingCacheStoreEntryTest {
 
     @Test
     public void testChainedEntries() {
-        CacheStore mockChainedFileStore = mock(CacheStore.class);
-        CacheStore mockChainedAbstractStore = mock(CacheStore.class);
-        CacheStore mockUnknownStore = mock(CacheStore.class);
-        FileCacheStoreConfiguration mockFileConfig =
+        final CacheStore mockChainedFileStore = mock(CacheStore.class);
+        final CacheStore mockChainedAbstractStore = mock(CacheStore.class);
+        final CacheStore mockUnknownStore = mock(CacheStore.class);
+        final FileCacheStoreConfiguration mockFileConfig =
             mock(FileCacheStoreConfiguration.class);
         when(mockFileConfig.location()).thenReturn("/foo/bar");
-        AbstractStoreConfiguration mockAbstractConfig =
+        final AbstractStoreConfiguration mockAbstractConfig =
                 mock(AbstractStoreConfiguration.class);
-        CacheStoreConfiguration mockUnknownConfig =
+        final CacheStoreConfiguration mockUnknownConfig =
                 mock(CacheStoreConfiguration.class);
-        TypedProperties mockProps = mock(TypedProperties.class);
-        TypedProperties mockNoProps = mock(TypedProperties.class);
+        final TypedProperties mockProps = mock(TypedProperties.class);
+        final TypedProperties mockNoProps = mock(TypedProperties.class);
         when(mockProps.get("id")).thenReturn("dummy-abstract");
         when(mockAbstractConfig.properties()).thenReturn(mockProps);
         when(mockFileConfig.properties()).thenReturn(mockNoProps);
         when(mockUnknownConfig.properties()).thenReturn(mockNoProps);
-        LinkedHashMap<CacheStore, CacheStoreConfiguration> mockStores =
-                new LinkedHashMap<CacheStore, CacheStoreConfiguration>(3);
+        final LinkedHashMap<CacheStore, CacheStoreConfiguration> mockStores =
+                new LinkedHashMap<>(3);
         mockStores.put(mockChainedFileStore, mockFileConfig);
         mockStores.put(mockChainedAbstractStore, mockAbstractConfig);
         mockStores.put(mockUnknownStore, mockUnknownConfig);
         when(mockStore.getStores()).thenReturn(mockStores);
-        Set<LowLevelCacheEntry> actual = testObj.chainedEntries();
+        final Set<LowLevelCacheEntry> actual = testObj.chainedEntries();
         assertEquals(3, actual.size());
         verify(mockProps).get("id");
         verify(mockFileConfig).location();
