@@ -55,7 +55,7 @@ public class BasicRolesPEP extends AbstractRolesPEP {
                 LOGGER.debug("Denying writer role permission to perform an action on an ACL node.");
                 return false;
             } else {
-                LOGGER.debug("Granting writer role permission to perform any action on a non-ACL nodes.");
+                LOGGER.debug("Granting writer role permission to perform any action on a non-ACL node.");
                 return true;
             }
         }
