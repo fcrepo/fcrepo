@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
  * service implements a simple {@link Transaction} service which is able to
  * create/commit/rollback {@link Transaction} objects A {@link Scheduled}
  * annotation is used for removing timed out Transactions
- * 
+ *
  * @author frank asseg
  */
 @Component
@@ -64,8 +64,7 @@ public class TransactionService {
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
      */
-    private static Map<String, Transaction> transactions =
-            new ConcurrentHashMap<String, Transaction>();
+    private static Map<String, Transaction> transactions = new ConcurrentHashMap<>();
 
     public static final long REAP_INTERVAL = 1000;
 
@@ -97,7 +96,7 @@ public class TransactionService {
 
     /**
      * Create a new Transaction and add it to the currently open ones
-     * 
+     *
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
@@ -112,7 +111,7 @@ public class TransactionService {
 
     /**
      * Retrieve an open {@link Transaction}
-     * 
+     *
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
@@ -131,7 +130,7 @@ public class TransactionService {
 
     /**
      * Get the current Transaction for a session
-     * 
+     *
      * @param session
      * @return
      * @throws TransactionMissingException
@@ -151,7 +150,7 @@ public class TransactionService {
 
     /**
      * Get the current Transaction ID for a session
-     * 
+     *
      * @param session
      * @return
      */
@@ -159,9 +158,8 @@ public class TransactionService {
         try {
             if (session instanceof TxSession) {
                 return ((TxSession) session).getTxId();
-            } else {
-                return session.getNamespaceURI(FCREPO4_TX_ID);
             }
+            return session.getNamespaceURI(FCREPO4_TX_ID);
         } catch (final RepositoryException e) {
             LOGGER.trace("Unable to retrieve current transaction ID from session", e);
             return null;
@@ -170,7 +168,7 @@ public class TransactionService {
 
     /**
      * Check if a Transaction exists
-     * 
+     *
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
@@ -180,7 +178,7 @@ public class TransactionService {
 
     /**
      * Commit a {@link Transaction} with the given id
-     * 
+     *
      * @param txid the id of the {@link Transaction}
      * @throws RepositoryException
      */
@@ -196,7 +194,7 @@ public class TransactionService {
 
     /**
      * Roll a {@link Transaction} back
-     * 
+     *
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
      * @throws RepositoryException if the {@link Transaction} could not be found

@@ -105,8 +105,7 @@ public class FedoraContentTest {
     }
 
     @Test
-    public void testPutContent() throws RepositoryException, IOException,
-                                                InvalidChecksumException, URISyntaxException, ParseException {
+    public void testPutContent() throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
@@ -130,6 +129,7 @@ public class FedoraContentTest {
         verify(mockSession).save();
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testCreateContent() throws RepositoryException, IOException,
                                                    InvalidChecksumException, URISyntaxException, ParseException {
@@ -157,11 +157,8 @@ public class FedoraContentTest {
     }
 
     @Test
-    public void testCreateContentAtMintedPath() throws RepositoryException,
-                                                               IOException,
-                                                               InvalidChecksumException,
-                                                               URISyntaxException,
-                                                               NoSuchFieldException, ParseException {
+    public void testCreateContentAtMintedPath() throws RepositoryException, InvalidChecksumException,
+                                               URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid;
@@ -188,11 +185,8 @@ public class FedoraContentTest {
 
 
     @Test
-    public void testCreateContentWithSlug() throws RepositoryException,
-                                                           IOException,
-                                                           InvalidChecksumException,
-                                                           URISyntaxException,
-                                                           NoSuchFieldException, ParseException {
+    public void testCreateContentWithSlug() throws RepositoryException, InvalidChecksumException,
+                                           URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsid = "slug";
         final String dsContent = "asdf";
@@ -218,8 +212,7 @@ public class FedoraContentTest {
     }
 
     @Test
-    public void testModifyContent() throws RepositoryException, IOException,
-                                                   InvalidChecksumException, URISyntaxException, ParseException {
+    public void testModifyContent() throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";

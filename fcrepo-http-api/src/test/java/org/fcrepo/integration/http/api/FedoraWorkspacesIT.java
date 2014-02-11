@@ -25,8 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import javax.jcr.RepositoryException;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -47,8 +45,7 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void shouldDemonstratePathsAndWorkspaces() throws IOException,
-        RepositoryException {
+    public void shouldDemonstratePathsAndWorkspaces() throws IOException {
 
         final String workspace = randomUUID().toString();
         final String pid = randomUUID().toString();

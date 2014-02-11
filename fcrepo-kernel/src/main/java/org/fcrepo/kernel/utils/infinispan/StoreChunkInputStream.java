@@ -126,13 +126,12 @@ public class StoreChunkInputStream extends InputStream {
         }
         if (indexInBuffer >= 0) {
             return buffer.length - indexInBuffer;
-        } else {
-            return -1;
         }
+        return -1;
     }
 
     @Override
-    public final long skip(long n) throws IOException {
+    public final long skip(final long n) throws IOException {
         if (n <= 0 || indexInBuffer == -1) {
             return 0;
         }
@@ -147,10 +146,9 @@ public class StoreChunkInputStream extends InputStream {
             buffer = null;
             indexInBuffer = 0;
             return skipped;
-        } else {
-            indexInBuffer += n;
-            return n;
         }
+        indexInBuffer += n;
+        return n;
     }
 
     private void fillBuffer() throws IOException {

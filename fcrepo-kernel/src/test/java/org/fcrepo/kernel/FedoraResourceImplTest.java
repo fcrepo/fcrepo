@@ -297,14 +297,14 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testIsNew() throws RepositoryException {
+    public void testIsNew() {
         when(mockNode.isNew()).thenReturn(true);
         assertTrue("resource state should be the same as the node state",
                 testObj.isNew());
     }
 
     @Test
-    public void testIsNotNew() throws RepositoryException {
+    public void testIsNotNew() {
         when(mockNode.isNew()).thenReturn(false);
         assertFalse("resource state should be the same as the node state",
                 testObj.isNew());

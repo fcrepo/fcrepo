@@ -33,8 +33,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
 import javax.jcr.Node;
@@ -52,7 +50,6 @@ import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.infinispan.loaders.CacheLoaderException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -117,7 +114,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         testObj = new DatastreamService();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockNode.getSession()).thenReturn(mockSession);
-        NodeType mockNodeType = mock(NodeType.class);
+        final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         llStore = mock(LowLevelStorageService.class);
@@ -229,8 +226,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetFixity() throws NoSuchAlgorithmException,
-            RepositoryException {
+    public void testGetFixity() throws RepositoryException {
         final URI mockUri = URI.create("sha1:foo:bar"); // can't mock final
                                                         // classes
         final long testSize = 4L;
@@ -255,7 +251,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
     @Test
     public void testRunFixityAndFixProblems() throws RepositoryException,
-            IOException, CacheLoaderException, URISyntaxException {
+            IOException {
 
         final Datastream mockDatastream = mock(Datastream.class);
 

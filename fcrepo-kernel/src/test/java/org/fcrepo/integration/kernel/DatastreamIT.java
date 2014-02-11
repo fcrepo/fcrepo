@@ -49,8 +49,7 @@ public class DatastreamIT extends AbstractIT {
     ObjectService objectService;
 
     @Test
-    public void testCreatedDate() throws RepositoryException, IOException,
-                                 InvalidChecksumException {
+    public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
         Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,
@@ -169,9 +168,7 @@ public class DatastreamIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamFileName() throws IOException,
-                                                    RepositoryException,
-                                                    InvalidChecksumException {
+    public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
         datastreamService.createDatastreamNode(session,

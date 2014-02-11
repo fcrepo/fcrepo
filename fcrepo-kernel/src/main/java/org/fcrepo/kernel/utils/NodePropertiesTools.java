@@ -77,7 +77,7 @@ public class NodePropertiesTools {
                              propertyName);
 
                 // if the property is multi-valued, go ahead and append to it.
-                final List<Value> newValues = new ArrayList<Value>();
+                final List<Value> newValues = new ArrayList<>();
                 Collections.addAll(newValues,
                                    node.getProperty(propertyName).getValues());
 
@@ -186,7 +186,7 @@ public class NodePropertiesTools {
 
             if (FedoraTypesUtils.isMultipleValuedProperty.apply(property)) {
 
-                final List<Value> newValues = new ArrayList<Value>();
+                final List<Value> newValues = new ArrayList<>();
 
                 boolean remove = false;
 
@@ -230,11 +230,11 @@ public class NodePropertiesTools {
      * @param propertyName
      * @return
      */
-    public String getReferencePropertyName(final String propertyName) {
+    public static String getReferencePropertyName(final String propertyName) {
         return propertyName + REFERENCE_PROPERTY_SUFFIX;
     }
 
-    private String getReferencePropertyName(final Property property) throws RepositoryException {
+    private static String getReferencePropertyName(final Property property) throws RepositoryException {
         return getReferencePropertyName(property.getName());
     }
     /**
@@ -271,7 +271,7 @@ public class NodePropertiesTools {
      * @return true if the property is (or could be) multivalued
      * @throws RepositoryException
      */
-    public boolean isMultivaluedProperty(final Node node,
+    public static boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
         throws RepositoryException {
         final PropertyDefinition def =

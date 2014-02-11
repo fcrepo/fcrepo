@@ -96,7 +96,7 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteTo() throws WebApplicationException,
-            IllegalArgumentException, IOException, NoSuchFieldException {
+            IllegalArgumentException, IOException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
@@ -121,7 +121,7 @@ public class BaseHtmlProviderTest {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteToWithAnnotation() throws WebApplicationException,
-            IllegalArgumentException, IOException, NoSuchFieldException {
+            IllegalArgumentException, IOException {
         final Template mockTemplate = mock(Template.class);
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 

@@ -20,7 +20,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.net.URI;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import javax.jcr.RepositoryException;
@@ -41,8 +40,7 @@ public class CheckCacheEntryFixityTest {
     }
 
     @Test
-    public void testApply() throws RepositoryException,
-        NoSuchAlgorithmException {
+    public void testApply() throws RepositoryException {
         final URI testUri = URI.create("sha1:foo:bar");
         final long testSize = new SecureRandom().nextLong();
         final CheckCacheEntryFixity testObj =

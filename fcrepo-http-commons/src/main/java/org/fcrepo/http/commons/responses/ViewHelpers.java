@@ -196,23 +196,18 @@ public class ViewHelpers {
 
             if (object.isLiteral()) {
                 final String s = object.getLiteralValue().toString();
-
                 if (s.isEmpty()) {
                     return "<empty>";
-                } else {
-                    return s;
                 }
-            } else {
-                if (uriAsLink) {
-                    return "&lt;<a href=\"" + object.getURI() + "\">" +
-                               object.getURI() + "</a>&gt;";
-                } else {
-                    return object.getURI();
-                }
+                return s;
             }
-        } else {
-            return "";
+            if (uriAsLink) {
+                return "&lt;<a href=\"" + object.getURI() + "\">" +
+                           object.getURI() + "</a>&gt;";
+            }
+            return object.getURI();
         }
+        return "";
     }
 
     /**
@@ -308,18 +303,12 @@ public class ViewHelpers {
 
                 if (split > 0) {
                     return "..." + namespace.substring(split);
-                } else {
-                    return namespace;
                 }
-
-            } else {
                 return namespace;
             }
-
-
-        } else {
-            return nsURIPrefix + ":";
+            return namespace;
         }
+        return nsURIPrefix + ":";
     }
 
     /**

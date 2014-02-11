@@ -90,11 +90,10 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
         LOGGER.info("Doing a low-level write to store {} for key {}",
                     getExternalIdentifier(), key);
 
-        final OutputStream outputStream =
-                new StoreChunkOutputStream(store, key +
-                                           DATA_SUFFIX);
-        IOUtils.copy(stream, outputStream);
-        outputStream.close();
+        try (final OutputStream outputStream = new StoreChunkOutputStream(store, key + DATA_SUFFIX)) {
+            IOUtils.copy(stream, outputStream);
+        }
+
     }
 
     /**
@@ -168,9 +167,8 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
                            cacheName.equals(that.cacheName) &&
                            ((store == null && that.store == null) ||
                                     (store != null && store.equals(that.store)));
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override

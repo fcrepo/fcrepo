@@ -63,6 +63,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
@@ -156,7 +157,7 @@ public class FedoraBatch extends AbstractResource {
 
         try {
 
-            final Set<Node> nodesChanged = new HashSet<Node>();
+            final Set<Node> nodesChanged = new HashSet<>();
 
             // iterate through the multipart entities
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -340,18 +341,17 @@ public class FedoraBatch extends AbstractResource {
      * @param request
      * @return
      * @throws RepositoryException
-     * @throws IOException
      * @throws NoSuchAlgorithmException
      */
     @GET
     @Produces("multipart/mixed")
     @Timed
-    public Response getBinaryContents(@PathParam("path") final List<PathSegment> pathList,
-                                      @QueryParam("child") final List<String> requestedChildren,
-                                      @Context final Request request) throws RepositoryException, IOException,
-        NoSuchAlgorithmException {
+    public Response getBinaryContents(
+        @PathParam("path") final List<PathSegment> pathList,
+        @QueryParam("child") final List<String> requestedChildren,
+        @Context final Request request) throws RepositoryException, NoSuchAlgorithmException {
 
-        final List<Datastream> datastreams = new ArrayList<Datastream>();
+        final List<Datastream> datastreams = new ArrayList<>();
 
         try {
             final String path = toPath(pathList);

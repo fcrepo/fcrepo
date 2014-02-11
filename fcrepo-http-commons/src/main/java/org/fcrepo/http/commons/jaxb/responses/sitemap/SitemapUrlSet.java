@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class SitemapUrlSet {
 
     private final List<SitemapEntry> sitemapEntries =
-        new ArrayList<SitemapEntry>();
+        new ArrayList<>();
 
     /**
      * Create a new sitemap with the default settings

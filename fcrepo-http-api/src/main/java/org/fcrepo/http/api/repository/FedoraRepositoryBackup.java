@@ -100,9 +100,8 @@ public class FedoraRepositoryBackup extends AbstractResource {
 
                 throw new WebApplicationException(serverError().entity(problemsOutput.toString()).build());
 
-            } else {
-                return backupDirectory.getCanonicalPath();
             }
+            return backupDirectory.getCanonicalPath();
         } finally {
             session.logout();
         }

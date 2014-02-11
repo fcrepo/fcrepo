@@ -70,9 +70,8 @@ public final class SerializationUtils {
         LOGGER.debug("uri from context: {}", uri);
         if (uri != null) {
             return createURI(uri);
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**

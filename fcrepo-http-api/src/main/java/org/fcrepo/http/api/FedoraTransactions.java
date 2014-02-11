@@ -87,19 +87,18 @@ public class FedoraTransactions extends AbstractResource {
             t.updateExpiryDate();
             return noContent().expires(t.getExpires()).build();
 
-        } else {
-            final Transaction t = txService.beginTransaction(session);
-            final HttpSession httpSession = req.getSession(true);
-            if (httpSession != null) {
-                httpSession.setAttribute("currentTx", t.getId());
-            }
-            return created(
-                    uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
-                            .buildFromMap(
-                                    singletonMap("path", "tx:" +
-                                            t.getId()))).expires(
-                    t.getExpires()).build();
         }
+        final Transaction t = txService.beginTransaction(session);
+        final HttpSession httpSession = req.getSession(true);
+        if (httpSession != null) {
+            httpSession.setAttribute("currentTx", t.getId());
+        }
+        return created(
+                uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
+                        .buildFromMap(
+                                singletonMap("path", "tx:" +
+                                        t.getId()))).expires(
+                t.getExpires()).build();
     }
 
     /**

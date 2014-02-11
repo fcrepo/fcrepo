@@ -150,10 +150,9 @@ public abstract class TestHelpers {
      * @param parent the owner object of the field
      * @param name the name of the field
      * @param obj the value to set
-     * @throws NoSuchFieldException
      */
     public static void setField(final Object parent, final String name,
-                                final Object obj) throws NoSuchFieldException {
+        final Object obj) {
         /* check the parent class too if the field could not be found */
         try {
             final Field f = findField(parent.getClass(), name);
@@ -174,8 +173,7 @@ public abstract class TestHelpers {
         if (clazz.getSuperclass() == null) {
             throw new NoSuchFieldException("Field " + name +
                                                    " could not be found");
-        } else {
-            return findField(clazz.getSuperclass(), name);
         }
+        return findField(clazz.getSuperclass(), name);
     }
 }

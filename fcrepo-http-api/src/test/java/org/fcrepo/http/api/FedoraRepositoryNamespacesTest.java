@@ -26,8 +26,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -57,8 +55,7 @@ public class FedoraRepositoryNamespacesTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws RepositoryException, URISyntaxException,
-                       NoSuchFieldException {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraRepositoryNamespaces();
         setField(testObj, "nodeService", mockNodeService);
@@ -68,7 +65,7 @@ public class FedoraRepositoryNamespacesTest {
     }
 
     @Test
-    public void testGetNamespaces() throws RepositoryException, IOException {
+    public void testGetNamespaces() throws RepositoryException {
         when(mockNodeService.getNamespaceRegistryStream(mockSession))
                 .thenReturn(testRdfStream);
         assertEquals(testRdfStream, testObj.getNamespaces());

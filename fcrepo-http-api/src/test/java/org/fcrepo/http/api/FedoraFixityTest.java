@@ -27,8 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.io.IOException;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -72,8 +70,7 @@ public class FedoraFixityTest {
     }
 
     @Test
-    public void testGetDatastreamFixity() throws RepositoryException,
-                                         IOException {
+    public void testGetDatastreamFixity() throws RepositoryException {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/objects/" + pid + "/testDS";
         final String dsId = "testDS";

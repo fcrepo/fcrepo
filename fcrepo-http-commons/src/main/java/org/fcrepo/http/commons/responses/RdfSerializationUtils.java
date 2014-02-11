@@ -92,10 +92,9 @@ public class RdfSerializationUtils {
             LOGGER.trace("Checking statement: {}", statement);
             return statement.asTriple().getObject().getLiteral()
                     .getLexicalForm();
-        } else {
-            LOGGER.trace("No value found for predicate: {}", predicate);
-            return null;
         }
+        LOGGER.trace("No value found for predicate: {}", predicate);
+        return null;
     }
 
     /**
@@ -110,9 +109,8 @@ public class RdfSerializationUtils {
         LOGGER.debug("uri from context: {}", uri);
         if (uri != null) {
             return createURI(uri);
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**

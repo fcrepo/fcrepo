@@ -67,7 +67,7 @@ public class StreamingBaseHtmlProviderTest {
     private BaseHtmlProvider mockBaseHtmlProvider;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(

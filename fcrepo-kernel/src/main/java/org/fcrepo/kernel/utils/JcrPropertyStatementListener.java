@@ -62,11 +62,9 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param session
      * @param problemModel
      * @return
-     * @throws RepositoryException
      */
     public static JcrPropertyStatementListener getListener(
-            final GraphSubjects subjects, final Session session, final Model problemModel)
-        throws RepositoryException {
+            final GraphSubjects subjects, final Session session, final Model problemModel) {
         return new JcrPropertyStatementListener(subjects, session, problemModel);
     }
 
@@ -75,10 +73,9 @@ public class JcrPropertyStatementListener extends StatementListener {
      *
      * @param subjects
      * @param session
-     * @throws RepositoryException
      */
     private JcrPropertyStatementListener(final GraphSubjects subjects,
-            final Session session, final Model problems) throws RepositoryException {
+            final Session session, final Model problems) {
         super();
         this.session = session;
         this.subjects = subjects;

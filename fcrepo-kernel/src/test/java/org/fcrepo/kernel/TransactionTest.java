@@ -81,7 +81,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void testExpiryUpdate() throws RepositoryException {
+    public void testExpiryUpdate() {
         final long orig = testObj.getExpires().getTime();
         testObj.updateExpiryDate();
         final long update = testObj.getExpires().getTime();

@@ -21,7 +21,6 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
@@ -33,7 +32,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -42,7 +40,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -107,7 +104,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetRootNode() throws IOException, RepositoryException {
+    public void testGetRootNode() throws RepositoryException {
         final Session session = repo.login();
         final FedoraResource object = nodeService.getObject(session, "/");
         assertEquals("/", object.getPath());
@@ -119,7 +116,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testRandomNodeGraph() throws IOException, RepositoryException {
+    public void testRandomNodeGraph() throws RepositoryException {
         final FedoraResource object =
             nodeService.findOrCreateObject(session, "/testNodeGraph");
 
@@ -133,8 +130,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testRepositoryRootGraph() throws IOException,
-                                         RepositoryException {
+    public void testRepositoryRootGraph() throws RepositoryException {
 
         final FedoraResource object = nodeService.getObject(session, "/");
 
@@ -160,7 +156,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testObjectGraph() throws IOException, RepositoryException {
+    public void testObjectGraph() throws RepositoryException {
 
         final FedoraResource object =
             objectService.createObject(session, "/testObjectGraph");
@@ -188,7 +184,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
 
     @Test
-    public void testObjectGraphWithCustomProperty() throws IOException, RepositoryException {
+    public void testObjectGraphWithCustomProperty() throws RepositoryException {
 
         FedoraResource object =
             objectService.createObject(session, "/testObjectGraph");
@@ -229,8 +225,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamGraph() throws IOException, RepositoryException,
-                                     InvalidChecksumException {
+    public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
 
         objectService.createObject(session, "/testDatastreamGraphParent");
 
@@ -305,7 +300,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     @Ignore("Skipping until we restablish paging behavior for RDF")
-    public void testObjectGraphWindow() throws IOException, RepositoryException {
+    public void testObjectGraphWindow() throws RepositoryException {
 
         final FedoraResource object =
             objectService.createObject(session, "/testObjectGraphWindow");

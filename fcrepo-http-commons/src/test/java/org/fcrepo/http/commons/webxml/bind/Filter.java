@@ -51,9 +51,8 @@ public class Filter extends Displayable {
     public List<InitParam> initParams() {
         if (initParams != null) {
             return initParams;
-        } else {
-            return emptyList();
         }
+        return emptyList();
     }
 
 }

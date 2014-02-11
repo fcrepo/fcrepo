@@ -17,6 +17,7 @@ package org.fcrepo.kernel;
 
 
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
@@ -59,7 +60,6 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
@@ -153,10 +153,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         if (node.hasProperty(JCR_CREATED)) {
             return new Date(node.getProperty(JCR_CREATED).getDate()
                             .getTimeInMillis());
-        } else {
-            LOGGER.debug("Node {} does not have a createdDate", node);
-            return null;
         }
+        LOGGER.debug("Node {} does not have a createdDate", node);
+        return null;
     }
 
     /* (non-Javadoc)
@@ -167,11 +166,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         if (node.hasProperty(JCR_LASTMODIFIED)) {
             return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
                             .getTimeInMillis());
-        } else {
-            LOGGER.debug(
-                        "Could not get last modified date property for node {}",
-                        node);
         }
+        LOGGER.debug(
+                    "Could not get last modified date property for node {}",
+                    node);
 
         final Date createdDate = getCreatedDate();
 
@@ -199,12 +197,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Collection<String> getModels() throws RepositoryException {
         if (isFrozen.apply(node)) {
-            return Lists.newArrayList(
+            return newArrayList(
                 Iterators.transform(
                     property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string));
-        } else {
-            return map(node.getMixinNodeTypes(), nodetype2name);
         }
+        return map(node.getMixinNodeTypes(), nodetype2name);
     }
 
     /* (non-Javadoc)
@@ -358,8 +355,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         if (lastModifiedDate != null) {
             return shaHex(node.getPath() + lastModifiedDate);
-        } else {
-            return "";
         }
+        return "";
     }
 }

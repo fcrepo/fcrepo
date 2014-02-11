@@ -27,6 +27,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+
 import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -66,7 +67,7 @@ public class VersionService extends RepositoryService {
      *                modified
      * @throws RepositoryException
      */
-    public void nodeUpdated(final Session session, String absPath) throws RepositoryException {
+    public void nodeUpdated(final Session session, final String absPath) throws RepositoryException {
         nodeUpdated(session.getNode(absPath));
     }
 
@@ -77,7 +78,7 @@ public class VersionService extends RepositoryService {
      * @param n the node that was updated
      * @throws RepositoryException
      */
-    public void nodeUpdated(Node n) throws RepositoryException {
+    public void nodeUpdated(final Node n) throws RepositoryException {
         if (isVersioningEnabled(n)
                 && isImplicitVersioningEnabled(n)) {
             queueOrCommitCheckpoint(n.getSession(), n.getPath());
@@ -99,22 +100,20 @@ public class VersionService extends RepositoryService {
         }
     }
 
-    private boolean isVersioningEnabled(final Node n) throws RepositoryException {
+    private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
         return n.isNodeType(VERSIONABLE);
     }
 
-    private boolean isImplicitVersioningEnabled(final Node n) throws RepositoryException {
+    private static boolean isImplicitVersioningEnabled(final Node n) throws RepositoryException {
         if (!n.hasProperty(VERSION_POLICY)) {
             return false;
-        } else {
-            final Property p = n.getProperty(VERSION_POLICY);
-
-            return propertyContains(p, AUTO_VERSION);
         }
+        final Property p = n.getProperty(VERSION_POLICY);
+        return propertyContains(p, AUTO_VERSION);
     }
 
-    private void queueOrCommitCheckpoint(Session session, String absPath) throws RepositoryException {
-        final String txId = TransactionService.getCurrentTransactionId(session);
+    private void queueOrCommitCheckpoint(final Session session, final String absPath) throws RepositoryException {
+        final String txId = txService.getCurrentTransactionId(session);
 
         if (txId == null) {
             checkpoint(session.getWorkspace(), absPath);
@@ -123,12 +122,12 @@ public class VersionService extends RepositoryService {
         }
     }
 
-    private void checkpoint(Workspace workspace, String absPath) throws RepositoryException {
+    private static void checkpoint(final Workspace workspace, final String absPath) throws RepositoryException {
         LOGGER.trace("Setting implicit version checkpoint set for {}", absPath);
         workspace.getVersionManager().checkpoint(absPath);
     }
 
-    private void queueCheckpoint(String txId, String absPath) throws TransactionMissingException {
+    private void queueCheckpoint(final String txId, final String absPath) throws TransactionMissingException {
         final Transaction tx = txService.getTransaction(txId);
         LOGGER.trace("Queuing implicit version checkpoint set for {}", absPath);
         tx.addPathToVersion(absPath);
@@ -143,7 +142,7 @@ public class VersionService extends RepositoryService {
      *                to be minted
      * @throws RepositoryException
      */
-    public void checkpoint(Node node) throws RepositoryException {
+    public void checkpoint(final Node node) throws RepositoryException {
 
         checkNotNull(node, "Cannot checkpoint null nodes");
 
@@ -152,7 +151,7 @@ public class VersionService extends RepositoryService {
         if (node.isNodeType(VERSIONABLE)) {
             LOGGER.trace("Setting checkpoint for {}", absPath);
 
-            final String txId = TransactionService.getCurrentTransactionId(session);
+            final String txId = txService.getCurrentTransactionId(session);
             if (txId != null) {
                 final Transaction tx = txService.getTransaction(txId);
                 tx.addPathToVersion(absPath);

@@ -52,7 +52,7 @@ public class ModeShapeRepositoryFactoryBeanTest {
     private JcrSession mockSession;
 
     @Before
-    public void setUp() throws RepositoryException, IOException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockRepo.login()).thenReturn(mockSession);
         testObj = new ModeShapeRepositoryFactoryBean();

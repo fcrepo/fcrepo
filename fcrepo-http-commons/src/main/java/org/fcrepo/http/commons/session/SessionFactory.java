@@ -219,9 +219,8 @@ public class SessionFactory {
 
         if (part.length > 1 && part[1].startsWith("workspace:")) {
             return part[1].substring("workspace:".length());
-        } else {
-            return null;
         }
+        return null;
 
     }
 
@@ -246,9 +245,8 @@ public class SessionFactory {
         if (part.length > 1 && part[1].startsWith("tx:")) {
             final String txid = part[1].substring("tx:".length());
             return transactionService.getTransaction(txid);
-        } else {
-            return null;
         }
+        return null;
     }
 
 }

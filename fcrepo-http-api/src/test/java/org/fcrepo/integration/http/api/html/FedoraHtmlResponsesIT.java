@@ -48,7 +48,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 public class FedoraHtmlResponsesIT extends AbstractResourceIT {
@@ -86,7 +85,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateNewNodeWithProvidedId() throws IOException, InterruptedException {
+    public void testCreateNewNodeWithProvidedId() throws IOException {
         createAndVerifyObjectWithIdFromRootPage(randomUUID().toString());
     }
 
@@ -113,7 +112,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateNewNodeWithGeneratedId() throws IOException, InterruptedException {
+    public void testCreateNewNodeWithGeneratedId() throws IOException {
 
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
@@ -127,7 +126,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateNewDatastream() throws IOException, InterruptedException {
+    public void testCreateNewDatastream() throws IOException {
 
         final String pid = randomUUID().toString();
 
@@ -153,7 +152,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateNewObjectAndDeleteIt() throws IOException, InterruptedException {
+    public void testCreateNewObjectAndDeleteIt() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 
@@ -240,7 +239,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals("Second version should be preserved.", "Updated Title", v2Titles.get(0).getWholeText());
     }
 
-    private void postSparqlUpdateUsingHttpClient(final String sparql, final String pid) throws IOException {
+    private static void postSparqlUpdateUsingHttpClient(final String sparql, final String pid) throws IOException {
         final HttpPatch method = new HttpPatch(serverAddress + pid);
         method.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity entity = new BasicHttpEntity();
@@ -333,7 +332,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
 
-    private <T> List<T> castList(final List<?> l) {
+    private static <T> List<T> castList(final List<?> l) {
         return transform(l, new Function<Object, T>() {
 
             @SuppressWarnings("unchecked")

@@ -111,7 +111,7 @@ public class SimpleObserver implements EventListener {
     public void onEvent(final javax.jcr.observation.EventIterator events) {
         // keep track of nodes that trigger events to prevent duplicates
         // size to minimize resizing.
-        final Set<String> posted = new HashSet<String>((int)events.getSize() * 2 / 3);
+        final Set<String> posted = new HashSet<>((int)events.getSize() * 2 / 3);
 
         Session lookupSession = null;
         try {
@@ -148,7 +148,7 @@ public class SimpleObserver implements EventListener {
                     }
                 }
             }
-        } catch ( RepositoryException ex ) {
+        } catch ( final RepositoryException ex ) {
             throw propagate(ex);
         } finally {
             if (lookupSession != null) {

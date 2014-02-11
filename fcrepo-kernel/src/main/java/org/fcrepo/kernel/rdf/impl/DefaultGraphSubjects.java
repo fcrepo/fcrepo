@@ -63,9 +63,8 @@ public class DefaultGraphSubjects implements GraphSubjects {
         if (absPath.endsWith(JCR_CONTENT)) {
             return createResource(RESOURCE_NAMESPACE
                     + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
-        } else {
-            return createResource(RESOURCE_NAMESPACE + absPath.substring(1));
         }
+        return createResource(RESOURCE_NAMESPACE + absPath.substring(1));
     }
 
     @Override
@@ -91,13 +90,12 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
         if (session.nodeExists(absPath)) {
             return session.getNode(absPath);
-        } else {
-            return null;
         }
+        return null;
     }
 
     @Override
-    public String getPathFromGraphSubject(Resource subject) throws RepositoryException {
+    public String getPathFromGraphSubject(final Resource subject) throws RepositoryException {
         if (!isFedoraGraphSubject(subject)) {
             return null;
         }
@@ -107,9 +105,8 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
         if (absPath.endsWith(FCR_CONTENT)) {
             return absPath.replace(FCR_CONTENT, JCR_CONTENT);
-        } else {
-            return absPath;
         }
+        return absPath;
     }
 
     @Override

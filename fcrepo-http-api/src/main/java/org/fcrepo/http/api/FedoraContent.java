@@ -101,8 +101,7 @@ public class FedoraContent extends AbstractResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType requestContentType,
                     final InputStream requestBodyStream)
-        throws IOException, InvalidChecksumException,
-                   RepositoryException, URISyntaxException, ParseException {
+        throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -182,7 +181,6 @@ public class FedoraContent extends AbstractResource {
      * @param requestBodyStream Binary blob
      * @return 201 Created
      * @throws RepositoryException
-     * @throws IOException
      * @throws InvalidChecksumException
      */
     @PUT
@@ -193,7 +191,7 @@ public class FedoraContent extends AbstractResource {
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
                                   final InputStream requestBodyStream,
                                   @Context final Request request)
-        throws RepositoryException, IOException, InvalidChecksumException, URISyntaxException, ParseException {
+        throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
 
         try {
             final String path = toPath(pathList);
@@ -258,9 +256,8 @@ public class FedoraContent extends AbstractResource {
                                         datastreamNode
                                                 .getNode(JCR_CONTENT))
                                         .getURI())).build();
-            } else {
-                return noContent().build();
             }
+            return noContent().build();
         } finally {
             session.logout();
         }

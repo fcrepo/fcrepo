@@ -132,10 +132,9 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     protected static Value getValueForObject(final Node object) {
         if (object.isURI()) {
             return vfactory.createURI(object.getURI());
-        } else {
-            if (object.isLiteral()) {
-                return createLiteral(vfactory, object.getLiteralValue());
-            }
+        }
+        if (object.isLiteral()) {
+            return createLiteral(vfactory, object.getLiteralValue());
         }
         throw new UnsupportedOperationException(
                 "We do not serialize blank nodes!");

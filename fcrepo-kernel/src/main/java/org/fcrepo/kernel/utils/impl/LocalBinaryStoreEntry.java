@@ -93,9 +93,8 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
             final FileSystemBinaryStore fsStore = (FileSystemBinaryStore)store;
             return getExternalId() + "/" + store.getClass().getName() + ":" +
                 fsStore.getDirectory().toPath();
-        } else {
-            return getExternalId() + "/" + store;
         }
+        return getExternalId() + "/" + store;
     }
 
     /**
@@ -113,9 +112,8 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
             return key.equals(that.getKey()) &&
                    ((store == null && that.store == null) ||
                     (store != null && store.equals(that.store)));
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override

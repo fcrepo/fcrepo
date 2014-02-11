@@ -85,7 +85,7 @@ public class FedoraRepositoryRestore extends AbstractResource {
             if (problems.hasProblems()) {
                 LOGGER.error("Problems restoring up the repository:");
 
-                final List<String> problemsOutput = new ArrayList<String>();
+                final List<String> problemsOutput = new ArrayList<>();
 
                 // Report the problems (we'll just print them out) ...
                 for (final Problem problem : problems) {
@@ -96,9 +96,8 @@ public class FedoraRepositoryRestore extends AbstractResource {
                 throw new WebApplicationException(serverError()
                         .entity(problemsOutput).build());
 
-            } else {
-                return noContent().build();
             }
+            return noContent().build();
         } finally {
             session.logout();
         }

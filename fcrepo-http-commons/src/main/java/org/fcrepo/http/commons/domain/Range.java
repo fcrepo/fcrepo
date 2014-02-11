@@ -75,9 +75,8 @@ public class Range {
     public long size() {
         if (end == -1) {
             return -1;
-        } else {
-            return end - start + 1;
         }
+        return end - start + 1;
     }
 
     /**

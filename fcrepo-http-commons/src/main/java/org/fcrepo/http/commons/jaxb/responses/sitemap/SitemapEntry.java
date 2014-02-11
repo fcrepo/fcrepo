@@ -19,7 +19,6 @@ package org.fcrepo.http.commons.jaxb.responses.sitemap;
 import java.net.URI;
 import java.util.Calendar;
 
-import javax.jcr.RepositoryException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -46,7 +45,7 @@ public class SitemapEntry {
     /**
      * (default constructor used by JAX-B)
      */
-    public SitemapEntry() throws RepositoryException {
+    public SitemapEntry() {
         this(null, null);
     }
 
@@ -54,9 +53,8 @@ public class SitemapEntry {
      * Sitemap entry for a URL with a default last modified date
      *
      * @param loc
-     * @throws RepositoryException
      */
-    public SitemapEntry(final URI loc) throws RepositoryException {
+    public SitemapEntry(final URI loc) {
         this(loc, Calendar.getInstance());
     }
 
@@ -65,10 +63,8 @@ public class SitemapEntry {
      *
      * @param loc
      * @param lastmod
-     * @throws RepositoryException
      */
-    public SitemapEntry(final URI loc, final Calendar lastmod)
-        throws RepositoryException {
+    public SitemapEntry(final URI loc, final Calendar lastmod) {
         this.loc = loc;
         this.lastmod = lastmod;
     }

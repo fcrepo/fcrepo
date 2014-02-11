@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType
 public class SitemapIndex {
 
-    private final List<SitemapEntry> entries = new ArrayList<SitemapEntry>();
+    private final List<SitemapEntry> entries = new ArrayList<>();
 
     /**
      * Create a new sitemap index (sitemap-of-sitemaps)

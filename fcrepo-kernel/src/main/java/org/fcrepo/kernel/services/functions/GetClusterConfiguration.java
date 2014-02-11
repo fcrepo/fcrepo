@@ -66,7 +66,7 @@ public class GetClusterConfiguration implements
         checkNotNull(input, "null cannot have a BinaryStore!");
 
         final Map<String, String> result =
-            new LinkedHashMap<String, String>();
+            new LinkedHashMap<>();
         final BinaryStore store = getBinaryStore.apply(input);
 
         if (!(store instanceof InfinispanBinaryStore)) {

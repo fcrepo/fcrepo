@@ -29,7 +29,6 @@ import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.FedoraResource;
 import org.slf4j.Logger;
@@ -40,18 +39,18 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Service for managing access to Fedora 'nodes' (either datastreams or objects,
  * we don't care.)
- * 
+ *
  * @author Chris Beer
  * @date May 9, 2013
  */
 @Component
-public class NodeService extends RepositoryService implements FedoraJcrTypes {
+public class NodeService extends RepositoryService {
 
     private static final Logger LOGGER = getLogger(NodeService.class);
 
     /**
      * Find or create a new Fedora resource at the given path
-     * 
+     *
      * @param session a JCR session
      * @param path a JCR path
      * @return
@@ -64,7 +63,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
     /**
      * Retrieve an existing Fedora resource at the given path
-     * 
+     *
      * @param session a JCR session
      * @param path a JCR path
      * @return
@@ -78,7 +77,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
     /**
      * Get an existing Fedora resource at the given path with the given version
      * label
-     * 
+     *
      * @param session a JCR session
      * @param path a JCR path
      * @param versionId a JCR version label
@@ -112,7 +111,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
     /**
      * Get the list of child nodes at the given path filtered by the given mixin
-     * 
+     *
      * @param session
      * @param path
      * @param mixin
@@ -139,7 +138,7 @@ public class NodeService extends RepositoryService implements FedoraJcrTypes {
 
     /**
      * Delete an existing object from the repository at the given path
-     * 
+     *
      * @param session
      * @param path
      * @throws RepositoryException

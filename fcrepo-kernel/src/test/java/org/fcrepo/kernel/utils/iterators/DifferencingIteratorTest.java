@@ -51,7 +51,7 @@ public class DifferencingIteratorTest {
 
         final Iterator<String> i =
             forArray(new String[] {onlyInIteratorValue, commonValue});
-        testIterator = new DifferencingIterator<String>(toBeCompared, i);
+        testIterator = new DifferencingIterator<>(toBeCompared, i);
 
         assertTrue("Didn't see a first value!", testIterator.hasNext());
         assertEquals("Retrieved final results too early!", null, testIterator
@@ -77,7 +77,7 @@ public class DifferencingIteratorTest {
         final Iterator<String> i =
             forArray(new String[] {onlyInIteratorValue, commonValue,
                     commonValue, commonValue2});
-        testIterator = new DifferencingIterator<String>(toBeCompared2, i);
+        testIterator = new DifferencingIterator<>(toBeCompared2, i);
 
         assertTrue("Didn't see a first value!", testIterator.hasNext());
         assertEquals("Retrieved final results too early!", null, testIterator
@@ -105,7 +105,7 @@ public class DifferencingIteratorTest {
     public void testDifferencingWithNoValues() {
 
         final Iterator<String> i = forArray(new String[] {});
-        testIterator = new DifferencingIterator<String>(toBeCompared, i);
+        testIterator = new DifferencingIterator<>(toBeCompared, i);
         assertFalse("Found a value where there should be none!", testIterator
                 .hasNext());
     }

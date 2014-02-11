@@ -108,14 +108,13 @@ public class DatastreamService extends RepositoryService {
      * @param requestBodyStream binary payload for the datastream
      * @return
      * @throws RepositoryException
-     * @throws IOException
      * @throws InvalidChecksumException
      */
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
             final String originalFileName,
             final InputStream requestBodyStream) throws RepositoryException,
-            IOException, InvalidChecksumException {
+            InvalidChecksumException {
 
         return createDatastreamNode(session, dsPath, contentType,
                                        originalFileName, requestBodyStream, null);
@@ -132,14 +131,13 @@ public class DatastreamService extends RepositoryService {
      * @param requestBodyStream binary payload for the datastream
      * @param checksum the digest for the binary payload (as urn:sha1:xyz)   @return
      * @throws RepositoryException
-     * @throws IOException
      * @throws InvalidChecksumException
      */
     public Node createDatastreamNode(final Session session,
                                      final String dsPath, final String contentType,
                                      final String originalFileName, final InputStream requestBodyStream,
                                      final URI checksum)
-        throws RepositoryException, IOException, InvalidChecksumException {
+        throws RepositoryException, InvalidChecksumException {
 
         final Datastream ds = createDatastream(session, dsPath);
         ds.setContent(requestBodyStream, contentType, checksum,
@@ -179,9 +177,8 @@ public class DatastreamService extends RepositoryService {
      *
      * @param node datastream node
      * @return
-     * @throws RepositoryException
      */
-    public Datastream asDatastream(final Node node) throws RepositoryException {
+    public Datastream asDatastream(final Node node) {
         return new Datastream(node);
     }
 

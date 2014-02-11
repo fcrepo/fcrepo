@@ -186,9 +186,8 @@ public class HttpGraphSubjects implements GraphSubjects {
 
         if (isValidJcrPath(absPath)) {
             return absPath;
-        } else {
-            return null;
         }
+        return null;
 
     }
 
@@ -215,7 +214,7 @@ public class HttpGraphSubjects implements GraphSubjects {
         return getPathMap(node.getPath());
     }
 
-    private Map<String, String> getPathMap(final String absPath) throws RepositoryException {
+    private Map<String, String> getPathMap(final String absPath) {
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
         if (path.endsWith(JCR_CONTENT)) {

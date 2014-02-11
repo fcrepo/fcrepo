@@ -120,11 +120,10 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
                     create(getResource(input).asNode(), range.asNode(),
                             rangeForJcrType);
                 return new RdfStream(propertyTriple).concat(super.apply(input));
-            } else {
-                LOGGER.trace(
-                        "Skipping RDFS:range for property: {} with unmappable type: {}",
-                        input.getName(), nameFromValue(requiredType));
             }
+            LOGGER.trace(
+                    "Skipping RDFS:range for property: {} with unmappable type: {}",
+                    input.getName(), nameFromValue(requiredType));
             return super.apply(input);
         } catch (final RepositoryException e) {
             throw propagate(e);
@@ -137,7 +136,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
      * @param requiredType a JCR PropertyType
      * @return
      */
-    private Node getRangeForJcrType(final int requiredType) {
+    private static Node getRangeForJcrType(final int requiredType) {
         return JCR_TYPE_TO_XSD_DATATYPE.containsKey(requiredType)
             ? createURI(JCR_TYPE_TO_XSD_DATATYPE.get(requiredType).getURI())
             : UNMAPPED_TYPE;

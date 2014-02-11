@@ -57,7 +57,7 @@ public class SessionProviderTest {
     private HttpServletRequest mockHttpServletRequest;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
         when(

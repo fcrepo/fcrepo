@@ -59,8 +59,7 @@ public class Servlet extends Displayable {
     public List<InitParam> initParams() {
         if (initParams != null) {
             return initParams;
-        } else {
-            return emptyList();
         }
+        return emptyList();
     }
 }

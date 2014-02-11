@@ -140,8 +140,7 @@ public class LowLevelStorageServiceTest {
     }
 
     @Test
-    public void shouldRetrieveLowLevelCacheEntryForDefaultBinaryStore()
-            throws RepositoryException {
+    public void shouldRetrieveLowLevelCacheEntryForDefaultBinaryStore() {
         final BinaryKey key = new BinaryKey("key-123");
         when(mockStoreFunc.apply(mockRepo)).thenReturn(mockStore);
 
@@ -155,8 +154,7 @@ public class LowLevelStorageServiceTest {
     }
 
     @Test
-    public void shouldRetrieveLowLevelCacheStoresForBinaryKey()
-            throws RepositoryException {
+    public void shouldRetrieveLowLevelCacheStoresForBinaryKey() {
 
         final LowLevelStorageService testObj = new LowLevelStorageService();
 
@@ -192,8 +190,8 @@ public class LowLevelStorageServiceTest {
         final CompositeBinaryStore mockStore = mock(CompositeBinaryStore.class);
 
         final HashMap<String, BinaryStore> map =
-                new HashMap<String, BinaryStore>();
-        final List<Cache<?, ?>> caches = new ArrayList<Cache<?, ?>>();
+                new HashMap<>();
+        final List<Cache<?, ?>> caches = new ArrayList<>();
         caches.add(ispnCache1);
         caches.add(ispnCache2);
 
@@ -227,7 +225,7 @@ public class LowLevelStorageServiceTest {
         when(future2.get(any(Long.class), eq(MILLISECONDS))).thenReturn(
                 cacheResponse2);
 
-        final List<Future<?>> mockClusterResults = new ArrayList<Future<?>>(2);
+        final List<Future<?>> mockClusterResults = new ArrayList<>(2);
         mockClusterResults.add(future1);
         mockClusterResults.add(future2);
 
@@ -258,8 +256,7 @@ public class LowLevelStorageServiceTest {
     }
 
     @Test
-    public void shouldReturnAnEmptySetForMissingBinaryStore()
-            throws RepositoryException {
+    public void shouldReturnAnEmptySetForMissingBinaryStore() {
 
         when(mockStoreFunc.apply(mockRepo)).thenReturn(null);
 

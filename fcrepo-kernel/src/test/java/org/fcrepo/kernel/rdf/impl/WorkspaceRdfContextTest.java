@@ -48,7 +48,7 @@ public class WorkspaceRdfContextTest {
 
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         subjects = new DefaultGraphSubjects(session);
         when(session.getRepository()).thenReturn(repository);

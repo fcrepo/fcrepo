@@ -20,6 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.contains;
+import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.query.Query.JCR_SQL2;
@@ -124,10 +127,9 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                         }
                     }
                     return false;
-                } else {
-                    return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                            FEDORA_RESOURCE);
                 }
+                return map(node.getMixinNodeTypes(), nodetype2name).contains(
+                        FEDORA_RESOURCE);
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
@@ -198,10 +200,9 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                     if (p.isMultiple()) {
                         LOGGER.debug("Found multi-valued property: {}", p);
                         return Iterators.forArray(p.getValues());
-                    } else {
-                        LOGGER.debug("Found single-valued property: {}", p);
-                        return Iterators.forArray(p.getValue());
                     }
+                    LOGGER.debug("Found single-valued property: {}", p);
+                    return Iterators.forArray(p.getValue());
                 } catch (final RepositoryException e) {
                     throw propagate(e);
                 }
@@ -279,9 +280,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                         return createProperty(
                                 getRDFNamespaceForJcrNamespace(uri), nsProperty
                                         .getLocalName());
-                    } else {
-                        return createProperty(property.getName());
                     }
+                    return createProperty(property.getName());
                 } catch (final RepositoryException e) {
                     throw propagate(e);
                 }
@@ -465,10 +465,9 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         }
 
         if (p.isMultiple()) {
-            return Iterators.contains(Iterators.transform(Iterators.forArray(p.getValues()), value2string), value);
-        } else {
-            return value.equals(p.getString());
+            return contains(transform(forArray(p.getValues()), value2string), value);
         }
+        return value.equals(p.getString());
 
     }
 }

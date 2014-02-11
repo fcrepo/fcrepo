@@ -139,9 +139,8 @@ public abstract class AbstractResource {
 
         if (path.isEmpty()) {
             return "/";
-        } else {
-            return path;
         }
+        return path;
     }
 
     protected void addResponseInformationToStream(
