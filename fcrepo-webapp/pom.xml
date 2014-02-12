@@ -64,6 +64,12 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-configs</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-transform</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -140,10 +146,33 @@
     </dependency>
 
   </dependencies>
-
   <build>
-
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.build.directory}/maven-shared-archive-resources</directory>
+      </resource>
+    </resources>
     <plugins>
+      <plugin>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>process-remote-resources</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>process</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <resourceBundles>
+            <resourceBundle>org.fcrepo:fcrepo-configs:${project.version}</resourceBundle>
+          </resourceBundles>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
@@ -385,25 +414,28 @@
     </profile>
     <profile>
       <id>auth-war</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <build>
-        <resources>
-          <resource>
-            <directory>src/main/resources</directory>
-            <excludes>
-              <exclude>spring/repo.xml</exclude>
-            </excludes>
-          </resource>
-          <resource>
-            <directory>src/auth/resources</directory>
-          </resource>
-        </resources>
         <plugins>
           <plugin>
             <artifactId>maven-war-plugin</artifactId>
-            <configuration>
-              <classifier>auth</classifier>
-              <packagingExcludes>WEB-INF/classes/spring/repo.xml</packagingExcludes>
-            </configuration>
+            <executions>
+              <execution>
+                <id>special-auth-war</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>war</goal>
+                </goals>
+                <configuration>
+                  <classifier>auth</classifier>
+                  <warSourceDirectory>src/main/webapp</warSourceDirectory>
+                  <warSourceDirectory>src/auth/webapp</warSourceDirectory>
+                  <packagingExcludes>WEB-INF/classes/spring/repo.xml</packagingExcludes>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

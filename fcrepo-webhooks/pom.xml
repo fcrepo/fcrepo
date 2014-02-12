@@ -62,6 +62,12 @@ See: http://en.wikipedia.org/wiki/Webhook</description>
       <type>test-jar</type>
     </dependency>
     <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-configs</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
