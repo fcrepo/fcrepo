@@ -56,6 +56,12 @@
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-configs</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!--  This dependency ensures that the AbstractRolesIT framework is available -->
     <dependency>
       <groupId>org.fcrepo</groupId>
