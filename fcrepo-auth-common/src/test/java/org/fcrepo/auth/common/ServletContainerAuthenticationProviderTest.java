@@ -45,6 +45,10 @@ import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.AuthenticationProvider;
 import org.modeshape.jcr.value.Path;
 
+/**
+ * @author bbpennel
+ * @date Feb 12, 2014
+ */
 public class ServletContainerAuthenticationProviderTest {
 
     @Mock
@@ -54,18 +58,18 @@ public class ServletContainerAuthenticationProviderTest {
     private FedoraPolicyEnforcementPoint pep;
 
     @Mock
-    Principal principal;
+    private Principal principal;
 
     @Mock
-    HttpServletRequest request;
+    private HttpServletRequest request;
 
     @Mock
-    Map<String, Object> sessionAttributes;
+    private Map<String, Object> sessionAttributes;
 
     @Captor
-    ArgumentCaptor<Set<Principal>> principalCaptor;
+    private ArgumentCaptor<Set<Principal>> principalCaptor;
 
-    ExecutionContext context;
+    private ExecutionContext context;
 
     @Before
     public void setUp() {
@@ -85,7 +89,9 @@ public class ServletContainerAuthenticationProviderTest {
         final AuthenticationProvider secondProvider =
                 ServletContainerAuthenticationProvider.getInstance();
 
-        assertTrue(provider == secondProvider);
+        assertEquals(
+                "Provider instance retrieved on second call should be the same object",
+                provider, secondProvider);
     }
 
     @Test
@@ -170,7 +176,7 @@ public class ServletContainerAuthenticationProviderTest {
                 "Resulting security context must exist and belong to userName",
                 "userName", result.getSecurityContext().getUserName());
 
-        assertTrue(pep == provider.getPep());
+        assertEquals(pep, provider.getPep());
     }
 
     @Test
@@ -185,7 +191,7 @@ public class ServletContainerAuthenticationProviderTest {
                 request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE))
                 .thenReturn(true);
 
-        final Set<Principal> groupPrincipals = new HashSet<Principal>();
+        final Set<Principal> groupPrincipals = new HashSet<>();
         final Principal groupPrincipal = mock(Principal.class);
         groupPrincipals.add(groupPrincipal);
         final HTTPPrincipalFactory principalFactory =
@@ -193,8 +199,7 @@ public class ServletContainerAuthenticationProviderTest {
         when(principalFactory.getGroupPrincipals(any(HttpServletRequest.class)))
         .thenReturn(groupPrincipals);
 
-        final Set<HTTPPrincipalFactory> factories =
-                new HashSet<HTTPPrincipalFactory>();
+        final Set<HTTPPrincipalFactory> factories = new HashSet<>();
         factories.add(principalFactory);
 
         provider.setPrincipalFactories(factories);

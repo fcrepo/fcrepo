@@ -21,8 +21,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -33,11 +33,14 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.value.Path;
 
+/**
+ * @author bbpennel
+ * @date Feb 12, 2014
+ */
 public class FedoraUserSecurityContextTest {
 
     @Mock
@@ -47,10 +50,10 @@ public class FedoraUserSecurityContextTest {
     private FedoraPolicyEnforcementPoint pep;
 
     @Mock
-    Principal principal;
+    private Principal principal;
 
     @Mock
-    HttpServletRequest request;
+    private HttpServletRequest request;
 
     @Before
     public void setUp() {
@@ -81,16 +84,20 @@ public class FedoraUserSecurityContextTest {
         FedoraUserSecurityContext context =
                 new FedoraUserSecurityContext(creds, null, pep);
 
-        assertTrue(principal == context.getEffectiveUserPrincipal());
+        assertEquals("Effective user principal must match given principal",
+                principal, context.getEffectiveUserPrincipal());
 
         context.logout();
-        assertTrue(ServletContainerAuthenticationProvider.EVERYONE == context
+        assertEquals("User principal when logged out should be EVERYONE",
+                ServletContainerAuthenticationProvider.EVERYONE, context
                 .getEffectiveUserPrincipal());
 
         when(request.getUserPrincipal()).thenReturn(null);
         context = new FedoraUserSecurityContext(creds, null, pep);
 
-        assertTrue(ServletContainerAuthenticationProvider.EVERYONE == context
+        assertEquals(
+                "Effective user principal should be EVERYONE when none is provided",
+                ServletContainerAuthenticationProvider.EVERYONE, context
                 .getEffectiveUserPrincipal());
     }
 
@@ -101,7 +108,7 @@ public class FedoraUserSecurityContextTest {
                 new FedoraUserSecurityContext(creds, null, pep);
 
         assertTrue(context.isAnonymous());
-        verify(creds, times(1)).getRequest();
+        verify(creds).getRequest();
     }
 
     @Test
@@ -154,13 +161,12 @@ public class FedoraUserSecurityContextTest {
 
         when(
                 pep.hasModeShapePermission(any(Path.class),
-                        any(String[].class),
-                        Matchers.anySetOf(Principal.class),
+                        any(String[].class), anySetOf(Principal.class),
                         any(Principal.class))).thenReturn(true);
         final Path path = mock(Path.class);
         assertTrue(context.hasPermission(null, path, new String[] {"read"}));
         verify(pep).hasModeShapePermission(any(Path.class),
-                any(String[].class), Matchers.anySetOf(Principal.class),
+                any(String[].class), anySetOf(Principal.class),
                 any(Principal.class));
 
         context.logout();
