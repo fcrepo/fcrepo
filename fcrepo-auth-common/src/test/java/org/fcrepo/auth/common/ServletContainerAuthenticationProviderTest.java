@@ -89,9 +89,9 @@ public class ServletContainerAuthenticationProviderTest {
         final AuthenticationProvider secondProvider =
                 ServletContainerAuthenticationProvider.getInstance();
 
-        assertEquals(
+        assertTrue(
                 "Provider instance retrieved on second call should be the same object",
-                provider, secondProvider);
+                provider == secondProvider);
     }
 
     @Test
