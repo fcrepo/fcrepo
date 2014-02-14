@@ -345,7 +345,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 }
             });
         assertTrue("Didn't find LDP link header!", links
-                .contains("http://www.w3.org/ns/ldp/Resource;rel=\"type\""));
+                .contains("http://www.w3.org/ns/ldp#Resource;rel=\"type\""));
         final GraphStore results = getGraphStore(getObjMethod);
         final Model model = createModelForGraph(results.getDefaultGraph());
 
@@ -398,7 +398,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find LDP link header!", links.contains("http://www.w3.org/ns/ldp/Resource;rel=\"type\""));
+        assertTrue("Didn't find LDP link header!", links.contains("http://www.w3.org/ns/ldp#Resource;rel=\"type\""));
     }
 
     @Test
