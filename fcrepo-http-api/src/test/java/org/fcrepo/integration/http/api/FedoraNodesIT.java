@@ -37,12 +37,18 @@ import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -359,6 +365,101 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         logger.debug("Leaving testGetObjectGraph()...");
     }
+    
+    public void verifyFullSetOfRdfTypes() throws Exception {
+        logger.debug("Entering verifyFullSetOfRdfTypes()...");
+        final String pid = "FedoraGraphWithRdfTypes";
+        createObject(pid);
+
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + pid);
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+        assertEquals("application/sparql-update", response.getFirstHeader(
+                "Accept-Patch").getValue());
+
+        final Collection<String> links =
+            map(response.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+        assertTrue("Didn't find LDP link header!", links
+                .contains("http://www.w3.org/ns/ldp/Resource;rel=\"type\""));
+        final GraphStore results = getGraphStore(getObjMethod);
+        final Model model = createModelForGraph(results.getDefaultGraph());
+
+        final Resource nodeUri = createResource(serverAddress + pid);
+
+        assertTrue("Didn't find rdfType rest-api object", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(RESTAPI_NAMESPACE + "object")));          
+        assertTrue("Didn't find rdfType rest-api relations", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(RESTAPI_NAMESPACE + "relations")));        
+        assertTrue("Didn't find rdfType rest-api resource", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(RESTAPI_NAMESPACE + "resource")));        
+        assertTrue("Didn't find rdfType ldp container", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(LDP_NAMESPACE + "Container")));
+        assertTrue("Didn't find rdfType ldp page", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(LDP_NAMESPACE + "Page")));
+        assertTrue("Didn't find rdfType dc describable", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(DC_NAMESPACE + "describable")));
+        assertTrue("Didn't find rdfType mix created", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(MIX_NAMESPACE + "created")));
+        assertTrue("Didn't find rdfType mix lastModified", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(MIX_NAMESPACE + "lastModified")));
+        assertTrue("Didn't find rdfType mix lockable", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(MIX_NAMESPACE + "lockable")));
+        assertTrue("Didn't find rdfType mix referenceable", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(MIX_NAMESPACE + "referenceable")));
+        assertTrue("Didn't find rdfType mix simpleVersionable", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(MIX_NAMESPACE + "simpleVersionable")));
+        assertTrue("Didn't find rdfType mix versionable", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(MIX_NAMESPACE + "versionable")));
+        assertTrue("Didn't find rdfType nt base", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(JCR_NT_NAMESPACE + "base")));
+        assertTrue("Didn't find rdfType nt folder", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(JCR_NT_NAMESPACE + "folder")));
+        assertTrue("Didn't find rdfType nt hierarchyNode", model.contains(nodeUri,
+                createProperty(RDF_NAMESPACE + "type"),
+                createResource(JCR_NT_NAMESPACE + "hierarchyNode")));
+        
+        //above assertions based on expection of these types on an out of the box fedora object:
+        /*
+        http://fedora.info/definitions/v4/rest-api#object 
+            http://fedora.info/definitions/v4/rest-api#relations 
+                http://fedora.info/definitions/v4/rest-api#resource 
+                http://purl.org/dc/elements/1.1/describable 
+                http://www.jcp.org/jcr/mix/1.0created 
+                http://www.jcp.org/jcr/mix/1.0lastModified 
+                http://www.jcp.org/jcr/mix/1.0lockable 
+                http://www.jcp.org/jcr/mix/1.0referenceable 
+                http://www.jcp.org/jcr/mix/1.0simpleVersionable 
+                http://www.jcp.org/jcr/mix/1.0versionable 
+                http://www.jcp.org/jcr/nt/1.0base 
+                http://www.jcp.org/jcr/nt/1.0folder 
+                http://www.jcp.org/jcr/nt/1.0hierarchyNode 
+                http://www.w3.org/ns/ldp#Container 
+                http://www.w3.org/ns/ldp#Page 
+                */
+        logger.debug("Leaving verifyFullSetOfRdfTypes()...");
+    }
 
     @Test
     public void testGetObjectGraphWithChildren() throws Exception {
@@ -644,8 +745,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertEquals(CREATED.getStatusCode(),
                 getStatus(postObjMethod("countNode")));
+        final String countNode = randomUUID().toString();
         assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(
-                "countNode", "asdf", "1234")));
+                countNode, "asdf", "1234")));
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeCount() first count repository graph:\n"
