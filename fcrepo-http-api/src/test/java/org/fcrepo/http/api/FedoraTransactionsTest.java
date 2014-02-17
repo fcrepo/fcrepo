@@ -37,7 +37,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.security.Principal;
+
 public class FedoraTransactionsTest {
+
+    private static final String USER_NAME = "test";
 
     private FedoraTransactions testObj;
 
@@ -55,6 +59,9 @@ public class FedoraTransactionsTest {
     @Mock
     private TransactionService mockTxService;
 
+    @Mock
+    private Principal mockPrincipal;
+
     @Before
     public void setUp() {
         initMocks(this);
@@ -69,9 +76,11 @@ public class FedoraTransactionsTest {
     @Test
     public void shouldStartANewTransaction() throws RepositoryException {
         setField(testObj, "session", regularSession);
-        when(mockTxService.beginTransaction(regularSession)).thenReturn(mockTx);
+        when(mockTxService.beginTransaction(regularSession, USER_NAME)).thenReturn(mockTx);
+        when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
+        when(mockPrincipal.getName()).thenReturn(USER_NAME);
         testObj.createTransaction(createPathList(), mockRequest);
-        verify(mockTxService).beginTransaction(regularSession);
+        verify(mockTxService).beginTransaction(regularSession, USER_NAME);
     }
 
     @Test

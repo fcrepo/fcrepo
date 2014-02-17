@@ -54,6 +54,8 @@ public class Transaction {
 
     private final String id;
 
+    private final String userName;
+
     private final Date created;
 
     private Calendar expires;
@@ -66,13 +68,14 @@ public class Transaction {
      * Create a transaction for the given Session
      * @param session
      */
-    public Transaction(final Session session) {
+    public Transaction(final Session session, String userName) {
         super();
         this.session = session;
         this.created = new Date();
         this.id = randomUUID().toString();
         this.expires = Calendar.getInstance();
         this.updateExpiryDate();
+        this.userName = userName;
     }
 
     /**
@@ -162,6 +165,25 @@ public class Transaction {
     public void expire() {
         this.session.logout();
         this.expires.setTimeInMillis(currentTimeMillis());
+    }
+
+    /**
+     * Checks if this transaction is associated with a specific user.
+     * If both user names are null, it is assumed that the transaction is
+     * anonymous and thus not bound to any user.
+     * @param userName the user
+     * @return true if the userName is associated with this transaction
+     */
+    public boolean isAssociatedWithUser(final String userName) {
+        boolean associatedWith = false;
+        if (this.userName == null) {
+            if (userName == null) {
+                associatedWith = true;
+            }
+        } else {
+            associatedWith = this.userName.equals(userName);
+        }
+        return associatedWith;
     }
 
     /**
