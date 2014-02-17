@@ -15,6 +15,9 @@
  */
 package org.fcrepo.auth.roles.basic;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -33,7 +36,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -89,22 +91,20 @@ public class BasicRolesPEPTest {
         when(sessionFactory.getInternalSession()).thenReturn(mockSession);
 
         when(principal.getName()).thenReturn("user");
-        allPrincipals = Collections.singleton(principal);
+        allPrincipals = singleton(principal);
 
         // ACLs for paths
 
         final Map<String, List<String>> adminAcl =
-                Collections.singletonMap("user", Arrays.asList("admin"));
+                singletonMap("user", asList("admin"));
         final Map<String, List<String>> writerAcl =
-                Collections.singletonMap("user", Arrays.asList("writer"));
+                singletonMap("user", asList("writer"));
         final Map<String, List<String>> readerAcl =
-                Collections.singletonMap("user", Arrays.asList("reader"));
+                singletonMap("user", asList("reader"));
         final Map<String, List<String>> emptyAcl =
-                Collections.singletonMap("user", Collections
-                        .<String> emptyList());
+                singletonMap("user", Collections.<String> emptyList());
         final Map<String, List<String>> unrecognizableAcl =
-                Collections.singletonMap("user", Arrays
-                        .asList("something_else"));
+                singletonMap("user", asList("something_else"));
 
         when(accessRolesProvider.findRolesForPath(adminablePath, mockSession))
                 .thenReturn(adminAcl);

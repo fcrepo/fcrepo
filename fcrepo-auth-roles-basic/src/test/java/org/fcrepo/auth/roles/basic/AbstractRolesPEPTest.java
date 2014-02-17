@@ -15,6 +15,7 @@
  */
 package org.fcrepo.auth.roles.basic;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -28,7 +29,6 @@ import org.mockito.Mock;
 import javax.jcr.RepositoryException;
 
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,8 +57,8 @@ public class AbstractRolesPEPTest {
     public void shouldGatherEffectiveRolesFromMultiplePrincipals()
             throws RepositoryException {
         final Map<String, List<String>> acl = new HashMap<>();
-        acl.put("a", Arrays.asList("reader", "writer"));
-        acl.put("b", Arrays.asList("admin"));
+        acl.put("a", asList("reader", "writer"));
+        acl.put("b", asList("admin"));
 
         final Set<Principal> principals = new HashSet<>();
         principals.add(principalA);

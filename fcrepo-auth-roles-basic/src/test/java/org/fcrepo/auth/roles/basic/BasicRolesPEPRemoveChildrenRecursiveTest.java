@@ -15,6 +15,9 @@
  */
 package org.fcrepo.auth.roles.basic;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,8 +38,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,14 +98,14 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(sessionFactory.getInternalSession()).thenReturn(mockSession);
 
         when(principal.getName()).thenReturn("user");
-        allPrincipals = Collections.singleton(principal);
+        allPrincipals = singleton(principal);
 
         // ACLs for paths and nodes
 
         final Map<String, List<String>> writerAcl =
-                Collections.singletonMap("user", Arrays.asList("writer"));
+                singletonMap("user", asList("writer"));
         final Map<String, List<String>> readerAcl =
-                Collections.singletonMap("user", Arrays.asList("reader"));
+                singletonMap("user", asList("reader"));
 
         when(accessRolesProvider.findRolesForPath(parentPath, mockSession))
                 .thenReturn(writerAcl);
