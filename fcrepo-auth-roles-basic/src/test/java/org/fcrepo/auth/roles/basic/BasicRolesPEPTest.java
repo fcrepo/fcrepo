@@ -162,7 +162,7 @@ public class BasicRolesPEPTest {
     }
 
     @Test
-    public void testDentyAllForUnrecognizableRole() {
+    public void testDenyAllForUnrecognizableRole() {
         assertFalse(pep.hasModeShapePermission(unrecognizablePath,
                 new String[] {"write"}, allPrincipals, principal));
         assertFalse(pep.hasModeShapePermission(unrecognizablePath,
