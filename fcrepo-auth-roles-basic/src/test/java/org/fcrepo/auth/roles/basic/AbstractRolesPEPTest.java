@@ -73,4 +73,18 @@ public class AbstractRolesPEPTest {
         assertTrue(roles.contains("admin"));
     }
 
+    @Test
+    public void shouldHandleUnmatchedRoles() throws RepositoryException {
+        final Map<String, List<String>> acl =
+                new HashMap<String, List<String>>();
+
+        final Set<Principal> principals = new HashSet<Principal>();
+        principals.add(principalA);
+
+        final Set<String> roles =
+                AbstractRolesPEP.resolveUserRoles(acl, principals);
+
+        assertEquals(0, roles.size());
+    }
+
 }
