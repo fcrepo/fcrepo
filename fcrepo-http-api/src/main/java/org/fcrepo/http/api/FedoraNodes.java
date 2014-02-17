@@ -47,6 +47,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -218,8 +219,7 @@ public class FedoraNodes extends AbstractResource {
                     .getLastModifiedDate().getTime());
         }
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
-        servletResponse.addHeader("Link",
-                "http://www.w3.org/ns/ldp#Resource;rel=\"type\"");
+        servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
 
         addResponseInformationToStream(resource, rdfStream, uriInfo,
                 subjects);

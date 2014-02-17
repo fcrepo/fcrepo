@@ -29,6 +29,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -327,7 +328,7 @@ public class FedoraNodesTest {
         assertEquals("Got wrong triples!", mockRdfStream.concat(mockRdfStream2),
                 rdfStream);
         verify(mockResponse).addHeader("Accept-Patch", "application/sparql-update");
-        verify(mockResponse).addHeader("Link", "http://www.w3.org/ns/ldp#Resource;rel=\"type\"");
+        verify(mockResponse).addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
 
     }
 
