@@ -76,12 +76,12 @@ public class DefaultPropertiesLoaderTest {
 
     @Test
     public void testCustomHomeDirWithRelativeSubdirs() {
-        System.setProperty(HOME_PROP, "/test");
+        System.setProperty(HOME_PROP, asTempPath("test"));
         System.setProperty(PROP_TEST, "sub");
 
         loader.loadSystemProperties();
 
-        File home = new File("/test");
+        File home = new File(asTempPath("test"));
         Assert.assertTrue("Relative subdirs are within fcrepo.home directory.",
                 containsPath(System.getProperty(PROP_TEST),
                         home.getAbsolutePath()));
@@ -90,12 +90,12 @@ public class DefaultPropertiesLoaderTest {
 
     @Test
     public void testCustomHomeDirWithAbsoluteSubdirs() {
-        System.setProperty(HOME_PROP, "/tmp/test");
-        System.setProperty(PROP_TEST, "/tmp/sub");
+        System.setProperty(HOME_PROP, asTempPath("test"));
+        System.setProperty(PROP_TEST, asTempPath("sub"));
 
         loader.loadSystemProperties();
 
-        File home = new File("/test");
+        File home = new File(asTempPath("test"));
         Assert.assertFalse("Absolute subdirs are idependent of fcrepo.home.",
                 containsPath(System.getProperty(PROP_TEST),
                         home.getAbsolutePath()));
@@ -122,5 +122,9 @@ public class DefaultPropertiesLoaderTest {
             }
         }
         return false;
+    }
+
+    private String asTempPath(final String file) {
+       return System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + file;
     }
 }
