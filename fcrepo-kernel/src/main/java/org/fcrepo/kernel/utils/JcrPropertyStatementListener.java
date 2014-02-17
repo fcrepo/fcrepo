@@ -18,6 +18,7 @@ package org.fcrepo.kernel.utils;
 
 import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.NamespaceException;
@@ -111,7 +112,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     && s.getObject().isResource()) {
                 final Resource mixinResource = s.getObject().asResource();
 
-                if (mixinResource.getNameSpace().equals("http://www.w3.org/ns/ldp#")) {
+                if (mixinResource.getNameSpace().equals(LDP_NAMESPACE)) {
                     return;
                 }
 

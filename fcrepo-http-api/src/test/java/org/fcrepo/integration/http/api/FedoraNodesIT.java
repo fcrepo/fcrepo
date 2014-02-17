@@ -42,6 +42,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
@@ -345,13 +346,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 }
             });
         assertTrue("Didn't find LDP link header!", links
-                .contains("http://www.w3.org/ns/ldp#Resource;rel=\"type\""));
+                .contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
         final GraphStore results = getGraphStore(getObjMethod);
         final Model model = createModelForGraph(results.getDefaultGraph());
 
         final Resource nodeUri = createResource(serverAddress + pid);
         assertTrue("Didn't find inlined resources!", model.contains(nodeUri,
-                createProperty("http://www.w3.org/ns/ldp#inlinedResource")));
+                createProperty(LDP_NAMESPACE + "inlinedResource")));
 
         assertTrue("Didn't find an expected triple!", model.contains(nodeUri,
                 createProperty(REPOSITORY_NAMESPACE + "mixinTypes"),
@@ -398,7 +399,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find LDP link header!", links.contains("http://www.w3.org/ns/ldp#Resource;rel=\"type\""));
+        assertTrue("Didn't find LDP link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
     }
 
     @Test
@@ -419,7 +420,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 compile(
                         "<"
                                 + serverAddress
-                                + "FedoraDescribeTestGraph> <http://www.w3.org/ns/ldp#inlinedResource>",
+                                + "FedoraDescribeTestGraph> <" + LDP_NAMESPACE + "inlinedResource>",
                         DOTALL).matcher(content).find());
 
     }

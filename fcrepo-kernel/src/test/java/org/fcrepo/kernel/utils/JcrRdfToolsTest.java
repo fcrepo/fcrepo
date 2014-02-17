@@ -43,6 +43,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
@@ -266,7 +267,7 @@ public class JcrRdfToolsTest {
 
         final Model actual = testObj.getTreeTriples(mockNode).asModel();
         assertEquals(0, Iterators.size(actual.listObjectsOfProperty(actual
-                .createProperty("http://www.w3.org/ns/ldp#inlinedResource"))));
+                .createProperty(LDP_NAMESPACE + "inlinedResource"))));
         verify(mockParent, never()).getProperties();
         verify(mockNode, never()).getNodes();
     }
@@ -291,24 +292,24 @@ public class JcrRdfToolsTest {
         final Model actual = testObj.getTreeTriples(mockNode).asModel();
 
         assertTrue(actual.contains(testSubjects.getContext(), type, actual
-                .createProperty("http://www.w3.org/ns/ldp#Page")));
+                .createProperty(LDP_NAMESPACE + "Page")));
         assertTrue(actual.contains(testSubjects.getContext(), actual
-                .createProperty("http://www.w3.org/ns/ldp#membersInlined"),
+                .createProperty(LDP_NAMESPACE + "membersInlined"),
                 actual.createLiteral(TRUE.toString())));
 
         final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
         assertTrue(actual.contains(graphSubject, type, actual
-                .createProperty("http://www.w3.org/ns/ldp#Container")));
+                .createProperty(LDP_NAMESPACE + "Container")));
 
         assertTrue(actual.contains(graphSubject, actual
-                .createProperty("http://www.w3.org/ns/ldp#membershipSubject"),
+                .createProperty(LDP_NAMESPACE + "membershipSubject"),
                 graphSubject));
         assertTrue(actual.contains(graphSubject,actual
-                .createProperty("http://www.w3.org/ns/ldp#membershipPredicate"),
+                .createProperty(LDP_NAMESPACE + "membershipPredicate"),
                 HAS_CHILD));
         assertTrue(actual.contains(graphSubject,actual
-                .createProperty("http://www.w3.org/ns/ldp#membershipObject"),
-                actual.createResource("http://www.w3.org/ns/ldp#MemberSubject")));
+                .createProperty(LDP_NAMESPACE + "membershipObject"),
+                actual.createResource(LDP_NAMESPACE + "MemberSubject")));
     }
 
     @Test
@@ -536,7 +537,7 @@ public class JcrRdfToolsTest {
         assertTrue(testObj.isInternalProperty(mockNode, createProperty(
                 "http://www.jcp.org/jcr/1.0", "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode,
-                createProperty("http://www.w3.org/ns/ldp#some-property")));
+                createProperty(LDP_NAMESPACE + "some-property")));
         assertFalse(testObj
                 .isInternalProperty(
                         mockNode,
