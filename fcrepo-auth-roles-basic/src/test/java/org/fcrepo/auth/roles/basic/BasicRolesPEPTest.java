@@ -64,32 +64,20 @@ public class BasicRolesPEPTest {
     @Mock
     private Path adminablePath;
 
-    private Map<String, List<String>> adminableAcl;
-
     @Mock
     private Path writablePath;
-
-    private Map<String, List<String>> writableAcl;
 
     @Mock
     private Path readablePath;
 
-    private Map<String, List<String>> readableAcl;
-
     @Mock
     private Path unreadablePath;
-
-    private Map<String, List<String>> unreadableAcl;
 
     @Mock
     private Path unrecognizablePath;
 
-    private Map<String, List<String>> unrecognizableAcl;
-
     @Mock
     private Path authzPath;
-
-    private Map<String, List<String>> authzAcl;
 
     @Before
     public void setUp() throws NoSuchFieldException, RepositoryException {
@@ -104,30 +92,32 @@ public class BasicRolesPEPTest {
         when(principal.getName()).thenReturn("user");
         allPrincipals = Collections.singleton(principal);
 
-        adminableAcl = Collections.singletonMap("user", Arrays.asList("admin"));
-        writableAcl = Collections.singletonMap("user", Arrays.asList("writer"));
-        readableAcl = Collections.singletonMap("user", Arrays.asList("reader"));
-        unreadableAcl =
+        final Map<String, List<String>> adminAcl =
+                Collections.singletonMap("user", Arrays.asList("admin"));
+        final Map<String, List<String>> writerAcl =
+                Collections.singletonMap("user", Arrays.asList("writer"));
+        final Map<String, List<String>> readerAcl =
+                Collections.singletonMap("user", Arrays.asList("reader"));
+        final Map<String, List<String>> emptyAcl =
                 Collections.singletonMap("user", Collections
                         .<String> emptyList());
-        unrecognizableAcl =
+        final Map<String, List<String>> unrecognizableAcl =
                 Collections.singletonMap("user", Arrays
                         .asList("something_else"));
-        authzAcl = Collections.singletonMap("user", Arrays.asList("writer"));
 
         when(accessRolesProvider.findRolesForPath(adminablePath, mockSession))
-                .thenReturn(adminableAcl);
+                .thenReturn(adminAcl);
         when(accessRolesProvider.findRolesForPath(writablePath, mockSession))
-                .thenReturn(writableAcl);
+                .thenReturn(writerAcl);
         when(accessRolesProvider.findRolesForPath(readablePath, mockSession))
-                .thenReturn(readableAcl);
+                .thenReturn(readerAcl);
         when(accessRolesProvider.findRolesForPath(unreadablePath, mockSession))
-                .thenReturn(unreadableAcl);
+                .thenReturn(emptyAcl);
         when(
                 accessRolesProvider.findRolesForPath(unrecognizablePath,
                         mockSession)).thenReturn(unrecognizableAcl);
         when(accessRolesProvider.findRolesForPath(authzPath, mockSession))
-                .thenReturn(authzAcl);
+                .thenReturn(writerAcl);
 
         // Identify authzPath as an ACL node
         final String authzDetection = "/{" + Constants.JcrName.NS_URI + "}";
