@@ -23,12 +23,12 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.security.Principal;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -88,11 +88,13 @@ public class FedoraTransactions extends AbstractResource {
             return noContent().expires(t.getExpires()).build();
 
         }
-        final Transaction t = txService.beginTransaction(session);
-        final HttpSession httpSession = req.getSession(true);
-        if (httpSession != null) {
-            httpSession.setAttribute("currentTx", t.getId());
+        final Principal userPrincipal = req.getUserPrincipal();
+        String userName = null;
+        if (userPrincipal != null) {
+            userName = userPrincipal.getName();
         }
+        final Transaction t = txService.beginTransaction(session, userName);
+
         return created(
                 uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
                         .buildFromMap(

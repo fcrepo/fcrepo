@@ -93,10 +93,11 @@ public class TransactionServiceTest {
 
     @Test
     public void testCreateTx() throws Exception {
-        final Transaction tx = service.beginTransaction(mock(Session.class));
+        final Transaction tx = service.beginTransaction(mock(Session.class), "test");
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
+        assertTrue(tx.isAssociatedWithUser("test"));
         assertEquals(NEW, tx.getState());
     }
 

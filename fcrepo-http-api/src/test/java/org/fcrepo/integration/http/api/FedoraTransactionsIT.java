@@ -199,7 +199,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     }
 
-    @Ignore("Until ticket is resolved: https://www.pivotaltracker.com/story/show/63029852")
     @Test
     public void testCreateDoStuffAndCommitTransactionSeparateConnections() throws Exception {
         /* create a tx */

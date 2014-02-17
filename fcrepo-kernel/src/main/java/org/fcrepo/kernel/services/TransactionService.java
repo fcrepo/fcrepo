@@ -100,9 +100,9 @@ public class TransactionService {
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
-    public Transaction beginTransaction(final Session sess)
+    public Transaction beginTransaction(final Session sess, String userName)
         throws RepositoryException {
-        final Transaction tx = new Transaction(sess);
+        final Transaction tx = new Transaction(sess, userName);
         final String txId = tx.getId();
         transactions.put(txId, tx);
         sess.setNamespacePrefix(FCREPO4_TX_ID, txId);
@@ -209,4 +209,21 @@ public class TransactionService {
         return tx;
     }
 
+    /**
+     * Checks if a user is bound to a {@link Transaction}
+     *
+     * @param txId the id of the {@link Transaction}
+     * @param userName the name  of the {@link java.security.Principal}
+     * @return if the transaction was created by this user
+    */
+    public boolean isAssociatedWithUser(String txId, String userName) {
+        boolean existsForUser = false;
+        if (exists(txId)) {
+            Transaction transaction = transactions.get(txId);
+            if (transaction.isAssociatedWithUser(userName)) {
+                existsForUser = true;
+            }
+        }
+        return existsForUser;
+    }
 }

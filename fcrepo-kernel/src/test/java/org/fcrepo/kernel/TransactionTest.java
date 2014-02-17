@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.Transaction.State.DIRTY;
 import static org.fcrepo.kernel.Transaction.State.NEW;
 import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,7 +46,7 @@ public class TransactionTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new Transaction(mockSession);
+        testObj = new Transaction(mockSession, "test");
     }
 
     @Test
@@ -95,5 +96,16 @@ public class TransactionTest {
         when(mockSession.hasPendingChanges()).thenReturn(true, false);
         assertEquals(DIRTY, testObj.getState());
         testObj.commit(null);
+    }
+
+    @Test
+    public void testUserAssociation() {
+        assertTrue(testObj.isAssociatedWithUser("test"));
+        assertFalse(testObj.isAssociatedWithUser("dummy"));
+        assertFalse(testObj.isAssociatedWithUser(null));
+
+        testObj = new Transaction(mockSession, null);
+        assertTrue(testObj.isAssociatedWithUser(null));
+        assertFalse(testObj.isAssociatedWithUser("test"));
     }
 }

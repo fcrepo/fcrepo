@@ -130,7 +130,7 @@ public class VersionServiceTest {
     @Test
     public void testDeferredCheckpointVersioned() throws Exception {
         // start a transaction
-        final Transaction t = txService.beginTransaction(s);
+        final Transaction t = txService.beginTransaction(s, "test");
         s = t.getSession();
         when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
@@ -155,7 +155,7 @@ public class VersionServiceTest {
     @Test
     public void testDeferredCheckpointUnversioned() throws Exception {
         // start a transaction
-        final Transaction t = txService.beginTransaction(s);
+        final Transaction t = txService.beginTransaction(s, "test");
         s = t.getSession();
         when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
@@ -180,7 +180,7 @@ public class VersionServiceTest {
     @Test
     public void testDeferredCheckpointAutoVersioned() throws Exception {
         // start a transaction
-        final Transaction t = txService.beginTransaction(s);
+        final Transaction t = txService.beginTransaction(s, "test");
         s = t.getSession();
         when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
