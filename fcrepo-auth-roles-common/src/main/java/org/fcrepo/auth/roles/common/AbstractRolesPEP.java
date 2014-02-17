@@ -16,13 +16,13 @@
 
 package org.fcrepo.auth.roles.common;
 
-import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.modeshape.jcr.value.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -30,14 +30,13 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
-import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.modeshape.jcr.JcrSession;
-import org.modeshape.jcr.value.Path;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Policy enforcement point for roles-based authentication
@@ -135,10 +134,10 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             final String[] actions, final Set<Principal> allPrincipals,
             final Principal userPrincipal) {
         final Set<String> roles;
-        final JcrSession session;
+        final Session session;
 
         try {
-            session = (JcrSession)sessionFactory.getInternalSession();
+            session = sessionFactory.getInternalSession();
             final Map<String, List<String>> acl =
                     accessRolesProvider.findRolesForPath(absPath, session);
             roles = resolveUserRoles(acl, allPrincipals);
@@ -188,7 +187,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
      * @return
      */
     private boolean canRemoveChildrenRecursive(final String parentPath,
-            final JcrSession session, final Set<Principal> allPrincipals,
+            final Session session, final Set<Principal> allPrincipals,
             final Principal userPrincipal, final Set<String> parentRoles) {
         try {
             LOGGER.debug("Recursive child remove permission checks for: {}",

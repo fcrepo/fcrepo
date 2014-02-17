@@ -27,10 +27,10 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.JcrSession;
 import org.modeshape.jcr.value.Path;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import java.security.Principal;
 import java.util.Arrays;
@@ -54,7 +54,7 @@ public class BasicRolesPEPTest {
     private SessionFactory sessionFactory;
 
     @Mock
-    private JcrSession mockSession;
+    private Session mockSession;
 
     @Mock
     private Principal principal;
