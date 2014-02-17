@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.fcrepo.auth.roles.common.AccessRolesProvider;
+import org.fcrepo.auth.roles.common.Constants;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,6 +86,11 @@ public class BasicRolesPEPTest {
 
     private Map<String, List<String>> unrecognizableAcl;
 
+    @Mock
+    private Path authzPath;
+
+    private Map<String, List<String>> authzAcl;
+
     @Before
     public void setUp() throws NoSuchFieldException, RepositoryException {
         initMocks(this);
@@ -107,6 +113,7 @@ public class BasicRolesPEPTest {
         unrecognizableAcl =
                 Collections.singletonMap("user", Arrays
                         .asList("something_else"));
+        authzAcl = Collections.singletonMap("user", Arrays.asList("writer"));
 
         when(accessRolesProvider.findRolesForPath(adminablePath, mockSession))
                 .thenReturn(adminableAcl);
@@ -119,6 +126,12 @@ public class BasicRolesPEPTest {
         when(
                 accessRolesProvider.findRolesForPath(unrecognizablePath,
                         mockSession)).thenReturn(unrecognizableAcl);
+        when(accessRolesProvider.findRolesForPath(authzPath, mockSession))
+                .thenReturn(authzAcl);
+
+        // Identify authzPath as an ACL node
+        final String authzDetection = "/{" + Constants.JcrName.NS_URI + "}";
+        when(authzPath.toString()).thenReturn("/blah" + authzDetection);
     }
 
     @Test
@@ -167,6 +180,12 @@ public class BasicRolesPEPTest {
                 new String[] {"write"}, allPrincipals, principal));
         assertFalse(pep.hasModeShapePermission(unrecognizablePath,
                 new String[] {"read"}, allPrincipals, principal));
+    }
+
+    @Test
+    public void testDenyWriteToWriterForAuthzPath() {
+        assertFalse(pep.hasModeShapePermission(authzPath,
+                new String[] {"write"}, allPrincipals, principal));
     }
 
 }
