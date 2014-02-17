@@ -92,6 +92,8 @@ public class BasicRolesPEPTest {
         when(principal.getName()).thenReturn("user");
         allPrincipals = Collections.singleton(principal);
 
+        // ACLs for paths
+
         final Map<String, List<String>> adminAcl =
                 Collections.singletonMap("user", Arrays.asList("admin"));
         final Map<String, List<String>> writerAcl =
@@ -120,6 +122,7 @@ public class BasicRolesPEPTest {
                 .thenReturn(writerAcl);
 
         // Identify authzPath as an ACL node
+
         final String authzDetection = "/{" + Constants.JcrName.NS_URI + "}";
         when(authzPath.toString()).thenReturn("/blah" + authzDetection);
     }
