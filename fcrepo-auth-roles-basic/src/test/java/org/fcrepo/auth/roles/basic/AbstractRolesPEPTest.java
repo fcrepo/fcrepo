@@ -56,12 +56,11 @@ public class AbstractRolesPEPTest {
     @Test
     public void shouldGatherEffectiveRolesFromMultiplePrincipals()
             throws RepositoryException {
-        final Map<String, List<String>> acl =
-                new HashMap<String, List<String>>();
+        final Map<String, List<String>> acl = new HashMap<>();
         acl.put("a", Arrays.asList("reader", "writer"));
         acl.put("b", Arrays.asList("admin"));
 
-        final Set<Principal> principals = new HashSet<Principal>();
+        final Set<Principal> principals = new HashSet<>();
         principals.add(principalA);
         principals.add(principalB);
 
@@ -75,10 +74,8 @@ public class AbstractRolesPEPTest {
 
     @Test
     public void shouldHandleUnmatchedRoles() throws RepositoryException {
-        final Map<String, List<String>> acl =
-                new HashMap<String, List<String>>();
-
-        final Set<Principal> principals = new HashSet<Principal>();
+        final Map<String, List<String>> acl = new HashMap<>();
+        final Set<Principal> principals = new HashSet<>();
         principals.add(principalA);
 
         final Set<String> roles =
