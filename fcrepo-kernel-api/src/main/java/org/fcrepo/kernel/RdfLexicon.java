@@ -90,6 +90,18 @@ public final class RdfLexicon {
     public static final String RELATIONS_NAMESPACE =
             "http://fedora.info/definitions/v4/rels-ext#";
 
+    public static final String RDF_NAMESPACE =
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
+    public static final String DC_NAMESPACE =
+            "http://purl.org/dc/elements/1.1/";
+
+    public static final String MIX_NAMESPACE =
+            "http://www.jcp.org/jcr/mix/1.0";
+
+    public static final String JCR_NT_NAMESPACE =
+            "http://www.jcp.org/jcr/nt/1.0";
+
     // MEMBERSHIP
     public static final Property HAS_MEMBER_OF_RESULT =
             createProperty(REPOSITORY_NAMESPACE + "hasMember");
