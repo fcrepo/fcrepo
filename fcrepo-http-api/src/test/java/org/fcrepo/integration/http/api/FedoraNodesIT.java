@@ -97,6 +97,7 @@ import com.google.common.base.Joiner;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
@@ -376,74 +377,31 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        assertEquals("application/sparql-update", response.getFirstHeader(
-                "Accept-Patch").getValue());
-
-        final Collection<String> links =
-            map(response.getHeaders("Link"), new Function<Header, String>() {
-
-                @Override
-                public String apply(final Header h) {
-                    return h.getValue();
-                }
-            });
-        assertTrue("Didn't find LDP link header!", links
-                .contains("http://www.w3.org/ns/ldp/Resource;rel=\"type\""));
         final GraphStore results = getGraphStore(getObjMethod);
         final Model model = createModelForGraph(results.getDefaultGraph());
-
         final Resource nodeUri = createResource(serverAddress + pid);
+        final Property rdfType = createProperty(RDF_NAMESPACE + "type");
 
-        assertTrue("Didn't find rdfType rest-api object", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(RESTAPI_NAMESPACE + "object")));          
-        assertTrue("Didn't find rdfType rest-api relations", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(RESTAPI_NAMESPACE + "relations")));        
-        assertTrue("Didn't find rdfType rest-api resource", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(RESTAPI_NAMESPACE + "resource")));        
-        assertTrue("Didn't find rdfType ldp container", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(LDP_NAMESPACE + "Container")));
-        assertTrue("Didn't find rdfType ldp page", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(LDP_NAMESPACE + "Page")));
-        assertTrue("Didn't find rdfType dc describable", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(DC_NAMESPACE + "describable")));
-        assertTrue("Didn't find rdfType mix created", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(MIX_NAMESPACE + "created")));
-        assertTrue("Didn't find rdfType mix lastModified", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(MIX_NAMESPACE + "lastModified")));
-        assertTrue("Didn't find rdfType mix lockable", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(MIX_NAMESPACE + "lockable")));
-        assertTrue("Didn't find rdfType mix referenceable", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(MIX_NAMESPACE + "referenceable")));
-        assertTrue("Didn't find rdfType mix simpleVersionable", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(MIX_NAMESPACE + "simpleVersionable")));
-        assertTrue("Didn't find rdfType mix versionable", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(MIX_NAMESPACE + "versionable")));
-        assertTrue("Didn't find rdfType nt base", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(JCR_NT_NAMESPACE + "base")));
-        assertTrue("Didn't find rdfType nt folder", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(JCR_NT_NAMESPACE + "folder")));
-        assertTrue("Didn't find rdfType nt hierarchyNode", model.contains(nodeUri,
-                createProperty(RDF_NAMESPACE + "type"),
-                createResource(JCR_NT_NAMESPACE + "hierarchyNode")));
-        
-        //above assertions based on expection of these types on an out of the box fedora object:
+        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "object");
+        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "relations");
+        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "resource");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "Page");
+        verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lasteModified");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lockable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "simpleVersionable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "versionable");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "base");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "folder");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "hierarchyNode");
+
+        //verifyResource based on the expection of these types on an out of the box fedora object:
         /*
-        http://fedora.info/definitions/v4/rest-api#object 
-            http://fedora.info/definitions/v4/rest-api#relations 
+                http://fedora.info/definitions/v4/rest-api#object 
+                http://fedora.info/definitions/v4/rest-api#relations 
                 http://fedora.info/definitions/v4/rest-api#resource 
                 http://purl.org/dc/elements/1.1/describable 
                 http://www.jcp.org/jcr/mix/1.0created 
@@ -457,7 +415,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 http://www.jcp.org/jcr/nt/1.0hierarchyNode 
                 http://www.w3.org/ns/ldp#Container 
                 http://www.w3.org/ns/ldp#Page 
-                */
+        */
         logger.debug("Leaving verifyFullSetOfRdfTypes()...");
     }
 
@@ -927,6 +885,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.info("HTML found to be valid.");
     }
 
+    private void verifyResource(Model model, Resource nodeUri, Property rdfType, String namespace, String resource) {
+        assertTrue("Didn't find rdfType " + namespace + resource, model.contains(nodeUri,
+        rdfType,
+        createResource(namespace + resource)));
+    }
+    
     public static class HTMLErrorHandler implements ErrorHandler {
 
         @Override
