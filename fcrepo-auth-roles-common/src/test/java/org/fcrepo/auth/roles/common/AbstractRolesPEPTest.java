@@ -66,10 +66,15 @@ public class AbstractRolesPEPTest {
 
         final Set<String> roles =
                 AbstractRolesPEP.resolveUserRoles(acl, principals);
-        assertEquals(3, roles.size());
-        assertTrue(roles.contains("reader"));
-        assertTrue(roles.contains("writer"));
-        assertTrue(roles.contains("admin"));
+        assertEquals(
+                "The effective roles set should contain the correct number of roles",
+                3, roles.size());
+        assertTrue("The effective roles set should contain the reader role",
+                roles.contains("reader"));
+        assertTrue("The effective roles set should contain the writer role",
+                roles.contains("writer"));
+        assertTrue("The effective roles set should contain the admin role",
+                roles.contains("admin"));
     }
 
     @Test
@@ -81,7 +86,9 @@ public class AbstractRolesPEPTest {
         final Set<String> roles =
                 AbstractRolesPEP.resolveUserRoles(acl, principals);
 
-        assertEquals(0, roles.size());
+        assertEquals(
+                "The effective roles set should contain no roles if there is no entry in the ACL",
+                0, roles.size());
     }
 
 }

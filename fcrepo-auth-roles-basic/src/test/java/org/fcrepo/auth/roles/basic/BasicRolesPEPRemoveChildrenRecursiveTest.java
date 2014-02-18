@@ -149,7 +149,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     public void shouldPermitForChildlessNode() throws RepositoryException {
         when(parentNode.hasNodes()).thenReturn(false);
 
-        assertTrue(pep.hasModeShapePermission(parentPath,
+        assertTrue("Should permit remove for childless writable node", pep
+                .hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
     }
 
@@ -158,7 +159,9 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(parentNode.hasNodes()).thenReturn(true);
         when(parentNode.getNodes()).thenReturn(nodeIterator(writableNode));
 
-        assertTrue(pep.hasModeShapePermission(parentPath,
+        assertTrue(
+                "Should permit remove for writable node with writable child",
+                pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
     }
 
@@ -168,7 +171,9 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(parentNode.getNodes()).thenReturn(
                 nodeIterator(writableNode, readableNode));
 
-        assertFalse(pep.hasModeShapePermission(parentPath,
+        assertFalse(
+                "Should deny remove for writable node with unwritable child",
+                pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
     }
 
@@ -177,7 +182,9 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(parentNode.hasNodes()).thenReturn(true);
         when(parentNode.getNodes()).thenReturn(nodeIterator(noAclNode));
 
-        assertTrue(pep.hasModeShapePermission(parentPath,
+        assertTrue(
+                "Should permit remove for writable node with child without an ACL",
+                pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
     }
 
@@ -189,7 +196,9 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(writableNode.hasNodes()).thenReturn(true);
         when(writableNode.getNodes()).thenReturn(nodeIterator(readableNode));
 
-        assertFalse(pep.hasModeShapePermission(parentPath,
+        assertFalse(
+                "Should deny remove for a writable node which has an unwritable child with depth greater than one level",
+                pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
     }
 
