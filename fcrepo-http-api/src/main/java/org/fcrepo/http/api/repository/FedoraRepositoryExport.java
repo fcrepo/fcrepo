@@ -16,23 +16,23 @@
 
 package org.fcrepo.http.api.repository;
 
-import javax.jcr.Session;
-import javax.ws.rs.Path;
-
-import org.fcrepo.http.api.FedoraImport;
+import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import javax.jcr.Session;
+import javax.ws.rs.Path;
+
 /**
- * This stub is a hack to mount the functionality of FedoraImport at the root of
+ * This stub is a hack to mount the functionality of FedoraExport at the root of
  * this webapp. Without it, the globbing from FedoraNodes would own this path
  * instead.
  */
 @Component
 @Scope("prototype")
 @Path("/fcr:export")
-public class FedoraRepositoryExport extends FedoraImport {
+public class FedoraRepositoryExport extends FedoraExport {
 
     @InjectedSession
     protected Session session;

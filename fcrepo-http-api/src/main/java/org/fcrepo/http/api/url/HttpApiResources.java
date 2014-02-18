@@ -29,16 +29,15 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
 
-import java.util.Map;
-
-import javax.jcr.RepositoryException;
-import javax.ws.rs.core.UriInfo;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFieldSearch;
 import org.fcrepo.http.api.FedoraFixity;
 import org.fcrepo.http.api.FedoraSitemap;
 import org.fcrepo.http.api.FedoraVersions;
+import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
@@ -49,8 +48,10 @@ import org.fcrepo.serialization.SerializerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import javax.jcr.RepositoryException;
+import javax.ws.rs.core.UriInfo;
+
+import java.util.Map;
 
 /**
  * Inject our HTTP API methods into the object graphs
@@ -80,17 +81,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             addContentStatements(resource, uriInfo, model, s);
         }
 
-        // fcr:export?format=xyz
-        for (final String key : serializers.keySet()) {
-            final Map<String, String> pathMap =
-                singletonMap("path", resource.getPath().substring(1));
-            final Resource format =
-                createResource(uriInfo.getBaseUriBuilder().path(
-                        FedoraExport.class).queryParam("format", key)
-                        .buildFromMap(pathMap).toASCIIString());
-            model.add(s, HAS_SERIALIZATION, format);
-        }
-
         return model;
     }
 
@@ -107,12 +97,22 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
         final Model model, final Resource s) throws RepositoryException {
 
-        // fcr:versions
         final Map<String, String> pathMap =
-            singletonMap("path", resource.getPath().substring(1));
+                singletonMap("path", resource.getPath().substring(1));
+
+        // fcr:versions
         model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
                         pathMap).toASCIIString()));
+
+        // fcr:exports?format=xyz
+        for (final String key : serializers.keySet()) {
+            final Resource format =
+                    createResource(uriInfo.getBaseUriBuilder().path(
+                            FedoraExport.class).queryParam("format", key)
+                            .buildFromMap(pathMap).toASCIIString());
+            model.add(s, HAS_SERIALIZATION, format);
+        }
     }
 
     private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
@@ -140,6 +140,13 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         model.add(s, HAS_WORKSPACE_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryWorkspaces.class)
                 .build().toASCIIString()));
+
+        // fcr:export?format=xyz
+        for (final String key : serializers.keySet()) {
+            model.add(s, HAS_SERIALIZATION, createResource(uriInfo
+                    .getBaseUriBuilder().path(FedoraRepositoryExport.class)
+                    .queryParam("format", key).build().toASCIIString()));
+        }
     }
 
 }
