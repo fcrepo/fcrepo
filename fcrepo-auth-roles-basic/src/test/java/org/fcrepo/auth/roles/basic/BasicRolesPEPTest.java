@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.fcrepo.auth.roles.common.AccessRolesProvider;
-import org.fcrepo.auth.roles.common.Constants;
+import org.fcrepo.auth.roles.common.Constants.JcrName;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -122,7 +122,7 @@ public class BasicRolesPEPTest {
 
         // Identify authzPath as an ACL node
 
-        final String authzDetection = "/{" + Constants.JcrName.NS_URI + "}";
+        final String authzDetection = "/{" + JcrName.NS_URI + "}";
         when(authzPath.toString()).thenReturn("/blah" + authzDetection);
     }
 
