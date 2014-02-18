@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.auth.roles.basic;
+
+package org.fcrepo.auth.roles.common;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -21,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import org.fcrepo.auth.roles.common.AbstractRolesPEP;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
