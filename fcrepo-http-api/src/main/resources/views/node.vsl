@@ -55,7 +55,11 @@
                 #if( $subject != $topic )
                     <div class="panel panel-default" resource="$subject.getURI()">
                         <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                            <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                            #if( $subject.getURI() && $subject.getURI().startsWith("http") )
+                                <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                            #else
+                                <h3>$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
+                            #end
                         </div>
                         <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
                             <div class="panel-body">
