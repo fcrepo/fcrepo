@@ -35,12 +35,14 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -48,6 +50,7 @@ import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
@@ -65,7 +68,13 @@ public class FedoraVersionsTest {
     VersionService mockVersions;
 
     @Mock
+    SessionFactory mockSessionFactory;
+
+    @Mock
     private Node mockNode;
+
+    @Mock
+    private NodeType mockNodeType;
 
     private Session mockSession;
 
@@ -92,8 +101,12 @@ public class FedoraVersionsTest {
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
         setField(testObj, "versionService", mockVersions);
+        setField(testObj, "sessionFactory", mockSessionFactory);
+        when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
         when(mockNode.getPath()).thenReturn("/test/path");
         when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
     }
 
     @Test
@@ -124,25 +137,8 @@ public class FedoraVersionsTest {
             testObj.addVersion(createPathList(pid), versionLabel);
         verify(mockResource).addVersionLabel(anyString());
         verify(mockVersions).createVersion(any(Workspace.class),
-                Matchers.<Collection<String>> any());
+                Matchers.<Collection<String>>any());
         assertNotNull(response);
-    }
-
-    @Test
-    public void testGetVersion() throws RepositoryException {
-        final String pid = "FedoraVersioningTest";
-        final String versionLabel = "v0.0.1";
-        when(
-                mockNodes.getObject(any(Session.class), any(String.class),
-                        any(String.class))).thenReturn(mockResource);
-        when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
-                mockVariant);
-        when(mockVariant.getMediaType()).thenReturn(
-                new MediaType("text", "turtle"));
-        when(mockResource.getTriples(any(GraphSubjects.class))).thenReturn(mockRdfStream);
-        final RdfStream response = testObj.getVersion(createPathList(pid), versionLabel, mockRequest, TestHelpers
-                .getUriInfoImpl());
-        assertEquals("Got wrong triples!", mockRdfStream, response);
     }
 
 }

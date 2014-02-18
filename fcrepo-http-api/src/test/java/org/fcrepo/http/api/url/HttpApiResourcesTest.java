@@ -98,6 +98,7 @@ public class HttpApiResourcesTest {
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
         throws RepositoryException {
         when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
+        when(mockNodeType.getName()).thenReturn("nt:root");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
@@ -117,7 +118,8 @@ public class HttpApiResourcesTest {
     public void shouldDecorateNodesWithLinksToVersionsAndExport()
         throws RepositoryException {
 
-        when(mockNode.getPrimaryNodeType()).thenReturn(mock(NodeType.class));
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
@@ -135,7 +137,8 @@ public class HttpApiResourcesTest {
     public void shouldDecorateDatastreamsWithLinksToFixityChecks()
         throws RepositoryException {
         when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mock(NodeType.class));
+        when(mockNodeType.getName()).thenReturn("nt:file");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
         final Resource graphSubject = mockSubjects.getGraphSubject(mockNode);

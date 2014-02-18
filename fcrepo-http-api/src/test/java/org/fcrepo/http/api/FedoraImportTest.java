@@ -28,6 +28,7 @@ import java.io.InputStream;
 
 import javax.jcr.Node;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
@@ -53,6 +54,9 @@ public class FedoraImportTest {
     @Mock
     private Node mockNode;
 
+    @Mock
+    private NodeType mockNodeType;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -65,6 +69,8 @@ public class FedoraImportTest {
         setField(testObj, "uriInfo", getUriInfoImpl());
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
     }
 
     @Test

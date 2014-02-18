@@ -28,12 +28,14 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -53,6 +55,7 @@ import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class FedoraVersionsIT extends AbstractResourceIT {
 
@@ -118,10 +121,12 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-        final List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
-        for (int i = 0; i < versionsInOrder.size(); i ++) {
-            assertEquals("Version " + i + " isn't accessible!",
-                    200, getStatus(new HttpGet(versionsInOrder.get(1))));
+
+        final Iterator<Quad> versionIt = results.find(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY);
+        while (versionIt.hasNext()) {
+            String url = versionIt.next().getObject().getURI();
+            assertEquals("Version " + url + " isn't accessible!",
+                    200, getStatus(new HttpGet(url)));
         }
     }
 
@@ -225,14 +230,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-        final List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
-        assertEquals("There must be a root version with two revisions.", 3, versionsInOrder.size());
-
-        final HttpGet retrieveFirstVersion = new HttpGet(versionsInOrder.get(1) + "/fcr:content");
-        assertEquals("First version wasn't preserved as expected!",
-                firstVersionText,
-                EntityUtils.toString(client.execute(
-                        retrieveFirstVersion).getEntity()));
+        verifyVersions(results, subject.asNode(), firstVersionText);
     }
 
     @Test
@@ -277,15 +275,12 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
         final String firstVersionText = "foo";
         final String secondVersionText = "bar";
-
         createDatastream(objName, dsName, firstVersionText);
-
         final GraphStore dsInitialVersion = getContent(serverAddress + objName);
         assertTrue("Should find auto-created versoning policy",
                 dsInitialVersion.contains(Node.ANY, createResource(serverAddress + objName+ "/" + dsName).asNode(), VERSIONING_POLICY.asNode(), NodeFactory.createLiteral("auto-version")));
 
         mutateDatastream(objName, dsName, secondVersionText);
-
         final HttpGet retrieveMutatedDataStreamMethod =
                 new HttpGet(serverAddress +
                         objName + "/" + dsName + "/fcr:content");
@@ -303,46 +298,25 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Didn't find a version triple!",
                 results.contains(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY));
 
-
-        final List<String> versionsInOrder = getChronologicalyOrderedVersionUrls(results, subject.asNode());
-        assertEquals("There must be a root version with two revisions.", 3, versionsInOrder.size());
-
-        final HttpGet retrieveFirstVersion = new HttpGet(versionsInOrder.get(1) + "/fcr:content");
-        assertEquals("First version wasn't preserved as expected!",
-                firstVersionText,
-                EntityUtils.toString(client.execute(
-                        retrieveFirstVersion).getEntity()));
-
-        final HttpGet retrieveSecondVersion = new HttpGet(versionsInOrder.get(2) + "/fcr:content");
-        assertEquals("Second version wasn't preserved as expected!",
-                secondVersionText,
-                EntityUtils.toString(client.execute(
-                        retrieveSecondVersion).getEntity()));
+        verifyVersions(results, subject.asNode(), firstVersionText, secondVersionText);
     }
 
-    private static List<String> getChronologicalyOrderedVersionUrls(final GraphStore graph, final Node subject) {
-        final List<String> versionUrls = new ArrayList<>();
+    /**
+     * Verifies that one version exists with each supplied value.  This method
+     * makes assertions that each of the provided values is the content of a
+     * version node and nothing else.  Order isn't important, and no assumption
+     * is made about whether extra versions exist.
+     */
+    private void verifyVersions(final GraphStore graph, final Node subject, String ... values) throws IOException {
+        ArrayList<String> remainingValues = new ArrayList<String>(Arrays.asList(values));
         final Iterator<Quad> versionIt = graph.find(Node.ANY, subject, HAS_VERSION.asNode(), Node.ANY);
-        while (versionIt.hasNext()) {
-            versionUrls.add(versionIt.next().getObject().getURI());
+        while (versionIt.hasNext() && !remainingValues.isEmpty()) {
+            String value = EntityUtils.toString(client.execute(new HttpGet(versionIt.next().getObject().getURI() + "/fcr:content")).getEntity());
+            remainingValues.remove(value);
         }
-        Collections.sort(versionUrls, new Comparator<String>() {
-            @Override
-            public int compare(final String o1, final String o2) {
-                String d1 = getFirstLiteralIfExists(graph, createResource(o1).asNode(), LAST_MODIFIED_DATE.asNode(), "");
-                String d2 = getFirstLiteralIfExists(graph, createResource(o2).asNode(), LAST_MODIFIED_DATE.asNode(), "");
-                if (d1.equals(d2)) {
-                    d1 += o1;
-                    d2 += o2;
-                }
-                System.out.println("COMPARING: " + d1 + " compare with " + d2);
-                return d1.compareTo(d2);
-            }
-        });
-        for (final String url : versionUrls) {
-            System.out.println(url + " " + getFirstLiteralIfExists(graph, createResource(url).asNode(), LAST_MODIFIED_DATE.asNode(), "(none)"));
+        if (!remainingValues.isEmpty()) {
+            fail(remainingValues.get(0) + " was not preserved in the version history!");
         }
-        return versionUrls;
     }
 
     private static String getFirstLiteralIfExists(final GraphStore graph, final Node subject, final Node predicate,
