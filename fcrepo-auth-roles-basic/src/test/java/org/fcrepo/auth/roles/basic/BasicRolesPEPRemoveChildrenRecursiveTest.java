@@ -19,9 +19,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -33,7 +33,6 @@ import org.mockito.Mock;
 import org.modeshape.jcr.value.Path;
 
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -157,11 +156,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     @Test
     public void shouldPermitForWritableChild() throws RepositoryException {
         when(parentNode.hasNodes()).thenReturn(true);
-
-        final NodeIterator iterator = mock(NodeIterator.class);
-        when(iterator.hasNext()).thenReturn(true, false);
-        when(iterator.nextNode()).thenReturn(writableNode);
-        when(parentNode.getNodes()).thenReturn(iterator);
+        when(parentNode.getNodes()).thenReturn(nodeIterator(writableNode));
 
         assertTrue(pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
@@ -170,11 +165,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     @Test
     public void shouldDenyForUnwritableChild() throws RepositoryException {
         when(parentNode.hasNodes()).thenReturn(true);
-
-        final NodeIterator iterator = mock(NodeIterator.class);
-        when(iterator.hasNext()).thenReturn(true, true, false);
-        when(iterator.nextNode()).thenReturn(writableNode, readableNode);
-        when(parentNode.getNodes()).thenReturn(iterator);
+        when(parentNode.getNodes()).thenReturn(
+                nodeIterator(writableNode, readableNode));
 
         assertFalse(pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
@@ -183,11 +175,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     @Test
     public void shouldInheritParentRolesIfNoAcl() throws RepositoryException {
         when(parentNode.hasNodes()).thenReturn(true);
-
-        final NodeIterator iterator = mock(NodeIterator.class);
-        when(iterator.hasNext()).thenReturn(true, false);
-        when(iterator.nextNode()).thenReturn(noAclNode);
-        when(parentNode.getNodes()).thenReturn(iterator);
+        when(parentNode.getNodes()).thenReturn(nodeIterator(noAclNode));
 
         assertTrue(pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
@@ -196,17 +184,10 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     @Test
     public void shouldDenyWithRecursion() throws RepositoryException {
         when(parentNode.hasNodes()).thenReturn(true);
+        when(parentNode.getNodes()).thenReturn(nodeIterator(writableNode));
+
         when(writableNode.hasNodes()).thenReturn(true);
-
-        final NodeIterator parentIterator = mock(NodeIterator.class);
-        when(parentIterator.hasNext()).thenReturn(true, false);
-        when(parentIterator.nextNode()).thenReturn(writableNode);
-        when(parentNode.getNodes()).thenReturn(parentIterator);
-
-        final NodeIterator writableIterator = mock(NodeIterator.class);
-        when(writableIterator.hasNext()).thenReturn(true, false);
-        when(writableIterator.nextNode()).thenReturn(readableNode);
-        when(writableNode.getNodes()).thenReturn(writableIterator);
+        when(writableNode.getNodes()).thenReturn(nodeIterator(readableNode));
 
         assertFalse(pep.hasModeShapePermission(parentPath,
                 new String[] {"remove"}, allPrincipals, principal));
