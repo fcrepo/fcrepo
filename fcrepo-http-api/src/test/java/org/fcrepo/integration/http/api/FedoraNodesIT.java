@@ -367,6 +367,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Leaving testGetObjectGraph()...");
     }
    
+    @Test
     public void verifyFullSetOfRdfTypes() throws Exception {
         logger.debug("Entering verifyFullSetOfRdfTypes()...");
         final String pid = "FedoraGraphWithRdfTypes";
@@ -381,23 +382,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final Model model = createModelForGraph(results.getDefaultGraph());
         final Resource nodeUri = createResource(serverAddress + pid);
         final Property rdfType = createProperty(RDF_NAMESPACE + "type");
-
-        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "object");
-        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "relations");
-        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "resource");
-        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
-        verifyResource(model, nodeUri, rdfType, RDF_NAMESPACE, "Page");
-        verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lasteModified");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lockable");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "simpleVersionable");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "versionable");
-        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "base");
-        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "folder");
-        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "hierarchyNode");
-
+        
         //verifyResource based on the expection of these types on an out of the box fedora object:
         /*
                 http://fedora.info/definitions/v4/rest-api#object 
@@ -416,6 +401,23 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 http://www.w3.org/ns/ldp#Container 
                 http://www.w3.org/ns/ldp#Page 
         */
+
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Page");
+        verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lockable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "simpleVersionable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "versionable");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "base");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "folder");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "hierarchyNode");
+
         logger.debug("Leaving verifyFullSetOfRdfTypes()...");
     }
 
