@@ -21,11 +21,14 @@ import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.fcrepo.kernel.services.RepositoryService.getRepositoryNamespaces;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -41,6 +44,7 @@ import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
@@ -67,6 +71,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 @RunWith(PowerMockRunner.class)
@@ -150,6 +155,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
 
     private Map<String, String> expectedNS;
 
+    private Resource subject;
+
     @Before
     public void setUp() {
         initMocks(this);
@@ -229,15 +236,13 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
     }
 
-    @Test
-    public void testSearchRepository() throws Exception {
-
+    public void setupSearchRepository()
+            throws UnsupportedRepositoryOperationException, RepositoryException {
         mockStatic(JcrRdfTools.class);
         final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjectFactory, mockSession)).thenReturn(mockJcrRdfTools);
 
-        final Resource subject =
-            createResource(RESTAPI_NAMESPACE + "search/request");
+        subject = createResource(RESTAPI_NAMESPACE + "search/request");
 
         when(mockSession.getValueFactory()).thenReturn(mockFactory);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -252,8 +257,16 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         when(
                 mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.kernel.utils.iterators.NodeIterator.class), eq(subject)))
                 .thenReturn(new RdfStream());
+    }
 
-        testObj.searchRepository(mockSubjectFactory, subject, mockSession,
+    @Test
+    public void testSearchRepository() throws Exception {
+
+        setupSearchRepository();
+
+        final Dataset dataset =
+                testObj.searchRepository(mockSubjectFactory, subject,
+                        mockSession,
                 "search terms", 10, 0L);
 
         // n+1
@@ -261,6 +274,40 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         verify(mockQueryOM).setOffset(0);
         verify(mockQueryOM).execute();
 
+        assertFalse("Dataset graph should contain results", dataset
+                .getDefaultModel().getGraph().isEmpty());
+
+    }
+
+    @Test
+    public void testSearchRepositoryNullSearchTerms() throws Exception {
+        setupSearchRepository();
+
+        final Dataset dataset = testObj.searchRepository(mockSubjectFactory, subject, mockSession,
+                null, 10, 0L);
+
+        // No query should have been run
+        verify(mockQueryManager, never()).getQOMFactory();
+        verify(mockQueryOM, never()).execute();
+
+        assertTrue("Null search terms should return an empty result graph",
+                dataset.getDefaultModel().getGraph().isEmpty());
+    }
+
+    @Test
+    public void testSearchRepositoryNoSearchTerms() throws Exception {
+        setupSearchRepository();
+
+        final Dataset dataset =
+                testObj.searchRepository(mockSubjectFactory, subject,
+                        mockSession, "", 10, 0L);
+
+        // No query should have been run
+        verify(mockQueryManager, never()).getQOMFactory();
+        verify(mockQueryOM, never()).execute();
+
+        assertTrue("Blank query should return an empty result graph", dataset
+                .getDefaultModel().getGraph().isEmpty());
     }
 
     @Test

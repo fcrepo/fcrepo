@@ -233,7 +233,7 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
         final Model model;
 
-        if (terms != null) {
+        if (terms != null && terms.trim().length() != 0) {
             final QueryManager queryManager =
                     session.getWorkspace().getQueryManager();
 
