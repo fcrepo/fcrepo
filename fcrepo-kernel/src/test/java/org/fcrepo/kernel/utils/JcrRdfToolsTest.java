@@ -179,6 +179,7 @@ public class JcrRdfToolsTest {
         when(mockValue.getString()).thenReturn("abc");
         when(mockParent.getProperties()).thenReturn(mockParentProperties);
         when(mockParentProperties.hasNext()).thenReturn(false);
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
     }
 
     @Test
@@ -284,6 +285,9 @@ public class JcrRdfToolsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockMixinNodeType});
+        
+        when(mockPrimaryNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
+        when(mockMixinNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
 
         when(mockProperties.hasNext()).thenReturn(false);
 

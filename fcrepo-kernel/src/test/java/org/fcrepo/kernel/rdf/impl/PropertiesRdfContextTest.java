@@ -20,7 +20,9 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -30,10 +32,12 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
@@ -70,7 +74,11 @@ public class PropertiesRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockContentNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
         when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockNode.hasProperties()).thenReturn(false);
@@ -89,7 +97,11 @@ public class PropertiesRdfContextTest {
                 mockContentSubject);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockContentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.getName()).thenReturn("not:root");
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
+        when(mockNodeType.getName()).thenReturn(
+                 mockNodeTypePrefix + ":" + mockNodeName);
+        
+        //when(mockNodeType.getName()).thenReturn("not:root");
     }
 
     private static final String MOCK_EXTERNAL_IDENTIFIER =
@@ -100,6 +112,10 @@ public class PropertiesRdfContextTest {
 
     private static final Resource mockSubject =
         createResource("http://example.com/node");
+    
+    private static final String mockNodeTypePrefix = "jcr";
+
+    private static final String mockNodeName = "mockNode";
 
     @Mock
     private Node mockNode, mockContentNode;
@@ -118,6 +134,12 @@ public class PropertiesRdfContextTest {
 
     @Mock
     private Repository mockRepository;
+    
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
 
     @Mock
     private LowLevelCacheEntry mockLowLevelCacheEntry;

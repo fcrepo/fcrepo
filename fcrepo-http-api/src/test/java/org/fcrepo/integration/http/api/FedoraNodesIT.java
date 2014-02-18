@@ -37,13 +37,18 @@ import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -92,6 +97,7 @@ import com.google.common.base.Joiner;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
@@ -360,6 +366,61 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         logger.debug("Leaving testGetObjectGraph()...");
     }
+   
+    @Test
+    public void verifyFullSetOfRdfTypes() throws Exception {
+        logger.debug("Entering verifyFullSetOfRdfTypes()...");
+        final String pid = "FedoraGraphWithRdfTypes";
+        createObject(pid);
+
+        final HttpGet getObjMethod =
+                new HttpGet(serverAddress + pid);
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+        final GraphStore results = getGraphStore(getObjMethod);
+        final Model model = createModelForGraph(results.getDefaultGraph());
+        final Resource nodeUri = createResource(serverAddress + pid);
+        final Property rdfType = createProperty(RDF_NAMESPACE + "type");
+        
+        //verifyResource based on the expection of these types on an out of the box fedora object:
+        /*
+                http://fedora.info/definitions/v4/rest-api#object 
+                http://fedora.info/definitions/v4/rest-api#relations 
+                http://fedora.info/definitions/v4/rest-api#resource 
+                http://purl.org/dc/elements/1.1/describable 
+                http://www.jcp.org/jcr/mix/1.0created 
+                http://www.jcp.org/jcr/mix/1.0lastModified 
+                http://www.jcp.org/jcr/mix/1.0lockable 
+                http://www.jcp.org/jcr/mix/1.0referenceable 
+                http://www.jcp.org/jcr/mix/1.0simpleVersionable 
+                http://www.jcp.org/jcr/mix/1.0versionable 
+                http://www.jcp.org/jcr/nt/1.0base 
+                http://www.jcp.org/jcr/nt/1.0folder 
+                http://www.jcp.org/jcr/nt/1.0hierarchyNode 
+                http://www.w3.org/ns/ldp#Container 
+                http://www.w3.org/ns/ldp#Page 
+        */
+
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Page");
+        verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lockable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "simpleVersionable");
+        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "versionable");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "base");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "folder");
+        verifyResource(model, nodeUri, rdfType, JCR_NT_NAMESPACE, "hierarchyNode");
+
+        logger.debug("Leaving verifyFullSetOfRdfTypes()...");
+    }
+
 
     @Test
     public void testGetObjectGraphWithChildren() throws Exception {
@@ -645,8 +706,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertEquals(CREATED.getStatusCode(),
                 getStatus(postObjMethod("countNode")));
+        final String countNode = randomUUID().toString();
         assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(
-                "countNode", "asdf", "1234")));
+                countNode, "asdf", "1234")));
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.debug("For testDescribeCount() first count repository graph:\n"
@@ -824,6 +886,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
             htmlParser.parse(new InputSource(htmlStream));
         }
         logger.info("HTML found to be valid.");
+    }
+    
+    private void verifyResource(Model model, Resource nodeUri, Property rdfType, String namespace, String resource) {
+        assertTrue("Didn't find rdfType " + namespace + resource, model.contains(nodeUri,
+        rdfType,
+        createResource(namespace + resource)));
     }
 
     public static class HTMLErrorHandler implements ErrorHandler {

@@ -53,7 +53,16 @@ public class NodeRdfContextTest {
     private Node mockNode;
 
     @Mock
-    private NodeType mockNodeType;
+    private NodeType mockPrimaryNodeType;
+    
+    @Mock
+    private NodeType mockMixinNodeType;
+    
+    @Mock
+    private NodeType mockPrimarySuperNodeType;
+    
+    @Mock
+    private NodeType mockMixinSuperNodeType;
 
     @Mock
     private GraphSubjects mockGraphSubjects;
@@ -77,19 +86,37 @@ public class NodeRdfContextTest {
 
     private static final String mockNodeTypePrefix = "jcr";
 
-    private static final String mockNodeTypeName = "someType";
+    private static final String mockPrimaryNodeTypeName = "somePrimaryType";
+    private static final String mockMixinNodeTypeName = "someMixinType";
+    private static final String mockPrimarySuperNodeTypeName = "somePrimarySuperType";
+    private static final String mockMixinSuperNodeTypeName = "someMixinSuperType";
 
     private static final Resource mockNodeSubject = createResource();
 
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.getName()).thenReturn(
-                mockNodeTypePrefix + ":" + mockNodeTypeName);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
+        when(mockPrimaryNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockPrimaryNodeTypeName);
+        
         when(mockNode.getName()).thenReturn(mockNodeName);
+        
         when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockNodeType});
+                new NodeType[] {mockMixinNodeType});
+        when(mockMixinNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockMixinNodeTypeName);  
+        
+        when(mockPrimaryNodeType.getSupertypes()).thenReturn(
+                new NodeType[] {mockPrimarySuperNodeType});
+        when(mockPrimarySuperNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockPrimarySuperNodeTypeName);
+        
+        when(mockMixinNodeType.getSupertypes()).thenReturn(
+                new NodeType[] {mockMixinSuperNodeType});
+        when(mockMixinSuperNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockMixinSuperNodeTypeName);
+       
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -100,15 +127,27 @@ public class NodeRdfContextTest {
     }
 
     @Test
-    public void testIncludesMixinTriples() throws RepositoryException,
-        IOException {
+    public void testRdfTypesForNodetypes() throws RepositoryException,
+        IOException {    
         final Model actual =
             new NodeRdfContext(mockNode, mockGraphSubjects, mockLowLevelStorageService).asModel();
-        final Resource expectedRdfType =
-            createResource(REPOSITORY_NAMESPACE + mockNodeTypeName);
+        final Resource expectedRdfTypePrimary =
+            createResource(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName);
+        final Resource expectedRdfTypeMixin =
+                createResource(REPOSITORY_NAMESPACE + mockMixinNodeTypeName);
+        final Resource expectedRdfTypePrimarySuper =
+                createResource(REPOSITORY_NAMESPACE + mockPrimarySuperNodeTypeName);
+        final Resource expectedRdfTypeMixinSuper =
+                createResource(REPOSITORY_NAMESPACE + mockMixinSuperNodeTypeName);
         logRdf("Constructed RDF: ", actual);
-        assertTrue("Didn't find RDF type triple for mixin!", actual.contains(
-                mockNodeSubject, type, expectedRdfType));
+        assertTrue("Didn't find RDF type triple for primarytype!", actual.contains(
+                mockNodeSubject, type, expectedRdfTypePrimary));
+        assertTrue("Didn't find RDF type triple for mixintype!", actual.contains(
+                mockNodeSubject, type, expectedRdfTypeMixin));
+        assertTrue("Didn't find RDF type triple for primarysupertype!", actual.contains(
+                mockNodeSubject, type, expectedRdfTypePrimarySuper));
+        assertTrue("Didn't find RDF type triple for mixinsupertype!", actual.contains(
+                mockNodeSubject, type, expectedRdfTypeMixinSuper));
     }
 
     @Test(expected = RuntimeException.class)

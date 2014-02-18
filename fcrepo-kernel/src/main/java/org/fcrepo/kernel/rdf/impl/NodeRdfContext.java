@@ -17,7 +17,6 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.forArray;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -25,6 +24,7 @@ import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -36,6 +36,8 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -87,9 +89,8 @@ public class NodeRdfContext extends RdfStream {
             this.lowLevelStorageService = lowLevelStorageService;
         }
 
-        // add JCR mixins as rdf:type triples
-        final Iterator<NodeType> nodeTypes = forArray(node.getMixinNodeTypes());
-        concat(Iterators.transform(nodeTypes, nodetype2triple()));
+        //include rdf:type for primaryType, mixins, and their supertypes
+        concatRdfTypes();
     }
 
     /**
@@ -148,6 +149,26 @@ public class NodeRdfContext extends RdfStream {
     private String getJcrUri(final String prefix) throws RepositoryException {
         return node().getSession().getWorkspace().getNamespaceRegistry()
                 .getURI(prefix);
+    }
+
+    private void concatRdfTypes() throws RepositoryException {
+        final NodeType primaryNodeType = node.getPrimaryNodeType();
+        final NodeType[] mixinNodeTypesArr = node.getMixinNodeTypes();
+        final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
+                .add(primaryNodeType.getSupertypes()).build();
+        final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
+        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder()
+                .add(primaryNodeType)
+                .addAll(primarySupertypes)
+                .addAll(mixinNodeTypes);
+        final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
+        for (final NodeType mixinNodeType : mixinNodeTypes) {
+            mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
+        }
+        nodeTypesB.addAll(mixinSupertypes.build());
+        final ImmutableList<NodeType> nodeTypes = nodeTypesB.build();
+        final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
+        concat(Iterators.transform(nodeTypesIt,nodetype2triple()));
     }
 
 }
