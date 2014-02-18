@@ -58,6 +58,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -102,6 +103,9 @@ public class FedoraNodesTest {
 
     @Mock
     private Node mockNode;
+
+    @Mock
+    private NodeType mockNodeType;
 
     @Mock
     private DatastreamService mockDatastreams;
@@ -161,6 +165,9 @@ public class FedoraNodesTest {
         when(mockDate.getTime()).thenReturn(0L);
         when(mockNode.getPath()).thenReturn("/test/path");
         when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+
     }
 
     @Test

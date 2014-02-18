@@ -46,6 +46,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.Request;
@@ -82,7 +83,13 @@ public class FedoraContentTest {
     private Node mockNode;
 
     @Mock
+    private NodeType mockNodeType;
+
+    @Mock
     private Node mockContentNode;
+
+    @Mock
+    private NodeType mockContentNodeType;
 
     @Mock
     private PidMinter mockMinter;
@@ -102,6 +109,10 @@ public class FedoraContentTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         final VersionManager mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
+        when(mockNodeType.getName()).thenReturn("nt:file");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockContentNodeType.getName()).thenReturn("nt:content");
+        when(mockContentNode.getPrimaryNodeType()).thenReturn(mockContentNodeType);
     }
 
     @Test

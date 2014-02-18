@@ -18,20 +18,29 @@ package org.fcrepo.http.commons.api.rdf;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.net.URI;
+import java.util.UUID;
 
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -46,40 +55,11 @@ import org.mockito.Mockito;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 
-public class HttpGraphSubjectsTest {
+public class HttpGraphSubjectsTest extends GraphSubjectsTest {
 
-    private HttpGraphSubjects testObj;
-
-    private String testPath = "/foo/bar";
-
-    @Mock
-    private Session mockSession;
-
-    @Mock
-    private Repository mockRepository;
-
-    @Mock
-    private Workspace mockWorkspace;
-
-    @Mock private  Resource mockSubject;
-
-    @Mock
-    private Node mockNode;
-
-    @Mock
-    private ValueFactory mockValueFactory;
-
-    private UriInfo uriInfo;
-
-    @Before
-    public void setUp() throws RepositoryException {
-        initMocks(this);
-        uriInfo = getUriInfoImpl(testPath);
-        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
-        when(mockSession.getRepository()).thenReturn(mockRepository);
-        testObj =
-            new HttpGraphSubjects(mockSession, MockNodeController.class,
-                    uriInfo);
+    protected HttpGraphSubjects getTestObj() {
+        return new HttpGraphSubjects(mockSession, MockNodeController.class,
+                uriInfo);
     }
 
     @Test
@@ -167,7 +147,7 @@ public class HttpGraphSubjectsTest {
         assertNull(testObj.getPathFromGraphSubject(ResourceFactory.createResource("who-knows-what-this-is")));
     }
 
-    private static UriInfo getUriInfoImpl(final String path) {
+    protected static UriInfo getUriInfoImpl(final String path) {
         // UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
         final UriInfo ui = mock(UriInfo.class);
         final UriBuilder ub = new UriBuilderImpl();
@@ -193,7 +173,7 @@ public class HttpGraphSubjectsTest {
     }
 
     @Path("/rest/{path}")
-    private class MockNodeController {
+    protected class MockNodeController {
 
     }
 }

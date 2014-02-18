@@ -16,6 +16,25 @@
 
 package org.fcrepo.http.commons.api.rdf;
 
+import com.google.common.base.Function;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.ValueFormatException;
+import javax.jcr.Workspace;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.Map;
+
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singletonMap;
 import static javax.jcr.PropertyType.PATH;
@@ -24,27 +43,14 @@ import static org.fcrepo.kernel.services.TransactionService.getCurrentTransactio
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URI;
-import java.util.Map;
-
-import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.ValueFormatException;
-import javax.jcr.Workspace;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-
-import com.google.common.base.Function;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
-import org.slf4j.Logger;
-import com.hp.hpl.jena.rdf.model.Resource;
-
 /**
- * Translate JCR paths to URLs to the given class
+ * Translate JCR paths to URLs.  There are a few types of translations
+ * that occur as part of this implementation:
+ * <ul>
+ *     <li>jcr:content is replaced with fcr:content</li>
+ *     <li>information about the transaction is added</li>
+ * </ul>
+ *
  */
 public class HttpGraphSubjects implements GraphSubjects {
 
@@ -52,7 +58,7 @@ public class HttpGraphSubjects implements GraphSubjects {
     public static final String WORKSPACE_PREFIX = "workspace:";
     public static final String TX_PREFIX = "tx:";
 
-    private final UriBuilder nodesBuilder;
+    protected final UriBuilder nodesBuilder;
 
     private final String basePath;
 
@@ -113,42 +119,68 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     @Override
     public Node getNodeFromGraphSubject(final Resource subject) throws RepositoryException {
+        final String subjectUri = getResourceURI(subject);
+        if (subjectUri == null) {
+            return null;
+        } else {
+            final String absPath = getPathFromGraphSubject(subjectUri);
 
-        final String absPath = getPathFromGraphSubject(subject);
+            if (absPath == null) {
+                return null;
+            }
 
-        if (absPath == null) {
+            final Node node;
+
+            if (session.nodeExists(absPath)) {
+                node = session.getNode(absPath);
+                LOGGER.trace("RDF resource {} maps to JCR node {}", subjectUri, node);
+            } else {
+                node = null;
+                LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
+                        subjectUri);
+            }
+
+            return node;
+        }
+    }
+
+    private String getResourceURI(final Resource subject) {
+        if (!subject.isURIResource()) {
+            LOGGER.debug("RDF resource {} was not a URI resource, aborting.",
+                    subject);
             return null;
         }
-
-        final Node node;
-
-
-        if (session.nodeExists(absPath)) {
-            node = session.getNode(absPath);
-            LOGGER.trace("RDF resource {} maps to JCR node {}", subject, node);
-        } else {
-            node = null;
-            LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
-                            subject);
-        }
-
-        return node;
-
+        return subject.getURI();
     }
 
     @Override
     public String getPathFromGraphSubject(final Resource subject) throws RepositoryException {
-        if (!isFedoraGraphSubject(subject)) {
+        final String subjectUri = getResourceURI(subject);
+        if (subjectUri == null) {
+            return null;
+        } else {
+            return getPathFromGraphSubject(getResourceURI(subject));
+        }
+    }
+
+    /**
+     * Gets a path from the graph subject's URI.  This method does the heavy
+     * lifting for getNodeFromGraphSubject and getPathFromGraphSubject in a way
+     * that's tied to a more generic URI rather than a rdf Resource.
+     */
+    protected String getPathFromGraphSubject(@NotNull final String subjectUri) throws RepositoryException {
+
+        if (!isFedoraGraphSubject(subjectUri)) {
             LOGGER.debug(
                     "RDF resource {} was not a URI resource with our expected basePath {}, aborting.",
-                    subject, basePath);
+                    subjectUri, basePath);
             return null;
         }
 
         final StringBuilder pathBuilder = new StringBuilder();
         final String absPath;
         final String[] pathSegments =
-                subject.getURI().substring(pathIx).split("/");
+                subjectUri.substring(pathIx).split("/");
 
         for (final String segment : pathSegments) {
             if (segment.startsWith(TX_PREFIX)) {
@@ -205,11 +237,16 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     @Override
     public boolean isFedoraGraphSubject(final Resource subject) {
-        return subject.isURIResource() && subject.getURI().startsWith(basePath)
-                && isValidJcrPath(subject.getURI().substring(pathIx));
+        return subject.isURIResource()
+                && isFedoraGraphSubject(subject.getURI());
     }
 
-    private Map<String, String> getPathMap(final Node node)
+    private boolean isFedoraGraphSubject(final String subjectUri) {
+        return subjectUri.startsWith(basePath)
+                && isValidJcrPath(subjectUri.substring(pathIx));
+    }
+
+    protected Map<String, String> getPathMap(final Node node)
         throws RepositoryException {
         return getPathMap(node.getPath());
     }

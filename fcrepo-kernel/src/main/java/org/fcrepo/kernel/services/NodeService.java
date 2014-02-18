@@ -16,25 +16,20 @@
 
 package org.fcrepo.kernel.services;
 
-import static com.google.common.collect.ImmutableSet.builder;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Set;
+import com.google.common.collect.ImmutableSet;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.FedoraResourceImpl;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
+import java.util.Set;
 
-import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.FedoraResource;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
-
-import com.google.common.collect.ImmutableSet;
+import static com.google.common.collect.ImmutableSet.builder;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service for managing access to Fedora 'nodes' (either datastreams or objects,
@@ -72,32 +67,6 @@ public class NodeService extends RepositoryService {
     public FedoraResource getObject(final Session session, final String path)
         throws RepositoryException {
         return new FedoraResourceImpl(session.getNode(path));
-    }
-
-    /**
-     * Get an existing Fedora resource at the given path with the given version
-     * label
-     *
-     * @param session a JCR session
-     * @param path a JCR path
-     * @param versionId a JCR version label
-     * @return
-     * @throws RepositoryException
-     */
-    public FedoraResource getObject(final Session session, final String path,
-            final String versionId) throws RepositoryException {
-        final VersionHistory versionHistory = getVersionHistory(session, path);
-
-        if (versionHistory == null) {
-            return null;
-        }
-
-        if (!versionHistory.hasVersionLabel(versionId)) {
-            return null;
-        }
-
-        final Version version = versionHistory.getVersionByLabel(versionId);
-        return new FedoraResourceImpl(version.getFrozenNode());
     }
 
     /**

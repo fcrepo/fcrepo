@@ -53,6 +53,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
@@ -95,6 +96,9 @@ public class FedoraBatchTest {
     private Node mockDsNode;
 
     @Mock
+    private NodeType mockDsNodeType;
+
+    @Mock
     private FedoraResourceImpl mockObject;
 
     @Mock
@@ -123,6 +127,8 @@ public class FedoraBatchTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         final VersionManager mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
+        when(mockDsNodeType.getName()).thenReturn("nt:file");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockDsNodeType);
     }
 
     @Test
