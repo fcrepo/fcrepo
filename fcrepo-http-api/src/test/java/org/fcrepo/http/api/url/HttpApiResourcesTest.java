@@ -35,14 +35,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
-import java.util.HashSet;
-
-import javax.jcr.Node;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-import javax.ws.rs.core.UriInfo;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
@@ -53,8 +47,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import javax.jcr.Node;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.core.UriInfo;
+
+import java.util.HashSet;
 
 public class HttpApiResourcesTest {
 
@@ -144,6 +144,45 @@ public class HttpApiResourcesTest {
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_FIXITY_SERVICE));
+    }
+
+    @Test
+    public void shouldDecorateRootNodeWithCorrectResourceURI()
+            throws RepositoryException {
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+
+        when(mockSerializers.keySet()).thenReturn(of("a"));
+        when(mockNode.getPath()).thenReturn("/");
+
+        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo,
+                        mockSubjects);
+        assertEquals("http://localhost/fcrepo/fcr:export?format=a", model
+                .getProperty(graphSubject, HAS_SERIALIZATION).getResource()
+                .getURI());
+    }
+
+    @Test
+    public void shouldDecorateOtherNodesWithCorrectResourceURI()
+            throws RepositoryException {
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.isNodeType(ROOT)).thenReturn(false);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+
+        when(mockSerializers.keySet()).thenReturn(of("a"));
+        when(mockNode.getPath()).thenReturn("/some/path/to/object");
+
+        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo,
+                        mockSubjects);
+        assertEquals(
+                "http://localhost/fcrepo/some/path/to/object/fcr:export?format=a",
+                model.getProperty(graphSubject, HAS_SERIALIZATION)
+                        .getResource().getURI());
     }
 
 }
