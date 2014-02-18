@@ -30,6 +30,7 @@ import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
 import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -48,8 +49,11 @@ import java.io.Writer;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
 
@@ -197,6 +201,13 @@ public class HierarchyRdfContextTest {
         when(mockGraphSubjects.getGraphSubject(mockChildNode)).thenReturn(
                 testChildSubject);
         when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
+        when(mockSession.getRepository()).thenReturn(mockRepository);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI("not")).thenReturn(JCR_NAMESPACE);
+        when(mockParentNode.getSession()).thenReturn(mockSession);
+        
     }
 
     private void nodeIsContainer() {
@@ -254,6 +265,12 @@ public class HierarchyRdfContextTest {
                 createResource(RESOURCE_PREFIX + "/4"));
         when(mockGraphSubjects.getGraphSubject(mockChildNode5)).thenReturn(
                 createResource(RESOURCE_PREFIX + "/5"));
+        
+        when(mockChildNode.getSession()).thenReturn(mockSession);
+        when(mockChildNode2.getSession()).thenReturn(mockSession);
+        when(mockChildNode3.getSession()).thenReturn(mockSession);
+        when(mockChildNode4.getSession()).thenReturn(mockSession);
+        when(mockChildNode5.getSession()).thenReturn(mockSession);
 
     }
 
@@ -325,6 +342,15 @@ public class HierarchyRdfContextTest {
 
     @Mock
     private Session mockSession;
+    
+    @Mock
+    private Repository mockRepository;
+    
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
 
     @Mock
     private Node mockNode, mockParentNode, mockChildNode, mockChildNode2,
