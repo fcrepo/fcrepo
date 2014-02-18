@@ -46,6 +46,10 @@ import java.util.Set;
  */
 public class BasicRolesPEPTest {
 
+    private static final String[] READ_ACTION = {"read"};
+
+    private static final String[] WRITE_ACTION = {"write"};
+
     private BasicRolesPEP pep;
 
     @Mock
@@ -135,62 +139,62 @@ public class BasicRolesPEPTest {
     @Test
     public void testPermitAnythingForAdminablePath() {
         assertTrue("Should permit write action for path with admin role", pep
-                .hasModeShapePermission(adminablePath,
-                new String[] {"write"}, allPrincipals, principal));
+                .hasModeShapePermission(adminablePath, WRITE_ACTION,
+                        allPrincipals, principal));
         assertTrue("Should permit read action for path with admin role", pep
-                .hasModeShapePermission(adminablePath,
-                new String[] {"read"}, allPrincipals, principal));
+                .hasModeShapePermission(adminablePath, READ_ACTION,
+                        allPrincipals, principal));
         assertTrue(
                 "Should permit another arbitrary action for path with admin role",
                 pep.hasModeShapePermission(adminablePath,
-                new String[] {"whatever"}, allPrincipals, principal));
+                        new String[] {"whatever"}, allPrincipals, principal));
     }
 
     @Test
     public void testPermitReadAndWriteForWritablePath() {
         assertTrue("Should permit write for path with writer role", pep
-                .hasModeShapePermission(writablePath,
-                new String[] {"write"}, allPrincipals, principal));
+                .hasModeShapePermission(writablePath, WRITE_ACTION,
+                        allPrincipals, principal));
         assertTrue("Should permit read for path with writer role", pep
-                .hasModeShapePermission(writablePath,
-                new String[] {"read"}, allPrincipals, principal));
+                .hasModeShapePermission(writablePath, READ_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
     public void testDenyWriteForReadablePath() {
         assertFalse("Should deny write for path with reader role", pep
-                .hasModeShapePermission(readablePath,
-                new String[] {"write"}, allPrincipals, principal));
+                .hasModeShapePermission(readablePath, WRITE_ACTION,
+                        allPrincipals, principal));
         assertTrue("Should permit read for path with reader role", pep
-                .hasModeShapePermission(readablePath,
-                new String[] {"read"}, allPrincipals, principal));
+                .hasModeShapePermission(readablePath, READ_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
     public void testDenyReadAndWriteForUnreadablePath() {
         assertFalse("Should deny write for path with no roles", pep
-                .hasModeShapePermission(unreadablePath,
-                new String[] {"write"}, allPrincipals, principal));
+                .hasModeShapePermission(unreadablePath, WRITE_ACTION,
+                        allPrincipals, principal));
         assertFalse("Should deny read for path with no roles", pep
-                .hasModeShapePermission(unreadablePath,
-                new String[] {"read"}, allPrincipals, principal));
+                .hasModeShapePermission(unreadablePath, READ_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
     public void testDenyAllForUnrecognizableRole() {
         assertFalse("Should deny write for path with unrecognizable role", pep
-                .hasModeShapePermission(unrecognizablePath,
-                new String[] {"write"}, allPrincipals, principal));
+                .hasModeShapePermission(unrecognizablePath, WRITE_ACTION,
+                        allPrincipals, principal));
         assertFalse("Should deny read for path with unrecognizable role", pep
-                .hasModeShapePermission(unrecognizablePath,
-                new String[] {"read"}, allPrincipals, principal));
+                .hasModeShapePermission(unrecognizablePath, READ_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
     public void testDenyWriteToWriterForAuthzPath() {
         assertFalse("Should deny write for ACL path", pep
-                .hasModeShapePermission(authzPath,
-                new String[] {"write"}, allPrincipals, principal));
+                .hasModeShapePermission(authzPath, WRITE_ACTION, allPrincipals,
+                        principal));
     }
 
 }

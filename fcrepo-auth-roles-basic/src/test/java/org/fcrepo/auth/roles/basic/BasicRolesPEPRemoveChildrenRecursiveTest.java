@@ -46,6 +46,8 @@ import java.util.Set;
  */
 public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
+    private static final String[] REMOVE_ACTION = { "remove" };
+
     private BasicRolesPEP pep;
 
     @Mock
@@ -150,8 +152,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(parentNode.hasNodes()).thenReturn(false);
 
         assertTrue("Should permit remove for childless writable node", pep
-                .hasModeShapePermission(parentPath,
-                new String[] {"remove"}, allPrincipals, principal));
+                .hasModeShapePermission(parentPath, REMOVE_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
@@ -161,8 +163,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertTrue(
                 "Should permit remove for writable node with writable child",
-                pep.hasModeShapePermission(parentPath,
-                new String[] {"remove"}, allPrincipals, principal));
+                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
@@ -173,8 +175,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertFalse(
                 "Should deny remove for writable node with unwritable child",
-                pep.hasModeShapePermission(parentPath,
-                new String[] {"remove"}, allPrincipals, principal));
+                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
@@ -184,8 +186,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertTrue(
                 "Should permit remove for writable node with child without an ACL",
-                pep.hasModeShapePermission(parentPath,
-                new String[] {"remove"}, allPrincipals, principal));
+                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
+                        allPrincipals, principal));
     }
 
     @Test
@@ -198,8 +200,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertFalse(
                 "Should deny remove for a writable node which has an unwritable child with depth greater than one level",
-                pep.hasModeShapePermission(parentPath,
-                new String[] {"remove"}, allPrincipals, principal));
+                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
+                        allPrincipals, principal));
     }
 
 }
