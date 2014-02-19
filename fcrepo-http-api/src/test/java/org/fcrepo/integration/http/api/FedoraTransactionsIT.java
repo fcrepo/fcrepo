@@ -16,8 +16,23 @@
 
 package org.fcrepo.integration.http.api;
 
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.update.GraphStore;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.io.IOException;
+
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static java.util.UUID.randomUUID;
@@ -25,18 +40,10 @@ import static java.util.regex.Pattern.compile;
 import static org.fcrepo.kernel.Transaction.DEFAULT_TIMEOUT;
 import static org.fcrepo.kernel.Transaction.TIMEOUT_SYSTEM_PROPERTY;
 import static org.fcrepo.kernel.services.TransactionService.REAP_INTERVAL;
+import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraTransactionsIT extends AbstractResourceIT {
 
@@ -257,6 +264,92 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                    graphStore.toDataset().asDatasetGraph()
                            .contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
 
+    }
+
+    /**
+     * Tests that transactions are treated as atomic with regards to nodes.
+     *
+     * A common use case for applications written against fedora is that an
+     * operation checks some property of a fedora object and acts on it
+     * accordingly.  In order for this to work in a multi-client or
+     * multi-threaded environment that comparison+action combination needs to
+     * be atomic.
+     *
+     * Imagine a scenario where we have one process that deletes all objects
+     * in the repository that don't have a "preserve" property set to the
+     * literal "true", and we have any number of other clients that add such
+     * a property.
+     *
+     * We want to ensure that there is no way for a client to successfully
+     * add this property between when the "deleter" process has determined that
+     * no such property exists and when it deletes the object.
+     *
+     * In other words, if there are only clients adding properties and the
+     * "deleter" deleting objects it should not be possible for an object
+     * to be deleted if a client has added a title and received a successful
+     * http response code.
+     */
+    @Test
+    @Ignore("Until we implement some kind of record level locking.")
+    public void testTransactionAndConcurrentConflictingUpdate() throws Exception {
+        final String preserveProperty = "preserve";
+        final String preserveValue = "true";
+
+        /* create the object in question */
+        final String objPid = randomUUID().toString();
+        createObject(objPid);
+
+         /* create the deleter transaction */
+        final String deleterTxLocation = createTransaction();
+        final String deleterTxId = deleterTxLocation.substring(serverAddress.length());
+
+        /* assert that the object is eligible for delete in the transaction */
+        verifyProperty("No preserve property should be set!", objPid, deleterTxId,
+                preserveProperty, preserveValue, false);
+
+        /* delete that object in the transaction */
+        final HttpDelete delete = new HttpDelete(deleterTxLocation + "/" + objPid);
+        assertEquals(204, execute(delete).getStatusLine().getStatusCode());
+
+        /* fetch the object-deleted-in-tx outside of the tx */
+        final HttpGet getObj =
+                new HttpGet(serverAddress + objPid);
+        HttpResponse resp = execute(getObj);
+        assertEquals("Expected to find our object outside the scope of the tx,"
+                + " despite it being deleted in the uncommitted transaction.",
+                200, resp.getStatusLine().getStatusCode());
+
+        /* mark the object as not deletable outside the context of the transaction */
+        setProperty(objPid, preserveProperty, preserveValue);
+
+        /* commit that transaction */
+        final HttpPost commitDeleteTx =
+                new HttpPost(deleterTxLocation + "/fcr:tx/fcr:commit");
+        resp = execute(commitDeleteTx);
+        assertNotEquals("Transaction is not atomic with regards to the object!",
+                204, resp.getStatusLine().getStatusCode());
+    }
+
+    private String createTransaction() throws IOException {
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        final HttpResponse response = execute(createTx);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+        return response.getFirstHeader("Location").getValue();
+    }
+
+    private void verifyProperty(String assertionMessage, String pid, String txId, String propertyUri, String propertyValue, boolean shouldExist) throws IOException {
+        client = createClient();
+        final HttpGet getObjCommitted =
+                new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
+        GraphStore graphStore = getGraphStore(getObjCommitted);
+        final boolean exists = graphStore.contains(ANY, createResource(serverAddress + pid).asNode(),
+                ResourceFactory.createProperty(propertyUri).asNode(), createPlainLiteral(propertyValue)
+                .asNode());
+        if (shouldExist) {
+            assertTrue(assertionMessage, exists);
+        } else {
+            assertFalse(assertionMessage, exists);
+        }
     }
 
 }

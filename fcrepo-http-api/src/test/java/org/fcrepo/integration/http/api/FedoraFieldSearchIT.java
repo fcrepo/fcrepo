@@ -85,17 +85,8 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         createObject("testobj");
 
         /* and add a dc title to the object so the query returns a result */
-        final HttpPatch postDc = new HttpPatch(serverAddress + "testobj");
-        postDc.setHeader("Content-Type", "application/sparql-update");
-        final String updateString =
-            "INSERT { <"
-                    + serverAddress
-                    + "testobj> <http://purl.org/dc/elements/1.1/title> \"testobj\" } WHERE { }";
-        postDc.setEntity(new StringEntity(updateString));
-        final HttpResponse dcResp = execute(postDc);
-        assertEquals(dcResp.getStatusLine().toString(), 204, dcResp
-                .getStatusLine().getStatusCode());
-        postDc.releaseConnection();
+        setProperty("testobj", "http://purl.org/dc/elements/1.1/title",
+                "testobj");
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         final URI uri =

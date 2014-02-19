@@ -31,6 +31,7 @@ import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -153,6 +154,30 @@ public abstract class AbstractResourceIT {
             client.execute(postDSMethod(pid, dsid, content));
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         return response;
+    }
+
+    protected HttpResponse setProperty(final String pid,
+                                       final String propertyUri,
+                                       final String value) throws IOException {
+        return setProperty(pid, null, propertyUri, value);
+    }
+
+    protected HttpResponse setProperty(final String pid, String txId,
+                                       final String propertyUri,
+                                       final String value) throws IOException {
+        final HttpPatch postProp = new HttpPatch(serverAddress
+                + (txId != null ? txId + "/" : "") + pid);
+        postProp.setHeader("Content-Type", "application/sparql-update");
+        final String updateString =
+                "INSERT { <"
+                        + serverAddress + pid
+                        + "> <" + propertyUri + "> \"" + value + "\" } WHERE { }";
+        postProp.setEntity(new StringEntity(updateString));
+        final HttpResponse dcResp = execute(postProp);
+        assertEquals(dcResp.getStatusLine().toString(),
+                204, dcResp.getStatusLine().getStatusCode());
+        postProp.releaseConnection();
+        return dcResp;
     }
 
 }
