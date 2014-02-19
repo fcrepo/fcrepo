@@ -321,10 +321,18 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
             final InputStream requestBodyStream,
-            @Context final Request request) throws RepositoryException {
+            @Context
+            final Request request) throws RepositoryException, ParseException,
+            IOException, InvalidChecksumException, URISyntaxException {
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to replace path: {}", path);
         try {
+
+            if (!nodeService.exists(session, path)) {
+                return createObject(pathList, null, null, null,
+                        requestContentType, null, uriInfo, requestBodyStream);
+            }
+
             final FedoraResource resource =
                 nodeService.getObject(session, path);
 

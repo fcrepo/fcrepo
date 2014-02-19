@@ -628,8 +628,39 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 createResource(subjectURI),
                 createProperty("info:rubydora#label"),
                 createPlainLiteral("asdfg")));
+    }
+
+    @Test
+    public void testCreateGraph() throws Exception {
+        final String subjectURI = serverAddress + UUID.randomUUID().toString();
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
+                        .getBytes()));
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals(201, response.getStatusLine().getStatusCode());
 
 
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+
+        getObjMethod.addHeader("Accept", "application/rdf+xml");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), getResponse.getStatusLine()
+                .getStatusCode());
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), null);
+        try (final Writer w = new StringWriter()) {
+            model.write(w);
+            logger.debug("Retrieved object graph for testCreateGraph():\n {}",
+                    w);
+        }
+        assertTrue("Didn't find a triple we tried to create!", model.contains(
+                createResource(subjectURI),
+                createProperty("info:rubydora#label"),
+                createPlainLiteral("asdfg")));
     }
 
     @Test

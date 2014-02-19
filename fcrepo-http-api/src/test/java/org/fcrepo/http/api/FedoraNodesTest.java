@@ -384,6 +384,7 @@ public class FedoraNodesTest {
     public void testReplaceRdf() throws IllegalArgumentException, Exception {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
+        when(mockNodes.exists(mockSession, path)).thenReturn(true);
         when(mockObject.getLastModifiedDate()).thenReturn(Calendar.getInstance().getTime());
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockObject.getEtagValue()).thenReturn("");
@@ -395,6 +396,34 @@ public class FedoraNodesTest {
 
         testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest);
         verify(mockObject).replaceProperties(any(GraphSubjects.class), any(Model.class));
+    }
+
+    @Test
+    public void testCreateRdf() throws Exception {
+        final String pid = "FedoraObjectsRdfTest2";
+        final String path = "/" + pid;
+
+        when(mockNodes.exists(mockSession, path)).thenReturn(false);
+        when(mockObjects.createObject(mockSession, path))
+                .thenReturn(mockObject);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+
+        final InputStream mockStream =
+                new ByteArrayInputStream("<a> <b> <c>".getBytes());
+
+        final Response actual =
+                testObj.createOrReplaceObjectRdf(createPathList(pid),
+                        getUriInfoImpl(), MediaType.valueOf("application/n3"),
+                        mockStream, mockRequest);
+
+        assertNotNull(actual);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        assertTrue(actual.getEntity().toString().endsWith(pid));
+        verify(mockObject).replaceProperties(any(GraphSubjects.class),
+                any(Model.class));
+        verify(mockObjects).createObject(mockSession, path);
+        verify(mockSession).save();
     }
 
     @Test
