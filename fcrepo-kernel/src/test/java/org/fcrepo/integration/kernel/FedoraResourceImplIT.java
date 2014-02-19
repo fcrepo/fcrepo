@@ -30,6 +30,8 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.INDEXING_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
@@ -40,13 +42,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeDefinition;
+import javax.jcr.nodetype.NodeTypeIterator;
+import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeTypeManager;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -69,6 +78,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
+import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -222,6 +232,45 @@ public class FedoraResourceImplIT extends AbstractIT {
                         .contains(ANY, s, p, o));
 
 
+    }
+
+    @Test 
+    public void testRdfTypeInheritance() throws RepositoryException {
+        NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
+        NamespaceRegistry nsReg = session.getWorkspace().getNamespaceRegistry();
+        
+        nsReg.registerNamespace("indexing","INDEXING_NAMESPACE");
+        
+        NodeTypeTemplate type = mgr.createNodeTypeTemplate();
+        type.setName("indexing:indexable");
+        type.setMixin(true);
+        NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type};
+        mgr.registerNodeTypes(nodeTypes, true);
+        
+        NodeTypeTemplate type2 = mgr.createNodeTypeTemplate();
+        type2.setName("test:testInher");
+        type2.setMixin(true);
+        type2.setDeclaredSuperTypeNames(new String[]{"indexing:indexable"});
+        NodeTypeDefinition[] nodeTypes2 = new NodeTypeDefinition[]{type2};
+        mgr.registerNodeTypes(nodeTypes2, true);
+        
+        FedoraResource object =
+                objectService.createObject(session, "/testNTTnheritanceObject");
+        final javax.jcr.Node node = object.getNode();
+        node.addMixin("test:testInher");
+        
+        session.save();
+        session.logout();
+        session = repo.login();
+        
+        object = objectService.getObject(session, "/testNTTnheritanceObject");
+        
+        // jcr property
+        final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
+        final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
+        final Node o = createProperty("INDEXING_NAMESPACE" + "indexable").asNode();
+        assertTrue("Supertype indexing not found!",object.getPropertiesDataset(subjects).asDatasetGraph()
+                       .contains(ANY, s, p, o));
     }
 
     @Test
