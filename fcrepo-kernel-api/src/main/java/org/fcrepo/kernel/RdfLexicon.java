@@ -93,6 +93,9 @@ public final class RdfLexicon {
     public static final String RDF_NAMESPACE =
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
+    public static final String INDEXING_NAMESPACE =
+            "http://fedora.info/definitions/v4/indexing#";
+
     public static final String DC_NAMESPACE =
             "http://purl.org/dc/elements/1.1/";
 
