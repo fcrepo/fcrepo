@@ -39,6 +39,7 @@ import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 public class SessionFactoryTest {
 
@@ -136,16 +137,16 @@ public class SessionFactoryTest {
             testGetAuthenticatedSessionWithTransaction() throws LoginException,
                                                         RepositoryException {
 
-        when(mockContext.getUserPrincipal()).thenReturn(mockUser);
+        when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        when(txSession.impersonate(any(Credentials.class))).thenReturn(
-                mockSession);
         when(mockTx.getSession()).thenReturn(txSession);
+        when(mockTx.isAssociatedWithUser(Mockito.anyString())).thenReturn(true);
+        when(mockTxService.isAssociatedWithUser(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
 
         final Session session = testObj.getSession(mockContext, mockRequest);
-        assertEquals(mockSession, session);
-        verify(txSession).impersonate(any(Credentials.class));
+        assertEquals(txSession, session);
+        verify(mockTx).getSession();
     }
 
     @Test

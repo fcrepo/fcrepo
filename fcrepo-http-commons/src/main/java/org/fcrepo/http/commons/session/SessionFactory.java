@@ -16,24 +16,25 @@
 
 package org.fcrepo.http.commons.session;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.annotation.PostConstruct;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.core.SecurityContext;
-
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.SecurityContext;
+
+import java.security.Principal;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.propagate;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Factory for generating sessions for HTTP requests, taking
@@ -150,22 +151,28 @@ public class SessionFactory {
                     getEmbeddedTransaction(servletRequest);
 
             final Session session;
+            final Principal userPrincipal = servletRequest.getUserPrincipal();
+
+            boolean isUserAuthorizedForTransaction = false;
 
             if (transaction != null) {
-                LOGGER.debug(
-                                "Returning a session in the transaction {} impersonating {}",
-                                transaction, creds);
-                // No need to impersonate if we have a servlet session tied to
-                // the Tx.
-                final HttpSession httpSession =
-                        servletRequest.getSession(true);
-                if (httpSession != null &&
-                        transaction.getId().equals(
-                                httpSession.getAttribute("currentTx"))) {
-                    session = transaction.getSession();
+
+                if (userPrincipal != null) {
+                    String userName = userPrincipal.getName();
+                    isUserAuthorizedForTransaction = transactionService.isAssociatedWithUser(
+                            transaction.getId(), userName);
                 } else {
-                    session = transaction.getSession().impersonate(creds);
+                    // Anonymous case
+                    isUserAuthorizedForTransaction = true;
                 }
+            }
+
+
+            if (transaction != null && isUserAuthorizedForTransaction) {
+                LOGGER.debug(
+                                "Returning a session in the transaction {}",
+                                transaction);
+                session = transaction.getSession();
             } else {
 
                 final String workspace =

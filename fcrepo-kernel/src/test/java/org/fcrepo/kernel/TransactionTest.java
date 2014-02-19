@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.Transaction.State.DIRTY;
 import static org.fcrepo.kernel.Transaction.State.NEW;
 import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -39,13 +40,15 @@ public class TransactionTest {
 
     private Transaction testObj;
 
+    private static final String USER_NAME = "test";
+
     @Mock
     private Session mockSession;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new Transaction(mockSession);
+        testObj = new Transaction(mockSession, USER_NAME);
     }
 
     @Test
@@ -95,5 +98,22 @@ public class TransactionTest {
         when(mockSession.hasPendingChanges()).thenReturn(true, false);
         assertEquals(DIRTY, testObj.getState());
         testObj.commit(null);
+    }
+
+    @Test
+    public void testUserAssociation() {
+        String otherUser = "dummy";
+        assertTrue("Transaction expected to be associated with user " + USER_NAME,
+                testObj.isAssociatedWithUser(USER_NAME));
+        assertFalse("Transaction should not be associated with the user" + otherUser,
+                testObj.isAssociatedWithUser(otherUser));
+        assertFalse("Transaction should not be associated with an empty user",
+                testObj.isAssociatedWithUser(null));
+
+        testObj = new Transaction(mockSession, null);
+        assertTrue("Transaction should not be associated with a user",
+                testObj.isAssociatedWithUser(null));
+        assertFalse("Transaction should not be associated with a user",
+                testObj.isAssociatedWithUser(USER_NAME));
     }
 }

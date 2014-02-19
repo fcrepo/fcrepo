@@ -32,7 +32,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -199,7 +198,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     }
 
-    @Ignore("Until ticket is resolved: https://www.pivotaltracker.com/story/show/63029852")
     @Test
     public void testCreateDoStuffAndCommitTransactionSeparateConnections() throws Exception {
         /* create a tx */
