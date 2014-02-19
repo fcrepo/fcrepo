@@ -265,11 +265,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         
         object = objectService.getObject(session, "/testNTTnheritanceObject");
         
-        // jcr property
         final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
         final Node o = createProperty("INDEXING_NAMESPACE" + "indexable").asNode();
-        assertTrue("Supertype indexing not found!",object.getPropertiesDataset(subjects).asDatasetGraph()
+        assertTrue("type indexing:indexing not found inherited in test:testInher!",object.getPropertiesDataset(subjects).asDatasetGraph()
                        .contains(ANY, s, p, o));
     }
 
