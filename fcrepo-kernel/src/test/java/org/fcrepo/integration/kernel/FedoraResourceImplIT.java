@@ -30,7 +30,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
-import static org.fcrepo.kernel.RdfLexicon.INDEXING_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -236,26 +235,27 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test 
     public void testRdfTypeInheritance() throws RepositoryException {
+        logger.info("in testRdfTypeInheritance...");
         NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
         NamespaceRegistry nsReg = session.getWorkspace().getNamespaceRegistry();
         
-        nsReg.registerNamespace("indexing","INDEXING_NAMESPACE");
-        
+        //create supertype mixin
         NodeTypeTemplate type = mgr.createNodeTypeTemplate();
-        type.setName("indexing:indexable");
+        type.setName("test:aSupertype");
         type.setMixin(true);
         NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type};
         mgr.registerNodeTypes(nodeTypes, true);
         
+        //create a type inheriting above supertype
         NodeTypeTemplate type2 = mgr.createNodeTypeTemplate();
         type2.setName("test:testInher");
         type2.setMixin(true);
-        type2.setDeclaredSuperTypeNames(new String[]{"indexing:indexable"});
+        type2.setDeclaredSuperTypeNames(new String[]{"test:aSupertype"});
         NodeTypeDefinition[] nodeTypes2 = new NodeTypeDefinition[]{type2};
         mgr.registerNodeTypes(nodeTypes2, true);
         
-        FedoraResource object =
-                objectService.createObject(session, "/testNTTnheritanceObject");
+        //create object with inheriting type
+        FedoraResource object = objectService.createObject(session, "/testNTTnheritanceObject");
         final javax.jcr.Node node = object.getNode();
         node.addMixin("test:testInher");
         
@@ -263,13 +263,14 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.logout();
         session = repo.login();
         
-        object = objectService.getObject(session, "/testNTTnheritanceObject");
-        
+        object = objectService.createObject(session, "/testNTTnheritanceObject");
+
+        //test that supertype has been inherited as rdf:type
         final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
-        final Node o = createProperty("INDEXING_NAMESPACE" + "indexable").asNode();
-        assertTrue("type indexing:indexing not found inherited in test:testInher!",object.getPropertiesDataset(subjects).asDatasetGraph()
-                       .contains(ANY, s, p, o));
+        final Node o = createProperty("info:fedora/test/aSupertype").asNode();
+        assertTrue("supertype test:aSupertype not found inherited in test:testInher!",object.getPropertiesDataset(subjects).asDatasetGraph()
+                       .contains(ANY, s, p, o));               
     }
 
     @Test
