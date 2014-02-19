@@ -52,6 +52,8 @@ public class TransactionServiceTest {
 
     private static final String NOT_A_TX = "bar";
 
+    private static final String USER_NAME = "test";
+
     TransactionService service;
 
     @Mock
@@ -93,11 +95,11 @@ public class TransactionServiceTest {
 
     @Test
     public void testCreateTx() throws Exception {
-        final Transaction tx = service.beginTransaction(mock(Session.class), "test");
+        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
-        assertTrue(tx.isAssociatedWithUser("test"));
+        assertTrue(tx.isAssociatedWithUser(USER_NAME));
         assertEquals(NEW, tx.getState());
     }
 

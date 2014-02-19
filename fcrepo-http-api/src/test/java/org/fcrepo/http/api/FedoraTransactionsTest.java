@@ -36,11 +36,12 @@ import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.security.Principal;
 
 public class FedoraTransactionsTest {
+
+    private static final String USER_NAME = "test";
 
     private FedoraTransactions testObj;
 
@@ -59,7 +60,7 @@ public class FedoraTransactionsTest {
     private TransactionService mockTxService;
 
     @Mock
-    private Principal principal;
+    private Principal mockPrincipal;
 
     @Before
     public void setUp() {
@@ -75,11 +76,11 @@ public class FedoraTransactionsTest {
     @Test
     public void shouldStartANewTransaction() throws RepositoryException {
         setField(testObj, "session", regularSession);
-        when(mockTxService.beginTransaction(regularSession, "test")).thenReturn(mockTx);
-        when(mockRequest.getUserPrincipal()).thenReturn(principal);
-        when(principal.getName()).thenReturn("test");
+        when(mockTxService.beginTransaction(regularSession, USER_NAME)).thenReturn(mockTx);
+        when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
+        when(mockPrincipal.getName()).thenReturn(USER_NAME);
         testObj.createTransaction(createPathList(), mockRequest);
-        verify(mockTxService).beginTransaction(regularSession, "test");
+        verify(mockTxService).beginTransaction(regularSession, USER_NAME);
     }
 
     @Test

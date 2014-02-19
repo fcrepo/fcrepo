@@ -40,13 +40,15 @@ public class TransactionTest {
 
     private Transaction testObj;
 
+    private static final String USER_NAME = "test";
+
     @Mock
     private Session mockSession;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new Transaction(mockSession, "test");
+        testObj = new Transaction(mockSession, USER_NAME);
     }
 
     @Test
@@ -100,12 +102,18 @@ public class TransactionTest {
 
     @Test
     public void testUserAssociation() {
-        assertTrue(testObj.isAssociatedWithUser("test"));
-        assertFalse(testObj.isAssociatedWithUser("dummy"));
-        assertFalse(testObj.isAssociatedWithUser(null));
+        String otherUser = "dummy";
+        assertTrue("Transaction expected to be associated with user " + USER_NAME,
+                testObj.isAssociatedWithUser(USER_NAME));
+        assertFalse("Transaction should not be associated with the user" + otherUser,
+                testObj.isAssociatedWithUser(otherUser));
+        assertFalse("Transaction should not be associated with an empty user",
+                testObj.isAssociatedWithUser(null));
 
         testObj = new Transaction(mockSession, null);
-        assertTrue(testObj.isAssociatedWithUser(null));
-        assertFalse(testObj.isAssociatedWithUser("test"));
+        assertTrue("Transaction should not be associated with a user",
+                testObj.isAssociatedWithUser(null));
+        assertFalse("Transaction should not be associated with a user",
+                testObj.isAssociatedWithUser(USER_NAME));
     }
 }

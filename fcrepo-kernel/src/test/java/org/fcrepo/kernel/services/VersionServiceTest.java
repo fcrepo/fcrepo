@@ -41,6 +41,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class VersionServiceTest {
 
+    private static final String USER_NAME = "test";
 
     private VersionService testObj;
 
@@ -54,6 +55,7 @@ public class VersionServiceTest {
 
     @Mock
     private VersionManager mockVM;
+
 
     @Before
     public void setup() throws Exception {
@@ -130,7 +132,7 @@ public class VersionServiceTest {
     @Test
     public void testDeferredCheckpointVersioned() throws Exception {
         // start a transaction
-        final Transaction t = txService.beginTransaction(s, "test");
+        final Transaction t = txService.beginTransaction(s, USER_NAME);
         s = t.getSession();
         when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
@@ -155,7 +157,7 @@ public class VersionServiceTest {
     @Test
     public void testDeferredCheckpointUnversioned() throws Exception {
         // start a transaction
-        final Transaction t = txService.beginTransaction(s, "test");
+        final Transaction t = txService.beginTransaction(s, USER_NAME);
         s = t.getSession();
         when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
@@ -180,7 +182,7 @@ public class VersionServiceTest {
     @Test
     public void testDeferredCheckpointAutoVersioned() throws Exception {
         // start a transaction
-        final Transaction t = txService.beginTransaction(s, "test");
+        final Transaction t = txService.beginTransaction(s, USER_NAME);
         s = t.getSession();
         when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
                 .thenReturn(t.getId());

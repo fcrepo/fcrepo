@@ -32,7 +32,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
