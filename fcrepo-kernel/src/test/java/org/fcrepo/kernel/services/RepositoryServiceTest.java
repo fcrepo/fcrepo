@@ -44,7 +44,6 @@ import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
@@ -236,8 +235,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
     }
 
-    public void setupSearchRepository()
-            throws UnsupportedRepositoryOperationException, RepositoryException {
+    private void setupSearchRepository() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjectFactory, mockSession)).thenReturn(mockJcrRdfTools);
@@ -260,7 +258,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testSearchRepository() throws Exception {
+    public void testSearchRepository() throws RepositoryException {
 
         setupSearchRepository();
 
@@ -280,7 +278,8 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testSearchRepositoryNullSearchTerms() throws Exception {
+    public void testSearchRepositoryNullSearchTerms()
+            throws RepositoryException {
         setupSearchRepository();
 
         final Dataset dataset = testObj.searchRepository(mockSubjectFactory, subject, mockSession,
@@ -295,7 +294,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testSearchRepositoryNoSearchTerms() throws Exception {
+    public void testSearchRepositoryNoSearchTerms() throws RepositoryException {
         setupSearchRepository();
 
         final Dataset dataset =
