@@ -28,6 +28,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
+import java.io.File;
 import java.util.Map;
 
 import org.infinispan.schematic.document.Document;
@@ -93,6 +94,17 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         return docWriter.document();
+    }
+
+    @Override
+    public String sha1(final File file) {
+        final String id = idFor(file);
+        final Document doc = super.getDocumentById(id);
+        final DocumentReader docReader = readDocument(doc);
+        if (null != docReader.getProperty(CONTENT_DIGEST)) {
+            return docReader.getProperty(CONTENT_DIGEST).toString();
+        }
+        return super.sha1(file);
     }
 
     private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
