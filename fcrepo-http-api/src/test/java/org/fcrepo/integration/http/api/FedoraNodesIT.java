@@ -632,7 +632,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testCreateGraph() throws Exception {
-        final String subjectURI = serverAddress + "FedoraCreateGraph";
+        final String subjectURI = serverAddress + UUID.randomUUID().toString();
         final HttpPut replaceMethod = new HttpPut(subjectURI);
         replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
