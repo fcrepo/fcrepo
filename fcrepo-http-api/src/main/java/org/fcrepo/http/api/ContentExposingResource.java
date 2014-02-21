@@ -44,9 +44,9 @@ import static javax.ws.rs.core.Response.status;
  */
 public abstract class ContentExposingResource extends AbstractResource {
 
-    public static final int REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+    protected static final int REQUESTED_RANGE_NOT_SATISFIABLE = 416;
 
-    public static final int PARTIAL_CONTENT = 206;
+    protected static final int PARTIAL_CONTENT = 206;
 
     /**
      * A helper method that does most of the work associated with processing a request
