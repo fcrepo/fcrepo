@@ -146,7 +146,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private String getResourceURI(final Resource subject) {
         if (!subject.isURIResource()) {
-            LOGGER.debug("RDF resource {} was not a URI resource, aborting.",
+            LOGGER.debug("RDF resource {} was not a URI resource: returning null.",
                     subject);
             return null;
         }
@@ -172,7 +172,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
         if (!isFedoraGraphSubject(subjectUri)) {
             LOGGER.debug(
-                    "RDF resource {} was not a URI resource with our expected basePath {}, aborting.",
+                    "RDF resource {} was not a URI resource with our expected basePath {}, returning null.",
                     subjectUri, basePath);
             return null;
         }
