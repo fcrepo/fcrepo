@@ -18,10 +18,7 @@ package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
 import com.sun.jersey.core.header.ContentDisposition;
-import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
-import org.fcrepo.http.commons.domain.Range;
-import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -40,7 +37,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
@@ -59,7 +55,6 @@ import java.util.List;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -72,11 +67,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:content")
-public class FedoraContent extends AbstractResource {
-
-    public static final int REQUESTED_RANGE_NOT_SATISFIABLE = 416;
-
-    public static final int PARTIAL_CONTENT = 206;
+public class FedoraContent extends ContentExposingResource {
 
     @InjectedSession
     protected Session session;
@@ -290,82 +281,6 @@ public class FedoraContent extends AbstractResource {
         } finally {
             session.logout();
         }
-    }
-
-    static Response getDatastreamContentResponse(Datastream ds,
-            String rangeValue, Request request, HttpGraphSubjects subjects) throws RepositoryException, IOException {
-        final EntityTag etag =
-                new EntityTag(ds.getContentDigest().toString());
-        final Date date = ds.getLastModifiedDate();
-        final Date roundedDate = new Date();
-        roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
-
-        final CacheControl cc = new CacheControl();
-        cc.setMaxAge(0);
-        cc.setMustRevalidate(true);
-
-        if (builder == null) {
-
-            final InputStream content = ds.getContent();
-
-            if (rangeValue != null && rangeValue.startsWith("bytes")) {
-
-                final Range range = Range.convert(rangeValue);
-
-                final long contentSize = ds.getContentSize();
-
-                final String endAsString;
-
-                if (range.end() == -1) {
-                    endAsString = Long.toString(contentSize - 1);
-                } else {
-                    endAsString = Long.toString(range.end());
-                }
-
-                final String contentRangeValue =
-                        String.format("bytes %s-%s/%s", range.start(),
-                                endAsString, contentSize);
-
-                if (range.end() > contentSize ||
-                        (range.end() == -1 && range.start() > contentSize)) {
-                    builder =
-                            status(
-                                    REQUESTED_RANGE_NOT_SATISFIABLE)
-                                    .header("Content-Range",
-                                            contentRangeValue);
-                } else {
-                    final RangeRequestInputStream rangeInputStream =
-                            new RangeRequestInputStream(content, range
-                                    .start(), range.size());
-
-                    builder =
-                            status(PARTIAL_CONTENT).entity(
-                                    rangeInputStream)
-                                    .header("Content-Range",
-                                            contentRangeValue);
-                }
-
-            } else {
-                builder = ok(content);
-            }
-        }
-
-        final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                .fileName(ds.getFilename())
-                .creationDate(ds.getCreatedDate())
-                .modificationDate(ds.getLastModifiedDate())
-                .size(ds.getContentSize())
-                .build();
-
-        return builder.type(ds.getMimeType()).header(
-                "Link",
-                subjects.getGraphSubject(ds.getNode()) +
-                        ";rel=\"meta\"").header("Accept-Ranges",
-                "bytes").cacheControl(cc).lastModified(date).tag(etag)
-                .header("Content-Disposition", contentDisposition)
-                .build();
     }
 
 }

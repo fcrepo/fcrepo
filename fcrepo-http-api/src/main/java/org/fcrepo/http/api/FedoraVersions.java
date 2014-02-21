@@ -18,7 +18,6 @@ package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.http.api.versioning.VersionAwareHttpGraphSubjects;
-import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
@@ -73,7 +72,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:versions")
-public class FedoraVersions extends AbstractResource {
+public class FedoraVersions extends ContentExposingResource {
 
     @InjectedSession
     protected Session session;
@@ -118,17 +117,17 @@ public class FedoraVersions extends AbstractResource {
      * reassigned to describe this version.
      *
      * @param pathList
-     * @param versionPath
+     * @param label
      * @return
      * @throws RepositoryException
      */
     @POST
-    @Path("/{versionPath:.+}")
+    @Path("/{label:.+}")
     public Response addVersion(@PathParam("path")
             final List<PathSegment> pathList,
-            @PathParam("versionPath")
-            final String versionPath) throws RepositoryException {
-        return addVersion(toPath(pathList), versionPath);
+            @PathParam("label")
+            final String label) throws RepositoryException {
+        return addVersion(toPath(pathList), label);
     }
 
     /**
@@ -159,30 +158,28 @@ public class FedoraVersions extends AbstractResource {
      * Retrieve a version of an object.  The path structure is as follows
      * (though these URLs are returned from getVersionList and need not be
      * constructed manually):
-     * /versionable-node/fcr:versions/uuid-of-the-frozen-node/path/to/any/copied/unversionable/nodes
      * /versionable-node/fcr:versions/label/path/to/any/copied/unversionable/nodes
      * @param pathList
-     * @param versionPath the tagged label of a version or the UUID of the
-     *                     frozenNode that stores that version.
+     * @param label the label for the version of the subgraph
      * @param uriInfo
      * @return
      * @throws RepositoryException
      */
-    @Path("/{versionPath:.+}")
+    @Path("/{label:.+}")
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML})
     public RdfStream getVersion(@PathParam("path")
             final List<PathSegment> pathList,
-            @PathParam("versionPath")
-            final String versionPath,
+            @PathParam("label")
+            final String label,
             @Context
             final Request request,
             @Context
             final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
-                versionPath);
+                label);
         final Node node = nodeTranslator().getNodeFromGraphSubjectForVersionNode(uriInfo.getRequestUri().toString());
         if (node == null) {
             throw new WebApplicationException(status(NOT_FOUND).build());
@@ -200,7 +197,7 @@ public class FedoraVersions extends AbstractResource {
      * @return Binary blob
      * @throws RepositoryException
      */
-    @Path("/{versionPath:.+}/fcr:content")
+    @Path("/{label:.+}/fcr:content")
     @GET
     @Timed
     public Response getHistoricContent(@PathParam("path")
@@ -208,17 +205,15 @@ public class FedoraVersions extends AbstractResource {
                                        final String rangeValue, @Context
                                        final Request request) throws RepositoryException, IOException {
         try {
-            final String path = toPath(pathList);
-            LOGGER.info("Attempting get of {}.", path);
+            LOGGER.info("Attempting get of {}.", uriInfo.getRequestUri());
             final Node frozenNode = nodeTranslator().getNodeFromGraphSubjectForVersionNode(
-                    uriInfo.getRequestUri().getPath().replace(FCR_CONTENT, ""));
+                    uriInfo.getRequestUri().toString().replace("/" + FCR_CONTENT, ""));
             final Datastream ds =
                     datastreamService.asDatastream(frozenNode);
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(session, FedoraNodes.class,
                             uriInfo);
-            return FedoraContent.getDatastreamContentResponse(ds, rangeValue,
-                    request, subjects);
+            return getDatastreamContentResponse(ds, rangeValue, request, subjects);
 
         } finally {
             session.logout();

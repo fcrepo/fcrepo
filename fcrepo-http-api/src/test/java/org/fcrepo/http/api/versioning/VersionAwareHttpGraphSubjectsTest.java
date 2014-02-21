@@ -28,20 +28,29 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 import java.util.UUID;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
 
     @Mock
     protected VersionManager mockVersionManager;
+
+    @Mock
+    protected Node mockFrozenNode;
+
+    @Mock
+    protected Node mockVersionableNode;
 
     @Before
     public void setUpForThisClass() throws RepositoryException {
@@ -56,90 +65,155 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
     }
 
     @Test
+    public void testGetGraphSubject() throws RepositoryException {
+        mockVersion(UUID.randomUUID().toString());
+
+        String uri = "http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath()
+                + "/fcr:versions/" + mockFrozenNode.getIdentifier();
+
+        Resource actual = testObj.getGraphSubject(mockFrozenNode.getPath());
+        assertEquals(uri, actual.getURI());
+    }
+
+    @Test
+    public void testGetGraphSubjectChildNode() throws RepositoryException {
+        mockVersion(UUID.randomUUID().toString());
+
+        String uri = "http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath()
+                + "/fcr:versions/" + mockFrozenNode.getIdentifier() + "/fcr:content";
+
+        String contentNodeId = UUID.randomUUID().toString();
+        Node mockVersionChildNode = mock(Node.class);
+        when(mockSession.getNodeByIdentifier(contentNodeId)).thenReturn(mockVersionChildNode);
+        when(mockVersionChildNode.isNodeType("mix:versionable")).thenReturn(false);
+        final String mockVersionedChildNodePath = mockVersionableNode.getPath() + "/" + FCR_CONTENT;
+        when(mockVersionChildNode.getPath()).thenReturn(mockVersionedChildNodePath);
+        when(mockVersionChildNode.getParent()).thenReturn(mockVersionableNode);
+
+        Node mockFrozenChildNode = mock(Node.class);
+        final String mockFrozenChildNodePath = mockFrozenNode.getPath() + "/" + JCR_CONTENT;
+        when(mockFrozenChildNode.getPath()).thenReturn(mockFrozenChildNodePath);
+        NodeType mockFrozenNodeType = mock(NodeType.class);
+        when(mockFrozenNodeType.getName()).thenReturn("nt:frozenNode");
+        when(mockFrozenChildNode.getPrimaryNodeType()).thenReturn(mockFrozenNodeType);
+        when(mockSession.nodeExists(mockFrozenChildNodePath)).thenReturn(true);
+        when(mockSession.getNode(mockFrozenChildNodePath)).thenReturn(mockFrozenChildNode);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn(contentNodeId);
+        when(mockFrozenChildNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
+        when(mockFrozenChildNode.getPath()).thenReturn(mockFrozenChildNodePath);
+        when(mockWorkspace.getName()).thenReturn("default");
+        when(mockFrozenChildNode.getParent()).thenReturn(mockFrozenNode);
+
+        Resource actual = testObj.getGraphSubject(mockFrozenChildNodePath);
+        assertEquals(uri, actual.getURI());
+    }
+
+
+    @Test
     public void testGetGraphSubjectForVersion() throws RepositoryException {
-        mockVersion(UUID.randomUUID().toString(), null, true);
-        Resource actual = testObj.getGraphSubject(mockNode);
-        assertEquals(mockSubject.getURI(), actual.getURI());
+        mockVersion(UUID.randomUUID().toString());
+
+        Resource actual = testObj.getGraphSubject(mockFrozenNode);
+        assertEquals("http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath() + "/fcr:versions/"
+                + mockFrozenNode.getIdentifier(), actual.getURI());
     }
 
     @Test
     public void testGetNodeFromGraphSubjectForVersionByUUID() throws PathNotFoundException,
             RepositoryException {
-        mockVersion(UUID.randomUUID().toString(), null, true);
-        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockNode, actual);
 
-        mockVersion(UUID.randomUUID().toString(), null, false);
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(null, actual);
+        mockVersion(UUID.randomUUID().toString());
+
+        String uri = "http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath()
+                + "/fcr:versions/" + mockFrozenNode.getIdentifier();
+        mockSubject(uri);
+
+        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
+        assertEquals(mockFrozenNode, actual);
+
     }
 
     @Test
     public void testGetNodeFromGraphSubjectForVersionByLabel() throws PathNotFoundException,
             RepositoryException {
-        mockVersion("test", "label", true);
-        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockNode, actual);
+        mockVersion(UUID.randomUUID().toString());
 
-        mockVersion("invalid", "missing-label", false);
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(null, actual);
+        final String label = UUID.randomUUID().toString();
+
+        when(mockSession.getNodeByIdentifier(label)).thenThrow(ItemNotFoundException.class);
+        Version mockVersion = mock(Version.class);
+        when(mockVersion.getFrozenNode()).thenReturn(mockFrozenNode);
+        VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        when(mockVersionHistory.hasVersionLabel(label)).thenReturn(true);
+        when(mockVersionHistory.getVersionByLabel(label)).thenReturn(mockVersion);
+        when(mockVersionManager.getVersionHistory(mockVersionableNode.getPath())).thenReturn(mockVersionHistory);
+
+        String uri = "http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath()
+                + "/fcr:versions/" + label;
+        mockSubject(uri);
+
+        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
+        assertEquals(mockFrozenNode, actual);
+    }
+
+    @Test
+    public void testGetNodeFromGraphSubjectForVersionChildByUUID() throws PathNotFoundException,
+            RepositoryException {
+
+        mockVersion(UUID.randomUUID().toString());
+
+        String uri = "http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath()
+                + "/fcr:versions/" + mockFrozenNode.getIdentifier() + "/fcr:content";
+        mockSubject(uri);
+
+        Node mockVersionChildNode = mock(Node.class);
+        final String mockVersionChildNodePath = mockFrozenNode.getPath() + "/" + JCR_CONTENT;
+        when(mockSession.getNode(mockVersionChildNodePath)).thenReturn(mockVersionChildNode);
+        when(mockVersionChildNode.getPath()).thenReturn(mockVersionChildNodePath);
+        when(mockSession.nodeExists(mockVersionChildNodePath)).thenReturn(true);
+        when(mockSession.getNode(mockVersionChildNodePath)).thenReturn(mockVersionChildNode);
+
+        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
+        assertEquals(mockVersionChildNode, actual);
+    }
+
+    private void mockSubject(String uri) {
+        when(mockSubject.getURI()).thenReturn(uri);
+        when(mockSubject.isURIResource()).thenReturn(true);
     }
 
     /**
-     * Sets the mocks to represent an environment where the node at the given
-     * path has a version with the given label (or not if null).
+     * Sets up the mocks so that mockVersionableNode represents a new
+     * versionable node and mockFrozenNode represents a historical version
+     * of that node.
      */
-    private void mockVersion(String nodePath, String label, boolean valid) throws RepositoryException {
+    private void mockVersion(String nodePath) throws RepositoryException {
         String frozenNodeUUID = UUID.randomUUID().toString();
         String versionedNodeUUID = UUID.randomUUID().toString();
 
-        if (label != null) {
-            when(mockSubject.getURI()).thenReturn("http://localhost:8080/fcrepo/rest/" + nodePath + "/fcr:versions/" + label);
-            when(mockSubject.isURIResource()).thenReturn(true);
+        final String frozenPath = "/jcr:versionStorage/" + frozenNodeUUID;
+        final String versionedPath = "/" + nodePath;
 
-            when(mockSession.getNodeByIdentifier(label)).thenThrow(ItemNotFoundException.class);
-            Version mockVersion = mock(Version.class);
-            when(mockVersion.getFrozenNode()).thenReturn(mockNode);
-            when(mockNode.getPath()).thenReturn("/" + nodePath);
-            when(mockSession.nodeExists("/" + nodePath)).thenReturn(true);
-            when(mockSession.getNode("/" + nodePath)).thenReturn(mockNode);
-            VersionHistory mockVersionHistory = mock(VersionHistory.class);
-            when(mockVersionHistory.hasVersionLabel(label)).thenReturn(valid);
-            when(mockVersionHistory.getVersionByLabel(label)).thenReturn(mockVersion);
-            when(mockVersionManager.getVersionHistory("/" + nodePath)).thenReturn(mockVersionHistory);
-        } else {
-            if (valid) {
-                when(mockSession.getNodeByIdentifier(frozenNodeUUID)).thenReturn(mockNode);
-            } else {
-                when(mockSession.getNodeByIdentifier(frozenNodeUUID)).thenThrow(ItemNotFoundException.class);
-            }
-            when(mockSubject.getURI()).thenReturn(
-                    "http://localhost:8080/fcrepo/rest/" + nodePath + "/fcr:versions/" + frozenNodeUUID);
-            when(mockSubject.isURIResource()).thenReturn(true);
+        when(mockSession.nodeExists(frozenPath)).thenReturn(true);
+        when(mockSession.nodeExists(versionedPath)).thenReturn(true);
+        when(mockSession.getNode(frozenPath)).thenReturn(mockFrozenNode);
+        when(mockSession.getNodeByIdentifier(frozenNodeUUID)).thenReturn(mockFrozenNode);
+        when(mockSession.getNode(versionedPath)).thenReturn(mockVersionableNode);
+        when(mockSession.getNodeByIdentifier(versionedNodeUUID)).thenReturn(mockVersionableNode);
+        when(mockVersionableNode.getIdentifier()).thenReturn(versionedNodeUUID);
+        when(mockFrozenNode.getIdentifier()).thenReturn(frozenNodeUUID);
+        when(mockVersionableNode.getPath()).thenReturn(versionedPath);
 
-            // set up the version manager
-            when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-            VersionHistory mockVersionHistory = mock(VersionHistory.class);
-            when(mockVersionHistory.hasVersionLabel(any(String.class))).thenReturn(false);
-            when(mockVersionManager.getVersionHistory("/" + nodePath)).thenReturn(mockVersionHistory);
+        NodeType mockFrozenNodeType = mock(NodeType.class);
+        when(mockFrozenNodeType.getName()).thenReturn("nt:frozenNode");
+        when(mockFrozenNode.getPrimaryNodeType()).thenReturn(mockFrozenNodeType);
+        when(mockFrozenNode.getPath()).thenReturn(frozenPath);
+        Property mockProperty = mock(Property.class);
+        when(mockProperty.getString()).thenReturn(versionedNodeUUID);
+        when(mockFrozenNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
 
-            // set up frozen node
-            when(mockNodeType.getName()).thenReturn("nt:frozenNode");
-            when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-            when(mockNode.getPath()).thenReturn("/" + nodePath);
-            Property mockProperty = mock(Property.class);
-            when(mockProperty.getString()).thenReturn(versionedNodeUUID);
-            when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
-            when(mockNode.getIdentifier()).thenReturn(frozenNodeUUID);
+        when(mockVersionableNode.isNodeType("mix:versionable")).thenReturn(true);
 
-            // set up the versioned node
-            Node versionableNode = mock(Node.class);
-            when(versionableNode.isNodeType("mix:versionable")).thenReturn(true);
-            when(versionableNode.getPath()).thenReturn("/" + nodePath);
-            when(mockSession.nodeExists("/" + nodePath)).thenReturn(true);
-            when(mockSession.getNode("/" + nodePath)).thenReturn(mockNode);
-            when(mockSession.getNodeByIdentifier(versionedNodeUUID)).thenReturn(versionableNode);
-        }
     }
 }

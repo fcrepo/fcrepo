@@ -159,7 +159,7 @@ public class HttpGraphSubjects implements GraphSubjects {
         if (subjectUri == null) {
             return null;
         } else {
-            return getPathFromGraphSubject(getResourceURI(subject));
+            return getPathFromGraphSubject(subjectUri);
         }
     }
 
