@@ -16,6 +16,7 @@
 
 package org.fcrepo.connector.file;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.AfterClass;
 import org.infinispan.schematic.document.Document;
 import org.junit.Before;
@@ -25,12 +26,14 @@ import org.mockito.Mock;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
+import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.NameFactory;
 import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.ValueFactories;
 import org.modeshape.jcr.value.basic.BasicName;
+import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
@@ -42,6 +45,7 @@ import java.nio.file.Path;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
+import static junit.framework.Assert.assertEquals;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -90,6 +94,9 @@ public class FedoraFileSystemConnectorTest {
 
     @Mock
     private BinaryValue binaryValue;
+
+    @Mock
+    private DocumentReader documentReader;
 
     private ExecutionContext mockContext = new ExecutionContext();
 
@@ -163,6 +170,31 @@ public class FedoraFileSystemConnectorTest {
 
         final Document doc = connector.getDocumentById("/" + tmpFile.getName());
         assertNotNull(doc);
+    }
+
+    @Test
+    public void testSha1() {
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn(NT_RESOURCE);
+        when(mockNameFactory.create(anyString())).thenReturn(new BasicName("", tmpFile.getName()));
+        when(binaryProperty.getFirstValue()).thenReturn(binaryValue);
+        when(mockTranslator.getProperty(any(Document.class), eq(JCR_DATA)))
+                .thenReturn(binaryProperty);
+
+        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        assertNotNull(doc);
+
+        final String chksum = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d";
+        when(documentReader.getProperty(FedoraJcrTypes.CONTENT_DIGEST))
+                .thenReturn(new BasicSingleValueProperty(new BasicName("", FedoraJcrTypes.CONTENT_DIGEST.toString()),
+                        chksum));
+
+        final String hex = documentReader.getProperty(FedoraJcrTypes.CONTENT_DIGEST).getValue(0).toString();
+        final String sha1 = connector.sha1(tmpFile);
+
+        assertNotNull(sha1);
+        assertNotNull(hex);
+        assertEquals(sha1, hex);
     }
 
 }
