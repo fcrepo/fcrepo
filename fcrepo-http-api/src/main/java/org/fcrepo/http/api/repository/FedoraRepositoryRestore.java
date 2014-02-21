@@ -80,8 +80,7 @@ public class FedoraRepositoryRestore extends AbstractResource {
         }
 
         try {
-            final Problems problems =
-                nodeService.restoreRepository(session, backupDirectory);
+            final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
             if (problems.hasProblems()) {
                 LOGGER.error("Problems restoring up the repository:");
 

@@ -59,11 +59,12 @@ public class VersionServiceTest {
 
     @Before
     public void setup() throws Exception {
-        txService = new TransactionService();
+        txService = new TransactionServiceImpl();
         initMocks(this);
-        testObj = new VersionService();
-        testObj.txService = txService;
-        txService.versionService = testObj;
+        testObj = new VersionServiceImpl();
+
+        ((VersionServiceImpl) testObj).setTxService(txService);
+        ((TransactionServiceImpl) txService).setVersionService(testObj);
 
         s = mock(Session.class);
         mockWorkspace = mock(Workspace.class);
@@ -76,29 +77,35 @@ public class VersionServiceTest {
         final Node versionedNode = mock(Node.class);
         when(versionedNode.getPath()).thenReturn("/example-versioned");
         when(versionedNode.getSession()).thenReturn(s);
-        when(versionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(true);
+        when(versionedNode.isNodeType(VersionServiceImpl.VERSIONABLE))
+                .thenReturn(true);
         when(s.getNode("/example-versioned")).thenReturn(versionedNode);
 
         // add a node that's autoversioned
         final Node autoversionedNode = mock(Node.class);
         when(autoversionedNode.getPath()).thenReturn("/example-auto-versioned");
         when(autoversionedNode.getSession()).thenReturn(s);
-        when(autoversionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(true);
+        when(autoversionedNode.isNodeType(VersionServiceImpl.VERSIONABLE))
+                .thenReturn(true);
         when(s.getNode("/example-auto-versioned")).thenReturn(autoversionedNode);
         final Property autoVersionProperty = mock(Property.class);
         final Value autoVersionValue = mock(Value.class);
-        when(autoVersionValue.getString()).thenReturn(VersionService.AUTO_VERSION);
+        when(autoVersionValue.getString()).thenReturn(
+                VersionServiceImpl.AUTO_VERSION);
         when(autoVersionProperty.isMultiple()).thenReturn(true);
         when(autoVersionProperty.getValues()).thenReturn(new Value[] { autoVersionValue });
-        when(autoversionedNode.hasProperty(VersionService.VERSION_POLICY)).thenReturn(true);
-        when(autoversionedNode.getProperty(VersionService.VERSION_POLICY)).thenReturn(autoVersionProperty);
+        when(autoversionedNode.hasProperty(VersionServiceImpl.VERSION_POLICY))
+                .thenReturn(true);
+        when(autoversionedNode.getProperty(VersionServiceImpl.VERSION_POLICY))
+                .thenReturn(autoVersionProperty);
 
 
         // add a node that's unversioned
         final Node unversionedNode = mock(Node.class);
         when(unversionedNode.getPath()).thenReturn("/example-unversioned");
         when(unversionedNode.getSession()).thenReturn(s);
-        when(unversionedNode.isNodeType(VersionService.VERSIONABLE)).thenReturn(false);
+        when(unversionedNode.isNodeType(VersionServiceImpl.VERSIONABLE))
+                .thenReturn(false);
         when(s.getNode("/example-unversioned")).thenReturn(unversionedNode);
     }
 
@@ -134,7 +141,7 @@ public class VersionServiceTest {
         // start a transaction
         final Transaction t = txService.beginTransaction(s, USER_NAME);
         s = t.getSession();
-        when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
+        when(s.getNamespaceURI(TransactionServiceImpl.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
 
         assertNotNull("Transaction must have started!",
@@ -159,7 +166,7 @@ public class VersionServiceTest {
         // start a transaction
         final Transaction t = txService.beginTransaction(s, USER_NAME);
         s = t.getSession();
-        when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
+        when(s.getNamespaceURI(TransactionServiceImpl.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
 
         assertNotNull("Transaction must have started!",
@@ -184,7 +191,7 @@ public class VersionServiceTest {
         // start a transaction
         final Transaction t = txService.beginTransaction(s, USER_NAME);
         s = t.getSession();
-        when(s.getNamespaceURI(TransactionService.FCREPO4_TX_ID))
+        when(s.getNamespaceURI(TransactionServiceImpl.FCREPO4_TX_ID))
                 .thenReturn(t.getId());
 
         assertNotNull("Transaction must have started!",

@@ -35,7 +35,7 @@ import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -49,7 +49,7 @@ public class FedoraRepositoryRestoreTest {
     private FedoraRepositoryRestore repoRestore;
 
     @Mock
-    private NodeService mockNodes;
+    private RepositoryService mockService;
 
     @Mock
     private Session mockSession;
@@ -60,7 +60,7 @@ public class FedoraRepositoryRestoreTest {
 
         repoRestore = new FedoraRepositoryRestore();
         setField(repoRestore, "session", mockSession);
-        setField(repoRestore, "nodeService", mockNodes);
+        setField(repoRestore, "repositoryService", mockService);
         setField(repoRestore, "uriInfo", getUriInfoImpl());
     }
 
@@ -68,7 +68,7 @@ public class FedoraRepositoryRestoreTest {
     public void testRunBackup() throws Exception {
         final Problems mockProblems = mock(Problems.class);
         when(mockProblems.hasProblems()).thenReturn(false);
-        when(mockNodes.backupRepository(any(Session.class), any(File.class)))
+        when(mockService.backupRepository(any(Session.class), any(File.class)))
                 .thenReturn(mockProblems);
 
         boolean thrown = false;
@@ -85,7 +85,7 @@ public class FedoraRepositoryRestoreTest {
     public void testRunBackupWithDir() throws Exception {
         final Problems mockProblems = mock(Problems.class);
         when(mockProblems.hasProblems()).thenReturn(false);
-        when(mockNodes.restoreRepository(any(Session.class), any(File.class)))
+        when(mockService.restoreRepository(any(Session.class), any(File.class)))
                 .thenReturn(mockProblems);
 
         final String tmpDir = System.getProperty("java.io.tmpdir");

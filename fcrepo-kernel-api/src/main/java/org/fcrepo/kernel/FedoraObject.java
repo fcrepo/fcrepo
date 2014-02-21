@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Core abstractions for manipulating storage policies.
-*/
 
-package org.fcrepo.kernel.services.policy;
+package org.fcrepo.kernel;
+
+import javax.jcr.RepositoryException;
+
+/**
+ * @author bbpennel
+ * @date Feb 18, 2014
+ */
+public interface FedoraObject extends FedoraResource {
+
+    /**
+     * @return The JCR name of the node that backs this object.
+     * @throws RepositoryException
+     */
+    String getName() throws RepositoryException;
+
+}

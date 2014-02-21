@@ -33,7 +33,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -436,8 +435,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        assertTrue(asList(
-                getVersionHistory(object.getNode()).getVersionLabels())
+        assertTrue(asList(object.getVersionHistory().getVersionLabels())
                 .contains("v0.0.1"));
 
     }

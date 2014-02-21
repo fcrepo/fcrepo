@@ -37,10 +37,10 @@ import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
-import static org.fcrepo.kernel.Transaction.DEFAULT_TIMEOUT;
-import static org.fcrepo.kernel.Transaction.TIMEOUT_SYSTEM_PROPERTY;
-import static org.fcrepo.kernel.services.TransactionService.REAP_INTERVAL;
 import static org.jgroups.util.Util.assertFalse;
+import static org.fcrepo.kernel.TransactionImpl.DEFAULT_TIMEOUT;
+import static org.fcrepo.kernel.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
+import static org.fcrepo.kernel.services.TransactionServiceImpl.REAP_INTERVAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -342,7 +342,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         client = createClient();
         final HttpGet getObjCommitted =
                 new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
-        GraphStore graphStore = getGraphStore(getObjCommitted);
+        final GraphStore graphStore = getGraphStore(getObjCommitted);
         final boolean exists = graphStore.contains(ANY, createResource(serverAddress + pid).asNode(),
                 ResourceFactory.createProperty(propertyUri).asNode(), createPlainLiteral(propertyValue)
                 .asNode());

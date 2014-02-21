@@ -94,17 +94,18 @@ public class FixityRdfContext extends NodeRdfContext {
                                             HAS_CONTENT_LOCATION_VALUE.asNode(),
                                             createLiteral(storeIdentifier)));
 
-                            for (final FixityResult.FixityState state : blob.status) {
+                            for (final FixityResult.FixityState state : blob.getStatus()) {
                                 b.add(create(resultSubject, HAS_FIXITY_STATE
                                         .asNode(), createLiteral(state
                                         .toString())));
                             }
                             final String checksum =
-                                blob.computedChecksum.toString();
+                                    blob.getComputedChecksum().toString();
                             b.add(create(resultSubject, HAS_MESSAGE_DIGEST
                                     .asNode(), createURI(checksum)));
-                            b.add(create(resultSubject, HAS_SIZE
-                                    .asNode(), createTypedLiteral(blob.computedSize)
+                            b.add(create(resultSubject, HAS_SIZE.asNode(),
+                                    createTypedLiteral(
+                                            blob.getComputedSize())
                                     .asNode()));
                             return b.build().iterator();
                         } catch (final RepositoryException e) {

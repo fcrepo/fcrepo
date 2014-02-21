@@ -70,7 +70,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockNodeType});
 
-        final ObjectService testObj = new ObjectService();
+        final ObjectService testObj = new ObjectServiceImpl();
         final Node actual =
                 testObj.createObject(mockSession, testPath).getNode();
         assertEquals(mockNode, actual);
@@ -87,7 +87,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
 
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
-        final ObjectService testObj = new ObjectService();
+        final ObjectService testObj = new ObjectServiceImpl();
         testObj.getObject(mockSession, "/foo");
         verify(mockSession).getNode(testPath);
     }
@@ -95,7 +95,7 @@ public class ObjectServiceTest implements FedoraJcrTypes {
     @Test
     public void testGetObjectNode() throws RepositoryException {
         final String testPath = "/foo";
-        final ObjectService testObj = new ObjectService();
+        final ObjectService testObj = new ObjectServiceImpl();
         testObj.getObjectNode(mockSession, "/foo");
         verify(mockSession).getNode(testPath);
     }

@@ -19,7 +19,6 @@ package org.fcrepo.kernel.services;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.services.RepositoryService.getRepositoryNamespaces;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -32,9 +31,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +46,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
-import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -65,7 +63,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -111,7 +108,7 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     private NodeIterator mockNI;
 
     @Mock
-    private NodeTypeIterator mockNTI;
+    private RowIterator mockRowIterator;
 
     @Mock
     private Workspace mockWorkspace;
@@ -144,9 +141,6 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     private QueryObjectModelFactory mockQOMFactory;
 
     @Mock
-    private NodeTypeManager mockNodeTypeManager;
-
-    @Mock
     private ValueFactory mockFactory;
 
     @Mock
@@ -169,22 +163,18 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
             when(mockProp.getLong()).thenReturn(EXPECTED_SIZE);
             when(mockRepo.login()).thenReturn(mockSession);
 
-            testObj = new RepositoryService();
+            testObj = new RepositoryServiceImpl();
             testObj.setRepository(mockRepo);
 
             when(mockSession.getNode("/objects")).thenReturn(mockRootNode);
             when(mockRootNode.getNodes()).thenReturn(mockNI);
             when(mockNI.getSize()).thenReturn(EXPECTED_SIZE);
-            when(testObj.findOrCreateNode(mockSession, "/objects")).thenReturn(
-                    mockRootNode);
             when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
             when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
-            when(mockWorkspace.getNodeTypeManager()).thenReturn(
-                    mockNodeTypeManager);
             when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                     mockNamespaceRegistry);
             when(mockNamespaceRegistry.getPrefixes()).thenReturn(mockPrefixes);
-            when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
+
             when(mockQueryManager.createQuery(anyString(), eq(JCR_SQL2)))
                     .thenReturn(mockQuery);
             when(mockQuery.execute()).thenReturn(mockQueryResult);
@@ -216,23 +206,9 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetAllNodeTypes() throws RepositoryException {
-        final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
-        assertEquals(mockNTI, actual);
-    }
-
-    @Test
     public void testGetRepositoryNamespaces() throws RepositoryException {
-        final Map<String, String> actual = getRepositoryNamespaces(mockSession);
+        final Map<String, String> actual = testObj.getRepositoryNamespaces(mockSession);
         assertEquals(expectedNS, actual);
-    }
-
-    @Test
-    public void testExists() throws RepositoryException {
-        final String existsPath = "/foo/bar/exists";
-        when(mockSession.nodeExists(existsPath)).thenReturn(true);
-        assertEquals(true, testObj.exists(mockSession, existsPath));
-        assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
     }
 
     private void setupSearchRepository() throws RepositoryException {
@@ -310,20 +286,46 @@ public class RepositoryServiceTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetNodeTypes() throws Exception {
-        when(mockNodeTypeManager.getPrimaryNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
-        when(mockNodeTypeManager.getMixinNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
-        testObj.getNodeTypes(mockSession);
+    public void testGetObjectSize() throws RepositoryException {
 
-        verify(mockNodeTypeManager).getPrimaryNodeTypes();
-        verify(mockNodeTypeManager).getMixinNodeTypes();
+        when(mockRepo.login()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
+        when(
+                mockQueryManager.createQuery("SELECT [" + CONTENT_SIZE +
+                        "] FROM [" + FEDORA_BINARY + "]", JCR_SQL2))
+                .thenReturn(mockQuery);
+        when(mockQuery.execute()).thenReturn(mockQueryResult);
+        when(mockQueryResult.getRows()).thenReturn(mockRowIterator);
+
+        when(mockRowIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockRowIterator.nextRow()).thenReturn(mockRow, mockRow, mockRow);
+
+        when(mockRow.getValue(CONTENT_SIZE)).thenReturn(mockValue);
+        when(mockValue.getLong()).thenReturn(5L, 10L, 1L);
+
+        final long count = testObj.getRepositorySize();
+        assertEquals("Got wrong count!", 16L, count);
+        verify(mockSession).logout();
+        verify(mockSession, never()).save();
     }
 
     @Test
-    public void testRegisterNodeTypes() throws Exception {
-        final InputStream mockInputStream = mock(InputStream.class);
-        testObj.registerNodeTypes(mockSession, mockInputStream);
+    public void testGetObjectCount() throws RepositoryException {
+        when(mockRepo.login()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
+        when(
+                mockQueryManager.createQuery("SELECT [" + JCR_PATH +
+                        "] FROM [" + FEDORA_OBJECT + "]", JCR_SQL2))
+                .thenReturn(mockQuery);
+        when(mockQuery.execute()).thenReturn(mockQueryResult);
+        when(mockQueryResult.getRows()).thenReturn(mockRowIterator);
+        when(mockRowIterator.getSize()).thenReturn(3L);
 
-        verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);
+        final long count = testObj.getRepositoryObjectCount();
+        assertEquals(3L, count);
+        verify(mockSession).logout();
+        verify(mockSession, never()).save();
     }
 }

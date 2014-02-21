@@ -16,7 +16,7 @@
 
 package org.fcrepo.kernel;
 
-import static org.fcrepo.kernel.Datastream.hasMixin;
+import static org.fcrepo.kernel.DatastreamImpl.hasMixin;
 import static org.fcrepo.kernel.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.utils.TestHelpers.getPropertyIterator;
@@ -86,7 +86,7 @@ public class DatastreamTest implements FedoraJcrTypes {
             NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-            testObj = new Datastream(mockDsNode);
+            testObj = new DatastreamImpl(mockDsNode);
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());

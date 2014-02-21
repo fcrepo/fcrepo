@@ -16,10 +16,9 @@
 
 package org.fcrepo.kernel;
 
-import org.fcrepo.kernel.services.VersionService;
-
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.Transaction.State.NEW;
 import static org.fcrepo.kernel.Transaction.State.COMMITED;
 import static org.fcrepo.kernel.Transaction.State.DIRTY;
 import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
@@ -29,26 +28,22 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
+import org.fcrepo.kernel.services.VersionService;
 
 /**
  * A Fedora Transaction wraps a JCR session with some expiration logic.
  * Whenever the transaction's session is requested, the expiration is extended
  */
-public class Transaction {
+public class TransactionImpl implements Transaction {
 
     // the default timeout is 3 minutes
     public static final long DEFAULT_TIMEOUT = 3L * 60L * 1000L;
 
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo4.tx.timeout";
-
-    /**
-     * Information about the state of the transaction
-     */
-    public static enum State {
-        DIRTY, NEW, COMMITED, ROLLED_BACK
-    }
 
     private final Session session;
 
@@ -58,9 +53,9 @@ public class Transaction {
 
     private final Date created;
 
-    private Calendar expires;
+    private final Calendar expires;
 
-    private State state = State.NEW;
+    private State state = NEW;
 
     private Set<String> versionedPaths;
 
@@ -68,7 +63,8 @@ public class Transaction {
      * Create a transaction for the given Session
      * @param session
      */
-    public Transaction(final Session session, String userName) {
+
+    public TransactionImpl(final Session session, final String userName) {
         super();
         this.session = session;
         this.created = new Date();
@@ -78,36 +74,35 @@ public class Transaction {
         this.userName = userName;
     }
 
-    /**
-     * Get the transaction-aware session
-     * @return
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getSession()
      */
+    @Override
     public Session getSession() {
         updateExpiryDate();
         return TxAwareSession.newInstance(session, id);
     }
 
-    /**
-     * Get the date this transaction was created
-     * @return
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getCreated()
      */
+    @Override
     public Date getCreated() {
         return new Date(created.getTime());
     }
 
-    /**
-     * Get the transaction identifier
-     * @return
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getId()
      */
+    @Override
     public String getId() {
         return id;
     }
 
-    /**
-     * Get the state of this transaction
-     * @return
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getState()
      */
+    @Override
     public State getState() throws RepositoryException {
         if (this.session != null && this.session.hasPendingChanges()) {
             return DIRTY;
@@ -115,23 +110,18 @@ public class Transaction {
         return state;
     }
 
-    /**
-     * Get the Date when this transaction is expired and can be
-     * garbage-collected
-     * @return
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getExpires()
      */
+    @Override
     public Date getExpires() {
         return expires.getTime();
     }
 
-    /**
-     * Adds a path at which a new version should be made upon successful
-     * completion of this transaction.  Subsequent calls with the same path
-     * have no effect, as the entire transaction is meant to be atomic and only
-     * one new version can result from it.
-     * @param absPath the object path to the resource to have a version
-     *                checkpoint made
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#addPathToVersion(java.lang.String)
      */
+    @Override
     public void addPathToVersion(final String absPath) {
         if (versionedPaths == null) {
             versionedPaths = Collections.newSetFromMap(
@@ -140,11 +130,10 @@ public class Transaction {
         versionedPaths.add(absPath);
     }
 
-    /**
-     * "Commit" the transaction by saving the backing-session
-     * @param vService a versionService
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#commit(org.fcrepo.kernel.services.VersionService)
      */
+    @Override
     public void commit(final VersionService vService) throws RepositoryException {
 
         this.session.save();
@@ -159,9 +148,10 @@ public class Transaction {
         this.expire();
     }
 
-    /**
-     * End the session, and mark for reaping
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#expire()
      */
+    @Override
     public void expire() {
         this.session.logout();
         this.expires.setTimeInMillis(currentTimeMillis());
@@ -174,6 +164,7 @@ public class Transaction {
      * @param userName the user
      * @return true if the userName is associated with this transaction
      */
+    @Override
     public boolean isAssociatedWithUser(final String userName) {
         boolean associatedWith = false;
         if (this.userName == null) {
@@ -186,19 +177,20 @@ public class Transaction {
         return associatedWith;
     }
 
-    /**
-     * Discard all unpersisted changes and expire
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#rollback()
      */
+    @Override
     public void rollback() throws RepositoryException {
         this.state = ROLLED_BACK;
         this.session.refresh(false);
         this.expire();
     }
 
-    /**
-     * Roll forward the expiration date for recent activity
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#updateExpiryDate()
      */
+    @Override
     public void updateExpiryDate() {
         long duration;
         if (System.getProperty(TIMEOUT_SYSTEM_PROPERTY) != null) {

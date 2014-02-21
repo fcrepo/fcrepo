@@ -16,28 +16,6 @@
 
 package org.fcrepo.http.api.repository;
 
-import com.codahale.metrics.annotation.Timed;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import java.io.IOException;
-import java.io.InputStream;
-
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -50,6 +28,30 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.services.NodeServiceImpl;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
 
 /**
  * Expose node types at a REST endpoint
@@ -74,7 +76,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @Timed
     @HtmlTemplate("jcr:nodetypes")
     public RdfStream getNodeTypes(@Context final UriInfo uriInfo) throws RepositoryException {
-        return nodeService.getNodeTypes(session).session(session);
+        return ((NodeServiceImpl) nodeService).getNodeTypes(session).session(session);
     }
 
     /**
@@ -91,7 +93,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
         throws RepositoryException, IOException {
 
         try {
-            nodeService.registerNodeTypes(session, requestBodyStream);
+            ((NodeServiceImpl) nodeService).registerNodeTypes(session, requestBodyStream);
 
             return status(SC_NO_CONTENT).build();
         } finally {

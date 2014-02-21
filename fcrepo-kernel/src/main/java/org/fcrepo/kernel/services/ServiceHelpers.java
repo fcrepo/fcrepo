@@ -16,8 +16,13 @@
 
 package org.fcrepo.kernel.services;
 
+import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 
 import java.net.URI;
@@ -26,8 +31,13 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.RowIterator;
 
 import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -158,4 +168,57 @@ public abstract class ServiceHelpers {
         return new CheckCacheEntryFixity(dsChecksum, dsSize);
     }
 
+    /**
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public static long getRepositoryCount(final Repository repository)
+        throws RepositoryException {
+        final Session session = repository.login();
+        try {
+            final QueryManager queryManager =
+                session.getWorkspace().getQueryManager();
+
+            final String querystring =
+                "SELECT [" + JCR_PATH + "] FROM ["
+                        + FEDORA_OBJECT + "]";
+
+            final QueryResult queryResults =
+                queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+            return queryResults.getRows().getSize();
+        } finally {
+
+            session.logout();
+        }
+    }
+
+    /**
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public static long getRepositorySize(final Repository repository)
+        throws RepositoryException {
+        final Session session = repository.login();
+        long sum = 0;
+        final QueryManager queryManager =
+            session.getWorkspace().getQueryManager();
+
+        final String querystring =
+                "SELECT [" + CONTENT_SIZE + "] FROM [" +
+                        FEDORA_BINARY + "]";
+
+        final QueryResult queryResults =
+            queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
+            final Value value =
+                    rows.nextRow().getValue(CONTENT_SIZE);
+            sum += value.getLong();
+        }
+
+        session.logout();
+
+        return sum;
+    }
 }

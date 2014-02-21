@@ -33,6 +33,7 @@ import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
@@ -83,6 +84,12 @@ public abstract class AbstractResource {
      */
     @Autowired
     protected VersionService versionService;
+
+    /**
+     * The fcrepo repository service
+     */
+    @Autowired
+    protected RepositoryService repositoryService;
 
     @Autowired(required = false)
     private HttpTripleUtil httpTripleUtil;

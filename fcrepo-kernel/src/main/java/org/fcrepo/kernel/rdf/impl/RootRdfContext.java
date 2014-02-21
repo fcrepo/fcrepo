@@ -28,8 +28,8 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
+import static org.fcrepo.kernel.services.ServiceHelpers.getRepositoryCount;
+import static org.fcrepo.kernel.services.ServiceHelpers.getRepositorySize;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
