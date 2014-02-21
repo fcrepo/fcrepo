@@ -162,7 +162,7 @@ public abstract class AbstractResourceIT {
         return setProperty(pid, null, propertyUri, value);
     }
 
-    protected HttpResponse setProperty(final String pid, String txId,
+    protected HttpResponse setProperty(final String pid, final String txId,
                                        final String propertyUri,
                                        final String value) throws IOException {
         final HttpPatch postProp = new HttpPatch(serverAddress

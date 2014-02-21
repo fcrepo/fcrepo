@@ -337,7 +337,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         return response.getFirstHeader("Location").getValue();
     }
 
-    private void verifyProperty(String assertionMessage, String pid, String txId, String propertyUri, String propertyValue, boolean shouldExist) throws IOException {
+    private void verifyProperty(final String assertionMessage, final String pid, final String txId,
+                                final String propertyUri, final String propertyValue,
+                                final boolean shouldExist) throws IOException {
         client = createClient();
         final HttpGet getObjCommitted =
                 new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
