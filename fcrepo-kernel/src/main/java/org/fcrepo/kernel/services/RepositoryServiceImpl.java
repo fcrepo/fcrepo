@@ -24,24 +24,19 @@ import static com.google.common.collect.Sets.newHashSet;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
+import static org.fcrepo.kernel.services.ServiceHelpers.getRepositoryCount;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.inject.Inject;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -49,18 +44,13 @@ import javax.jcr.query.qom.Constraint;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.rdf.impl.NodeTypeRdfContext;
-import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.Problems;
 import org.modeshape.jcr.api.RepositoryManager;
-import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -73,39 +63,25 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.util.Context;
 
 /**
- * Repository-global helper methods
- *
+ * Service for repository-wide management and querying
+ * 
  * @author Chris Beer
  * @date Mar 11, 2013
  */
 @Component
-public class RepositoryService extends JcrTools implements FedoraJcrTypes {
+public class RepositoryServiceImpl extends AbstractService implements RepositoryService {
 
-    private static final Logger LOGGER = getLogger(RepositoryService.class);
+    private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 
     private final Timer objectSizeCalculationTimer = getMetrics().timer(
             name(RepositoryService.class, "objectSizeCalculation"));
-
-    @Inject
-    protected Repository repo;
-
-    /**
-     * Test whether a node exists in the JCR store
-     *
-     * @param path
-     * @return whether a node exists at the given path
-     * @throws RepositoryException
-     */
-    public boolean exists(final Session session, final String path)
-        throws RepositoryException {
-        return session.nodeExists(path);
-    }
 
     /**
      * Calculate the total size of all the binary properties in the repository
      *
      * @return size in bytes
      */
+    @Override
     public Long getRepositorySize() {
         try {
 
@@ -113,7 +89,9 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
             LOGGER.debug("Calculating repository size from index");
 
             try {
-                return FedoraTypesUtils.getRepositorySize(repo);
+                // Differentiating between the local getRepositorySize and
+                // ServiceHelpers
+                return ServiceHelpers.getRepositorySize(repo);
 
             } finally {
                 context.stop();
@@ -123,11 +101,12 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * Calculate the number of objects in the repository
-     *
-     * @return
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getRepositoryObjectCount()
      */
+    @Override
     public Long getRepositoryObjectCount() {
         try {
             return getRepositoryCount(repo);
@@ -136,59 +115,39 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         }
     }
 
-    /**
-     * Get the full list of node types in the repository
-     *
-     * @param session
-     * @return
-     * @throws RepositoryException
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getRepositoryNamespaces(
+     * javax.jcr.Session)
      */
-    public NodeTypeIterator getAllNodeTypes(final Session session)
-        throws RepositoryException {
-        final NodeTypeManager ntmanager =
-                (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
-        return ntmanager.getAllNodeTypes();
+    @Override
+    public Map<String, String> getRepositoryNamespaces(final Session session) throws RepositoryException {
+
+        final NamespaceRegistry reg = session.getWorkspace().getNamespaceRegistry();
+        return asMap(newHashSet(reg.getPrefixes()), new Function<String, String>() {
+
+            @Override
+            public String apply(final String p) {
+                try {
+                    return reg.getURI(p);
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
+                }
+            }
+        });
     }
 
-    /**
-     * Get a map of JCR prefixes to their URI namespaces
-     *
-     * @param session
-     * @return
-     * @throws RepositoryException
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryDataset
+     * (javax.jcr.Session)
      */
-    public static Map<String, String> getRepositoryNamespaces(
-            final Session session) throws RepositoryException {
+    @Override
+    public Dataset getNamespaceRegistryDataset(final Session session) throws RepositoryException {
 
-        final NamespaceRegistry reg =
-            session.getWorkspace().getNamespaceRegistry();
-        return asMap(newHashSet(reg.getPrefixes()),
-                new Function<String, String>() {
-
-                    @Override
-                    public String apply(final String p) {
-                        try {
-                            return reg.getURI(p);
-                        } catch (final RepositoryException e) {
-                            throw propagate(e);
-                        }
-                    }
-                });
-    }
-
-    /**
-     * Serialize the JCR namespace information as an RDF Dataset
-     *
-     * @param session
-     * @return
-     * @throws RepositoryException
-     */
-    public Dataset getNamespaceRegistryDataset(final Session session)
-        throws RepositoryException {
-
-        final Model model =
-            JcrRdfTools.withContext(null, session).getNamespaceTriples()
-                    .asModel();
+        final Model model = JcrRdfTools.withContext(null, session).getNamespaceTriples().asModel();
 
         model.register(new NamespaceChangedStatementListener(session));
 
@@ -198,34 +157,27 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     }
 
-    /**
-     * Serialize the JCR namespace information as an {@link RdfStream}
-     *
-     * @param session
-     * @return
-     * @throws RepositoryException
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryStream
+     * (javax.jcr.Session)
      */
-    public RdfStream getNamespaceRegistryStream(final Session session)
-        throws RepositoryException {
+    @Override
+    public RdfStream getNamespaceRegistryStream(final Session session) throws RepositoryException {
 
         return JcrRdfTools.withContext(null, session).getNamespaceTriples();
 
     }
 
-
-    /**
-     * Perform a full-text search on the whole repository and return the
-     * information as an RDF Dataset
-     *
-     * @param subjectFactory
-     * @param searchSubject RDF resource to use as the subject of the search
-     * @param session
-     * @param terms
-     * @param limit
-     * @param offset
-     * @return
-     * @throws RepositoryException
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#searchRepository(org.fcrepo
+     * .kernel.rdf.GraphSubjects, com.hp.hpl.jena.rdf.model.Resource,
+     * javax.jcr.Session, java.lang.String, int, long)
      */
+    @Override
     public Dataset searchRepository(final GraphSubjects subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset)
@@ -293,14 +245,13 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
 
     }
 
-    /**
-     * This method backups up a running repository
-     *
-     * @param session
-     * @param backupDirectory
-     * @return
-     * @throws RepositoryException
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#backupRepository(javax.jcr
+     * .Session, java.io.File)
      */
+    @Override
     public Problems backupRepository(final Session session,
                                      final File backupDirectory) throws RepositoryException {
         final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
@@ -312,14 +263,13 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return problems;
     }
 
-    /**
-     * This methods restores the repository from a backup
-     *
-     * @param session
-     * @param backupDirectory
-     * @return
-     * @throws RepositoryException
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#restoreRepository(javax.
+     * jcr.Session, java.io.File)
      */
+    @Override
     public Problems restoreRepository(final Session session,
                                       final File backupDirectory) throws RepositoryException {
         final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
@@ -331,35 +281,4 @@ public class RepositoryService extends JcrTools implements FedoraJcrTypes {
         return problems;
     }
 
-    /**
-     * Set the repository to back this RepositoryService
-     *
-     * @param repository
-     */
-    public void setRepository(final Repository repository) {
-        repo = repository;
-    }
-
-    /**
-     *
-     * @param session
-     * @return
-     * @throws RepositoryException
-     */
-    public RdfStream getNodeTypes(final Session session) throws RepositoryException {
-        return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());
-    }
-
-    /**
-     *
-     * @param session
-     * @param cndStream
-     * @throws RepositoryException
-     * @throws IOException
-     */
-    public void registerNodeTypes(final Session session,
-                                  final InputStream cndStream) throws RepositoryException, IOException {
-        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
-        nodeTypeManager.registerNodeTypes(cndStream, true);
-    }
 }

@@ -85,7 +85,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
 
         try {
             final Dataset dataset =
-                nodeService.getNamespaceRegistryDataset(session);
+                repositoryService.getNamespaceRegistryDataset(session);
             parseExecute(IOUtils.toString(requestBodyStream), dataset);
             session.save();
             return status(SC_NO_CONTENT).build();
@@ -104,6 +104,6 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
                       TEXT_HTML, APPLICATION_XHTML_XML})
     @HtmlTemplate("jcr:namespaces")
     public RdfStream getNamespaces() throws RepositoryException {
-        return nodeService.getNamespaceRegistryStream(session).session(session);
+        return repositoryService.getNamespaceRegistryStream(session).session(session);
     }
 }

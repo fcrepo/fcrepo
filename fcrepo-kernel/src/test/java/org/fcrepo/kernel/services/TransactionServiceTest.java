@@ -18,7 +18,7 @@ package org.fcrepo.kernel.services;
 
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.Transaction.State.NEW;
-import static org.fcrepo.kernel.services.TransactionService.FCREPO4_TX_ID;
+import static org.fcrepo.kernel.services.TransactionServiceImpl.FCREPO4_TX_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -65,10 +65,10 @@ public class TransactionServiceTest {
     @Before
     public void setup() throws Exception {
         initMocks(this);
-        service = new TransactionService();
+        service = new TransactionServiceImpl();
         when(mockTx.getId()).thenReturn(IS_A_TX);
         final Field txsField =
-                TransactionService.class.getDeclaredField("transactions");
+                TransactionServiceImpl.class.getDeclaredField("transactions");
         txsField.setAccessible(true);
         @SuppressWarnings("unchecked")
         final Map<String, Transaction> txs =

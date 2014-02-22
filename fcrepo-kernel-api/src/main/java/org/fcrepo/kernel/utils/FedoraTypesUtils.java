@@ -23,12 +23,8 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.contains;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.PropertyType.BINARY;
-import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
@@ -37,17 +33,12 @@ import java.util.Iterator;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
-import javax.jcr.query.QueryManager;
-import javax.jcr.query.QueryResult;
-import javax.jcr.query.RowIterator;
-import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
@@ -56,7 +47,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
@@ -263,33 +253,6 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     };
 
     /**
-     * Map a JCR property to an RDF property with the right namespace URI and
-     * local name
-     */
-    public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty =
-        new Function<Property, com.hp.hpl.jena.rdf.model.Property>() {
-
-            @Override
-            public com.hp.hpl.jena.rdf.model.Property apply(
-                    final Property property) {
-                LOGGER.trace("Creating predicate for property: {}", property);
-                try {
-                    if (property instanceof Namespaced) {
-                        final Namespaced nsProperty = (Namespaced) property;
-                        final String uri = nsProperty.getNamespaceURI();
-                        return createProperty(
-                                getRDFNamespaceForJcrNamespace(uri), nsProperty
-                                        .getLocalName());
-                    }
-                    return createProperty(property.getName());
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-
-            }
-        };
-
-    /**
      * ISODateTimeFormat is thread-safe and immutable, and the formatters it
      * returns are as well.
      */
@@ -362,31 +325,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     }
 
     /**
-     * Get the JCR Base version for a node
-     *
-     * @param node
-     * @return
-     * @throws RepositoryException
-     */
-    public static Version getBaseVersion(final Node node) throws RepositoryException {
-        return node.getSession().getWorkspace().getVersionManager()
-                .getBaseVersion(node.getPath());
-    }
-
-    /**
-     * Get the JCR VersionHistory for an existing node.
-     *
-     * @param node
-     * @return
-     * @throws RepositoryException
-     */
-    public static VersionHistory getVersionHistory(final Node node) throws RepositoryException {
-        return getVersionHistory(node.getSession(), node.getPath());
-    }
-
-    /**
      * Get the JCR VersionHistory for a node at a given JCR path
-     *
+     * 
      * @param session
      * @param path
      * @return
@@ -399,61 +339,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     }
 
     /**
-     * @return a double of the size of the fedora:datastream binary content
-     * @throws RepositoryException
-     */
-    public static long getRepositoryCount(final Repository repository)
-        throws RepositoryException {
-        final Session session = repository.login();
-        try {
-            final QueryManager queryManager =
-                session.getWorkspace().getQueryManager();
-
-            final String querystring =
-                "SELECT [" + JCR_PATH + "] FROM ["
-                        + FEDORA_OBJECT + "]";
-
-            final QueryResult queryResults =
-                queryManager.createQuery(querystring, JCR_SQL2).execute();
-
-            return queryResults.getRows().getSize();
-        } finally {
-
-            session.logout();
-        }
-    }
-
-    /**
-     * @return a double of the size of the fedora:datastream binary content
-     * @throws RepositoryException
-     */
-    public static long getRepositorySize(final Repository repository)
-        throws RepositoryException {
-        final Session session = repository.login();
-        long sum = 0;
-        final QueryManager queryManager =
-            session.getWorkspace().getQueryManager();
-
-        final String querystring =
-                "SELECT [" + CONTENT_SIZE + "] FROM [" +
-                        FEDORA_BINARY + "]";
-
-        final QueryResult queryResults =
-            queryManager.createQuery(querystring, JCR_SQL2).execute();
-
-        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
-            final Value value =
-                    rows.nextRow().getValue(CONTENT_SIZE);
-            sum += value.getLong();
-        }
-
-        session.logout();
-
-        return sum;
-    }
-
-    /**
      * Check if the property contains the given string value
+     * 
      * @param p
      * @param value
      * @return

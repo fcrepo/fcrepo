@@ -17,16 +17,9 @@
 package org.fcrepo.kernel.utils;
 
 import static java.util.Calendar.MILLISECOND;
-import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.convertDateToXSDString;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getDefinitionForPropertyName;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositoryCount;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getRepositorySize;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isBinaryContentProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
@@ -43,11 +36,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 
 import java.io.InputStream;
 import java.util.Calendar;
@@ -243,32 +233,6 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
-    public void testGetBaseVersionForNode() throws RepositoryException {
-        when(mockNode.getPath()).thenReturn("/my/path");
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getBaseVersion("/my/path")).thenReturn(
-                mockVersion);
-        final Version versionHistory = getBaseVersion(mockNode);
-
-        assertEquals(mockVersion, versionHistory);
-    }
-
-    @Test
-    public void testGetVersionHistoryForNode() throws RepositoryException {
-        when(mockNode.getPath()).thenReturn("/my/path");
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockNode.getSession().getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getVersionHistory("/my/path")).thenReturn(
-                mockVersionHistory);
-
-        final VersionHistory versionHistory = getVersionHistory(mockNode);
-        assertEquals(mockVersionHistory, versionHistory);
-    }
-
-    @Test
     public void testGetVersionHistoryForSessionAndPath() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockWS.getVersionManager()).thenReturn(mockVersionManager);
@@ -298,50 +262,6 @@ public class FedoraTypesUtilsTest {
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
                  " after RepositoryException!");
         } catch (final RuntimeException e) {} // expected
-    }
-
-    @Test
-    public void testGetObjectSize() throws RepositoryException {
-
-        when(mockRepository.login()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getQueryManager()).thenReturn(mockQueryManager);
-        when(
-                mockQueryManager.createQuery("SELECT [" + CONTENT_SIZE +
-                        "] FROM [" + FEDORA_BINARY + "]", JCR_SQL2))
-                .thenReturn(mockQuery);
-        when(mockQuery.execute()).thenReturn(mockResults);
-        when(mockResults.getRows()).thenReturn(mockIterator);
-
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.nextRow()).thenReturn(mockRow, mockRow, mockRow);
-
-        when(mockRow.getValue(CONTENT_SIZE)).thenReturn(mockValue);
-        when(mockValue.getLong()).thenReturn(5L, 10L, 1L);
-
-        final long count = getRepositorySize(mockRepository);
-        assertEquals("Got wrong count!", 16L, count);
-        verify(mockSession).logout();
-        verify(mockSession, never()).save();
-    }
-
-    @Test
-    public void testGetObjectCount() throws RepositoryException {
-        when(mockRepository.login()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getQueryManager()).thenReturn(mockQueryManager);
-        when(
-                mockQueryManager.createQuery("SELECT [" + JCR_PATH +
-                        "] FROM [" + FEDORA_OBJECT + "]", JCR_SQL2))
-                .thenReturn(mockQuery);
-        when(mockQuery.execute()).thenReturn(mockResults);
-        when(mockResults.getRows()).thenReturn(mockIterator);
-        when(mockIterator.getSize()).thenReturn(3L);
-
-        final long count = getRepositoryCount(mockRepository);
-        assertEquals(3L, count);
-        verify(mockSession).logout();
-        verify(mockSession, never()).save();
     }
 
     @Test

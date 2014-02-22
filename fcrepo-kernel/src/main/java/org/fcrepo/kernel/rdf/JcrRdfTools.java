@@ -16,9 +16,11 @@
 
 package org.fcrepo.kernel.rdf;
 
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static javax.jcr.PropertyType.REFERENCE;
@@ -37,6 +39,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -57,8 +60,10 @@ import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
+import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -281,7 +286,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public RdfStream getJcrTriples(final Node node,
-        final Iterable<FixityResult> blobs) throws RepositoryException {
+            final Iterable<FixityResult> blobs) throws RepositoryException {
         return new FixityRdfContext(node, graphSubjects, llstore, blobs);
     }
 
@@ -613,4 +618,31 @@ public class JcrRdfTools {
         return type;
     }
 
+    /**
+     * Map a JCR property to an RDF property with the right namespace URI and
+     * local name
+     */
+    public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty =
+            new Function<Property, com.hp.hpl.jena.rdf.model.Property>() {
+
+                @Override
+                public com.hp.hpl.jena.rdf.model.Property apply(
+                        final Property property) {
+                    LOGGER.trace("Creating predicate for property: {}",
+                            property);
+                    try {
+                        if (property instanceof Namespaced) {
+                            final Namespaced nsProperty = (Namespaced) property;
+                            final String uri = nsProperty.getNamespaceURI();
+                            return createProperty(
+                                    getRDFNamespaceForJcrNamespace(uri),
+                                    nsProperty.getLocalName());
+                        }
+                        return createProperty(property.getName());
+                    } catch (final RepositoryException e) {
+                        throw propagate(e);
+                    }
+
+                }
+            };
 }

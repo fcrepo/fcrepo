@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
+import java.io.InputStream;
 import java.util.Set;
 
 import javax.jcr.Node;
@@ -30,11 +31,13 @@ import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeTypeIterator;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -43,6 +46,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
 public class NodeServiceTest {
+
+    @Mock
+    private NodeTypeIterator mockNTI;
+
+    @Mock
+    private NodeTypeManager mockNodeTypeManager;
 
     @Mock
     private Session mockSession;
@@ -61,8 +70,12 @@ public class NodeServiceTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        testObj = new NodeService();
+        testObj = new NodeServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
+
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
     }
 
     @SuppressWarnings("unchecked")
@@ -108,5 +121,37 @@ public class NodeServiceTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         testObj.moveObject(mockSession, "foo", "bar");
         verify(mockWorkspace).move("foo", "bar");
+    }
+
+    @Test
+    public void testExists() throws RepositoryException {
+        final String existsPath = "/foo/bar/exists";
+        when(mockSession.nodeExists(existsPath)).thenReturn(true);
+        assertEquals(true, testObj.exists(mockSession, existsPath));
+        assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
+    }
+
+    @Test
+    public void testGetAllNodeTypes() throws RepositoryException {
+        final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
+        assertEquals(mockNTI, actual);
+    }
+
+    @Test
+    public void testGetNodeTypes() throws Exception {
+        when(mockNodeTypeManager.getPrimaryNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
+        when(mockNodeTypeManager.getMixinNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
+        testObj.getNodeTypes(mockSession);
+
+        verify(mockNodeTypeManager).getPrimaryNodeTypes();
+        verify(mockNodeTypeManager).getMixinNodeTypes();
+    }
+
+    @Test
+    public void testRegisterNodeTypes() throws Exception {
+        final InputStream mockInputStream = mock(InputStream.class);
+        testObj.registerNodeTypes(mockSession, mockInputStream);
+
+        verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);
     }
 }

@@ -111,14 +111,14 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        testObj = new DatastreamService();
+        testObj = new DatastreamServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockNode.getSession()).thenReturn(mockSession);
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         llStore = mock(LowLevelStorageService.class);
-        testObj.setLlStoreService(llStore);
+        ((DatastreamServiceImpl) testObj).setLlStoreService(llStore);
     }
 
     @Test
@@ -137,7 +137,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         final StoragePolicyDecisionPoint pdp = mock(StoragePolicyDecisionPoint.class);
         when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
-        testObj.setStoragePolicyDecisionPoint(pdp);
+        ((DatastreamServiceImpl) testObj).setStoragePolicyDecisionPoint(pdp);
         when(mockNode.getSession().getValueFactory()).thenReturn(
                 mockValueFactory);
         when(
@@ -163,7 +163,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
-        final DatastreamService testObj = new DatastreamService();
+        final DatastreamService testObj = new DatastreamServiceImpl();
         testObj.getDatastreamNode(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
     }
@@ -179,12 +179,6 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         testObj.getDatastream(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
-    }
-
-    @Test
-    public void testExists() throws RepositoryException {
-        testObj.exists(mockSession, "/foo/bar");
-        verify(mockSession).nodeExists("/foo/bar");
     }
 
     @Test
@@ -211,10 +205,13 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
 
         when(
                 llStore.transformLowLevelCacheEntries(eq(mockContent),
-                       Matchers.<Function<LowLevelCacheEntry,FixityResult>> any())).thenReturn(mockCollection);
+ Matchers
+                        .<Function<LowLevelCacheEntry, FixityResult>> any()))
+                .thenReturn(mockCollection);
         when(
                 mockJcrRdfTools.getJcrTriples(eq(mockNode), Matchers
-                        .<Iterable<FixityResult>> any())).thenReturn(new RdfStream());
+                        .<Iterable<FixityResult>> any())).thenReturn(
+                new RdfStream());
 
         when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
                 createResource("abc"));

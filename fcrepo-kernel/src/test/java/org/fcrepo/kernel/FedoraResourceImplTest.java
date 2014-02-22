@@ -25,13 +25,12 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getProblemsModel;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -47,9 +46,11 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
@@ -266,9 +267,6 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetVersionDataset() throws Exception {
 
-        mockStatic(FedoraTypesUtils.class);
-        when(getVersionHistory(mockNode)).thenReturn(mock(VersionHistory.class));
-
         mockStatic(JcrRdfTools.class);
         final GraphSubjects mockSubjects = mock(GraphSubjects.class);
 
@@ -285,15 +283,59 @@ public class FedoraResourceImplTest {
     @Test
     public void testAddVersionLabel() throws RepositoryException {
 
-        mockStatic(FedoraTypesUtils.class);
         final VersionHistory mockVersionHistory = mock(VersionHistory.class);
         final Version mockVersion = mock(Version.class);
         when(mockVersion.getName()).thenReturn("uuid");
-        when(getBaseVersion(mockNode)).thenReturn(mockVersion);
-        when(getVersionHistory(mockNode)).thenReturn(mockVersionHistory);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+
+        when(mockVersionManager.getBaseVersion(anyString())).thenReturn(
+                mockVersion);
+
+        when(mockVersionManager.getVersionHistory(anyString())).thenReturn(
+                mockVersionHistory);
 
         testObj.addVersionLabel("v1.0.0");
         verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", true);
+    }
+
+    @Test
+    public void testGetBaseVersion() throws RepositoryException {
+
+        final Version mockVersion = mock(Version.class);
+        when(mockVersion.getName()).thenReturn("uuid");
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+
+        when(mockVersionManager.getBaseVersion(anyString())).thenReturn(
+                mockVersion);
+
+        testObj.getBaseVersion();
+
+        verify(mockVersionManager).getBaseVersion(anyString());
+    }
+
+    @Test
+    public void testGetVersionHistory() throws RepositoryException {
+
+        final VersionHistory mockVersionHistory = mock(VersionHistory.class);
+        final Version mockVersion = mock(Version.class);
+        when(mockVersion.getName()).thenReturn("uuid");
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+
+        when(mockVersionManager.getVersionHistory(anyString())).thenReturn(
+                mockVersionHistory);
+
+        testObj.getVersionHistory();
+
+        verify(mockVersionManager).getVersionHistory(anyString());
     }
 
     @Test

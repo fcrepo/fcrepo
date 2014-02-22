@@ -38,7 +38,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -55,7 +55,7 @@ public class FedoraFieldSearchTest {
     private Request mockRequest;
 
     @Mock
-    private NodeService mockNodeService;
+    private RepositoryService mockService;
 
     private UriInfo uriInfo;
 
@@ -72,7 +72,7 @@ public class FedoraFieldSearchTest {
         mockSession = mockSession(testObj);
         this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
-        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "repositoryService", mockService);
         setField(testObj, "session", mockSession);
     }
 
@@ -82,7 +82,7 @@ public class FedoraFieldSearchTest {
                 new Variant(MediaType.valueOf("application/n-triples"), null,
                         null));
         when(
-                mockNodeService
+                mockService
                         .searchRepository(
                                 any(GraphSubjects.class),
                                 eq(createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
@@ -92,7 +92,7 @@ public class FedoraFieldSearchTest {
 
         testObj.searchSubmitRdf("ZZZ", 0, 0, mockRequest, mockResponse, uriInfo);
 
-        verify(mockNodeService)
+        verify(mockService)
                 .searchRepository(
                         any(GraphSubjects.class),
                 eq(createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),

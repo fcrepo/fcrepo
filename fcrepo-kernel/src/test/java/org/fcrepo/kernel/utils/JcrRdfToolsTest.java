@@ -464,9 +464,9 @@ public class JcrRdfToolsTest {
         when(mockCacheEntry.getExternalIdentifier()).thenReturn("http://xyz");
         final String testFixityUri = "http://abc";
         final FixityResult mockResult =
-            new FixityResult(mockCacheEntry, 123, new URI(testFixityUri));
-        mockResult.status.add(BAD_CHECKSUM);
-        mockResult.status.add(BAD_SIZE);
+            new FixityResultImpl(mockCacheEntry, 123, new URI(testFixityUri));
+        mockResult.getStatus().add(BAD_CHECKSUM);
+        mockResult.getStatus().add(BAD_SIZE);
 
         final List<FixityResult> mockBlobs = asList(mockResult);
 

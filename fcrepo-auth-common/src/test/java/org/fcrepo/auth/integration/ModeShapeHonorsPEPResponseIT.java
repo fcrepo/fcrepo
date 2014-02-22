@@ -37,6 +37,7 @@ import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ObjectServiceImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -109,7 +110,7 @@ public class ModeShapeHonorsPEPResponseIT {
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }
-        final ObjectService os = new ObjectService();
+        final ObjectService os = new ObjectServiceImpl();
         os.createObject(session, "/myobject");
         verify(pep, times(5)).hasModeShapePermission(any(Path.class),
                 any(String[].class), Matchers.<Set<Principal>> any(),
@@ -136,7 +137,7 @@ public class ModeShapeHonorsPEPResponseIT {
 
         final ServletCredentials credentials = new ServletCredentials(request);
         final Session session = repo.login(credentials);
-        final ObjectService os = new ObjectService();
+        final ObjectService os = new ObjectServiceImpl();
         os.createObject(session, "/myobject");
         verify(pep, times(5)).hasModeShapePermission(any(Path.class),
                 any(String[].class), Matchers.<Set<Principal>> any(),
