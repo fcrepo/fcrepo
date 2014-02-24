@@ -25,14 +25,7 @@ import java.util.Set;
  * Structure for presenting the results of a fixity check
  * (and any repair operations that may have occurred)
  */
-public class FixityResult {
-
-    /**
-     * The possible fixity states (which may be ORed together later)
-     */
-    public static enum FixityState {
-        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE, MISSING_STORED_FIXITY
-    }
+public class FixityResultImpl implements FixityResult {
 
     /**
      * This is a little weird here, and is vestigal from when
@@ -45,27 +38,27 @@ public class FixityResult {
      * - REPAIRED and BAD_*: the checksum or size failed to match, but it
      *       was automatically recovered from a different copy
      */
-    public Set<FixityState> status = EnumSet.noneOf(FixityState.class);
+    private final Set<FixityState> status = EnumSet.noneOf(FixityState.class);
 
 
     /**
      * the size computed by the fixity check
      * @todo make this private
      */
-    public long computedSize;
+    private long computedSize;
 
     /**
      * the checksum computed by the fixity check
      * @todo make this private
      */
-    public URI computedChecksum;
+    private URI computedChecksum;
 
     private final CacheEntry entry;
 
     /**
      * Initialize an empty fixity result
      */
-    public FixityResult() {
+    public FixityResultImpl() {
         this(null);
     }
 
@@ -73,7 +66,7 @@ public class FixityResult {
      * Prepare a fixity result for a Low-Level cache entry
      * @param entry
      */
-    public FixityResult(final CacheEntry entry) {
+    public FixityResultImpl(final CacheEntry entry) {
         this.entry = entry;
     }
 
@@ -82,7 +75,7 @@ public class FixityResult {
      * @param size
      * @param checksum
      */
-    public FixityResult(final long size, final URI checksum) {
+    public FixityResultImpl(final long size, final URI checksum) {
         this(null, size, checksum);
     }
 
@@ -92,7 +85,7 @@ public class FixityResult {
      * @param size
      * @param checksum
      */
-    public FixityResult(final CacheEntry entry, final long size,
+    public FixityResultImpl(final CacheEntry entry, final long size,
                         final URI checksum) {
         this.entry = entry;
         computedSize = size;
@@ -103,6 +96,7 @@ public class FixityResult {
      * Get the identifier for the entry's store
      * @return
      */
+    @Override
     public String getStoreIdentifier() {
         return entry.getExternalIdentifier();
     }
@@ -114,8 +108,8 @@ public class FixityResult {
         if (obj instanceof FixityResult) {
             final FixityResult that = (FixityResult) obj;
             result =
-                computedSize == that.computedSize &&
-                computedChecksum.equals(that.computedChecksum);
+                    computedSize == that.getComputedSize() &&
+                            computedChecksum.equals(that.getComputedChecksum());
         }
 
         return result;
@@ -136,6 +130,7 @@ public class FixityResult {
      * Get the underlying Low-Level cache entry
      * @return
      */
+    @Override
     public CacheEntry getEntry() {
         return entry;
     }
@@ -145,6 +140,7 @@ public class FixityResult {
      * @param checksum
      * @return
      */
+    @Override
     public boolean matches(final URI checksum) {
         return computedChecksum.equals(checksum);
     }
@@ -154,6 +150,7 @@ public class FixityResult {
      * @param size
      * @return
      */
+    @Override
     public boolean matches(final long size) {
         return computedSize == size;
     }
@@ -164,6 +161,7 @@ public class FixityResult {
      * @param checksum checksum URI in the form urn:DIGEST:RESULT
      * @return true if both conditions matched
      */
+    @Override
     public boolean matches(final long size, final URI checksum) {
         return matches(size) && matches(checksum);
     }
@@ -172,6 +170,7 @@ public class FixityResult {
      * Was the fixity declared a success
      * @return
      */
+    @Override
     public boolean isSuccess() {
         return status.contains(FixityState.SUCCESS);
     }
@@ -179,7 +178,33 @@ public class FixityResult {
     /**
      * Mark the fixity result as been automatically repaired
      */
+    @Override
     public void setRepaired() {
         status.add(FixityState.REPAIRED);
     }
+
+    /**
+     * @return the status
+     */
+    @Override
+    public Set<FixityState> getStatus() {
+        return status;
+    }
+
+    /**
+     * @return the computedSize
+     */
+    @Override
+    public long getComputedSize() {
+        return computedSize;
+    }
+
+    /**
+     * @return the computedChecksum
+     */
+    @Override
+    public URI getComputedChecksum() {
+        return computedChecksum;
+    }
+
 }

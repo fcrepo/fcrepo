@@ -38,6 +38,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.DatastreamImpl;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
@@ -67,7 +68,7 @@ import com.google.common.collect.ImmutableSet;
  * @date Feb 11, 2013
  */
 @Component
-public class DatastreamService extends RepositoryService {
+public class DatastreamServiceImpl extends AbstractService implements DatastreamService {
 
     @Autowired(required = false)
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
@@ -96,8 +97,9 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public Datastream createDatastream(final Session session, final String dsPath) throws RepositoryException {
-        return new Datastream(session, dsPath);
+        return new DatastreamImpl(session, dsPath);
     }
     /**
      * Create a new Datastream node in the JCR store
@@ -110,6 +112,7 @@ public class DatastreamService extends RepositoryService {
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
+    @Override
     public Node createDatastreamNode(final Session session,
             final String dsPath, final String contentType,
             final String originalFileName,
@@ -133,6 +136,7 @@ public class DatastreamService extends RepositoryService {
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
+    @Override
     public Node createDatastreamNode(final Session session,
                                      final String dsPath, final String contentType,
                                      final String originalFileName, final InputStream requestBodyStream,
@@ -152,6 +156,7 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public Node getDatastreamNode(final Session session, final String path)
         throws RepositoryException {
         LOGGER.trace("Executing getDatastreamNode() with path: {}", path);
@@ -167,9 +172,10 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public Datastream getDatastream(final Session session, final String path)
         throws RepositoryException {
-        return new Datastream(session, path);
+        return new DatastreamImpl(session, path);
     }
 
     /**
@@ -178,8 +184,9 @@ public class DatastreamService extends RepositoryService {
      * @param node datastream node
      * @return
      */
+    @Override
     public Datastream asDatastream(final Node node) {
-        return new Datastream(node);
+        return new DatastreamImpl(node);
     }
 
     /**
@@ -190,6 +197,7 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public RdfStream getFixityResultsModel(final GraphSubjects subjects,
             final Datastream datastream) throws RepositoryException {
         final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
@@ -208,6 +216,7 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public Collection<FixityResult> runFixityAndFixProblems(
             final Datastream datastream) throws RepositoryException {
 
@@ -283,6 +292,7 @@ public class DatastreamService extends RepositoryService {
      * @return
      * @throws RepositoryException
      */
+    @Override
     public Collection<FixityResult> getFixity(final Node resource,
             final URI dsChecksum, final long dsSize) throws RepositoryException {
         LOGGER.debug("Checking resource: " + resource.getPath());

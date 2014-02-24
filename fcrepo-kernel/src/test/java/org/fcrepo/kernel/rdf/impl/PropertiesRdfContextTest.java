@@ -22,7 +22,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -100,7 +99,7 @@ public class PropertiesRdfContextTest {
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
         when(mockNodeType.getName()).thenReturn(
                  mockNodeTypePrefix + ":" + mockNodeName);
-        
+
         //when(mockNodeType.getName()).thenReturn("not:root");
     }
 
@@ -112,7 +111,7 @@ public class PropertiesRdfContextTest {
 
     private static final Resource mockSubject =
         createResource("http://example.com/node");
-    
+
     private static final String mockNodeTypePrefix = "jcr";
 
     private static final String mockNodeName = "mockNode";
@@ -134,7 +133,7 @@ public class PropertiesRdfContextTest {
 
     @Mock
     private Repository mockRepository;
-    
+
     @Mock
     private Workspace mockWorkspace;
 
@@ -144,7 +143,7 @@ public class PropertiesRdfContextTest {
     @Mock
     private LowLevelCacheEntry mockLowLevelCacheEntry;
 
-    private void
+    private static void
             logRdf(final String message, final Model model) throws IOException {
         LOGGER.debug(message);
         try (Writer w = new StringWriter()) {

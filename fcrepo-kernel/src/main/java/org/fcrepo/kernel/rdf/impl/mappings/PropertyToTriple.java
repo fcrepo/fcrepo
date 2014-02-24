@@ -30,7 +30,7 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getPredicateForProperty;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;

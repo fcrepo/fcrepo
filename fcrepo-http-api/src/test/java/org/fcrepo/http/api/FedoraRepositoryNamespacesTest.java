@@ -26,11 +26,12 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
-import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,12 +46,12 @@ public class FedoraRepositoryNamespacesTest {
     FedoraRepositoryNamespaces testObj;
 
     @Mock
-    private NodeService mockNodeService;
+    private RepositoryService mockService;
 
     @Mock
     private Dataset mockDataset;
 
-    private RdfStream testRdfStream = new RdfStream();
+    private final RdfStream testRdfStream = new RdfStream();
 
     private Session mockSession;
 
@@ -58,7 +59,7 @@ public class FedoraRepositoryNamespacesTest {
     public void setUp() {
         initMocks(this);
         testObj = new FedoraRepositoryNamespaces();
-        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "repositoryService", mockService);
         setField(testObj, "uriInfo", getUriInfoImpl());
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
@@ -66,7 +67,7 @@ public class FedoraRepositoryNamespacesTest {
 
     @Test
     public void testGetNamespaces() throws RepositoryException {
-        when(mockNodeService.getNamespaceRegistryStream(mockSession))
+        when(mockService.getNamespaceRegistryStream(mockSession))
                 .thenReturn(testRdfStream);
         assertEquals(testRdfStream, testObj.getNamespaces());
     }
@@ -76,7 +77,7 @@ public class FedoraRepositoryNamespacesTest {
 
         final Model model = createDefaultModel();
         final Dataset mockDataset = DatasetFactory.create(model);
-        when(mockNodeService.getNamespaceRegistryDataset(mockSession))
+        when(mockService.getNamespaceRegistryDataset(mockSession))
                 .thenReturn(mockDataset);
 
         testObj.updateNamespaces(new ByteArrayInputStream(

@@ -366,7 +366,7 @@ public class PropertyToTripleTest {
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
     }
 
-    private <T> Iterator<T> twoValueIterator(final T t, final T t2) {
+    private static <T> Iterator<T> twoValueIterator(final T t, final T t2) {
         return ImmutableList.of(t, t2).iterator();
     }
 

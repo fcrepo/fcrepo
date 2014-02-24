@@ -64,24 +64,24 @@ public abstract class BasicCacheEntry implements CacheEntry {
             final URI calculatedChecksum = ContentDigest.asURI(digest,
                                                                   fixityInputStream.getMessageDigest().digest());
             final FixityResult result =
-                new FixityResult(this,
+                new FixityResultImpl(this,
                                     fixityInputStream.getByteCount(),
                                     calculatedChecksum);
 
             if (checksum.equals(ContentDigest.missingChecksum()) || size == -1L) {
-                result.status.add(MISSING_STORED_FIXITY);
+                result.getStatus().add(MISSING_STORED_FIXITY);
             }
 
             if (!result.matches(checksum)) {
-                result.status.add(BAD_CHECKSUM);
+                result.getStatus().add(BAD_CHECKSUM);
             }
 
             if (!result.matches(size)) {
-                result.status.add(BAD_SIZE);
+                result.getStatus().add(BAD_SIZE);
             }
 
             if (result.matches(size, checksum)) {
-                result.status.add(SUCCESS);
+                result.getStatus().add(SUCCESS);
             }
 
             LOGGER.debug("Got {}", result.toString());

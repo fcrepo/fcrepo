@@ -91,7 +91,7 @@ public class FedoraObjectTest implements FedoraJcrTypes {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
             when(mockRootNode.getNode(relPath)).thenReturn(mockObjNode);
             when(mockSession.getUserID()).thenReturn(mockUser);
-            testFedoraObject = new FedoraObject(mockObjNode);
+            testFedoraObject = new FedoraObjectImpl(mockObjNode);
 
             mockNodetypes = new NodeType[2];
             mockNodetypes[0] = mock(NodeType.class);

@@ -25,8 +25,6 @@ import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
 import static org.fcrepo.kernel.services.ServiceHelpers.getObjectSize;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getBaseVersion;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFrozen;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
@@ -45,6 +43,7 @@ import java.util.Set;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
@@ -306,9 +305,29 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public void addVersionLabel(final String label) throws RepositoryException {
-        final VersionHistory versionHistory = getVersionHistory(node);
-        versionHistory.addVersionLabel(getBaseVersion(node).getName(), label,
+        final VersionHistory versionHistory = getVersionHistory();
+        versionHistory.addVersionLabel(getBaseVersion().getName(), label,
                                        true);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getBaseVersion()
+     */
+    @Override
+    public Version getBaseVersion() throws RepositoryException {
+        return node.getSession().getWorkspace().getVersionManager()
+                .getBaseVersion(node.getPath());
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getVersionHistory()
+     */
+    @Override
+    public VersionHistory getVersionHistory() throws RepositoryException {
+        return node.getSession().getWorkspace().getVersionManager()
+                .getVersionHistory(node.getPath());
     }
 
     /* (non-Javadoc)
