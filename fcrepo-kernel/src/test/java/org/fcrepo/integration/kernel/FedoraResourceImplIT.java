@@ -40,14 +40,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeDefinition;
-import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.PropertyType;
 import javax.jcr.Repository;
@@ -76,7 +72,6 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -232,36 +227,34 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     }
 
-    @Test 
+    @Test
     public void testRdfTypeInheritance() throws RepositoryException {
         logger.info("in testRdfTypeInheritance...");
-        NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
-        NamespaceRegistry nsReg = session.getWorkspace().getNamespaceRegistry();
-        
+        final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
         //create supertype mixin
-        NodeTypeTemplate type = mgr.createNodeTypeTemplate();
+        final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
         type.setName("test:aSupertype");
         type.setMixin(true);
-        NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type};
+        final NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type};
         mgr.registerNodeTypes(nodeTypes, true);
-        
+
         //create a type inheriting above supertype
-        NodeTypeTemplate type2 = mgr.createNodeTypeTemplate();
+        final NodeTypeTemplate type2 = mgr.createNodeTypeTemplate();
         type2.setName("test:testInher");
         type2.setMixin(true);
         type2.setDeclaredSuperTypeNames(new String[]{"test:aSupertype"});
-        NodeTypeDefinition[] nodeTypes2 = new NodeTypeDefinition[]{type2};
+        final NodeTypeDefinition[] nodeTypes2 = new NodeTypeDefinition[]{type2};
         mgr.registerNodeTypes(nodeTypes2, true);
-        
+
         //create object with inheriting type
         FedoraResource object = objectService.createObject(session, "/testNTTnheritanceObject");
         final javax.jcr.Node node = object.getNode();
         node.addMixin("test:testInher");
-        
+
         session.save();
         session.logout();
         session = repo.login();
-        
+
         object = objectService.createObject(session, "/testNTTnheritanceObject");
 
         //test that supertype has been inherited as rdf:type
@@ -269,7 +262,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
         final Node o = createProperty("info:fedora/test/aSupertype").asNode();
         assertTrue("supertype test:aSupertype not found inherited in test:testInher!",object.getPropertiesDataset(subjects).asDatasetGraph()
-                       .contains(ANY, s, p, o));               
+                       .contains(ANY, s, p, o));
     }
 
     @Test
