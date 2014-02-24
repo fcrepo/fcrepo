@@ -16,7 +16,6 @@
 
 package org.fcrepo.connector.file;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.AfterClass;
 import org.infinispan.schematic.document.Document;
 import org.junit.Before;
@@ -45,8 +44,8 @@ import java.nio.file.Path;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
-import static junit.framework.Assert.assertEquals;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -173,7 +172,7 @@ public class FedoraFileSystemConnectorTest {
     }
 
     @Test
-    public void testSha1() {
+    public void testSha1WhenContentDigestIsCached() {
         when(mockTranslator.getPrimaryTypeName(any(Document.class)))
                 .thenReturn(NT_RESOURCE);
         when(mockNameFactory.create(anyString())).thenReturn(new BasicName("", tmpFile.getName()));
@@ -181,20 +180,36 @@ public class FedoraFileSystemConnectorTest {
         when(mockTranslator.getProperty(any(Document.class), eq(JCR_DATA)))
                 .thenReturn(binaryProperty);
 
-        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
-        assertNotNull(doc);
-
         final String chksum = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d";
-        when(documentReader.getProperty(FedoraJcrTypes.CONTENT_DIGEST))
-                .thenReturn(new BasicSingleValueProperty(new BasicName("", FedoraJcrTypes.CONTENT_DIGEST.toString()),
-                        chksum));
 
-        final String hex = documentReader.getProperty(FedoraJcrTypes.CONTENT_DIGEST).getValue(0).toString();
+        when(mockTranslator.getProperty(any(Document.class), eq(CONTENT_DIGEST)))
+                .thenReturn(new BasicSingleValueProperty(new BasicName("", CONTENT_DIGEST.toString()),
+                                     chksum));
+
         final String sha1 = connector.sha1(tmpFile);
 
         assertNotNull(sha1);
-        assertNotNull(hex);
-        assertEquals(sha1, hex);
+        assert(sha1.contains(chksum));
+    }
+
+    @Test
+    public void testSha1ContentDigestIsNotCached() {
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn(NT_RESOURCE);
+        when(mockNameFactory.create(anyString())).thenReturn(new BasicName("", tmpFile.getName()));
+        when(binaryProperty.getFirstValue()).thenReturn(binaryValue);
+        when(mockTranslator.getProperty(any(Document.class), eq(JCR_DATA)))
+                .thenReturn(binaryProperty);
+
+        final String chksum = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d";
+
+        when(mockTranslator.getProperty(any(Document.class), eq(CONTENT_DIGEST)))
+                .thenReturn(null);
+
+        final String sha1 = connector.sha1(tmpFile);
+
+        assertNotNull(sha1);
+        assert(sha1.contains(chksum));
     }
 
 }
