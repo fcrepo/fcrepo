@@ -63,8 +63,8 @@ public class VersionServiceTest {
         initMocks(this);
         testObj = new VersionServiceImpl();
 
-        ((VersionServiceImpl) testObj).setTxService(txService);
-        ((TransactionServiceImpl) txService).setVersionService(testObj);
+        testObj.setTxService(txService);
+        txService.setVersionService(testObj);
 
         s = mock(Session.class);
         mockWorkspace = mock(Workspace.class);

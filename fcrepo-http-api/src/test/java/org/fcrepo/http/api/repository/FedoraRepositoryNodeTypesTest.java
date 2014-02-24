@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.api.repository;
 
-import org.fcrepo.kernel.services.NodeServiceImpl;
+import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class FedoraRepositoryNodeTypesTest {
     private FedoraRepositoryNodeTypes testObj;
 
     @Mock
-    private NodeServiceImpl mockNodes;
+    private NodeService mockNodes;
 
     @Mock
     private InputStream mockInputStream;

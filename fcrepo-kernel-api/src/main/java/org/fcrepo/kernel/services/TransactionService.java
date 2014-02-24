@@ -92,4 +92,9 @@ public interface TransactionService extends Service {
     */
     boolean isAssociatedWithUser(final String txId, final String userName);
 
+    /**
+     * @param versionService the versionService to set
+     */
+    void setVersionService(final VersionService versionService);
+
 }

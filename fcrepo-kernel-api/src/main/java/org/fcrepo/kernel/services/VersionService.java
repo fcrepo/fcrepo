@@ -74,4 +74,8 @@ public interface VersionService extends Service {
      */
     void checkpoint(Node node) throws RepositoryException;
 
+    /**
+     * @param txService the txService to set
+     */
+    void setTxService(final TransactionService txService);
 }

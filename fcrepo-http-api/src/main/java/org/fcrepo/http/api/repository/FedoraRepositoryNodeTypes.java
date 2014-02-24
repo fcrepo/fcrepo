@@ -46,7 +46,6 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.services.NodeServiceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -76,7 +75,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @Timed
     @HtmlTemplate("jcr:nodetypes")
     public RdfStream getNodeTypes(@Context final UriInfo uriInfo) throws RepositoryException {
-        return ((NodeServiceImpl) nodeService).getNodeTypes(session).session(session);
+        return nodeService.getNodeTypes(session).session(session);
     }
 
     /**
@@ -93,7 +92,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
         throws RepositoryException, IOException {
 
         try {
-            ((NodeServiceImpl) nodeService).registerNodeTypes(session, requestBodyStream);
+            nodeService.registerNodeTypes(session, requestBodyStream);
 
             return status(SC_NO_CONTENT).build();
         } finally {

@@ -171,6 +171,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     /**
      * @param txService the txService to set
      */
+    @Override
     public void setTxService(final TransactionService txService) {
         this.txService = txService;
     }

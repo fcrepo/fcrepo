@@ -244,6 +244,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     /**
      * @param versionService the versionService to set
      */
+    @Override
     public void setVersionService(final VersionService versionService) {
         this.versionService = versionService;
     }
