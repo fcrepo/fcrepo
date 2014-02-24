@@ -241,7 +241,7 @@ public class NodeTypeRdfContextTest {
 
     }
 
-    private void initNamespacedMocks(final Namespaced namedspacedObject, final String mockNamespaceUri, final String mockNodeTypeName) throws RepositoryException {
+    private static void initNamespacedMocks(final Namespaced namedspacedObject, final String mockNamespaceUri, final String mockNodeTypeName) throws RepositoryException {
         when(namedspacedObject.getNamespaceURI()).thenReturn(mockNamespaceUri);
         when(namedspacedObject.getLocalName()).thenReturn(mockNodeTypeName);
     }

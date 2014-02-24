@@ -54,13 +54,13 @@ public class NodeRdfContextTest {
 
     @Mock
     private NodeType mockPrimaryNodeType;
-    
+
     @Mock
     private NodeType mockMixinNodeType;
-    
+
     @Mock
     private NodeType mockPrimarySuperNodeType;
-    
+
     @Mock
     private NodeType mockMixinSuperNodeType;
 
@@ -99,24 +99,24 @@ public class NodeRdfContextTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockPrimaryNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockPrimaryNodeTypeName);
-        
+
         when(mockNode.getName()).thenReturn(mockNodeName);
-        
+
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockMixinNodeType});
         when(mockMixinNodeType.getName()).thenReturn(
-                mockNodeTypePrefix + ":" + mockMixinNodeTypeName);  
-        
+                mockNodeTypePrefix + ":" + mockMixinNodeTypeName);
+
         when(mockPrimaryNodeType.getSupertypes()).thenReturn(
                 new NodeType[] {mockPrimarySuperNodeType});
         when(mockPrimarySuperNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockPrimarySuperNodeTypeName);
-        
+
         when(mockMixinNodeType.getSupertypes()).thenReturn(
                 new NodeType[] {mockMixinSuperNodeType});
         when(mockMixinSuperNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockMixinSuperNodeTypeName);
-       
+
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -128,7 +128,7 @@ public class NodeRdfContextTest {
 
     @Test
     public void testRdfTypesForNodetypes() throws RepositoryException,
-        IOException {    
+        IOException {
         final Model actual =
             new NodeRdfContext(mockNode, mockGraphSubjects, mockLowLevelStorageService).asModel();
         final Resource expectedRdfTypePrimary =
@@ -159,7 +159,7 @@ public class NodeRdfContextTest {
 
     }
 
-    private void logRdf(final String message, final Model model) throws IOException {
+    private static void logRdf(final String message, final Model model) throws IOException {
         LOGGER.debug(message);
         try (Writer w = new StringWriter()) {
             model.write(w);
