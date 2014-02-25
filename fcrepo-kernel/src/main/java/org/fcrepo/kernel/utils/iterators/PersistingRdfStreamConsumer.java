@@ -119,7 +119,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     }
 
     protected void operateOnTriple(final Statement t)
-        throws RepositoryException {
+            throws RepositoryException {
         final Resource subject = t.getSubject();
         final Node subjectNode = idTranslator().getNodeFromGraphSubject(subject);
 

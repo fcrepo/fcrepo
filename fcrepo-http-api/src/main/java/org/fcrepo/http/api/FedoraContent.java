@@ -90,7 +90,7 @@ public class FedoraContent extends ContentExposingResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType requestContentType,
                     final InputStream requestBodyStream)
-        throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
+            throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
                         : APPLICATION_OCTET_STREAM_TYPE;
@@ -180,7 +180,7 @@ public class FedoraContent extends ContentExposingResource {
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
                                   final InputStream requestBodyStream,
                                   @Context final Request request)
-        throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
+            throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
 
         try {
             final String path = toPath(pathList);

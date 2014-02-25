@@ -31,7 +31,7 @@ public interface TokenRequestValidations {
      * @throws RepositoryException
      */
     boolean isValidAuthCode(final OAuthTokenRequest oauthRequest)
-        throws RepositoryException;
+            throws RepositoryException;
 
     /**
      * Checks the validity of the client associated with the given request

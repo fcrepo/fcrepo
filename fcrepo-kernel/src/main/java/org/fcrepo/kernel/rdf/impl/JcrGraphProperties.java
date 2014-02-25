@@ -47,7 +47,7 @@ public class JcrGraphProperties implements GraphProperties {
     @Override
     public Dataset getProperties(final Node node, final GraphSubjects subjects,
             final int offset, final int limit)
-        throws RepositoryException {
+            throws RepositoryException {
         final JcrRdfTools jcrRdfTools = JcrRdfTools.withContext(subjects, node.getSession());
         final Model model =
             jcrRdfTools.getJcrTriples(node).concat(
@@ -78,7 +78,7 @@ public class JcrGraphProperties implements GraphProperties {
 
     @Override
     public Dataset getProperties(final Node node, final GraphSubjects subjects)
-        throws RepositoryException {
+            throws RepositoryException {
         return getProperties(node, subjects, 0, -1);
     }
 

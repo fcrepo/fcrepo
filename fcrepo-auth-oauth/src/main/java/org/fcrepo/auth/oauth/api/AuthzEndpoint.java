@@ -82,7 +82,7 @@ public class AuthzEndpoint extends AbstractResource {
      */
     @GET
     public Response getAuthorization(@Context final HttpServletRequest request)
-        throws URISyntaxException, OAuthSystemException, RepositoryException {
+            throws URISyntaxException, OAuthSystemException, RepositoryException {
 
         final OAuthAuthzRequest oauthRequest;
 

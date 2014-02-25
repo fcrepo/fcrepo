@@ -226,7 +226,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Dataset getPropertiesDataset(final GraphSubjects graphSubjects,
         final int offset, final int limit)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final JcrRdfTools jcrRdfTools =
             JcrRdfTools.withContext(graphSubjects, getNode().getSession());
@@ -261,7 +261,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public Dataset getPropertiesDataset(final GraphSubjects subjects)
-        throws RepositoryException {
+            throws RepositoryException {
         return getPropertiesDataset(subjects, 0, -1);
     }
 
@@ -270,7 +270,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream getTriples(final GraphSubjects graphSubjects)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final JcrRdfTools jcrRdfTools =
                 JcrRdfTools.withContext(graphSubjects, getNode().getSession());
@@ -283,7 +283,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final JcrRdfTools jcrRdfTools =
                 JcrRdfTools.withContext(graphSubjects, getNode().getSession());
@@ -296,7 +296,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream getVersionTriples(final GraphSubjects graphSubjects)
-        throws RepositoryException {
+            throws RepositoryException {
         return JcrRdfTools.withContext(graphSubjects, node.getSession())
                 .getVersionTriples(node);
     }

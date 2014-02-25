@@ -68,7 +68,7 @@ public class NodeRdfContext extends RdfStream {
      */
     public NodeRdfContext(final Node node, final GraphSubjects graphSubjects,
         final LowLevelStorageService lowLevelStorageService)
-        throws RepositoryException {
+            throws RepositoryException {
         super();
         this.node = node;
         this.graphSubjects = graphSubjects;

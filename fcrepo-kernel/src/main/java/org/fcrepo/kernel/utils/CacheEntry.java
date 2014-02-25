@@ -36,7 +36,7 @@ public interface CacheEntry {
      * @throws RepositoryException
      */
     FixityResult checkFixity(URI checksum, long size)
-        throws RepositoryException;
+            throws RepositoryException;
 
     /**
      * Get a raw input stream from the underlying store

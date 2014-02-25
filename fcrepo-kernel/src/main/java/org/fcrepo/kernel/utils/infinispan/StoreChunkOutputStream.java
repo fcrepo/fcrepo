@@ -90,7 +90,7 @@ public class StoreChunkOutputStream extends OutputStream {
 
     @Override
     public void write(final byte[] b, final int off, final int len)
-        throws IOException {
+            throws IOException {
         if (len + chunkBuffer.size() <= CHUNKSIZE) {
             chunkBuffer.write(b, off, len);
         } else {

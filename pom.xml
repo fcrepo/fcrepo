@@ -46,7 +46,7 @@
     <!-- plugin versions -->
     <!-- Until MCHECKSTYLE-169 is resolved, we're using our own, patched version 
       of checkstyle deployed to fcrepo.maven.org -->
-    <checkstyle.plugin.version>2.10-fcrepo</checkstyle.plugin.version>
+    <checkstyle.plugin.version>2.11-fcrepo-SNAPSHOT</checkstyle.plugin.version>
 
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
     <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>

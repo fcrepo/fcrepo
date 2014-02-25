@@ -268,7 +268,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public RdfStream getVersionTriples(final Node node)
-        throws RepositoryException {
+            throws RepositoryException {
         return new VersionsRdfContext(node, graphSubjects, llstore);
     }
 
@@ -368,7 +368,7 @@ public class JcrRdfTools {
      * @throws javax.jcr.RepositoryException
      */
     public Value createValue(final Node node, final RDFNode data, final int type)
-        throws RepositoryException {
+            throws RepositoryException {
         final ValueFactory valueFactory = node.getSession().getValueFactory();
         return createValue(valueFactory, data, type);
 
@@ -404,7 +404,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
-        throws RepositoryException {
+            throws RepositoryException {
         assert (valueFactory != null);
 
         if (data.isURIResource()
@@ -469,7 +469,7 @@ public class JcrRdfTools {
      */
     public String getPropertyNameFromPredicate(final Node node,
         final com.hp.hpl.jena.rdf.model.Property predicate)
-        throws RepositoryException {
+            throws RepositoryException {
         final Map<String, String> s = emptyMap();
         return getPropertyNameFromPredicate(node, predicate, s);
 
@@ -518,7 +518,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
-        throws RepositoryException {
+            throws RepositoryException {
 
 
         final Map<String, String> emptyNamespaceMapping = emptyMap();

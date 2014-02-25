@@ -75,7 +75,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
 
     @Override
     protected void operateOnProperty(final Statement t, final Node n)
-        throws RepositoryException {
+            throws RepositoryException {
         LOGGER.debug("Trying to remove property from triple: {} on node: {}.", t, n
                 .getPath());
         final String propertyName =

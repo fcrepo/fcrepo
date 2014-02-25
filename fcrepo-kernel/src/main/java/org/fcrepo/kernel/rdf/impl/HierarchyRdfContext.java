@@ -75,7 +75,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
     public HierarchyRdfContext(final javax.jcr.Node node,
             final GraphSubjects graphSubjects,
             final LowLevelStorageService lowLevelStorageService)
-        throws RepositoryException {
+            throws RepositoryException {
 
         super(node, graphSubjects, lowLevelStorageService);
         if (node.getDepth() > 0) {

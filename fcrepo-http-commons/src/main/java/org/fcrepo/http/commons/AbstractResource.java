@@ -146,7 +146,7 @@ public abstract class AbstractResource {
     protected void addResponseInformationToStream(
             final FedoraResource resource, final RdfStream dataset,
             final UriInfo uriInfo, final GraphSubjects subjects)
-        throws RepositoryException {
+            throws RepositoryException {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
                     uriInfo, subjects);

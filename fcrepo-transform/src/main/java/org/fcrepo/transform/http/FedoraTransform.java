@@ -184,7 +184,7 @@ public class FedoraTransform extends AbstractResource {
     public Object evaluateTransform(@PathParam("path")
         final List<PathSegment> pathList, @HeaderParam("Content-Type")
         final MediaType contentType, final InputStream requestBodyStream)
-        throws RepositoryException, LDPathParseException {
+            throws RepositoryException, LDPathParseException {
 
         try {
             final String path = toPath(pathList);

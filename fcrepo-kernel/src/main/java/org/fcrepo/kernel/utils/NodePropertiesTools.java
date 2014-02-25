@@ -64,7 +64,7 @@ public class NodePropertiesTools {
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
-        throws RepositoryException {
+            throws RepositoryException {
 
         // if it already exists, we can take some shortcuts
         if (node.hasProperty(propertyName)) {
@@ -178,7 +178,7 @@ public class NodePropertiesTools {
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)
-        throws RepositoryException {
+            throws RepositoryException {
         // if the property doesn't exist, we don't need to worry about it.
         if (node.hasProperty(propertyName)) {
 
@@ -247,7 +247,7 @@ public class NodePropertiesTools {
      * @throws RepositoryException
      */
     public int getPropertyType(final Node node, final String propertyName)
-        throws RepositoryException {
+            throws RepositoryException {
         LOGGER.debug("Getting type of property: {} from node: {}",
                 propertyName, node);
         final PropertyDefinition def =
@@ -273,7 +273,7 @@ public class NodePropertiesTools {
      */
     public static boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
-        throws RepositoryException {
+            throws RepositoryException {
         final PropertyDefinition def =
             getDefinitionForPropertyName(node, propertyName);
 

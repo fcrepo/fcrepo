@@ -43,5 +43,5 @@ public interface UriAwareResourceModelFactory {
      */
     Model createModelForResource(final FedoraResource resource,
             final UriInfo uriInfo, final GraphSubjects graphSubjects)
-        throws RepositoryException;
+            throws RepositoryException;
 }

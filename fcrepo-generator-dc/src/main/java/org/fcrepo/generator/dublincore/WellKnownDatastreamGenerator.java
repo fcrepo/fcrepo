@@ -53,7 +53,7 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
     }
 
     private InputStream getContentInputStream(final Node node)
-        throws RepositoryException {
+            throws RepositoryException {
         if (node.hasNode(wellKnownDsid)) {
             final Node dc = node.getNode(wellKnownDsid);
 

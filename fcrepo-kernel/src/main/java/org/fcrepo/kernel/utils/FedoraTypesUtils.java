@@ -403,7 +403,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public static long getRepositoryCount(final Repository repository)
-        throws RepositoryException {
+            throws RepositoryException {
         final Session session = repository.login();
         try {
             final QueryManager queryManager =
@@ -428,7 +428,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @throws RepositoryException
      */
     public static long getRepositorySize(final Repository repository)
-        throws RepositoryException {
+            throws RepositoryException {
         final Session session = repository.login();
         long sum = 0;
         final QueryManager queryManager =

@@ -82,7 +82,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
                       TEXT_HTML, APPLICATION_XHTML_XML})
     @HtmlTemplate("jcr:workspaces")
     public RdfStream getWorkspaces()
-        throws RepositoryException {
+            throws RepositoryException {
 
         final GraphSubjects subjects =
             new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
@@ -103,7 +103,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @Path("{path}")
     public Response createWorkspace(@PathParam("path") final String path,
             @Context final UriInfo uriInfo)
-        throws RepositoryException, URISyntaxException {
+            throws RepositoryException, URISyntaxException {
 
         try {
             final Workspace workspace = session.getWorkspace();

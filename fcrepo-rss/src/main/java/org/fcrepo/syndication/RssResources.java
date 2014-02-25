@@ -39,7 +39,7 @@ public class RssResources implements UriAwareResourceModelFactory {
     @Override
     public Model createModelForResource(final FedoraResource resource,
             final UriInfo uriInfo, final GraphSubjects graphSubjects)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final Model model = ModelFactory.createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode());

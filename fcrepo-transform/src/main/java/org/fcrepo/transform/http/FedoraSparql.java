@@ -154,7 +154,7 @@ public class FedoraSparql extends AbstractResource {
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     public Response runSparqlQuery(final InputStream requestBodyStream,
         @Context final Request request, @Context final UriInfo uriInfo)
-        throws IOException, RepositoryException {
+            throws IOException, RepositoryException {
 
         final GraphSubjects graphSubjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 

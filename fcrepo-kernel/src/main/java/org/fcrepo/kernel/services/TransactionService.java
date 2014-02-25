@@ -101,7 +101,7 @@ public class TransactionService {
      * @return the {@link Transaction}
      */
     public Transaction beginTransaction(final Session sess, String userName)
-        throws RepositoryException {
+            throws RepositoryException {
         final Transaction tx = new Transaction(sess, userName);
         final String txId = tx.getId();
         transactions.put(txId, tx);
@@ -116,7 +116,7 @@ public class TransactionService {
      * @return the {@link Transaction}
      */
     public Transaction getTransaction(final String txid)
-        throws TransactionMissingException {
+            throws TransactionMissingException {
 
         final Transaction tx = transactions.get(txid);
 
@@ -136,7 +136,7 @@ public class TransactionService {
      * @throws TransactionMissingException
      */
     public Transaction getTransaction(final Session session)
-        throws TransactionMissingException {
+            throws TransactionMissingException {
 
         final String txId = getCurrentTransactionId(session);
 

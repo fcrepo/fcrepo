@@ -133,7 +133,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n)
-        throws RepositoryException {
+            throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
             Iterators.filter(new PropertyIterator(n.getProperties()),

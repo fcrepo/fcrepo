@@ -66,5 +66,5 @@ public interface GraphProperties {
      * @throws RepositoryException
      */
     Dataset getProperties(final Node node, final GraphSubjects subjects)
-        throws RepositoryException;
+            throws RepositoryException;
 }

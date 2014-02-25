@@ -58,7 +58,7 @@ public interface FedoraObjectSerializer {
      * @throws IOException
      */
     void serialize(final FedoraObject obj, final OutputStream out)
-        throws RepositoryException, IOException;
+            throws RepositoryException, IOException;
 
     /**
      * Read the given InputStream and de-serialize the content

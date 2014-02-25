@@ -132,7 +132,7 @@ public class FedoraTransactions extends AbstractResource {
 
     private Response finalizeTransaction(@PathParam("path")
         final List<PathSegment> pathList, final boolean commit)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final String path = toPath(pathList);
         if (!path.equals("/")) {

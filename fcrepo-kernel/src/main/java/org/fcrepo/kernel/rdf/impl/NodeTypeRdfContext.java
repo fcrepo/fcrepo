@@ -71,7 +71,7 @@ public class NodeTypeRdfContext extends RdfStream {
      * @throws RepositoryException
      */
     public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager)
-        throws RepositoryException {
+            throws RepositoryException {
         super();
 
         concat(new NodeTypeRdfContext(new NodeTypeIterator(nodeTypeManager
@@ -88,7 +88,7 @@ public class NodeTypeRdfContext extends RdfStream {
      * @throws RepositoryException
      */
     public NodeTypeRdfContext(final Iterable<NodeType> nodeTypeIterator)
-        throws RepositoryException {
+            throws RepositoryException {
         super();
 
         for (final NodeType t : nodeTypeIterator) {
@@ -104,7 +104,7 @@ public class NodeTypeRdfContext extends RdfStream {
      * @throws RepositoryException
      */
     public NodeTypeRdfContext(final NodeType nodeType)
-        throws RepositoryException {
+            throws RepositoryException {
         super();
 
         final Node nodeTypeResource = getResource(nodeType).asNode();

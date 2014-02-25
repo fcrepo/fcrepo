@@ -63,7 +63,7 @@ public class AccessRolesProvider {
      */
     public Map<String, List<String>>
     getRoles(Node node, final boolean effective)
-        throws RepositoryException {
+            throws RepositoryException {
         final Map<String, List<String>> data =
                 new HashMap<String, List<String>>();
         final Session session = node.getSession();
@@ -107,7 +107,7 @@ public class AccessRolesProvider {
      */
     private void getAssignments(final Node node,
             final Map<String, List<String>> data)
-        throws RepositoryException {
+            throws RepositoryException {
 
         if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
             try {
@@ -155,7 +155,7 @@ public class AccessRolesProvider {
      * @param data the roles to assign
      */
     public void postRoles(final Node node, final Map<String, Set<String>> data)
-        throws RepositoryException {
+            throws RepositoryException {
         final Session session = node.getSession();
         Constants.registerPrefixes(session);
         if (!node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
