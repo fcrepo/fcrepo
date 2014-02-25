@@ -207,7 +207,7 @@ public class HierarchyRdfContextTest {
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("not")).thenReturn(JCR_NAMESPACE);
         when(mockParentNode.getSession()).thenReturn(mockSession);
-        
+
     }
 
     private void nodeIsContainer() {
@@ -265,7 +265,7 @@ public class HierarchyRdfContextTest {
                 createResource(RESOURCE_PREFIX + "/4"));
         when(mockGraphSubjects.getGraphSubject(mockChildNode5)).thenReturn(
                 createResource(RESOURCE_PREFIX + "/5"));
-        
+
         when(mockChildNode.getSession()).thenReturn(mockSession);
         when(mockChildNode2.getSession()).thenReturn(mockSession);
         when(mockChildNode3.getSession()).thenReturn(mockSession);
@@ -302,7 +302,7 @@ public class HierarchyRdfContextTest {
                 mockLowLevelStorageService).asModel();
     }
 
-    private void
+    private static void
             logRdf(final String message, final Model model) throws IOException {
         LOGGER.debug(message);
         try (Writer w = new StringWriter()) {
@@ -342,10 +342,10 @@ public class HierarchyRdfContextTest {
 
     @Mock
     private Session mockSession;
-    
+
     @Mock
     private Repository mockRepository;
-    
+
     @Mock
     private Workspace mockWorkspace;
 

@@ -21,6 +21,8 @@ import java.util.Date;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -151,6 +153,22 @@ public interface FedoraResource {
      * @throws RepositoryException
      */
     void addVersionLabel(final String label) throws RepositoryException;
+
+    /**
+     * Get the JCR Base version for the node
+     * 
+     * @return
+     * @throws RepositoryException
+     */
+    public Version getBaseVersion() throws RepositoryException;
+
+    /**
+     * Get JCR VersionHistory for the node.
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    public VersionHistory getVersionHistory() throws RepositoryException;
 
     /**
      * Check if a resource was created in this session

@@ -33,7 +33,7 @@ import javax.jcr.Session;
 import org.fcrepo.integration.kernel.AbstractIT;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Test;
 import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
@@ -44,13 +44,13 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class ObjectServiceIT extends AbstractIT {
+public class RepositoryServiceIT extends AbstractIT {
 
     @Inject
     private Repository repository;
 
     @Inject
-    ObjectService objectService;
+    RepositoryService repositoryService;
 
     @Inject
     DatastreamService datastreamService;
@@ -59,7 +59,7 @@ public class ObjectServiceIT extends AbstractIT {
     public void testGetAllObjectsDatastreamSize() throws Exception {
         Session session = repository.login();
 
-        final double originalSize = objectService.getRepositorySize();
+        final double originalSize = repositoryService.getRepositorySize();
 
         datastreamService.createDatastreamNode(session,
                 "testObjectServiceNode", "application/octet-stream",
@@ -69,7 +69,7 @@ public class ObjectServiceIT extends AbstractIT {
 
         session = repository.login();
 
-        final double afterSize = objectService.getRepositorySize();
+        final double afterSize = repositoryService.getRepositorySize();
 
         assertEquals(4.0, afterSize - originalSize);
 
@@ -80,8 +80,7 @@ public class ObjectServiceIT extends AbstractIT {
     public void testGetNamespaceRegistryGraph() throws Exception {
         final Session session = repository.login();
 
-        final Dataset registryGraph =
-            objectService.getNamespaceRegistryDataset(session);
+        final Dataset registryGraph = repositoryService.getNamespaceRegistryDataset(session);
 
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
@@ -106,8 +105,7 @@ public class ObjectServiceIT extends AbstractIT {
     public void testUpdateNamespaceRegistryGraph() throws Exception {
         final Session session = repository.login();
 
-        final Dataset registryGraph =
-            objectService.getNamespaceRegistryDataset(session);
+        final Dataset registryGraph = repositoryService.getNamespaceRegistryDataset(session);
         final NamespaceRegistry namespaceRegistry =
             session.getWorkspace().getNamespaceRegistry();
 
@@ -130,8 +128,7 @@ public class ObjectServiceIT extends AbstractIT {
 
         final File backupDirectory = createTempDir();
 
-        final Problems problems =
-            objectService.backupRepository(session, backupDirectory);
+        final Problems problems = repositoryService.backupRepository(session, backupDirectory);
 
         assertFalse(problems.hasProblems());
         session.logout();
@@ -148,10 +145,9 @@ public class ObjectServiceIT extends AbstractIT {
 
         final File backupDirectory = createTempDir();
 
-        objectService.backupRepository(session, backupDirectory);
+        repositoryService.backupRepository(session, backupDirectory);
 
-        final Problems problems =
-            objectService.restoreRepository(session, backupDirectory);
+        final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
 
         assertFalse(problems.hasProblems());
         session.logout();

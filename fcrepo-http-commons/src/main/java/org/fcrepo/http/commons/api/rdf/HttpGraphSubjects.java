@@ -22,6 +22,16 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonMap;
+import static javax.jcr.PropertyType.PATH;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
+import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -32,16 +42,6 @@ import javax.jcr.Workspace;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.Map;
-
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static java.util.Collections.singletonMap;
-import static javax.jcr.PropertyType.PATH;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.fcrepo.kernel.services.TransactionService.getCurrentTransactionId;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Translate JCR paths to URLs.  There are a few types of translations
@@ -70,7 +70,7 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private final String defaultWorkspace;
 
-    private Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
+    private final Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
 
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.

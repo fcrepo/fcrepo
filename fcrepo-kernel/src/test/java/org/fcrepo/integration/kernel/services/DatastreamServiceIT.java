@@ -132,7 +132,7 @@ public class DatastreamServiceIT extends AbstractIT {
 
         for (final FixityResult fixityResult : fixityResults) {
             Assert.assertEquals("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf",
-                    fixityResult.computedChecksum.toString());
+                    fixityResult.getComputedChecksum().toString());
         }
     }
 
@@ -161,7 +161,7 @@ public class DatastreamServiceIT extends AbstractIT {
 
         for (final FixityResult fixityResult : fixityResults) {
             Assert.assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
-                                   fixityResult.computedChecksum.toString());
+                    fixityResult.getComputedChecksum().toString());
         }
     }
 
@@ -169,7 +169,7 @@ public class DatastreamServiceIT extends AbstractIT {
     public void testChecksumBlobsForValuesWithoutChecksums() throws Exception {
 
         final Session session = repository.login();
-        javax.jcr.ValueFactory factory = session.getValueFactory();
+        final javax.jcr.ValueFactory factory = session.getValueFactory();
         final FedoraObject object = objectService.createObject(session, "/testLLObject");
 
         final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
@@ -188,9 +188,10 @@ public class DatastreamServiceIT extends AbstractIT {
 
         for (final FixityResult fixityResult : fixityResults) {
             assertFalse(fixityResult.isSuccess());
-            assertTrue(fixityResult.status.contains(FixityResult.FixityState.MISSING_STORED_FIXITY));
+            assertTrue(fixityResult.getStatus().contains(
+                    FixityResult.FixityState.MISSING_STORED_FIXITY));
             assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
-                                   fixityResult.computedChecksum.toString());
+                    fixityResult.getComputedChecksum().toString());
         }
     }
 }

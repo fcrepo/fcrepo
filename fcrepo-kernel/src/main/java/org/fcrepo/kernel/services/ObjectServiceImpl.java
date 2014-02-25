@@ -24,6 +24,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraObjectImpl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -34,9 +35,9 @@ import org.springframework.stereotype.Component;
  * @date Feb 11, 2013
  */
 @Component
-public class ObjectService extends RepositoryService {
+public class ObjectServiceImpl extends AbstractService implements ObjectService {
 
-    private static final Logger LOGGER = getLogger(ObjectService.class);
+    private static final Logger LOGGER = getLogger(ObjectServiceImpl.class);
 
     /**
      * @param session A JCR Session
@@ -44,9 +45,10 @@ public class ObjectService extends RepositoryService {
      * @return The created object
      * @throws RepositoryException
      */
+    @Override
     public FedoraObject createObject(final Session session, final String path)
         throws RepositoryException {
-        return new FedoraObject(session, path, NT_FOLDER);
+        return new FedoraObjectImpl(session, path, NT_FOLDER);
     }
 
     /**
@@ -54,6 +56,7 @@ public class ObjectService extends RepositoryService {
      * @return The JCR node behind the FedoraObject with the proffered PID
      * @throws RepositoryException
      */
+    @Override
     public Node getObjectNode(final Session session, final String path)
         throws RepositoryException {
         return session.getNode(path);
@@ -65,10 +68,11 @@ public class ObjectService extends RepositoryService {
      * @return A FedoraObject with the proffered PID
      * @throws RepositoryException
      */
+    @Override
     public FedoraObject getObject(final Session session, final String path)
         throws RepositoryException {
         LOGGER.trace("Executing getObject() with path: {}", path);
-        return new FedoraObject(getObjectNode(session, path));
+        return new FedoraObjectImpl(getObjectNode(session, path));
     }
 
 }

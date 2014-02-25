@@ -43,8 +43,10 @@ import javax.jcr.Session;
 import org.apache.poi.util.IOUtils;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.DatastreamServiceImpl;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ObjectServiceImpl;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -89,15 +91,15 @@ public class SelfHealingIT {
         final Map<?, ?> params = singletonMap(URL, config.toString());
         repo = new JcrRepositoryFactory().getRepository(params);
 
-        datastreamService = new DatastreamService();
+        datastreamService = new DatastreamServiceImpl();
         datastreamService.setRepository(repo);
-        datastreamService
+        ((DatastreamServiceImpl) datastreamService)
                 .setStoragePolicyDecisionPoint(storagePolicyDecisionPoint);
-        objectService = new ObjectService();
+        objectService = new ObjectServiceImpl();
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();
         lowLevelService.setRepository(repo);
-        datastreamService.setLlStoreService(lowLevelService);
+        ((DatastreamServiceImpl) datastreamService).setLlStoreService(lowLevelService);
     }
 
     private void tamperWithNode(final Node node) throws Exception {
@@ -187,7 +189,7 @@ public class SelfHealingIT {
         boolean fixityOk = true;
 
         for (final FixityResult fixityResult : nodeFixity) {
-            fixityOk &= fixityResult.computedChecksum.equals(shaA);
+            fixityOk &= fixityResult.getComputedChecksum().equals(shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -197,7 +199,7 @@ public class SelfHealingIT {
         fixityOk = true;
 
         for (final FixityResult fixityResult : nodeFixity2) {
-            fixityOk &= fixityResult.computedChecksum.equals(shaB);
+            fixityOk &= fixityResult.getComputedChecksum().equals(shaB);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);
@@ -208,7 +210,7 @@ public class SelfHealingIT {
 
         fixityOk = true;
         for (final FixityResult fixityResult : nodeFixity) {
-            fixityOk &= fixityResult.computedChecksum.equals(shaA);
+            fixityOk &= fixityResult.getComputedChecksum().equals(shaA);
         }
 
         assertFalse("Expected the fixity check to fail.", fixityOk);
@@ -219,7 +221,7 @@ public class SelfHealingIT {
 
         fixityOk = true;
         for (final FixityResult fixityResult : nodeFixity) {
-            fixityOk &= fixityResult.computedChecksum.equals(shaA);
+            fixityOk &= fixityResult.getComputedChecksum().equals(shaA);
         }
 
         assertTrue("Expected the fixity check to pass.", fixityOk);

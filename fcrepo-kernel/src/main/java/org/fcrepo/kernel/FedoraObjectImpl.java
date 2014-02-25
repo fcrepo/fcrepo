@@ -34,7 +34,7 @@ import org.slf4j.Logger;
  * @author ajs6f
  * @date Feb 21, 2013
  */
-public class FedoraObject extends FedoraResourceImpl {
+public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject {
 
     private static final Logger LOGGER = getLogger(FedoraObject.class);
 
@@ -42,7 +42,7 @@ public class FedoraObject extends FedoraResourceImpl {
      * Construct a FedoraObject from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
-    public FedoraObject(final Node node) {
+    public FedoraObjectImpl(final Node node) {
         super(node);
 
         if (node.isNew()) {
@@ -57,7 +57,7 @@ public class FedoraObject extends FedoraResourceImpl {
      * @param nodeType primary type to assign to created object
      * @throws RepositoryException
      */
-    public FedoraObject(final Session session, final String path,
+    public FedoraObjectImpl(final Session session, final String path,
                         final String nodeType) throws RepositoryException {
         super(session, path, nodeType);
 
@@ -71,7 +71,7 @@ public class FedoraObject extends FedoraResourceImpl {
      * @param path the absolute path to the object
      * @throws RepositoryException
      */
-    public FedoraObject(final Session session, final String path)
+    public FedoraObjectImpl(final Session session, final String path)
         throws RepositoryException {
         this(session, path, JcrConstants.NT_FOLDER);
     }
@@ -90,10 +90,10 @@ public class FedoraObject extends FedoraResourceImpl {
         }
     }
 
-    /**
-     * @return The JCR name of the node that backs this object.
-     * @throws RepositoryException
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraObject#getName()
      */
+    @Override
     public String getName() throws RepositoryException {
         return node.getName();
     }

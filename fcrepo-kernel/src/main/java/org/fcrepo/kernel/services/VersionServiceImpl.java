@@ -16,11 +16,12 @@
 
 package org.fcrepo.kernel.services;
 
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -28,11 +29,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
-import java.util.Collection;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.exception.TransactionMissingException;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * This service exposes management of node versioning.  Instead of invoking
@@ -43,7 +44,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 
 @Component
-public class VersionService extends RepositoryService {
+public class VersionServiceImpl extends AbstractService implements VersionService {
 
     private static final Logger LOGGER = getLogger(VersionService.class);
 
@@ -54,7 +55,7 @@ public class VersionService extends RepositoryService {
     protected static final String AUTO_VERSION = "auto-version";
 
     @Autowired
-    TransactionService txService;
+    private TransactionService txService;
 
     /**
      * Notifies the version manager that the node at a given path was updated
@@ -67,6 +68,7 @@ public class VersionService extends RepositoryService {
      *                modified
      * @throws RepositoryException
      */
+    @Override
     public void nodeUpdated(final Session session, final String absPath) throws RepositoryException {
         nodeUpdated(session.getNode(absPath));
     }
@@ -78,6 +80,7 @@ public class VersionService extends RepositoryService {
      * @param n the node that was updated
      * @throws RepositoryException
      */
+    @Override
     public void nodeUpdated(final Node n) throws RepositoryException {
         if (isVersioningEnabled(n)
                 && isImplicitVersioningEnabled(n)) {
@@ -93,6 +96,7 @@ public class VersionService extends RepositoryService {
      * @param paths absolute paths to the nodes within the workspace
      * @throws RepositoryException
      */
+    @Override
     public void createVersion(final Workspace workspace,
             final Collection<String> paths) throws RepositoryException {
         for (final String absPath : paths) {
@@ -113,7 +117,7 @@ public class VersionService extends RepositoryService {
     }
 
     private void queueOrCommitCheckpoint(final Session session, final String absPath) throws RepositoryException {
-        final String txId = txService.getCurrentTransactionId(session);
+        final String txId = getCurrentTransactionId(session);
 
         if (txId == null) {
             checkpoint(session.getWorkspace(), absPath);
@@ -142,6 +146,7 @@ public class VersionService extends RepositoryService {
      *                to be minted
      * @throws RepositoryException
      */
+    @Override
     public void checkpoint(final Node node) throws RepositoryException {
 
         checkNotNull(node, "Cannot checkpoint null nodes");
@@ -151,7 +156,7 @@ public class VersionService extends RepositoryService {
         if (node.isNodeType(VERSIONABLE)) {
             LOGGER.trace("Setting checkpoint for {}", absPath);
 
-            final String txId = txService.getCurrentTransactionId(session);
+            final String txId = getCurrentTransactionId(session);
             if (txId != null) {
                 final Transaction tx = txService.getTransaction(txId);
                 tx.addPathToVersion(absPath);
@@ -161,5 +166,13 @@ public class VersionService extends RepositoryService {
         } else {
             LOGGER.trace("No checkpoint set for unversionable {}", absPath);
         }
+    }
+
+    /**
+     * @param txService the txService to set
+     */
+    @Override
+    public void setTxService(final TransactionService txService) {
+        this.txService = txService;
     }
 }

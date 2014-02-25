@@ -32,8 +32,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.DatastreamServiceImpl;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ObjectServiceImpl;
 import org.fcrepo.kernel.services.functions.GetBinaryKey;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
@@ -80,10 +82,10 @@ public class TiffStoragePolicyStorageIT {
         pdp = new StoragePolicyDecisionPointImpl();
         pdp.addPolicy(new MimeTypeStoragePolicy("image/tiff", "tiff-store"));
 
-        datastreamService = new DatastreamService();
+        datastreamService = new DatastreamServiceImpl();
         datastreamService.setRepository(repo);
-        datastreamService.setStoragePolicyDecisionPoint(pdp);
-        objectService = new ObjectService();
+        ((DatastreamServiceImpl) datastreamService).setStoragePolicyDecisionPoint(pdp);
+        objectService = new ObjectServiceImpl();
         objectService.setRepository(repo);
         lowLevelService = new LowLevelStorageService();
         lowLevelService.setRepository(repo);

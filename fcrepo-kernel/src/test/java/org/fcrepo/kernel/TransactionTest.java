@@ -48,7 +48,7 @@ public class TransactionTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new Transaction(mockSession, USER_NAME);
+        testObj = new TransactionImpl(mockSession, USER_NAME);
     }
 
     @Test
@@ -102,7 +102,7 @@ public class TransactionTest {
 
     @Test
     public void testUserAssociation() {
-        String otherUser = "dummy";
+        final String otherUser = "dummy";
         assertTrue("Transaction expected to be associated with user " + USER_NAME,
                 testObj.isAssociatedWithUser(USER_NAME));
         assertFalse("Transaction should not be associated with the user" + otherUser,
@@ -110,7 +110,7 @@ public class TransactionTest {
         assertFalse("Transaction should not be associated with an empty user",
                 testObj.isAssociatedWithUser(null));
 
-        testObj = new Transaction(mockSession, null);
+        testObj = new TransactionImpl(mockSession, null);
         assertTrue("Transaction should not be associated with a user",
                 testObj.isAssociatedWithUser(null));
         assertFalse("Transaction should not be associated with a user",

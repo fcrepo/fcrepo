@@ -206,27 +206,27 @@ public class LowLevelCacheEntryTest {
         URI testCS = ContentDigest.asURI("SHA-1", digested);
         LOGGER.debug(testCS.toString());
         FixityResult actual = ispnEntry.checkFixity(testCS, bytes.length);
-        assertEquals(1, actual.status.size());
-        assertEquals(actual.status.iterator().next().toString(), true,
-                actual.status.contains(SUCCESS));
+        assertEquals(1, actual.getStatus().size());
+        assertEquals(actual.getStatus().iterator().next().toString(), true,
+                actual.getStatus().contains(SUCCESS));
 
         // report the wrong size
         actual = ispnEntry.checkFixity(testCS, bytes.length + 1);
-        assertEquals(1, actual.status.size());
-        assertEquals(actual.status.iterator().next().toString(), true,
-                actual.status.contains(BAD_SIZE));
+        assertEquals(1, actual.getStatus().size());
+        assertEquals(actual.getStatus().iterator().next().toString(), true,
+                actual.getStatus().contains(BAD_SIZE));
         // break the digest
         digested[0] += 9;
         testCS = ContentDigest.asURI("SHA-1", digested);
         actual = ispnEntry.checkFixity(testCS, bytes.length);
-        assertEquals(1, actual.status.size());
-        assertEquals(actual.status.iterator().next().toString(), true,
-                actual.status.contains(BAD_CHECKSUM));
+        assertEquals(1, actual.getStatus().size());
+        assertEquals(actual.getStatus().iterator().next().toString(), true,
+                actual.getStatus().contains(BAD_CHECKSUM));
         // report the wrong size and the wrong digest
         actual = ispnEntry.checkFixity(testCS, bytes.length + 1);
-        assertEquals(2, actual.status.size());
-        assertEquals(true, actual.status.contains(BAD_CHECKSUM));
-        assertEquals(true, actual.status.contains(BAD_SIZE));
+        assertEquals(2, actual.getStatus().size());
+        assertEquals(true, actual.getStatus().contains(BAD_CHECKSUM));
+        assertEquals(true, actual.getStatus().contains(BAD_SIZE));
     }
 
 }

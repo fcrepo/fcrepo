@@ -52,7 +52,7 @@ public class FedoraRepositoryNodeTypesTest {
     @Mock
     private InputStream mockInputStream;
 
-    private RdfStream mockRdfStream = new RdfStream();
+    private final RdfStream mockRdfStream = new RdfStream();
 
     private Session mockSession;
 

@@ -31,6 +31,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.TransactionImpl;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ import org.springframework.stereotype.Component;
  * @author frank asseg
  */
 @Component
-public class TransactionService {
+public class TransactionServiceImpl extends AbstractService implements TransactionService {
 
     private static final Logger LOGGER = getLogger(TransactionService.class);
 
@@ -57,7 +58,7 @@ public class TransactionService {
     static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
 
     @Autowired
-    VersionService versionService;
+    private VersionService versionService;
 
     /**
      * TODO since transactions have to be available on all nodes, they have to
@@ -72,6 +73,12 @@ public class TransactionService {
      * Every REAP_INTERVAL milliseconds, check for expired transactions. If the
      * tx is expired, roll it back and remove it from the registry.
      */
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.TransactionService#removeAndRollbackExpired()
+     */
+    @Override
     @Scheduled(fixedRate = REAP_INTERVAL)
     public void removeAndRollbackExpired() {
         synchronized (transactions) {
@@ -100,9 +107,10 @@ public class TransactionService {
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
-    public Transaction beginTransaction(final Session sess, String userName)
+    @Override
+    public Transaction beginTransaction(final Session sess, final String userName)
         throws RepositoryException {
-        final Transaction tx = new Transaction(sess, userName);
+        final Transaction tx = new TransactionImpl(sess, userName);
         final String txId = tx.getId();
         transactions.put(txId, tx);
         sess.setNamespacePrefix(FCREPO4_TX_ID, txId);
@@ -115,6 +123,7 @@ public class TransactionService {
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
+    @Override
     public Transaction getTransaction(final String txid)
         throws TransactionMissingException {
 
@@ -135,6 +144,7 @@ public class TransactionService {
      * @return
      * @throws TransactionMissingException
      */
+    @Override
     public Transaction getTransaction(final Session session)
         throws TransactionMissingException {
 
@@ -172,6 +182,7 @@ public class TransactionService {
      * @param txid the Id of the {@link Transaction}
      * @return the {@link Transaction}
      */
+    @Override
     public boolean exists(final String txid) {
         return transactions.containsKey(txid);
     }
@@ -182,6 +193,7 @@ public class TransactionService {
      * @param txid the id of the {@link Transaction}
      * @throws RepositoryException
      */
+    @Override
     public Transaction commit(final String txid) throws RepositoryException {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
@@ -199,6 +211,7 @@ public class TransactionService {
      * @return the {@link Transaction} object
      * @throws RepositoryException if the {@link Transaction} could not be found
      */
+    @Override
     public Transaction rollback(final String txid) throws RepositoryException {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
@@ -216,14 +229,24 @@ public class TransactionService {
      * @param userName the name  of the {@link java.security.Principal}
      * @return if the transaction was created by this user
     */
-    public boolean isAssociatedWithUser(String txId, String userName) {
+    @Override
+    public boolean isAssociatedWithUser(final String txId, final String userName) {
         boolean existsForUser = false;
         if (exists(txId)) {
-            Transaction transaction = transactions.get(txId);
+            final Transaction transaction = transactions.get(txId);
             if (transaction.isAssociatedWithUser(userName)) {
                 existsForUser = true;
             }
         }
         return existsForUser;
     }
+
+    /**
+     * @param versionService the versionService to set
+     */
+    @Override
+    public void setVersionService(final VersionService versionService) {
+        this.versionService = versionService;
+    }
+
 }
