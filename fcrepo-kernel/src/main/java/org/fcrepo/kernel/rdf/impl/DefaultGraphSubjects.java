@@ -80,7 +80,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
 
     @Override
     public Node getNodeFromGraphSubject(final Resource subject)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final String absPath = getPathFromGraphSubject(subject);
 

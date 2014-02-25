@@ -74,7 +74,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(final InputStream requestBodyStream)
-        throws RepositoryException, IOException {
+            throws RepositoryException, IOException {
 
         try {
             if (requestBodyStream != null) {

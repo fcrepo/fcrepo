@@ -133,7 +133,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
      * @throws NullPointerException if session is null
      */
     private Map<String,String> getPathMapForVersionNode(final Node frozenNode)
-        throws RepositoryException {
+            throws RepositoryException {
         Node versionableFrozenNode = frozenNode;
         Node versionableNode = internalSession.getNodeByIdentifier(
                 versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
@@ -172,7 +172,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
      * @throws NullPointerException if session is null
      */
     public Node getNodeFromGraphSubjectForVersionNode(final String subjectUri)
-        throws RepositoryException {
+            throws RepositoryException {
 
         /*
          * Get the part of the URI after fcr:versions/ that represents the label

@@ -42,7 +42,7 @@ public interface GraphSubjects {
      * @throws RepositoryException
      */
     Node getNodeFromGraphSubject(final Resource subject)
-        throws RepositoryException;
+            throws RepositoryException;
 
     /**
      * Translate an RDF resource into a JCR path

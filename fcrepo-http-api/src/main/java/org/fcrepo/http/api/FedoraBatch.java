@@ -147,7 +147,7 @@ public class FedoraBatch extends AbstractResource {
     @Timed
     public Response batchModify(@PathParam("path") final List<PathSegment> pathList,
                                 final MultiPart multipart)
-        throws RepositoryException, InvalidChecksumException, IOException, URISyntaxException {
+            throws RepositoryException, InvalidChecksumException, IOException, URISyntaxException {
 
         final String path = toPath(pathList);
 

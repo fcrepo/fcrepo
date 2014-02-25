@@ -85,7 +85,7 @@ public class CacheStoreEntry extends LowLevelCacheEntry {
      */
     @Override
     public void storeValue(final InputStream stream)
-        throws BinaryStoreException, IOException {
+            throws BinaryStoreException, IOException {
         // TODO this is probably an auditable action.
         LOGGER.info("Doing a low-level write to store {} for key {}",
                     getExternalIdentifier(), key);

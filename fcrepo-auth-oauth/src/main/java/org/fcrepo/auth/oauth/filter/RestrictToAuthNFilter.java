@@ -64,7 +64,7 @@ public class RestrictToAuthNFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request,
             final ServletResponse response, final FilterChain chain)
-        throws IOException, ServletException {
+            throws IOException, ServletException {
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
         final String requestURI = req.getRequestURI();

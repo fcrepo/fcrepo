@@ -120,7 +120,7 @@ public class FedoraWebhooks extends AbstractResource {
      * @throws RepositoryException
      */
     public void runHooks(final Node resource, final FedoraEvent event)
-        throws RepositoryException {
+            throws RepositoryException {
         if (resource == null) {
             LOGGER.warn("resource node is null; event path is {}", event
                     .getPath());

@@ -92,7 +92,7 @@ public class Datastream extends FedoraResourceImpl {
      * @throws RepositoryException
      */
     public Datastream(final Session session, final String path)
-        throws RepositoryException {
+            throws RepositoryException {
         this(session, path, JcrConstants.NT_FILE);
     }
 
@@ -138,7 +138,7 @@ public class Datastream extends FedoraResourceImpl {
     public void setContent(final InputStream content, final String contentType,
                            final URI checksum, final String originalFileName,
                            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-        throws RepositoryException, InvalidChecksumException {
+            throws RepositoryException, InvalidChecksumException {
 
         final Node contentNode =
             findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
@@ -293,7 +293,7 @@ public class Datastream extends FedoraResourceImpl {
     }
 
     private static void decorateContentNode(final Node contentNode)
-        throws RepositoryException {
+            throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
             return;

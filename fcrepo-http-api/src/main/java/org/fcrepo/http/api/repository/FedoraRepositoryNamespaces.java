@@ -81,7 +81,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     @Timed
     @Consumes({contentTypeSPARQLUpdate})
     public Response updateNamespaces(final InputStream requestBodyStream)
-        throws RepositoryException, IOException {
+            throws RepositoryException, IOException {
 
         try {
             final Dataset dataset =

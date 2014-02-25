@@ -47,7 +47,7 @@ public class NamespaceChangedStatementListener extends StatementListener {
      * @throws RepositoryException
      */
     public NamespaceChangedStatementListener(final Session session)
-        throws RepositoryException {
+            throws RepositoryException {
         super();
         this.namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
     }

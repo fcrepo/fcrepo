@@ -52,7 +52,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
      */
     @Override
     public FixityResult checkFixity(final URI checksum, final long size)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final String digest = ContentDigest.getAlgorithm(checksum);
 

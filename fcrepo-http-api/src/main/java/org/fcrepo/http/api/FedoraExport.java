@@ -85,7 +85,7 @@ public class FedoraExport extends AbstractResource {
 
                     @Override
                     public void write(final OutputStream out)
-                        throws IOException {
+                            throws IOException {
 
                         try {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);

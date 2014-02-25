@@ -130,7 +130,7 @@ public class AccessRoles extends AbstractResource {
     @Timed
     public Response post(@PathParam("path")
         final List<PathSegment> pathList, final Map<String, Set<String>> data)
-        throws RepositoryException {
+            throws RepositoryException {
         final String path = toPath(pathList);
         LOGGER.debug("POST Received request param: {}", request);
         Response.ResponseBuilder response;

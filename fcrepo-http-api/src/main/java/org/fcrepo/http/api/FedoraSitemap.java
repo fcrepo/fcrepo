@@ -114,7 +114,7 @@ public class FedoraSitemap extends AbstractResource {
     @Timed
     @Produces(TEXT_XML)
     public SitemapUrlSet getSitemap(@PathParam("page") final String page)
-        throws RepositoryException {
+            throws RepositoryException {
         try {
             final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 
@@ -134,7 +134,7 @@ public class FedoraSitemap extends AbstractResource {
     }
 
     private RowIterator getSitemapEntries(final Session session, final long pg)
-        throws RepositoryException {
+            throws RepositoryException {
 
         final QueryManager queryManager =
             session.getWorkspace().getQueryManager();
@@ -156,7 +156,7 @@ public class FedoraSitemap extends AbstractResource {
     }
 
     private SitemapEntry getSitemapEntry(final Row r)
-        throws RepositoryException {
+            throws RepositoryException {
 
         Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
         final String path = r.getNode().getPath();

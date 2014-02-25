@@ -65,7 +65,7 @@ public class NodeService extends RepositoryService {
      * @throws RepositoryException
      */
     public FedoraResource getObject(final Session session, final String path)
-        throws RepositoryException {
+            throws RepositoryException {
         return new FedoraResourceImpl(session.getNode(path));
     }
 
@@ -74,7 +74,7 @@ public class NodeService extends RepositoryService {
      * @throws RepositoryException
      */
     public Set<String> getObjectNames(final Session session, final String path)
-        throws RepositoryException {
+            throws RepositoryException {
         return getObjectNames(session, path, null);
     }
 
@@ -113,7 +113,7 @@ public class NodeService extends RepositoryService {
      * @throws RepositoryException
      */
     public void deleteObject(final Session session, final String path)
-        throws RepositoryException {
+            throws RepositoryException {
         final Node obj = session.getNode(path);
         obj.remove();
     }
@@ -128,7 +128,7 @@ public class NodeService extends RepositoryService {
     public void copyObject(final Session session,
                            final String source,
                            final String destination)
-        throws RepositoryException {
+            throws RepositoryException {
         session.getWorkspace().copy(source, destination);
     }
 
@@ -142,7 +142,7 @@ public class NodeService extends RepositoryService {
     public void moveObject(final Session session,
                            final String source,
                            final String destination)
-        throws RepositoryException {
+            throws RepositoryException {
         session.getWorkspace().move(source, destination);
     }
 }

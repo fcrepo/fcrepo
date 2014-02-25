@@ -53,7 +53,7 @@ public abstract class LowLevelCacheEntry extends BasicCacheEntry {
      * @throws IOException
      */
     public abstract void storeValue(final InputStream stream)
-        throws BinaryStoreException, IOException;
+            throws BinaryStoreException, IOException;
 
     /**
      * Set a meaningful identifier from some higher level that we should

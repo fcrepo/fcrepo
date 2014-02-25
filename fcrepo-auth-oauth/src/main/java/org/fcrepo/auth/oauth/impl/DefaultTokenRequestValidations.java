@@ -65,7 +65,7 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
      */
     @Override
     public boolean isValidAuthCode(OAuthTokenRequest oauthRequest)
-        throws RepositoryException {
+            throws RepositoryException {
         final String client = oauthRequest.getClientId();
         LOGGER.debug("Request has authorization client: {}", client);
         final String code = oauthRequest.getCode();

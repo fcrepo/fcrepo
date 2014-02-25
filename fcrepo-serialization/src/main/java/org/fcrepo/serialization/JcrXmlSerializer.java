@@ -46,7 +46,7 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
 
     @Override
     public void serialize(final FedoraObject obj, final OutputStream out)
-        throws RepositoryException, IOException {
+            throws RepositoryException, IOException {
         final Node node = obj.getNode();
         node.getSession().exportSystemView(node.getPath(), out, false, false);
     }

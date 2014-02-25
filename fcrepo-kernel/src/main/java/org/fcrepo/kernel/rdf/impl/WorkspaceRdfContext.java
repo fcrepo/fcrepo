@@ -57,7 +57,7 @@ public class WorkspaceRdfContext extends RdfStream {
      * @throws RepositoryException
      */
     public WorkspaceRdfContext(final Session session, final GraphSubjects subjects)
-        throws RepositoryException {
+            throws RepositoryException {
         super();
 
         final String[] workspaces =

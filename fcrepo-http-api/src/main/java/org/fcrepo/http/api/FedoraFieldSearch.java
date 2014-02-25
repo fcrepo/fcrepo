@@ -159,7 +159,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                      final int limit,
                                      final HttpServletResponse servletResponse,
                                      final UriInfo uriInfo)
-        throws RepositoryException {
+            throws RepositoryException {
 
         try {
             LOGGER.debug(

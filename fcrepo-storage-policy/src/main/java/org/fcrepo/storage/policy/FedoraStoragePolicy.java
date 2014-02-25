@@ -197,7 +197,7 @@ public class FedoraStoragePolicy extends AbstractResource {
     @DELETE
     @Timed
     public Response deleteNodeType(@PathParam("path") final String nodeType)
-        throws RepositoryException {
+            throws RepositoryException {
         try {
             LOGGER.debug("Deleting node property{}", nodeType);
             final Node node =

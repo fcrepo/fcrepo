@@ -100,7 +100,7 @@ public class Constants {
      * @throws RepositoryException
      */
     public static void registerPrefixes(final Session session)
-        throws RepositoryException {
+            throws RepositoryException {
         session.setNamespacePrefix(JcrName.NS_PREFIX, JcrName.NS_URI);
     }
 }

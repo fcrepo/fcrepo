@@ -161,7 +161,7 @@ public class PropertyToTriple implements
     }
 
     private Node traverseLink(final Property p, final Value v)
-        throws RepositoryException {
+            throws RepositoryException {
         final javax.jcr.Node refNode;
         if (v.getType() == PATH) {
             refNode = p.getParent().getNode(v.getString());
@@ -172,7 +172,7 @@ public class PropertyToTriple implements
     }
 
     private Node getGraphSubject(final javax.jcr.Node n)
-        throws RepositoryException {
+            throws RepositoryException {
         return graphSubjects.getGraphSubject(n).asNode();
     }
 

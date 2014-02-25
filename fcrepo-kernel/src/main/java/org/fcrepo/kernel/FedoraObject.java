@@ -72,7 +72,7 @@ public class FedoraObject extends FedoraResourceImpl {
      * @throws RepositoryException
      */
     public FedoraObject(final Session session, final String path)
-        throws RepositoryException {
+            throws RepositoryException {
         this(session, path, JcrConstants.NT_FOLDER);
     }
 

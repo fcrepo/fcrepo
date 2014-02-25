@@ -63,7 +63,7 @@ public class AccessRolesTypes {
     }
 
     private static void registerNodeTypes(final SessionFactory sessions)
-        throws RepositoryException, IOException {
+            throws RepositoryException, IOException {
         synchronized (mutex) {
             if (!registered) {
                 Session session = null;

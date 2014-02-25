@@ -247,7 +247,7 @@ public class FedoraNodes extends AbstractResource {
             final UriInfo uriInfo,
             final InputStream requestBodyStream,
             @Context final Request request)
-        throws RepositoryException, IOException {
+            throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to update path: {}", path);
@@ -400,7 +400,7 @@ public class FedoraNodes extends AbstractResource {
             final String slug,
             @Context
             final UriInfo uriInfo, final InputStream requestBodyStream)
-        throws RepositoryException, ParseException, IOException,
+            throws RepositoryException, ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
 
         final String newObjectPath;
@@ -613,7 +613,7 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response copyObject(@PathParam("path") final List<PathSegment> path,
                                @HeaderParam("Destination") final String destinationUri)
-        throws RepositoryException, URISyntaxException {
+            throws RepositoryException, URISyntaxException {
 
         try {
 
@@ -656,7 +656,7 @@ public class FedoraNodes extends AbstractResource {
     public Response moveObject(@PathParam("path") final List<PathSegment> pathList,
                                @HeaderParam("Destination") final String destinationUri,
                                @Context final Request request)
-        throws RepositoryException, URISyntaxException {
+            throws RepositoryException, URISyntaxException {
 
         try {
 

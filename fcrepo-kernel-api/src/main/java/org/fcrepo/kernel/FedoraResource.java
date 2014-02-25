@@ -106,7 +106,7 @@ public interface FedoraResource {
      * @throws RepositoryException
      */
     Dataset getPropertiesDataset(final GraphSubjects graphSubjects,
-       final int offset, final int limit) throws RepositoryException;
+           final int offset, final int limit) throws RepositoryException;
 
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
@@ -115,7 +115,7 @@ public interface FedoraResource {
      * @throws RepositoryException
      */
     Dataset getPropertiesDataset(final GraphSubjects subjects)
-        throws RepositoryException;
+            throws RepositoryException;
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
@@ -132,7 +132,7 @@ public interface FedoraResource {
      * @throws RepositoryException
      */
     RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
-        throws RepositoryException;
+            throws RepositoryException;
 
     /**
      * Serialize the JCR versions information as an RDF dataset
@@ -141,7 +141,7 @@ public interface FedoraResource {
      * @throws RepositoryException
      */
     RdfStream getVersionTriples(final GraphSubjects graphSubjects)
-        throws RepositoryException;
+            throws RepositoryException;
 
     /**
      * Tag the current version of the Node with a version label that

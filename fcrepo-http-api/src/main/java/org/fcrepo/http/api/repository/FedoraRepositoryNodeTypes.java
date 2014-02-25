@@ -88,7 +88,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @Consumes({"text/cnd"})
     @Timed
     public Response updateCnd(final InputStream requestBodyStream)
-        throws RepositoryException, IOException {
+            throws RepositoryException, IOException {
 
         try {
             nodeService.registerNodeTypes(session, requestBodyStream);
