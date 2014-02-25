@@ -16,6 +16,8 @@
 
 package org.fcrepo.auth.common;
 
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE;
+
 import java.security.Principal;
 import java.util.Set;
 
@@ -117,9 +119,8 @@ public class FedoraUserSecurityContext implements SecurityContext,
     public Principal getEffectiveUserPrincipal() {
         if (this.loggedIn && this.userPrincipal != null) {
             return this.userPrincipal;
-        } else {
-            return ServletContainerAuthenticationProvider.EVERYONE;
         }
+        return EVERYONE;
     }
 
     /**
@@ -159,8 +160,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
         if (pep != null) {
             return pep.hasModeShapePermission(absPath, actions,
                     this.principals, getEffectiveUserPrincipal());
-        } else {
-            return false;
         }
+        return false;
     }
 }

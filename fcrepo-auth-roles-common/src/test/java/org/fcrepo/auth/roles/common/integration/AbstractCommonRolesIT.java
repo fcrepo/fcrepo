@@ -15,8 +15,9 @@
  */
 package org.fcrepo.auth.roles.common.integration;
 
+import static java.util.Collections.singletonList;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,16 +31,16 @@ public abstract class AbstractCommonRolesIT extends AbstractRolesIT {
             defineTestObjects();
 
     protected static Map<String, List<String>> t_roles =
-            new HashMap<String, List<String>>();
+            new HashMap<>();
 
     protected static Map<String, List<String>> admin_role =
-            new HashMap<String, List<String>>();
+            new HashMap<>();
 
     static {
-        t_roles.put("exampleadmin", Collections.singletonList("admin"));
-        t_roles.put("examplereader", Collections.singletonList("reader"));
-        t_roles.put("examplewriter", Collections.singletonList("writer"));
-        admin_role.put("exampleadmin", Collections.singletonList("admin"));
+        t_roles.put("exampleadmin", singletonList("admin"));
+        t_roles.put("examplereader", singletonList("reader"));
+        t_roles.put("examplewriter", singletonList("writer"));
+        admin_role.put("exampleadmin", singletonList("admin"));
     }
 
     protected String test_json_roles = makeJson(t_roles);
@@ -48,7 +49,7 @@ public abstract class AbstractCommonRolesIT extends AbstractRolesIT {
 
     private static List<RolesPepTestObjectBean> defineTestObjects() {
         final List<RolesPepTestObjectBean> test_objs =
-                new ArrayList<RolesPepTestObjectBean>();
+                new ArrayList<>();
         final RolesPepTestObjectBean objA = new RolesPepTestObjectBean();
         /* parent object */
         objA.setPath("testcommonobj1");

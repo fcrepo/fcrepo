@@ -57,9 +57,9 @@ import com.hp.hpl.jena.sparql.syntax.ElementSubQuery;
 import com.hp.hpl.jena.sparql.syntax.ElementTriplesBlock;
 import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
+
 import org.apache.commons.lang.NotImplementedException;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.utils.NodePropertiesTools;
 import org.fcrepo.transform.exception.JQLParsingException;
 import org.modeshape.common.collection.Collections;
 import org.modeshape.jcr.api.query.qom.Limit;
@@ -79,6 +79,7 @@ import javax.jcr.query.qom.PropertyValue;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -104,6 +105,7 @@ import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LESS_TH
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LIKE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_NOT_EQUAL_TO;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -135,26 +137,23 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
 
-    private NodePropertiesTools propertiesTools = new NodePropertiesTools();
-
     /**
      * Create a new query
      * @param session
      * @param jcrTools
      * @param queryManager
-     * @throws RepositoryException
      */
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
-                           final QueryManager queryManager) throws RepositoryException {
+                           final QueryManager queryManager) {
         this.session = session;
         this.jcrTools = jcrTools;
         this.queryFactory = queryManager.getQOMFactory();
         this.constraint = null;
-        this.variables = new HashMap<String, Column>();
-        this.joins = new HashMap<String, Source>();
+        this.variables = new HashMap<>();
+        this.joins = new HashMap<>();
         this.joinTypes = new HashMap<>();
-        this.joinConditions = new HashMap<String, JoinCondition>();
+        this.joinConditions = new HashMap<>();
     }
 
     /**
@@ -508,9 +507,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                             final String joinPropertyName;
 
                             if (propertyType == URI) {
-                                joinPropertyName =
-                                    propertiesTools
-                                            .getReferencePropertyName(propertyName);
+                                joinPropertyName = getReferencePropertyName(propertyName);
                             } else {
                                 joinPropertyName = propertyName;
                             }

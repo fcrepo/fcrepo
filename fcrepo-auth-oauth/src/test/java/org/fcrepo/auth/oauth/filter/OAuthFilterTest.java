@@ -50,24 +50,24 @@ public class OAuthFilterTest {
 
     @Mock
     private HttpServletRequest mockRequest;
-    
+
     @Mock
     private HttpServletResponse mockResponse;
-    
+
     @Mock
     private FilterChain mockFilterChain;
-    
+
     @Mock
     private OAuthRSProvider mockProvider;
-    
+
     @Mock
     private OAuthDecision mockDecision;
-    
+
     @Mock
     private OAuthClient mockClient;
-    
+
     private OAuthFilter testObj;
-    
+
     @Before
     public void setUp(){
         initMocks(this);
@@ -75,7 +75,7 @@ public class OAuthFilterTest {
         testObj.setProvider(mockProvider);
         testObj.setRealm(DUMMY_REALM);
     }
-    
+
     @Test
     public void testValidRequest()
         throws IOException, ServletException, OAuthProblemException {
@@ -101,7 +101,7 @@ public class OAuthFilterTest {
         verify(mockFilterChain)
             .doFilter(any(HttpServletRequestWrapper.class), eq(mockResponse));
     }
-    
+
 
     /**
      * The token-bearing header is expected to be of the format
@@ -125,7 +125,7 @@ public class OAuthFilterTest {
         verify(mockFilterChain, times(0))
             .doFilter(any(HttpServletRequestWrapper.class), eq(mockResponse));
     }
-    
+
     /**
      * The token-bearing header is must be present for a default
      * configuration. Our OAuth library sends no elaborating error type back
@@ -146,14 +146,14 @@ public class OAuthFilterTest {
         verify(mockFilterChain, times(0))
             .doFilter(any(HttpServletRequestWrapper.class), eq(mockResponse));
     }
-    
+
     /**
      * A misconfigured filter that attempts to parse tokens in multiple
      * ways is treated as an invalid request by our OAuth library, and
      * should result in a 400 (Bad Request)
      * @throws IOException
      * @throws ServletException
-     * @throws OAuthProblemException 
+     * @throws OAuthProblemException
      */
     @Test
     public void testMultipleStyles()
@@ -168,7 +168,7 @@ public class OAuthFilterTest {
         when(mockProvider.validateRequest(DUMMY_REALM, DUMMY_TOKEN, mockRequest))
         .thenReturn(mockDecision);
         when(mockDecision.getOAuthClient()).thenReturn(mockClient);
-        HashSet<ParameterStyle> styles = new HashSet<ParameterStyle>(2);
+        final HashSet<ParameterStyle> styles = new HashSet<>(2);
         styles.add(ParameterStyle.HEADER);
         styles.add(ParameterStyle.QUERY);
         testObj.setParameterStyles(styles);

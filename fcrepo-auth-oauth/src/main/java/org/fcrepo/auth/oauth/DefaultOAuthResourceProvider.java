@@ -70,23 +70,22 @@ public class DefaultOAuthResourceProvider implements OAuthRSProvider {
         try {
             if (!session.itemExists(getTokenPath(token))) {
                 throw new OAuthRuntimeException("Invalid token!");
-            } else {
-                final Node tokenNode = session.getNode(getTokenPath(token));
-                LOGGER.debug("Retrieved token from: {}", tokenNode.getPath());
-
-                final String client =
-                    tokenNode.getProperty(CLIENT_PROPERTY).getString();
-                LOGGER.debug("Retrieved client: {}", client);
-
-                final String principal;
-                if (tokenNode.hasProperty(PRINCIPAL_PROPERTY)) {
-                    principal = tokenNode.getProperty(PRINCIPAL_PROPERTY).getString();
-                } else {
-                    principal = null;
-                }
-                LOGGER.debug("Retrieved principal: {}", principal);
-                return new Decision(client, principal);
             }
+            final Node tokenNode = session.getNode(getTokenPath(token));
+            LOGGER.debug("Retrieved token from: {}", tokenNode.getPath());
+
+            final String client =
+                tokenNode.getProperty(CLIENT_PROPERTY).getString();
+            LOGGER.debug("Retrieved client: {}", client);
+
+            final String principal;
+            if (tokenNode.hasProperty(PRINCIPAL_PROPERTY)) {
+                principal = tokenNode.getProperty(PRINCIPAL_PROPERTY).getString();
+            } else {
+                principal = null;
+            }
+            LOGGER.debug("Retrieved principal: {}", principal);
+            return new Decision(client, principal);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException("Exception validating OAuth request", e);
         } finally {
@@ -96,7 +95,7 @@ public class DefaultOAuthResourceProvider implements OAuthRSProvider {
 
     }
 
-    private String getTokenPath(String token) {
+    private static String getTokenPath(final String token) {
         return "/tokens/" + token;
     }
 

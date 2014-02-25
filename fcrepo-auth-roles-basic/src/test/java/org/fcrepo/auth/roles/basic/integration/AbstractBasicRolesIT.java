@@ -31,8 +31,7 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
             defineTestObjects();
 
     private static List<RolesPepTestObjectBean> defineTestObjects() {
-        final List<RolesPepTestObjectBean> test_objs =
-                new ArrayList<RolesPepTestObjectBean>();
+        final List<RolesPepTestObjectBean> test_objs = new ArrayList<>();
         /* public object with public datastream */
         final RolesPepTestObjectBean objA = new RolesPepTestObjectBean();
         objA.setPath("testparent1");

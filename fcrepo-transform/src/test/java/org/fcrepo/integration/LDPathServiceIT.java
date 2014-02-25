@@ -17,8 +17,6 @@
 package org.fcrepo.integration;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.transformations.LDPathTransform;
@@ -60,13 +58,13 @@ public class LDPathServiceIT {
     }
 
     @Test
-    public void shouldDoStuff() throws RepositoryException, LDPathParseException {
-        Session session = repo.login();
+    public void shouldDoStuff() throws RepositoryException {
+        final Session session = repo.login();
 
         final FedoraObject object = objectService.createObject(session, "/testObject");
         object.getNode().setProperty("dc:title", "some-title");
 
-        String s = "@prefix dces : <http://purl.org/dc/elements/1.1/>\n" +
+        final String s = "@prefix dces : <http://purl.org/dc/elements/1.1/>\n" +
                        "@prefix fcrepo : <" + REPOSITORY_NAMESPACE + ">\n" +
                            "id      = . :: xsd:string ;\n" +
                            "title = dc:title :: xsd:string ;\n" +
@@ -80,7 +78,7 @@ public class LDPathServiceIT {
 
         assert(list != null);
         assertEquals(1, list.size());
-        Map<String, Collection<Object>> stuff = list.get(0);
+        final Map<String, Collection<Object>> stuff = list.get(0);
 
         assertTrue(stuff.containsKey("id"));
         assertTrue(stuff.containsKey("title"));

@@ -61,7 +61,7 @@ public class DefaultOAuthResourceProviderTest {
     DefaultOAuthResourceProvider testObj;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockSessions.getInternalSession("oauth")).thenReturn(mockSession);
         when(mockSession.itemExists("/tokens/" + INVALID_TOKEN))
@@ -90,7 +90,7 @@ public class DefaultOAuthResourceProviderTest {
 
     @Test(expected=OAuthRuntimeException.class)
     public void testRejectsNonexistentTokenRequest()
-        throws PathNotFoundException, RepositoryException, OAuthProblemException {
+        throws OAuthProblemException {
         testObj.validateRequest(DUMMY_RSID, INVALID_TOKEN, mockRequest);
         verify(mockSession).logout();
     }

@@ -35,9 +35,9 @@ public class RolesPepTestObjectBean {
     private final Map<String, List<Map<String, String>>> datastreamACLs;
 
     public RolesPepTestObjectBean() {
-        this.datastreams = new ArrayList<Map<String, String>>();
-        this.acls = new ArrayList<Map<String, String>>();
-        this.datastreamACLs = new HashMap<String, List<Map<String, String>>>();
+        this.datastreams = new ArrayList<>();
+        this.acls = new ArrayList<>();
+        this.datastreamACLs = new HashMap<>();
     }
 
     public String getPath() {
@@ -53,7 +53,7 @@ public class RolesPepTestObjectBean {
     }
 
     public void addDatastream(final String dsid, final String content) {
-        final Map<String, String> datastream = new HashMap<String, String>();
+        final Map<String, String> datastream = new HashMap<>();
         datastream.put(dsid, content);
         datastreams.add(datastream);
     }
@@ -63,7 +63,7 @@ public class RolesPepTestObjectBean {
     }
 
     public void addACL(final String principal, final String role) {
-        final Map<String, String> acl = new HashMap<String, String>();
+        final Map<String, String> acl = new HashMap<>();
         acl.put(principal, role);
         acls.add(acl);
     }
@@ -75,10 +75,10 @@ public class RolesPepTestObjectBean {
     public void addDatastreamACL(final String dsid, final String principal,
             final String role) {
         List<Map<String, String>> acl_list;
-        final Map<String, String> acl = new HashMap<String, String>();
+        final Map<String, String> acl = new HashMap<>();
         acl.put(principal, role);
         if (this.datastreamACLs.get(dsid) == null) {
-            acl_list = new ArrayList<Map<String, String>>();
+            acl_list = new ArrayList<>();
             this.datastreamACLs.put(dsid, acl_list);
         }
         this.datastreamACLs.get(dsid).add(acl);

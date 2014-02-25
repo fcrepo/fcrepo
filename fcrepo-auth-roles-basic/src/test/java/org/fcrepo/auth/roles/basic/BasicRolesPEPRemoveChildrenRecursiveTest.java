@@ -89,7 +89,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     private Node noAclNode;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
 
         pep = new BasicRolesPEP();

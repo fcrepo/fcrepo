@@ -15,13 +15,13 @@
  */
 package org.fcrepo.storage.policy;
 
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -75,7 +75,7 @@ public class TiffStoragePolicyStorageIT {
                 this.getClass().getClassLoader().getResource(
                     "repository.json");
 
-        Map params = Collections.singletonMap(JcrRepositoryFactory.URL,
+        final Map<String, String> params = singletonMap(JcrRepositoryFactory.URL,
                                               config.toString());
         repo = new JcrRepositoryFactory().getRepository(params);
 
@@ -117,7 +117,7 @@ public class TiffStoragePolicyStorageIT {
 
         final Node node = session.getNode("/testCompositeObject/content");
 
-        BinaryKey key =
+        final BinaryKey key =
             getBinaryKey.apply(node.getNode(JcrConstants.JCR_CONTENT)
                                .getProperty(JcrConstants.JCR_DATA));
 
@@ -126,7 +126,7 @@ public class TiffStoragePolicyStorageIT {
         final Node tiffNode =
             session.getNode("/testCompositeObject/tiffContent");
 
-        BinaryKey tiffKey =
+        final BinaryKey tiffKey =
             getBinaryKey.apply(tiffNode.getNode(JcrConstants.JCR_CONTENT)
                                .getProperty(JcrConstants.JCR_DATA));
 
@@ -148,12 +148,12 @@ public class TiffStoragePolicyStorageIT {
 
         assertEquals(1, lowLevelTiffEntries.size());
 
-        LowLevelCacheEntry e = iterator.next();
+        final LowLevelCacheEntry e = iterator.next();
 
         assertThat(e.getExternalIdentifier(),
                    containsString("TransientBinaryStore"));
 
-        LowLevelCacheEntry tiffEntry = tiffIterator.next();
+        final LowLevelCacheEntry tiffEntry = tiffIterator.next();
         assertThat(tiffEntry.getExternalIdentifier(),
                    containsString("FileSystemBinaryStore"));
     }

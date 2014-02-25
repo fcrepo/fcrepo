@@ -89,11 +89,10 @@ public class ServletContainerAuthenticationProvider implements
     public static synchronized AuthenticationProvider getInstance() {
         if (_instance != null) {
             return _instance;
-        } else {
-            _instance = new ServletContainerAuthenticationProvider();
-            LOGGER.warn("Security is MINIMAL, no Policy Enforcement Point configured.");
-            return _instance;
         }
+        _instance = new ServletContainerAuthenticationProvider();
+        LOGGER.warn("Security is MINIMAL, no Policy Enforcement Point configured.");
+        return _instance;
     }
 
     /**
@@ -137,7 +136,7 @@ public class ServletContainerAuthenticationProvider implements
         }
 
         // add base public principals
-        final Set<Principal> principals = new HashSet<Principal>();
+        final Set<Principal> principals = new HashSet<>();
         principals.add(EVERYONE); // all sessions have this principal
 
         // request fedora user role to add user principal

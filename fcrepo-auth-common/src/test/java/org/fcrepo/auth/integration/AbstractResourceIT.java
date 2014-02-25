@@ -69,9 +69,8 @@ public abstract class AbstractResourceIT {
             final String query) {
         if (query.equals("")) {
             return new HttpPost(serverAddress + pid);
-        } else {
-            return new HttpPost(serverAddress + pid + "?" + query);
         }
+        return new HttpPost(serverAddress + pid + "?" + query);
     }
 
     protected static HttpPost postDSMethod(final String pid,

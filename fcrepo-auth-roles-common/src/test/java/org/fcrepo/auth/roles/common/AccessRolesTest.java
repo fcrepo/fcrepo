@@ -84,7 +84,7 @@ public class AccessRolesTest {
     private AccessRoles accessRoles;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         accessRoles = new AccessRoles();
         setField(accessRoles, "accessRolesProvider", accessRolesProvider);

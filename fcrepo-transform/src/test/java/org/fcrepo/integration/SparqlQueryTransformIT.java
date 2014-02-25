@@ -20,7 +20,6 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
-import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.ObjectService;
@@ -58,12 +57,12 @@ public class SparqlQueryTransformIT {
     }
 
     @Test
-    public void shouldDoStuff() throws RepositoryException, LDPathParseException {
-        Session session = repo.login();
+    public void shouldDoStuff() throws RepositoryException {
+        final Session session = repo.login();
 
         final FedoraObject object = objectService.createObject(session, "/testObject");
 
-        String s = "SELECT ?x ?uuid\n" +
+        final String s = "SELECT ?x ?uuid\n" +
                 "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "uuid> ?uuid }";
         final InputStream stringReader = new ByteArrayInputStream(s.getBytes());
 

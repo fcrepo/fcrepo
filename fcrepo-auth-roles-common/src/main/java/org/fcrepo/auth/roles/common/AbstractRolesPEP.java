@@ -113,12 +113,11 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
      *
      * @param principals effective principals
      * @return set of effective content roles
-     * @throws RepositoryException if role discovery fails
      */
     public static Set<String>
     resolveUserRoles(final Map<String, List<String>> acl,
-                    final Set<Principal> principals) throws RepositoryException {
-        final Set<String> roles = new HashSet<String>();
+                    final Set<Principal> principals) {
+        final Set<String> roles = new HashSet<>();
         for (final Principal p : principals) {
             final List<String> matchedRoles = acl.get(p.getName());
             if (matchedRoles != null) {
@@ -174,9 +173,8 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             return canRemoveChildrenRecursive(absPath.toString(), session,
                     allPrincipals,
                     userPrincipal, roles);
-        } else {
-            return true;
         }
+        return true;
     }
 
     /**

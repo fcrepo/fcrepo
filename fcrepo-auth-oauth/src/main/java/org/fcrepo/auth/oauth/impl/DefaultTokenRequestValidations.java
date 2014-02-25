@@ -53,7 +53,7 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
      * accessible via the given session factory.
      * @param sessions
      */
-    public DefaultTokenRequestValidations(SessionFactory sessions) {
+    public DefaultTokenRequestValidations(final SessionFactory sessions) {
         this.sessions = sessions;
     }
 
@@ -64,7 +64,7 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
      * @throws RepositoryException
      */
     @Override
-    public boolean isValidAuthCode(OAuthTokenRequest oauthRequest)
+    public boolean isValidAuthCode(final OAuthTokenRequest oauthRequest)
         throws RepositoryException {
         final String client = oauthRequest.getClientId();
         LOGGER.debug("Request has authorization client: {}", client);
@@ -91,9 +91,8 @@ public class DefaultTokenRequestValidations implements TokenRequestValidations {
                                 value2string));
                     // and if there is at least one scope in common
                     return (storedScopes.isEmpty() || !intersection(storedScopes, scopes).isEmpty());
-                } else {
-                    return true;
                 }
+                return true;
             }
         } catch (final PathNotFoundException e) {
             // this wasn't a code we stored

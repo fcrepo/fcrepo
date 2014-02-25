@@ -22,6 +22,9 @@ package org.fcrepo.storage.policy;
  */
 
 public class StoragePolicyTypeException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      * Ordinary constructor
      *

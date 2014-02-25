@@ -16,6 +16,11 @@
 
 package org.fcrepo.auth.roles.common;
 
+import static org.fcrepo.auth.roles.common.Constants.JcrName.Rbacl;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.principal;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.rbacl;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.rbaclAssignable;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.role;
 import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -77,7 +82,7 @@ public class AccessRolesProviderTest {
     private AccessRolesProvider provider;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(node.getSession()).thenReturn(session);
 
@@ -98,7 +103,7 @@ public class AccessRolesProviderTest {
             final String roleName) throws RepositoryException {
         // Set up principal for parent node
         when(principalProperty.getString()).thenReturn(principalName);
-        when(principalNode.getProperty(eq(JcrName.principal.getQualified())))
+        when(principalNode.getProperty(eq(principal.getQualified())))
                 .thenReturn(principalProperty);
 
         // Roles for parent
@@ -106,7 +111,7 @@ public class AccessRolesProviderTest {
         final Value roleValue = mock(Value.class);
         when(roleValue.toString()).thenReturn(roleName);
         when(roleProperty.getValues()).thenReturn(new Value[] {roleValue});
-        when(principalNode.getProperty(eq(JcrName.role.getQualified())))
+        when(principalNode.getProperty(eq(role.getQualified())))
                 .thenReturn(roleProperty);
     }
 
@@ -268,13 +273,13 @@ public class AccessRolesProviderTest {
 
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
-        when(parentNode1.isNodeType(eq(JcrName.rbaclAssignable.getQualified())))
+        when(parentNode1.isNodeType(eq(rbaclAssignable.getQualified())))
                 .thenReturn(true);
         when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
 
         // Set up immediate parent node
         final Node parentNode2 = mock(Node.class);
-        when(parentNode2.isNodeType(eq(JcrName.rbaclAssignable.getQualified())))
+        when(parentNode2.isNodeType(eq(rbaclAssignable.getQualified())))
                 .thenReturn(true);
         when(parentNode2.getNode(anyString())).thenReturn(rbaclNode);
         when(parentNode2.getParent()).thenReturn(parentNode1);
@@ -376,7 +381,7 @@ public class AccessRolesProviderTest {
         // Roles for parent
         final Property roleProperty = mock(Property.class);
         when(roleProperty.getValues()).thenReturn(new Value[] {null});
-        when(principalNode1.getProperty(eq(JcrName.role.getQualified())))
+        when(principalNode1.getProperty(eq(role.getQualified())))
                 .thenReturn(roleProperty);
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
@@ -418,7 +423,7 @@ public class AccessRolesProviderTest {
         when(node.addNode(anyString(), anyString())).thenReturn(aclNode);
 
         final Map<String, Set<String>> data =
-                new HashMap<String, Set<String>>();
+                new HashMap<>();
         provider.postRoles(node, data);
 
         // Node should be given node types to make it assignable
@@ -433,24 +438,24 @@ public class AccessRolesProviderTest {
     public void testPostRolesEmptyDataToRBACLAssignable()
             throws RepositoryException {
         final Map<String, Set<String>> data =
-                new HashMap<String, Set<String>>();
+                new HashMap<>();
 
-        when(node.isNodeType(JcrName.rbaclAssignable.getQualified()))
+        when(node.isNodeType(rbaclAssignable.getQualified()))
                 .thenReturn(true);
 
         provider.postRoles(node, data);
 
         // Mixin should not be added
         verify(node, never()).addMixin(
-                eq(JcrName.rbaclAssignable.getQualified()));
-        verify(node).addNode(eq(JcrName.rbacl.getQualified()),
-                eq(JcrName.Rbacl.getQualified()));
+                eq(rbaclAssignable.getQualified()));
+        verify(node).addNode(eq(rbacl.getQualified()),
+                eq(Rbacl.getQualified()));
     }
 
     @Test
     public void testPostRolesToNonRBACLNode() throws RepositoryException {
-        final Map<String, Set<String>> data = new HashMap<String, Set<String>>();
-        final Set<String> roles = new HashSet<String>();
+        final Map<String, Set<String>> data = new HashMap<>();
+        final Set<String> roles = new HashSet<>();
         roles.add("role");
         data.put("principal", roles);
 
@@ -478,19 +483,18 @@ public class AccessRolesProviderTest {
     @Test
     public void testPostRolesToRBACLNode() throws RepositoryException {
 
-        final Map<String, Set<String>> data =
-                new HashMap<String, Set<String>>();
+        final Map<String, Set<String>> data = new HashMap<>();
 
-        when(node.hasNode(eq(JcrName.rbacl.getQualified()))).thenReturn(true);
+        when(node.hasNode(eq(rbacl.getQualified()))).thenReturn(true);
 
         final Node aclNode = mock(Node.class);
         when(aclNode.getNodes()).thenReturn(rbaclIterator);
-        when(node.getNode(eq(JcrName.rbacl.getQualified())))
+        when(node.getNode(eq(rbacl.getQualified())))
                 .thenReturn(aclNode);
 
         provider.postRoles(node, data);
 
-        verify(node).addMixin(eq(JcrName.rbaclAssignable.getQualified()));
+        verify(node).addMixin(eq(rbaclAssignable.getQualified()));
 
         // Check that it attempted to remove existing principals
         verify(principalNode1).remove();

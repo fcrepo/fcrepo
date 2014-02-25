@@ -85,10 +85,9 @@ public class JMSTopicPublisher {
      * Connect to JCR Repostory and JMS queue
      *
      * @throws JMSException
-     * @throws RepositoryException
      */
     @PostConstruct
-    public void acquireConnections() throws JMSException, RepositoryException {
+    public void acquireConnections() throws JMSException {
         LOGGER.debug("Initializing: {}", this.getClass().getCanonicalName());
 
         connection = connectionFactory.createConnection();

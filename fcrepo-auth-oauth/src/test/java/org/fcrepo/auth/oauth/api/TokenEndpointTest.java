@@ -47,36 +47,36 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 public class TokenEndpointTest {
-    
+
     private static final String AUTH_CODES = "/authorization-codes";
 
     private final static String DUMMY_AUTH_CODE = "mockAuthorizationCode";
 
     @Mock
     private HttpServletRequest mockRequest;
-    
+
     @Mock
     TokenRequestValidations mockValidations;
 
     @Mock
     SessionFactory mockSessions;
-    
+
     @Mock
     Session mockSession;
-    
+
     @Mock
     Node mockTokenNode;
-    
+
     @Mock
     Node mockTokenRootNode;
-    
+
     @Mock
     Node mockRootNode;
 
     private TokenEndpoint testObj;
 
     @Before
-    public void setUp() throws NoSuchFieldException, RepositoryException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         testObj = new TokenEndpoint();
         setField(testObj, "requestValidator", mockValidations);
@@ -96,14 +96,14 @@ public class TokenEndpointTest {
         when(mockSession.getNode(startsWith("/tokens/")))
         .thenReturn(mockTokenNode);
     }
-    
+
     private void initForAuthCode() throws RepositoryException {
-        String authCodePath = (AUTH_CODES + "/" + DUMMY_AUTH_CODE);
-        Node mockAuthCode = mock(Node.class);
+        final String authCodePath = (AUTH_CODES + "/" + DUMMY_AUTH_CODE);
+        final Node mockAuthCode = mock(Node.class);
         when(mockAuthCode.getPath()).thenReturn(authCodePath);
         when(mockRootNode.getNode(authCodePath.substring(1)))
         .thenReturn(mockAuthCode);
-        Property mockProp = mock(Property.class);
+        final Property mockProp = mock(Property.class);
         when(mockProp.getString()).thenReturn("bond");
         when(mockAuthCode.getProperty("oauth-client")).thenReturn(mockProp);
         when(mockRequest.getParameter(OAuth.OAUTH_GRANT_TYPE))
@@ -115,7 +115,7 @@ public class TokenEndpointTest {
         when(mockSession.getNode(authCodePath))
         .thenReturn(mockAuthCode);
     }
-    
+
     private void initForPassword() {
         when(mockRequest.getParameter(OAuth.OAUTH_GRANT_TYPE))
         .thenReturn(GrantType.PASSWORD.toString());
@@ -124,14 +124,14 @@ public class TokenEndpointTest {
         when(mockRequest.getParameter(OAuth.OAUTH_PASSWORD))
         .thenReturn("testPassword");
     }
-    
+
     private void initForRefreshToken() {
         when(mockRequest.getParameter(OAuth.OAUTH_GRANT_TYPE))
         .thenReturn(GrantType.REFRESH_TOKEN.toString());
         when(mockRequest.getParameter(OAuth.OAUTH_REFRESH_TOKEN))
         .thenReturn("dummyData");
     }
-    
+
     @Test
     public void testValidRequest()
         throws OAuthSystemException, RepositoryException {
@@ -144,7 +144,7 @@ public class TokenEndpointTest {
         .thenReturn(true);
         when(mockValidations.isValidCredentials(any(OAuthTokenRequest.class)))
         .thenReturn(true);
-        Response actual = testObj.getToken(mockRequest);
+        final Response actual = testObj.getToken(mockRequest);
         if (actual.getStatus() != 200) {
             System.out.println(actual.getEntity());
         }
@@ -155,7 +155,7 @@ public class TokenEndpointTest {
         verify(mockSession).save();
         verify(mockSession).logout();
     }
-    
+
     @Test
     public void testBadClient()
         throws RepositoryException, OAuthSystemException {
@@ -168,10 +168,10 @@ public class TokenEndpointTest {
         .thenReturn(true);
         when(mockValidations.isValidCredentials(any(OAuthTokenRequest.class)))
         .thenReturn(true);
-        Response actual = testObj.getToken(mockRequest);
+        final Response actual = testObj.getToken(mockRequest);
         assertEquals(400, actual.getStatus());
         System.out.println(actual.getEntity());
-        JsonObject json = JSON.parse(actual.getEntity().toString());
+        final JsonObject json = JSON.parse(actual.getEntity().toString());
         assertEquals("invalid_client", json.get("error").getAsString().value());
     }
 
@@ -187,10 +187,10 @@ public class TokenEndpointTest {
         .thenReturn(false);
         when(mockValidations.isValidCredentials(any(OAuthTokenRequest.class)))
         .thenReturn(true);
-        Response actual = testObj.getToken(mockRequest);
+        final Response actual = testObj.getToken(mockRequest);
         assertEquals(401, actual.getStatus());
         System.out.println(actual.getEntity());
-        JsonObject json = JSON.parse(actual.getEntity().toString());
+        final JsonObject json = JSON.parse(actual.getEntity().toString());
         assertEquals("unauthorized_client", json.get("error").getAsString().value());
     }
 
@@ -206,10 +206,10 @@ public class TokenEndpointTest {
         .thenReturn(true);
         when(mockValidations.isValidCredentials(any(OAuthTokenRequest.class)))
         .thenReturn(true);
-        Response actual = testObj.getToken(mockRequest);
+        final Response actual = testObj.getToken(mockRequest);
         assertEquals(400, actual.getStatus());
         System.out.println(actual.getEntity());
-        JsonObject json = JSON.parse(actual.getEntity().toString());
+        final JsonObject json = JSON.parse(actual.getEntity().toString());
         assertEquals("invalid_grant", json.get("error").getAsString().value());
     }
 
@@ -225,10 +225,10 @@ public class TokenEndpointTest {
         .thenReturn(true);
         when(mockValidations.isValidCredentials(any(OAuthTokenRequest.class)))
         .thenReturn(false);
-        Response actual = testObj.getToken(mockRequest);
+        final Response actual = testObj.getToken(mockRequest);
         assertEquals(400, actual.getStatus());
         System.out.println(actual.getEntity());
-        JsonObject json = JSON.parse(actual.getEntity().toString());
+        final JsonObject json = JSON.parse(actual.getEntity().toString());
         assertEquals("invalid_grant", json.get("error").getAsString().value());
     }
 
@@ -240,10 +240,10 @@ public class TokenEndpointTest {
         .thenReturn(true);
         when(mockValidations.isValidSecret(any(OAuthTokenRequest.class)))
         .thenReturn(true);
-        Response actual = testObj.getToken(mockRequest);
+        final Response actual = testObj.getToken(mockRequest);
         assertEquals(400, actual.getStatus());
         System.out.println(actual.getEntity());
-        JsonObject json = JSON.parse(actual.getEntity().toString());
+        final JsonObject json = JSON.parse(actual.getEntity().toString());
         assertEquals("invalid_grant", json.get("error").getAsString().value());
     }
 }

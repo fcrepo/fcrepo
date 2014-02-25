@@ -82,7 +82,7 @@ public class FedoraSparqlTest {
     private QueryResult mockResults;
 
     @Before
-    public void setUp() throws NoSuchFieldException, RepositoryException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
 
         testObj = new FedoraSparql();

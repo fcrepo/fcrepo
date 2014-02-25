@@ -85,7 +85,7 @@ public class BasicRolesPEPTest {
     private Path authzPath;
 
     @Before
-    public void setUp() throws NoSuchFieldException, RepositoryException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
 
         pep = new BasicRolesPEP();

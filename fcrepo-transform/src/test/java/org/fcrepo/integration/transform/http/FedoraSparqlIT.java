@@ -75,24 +75,24 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     public void destroy() {
         session.logout();
     }
-    
+
     @Test
     public void itShouldHaveAnHtmlView() throws IOException {
-        HttpGet request = new HttpGet(serverAddress + "/fcr:sparql");
+        final HttpGet request = new HttpGet(serverAddress + "/fcr:sparql");
         request.addHeader("Accept", "text/html");
-        HttpResponse response = client.execute(request);
+        final HttpResponse response = client.execute(request);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         assertTrue(content.contains("SPARQL"));
         assertTrue(content.contains("PREFIX dc: <http://purl.org/dc/elements/1.1/>"));
     }
 
     @Test
-    public void itShouldWorkWithSimpleProperties() throws IOException, RepositoryException {
+    public void itShouldWorkWithSimpleProperties() throws IOException {
 
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT ?subject WHERE { ?subject dc:title \"xyz\"}";
 
-        String content = getResponseContent(sparql);
+        final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -104,11 +104,11 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     }
 
     @Test
-    public void itShouldWorkWithRdfTypeMixins() throws IOException, RepositoryException {
+    public void itShouldWorkWithRdfTypeMixins() throws IOException {
 
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#resource> . ?subject dc:title \"xyz\"}";
 
-        String content = getResponseContent(sparql);
+        final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -121,11 +121,11 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     }
 
     @Test
-    public void itShouldWorkWithRdfTypeProperties() throws IOException, RepositoryException {
+    public void itShouldWorkWithRdfTypeProperties() throws IOException {
 
         final String sparql = "SELECT ?subject WHERE { ?subject a <info:some-type> }";
 
-        String content = getResponseContent(sparql);
+        final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
         assertTrue(resultSet.hasNext());
@@ -137,11 +137,11 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     }
 
     @Test
-    public void itShouldWorkWithReferenceProperties() throws IOException, RepositoryException {
+    public void itShouldWorkWithReferenceProperties() throws IOException {
 
         final String sparql = "PREFIX  fedorarelsext:  <http://fedora.info/definitions/v4/rels-ext#> SELECT ?subject ?part WHERE { ?subject fedorarelsext:hasPart ?part }";
 
-        String content = getResponseContent(sparql);
+        final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -155,14 +155,14 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     }
 
     @Test
-    public void itShouldWorkWithJoinedQueries() throws IOException, RepositoryException {
+    public void itShouldWorkWithJoinedQueries() throws IOException {
 
         final String sparql = "PREFIX  fedorarelsext:  <http://fedora.info/definitions/v4/rels-ext#>\n" +
                               "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\n" +
                               "SELECT ?part ?collectionTitle WHERE { ?part fedorarelsext:isPartOf ?collection .\n" +
                                   "  ?collection dc:title ?collectionTitle }";
 
-        String content = getResponseContent(sparql);
+        final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
 
@@ -179,7 +179,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     public void itShouldIndexCustomProperties() throws Exception {
         final String sparql = "PREFIX zz: <http://zz.com/> SELECT ?subject WHERE { ?subject zz:name \"junk\"}";
 
-        String content = getResponseContent(sparql);
+        final String content = getResponseContent(sparql);
 
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
         assertTrue(resultSet.hasNext());
@@ -188,14 +188,14 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     }
 
     private String getResponseContent(final String sparql) throws IOException {
-        HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
-        BasicHttpEntity entity =  new BasicHttpEntity();
+        final HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
+        final BasicHttpEntity entity =  new BasicHttpEntity();
         entity.setContent(IOUtils.toInputStream(sparql));
         sparqlRequest.setEntity(entity);
-        HttpResponse response = client.execute(sparqlRequest);
+        final HttpResponse response = client.execute(sparqlRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.trace("Retrieved sparql feed:\n" + content);
         return content;
     }

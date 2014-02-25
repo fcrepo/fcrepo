@@ -55,7 +55,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 
-import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
@@ -145,7 +144,7 @@ public class FedoraTransform extends AbstractResource {
     @Timed
     public Object evaluateLdpathProgram(@PathParam("path")
         final List<PathSegment> pathList, @PathParam("program")
-        final String program) throws RepositoryException, LDPathParseException {
+        final String program) throws RepositoryException {
 
         try {
             final String path = toPath(pathList);
@@ -172,7 +171,6 @@ public class FedoraTransform extends AbstractResource {
      * @param requestBodyStream
      * @return
      * @throws RepositoryException
-     * @throws LDPathParseException
      */
     @POST
     @Consumes({APPLICATION_RDF_LDPATH, contentTypeSPARQLQuery})
@@ -184,7 +182,7 @@ public class FedoraTransform extends AbstractResource {
     public Object evaluateTransform(@PathParam("path")
         final List<PathSegment> pathList, @HeaderParam("Content-Type")
         final MediaType contentType, final InputStream requestBodyStream)
-        throws RepositoryException, LDPathParseException {
+        throws RepositoryException {
 
         try {
             final String path = toPath(pathList);

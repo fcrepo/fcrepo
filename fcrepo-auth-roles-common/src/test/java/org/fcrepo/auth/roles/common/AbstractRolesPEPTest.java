@@ -26,8 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.jcr.RepositoryException;
-
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,15 +45,14 @@ public class AbstractRolesPEPTest {
     private Principal principalB;
 
     @Before
-    public void setUp() throws NoSuchFieldException, RepositoryException {
+    public void setUp() {
         initMocks(this);
         when(principalA.getName()).thenReturn("a");
         when(principalB.getName()).thenReturn("b");
     }
 
     @Test
-    public void shouldGatherEffectiveRolesFromMultiplePrincipals()
-            throws RepositoryException {
+    public void shouldGatherEffectiveRolesFromMultiplePrincipals() {
         final Map<String, List<String>> acl = new HashMap<>();
         acl.put("a", asList("reader", "writer"));
         acl.put("b", asList("admin"));
@@ -78,7 +75,7 @@ public class AbstractRolesPEPTest {
     }
 
     @Test
-    public void shouldHandleUnmatchedRoles() throws RepositoryException {
+    public void shouldHandleUnmatchedRoles() {
         final Map<String, List<String>> acl = new HashMap<>();
         final Set<Principal> principals = new HashSet<>();
         principals.add(principalA);

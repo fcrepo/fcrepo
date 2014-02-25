@@ -21,7 +21,6 @@ import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.sparql.util.Symbol;
-import org.apache.marmotta.ldpath.exception.LDPathParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -126,7 +125,7 @@ public class LDPathTransformTest {
     }
 
     @Test
-    public void testProgramQuery() throws LDPathParseException, RepositoryException {
+    public void testProgramQuery() {
 
         final Model model = ModelFactory.createDefaultModel();
         model.add(model.createResource("abc"), model.createProperty("http://purl.org/dc/elements/1.1/title"), model.createLiteral("some-title"));

@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -47,24 +46,24 @@ public class RestrictToAuthNFilterTest {
 
     @Mock
     private HttpServletRequest mockRequest;
-    
+
     @Mock
     private HttpServletResponse mockResponse;
-    
+
     @Mock
     private FilterChain mockFilterChain;
-    
+
     @Before
     public void setUp() {
         initMocks(this);
     }
-    
+
     @Test
     public void testValidRequestAuthRequired()
-        throws IOException, ServletException, OAuthProblemException {
-        RestrictToAuthNFilter testObj = new RestrictToAuthNFilter();
+        throws IOException, ServletException {
+        final RestrictToAuthNFilter testObj = new RestrictToAuthNFilter();
         when(mockRequest.getRequestURI()).thenReturn(AUTHN_REQUIRED_URI);
-        Principal mockPrincipal = mock(Principal.class);
+        final Principal mockPrincipal = mock(Principal.class);
         when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
         testObj.doFilter(mockRequest, mockResponse, mockFilterChain);
         // a successful request should not send an error back to client
@@ -73,11 +72,11 @@ public class RestrictToAuthNFilterTest {
         verify(mockFilterChain)
             .doFilter(any(HttpServletRequestWrapper.class), eq(mockResponse));
     }
-    
+
     @Test
     public void testNoAuthRequired()
-        throws IOException, ServletException, OAuthProblemException {
-        RestrictToAuthNFilter testObj = new RestrictToAuthNFilter();
+        throws IOException, ServletException {
+        final RestrictToAuthNFilter testObj = new RestrictToAuthNFilter();
         when(mockRequest.getRequestURI()).thenReturn(NO_AUTH_REQUIRED_URI);
         testObj.doFilter(mockRequest, mockResponse, mockFilterChain);
         // "public" URIs shouldn't result in a principal query
@@ -91,8 +90,8 @@ public class RestrictToAuthNFilterTest {
 
     @Test
     public void testInvalidRequestAuthRequired()
-        throws IOException, ServletException, OAuthProblemException {
-        RestrictToAuthNFilter testObj = new RestrictToAuthNFilter();
+        throws IOException, ServletException {
+        final RestrictToAuthNFilter testObj = new RestrictToAuthNFilter();
         when(mockRequest.getRequestURI()).thenReturn(AUTHN_REQUIRED_URI);
         testObj.doFilter(mockRequest, mockResponse, mockFilterChain);
         // an unauthenticated request should send an error back to client
@@ -101,5 +100,5 @@ public class RestrictToAuthNFilterTest {
         verify(mockFilterChain, times(0))
             .doFilter(any(HttpServletRequestWrapper.class), eq(mockResponse));
     }
-    
+
 }

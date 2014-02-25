@@ -71,7 +71,7 @@ public class ContainerWrapper implements ApplicationContextAware {
 
         final URI uri = URI.create("http://localhost:" + port + "/");
 
-        final Map<String, String> initParams = new HashMap<String, String>();
+        final Map<String, String> initParams = new HashMap<>();
 
         server = GrizzlyWebContainerFactory.create(uri, initParams);
 

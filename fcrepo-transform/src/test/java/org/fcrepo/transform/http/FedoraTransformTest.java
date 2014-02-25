@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -72,7 +71,7 @@ public class FedoraTransformTest {
     Transformation mockTransform;
 
     @Before
-    public void setUp() throws NoSuchFieldException, RepositoryException {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraTransform();
         TestHelpers.setField(testObj, "nodeService", mockNodeService);
@@ -96,7 +95,7 @@ public class FedoraTransformTest {
         final Dataset dataset = DatasetFactory.create(model);
         when(mockResource.getPropertiesDataset(any(GraphSubjects.class))).thenReturn(dataset);
 
-        InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
+        final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
                                                           "{\n" +
                                                           "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
                                                           "} ").getBytes());

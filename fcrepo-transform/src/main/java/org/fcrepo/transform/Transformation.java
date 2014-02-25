@@ -32,6 +32,7 @@ public interface Transformation extends Function<Dataset, Object> {
      * @param dataset
      * @return
      */
+    @Override
     Object apply(final Dataset dataset);
 
     /**

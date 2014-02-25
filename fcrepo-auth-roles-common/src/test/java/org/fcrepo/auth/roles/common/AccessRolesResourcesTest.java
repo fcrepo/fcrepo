@@ -68,7 +68,7 @@ public class AccessRolesResourcesTest {
     private String pathString;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
 
         resources = new AccessRolesResources();

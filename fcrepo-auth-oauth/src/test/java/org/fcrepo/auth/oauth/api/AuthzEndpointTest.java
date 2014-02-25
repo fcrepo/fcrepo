@@ -64,7 +64,7 @@ public class AuthzEndpointTest {
     private AuthzEndpoint testObj;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockRootNode.getNode(startsWith("authorization-codes/")))
         .thenReturn(mockCodeNode);

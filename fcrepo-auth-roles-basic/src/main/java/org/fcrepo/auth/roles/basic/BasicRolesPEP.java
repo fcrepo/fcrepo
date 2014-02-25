@@ -54,19 +54,17 @@ public class BasicRolesPEP extends AbstractRolesPEP {
             if (absPath.contains(AUTHZ_DETECTION)) {
                 LOGGER.debug("Denying writer role permission to perform an action on an ACL node.");
                 return false;
-            } else {
-                LOGGER.debug("Granting writer role permission to perform any action on a non-ACL node.");
-                return true;
             }
+            LOGGER.debug("Granting writer role permission to perform any action on a non-ACL node.");
+            return true;
         }
         if (roles.contains("reader")) {
             if (actions.length == 1 && "read".equals(actions[0])) {
                 LOGGER.debug("Granting reader role permission to perform a read action.");
                 return true;
-            } else {
-                LOGGER.debug("Denying reader role permission to perform a non-read action.");
-                return false;
             }
+            LOGGER.debug("Denying reader role permission to perform a non-read action.");
+            return false;
         }
         LOGGER.error("There are roles in session that aren't recognized by this PEP: {}",
                      roles);

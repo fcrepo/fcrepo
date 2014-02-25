@@ -16,6 +16,7 @@
 
 package org.fcrepo.auth.roles.common.integration;
 
+import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -24,7 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,9 +168,9 @@ public abstract class AbstractRolesIT {
             final String principal, final String role,
             final boolean is_authenticated)
                     throws IOException {
-        final Map<String, String> tmap = new HashMap<String, String>();
+        final Map<String, String> tmap = new HashMap<>();
         tmap.put(principal, role);
-        final List<Map<String, String>> acls = Collections.singletonList(tmap);
+        final List<Map<String, String>> acls = singletonList(tmap);
         final String jsonACLs = createJsonACLs(acls);
         final HttpPost method = postRolesMethod(path);
         if (is_authenticated) {
@@ -360,7 +360,6 @@ public abstract class AbstractRolesIT {
         final String content = EntityUtils.toString(entity);
         logger.debug("content: {}", content);
         final ObjectMapper mapper = new ObjectMapper();
-        @SuppressWarnings("unchecked")
         final Map<String, List<String>> result =
             mapper.readValue(content,
                     new TypeReference<Map<String, List<String>>>() {});
@@ -379,7 +378,6 @@ public abstract class AbstractRolesIT {
         final String content = EntityUtils.toString(entity);
         logger.debug("content: {}", content);
         final ObjectMapper mapper = new ObjectMapper();
-        @SuppressWarnings("unchecked")
         final Map<String, List<String>> result =
             mapper.readValue(content,
                     new TypeReference<Map<String, List<String>>>() {});
@@ -431,9 +429,7 @@ public abstract class AbstractRolesIT {
 
 
 
-    private void
-    setAuth(final AbstractHttpMessage method,
-            final String username) {
+    private static void setAuth(final AbstractHttpMessage method, final String username) {
         final String creds = username + ":password";
         // in test configuration we don't need real passwords
         final String encCreds =
@@ -488,12 +484,11 @@ public abstract class AbstractRolesIT {
     private String createJsonACLs(
             final List<Map<String, String>> principals_and_roles) {
         final Map<String, List<String>> acls =
-                new HashMap<String, List<String>>();
+                new HashMap<>();
 
         for (final Map<String, String> entries : principals_and_roles) {
             for (final Map.Entry<String, String> entry : entries.entrySet()) {
-                acls.put(entry.getKey(), Collections.singletonList(entry
-                        .getValue()));
+                acls.put(entry.getKey(), singletonList(entry.getValue()));
             }
         }
         return makeJson(acls);

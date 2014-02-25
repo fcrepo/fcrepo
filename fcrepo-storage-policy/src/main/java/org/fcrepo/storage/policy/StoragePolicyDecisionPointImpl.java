@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Service that evaluates a set of storage policies for an object and provides
  * storage hints for a binary stream
- * 
+ *
  * @author cbeer
  * @date Apr 25, 2013
  */
@@ -45,7 +45,7 @@ public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoin
      */
     public StoragePolicyDecisionPointImpl() {
         LOGGER.debug("Initializing binary StoragePolicyDecisionPointImpl");
-        policies = new ArrayList<StoragePolicy>();
+        policies = new ArrayList<>();
     }
 
     /*
@@ -92,11 +92,11 @@ public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoin
 
     /**
      * For now: simple contains implementation
-     * 
+     *
      * @param p
      */
     @Override
-    public boolean contains(StoragePolicy p) {
+    public boolean contains(final StoragePolicy p) {
         return policies.contains(p);
     }
 

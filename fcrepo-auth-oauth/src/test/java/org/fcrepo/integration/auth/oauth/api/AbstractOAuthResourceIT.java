@@ -81,9 +81,8 @@ public abstract class AbstractOAuthResourceIT {
             postObjMethod(final String pid, final String query) {
         if (query.equals("")) {
             return new HttpPost(serverAddress + "objects/" + pid);
-        } else {
-            return new HttpPost(serverAddress + "objects/" + pid + "?" + query);
         }
+        return new HttpPost(serverAddress + "objects/" + pid + "?" + query);
     }
 
     protected static HttpPost postDSMethod(final String pid, final String ds,
