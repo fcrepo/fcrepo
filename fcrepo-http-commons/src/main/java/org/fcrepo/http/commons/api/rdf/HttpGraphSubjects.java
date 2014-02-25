@@ -122,26 +122,25 @@ public class HttpGraphSubjects implements GraphSubjects {
         final String subjectUri = getResourceURI(subject);
         if (subjectUri == null) {
             return null;
-        } else {
-            final String absPath = getPathFromGraphSubject(subjectUri);
-
-            if (absPath == null) {
-                return null;
-            }
-
-            final Node node;
-
-            if (session.nodeExists(absPath)) {
-                node = session.getNode(absPath);
-                LOGGER.trace("RDF resource {} maps to JCR node {}", subjectUri, node);
-            } else {
-                node = null;
-                LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
-                        subjectUri);
-            }
-
-            return node;
         }
+        final String absPath = getPathFromGraphSubject(subjectUri);
+
+        if (absPath == null) {
+            return null;
+        }
+
+        final Node node;
+
+        if (session.nodeExists(absPath)) {
+            node = session.getNode(absPath);
+            LOGGER.trace("RDF resource {} maps to JCR node {}", subjectUri, node);
+        } else {
+            node = null;
+            LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
+                    subjectUri);
+        }
+
+        return node;
     }
 
     private String getResourceURI(final Resource subject) {
@@ -158,9 +157,8 @@ public class HttpGraphSubjects implements GraphSubjects {
         final String subjectUri = getResourceURI(subject);
         if (subjectUri == null) {
             return null;
-        } else {
-            return getPathFromGraphSubject(subjectUri);
         }
+        return getPathFromGraphSubject(subjectUri);
     }
 
     /**

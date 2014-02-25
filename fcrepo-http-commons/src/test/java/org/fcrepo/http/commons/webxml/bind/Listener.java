@@ -54,4 +54,9 @@ public class Listener extends Displayable {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return className.hashCode() + 2 * displayName.hashCode();
+    }
+
 }

@@ -116,7 +116,7 @@ public class FedoraIdentifiers extends AbstractResource {
 
     }
 
-    private Function<String, String> absolutize(final String path) {
+    private static Function<String, String> absolutize(final String path) {
         return new Function<String, String>() {
 
             @Override

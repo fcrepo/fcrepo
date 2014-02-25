@@ -77,7 +77,8 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
      * @param uris a UriInfo implementation with information about the request
      *             URI.
      */
-    public VersionAwareHttpGraphSubjects(Session session, Session internalSession, Class<?> relativeTo, UriInfo uris) {
+    public VersionAwareHttpGraphSubjects(final Session session,
+        final Session internalSession, final Class<?> relativeTo, final UriInfo uris) {
         super(session, relativeTo, uris);
         this.internalSession = internalSession;
     }
@@ -85,28 +86,25 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
     @Override
     public String getPathFromGraphSubject(@NotNull final String subjectUri) throws RepositoryException {
         if (subjectUri.matches("^.*\\Q" + FCR_VERSIONS + "/\\E.+$")) {
-            Node node = getNodeFromGraphSubjectForVersionNode(subjectUri);
+            final Node node = getNodeFromGraphSubjectForVersionNode(subjectUri);
             if (node == null) {
                 return null;
-            } else {
-                return node.getPath();
             }
-        } else {
-            return super.getPathFromGraphSubject(subjectUri);
+            return node.getPath();
         }
+        return super.getPathFromGraphSubject(subjectUri);
     }
 
     @Override
     public Resource getGraphSubject(final String absPath) throws RepositoryException {
         if (absPath.contains("jcr:versionStorage")) {
-            Node probableFrozenNode = internalSession.getNode(absPath);
+            final Node probableFrozenNode = internalSession.getNode(absPath);
             if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-                URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
+                final URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
                 LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
                 return createResource(result.toString());
-            } else {
-                LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
             }
+            LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
         }
         return super.getGraphSubject(absPath);
     }
@@ -114,7 +112,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
     @Override
     public Resource getGraphSubject(final Node node) throws RepositoryException {
         if (node.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-            URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(node));
+            final URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(node));
             LOGGER.debug("Translated node {} into RDF subject {}", node, result);
             return createResource(result.toString());
         }
@@ -149,7 +147,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
 
         pathWithinVersionable = versionableFrozenNode.getIdentifier()
                 + (pathWithinVersionable.length() > 0 ? pathWithinVersionable : "");
-        String pathToVersionable = versionableNode.getPath();
+        final String pathToVersionable = versionableNode.getPath();
         LOGGER.debug("frozen node found with id {}.", versionableFrozenNode.getIdentifier());
         String path =  pathToVersionable + "/" + FCR_VERSIONS + "/" + pathWithinVersionable;
         if (path.endsWith(JCR_CONTENT)) {
@@ -158,7 +156,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
         return singletonMap("path", path.startsWith("/") ? path.substring(1) : path);
     }
 
-    private String getRelativePath(Node node, Node ancestor) throws RepositoryException {
+    private static String getRelativePath(final Node node, final Node ancestor) throws RepositoryException {
         return node.getPath().substring(ancestor.getPath().length() + 1);
     }
 
@@ -198,15 +196,14 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
             }
             return internalSession.getNode(versionedFrozenNode.getPath() + "/"
                     + pathIntoVersionedGraph.replace(FCR_CONTENT, JCR_CONTENT));
-        } else {
-            /**
-             * The subjectUri references a version of a verisonable node identified
-             * by label (the root of the versioned subgraph).
-             */
-            final String label = labelAndPath;
-            LOGGER.trace("subjectUri={}, label={}", subjectUri, label);
-            return getFrozenNodeByLabel(subjectUri, label);
         }
+        /**
+         * The subjectUri references a version of a verisonable node identified
+         * by label (the root of the versioned subgraph).
+         */
+        final String label = labelAndPath;
+        LOGGER.trace("subjectUri={}, label={}", subjectUri, label);
+        return getFrozenNodeByLabel(subjectUri, label);
     }
 
     /**
@@ -216,7 +213,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
      * was used for versions created without a label.  The current implementation
      * uses the JCR UUID for the frozen node as the system-assigned label.
      */
-    private Node getFrozenNodeByLabel(String subjectUri, String label) throws RepositoryException {
+    private Node getFrozenNodeByLabel(final String subjectUri, final String label) throws RepositoryException {
         final String baseResourcePath
             = getPathFromGraphSubject(subjectUri.substring(0, subjectUri.indexOf("/" + FCR_VERSIONS)));
         try {
@@ -239,20 +236,20 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
              * node we were looking for, so fall through and look for a labeled
              * node.
              */
-        } catch (ItemNotFoundException ex) {
+        } catch (final ItemNotFoundException ex) {
             /*
              * the label wasn't a uuid of a frozen node but
              * instead possibly a version label.
              */
         }
 
-        VersionHistory hist = internalSession.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
+        final VersionHistory hist =
+            internalSession.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
         if (hist.hasVersionLabel(label)) {
             LOGGER.debug("Found version for {} by label {}.",  subjectUri, label);
             return hist.getVersionByLabel(label).getFrozenNode();
-        } else {
-            LOGGER.warn("Unknown version {} with label or uuid {}!", subjectUri, label);
-            return null;
         }
+        LOGGER.warn("Unknown version {} with label or uuid {}!", subjectUri, label);
+        return null;
     }
 }

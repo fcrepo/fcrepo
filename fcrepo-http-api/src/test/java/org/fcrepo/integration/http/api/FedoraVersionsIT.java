@@ -21,6 +21,7 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
@@ -28,20 +29,17 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
-import org.junit.Assert;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -50,7 +48,6 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -124,7 +121,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final Iterator<Quad> versionIt = results.find(Node.ANY, subject.asNode(), HAS_VERSION.asNode(), Node.ANY);
         while (versionIt.hasNext()) {
-            String url = versionIt.next().getObject().getURI();
+            final String url = versionIt.next().getObject().getURI();
             assertEquals("Version " + url + " isn't accessible!",
                     200, getStatus(new HttpGet(url)));
         }
@@ -307,25 +304,18 @@ public class FedoraVersionsIT extends AbstractResourceIT {
      * version node and nothing else.  Order isn't important, and no assumption
      * is made about whether extra versions exist.
      */
-    private void verifyVersions(final GraphStore graph, final Node subject, String ... values) throws IOException {
-        ArrayList<String> remainingValues = new ArrayList<String>(Arrays.asList(values));
-        final Iterator<Quad> versionIt = graph.find(Node.ANY, subject, HAS_VERSION.asNode(), Node.ANY);
+    private void verifyVersions(final GraphStore graph, final Node subject, final String ... values) throws IOException {
+        final ArrayList<String> remainingValues = newArrayList(values);
+        final Iterator<Quad> versionIt = graph.find(ANY, subject, HAS_VERSION.asNode(), ANY);
         while (versionIt.hasNext() && !remainingValues.isEmpty()) {
-            String value = EntityUtils.toString(client.execute(new HttpGet(versionIt.next().getObject().getURI() + "/fcr:content")).getEntity());
+            final String value =
+                EntityUtils.toString(client
+                        .execute(new HttpGet(versionIt.next().getObject().getURI() + "/fcr:content")).getEntity());
             remainingValues.remove(value);
         }
         if (!remainingValues.isEmpty()) {
             fail(remainingValues.get(0) + " was not preserved in the version history!");
         }
-    }
-
-    private static String getFirstLiteralIfExists(final GraphStore graph, final Node subject, final Node predicate,
-        final String defaultValue) {
-        final Iterator<Quad> quads = graph.find(Node.ANY, subject, predicate, Node.ANY);
-        if (quads.hasNext()) {
-            return quads.next().getObject().getLiteralValue().toString();
-        }
-        return defaultValue;
     }
 
     public void postNodeTypeCNDSnippet(final String snippet) throws IOException {

@@ -183,11 +183,10 @@ public class FedoraVersions extends ContentExposingResource {
         final Node node = nodeTranslator().getNodeFromGraphSubjectForVersionNode(uriInfo.getRequestUri().toString());
         if (node == null) {
             throw new WebApplicationException(status(NOT_FOUND).build());
-        } else {
-            final FedoraResource resource = new FedoraResourceImpl(node);
-            return resource.getTriples(nodeTranslator()).session(session).topic(
-                    nodeTranslator().getGraphSubject(resource.getNode()).asNode());
         }
+        final FedoraResource resource = new FedoraResourceImpl(node);
+        return resource.getTriples(nodeTranslator()).session(session).topic(
+                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
     }
 
     /**

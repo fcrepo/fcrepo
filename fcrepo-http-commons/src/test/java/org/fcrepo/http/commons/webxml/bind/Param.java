@@ -61,4 +61,10 @@ public class Param extends Describable {
         }
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode() + 2 * value.hashCode();
+
+    }
 }

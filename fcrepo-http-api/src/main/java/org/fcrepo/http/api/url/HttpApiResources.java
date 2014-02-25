@@ -84,7 +84,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         return model;
     }
 
-    private void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,
+    private static void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,
         final Model model, final Resource s) throws RepositoryException {
         // fcr:fixity
         final Map<String, String> pathMap =

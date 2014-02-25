@@ -17,16 +17,11 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -38,10 +33,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
