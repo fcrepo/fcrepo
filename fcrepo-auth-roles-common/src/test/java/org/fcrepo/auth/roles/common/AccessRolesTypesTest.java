@@ -20,13 +20,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URL;
 
 import javax.jcr.RepositoryException;
@@ -90,18 +88,6 @@ public class AccessRolesTypesTest {
         setField(accessRolesTypes, "sessionFactory", sessionFactory);
 
         when(sessionFactory.getInternalSession()).thenReturn(session);
-
-        // Ugly zone, reset private static flag between tests
-        final Field registeredField =
-                AccessRolesTypes.class.getDeclaredField("registered");
-        registeredField.setAccessible(true);
-        try {
-            registeredField.setBoolean(registeredField, false);
-        } catch (final IllegalArgumentException e) {
-            LOGGER.error("Reflection error", e);
-        } catch (final IllegalAccessException e) {
-            LOGGER.error("Reflection error", e);
-        }
     }
 
     @Test(expected = RepositoryException.class)
@@ -144,22 +130,5 @@ public class AccessRolesTypesTest {
         verify(nodeTypeManager).registerNodeTypes(any(URL.class), anyBoolean());
         verify(session).save();
         verify(session).logout();
-    }
-
-    @Test
-    public void testSetupRepoConfigAlreadyRegistered()
-            throws RepositoryException, IOException {
-        accessRolesTypes.setUpRepositoryConfiguration();
-
-        // Clear verify counts
-        reset(nodeTypeManager);
-        reset(session);
-
-        accessRolesTypes.setUpRepositoryConfiguration();
-
-        verify(nodeTypeManager, never()).registerNodeTypes(any(URL.class),
-                anyBoolean());
-        verify(session, never()).save();
-        verify(session, never()).logout();
     }
 }
