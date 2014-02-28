@@ -15,15 +15,15 @@
  */
 package org.fcrepo.integration;
 
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.transform.transformations.LDPathTransform;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -31,12 +31,12 @@ import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -49,6 +49,7 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class LDPathServiceIT {
 
     @Inject

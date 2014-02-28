@@ -34,22 +34,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.JcrConstants;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
-import static org.apache.jena.riot.WebContent.contentTypeHTMLForm;
 
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.ws.rs.core.Response.Status;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.jena.riot.WebContent.contentTypeHTMLForm;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -58,11 +57,9 @@ import static org.junit.Assert.assertTrue;
  *
  * @author cbeer
  */
-@ContextConfiguration({"/spring-test/master.xml", "/spring-test/test-container.xml"})
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@ContextConfiguration({"/spring-test/test-container.xml"})
 public class FedoraSparqlIT  extends AbstractResourceIT {
-
-        @Autowired
-        Repository repo;
 
     private Session session;
 
