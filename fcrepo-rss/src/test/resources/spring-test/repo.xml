@@ -10,17 +10,13 @@
     <!-- Context that supports the actual ModeShape JCR itself -->
 
     <context:annotation-config/>
+    
+    <context:property-placeholder/>
 
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:config/testing/repository.json}"/>
 
-    <context:component-scan
-        base-package="org.fcrepo.kernel.services, org.fcrepo.syndication"/>
-
-    <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
-    <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
-
-    <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
+    <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
 </beans>

@@ -8,5 +8,6 @@
     <bean class="org.fcrepo.http.commons.test.util.SpringContextSingleton"/>
     <import resource="classpath:/spring-test/repo.xml"/>
     <import resource="classpath:/spring-test/rest.xml"/>
+    <import resource="classpath:/spring-test/eventing.xml"/>
     
 </beans>

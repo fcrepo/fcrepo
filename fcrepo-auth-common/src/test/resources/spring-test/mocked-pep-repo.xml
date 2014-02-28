@@ -21,6 +21,6 @@
   <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider"
     p:pep-ref="pep"/>
   
-  <bean class="org.modeshape.jcr.JcrRepositoryFactory" />
+  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
 </beans>
