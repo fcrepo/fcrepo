@@ -227,8 +227,7 @@ public class AccessRolesTest {
                     Matchers.<Map<String, Set<String>>> any());
             // Verify no changes saved
             verify(session, never()).save();
-            // Logout does not currently happen when the post is invalid
-            verify(session, never()).logout();
+            verify(session).logout();
         }
     }
 

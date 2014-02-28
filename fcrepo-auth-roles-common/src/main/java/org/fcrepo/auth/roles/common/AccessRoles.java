@@ -137,11 +137,7 @@ public class AccessRoles extends AbstractResource {
 
         try {
             validatePOST(data);
-        } catch (final IllegalArgumentException e) {
-            throw new WebApplicationException(e, Response.status(Status.BAD_REQUEST).build());
-        }
 
-        try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
             this.getAccessRolesProvider().postRoles(resource.getNode(), data);
@@ -150,6 +146,9 @@ public class AccessRoles extends AbstractResource {
             response =
                     Response.created(getUriInfo().getBaseUriBuilder()
                             .path(path).path("fcr:accessroles").build());
+
+        } catch (final IllegalArgumentException e) {
+            throw new WebApplicationException(e, Response.status(Status.BAD_REQUEST).build());
         } finally {
             session.logout();
         }

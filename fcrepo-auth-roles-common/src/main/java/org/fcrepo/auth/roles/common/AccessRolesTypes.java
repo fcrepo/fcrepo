@@ -42,11 +42,7 @@ public class AccessRolesTypes {
             .getLogger(AccessRolesTypes.class);
 
     @Autowired
-    private SessionFactory sessionFactory = null;
-
-    private static boolean registered = false;
-
-    private static final Object mutex = new Object();
+    private final SessionFactory sessionFactory = null;
 
     /**
      * Initialize, register role assignment node types.
@@ -57,38 +53,31 @@ public class AccessRolesTypes {
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException,
             IOException {
-        if (!registered) {
-            registerNodeTypes(sessionFactory);
-        }
+        registerNodeTypes(sessionFactory);
     }
 
-    private static void registerNodeTypes(final SessionFactory sessions)
+    private void registerNodeTypes(final SessionFactory sessions)
         throws RepositoryException, IOException {
-        synchronized (mutex) {
-            if (!registered) {
-                Session session = null;
-                try {
-                    session = sessions.getInternalSession();
-                    final NodeTypeManager mgr =
-                            (NodeTypeManager) session.getWorkspace()
-                                    .getNodeTypeManager();
-                    final URL cnd =
-                            AccessRoles.class
-                                    .getResource("/cnd/access-control.cnd");
-                    final NodeTypeIterator nti =
-                            mgr.registerNodeTypes(cnd, true);
-                    while (nti.hasNext()) {
-                        final NodeType nt = nti.nextNodeType();
-                        LOGGER.debug("registered node type: {}", nt.getName());
-                    }
-                    session.save();
-                    registered = true;
-                    LOGGER.debug("Registered access role node types");
-                } finally {
-                    if (session != null) {
-                        session.logout();
-                    }
-                }
+        Session session = null;
+        try {
+            session = sessions.getInternalSession();
+            final NodeTypeManager mgr =
+                    (NodeTypeManager) session.getWorkspace()
+                            .getNodeTypeManager();
+            final URL cnd =
+                    AccessRoles.class
+                            .getResource("/cnd/access-control.cnd");
+            final NodeTypeIterator nti =
+                    mgr.registerNodeTypes(cnd, true);
+            while (nti.hasNext()) {
+                final NodeType nt = nti.nextNodeType();
+                LOGGER.debug("registered node type: {}", nt.getName());
+            }
+            session.save();
+            LOGGER.debug("Registered access role node types");
+        } finally {
+            if (session != null) {
+                session.logout();
             }
         }
     }
