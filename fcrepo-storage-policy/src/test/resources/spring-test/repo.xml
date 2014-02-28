@@ -15,7 +15,7 @@
         class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
 
-    <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
+    <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 

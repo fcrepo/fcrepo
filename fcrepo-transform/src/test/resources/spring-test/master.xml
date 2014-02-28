@@ -5,7 +5,7 @@
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
     
     <!-- Master context for the test application. -->
-    
+    <bean class="org.fcrepo.http.commons.test.util.SpringContextSingleton"/>
     <import resource="classpath:/spring-test/repo.xml"/>
     <import resource="classpath:/spring-test/rest.xml"/>
     

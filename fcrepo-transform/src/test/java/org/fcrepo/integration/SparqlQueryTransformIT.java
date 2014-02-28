@@ -15,28 +15,27 @@
  */
 package org.fcrepo.integration;
 
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
-import javax.inject.Inject;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.ResultSet;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
+import javax.inject.Inject;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -46,10 +45,8 @@ import com.hp.hpl.jena.query.ResultSet;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
-public class SparqlQueryTransformIT {
-
-    @Inject
-    Repository repo;
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+public class SparqlQueryTransformIT extends AbstractResourceIT {
 
     @Inject
     ObjectService objectService;

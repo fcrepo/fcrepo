@@ -19,13 +19,16 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.fcrepo.http.commons.test.util.SpringContextSingleton;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.jcr.Repository;
 import java.io.IOException;
+
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
@@ -38,7 +41,16 @@ import static java.lang.System.getProperty;
 @RunWith(SpringJUnit4ClassRunner.class)
 public abstract class AbstractResourceIT {
 
+    protected Repository repo;
+
     protected Logger logger;
+
+    @Before
+    public void setRepo() {
+        repo =
+                SpringContextSingleton.getApplicationContext().getBean(
+                        Repository.class);
+    }
 
     @Before
     public void setLogger() {
