@@ -17,7 +17,6 @@
 package org.fcrepo.auth.common;
 
 import java.security.Principal;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.modeshape.jcr.value.Path;

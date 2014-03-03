@@ -33,7 +33,6 @@ import javax.jcr.Session;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
