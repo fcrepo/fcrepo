@@ -89,25 +89,6 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
         this.sessionFactory = sessionFactory;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.auth.FedoraPolicyEnforcementPoint#filterPathsForReading(java
-     * .util.Collection, java.util.Set, java.security.Principal)
-     */
-    @Override
-    public Iterator<Path> filterPathsForReading(final Iterator<Path> paths,
-            final Set<Principal> allPrincipals, final Principal userPrincipal) {
-        Session session;
-        try {
-            session = sessionFactory.getInternalSession();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException("PEP cannot obtain an internal session", e);
-        }
-        return new PathIterator(session, paths,
-                userPrincipal, allPrincipals);
-    }
-
     /**
      * Gather effectives roles
      *
@@ -244,78 +225,5 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
     public abstract boolean rolesHaveModeShapePermission(String absPath,
             String[] actions, Set<Principal> allPrincipals,
             Principal userPrincipal, Set<String> roles);
-
-    /**
-     * Filter paths for reading
-     */
-    public class PathIterator implements Iterator<Path> {
-
-        private Path next = null;
-
-        private Session session = null;
-
-        private Iterator<Path> wrapped = null;
-
-        private Principal userPrincipal = null;
-
-        private Set<Principal> principals = null;
-
-        /**
-         * @param session
-         * @param paths
-         * @param allPrincipals
-         */
-        public PathIterator(final Session session,
-                final Iterator<Path> paths, final Principal userPrincipal,
-                final Set<Principal> allPrincipals) {
-            this.wrapped = paths;
-            this.session = session;
-            this.userPrincipal = userPrincipal;
-            this.principals = allPrincipals;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (next == null) {
-                findNext();
-            }
-            return next != null;
-        }
-
-        @Override
-        public Path next() {
-            if (next == null) {
-                findNext();
-            }
-            return next;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException(
-                    "This API is for reads only");
-        }
-
-        private void findNext() {
-            while (wrapped.hasNext()) {
-                final Path p = wrapped.next();
-                // lookup roles
-                try {
-                    final Map<String, List<String>> acl =
-                            accessRolesProvider.findRolesForPath(p, session);
-                    final Set<String> roles = resolveUserRoles(acl, principals);
-                    if (rolesHaveModeShapePermission(p.getString(),
-                            READ_ACTIONS,
-                            principals, userPrincipal, roles)) {
-                        next = p;
-                        break;
-                    }
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException("Cannot look up node information on " + p +
-                            " for permissions check.", e);
-                }
-            }
-        }
-    }
 
 }
