@@ -21,7 +21,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
@@ -44,9 +43,6 @@ public class SessionProvider extends
     SessionFactory sessionFactory;
 
     @Context
-    private SecurityContext secContext;
-
-    @Context
     private HttpServletRequest request;
 
     private static final Logger LOGGER = getLogger(SessionProvider.class);
@@ -62,6 +58,6 @@ public class SessionProvider extends
     public Injectable<Session> getInjectable(final ComponentContext ic,
             final InjectedSession a) {
         LOGGER.trace("Returning new InjectableSession...");
-        return new InjectableSession(sessionFactory, secContext, request);
+        return new InjectableSession(sessionFactory, request);
     }
 }

@@ -24,9 +24,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
-import org.fcrepo.http.commons.session.InjectableSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -41,9 +39,6 @@ public class InjectableSessionTest {
     @Mock
     private SessionFactory mockSessionFactory;
 
-    @Mock
-    private SecurityContext mockSecurityContext;
-
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -51,11 +46,8 @@ public class InjectableSessionTest {
             mock(HttpServletRequest.class);
         when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(
                 mockSession);
-        when(
-                mockSessionFactory.getSession(mockSecurityContext,
-                        mockHttpServletRequest)).thenReturn(mockSession);
         testObj =
-            new InjectableSession(mockSessionFactory, mockSecurityContext,
+            new InjectableSession(mockSessionFactory,
                     mockHttpServletRequest);
 
     }
