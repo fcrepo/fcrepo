@@ -32,7 +32,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
@@ -40,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.modeshape.jcr.api.ServletCredentials;
 
 public class SessionFactoryTest {
 
@@ -64,9 +64,6 @@ public class SessionFactoryTest {
     private HttpServletRequest mockRequest;
 
     @Mock
-    private SecurityContext mockContext;
-
-    @Mock
     private Principal mockUser;
 
     @Before
@@ -81,16 +78,16 @@ public class SessionFactoryTest {
                                             RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn(null);
         testObj.getSession(mockRequest);
-        verify(mockRepo).login();
+        verify(mockRepo).login(any(ServletCredentials.class));
     }
 
     @Test
     public void testGetSessionAuthenticated() throws LoginException,
                                              RepositoryException {
-        when(mockContext.getUserPrincipal()).thenReturn(mockUser);
+        when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn("/some/path");
-        testObj.getSession(mockContext, mockRequest);
+        testObj.getSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class));
     }
 
@@ -107,7 +104,7 @@ public class SessionFactoryTest {
         when(mockRequest.getPathInfo()).thenReturn(
                 "/workspace:some-workspace/some/path");
         testObj.getSession(mockRequest);
-        verify(mockRepo).login("some-workspace");
+        verify(mockRepo).login(any(ServletCredentials.class), eq("some-workspace"));
     }
 
     @Test
@@ -125,10 +122,10 @@ public class SessionFactoryTest {
             testGetAuthenticatedSessionWithWorkspace() throws LoginException,
                                                       RepositoryException {
 
-        when(mockContext.getUserPrincipal()).thenReturn(mockUser);
+        when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
         when(mockRequest.getPathInfo()).thenReturn(
                 "/workspace:some-workspace/some/path");
-        testObj.getSession(mockContext, mockRequest);
+        testObj.getSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class), eq("some-workspace"));
     }
 
@@ -143,14 +140,9 @@ public class SessionFactoryTest {
         when(mockTxService.isAssociatedWithUser(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
 
-        final Session session = testObj.getSession(mockContext, mockRequest);
+        final Session session = testObj.getSession(mockRequest);
         assertEquals(txSession, session);
         verify(mockTx).getSession();
     }
 
-    @Test
-    public void testGetSessionProvider() {
-        when(mockContext.getUserPrincipal()).thenReturn(mockUser);
-        testObj.getSessionProvider(mockContext, mockRequest);
-    }
 }

@@ -25,7 +25,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,9 +44,6 @@ public class SessionProviderTest {
     private SessionFactory mockSessionFactory;
 
     @Mock
-    private SecurityContext mockSecurityContext;
-
-    @Mock
     private ComponentContext con;
 
     @Mock
@@ -61,11 +57,9 @@ public class SessionProviderTest {
         initMocks(this);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
         when(
-                mockSessionFactory.getSession(mockSecurityContext,
-                        mockHttpServletRequest)).thenReturn(mockSession);
+                mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
         testObj = new SessionProvider();
         setField(testObj, "sessionFactory", mockSessionFactory);
-        setField(testObj, "secContext", mockSecurityContext);
         setField(testObj, "request", mockHttpServletRequest);
 
     }

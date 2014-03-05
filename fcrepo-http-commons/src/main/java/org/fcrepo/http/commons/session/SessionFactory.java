@@ -28,7 +28,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
 import java.security.Principal;
 
@@ -100,48 +99,13 @@ public class SessionFactory {
     }
 
     /**
-     * Get a JCR session for the given HTTP servlet request (within the right
-     * transaction or workspace)
-     *
-     * @param servletRequest
-     * @return
-     * @throws RepositoryException
-     */
-    public Session getSession(final HttpServletRequest servletRequest)
-        throws RepositoryException {
-
-        final String workspace = getEmbeddedWorkspace(servletRequest);
-        final Transaction transaction =
-                getEmbeddedTransaction(servletRequest);
-
-        final Session session;
-
-        if (transaction != null) {
-            LOGGER.debug("Returning a session in the transaction {}",
-                            transaction);
-            session = transaction.getSession();
-        } else if (workspace != null) {
-            LOGGER.debug("Returning a session in the workspace {}",
-                            workspace);
-            session = repo.login(workspace);
-        } else {
-            LOGGER.debug("Returning a session in the default workspace");
-            session = repo.login();
-        }
-
-        return session;
-    }
-
-    /**
      * Get a JCR session for the given HTTP servlet request with a
      * SecurityContext attached
      *
-     * @param securityContext
      * @param servletRequest
      * @return
      */
-    public Session getSession(final SecurityContext securityContext,
-            final HttpServletRequest servletRequest) {
+    public Session getSession(final HttpServletRequest servletRequest) {
 
         try {
             final ServletCredentials creds =
@@ -193,20 +157,6 @@ public class SessionFactory {
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-    }
-
-    /**
-     * Get the configured Session Provider
-     *
-     * @param securityContext
-     * @param servletRequest
-     * @return
-     */
-    public AuthenticatedSessionProvider getSessionProvider(
-            final SecurityContext securityContext,
-            final HttpServletRequest servletRequest) {
-        final ServletCredentials creds = new ServletCredentials(servletRequest);
-        return new AuthenticatedSessionProviderImpl(repo, creds);
     }
 
     /**

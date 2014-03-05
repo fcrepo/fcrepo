@@ -21,7 +21,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 
 import org.slf4j.Logger;
 
@@ -34,8 +33,6 @@ public class InjectableSession implements Injectable<Session> {
 
     private SessionFactory sessionFactory;
 
-    private SecurityContext secContext;
-
     private HttpServletRequest request;
 
     private static final Logger LOGGER = getLogger(InjectableSession.class);
@@ -45,26 +42,22 @@ public class InjectableSession implements Injectable<Session> {
      * factory
      *
      * @param sessionFactory
-     * @param reqContext
      * @param request
      */
     public InjectableSession(final SessionFactory sessionFactory,
-            final SecurityContext reqContext,
             final HttpServletRequest request) {
         checkNotNull(sessionFactory, "SessionFactory cannot be null!");
-        checkNotNull(reqContext, "HttpRequestContext cannot be null!");
         checkNotNull(request, "HttpServletRequest cannot be null!");
         LOGGER.debug("Initializing an InjectableSession with SessionFactory {}.",
                         sessionFactory);
         this.sessionFactory = sessionFactory;
-        this.secContext = reqContext;
         this.request = request;
 
     }
 
     @Override
     public Session getValue() {
-        return sessionFactory.getSession(secContext, request);
+        return sessionFactory.getSession(request);
     }
 
 }
