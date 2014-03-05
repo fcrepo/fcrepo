@@ -16,6 +16,7 @@
 
 package org.fcrepo.auth.common;
 
+import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -25,14 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.security.Principal;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.jcr.Credentials;
-import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +38,16 @@ import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.AuthenticationProvider;
 import org.modeshape.jcr.value.Path;
 
+import javax.jcr.Credentials;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author bbpennel
  * @date Feb 12, 2014
@@ -55,7 +58,7 @@ public class ServletContainerAuthenticationProviderTest {
     private ServletCredentials creds;
 
     @Mock
-    private FedoraPolicyEnforcementPoint pep;
+    private FedoraAuthorizationDelegate fad;
 
     @Mock
     private Principal principal;
@@ -63,7 +66,6 @@ public class ServletContainerAuthenticationProviderTest {
     @Mock
     private HttpServletRequest request;
 
-    @Mock
     private Map<String, Object> sessionAttributes;
 
     @Captor
@@ -77,6 +79,7 @@ public class ServletContainerAuthenticationProviderTest {
         when(request.getUserPrincipal()).thenReturn(principal);
         when(creds.getRequest()).thenReturn(request);
         context = new ExecutionContext();
+        sessionAttributes = new HashMap<String, Object>();
     }
 
     @Test
@@ -136,7 +139,7 @@ public class ServletContainerAuthenticationProviderTest {
                 (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider
                 .getInstance();
 
-        provider.setPep(pep);
+        provider.setFad(fad);
 
         when(
                 request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE))
@@ -160,11 +163,10 @@ public class ServletContainerAuthenticationProviderTest {
         authProvider.hasPermission(authContext, mock(Path.class),
                 new String[] {"read"});
 
-        verify(pep).hasModeShapePermission(any(Path.class),
-                any(String[].class), principalCaptor.capture(),
-                any(Principal.class));
+        verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
-        final Set<Principal> resultPrincipals = principalCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(2, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
@@ -176,71 +178,57 @@ public class ServletContainerAuthenticationProviderTest {
                 "Resulting security context must exist and belong to userName",
                 "userName", result.getSecurityContext().getUserName());
 
-        assertEquals(pep, provider.getPep());
+        assertEquals(fad, provider.getFad());
     }
 
     @Test
     public void testAuthenticateWithPrincipalFactory() {
         final ServletContainerAuthenticationProvider provider =
-                (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider
-                .getInstance();
+                (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider.getInstance();
 
-        provider.setPep(pep);
+        provider.setFad(fad);
 
-        when(
-                request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE))
-                .thenReturn(true);
+        when(request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)).thenReturn(true);
 
         final Set<Principal> groupPrincipals = new HashSet<>();
         final Principal groupPrincipal = mock(Principal.class);
         groupPrincipals.add(groupPrincipal);
-        final HTTPPrincipalFactory principalFactory =
-                mock(HTTPPrincipalFactory.class);
-        when(principalFactory.getGroupPrincipals(any(HttpServletRequest.class)))
-        .thenReturn(groupPrincipals);
+        final HttpHeaderPrincipalProvider principalProvider = mock(HttpHeaderPrincipalProvider.class);
+        when(principalProvider.getPrincipals(any(Credentials.class))).thenReturn(groupPrincipals);
 
-        final Set<HTTPPrincipalFactory> factories = new HashSet<>();
-        factories.add(principalFactory);
+        final Set<PrincipalProvider> providers = new HashSet<>();
+        providers.add(principalProvider);
 
-        provider.setPrincipalFactories(factories);
+        provider.setPrincipalProviders(providers);
 
-        final ExecutionContext result =
-                provider.authenticate(creds, "repo", "workspace", context,
-                        sessionAttributes);
+        final ExecutionContext result = provider.authenticate(creds, "repo", "workspace", context, sessionAttributes);
 
-        final AdvancedAuthorizationProvider authProvider =
-                (AdvancedAuthorizationProvider) result.getSecurityContext();
-        final AdvancedAuthorizationProvider.Context authContext =
-                mock(AdvancedAuthorizationProvider.Context.class);
+        final AdvancedAuthorizationProvider authProvider = (AdvancedAuthorizationProvider) result.getSecurityContext();
+        final AdvancedAuthorizationProvider.Context authContext = mock(AdvancedAuthorizationProvider.Context.class);
 
         // Perform hasPermission on auth provider to capture result principals
         // from authenticate
-        authProvider.hasPermission(authContext, mock(Path.class),
-                new String[] {"read"});
+        authProvider.hasPermission(authContext, mock(Path.class), new String[] {"read"});
 
-        verify(pep).hasModeShapePermission(any(Path.class),
-                any(String[].class), principalCaptor.capture(),
-                any(Principal.class));
+        verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
-        final Set<Principal> resultPrincipals = principalCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(3, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
                 .contains(ServletContainerAuthenticationProvider.EVERYONE));
-        assertTrue("User principal must be present", resultPrincipals
-                .contains(principal));
-        assertTrue("Group Principal from factory must be present",
-                resultPrincipals.contains(groupPrincipal));
+        assertTrue("User principal must be present", resultPrincipals.contains(principal));
+        assertTrue("Group Principal from factory must be present", resultPrincipals.contains(groupPrincipal));
     }
 
     @Test
     public void testAuthenticateNoUserPrincipal() {
 
         final ServletContainerAuthenticationProvider provider =
-                (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider
-                .getInstance();
+                (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider.getInstance();
 
-        provider.setPep(pep);
+        provider.setFad(fad);
 
         when(request.getUserPrincipal()).thenReturn(null);
 
@@ -251,42 +239,33 @@ public class ServletContainerAuthenticationProviderTest {
     public void testAuthenticateUnrecognizedRole() {
 
         final ServletContainerAuthenticationProvider provider =
-                (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider
-                .getInstance();
+                (ServletContainerAuthenticationProvider) ServletContainerAuthenticationProvider.getInstance();
 
-        provider.setPep(pep);
+        provider.setFad(fad);
 
         when(request.isUserInRole("unknownRole")).thenReturn(true);
 
         evaluateDefaultAuthenticateCase(provider);
     }
 
-    private void evaluateDefaultAuthenticateCase(
-            final ServletContainerAuthenticationProvider provider) {
-        final ExecutionContext result =
-                provider.authenticate(creds, "repo", "workspace", context,
-                        sessionAttributes);
+    private void evaluateDefaultAuthenticateCase(final ServletContainerAuthenticationProvider provider) {
+        final ExecutionContext result = provider.authenticate(creds, "repo", "workspace", context, sessionAttributes);
 
         assertNotNull(result);
 
-        final AdvancedAuthorizationProvider authProvider =
-                (AdvancedAuthorizationProvider) result.getSecurityContext();
-        final AdvancedAuthorizationProvider.Context authContext =
-                mock(AdvancedAuthorizationProvider.Context.class);
+        final AdvancedAuthorizationProvider authProvider = (AdvancedAuthorizationProvider) result.getSecurityContext();
+        final AdvancedAuthorizationProvider.Context authContext = mock(AdvancedAuthorizationProvider.Context.class);
 
-        authProvider.hasPermission(authContext, mock(Path.class),
-                new String[] {"read"});
+        authProvider.hasPermission(authContext, mock(Path.class), new String[] {"read"});
 
-        verify(pep).hasModeShapePermission(any(Path.class),
-                any(String[].class), principalCaptor.capture(),
-                any(Principal.class));
+        verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
-        final Set<Principal> resultPrincipals = principalCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(1, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
                 .contains(ServletContainerAuthenticationProvider.EVERYONE));
-        assertEquals(ServletContainerAuthenticationProvider.EVERYONE_NAME,
-                resultPrincipals.iterator().next().getName());
+        assertEquals(ServletContainerAuthenticationProvider.EVERYONE_NAME, resultPrincipals.iterator().next().getName());
     }
 }

@@ -18,6 +18,8 @@ package org.fcrepo.auth.roles.basic;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
+import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -97,6 +99,9 @@ public class BasicRolesPEPTest {
         when(principal.getName()).thenReturn("user");
         allPrincipals = singleton(principal);
 
+        when(mockSession.getAttribute(FEDORA_USER_PRINCIPAL)).thenReturn(principal);
+        when(mockSession.getAttribute(FEDORA_ALL_PRINCIPALS)).thenReturn(allPrincipals);
+
         // ACLs for paths
 
         final Map<String, List<String>> adminAcl =
@@ -132,69 +137,58 @@ public class BasicRolesPEPTest {
 
     @Test
     public void testPermitRemoveChildNodesForRemoveChildNodesAction() {
-        assertTrue(pep.hasModeShapePermission(unreadablePath,
-                new String[] {"remove_child_nodes"}, allPrincipals, principal));
+        assertTrue(pep.hasPermission(mockSession, unreadablePath,
+                new String[] {"remove_child_nodes"}));
     }
 
     @Test
     public void testPermitAnythingForAdminablePath() {
         assertTrue("Should permit write action for path with admin role", pep
-                .hasModeShapePermission(adminablePath, WRITE_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, adminablePath, WRITE_ACTION));
         assertTrue("Should permit read action for path with admin role", pep
-                .hasModeShapePermission(adminablePath, READ_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, adminablePath, READ_ACTION));
         assertTrue(
                 "Should permit another arbitrary action for path with admin role",
-                pep.hasModeShapePermission(adminablePath,
-                        new String[] {"whatever"}, allPrincipals, principal));
+                pep.hasPermission(mockSession, adminablePath,
+                        new String[] {"whatever"}));
     }
 
     @Test
     public void testPermitReadAndWriteForWritablePath() {
         assertTrue("Should permit write for path with writer role", pep
-                .hasModeShapePermission(writablePath, WRITE_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, writablePath, WRITE_ACTION));
         assertTrue("Should permit read for path with writer role", pep
-                .hasModeShapePermission(writablePath, READ_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, writablePath, READ_ACTION));
     }
 
     @Test
     public void testDenyWriteForReadablePath() {
         assertFalse("Should deny write for path with reader role", pep
-                .hasModeShapePermission(readablePath, WRITE_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, readablePath, WRITE_ACTION));
         assertTrue("Should permit read for path with reader role", pep
-                .hasModeShapePermission(readablePath, READ_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, readablePath, READ_ACTION));
     }
 
     @Test
     public void testDenyReadAndWriteForUnreadablePath() {
         assertFalse("Should deny write for path with no roles", pep
-                .hasModeShapePermission(unreadablePath, WRITE_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, unreadablePath, WRITE_ACTION));
         assertFalse("Should deny read for path with no roles", pep
-                .hasModeShapePermission(unreadablePath, READ_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, unreadablePath, READ_ACTION));
     }
 
     @Test
     public void testDenyAllForUnrecognizableRole() {
         assertFalse("Should deny write for path with unrecognizable role", pep
-                .hasModeShapePermission(unrecognizablePath, WRITE_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, unrecognizablePath, WRITE_ACTION));
         assertFalse("Should deny read for path with unrecognizable role", pep
-                .hasModeShapePermission(unrecognizablePath, READ_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, unrecognizablePath, READ_ACTION));
     }
 
     @Test
     public void testDenyWriteToWriterForAuthzPath() {
         assertFalse("Should deny write for ACL path", pep
-                .hasModeShapePermission(authzPath, WRITE_ACTION, allPrincipals,
-                        principal));
+                .hasPermission(mockSession, authzPath, WRITE_ACTION));
     }
 
 }

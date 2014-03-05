@@ -16,32 +16,28 @@
 
 package org.fcrepo.auth.common;
 
+import static java.util.Collections.emptySet;
+
+import javax.jcr.Credentials;
+
 import java.security.Principal;
 import java.util.Set;
 
-import org.modeshape.jcr.value.Path;
-
 /**
- * Policy Enforcement Points implement the various authorization decisions
- * needed by Fedora. Implementations will translate enforcement calls into
- * their given policy framework.
- *
+ * An example principal provider that extracts principals from request headers.
+ * 
  * @author Gregory Jansen
  */
-public interface FedoraPolicyEnforcementPoint {
+public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
-    /**
-     * Is the action permitted to the user or other any other principal on the
-     * given node path?
-     *
-     * @param context
-     * @param absPath
-     * @param actions
-     * @param userPrincipal
-     * @param allPrincipals
-     * @return
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.auth.PrincipalProvider#getPrincipals(javax.jcr.Credentials)
      */
-    boolean hasModeShapePermission(Path absPath, String[] actions,
-            Set<Principal> allPrincipals, Principal userPrincipal);
+    @Override
+    public Set<Principal> getPrincipals(final Credentials credentials) {
+        return emptySet();
+    }
 
 }

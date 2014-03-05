@@ -18,6 +18,8 @@ package org.fcrepo.auth.roles.basic;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
+import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertFalse;
@@ -101,6 +103,9 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(principal.getName()).thenReturn("user");
         allPrincipals = singleton(principal);
 
+        when(mockSession.getAttribute(FEDORA_USER_PRINCIPAL)).thenReturn(principal);
+        when(mockSession.getAttribute(FEDORA_ALL_PRINCIPALS)).thenReturn(allPrincipals);
+
         // ACLs for paths and nodes
 
         final Map<String, List<String>> writerAcl =
@@ -152,8 +157,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
         when(parentNode.hasNodes()).thenReturn(false);
 
         assertTrue("Should permit remove for childless writable node", pep
-                .hasModeShapePermission(parentPath, REMOVE_ACTION,
-                        allPrincipals, principal));
+                .hasPermission(mockSession, parentPath, REMOVE_ACTION));
     }
 
     @Test
@@ -163,8 +167,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertTrue(
                 "Should permit remove for writable node with writable child",
-                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
-                        allPrincipals, principal));
+                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
     }
 
     @Test
@@ -175,8 +178,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertFalse(
                 "Should deny remove for writable node with unwritable child",
-                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
-                        allPrincipals, principal));
+                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
     }
 
     @Test
@@ -186,8 +188,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertTrue(
                 "Should permit remove for writable node with child without an ACL",
-                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
-                        allPrincipals, principal));
+                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
     }
 
     @Test
@@ -200,8 +201,7 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertFalse(
                 "Should deny remove for a writable node which has an unwritable child with depth greater than one level",
-                pep.hasModeShapePermission(parentPath, REMOVE_ACTION,
-                        allPrincipals, principal));
+                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
     }
 
 }

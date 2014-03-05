@@ -16,20 +16,20 @@
 
 package org.fcrepo.auth.common;
 
-import java.security.Principal;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.jcr.Credentials;
-import javax.servlet.http.HttpServletRequest;
-
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.security.AuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jcr.Credentials;
+import javax.servlet.http.HttpServletRequest;
+
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Authenticates ModeShape logins where JAX-RS credentials are supplied. Capable
@@ -75,10 +75,9 @@ public class ServletContainerAuthenticationProvider implements
     private static final Logger LOGGER = LoggerFactory
             .getLogger(ServletContainerAuthenticationProvider.class);
 
-    private Set<HTTPPrincipalFactory> principalFactories = Collections
-            .emptySet();
+    private Set<PrincipalProvider> principalProviders = Collections.emptySet();
 
-    private FedoraPolicyEnforcementPoint pep;
+    private FedoraAuthorizationDelegate fad;
 
     /**
      * Provides the singleton bean to ModeShape via reflection based on class
@@ -96,79 +95,115 @@ public class ServletContainerAuthenticationProvider implements
     }
 
     /**
-     * @return the principalFactories
+     * @return the principalProviders
      */
-    public Set<HTTPPrincipalFactory> getPrincipalFactories() {
-        return principalFactories;
+    public Set<PrincipalProvider> getPrincipalProviders() {
+        return principalProviders;
     }
 
     /**
-     * @param principalFactories the principalFactories to set
+     * @param principalProviders the principalProviders to set
      */
-    public void setPrincipalFactories(
-            final Set<HTTPPrincipalFactory> principalFactories) {
-        this.principalFactories = principalFactories;
+    public void setPrincipalProviders(
+            final Set<PrincipalProvider> principalProviders) {
+        this.principalProviders = principalProviders;
     }
 
     /**
-     * @see org.modeshape.jcr.security.AuthenticationProvider
-     *      #authenticate(javax.jcr.Credentials, java.lang.String,
-     *      java.lang.String, org.modeshape.jcr.ExecutionContext, java.util.Map)
+     * Authenticate the user that is using the supplied credentials.
+     * <p>
+     * If the credentials given establish that the authenticated user has the
+     * fedoraAdmin role, construct an ExecutionContext with
+     * FedoraAdminSecurityContext as the SecurityContext. Otherwise, construct
+     * an ExecutionContext with FedoraUserSecurityContext as the
+     * SecurityContext.
+     * </p>
+     * <p>
+     * If user has the fedoraUser role, add additional information to the
+     * session attributes so that authorization can be performed by the
+     * authorization delegate. Currently, this includes the servlet request, a
+     * principal instance representing the authenticated user, and a set of all
+     * principals representing the credentials given (e.g. the authenticated
+     * user and their groups).
+     * </p>
+     * <p>
+     * If the user has neither the fedoraUser or fedoraAdmin role, add only the
+     * singleton set containing the EVERYONE principal to the session
+     * attributes.
+     * </p>
      */
     @Override
     public ExecutionContext authenticate(final Credentials credentials,
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
-        LOGGER.debug("in authenticate: {}; PEP: {}", credentials, pep);
+        LOGGER.debug("in authenticate: {}; FAD: {}", credentials, fad);
 
         if (!(credentials instanceof ServletCredentials)) {
             return null;
         }
 
-        final ServletCredentials creds = (ServletCredentials) credentials;
+        final HttpServletRequest servletRequest =
+                ((ServletCredentials) credentials).getRequest();
+        final Principal userPrincipal = servletRequest.getUserPrincipal();
 
-        // does this request have the fedoraAdmin role in the container?
-        if (creds.getRequest().getUserPrincipal() != null &&
-                creds.getRequest().isUserInRole(FEDORA_ADMIN_ROLE)) {
-            return repositoryContext.with(new FedoraAdminSecurityContext(creds
-                    .getRequest().getUserPrincipal().getName()));
+        if (userPrincipal != null &&
+                servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {
+            return repositoryContext.with(new FedoraAdminSecurityContext(
+                    userPrincipal.getName()));
         }
 
-        // add base public principals
-        final Set<Principal> principals = new HashSet<>();
-        principals.add(EVERYONE); // all sessions have this principal
+        if (userPrincipal != null &&
+                servletRequest.isUserInRole(FEDORA_USER_ROLE)) {
 
-        // request fedora user role to add user principal
-        if (creds.getRequest().getUserPrincipal() != null &&
-                creds.getRequest().isUserInRole(FEDORA_USER_ROLE)) {
-            principals.add(creds.getRequest().getUserPrincipal());
-            // get user details/principals
-            addUserPrincipals(creds.getRequest(), principals);
+            sessionAttributes.put(
+                    FedoraAuthorizationDelegate.FEDORA_SERVLET_REQUEST,
+                    servletRequest);
+
+            sessionAttributes.put(
+                    FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
+                    userPrincipal);
+
+            final Set<Principal> principals = new HashSet<>();
+            addPrincipals(credentials, principals);
+            principals.add(userPrincipal);
+            principals.add(EVERYONE);
+
+            sessionAttributes.put(
+                    FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
+                    principals);
+
+        } else {
+
+            sessionAttributes.put(
+                    FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
+                    Collections.singleton(EVERYONE));
+
         }
-        return repositoryContext.with(new FedoraUserSecurityContext(creds,
-                principals, pep));
+
+        return repositoryContext.with(new FedoraUserSecurityContext(
+                userPrincipal, fad));
     }
 
     /**
-     * @return the pep
+     * @return the authorization delegate
      */
-    public FedoraPolicyEnforcementPoint getPep() {
-        return pep;
+    public FedoraAuthorizationDelegate getFad() {
+        return fad;
     }
 
     /**
-     * @param pep the pep to set
+     * @param fad the authorization delegate to set
      */
-    public void setPep(final FedoraPolicyEnforcementPoint pep) {
-        this.pep = pep;
+    public void setFad(final FedoraAuthorizationDelegate fad) {
+        this.fad = fad;
     }
 
-    private void addUserPrincipals(final HttpServletRequest request,
+    private void addPrincipals(final Credentials credentials,
             final Set<Principal> principals) {
-        // TODO add exception handling for principal factories
-        for (final HTTPPrincipalFactory pf : this.getPrincipalFactories()) {
-            principals.addAll(pf.getGroupPrincipals(request));
+        // TODO add exception handling for principal providers
+        for (final PrincipalProvider p : this.getPrincipalProviders()) {
+            principals.addAll(p.getPrincipals(credentials));
         }
     }
 }
