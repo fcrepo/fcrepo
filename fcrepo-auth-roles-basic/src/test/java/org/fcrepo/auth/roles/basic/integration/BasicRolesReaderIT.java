@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
-import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
+import org.fcrepo.auth.roles.common.integration.RolesFadTestObjectBean;
 import org.junit.Test;
 
 /**
@@ -38,7 +38,7 @@ public class BasicRolesReaderIT extends AbstractBasicRolesIT {
     private final static String TESTDS = "readertestds";
 
     @Override
-    protected List<RolesPepTestObjectBean> getTestObjs() {
+    protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
     }
 

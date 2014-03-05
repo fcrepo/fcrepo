@@ -35,7 +35,7 @@ import org.junit.Test;
 public class AccessRolesIT extends AbstractCommonRolesIT {
 
     @Override
-    protected List<RolesPepTestObjectBean> getTestObjs() {
+    protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
     }
 

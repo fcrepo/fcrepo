@@ -22,19 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.security.Principal;
-import java.util.Set;
-
-import javax.jcr.AccessDeniedException;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.security.Privilege;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.http.auth.BasicUserPrincipal;
-import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
+import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.ObjectServiceImpl;
@@ -42,7 +31,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.value.Path;
@@ -51,21 +39,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.jcr.AccessDeniedException;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.security.Privilege;
+import javax.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
+
 /**
  * @author Gregory Jansen
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = {"/spring-test/mocked-pep-repo.xml"})
-public class ModeShapeHonorsPEPResponseIT {
+@ContextConfiguration(locations = {"/spring-test/mocked-fad-repo.xml"})
+public class ModeShapeHonorsFADResponseIT {
 
     private static Logger logger =
-            getLogger(ModeShapeHonorsPEPResponseIT.class);
+            getLogger(ModeShapeHonorsFADResponseIT.class);
 
     @Autowired
     Repository repo;
 
     @Autowired
-    FedoraPolicyEnforcementPoint pep;
+    FedoraAuthorizationDelegate fad;
 
     HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
 
@@ -80,14 +77,14 @@ public class ModeShapeHonorsPEPResponseIT {
     }
 
     @Test
-    public void testPEPFactory() {
+    public void testFADFactory() {
         Assert.assertNotNull(
                 "AuthenticationProvider must return a AuthenticationProvider",
                 ServletContainerAuthenticationProvider.getInstance());
     }
 
     @Test
-    public void testPermissivePEP() throws RepositoryException {
+    public void testPermissiveFAD() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
         when(request.getUserPrincipal()).thenReturn(
                 new BasicUserPrincipal("fred"));
@@ -95,12 +92,8 @@ public class ModeShapeHonorsPEPResponseIT {
                 request.isUserInRole(Mockito
                         .eq(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)))
                 .thenReturn(true);
-        Mockito.reset(pep);
-        when(
-                pep.hasModeShapePermission(any(Path.class),
-                        any(String[].class), Matchers
-                                .<Set<Principal>> any(),
-                        any(Principal.class))).thenReturn(true);
+        Mockito.reset(fad);
+        when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true);
 
         final ServletCredentials credentials =
                 new ServletCredentials(request);
@@ -112,13 +105,11 @@ public class ModeShapeHonorsPEPResponseIT {
         }
         final ObjectService os = new ObjectServiceImpl();
         os.createObject(session, "/myobject");
-        verify(pep, times(5)).hasModeShapePermission(any(Path.class),
-                any(String[].class), Matchers.<Set<Principal>> any(),
-                any(Principal.class));
+        verify(fad, times(5)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void testRestrictivePEP() throws RepositoryException {
+    public void testRestrictiveFAD() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
         when(request.getUserPrincipal()).thenReturn(
                 new BasicUserPrincipal("fred"));
@@ -128,19 +119,13 @@ public class ModeShapeHonorsPEPResponseIT {
                 .thenReturn(true);
 
         // first permission check is for login
-        Mockito.reset(pep);
-        when(
-                pep.hasModeShapePermission(any(Path.class),
-                        any(String[].class), Matchers
-                                .<Set<Principal>> any(),
-                        any(Principal.class))).thenReturn(true, false);
+        Mockito.reset(fad);
+        when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true, false);
 
         final ServletCredentials credentials = new ServletCredentials(request);
         final Session session = repo.login(credentials);
         final ObjectService os = new ObjectServiceImpl();
         os.createObject(session, "/myobject");
-        verify(pep, times(5)).hasModeShapePermission(any(Path.class),
-                any(String[].class), Matchers.<Set<Principal>> any(),
-                any(Principal.class));
+        verify(fad, times(5)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 }

@@ -20,20 +20,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.fcrepo.auth.roles.common.integration.AbstractRolesIT;
-import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
+import org.fcrepo.auth.roles.common.integration.RolesFadTestObjectBean;
 
 /**
  * @author Scott Prater
  */
 public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
 
-    protected final static List<RolesPepTestObjectBean> test_objs =
+    protected final static List<RolesFadTestObjectBean> test_objs =
             defineTestObjects();
 
-    private static List<RolesPepTestObjectBean> defineTestObjects() {
-        final List<RolesPepTestObjectBean> test_objs = new ArrayList<>();
+    private static List<RolesFadTestObjectBean> defineTestObjects() {
+        final List<RolesFadTestObjectBean> test_objs = new ArrayList<>();
         /* public object with public datastream */
-        final RolesPepTestObjectBean objA = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objA = new RolesFadTestObjectBean();
         objA.setPath("testparent1");
         objA.addACL(EVERYONE_NAME, "reader");
         objA.addACL("examplereader", "reader");
@@ -43,7 +43,7 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
         test_objs.add(objA);
 
         /* public object with one public datastream, one restricted datastream */
-        final RolesPepTestObjectBean objB = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objB = new RolesFadTestObjectBean();
         objB.setPath("testparent2");
         objB.addACL(EVERYONE_NAME, "reader");
         objB.addACL("examplereader", "reader");
@@ -58,13 +58,13 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
         test_objs.add(objB);
 
         /* public child object with datastream, no ACLs */
-        final RolesPepTestObjectBean objC = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objC = new RolesFadTestObjectBean();
         objC.setPath("testparent1/testchild1NoACL");
         objC.addDatastream("tsc1_data", "Test Child 1, datastream 1,  Hello!");
         test_objs.add(objC);
 
         /* restricted child object with restricted datastreams */
-        final RolesPepTestObjectBean objD = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objD = new RolesFadTestObjectBean();
         objD.setPath("testparent1/testchild2WithACL");
         objD.addACL("examplereader", "reader");
         objD.addACL("examplewriter", "writer");
@@ -81,7 +81,7 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
          * even more restricted child object, with even more restricted
          * datastreams
          */
-        final RolesPepTestObjectBean objE = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objE = new RolesFadTestObjectBean();
         objE.setPath("testparent1/testchild4WithACL");
         objE.addACL("examplewriter", "writer");
         objE.addACL("exampleadmin", "admin");
@@ -93,7 +93,7 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
         test_objs.add(objE);
 
         /* private child object with 1 private datastream, 1 public datastream */
-        final RolesPepTestObjectBean objF = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objF = new RolesFadTestObjectBean();
         objF.setPath("testparent2/testchild5WithACL");
         objF.addACL("exampleadmin", "admin");
         objF.addDatastream("tsc1_data",
@@ -103,7 +103,7 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
         test_objs.add(objF);
 
         /* Public object, restricted datastream */
-        final RolesPepTestObjectBean objG = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objG = new RolesFadTestObjectBean();
         objG.setPath("testparent3");
         objG.addACL(EVERYONE_NAME, "reader");
         objG.addACL("examplereader", "reader");
@@ -115,12 +115,12 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
         objG.addDatastreamACL("tsp2_data", "exampleadmin", "admin");
         test_objs.add(objG);
 
-        final RolesPepTestObjectBean objH = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objH = new RolesFadTestObjectBean();
         objH.setPath("testparent3/testchild3a");
         objH.addACL("exampleadmin", "admin");
         test_objs.add(objH);
 
-        final RolesPepTestObjectBean objI = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objI = new RolesFadTestObjectBean();
         objI.setPath("testparent3/testchild3b");
         test_objs.add(objI);
 

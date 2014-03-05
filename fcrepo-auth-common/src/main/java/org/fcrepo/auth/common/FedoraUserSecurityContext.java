@@ -18,21 +18,19 @@ package org.fcrepo.auth.common;
 
 import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE;
 
-import java.security.Principal;
-import java.util.Set;
-
-import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Principal;
+
 /**
  * The security context for Fedora servlet users. These users are not
  * necessarily authenticated by the container, i.e. users may include the
  * general public. This security context delegates all access decisions to the
- * configured Fedora policy enforcement point.
+ * configured authorization delegate.
  *
  * @author Gregory Jansen
  */
@@ -42,33 +40,28 @@ public class FedoraUserSecurityContext implements SecurityContext,
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
 
-    private Set<Principal> principals = null;
-
     private Principal userPrincipal = null;
 
-    private FedoraPolicyEnforcementPoint pep = null;
+    private FedoraAuthorizationDelegate fad = null;
 
     private boolean loggedIn = true;
 
     /**
      * Constructs a new security context.
      *
-     * @param request the servlet request
-     * @param principals security principals associated with this request
-     * @param pep the policy enforcement point
+     * @param userPrincipal the user principal associated with this security
+     *        context
+     * @param fad the authorization delegate
      */
-    protected FedoraUserSecurityContext(
-            final ServletCredentials credentials,
-            final Set<Principal> principals,
-            final FedoraPolicyEnforcementPoint pep) {
-        this.principals = principals;
-        this.pep = pep;
-        if (credentials.getRequest() != null) {
-            this.userPrincipal = credentials.getRequest().getUserPrincipal();
-        }
-        if (this.pep == null) {
-            LOGGER.warn("This security context must have a PEP injected");
-            throw new IllegalArgumentException("This security context must have a PEP injected");
+    protected FedoraUserSecurityContext(final Principal userPrincipal,
+            final FedoraAuthorizationDelegate fad) {
+        this.fad = fad;
+        this.userPrincipal = userPrincipal;
+
+        if (this.fad == null) {
+            LOGGER.warn("This security context must have a FAD injected");
+            throw new IllegalArgumentException(
+                    "This security context must have a FAD injected");
         }
     }
 
@@ -138,11 +131,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
      * @see
      * org.modeshape.jcr.security.AdvancedAuthorizationProvider#hasPermission
      * (org.modeshape.jcr.security.AdvancedAuthorizationProvider.Context,
-     * org.modeshape.jcr.value.Path, java.lang.String[]) grabs AuthZ attributes
-     * from context and delegates to a handler class subject: user roles
-     * (abstract privileges?) group principals (on campus) (URIs? attrIds?) the
-     * user principle resource attributes: mix-in types JCR path environment
-     * attributes: ??
+     * org.modeshape.jcr.value.Path, java.lang.String[])
      */
     @Override
     public boolean hasPermission(final Context context, final Path absPath,
@@ -156,10 +145,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return actions.length == 1 && "read".equals(actions[0]);
         }
 
-        // delegate to Fedora PDP
-        if (pep != null) {
-            return pep.hasModeShapePermission(absPath, actions,
-                    this.principals, getEffectiveUserPrincipal());
+        // delegate
+        if (fad != null) {
+            return fad.hasPermission(context.getSession(), absPath, actions);
         }
         return false;
     }

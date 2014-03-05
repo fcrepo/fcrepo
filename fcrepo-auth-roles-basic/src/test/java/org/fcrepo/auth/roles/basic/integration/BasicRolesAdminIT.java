@@ -23,12 +23,12 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
 
+import org.apache.http.client.ClientProtocolException;
+import org.fcrepo.auth.roles.common.integration.RolesFadTestObjectBean;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.List;
-
-import org.apache.http.client.ClientProtocolException;
-import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
-import org.junit.Test;
 
 /**
  * Verifies that role for admins is properly enforced.
@@ -41,7 +41,7 @@ public class BasicRolesAdminIT extends AbstractBasicRolesIT {
     private final static String TESTDS = "admintestds";
 
     @Override
-    protected List<RolesPepTestObjectBean> getTestObjs() {
+    protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
     }
 

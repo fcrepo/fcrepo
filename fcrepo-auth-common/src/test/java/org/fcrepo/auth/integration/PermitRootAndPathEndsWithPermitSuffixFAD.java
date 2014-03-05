@@ -20,7 +20,9 @@ import java.security.Principal;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
+import javax.jcr.Session;
+
+import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +30,11 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Gregory Jansen
  */
-public class PermitRootAndPathEndsWithPermitSuffixPEP implements
-        FedoraPolicyEnforcementPoint {
+public class PermitRootAndPathEndsWithPermitSuffixFAD implements
+        FedoraAuthorizationDelegate {
 
     Logger logger = LoggerFactory
-            .getLogger(PermitRootAndPathEndsWithPermitSuffixPEP.class);
+            .getLogger(PermitRootAndPathEndsWithPermitSuffixFAD.class);
 
     /*
      * (non-Javadoc)
@@ -42,9 +44,7 @@ public class PermitRootAndPathEndsWithPermitSuffixPEP implements
      * java.security.Principal)
      */
     @Override
-    public boolean hasModeShapePermission(final Path absPath,
-            final String[] actions, final Set<Principal> allPrincipals,
-            final Principal userPrincipal) {
+    public boolean hasPermission(final Session session, final Path absPath, final String[] actions) {
         // allow operations at the root, for test convenience
         if (absPath.isRoot()) {
             return true;

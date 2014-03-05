@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * @author Mike Daines
  */
-public class AbstractRolesPEPTest {
+public class AbstractRolesAuthorizationDelegateTest {
 
     @Mock
     private Principal principalA;
@@ -62,7 +62,7 @@ public class AbstractRolesPEPTest {
         principals.add(principalB);
 
         final Set<String> roles =
-                AbstractRolesPEP.resolveUserRoles(acl, principals);
+                AbstractRolesAuthorizationDelegate.resolveUserRoles(acl, principals);
         assertEquals(
                 "The effective roles set should contain the correct number of roles",
                 3, roles.size());
@@ -81,7 +81,7 @@ public class AbstractRolesPEPTest {
         principals.add(principalA);
 
         final Set<String> roles =
-                AbstractRolesPEP.resolveUserRoles(acl, principals);
+                AbstractRolesAuthorizationDelegate.resolveUserRoles(acl, principals);
 
         assertEquals(
                 "The effective roles set should contain no roles if there is no entry in the ACL",

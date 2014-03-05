@@ -16,32 +16,28 @@
 
 package org.fcrepo.auth.roles.basic;
 
-import java.security.Principal;
-import java.util.Set;
-
-import org.fcrepo.auth.roles.common.AbstractRolesPEP;
+import org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Set;
 
 /**
  * @author Gregory Jansen
  */
-public class BasicRolesPEP extends AbstractRolesPEP {
+public class BasicRolesAuthorizationDelegate extends AbstractRolesAuthorizationDelegate {
 
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(BasicRolesPEP.class);
+            .getLogger(BasicRolesAuthorizationDelegate.class);
 
     /*
      * (non-Javadoc)
-     * @see
-     * org.fcrepo.auth.roles.AbstractRolesPEP#hasModeShapePermission(org.modeshape
-     * .jcr.value.Path, java.lang.String[], java.util.Set,
-     * java.security.Principal, java.util.Set)
+     * @see org.fcrepo.auth.roles.AbstractRolesAuthorizationDelegate#rolesHavePermission(final
+     * String absPath, final String[] actions, final Set<String> roles)
      */
     @Override
-    public boolean rolesHaveModeShapePermission(final String absPath,
-            final String[] actions, final Set<Principal> allPrincipals,
-            final Principal userPrincipal, final Set<String> roles) {
+    public boolean rolesHavePermission(final String absPath,
+            final String[] actions, final Set<String> roles) {
         if (roles.isEmpty()) {
             LOGGER.debug("A caller without content roles can do nothing in the repository.");
             return false;
@@ -66,7 +62,7 @@ public class BasicRolesPEP extends AbstractRolesPEP {
             LOGGER.debug("Denying reader role permission to perform a non-read action.");
             return false;
         }
-        LOGGER.error("There are roles in session that aren't recognized by this PEP: {}",
+        LOGGER.error("There are roles in session that aren't recognized by this authorization delegate: {}",
                      roles);
         return false;
     }

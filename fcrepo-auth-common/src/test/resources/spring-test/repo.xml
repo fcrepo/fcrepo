@@ -15,10 +15,10 @@
   <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
     depends-on="authenticationProvider" p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
   
-  <bean name="pep" class="org.fcrepo.auth.integration.PermitRootAndPathEndsWithPermitSuffixPEP"/>
+  <bean name="fad" class="org.fcrepo.auth.integration.PermitRootAndPathEndsWithPermitSuffixFAD"/>
 
   <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider"
-    p:pep-ref="pep"/>
+    p:fad-ref="fad"/>
   
 
   <bean class="org.modeshape.jcr.JcrRepositoryFactory" />

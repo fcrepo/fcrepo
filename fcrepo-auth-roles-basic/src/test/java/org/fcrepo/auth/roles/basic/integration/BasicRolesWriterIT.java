@@ -22,14 +22,14 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
-import java.util.List;
+import org.apache.http.client.ClientProtocolException;
+import org.fcrepo.auth.roles.common.integration.RolesFadTestObjectBean;
+import org.junit.Test;
 
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.http.client.ClientProtocolException;
-import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
-import org.junit.Test;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Verifies that role for writers is properly enforced.
@@ -42,7 +42,7 @@ public class BasicRolesWriterIT extends AbstractBasicRolesIT {
     private final static String TESTDS = "writertestds";
 
     @Override
-    protected List<RolesPepTestObjectBean> getTestObjs() {
+    protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
     }
 

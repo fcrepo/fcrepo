@@ -16,10 +16,10 @@
   <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
     depends-on="authenticationProvider" p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
   
-  <bean name="pep" class="org.mockito.Mockito" factory-method="mock" c:classToMock="org.fcrepo.auth.common.FedoraPolicyEnforcementPoint"/>
+  <bean name="fad" class="org.mockito.Mockito" factory-method="mock" c:classToMock="org.fcrepo.auth.common.FedoraAuthorizationDelegate"/>
 
   <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider"
-    p:pep-ref="pep"/>
+    p:fad-ref="fad"/>
   
   <bean class="org.modeshape.jcr.JcrRepositoryFactory" />
 

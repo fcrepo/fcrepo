@@ -16,10 +16,10 @@
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:classpath:/config/servlet-auth/repository.json}"
         depends-on="authenticationProvider"/>                                                                                                                 
                                                                                                                                                             
-    <bean name="pep" class="org.fcrepo.auth.roles.basic.BasicRolesPEP"/>                                                                                      
+    <bean name="fad" class="org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate"/>                                                                                      
                                                                                                                                                             
     <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
-        <property name="pep" ref="pep"/>
+        <property name="fad" ref="fad"/>
     </bean>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>

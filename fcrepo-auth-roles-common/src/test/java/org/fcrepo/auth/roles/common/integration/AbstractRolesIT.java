@@ -22,14 +22,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -52,6 +44,14 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Gregory Jansen
@@ -78,7 +78,7 @@ public abstract class AbstractRolesIT {
 
     protected static CloseableHttpClient client;
 
-    private static List<RolesPepTestObjectBean> test_objs;
+    private static List<RolesFadTestObjectBean> test_objs;
 
     private static boolean is_setup = false;
 
@@ -95,8 +95,7 @@ public abstract class AbstractRolesIT {
     public void setUp() throws Exception {
         if (is_setup == false) {
             test_objs = getTestObjs();
-            for (final RolesPepTestObjectBean obj : test_objs) {
-
+            for (final RolesFadTestObjectBean obj : test_objs) {
                 deleteTestObject(obj);
                 ingestObject(obj);
             }
@@ -385,7 +384,7 @@ public abstract class AbstractRolesIT {
     }
 
     protected void deleteTestObject(
-            final RolesPepTestObjectBean obj) {
+            final RolesFadTestObjectBean obj) {
         try {
             final HttpDelete method = deleteObjMethod(obj.getPath());
             setAuth(method, "fedoraAdmin");
@@ -400,7 +399,7 @@ public abstract class AbstractRolesIT {
 
 
     protected void
-    ingestObject(final RolesPepTestObjectBean obj)
+    ingestObject(final RolesFadTestObjectBean obj)
             throws Exception {
         final HttpPost method = postObjMethod(obj.getPath());
         setAuth(method, "fedoraAdmin");
@@ -439,7 +438,7 @@ public abstract class AbstractRolesIT {
     }
 
     private void addObjectACLs(
-            final RolesPepTestObjectBean obj)
+            final RolesFadTestObjectBean obj)
                     throws Exception {
         if (obj.getACLs().size() > 0) {
             final String jsonACLs = createJsonACLs(obj.getACLs());
@@ -449,7 +448,7 @@ public abstract class AbstractRolesIT {
     }
 
     private void addDatastreams(
-            final RolesPepTestObjectBean obj)
+            final RolesFadTestObjectBean obj)
                     throws Exception {
         for (final Map<String, String> entries : obj.getDatastreams()) {
             for (final Map.Entry<String, String> entry : entries.entrySet()) {
@@ -469,7 +468,7 @@ public abstract class AbstractRolesIT {
     }
 
     private void addDatastreamACLs(
-            final RolesPepTestObjectBean obj,
+            final RolesFadTestObjectBean obj,
             final String dsid) throws Exception {
         if (obj.getDatastreamACLs(dsid) != null) {
             final String jsonACLs = createJsonACLs(obj.getDatastreamACLs(dsid));
@@ -494,5 +493,5 @@ public abstract class AbstractRolesIT {
         return makeJson(acls);
     }
 
-    protected abstract List<RolesPepTestObjectBean> getTestObjs();
+    protected abstract List<RolesFadTestObjectBean> getTestObjs();
 }

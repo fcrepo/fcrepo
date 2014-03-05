@@ -16,7 +16,7 @@
 
 package org.fcrepo.auth.roles.common;
 
-import org.fcrepo.auth.common.FedoraPolicyEnforcementPoint;
+import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.value.Path;
@@ -41,15 +41,13 @@ import java.util.Set;
  * Policy enforcement point for roles-based authentication
  * @author Gregory Jansen
  */
-public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
+public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthorizationDelegate {
 
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(AbstractRolesPEP.class);
+            .getLogger(AbstractRolesAuthorizationDelegate.class);
 
     protected static final String AUTHZ_DETECTION = "/{" +
             Constants.JcrName.NS_URI + "}";
-
-    private static final String[] READ_ACTIONS = {"read"};
 
     private static final String[] REMOVE_ACTIONS = {"remove"};
 
@@ -109,16 +107,25 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
     }
 
     @Override
-    public boolean hasModeShapePermission(final Path absPath,
-            final String[] actions, final Set<Principal> allPrincipals,
-            final Principal userPrincipal) {
+    public boolean hasPermission(Session session, final Path absPath,
+            final String[] actions) {
         final Set<String> roles;
-        final Session session;
+
+        final Principal userPrincipal = getUserPrincipal(session);
+        if (userPrincipal == null) {
+            return false;
+        }
+
+        final Set<Principal> allPrincipals = getPrincipals(session);
+        if (allPrincipals == null) {
+            return false;
+        }
 
         try {
-            session = sessionFactory.getInternalSession();
+            final Session internalSession = sessionFactory.getInternalSession();
             final Map<String, List<String>> acl =
-                    accessRolesProvider.findRolesForPath(absPath, session);
+                    accessRolesProvider.findRolesForPath(absPath,
+                            internalSession);
             roles = resolveUserRoles(acl, allPrincipals);
             LOGGER.debug("roles for this request: {}", roles);
         } catch (final RepositoryException e) {
@@ -141,9 +148,7 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             return true;
         }
 
-        if (!rolesHaveModeShapePermission(absPath.toString(), actions,
-                allPrincipals,
-                userPrincipal, roles)) {
+        if (!rolesHavePermission(absPath.toString(), actions, roles)) {
             return false;
         }
 
@@ -157,6 +162,25 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
         return true;
     }
 
+    private Principal getUserPrincipal(Session session) {
+        final Object value = session.getAttribute(FEDORA_USER_PRINCIPAL);
+        if (value instanceof Principal) {
+            return (Principal) value;
+        } else {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<Principal> getPrincipals(Session session) {
+        final Object value = session.getAttribute(FEDORA_ALL_PRINCIPALS);
+        if (value instanceof Set<?>) {
+            return (Set<Principal>) value;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * @param absPath
      * @param actions
@@ -168,9 +192,10 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
             final Session session, final Set<Principal> allPrincipals,
             final Principal userPrincipal, final Set<String> parentRoles) {
         try {
+            final Session internalSession = sessionFactory.getInternalSession();
             LOGGER.debug("Recursive child remove permission checks for: {}",
                          parentPath);
-            final Node parent = session.getNode(parentPath);
+            final Node parent = internalSession.getNode(parentPath);
             if (!parent.hasNodes()) {
                 return true;
             }
@@ -190,8 +215,8 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
                 } else {
                     roles = parentRoles;
                 }
-                if (rolesHaveModeShapePermission(n.getPath(), REMOVE_ACTIONS,
-                        allPrincipals, userPrincipal, roles)) {
+                if (rolesHavePermission(n.getPath(), REMOVE_ACTIONS,
+                        roles)) {
 
                     if (!canRemoveChildrenRecursive(n.getPath(), session,
                             allPrincipals, userPrincipal, roles)) {
@@ -216,13 +241,10 @@ public abstract class AbstractRolesPEP implements FedoraPolicyEnforcementPoint {
      *
      * @param absPath path to the object
      * @param actions requested action
-     * @param userPrincipal
-     * @param allPrincipals
      * @param roles effective roles for this request and content
      * @return true if role has permission
      */
-    public abstract boolean rolesHaveModeShapePermission(String absPath,
-            String[] actions, Set<Principal> allPrincipals,
-            Principal userPrincipal, Set<String> roles);
+    public abstract boolean rolesHavePermission(final String absPath,
+            final String[] actions, final Set<String> roles);
 
 }

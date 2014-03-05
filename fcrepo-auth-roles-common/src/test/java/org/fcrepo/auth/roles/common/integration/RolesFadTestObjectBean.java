@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author Scott Prater
  */
-public class RolesPepTestObjectBean {
+public class RolesFadTestObjectBean {
 
     private String path;
 
@@ -34,7 +34,7 @@ public class RolesPepTestObjectBean {
 
     private final Map<String, List<Map<String, String>>> datastreamACLs;
 
-    public RolesPepTestObjectBean() {
+    public RolesFadTestObjectBean() {
         this.datastreams = new ArrayList<>();
         this.acls = new ArrayList<>();
         this.datastreamACLs = new HashMap<>();
