@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.Objects.toStringHelper;
@@ -29,9 +30,8 @@ import javax.jcr.observation.Event;
 import org.fcrepo.kernel.utils.EventType;
 
 /**
- * A very simple abstraction to prevent event-driven machinery
- * downstream from the repository from relying directly on a JCR
- * interface (Event).
+ * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
+ * on a JCR interface {@link Event). Can represent either a single JCR event or several.
  *
  * @author ajs6f
  * @date Feb 19, 2013
@@ -44,10 +44,13 @@ public class FedoraEvent implements Event {
 
     private String nodeType;
 
+    private Integer eventType = null;
+
     private Map<Object, Object> memoizedInfo;
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
+     *
      * @param e
      */
     public FedoraEvent(final Event e) {
@@ -55,8 +58,9 @@ public class FedoraEvent implements Event {
     }
 
     /**
-     * Wrap a JCR Event with our FedoraEvent decorators
-     * and include the type given in the info map
+     * Wrap a JCR Event with our FedoraEvent decorators and include the type
+     * given in the info map
+     *
      * @param e
      * @param wrappedNodeType type of node for the event
      */
@@ -68,7 +72,12 @@ public class FedoraEvent implements Event {
 
     @Override
     public int getType() {
-        return e.getType();
+        return eventType != null ? eventType : e.getType();
+    }
+
+    public FedoraEvent setType(final Integer type) {
+        eventType = type;
+        return this;
     }
 
     @Override
@@ -88,7 +97,7 @@ public class FedoraEvent implements Event {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Map<?, ?> getInfo() throws RepositoryException {
+    public Map<Object, Object> getInfo() throws RepositoryException {
         if (memoizedInfo == null) {
             memoizedInfo = new HashMap<>(e.getInfo());
             memoizedInfo.put(NODE_TYPE_KEY, this.nodeType);
@@ -109,12 +118,8 @@ public class FedoraEvent implements Event {
     @Override
     public String toString() {
         try {
-            return toStringHelper(this).add(
-                    "Event type:",
-                    REPOSITORY_NAMESPACE
-                            + EventType.valueOf(getType())).add(
-                    "Path:", getPath()).add("Date: ", getDate()).add("Info:",
-                    getInfo()).toString();
+            return toStringHelper(this).add("Event type:", REPOSITORY_NAMESPACE + EventType.valueOf(getType())).add(
+                    "Path:", getPath()).add("Date: ", getDate()).add("Info:", getInfo()).toString();
         } catch (final RepositoryException e) {
             throw propagate(e);
         }

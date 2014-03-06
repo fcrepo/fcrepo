@@ -52,6 +52,7 @@ import com.google.common.eventbus.EventBus;
  * Fedora EventBus as a stream of FedoraEvents.
  *
  * @author eddies
+ * @author ajs6f
  * @date Feb 7, 2013
  */
 public class SimpleObserver implements EventListener {
@@ -61,9 +62,7 @@ public class SimpleObserver implements EventListener {
     /**
      * A simple counter of events that pass through this observer
      */
-    static final Counter EVENT_COUNTER = getMetrics().counter(
-            name(
-                    SimpleObserver.class, "onEvent"));
+    static final Counter EVENT_COUNTER = getMetrics().counter(name(SimpleObserver.class, "onEvent"));
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED +
             PROPERTY_ADDED + PROPERTY_CHANGED + PROPERTY_REMOVED;
