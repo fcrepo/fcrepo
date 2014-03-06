@@ -17,7 +17,6 @@
 package org.fcrepo.auth.common;
 
 import java.security.Principal;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.modeshape.jcr.value.Path;
@@ -43,18 +42,6 @@ public interface FedoraPolicyEnforcementPoint {
      * @return
      */
     boolean hasModeShapePermission(Path absPath, String[] actions,
-            Set<Principal> allPrincipals, Principal userPrincipal);
-
-    /**
-     * Filter the collection of JCR paths, selecting those the user has
-     * permission to read.
-     * 
-     * @param paths an iterator of paths
-     * @param allPrincipals all the authenticated principals
-     * @param userPrincipal the user principal
-     * @return an iterator of permitted paths
-     */
-    Iterator<Path> filterPathsForReading(Iterator<Path> paths,
             Set<Principal> allPrincipals, Principal userPrincipal);
 
 }
