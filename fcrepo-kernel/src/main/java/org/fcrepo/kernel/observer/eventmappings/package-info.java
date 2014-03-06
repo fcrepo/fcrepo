@@ -13,31 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Mappings from JCR {@link Event}s to {@link FedoraEvents}
+ *
+ * @author ajs6f
+ * @date Mar 5, 2014
+ */
 
-package org.fcrepo.kernel.observer;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import javax.jcr.observation.Event;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-public class NOOPFilterTest {
-
-    @Mock
-    Event mockEvent;
-
-    @Before
-    public void setUp() throws Exception {
-        initMocks(this);
-    }
-
-    @Test
-    public void testApply() throws Exception {
-        assertTrue("Failed to pass an event through a NO-OP filter!", new NOOPFilter().getFilter(null).apply(mockEvent));
-    }
-
-}
+package org.fcrepo.kernel.observer.eventmappings;

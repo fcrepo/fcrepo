@@ -13,33 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ *
+ */
 
-package org.fcrepo.kernel.observer;
+package org.fcrepo.kernel.observer.eventmappings;
 
-import javax.jcr.Session;
+import static com.google.common.collect.Iterators.transform;
+
+import java.util.Iterator;
+
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Predicate;
+import org.fcrepo.kernel.observer.FedoraEvent;
+import com.google.common.base.Function;
 
 /**
- * Simple {@link EventFilter} that does no filtering.
+ * Maps each JCR {@link Event} to a single {@link FedoraEvent}
  *
- * @author eddies
- * @date Feb 7, 2013
  * @author ajs6f
- * @author barmintor
- * @date Dec 2013
+ * @date Feb 27, 2014
  */
-public class NOOPFilter implements EventFilter {
+public class OneToOne implements InternalExternalEventMapper {
 
     @Override
-    public Predicate<Event> getFilter(final Session session) {
-        return this;
-    }
+    public Iterator<FedoraEvent> apply(final Iterator<Event> jcrEvents) {
+        return transform(jcrEvents, new Function<Event, FedoraEvent>() {
 
-    @Override
-    public boolean apply(final Event event) {
-        return true;
+            @Override
+            public FedoraEvent apply(final Event e) {
+                return new FedoraEvent(e);
+            }
+        });
     }
-
 }

@@ -15,16 +15,16 @@
  */
 package org.fcrepo.syndication;
 
+import static org.fcrepo.kernel.utils.TestHelpers.setField;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
 
-import javax.jcr.observation.Event;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,27 +42,27 @@ public class RSSPublisherTest {
 
     @Test
     public void testGetFeed() throws Exception {
-        EventBus mockBus = mock(EventBus.class);
-        TestHelpers.setField(testObj, "eventBus", mockBus);
-        UriInfo mockUris = mock(UriInfo.class);
-        URI mockUri = new URI("http://localhost.info");
+        final EventBus mockBus = mock(EventBus.class);
+        setField(testObj, "eventBus", mockBus);
+        final UriInfo mockUris = mock(UriInfo.class);
+        final URI mockUri = new URI("http://localhost.info");
         when(mockUris.getBaseUri()).thenReturn(mockUri);
-        TestHelpers.setField(testObj, "uriInfo", mockUris);
+        setField(testObj, "uriInfo", mockUris);
         testObj.initialize();
         testObj.getFeed();
     }
 
     @Test
     public void testInitialize() throws Exception {
-        EventBus mockBus = mock(EventBus.class);
-        TestHelpers.setField(testObj, "eventBus", mockBus);
+        final EventBus mockBus = mock(EventBus.class);
+        setField(testObj, "eventBus", mockBus);
         testObj.initialize();
         verify(mockBus).register(testObj);
     }
 
     @Test
     public void testNewEvent() {
-        Event mockEvent = mock(Event.class);
+        final FedoraEvent mockEvent = mock(FedoraEvent.class);
         testObj.newEvent(mockEvent);
     }
 

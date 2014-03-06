@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.observer;
+package org.fcrepo.kernel.observer.eventmappings;
 
-import static org.junit.Assert.assertTrue;
-import static org.mockito.MockitoAnnotations.initMocks;
+import java.util.Iterator;
 
 import javax.jcr.observation.Event;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import org.fcrepo.kernel.observer.FedoraEvent;
 
-public class NOOPFilterTest {
+import com.google.common.base.Function;
 
-    @Mock
-    Event mockEvent;
-
-    @Before
-    public void setUp() throws Exception {
-        initMocks(this);
-    }
-
-    @Test
-    public void testApply() throws Exception {
-        assertTrue("Failed to pass an event through a NO-OP filter!", new NOOPFilter().getFilter(null).apply(mockEvent));
-    }
+/**
+ * Maps {@link Iterator} packages of {@link Event}s to
+ * {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
+ *
+ * @author ajs6f
+ * @date Feb 27, 2014
+ */
+public interface InternalExternalEventMapper extends Function<Iterator<Event>, Iterator<FedoraEvent>> {
 
 }

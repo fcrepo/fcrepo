@@ -52,7 +52,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         final HttpPost method =
                 new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
-        final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+        final List<NameValuePair> formparams = new ArrayList<>();
 
         formparams.add(new BasicNameValuePair("callbackUrl",
                 RESTAPI_NAMESPACE + "/fake:url"));
@@ -81,7 +81,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         final HttpPost method =
                 new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
-        final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+        final List<NameValuePair> formparams = new ArrayList<>();
 
         formparams.add(new BasicNameValuePair("callbackUrl",
                 RESTAPI_NAMESPACE + "/fake:url"));
@@ -103,7 +103,7 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         final HttpPost method =
                 new HttpPost(serverAddress + "/fcr:webhooks/callback_id");
 
-        final List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+        final List<NameValuePair> formparams = new ArrayList<>();
 
         formparams.add(new BasicNameValuePair("callbackUrl", serverAddress +
                 "/dummy"));
@@ -133,9 +133,8 @@ public class FedoraWebhooksIT extends AbstractResourceIT {
         logger.debug(lastBody);
 
         assertNotNull("Our webhook wasn't called!", lastBody);
-        assertTrue("Our webhook didn't have the content we expected!", compile(
-                EventType.valueOf(NODE_ADDED).toString(), DOTALL).matcher(
-                lastBody).find());
+        assertTrue("Our webhook didn't have the content we expected!", lastBody.contains(EventType.valueOf(NODE_ADDED)
+                .getName()));
 
     }
 }

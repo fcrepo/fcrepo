@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static javax.jcr.observation.Event.NODE_ADDED;
-import static javax.jcr.observation.Event.NODE_MOVED;
-import static javax.jcr.observation.Event.NODE_REMOVED;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.utils.EventType.valueOf;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -34,20 +28,21 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+
 import org.slf4j.Logger;
 
 /**
- * EventFilter that passes only events emitted from nodes with
- * a Fedora JCR type, or properties attached to them.
+ * {@link EventFilter} that passes only events emitted from nodes with a Fedora
+ * JCR type, or properties attached to them, except in the case of a node
+ * removal. In that case, since we cannot test the node for its types, we assume
+ * that any non-JCR namespaced node is fair game.
  *
  * @author ajs6f
  * @author barmintor
  * @date Dec 2013
- *
  * @author eddies
  * @date Feb 7, 2013
- *
  * @author escowles
  * @date Oct 3, 2013
  */
@@ -71,49 +66,37 @@ public class DefaultFilter implements EventFilter {
     }
 
     @Override
-    public Function<Event, Event> getFilter(final Session session) {
+    public Predicate<Event> getFilter(final Session session) {
         return new DefaultFilter(session);
     }
 
     @Override
-    public Event apply(final Event event) {
+    public boolean apply(final Event event) {
         try {
-            String nPath = event.getPath();
-            final int nType = event.getType();
-            switch (nType) {
-                case NODE_ADDED:
-                    break;
+            switch (valueOf(event.getType())) {
                 case NODE_REMOVED:
-                    return event;
-                case PROPERTY_ADDED:
-                    nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                    break;
-                case PROPERTY_REMOVED:
-                    nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                    break;
-                case PROPERTY_CHANGED:
-                    nPath = nPath.substring(0, nPath.lastIndexOf('/'));
-                    break;
-                case NODE_MOVED:
+                    final String path = event.getPath();
+                    // only propagate non-jcr node removals, a simple test, but
+                    // we cannot use the predicates we use below in the absence
+                    // of a node to test
+                    if (!path.startsWith("jcr:", path.lastIndexOf('/') + 1)) {
+                        return true;
+                    }
                     break;
                 default:
-                    return null;
-            }
-
-            final Node n = session.getNode(nPath);
-            if (isFedoraObject.apply(n)) {
-                return new FedoraEvent(event, FEDORA_OBJECT);
-            }
-            if (isFedoraDatastream.apply(n)) {
-                return new FedoraEvent(event, FEDORA_DATASTREAM);
+                    final String nodeId = event.getIdentifier();
+                    final Node n = session.getNodeByIdentifier(nodeId);
+                    if (isFedoraObject.apply(n) || isFedoraDatastream.apply(n)) {
+                        return true;
+                    }
             }
         } catch (final PathNotFoundException e) {
-            LOGGER.trace("Dropping event from outside our assigned workspace", e);
-            return null;
+            LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
+            return false;
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-        return null;
+        return false;
     }
 
 }

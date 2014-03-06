@@ -55,8 +55,8 @@ public enum EventType {
         translation = b.build();
     }
 
-    EventType(final Integer jcrEventType, final String eventName) {
-        this.jcrEventType = jcrEventType;
+    EventType(final Integer eventType, final String eventName) {
+        this.jcrEventType = eventType;
         this.eventName = eventName;
     }
 

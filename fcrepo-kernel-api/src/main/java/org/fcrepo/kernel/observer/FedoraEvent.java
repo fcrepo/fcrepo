@@ -13,95 +13,109 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static com.google.common.collect.Sets.union;
+import static java.util.Collections.singleton;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.utils.EventType;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+
 /**
- * A very simple abstraction to prevent event-driven machinery
- * downstream from the repository from relying directly on a JCR
- * interface (Event).
+ * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
+ * on a JCR interface {@link Event). Can represent either a single JCR event or several.
  *
  * @author ajs6f
  * @date Feb 19, 2013
  */
-public class FedoraEvent implements Event {
+public class FedoraEvent {
 
     public static final String NODE_TYPE_KEY = "fedora:nodeTypeKey";
 
     private Event e;
 
-    private String nodeType;
-
-    private Map<Object, Object> memoizedInfo;
+    private Set<Integer> eventTypes = new HashSet<>();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
+     *
      * @param e
      */
     public FedoraEvent(final Event e) {
-        this(e, null);
+        checkArgument(e != null, "null cannot support a FedoraEvent!");
+        this.e = e;
     }
 
     /**
-     * Wrap a JCR Event with our FedoraEvent decorators
-     * and include the type given in the info map
-     * @param e
-     * @param wrappedNodeType type of node for the event
+     * @return the event types of the underlying JCR {@link Event}s
      */
-    public FedoraEvent(final Event e, final String wrappedNodeType) {
-        checkArgument(e != null, "null cannot support a FedoraEvent!");
-        this.e = e;
-        this.nodeType = wrappedNodeType;
+    public Set<Integer> getTypes() {
+        return eventTypes != null ? union(singleton(e.getType()), eventTypes) : singleton(e.getType());
     }
 
-    @Override
-    public int getType() {
-        return e.getType();
+    /**
+     * @param type
+     * @return this object for continued use
+     */
+    public FedoraEvent addType(final Integer type) {
+        eventTypes.add(type);
+        return this;
     }
 
-    @Override
+    /**
+     * @return the path of the underlying JCR {@link Event}s
+     */
     public String getPath() throws RepositoryException {
         return e.getPath();
     }
 
-    @Override
+    /**
+     * @return the user ID of the underlying JCR {@link Event}s
+     */
     public String getUserID() {
         return e.getUserID();
     }
 
-    @Override
+    /**
+     * @return the node identifer of the underlying JCR {@link Event}s
+     */
     public String getIdentifier() throws RepositoryException {
         return e.getIdentifier();
     }
 
+    /**
+     * @return the info map of the underlying JCR {@link Event}s
+     */
     @SuppressWarnings("unchecked")
-    @Override
-    public Map<?, ?> getInfo() throws RepositoryException {
-        if (memoizedInfo == null) {
-            memoizedInfo = new HashMap<>(e.getInfo());
-            memoizedInfo.put(NODE_TYPE_KEY, this.nodeType);
-        }
-        return memoizedInfo;
+    public Map<Object, Object> getInfo() throws RepositoryException {
+        return new HashMap<>(e.getInfo());
     }
 
-    @Override
+    /**
+     * @return the user data of the underlying JCR {@link Event}s
+     */
     public String getUserData() throws RepositoryException {
         return e.getUserData();
     }
 
-    @Override
+    /**
+     * @return the date of the underlying JCR {@link Event}s
+     */
     public long getDate() throws RepositoryException {
         return e.getDate();
     }
@@ -109,15 +123,16 @@ public class FedoraEvent implements Event {
     @Override
     public String toString() {
         try {
-            return toStringHelper(this).add(
-                    "Event type:",
-                    REPOSITORY_NAMESPACE
-                            + EventType.valueOf(getType())).add(
-                    "Path:", getPath()).add("Date: ", getDate()).add("Info:",
-                    getInfo()).toString();
+            return toStringHelper(this).add("Event types:",
+                    Joiner.on(',').join(Iterables.transform(getTypes(), new Function<Integer, String>() {
+
+                        @Override
+                        public String apply(final Integer type) {
+                            return EventType.valueOf(type).getName();
+                        }
+                    }))).add("Path:", getPath()).add("Date: ", getDate()).add("Info:", getInfo()).toString();
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
     }
-
 }
