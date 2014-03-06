@@ -18,17 +18,92 @@ package org.fcrepo.auth.common;
 
 import static java.util.Collections.emptySet;
 
+import org.modeshape.jcr.api.ServletCredentials;
+
 import javax.jcr.Credentials;
+import javax.servlet.http.HttpServletRequest;
 
 import java.security.Principal;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * An example principal provider that extracts principals from request headers.
- * 
+ *
  * @author Gregory Jansen
  */
 public class HttpHeaderPrincipalProvider implements PrincipalProvider {
+
+    public class HttpHeaderPrincipal implements Principal {
+
+        private final String name;
+
+        HttpHeaderPrincipal(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof HttpHeaderPrincipal) {
+                return ((HttpHeaderPrincipal) o).getName().equals(
+                        this.getName());
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            if (name == null) {
+                return 0;
+            } else {
+                return name.hashCode();
+            }
+        }
+
+    }
+
+    private String headerName;
+
+    private String separator = "";
+
+    /**
+     * @return The name of the header from which to extract principals
+     */
+    public String getHeaderName() {
+        return headerName;
+    }
+
+    /**
+     * @param headerName The name of the header from which to extract principals
+     */
+    public void setHeaderName(String headerName) {
+        this.headerName = headerName;
+    }
+
+    /**
+     * @return The string by which to split header values
+     */
+    public String getSeparator() {
+        return separator;
+    }
+
+    /**
+     * @param separator The string by which to split header values
+     */
+    public void setSeparator(String separator) {
+        this.separator = separator;
+    }
 
     /*
      * (non-Javadoc)
@@ -37,7 +112,40 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
      */
     @Override
     public Set<Principal> getPrincipals(final Credentials credentials) {
-        return emptySet();
+
+        if (headerName == null || separator == null) {
+            return emptySet();
+        }
+
+        if (!(credentials instanceof ServletCredentials)) {
+            return emptySet();
+        }
+
+        final ServletCredentials servletCredentials =
+                (ServletCredentials) credentials;
+
+        final HttpServletRequest request = servletCredentials.getRequest();
+
+        if (request == null) {
+            return emptySet();
+        }
+
+        final String value = request.getHeader(headerName);
+
+        if (value == null) {
+            return emptySet();
+        }
+
+        final String[] names = value.split(separator);
+
+        final Set<Principal> principals = new HashSet<>();
+
+        for (final String name : names) {
+            principals.add(new HttpHeaderPrincipal(name));
+        }
+
+        return principals;
+
     }
 
 }

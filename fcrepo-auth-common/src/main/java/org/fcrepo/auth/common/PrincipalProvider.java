@@ -26,9 +26,10 @@ import java.util.Set;
  * credentials to authorization delegates. An implementation of this interface
  * could perform a query to determine group membership, for example.
  * <p>
- * The ServletContainerAuthenticationProvider may be configured with one or more
- * implementations of this class, which it will consult during authentication.
- * The results will be assigned to the FEDORA_ALL_PRINCIPALS session attribute.
+ * The ServletContainerAuthenticationProvider may be configured with zero or
+ * more implementations of this class, which it will consult during
+ * authentication. The union of the results will be assigned to the
+ * FEDORA_ALL_PRINCIPALS session attribute.
  * </p>
  *
  * @author Gregory Jansen
