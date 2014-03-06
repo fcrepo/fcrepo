@@ -31,14 +31,20 @@ import com.google.common.collect.ForwardingIterator;
  */
 public class EventIterator extends ForwardingIterator<Event> implements Iterable<Event> {
 
-    private javax.jcr.observation.EventIterator i;
+    private Iterator<Event> i;
 
     /**
      * Wrap the given EventIterator with the generic Iterator<Event>
      *
      * @param i
      */
+    @SuppressWarnings("unchecked")
     public EventIterator(final javax.jcr.observation.EventIterator i) {
+        super();
+        this.i = i;
+    }
+
+    public EventIterator(final Iterator<Event> i) {
         super();
         this.i = i;
     }
@@ -48,7 +54,6 @@ public class EventIterator extends ForwardingIterator<Event> implements Iterable
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected Iterator<Event> delegate() {
         return i;

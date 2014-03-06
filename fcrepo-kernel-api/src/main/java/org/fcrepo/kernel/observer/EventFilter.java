@@ -18,21 +18,21 @@ package org.fcrepo.kernel.observer;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 
 /**
  * Filter JCR events to remove extraneous events
  * @author eddies
+ * @author ajs6f
  * @date Feb 7, 2013
  */
-public interface EventFilter extends Function<Event, Event> {
+public interface EventFilter extends Predicate<Event> {
 
     /**
-     * Return a function to wrap Events, or transform to null if they should be
-     * skipped
+     * Return a {@link Predicate} with which to filter JCR {@link Event}s.
      *
      * @param session
      * @return
      */
-    Function<Event, Event> getFilter(final Session session);
+    Predicate<Event> getFilter(final Session session);
 }

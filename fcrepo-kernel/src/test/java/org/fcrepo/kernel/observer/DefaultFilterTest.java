@@ -20,10 +20,12 @@ import static com.google.common.base.Predicates.alwaysFalse;
 import static com.google.common.base.Predicates.alwaysTrue;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
+import static java.util.UUID.randomUUID;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -34,7 +36,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -65,20 +66,19 @@ public class DefaultFilterTest {
     @Mock
     private Property mockProperty;
 
+    private final static String testId = randomUUID().toString();
+
     private final static String testPath = "/foo/bar";
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
         when(mockEvent.getPath()).thenReturn(testPath);
+        when(mockEvent.getIdentifier()).thenReturn(testId);
         when(mockEvent.getType()).thenReturn(NODE_ADDED);
         when(mockNode.isNode()).thenReturn(true);
         testObj = new DefaultFilter();
         when(mockRepo.login()).thenReturn(mockSession);
-    }
-
-    @After
-    public void tearDown() {
     }
 
     @Test
@@ -87,7 +87,7 @@ public class DefaultFilterTest {
         final Predicate<Node> holdO = isFedoraObject;
         try {
             isFedoraObject = alwaysTrue();
-            assertNotNull(testObj.getFilter(mockSession).apply(mockEvent));
+            assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
         } finally {
             isFedoraObject = holdO;
         }
@@ -95,9 +95,9 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldNotApplyToNonExistentNodes() throws Exception {
-        when(mockSession.getNode(testPath)).thenThrow(
+        when(mockSession.getNodeByIdentifier(testId)).thenThrow(
                 new PathNotFoundException("Expected."));
-        assertNull(testObj.getFilter(mockSession).apply(mockEvent));
+        assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class DefaultFilterTest {
         try {
             isFedoraObject = alwaysFalse();
             isFedoraDatastream = alwaysFalse();
-            assertNull(testObj.getFilter(mockSession).apply(mockEvent));
+            assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
         } finally {
             isFedoraObject = holdO;
             isFedoraDatastream = hold1;

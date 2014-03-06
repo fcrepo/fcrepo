@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.observer;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.observation.Event;
@@ -36,7 +37,7 @@ public class NOOPFilterTest {
 
     @Test
     public void testApply() throws Exception {
-        assertEquals(mockEvent, new NOOPFilter().getFilter(null).apply(mockEvent));
+        assertTrue("Failed to pass an event through a NO-OP filter!", new NOOPFilter().getFilter(null).apply(mockEvent));
     }
 
 }
