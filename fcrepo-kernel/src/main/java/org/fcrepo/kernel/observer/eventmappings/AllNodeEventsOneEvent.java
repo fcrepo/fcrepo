@@ -18,6 +18,7 @@ package org.fcrepo.kernel.observer.eventmappings;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Multimaps.index;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 
@@ -25,9 +26,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.observer.FedoraEvent;
-import org.fcrepo.kernel.observer.InternalExternalEventMapper;
 import org.fcrepo.kernel.utils.iterators.EventIterator;
-
+import org.slf4j.Logger;
 import com.google.common.base.Function;
 import com.google.common.collect.Multimap;
 
@@ -52,7 +52,9 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         @Override
         public String apply(final Event ev) {
             try {
-                return ev.getIdentifier();
+                final String id = ev.getIdentifier();
+                log.debug("Sorting an event by identifier: {}", id);
+                return id;
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
@@ -95,4 +97,6 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
             }
         };
     }
+
+    private final static Logger log = getLogger(AllNodeEventsOneEvent.class);
 }

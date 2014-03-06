@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.observer;
+package org.fcrepo.kernel.observer.eventmappings;
 
 import java.util.Iterator;
 
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.iterators.EventIterator;
 
 import com.google.common.base.Function;

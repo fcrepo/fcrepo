@@ -26,7 +26,6 @@ import java.util.Iterator;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.observer.FedoraEvent;
-import org.fcrepo.kernel.observer.InternalExternalEventMapper;
 import org.fcrepo.kernel.utils.iterators.EventIterator;
 
 import com.google.common.base.Function;
@@ -48,7 +47,5 @@ public class OneToOne implements InternalExternalEventMapper {
                 return new FedoraEvent(e);
             }
         });
-
     }
-
 }
