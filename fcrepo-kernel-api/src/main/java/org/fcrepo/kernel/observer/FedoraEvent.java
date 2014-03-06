@@ -75,6 +75,10 @@ public class FedoraEvent implements Event {
         return eventType != null ? eventType : e.getType();
     }
 
+    /**
+     * @param type
+     * @return this object for continued use
+     */
     public FedoraEvent setType(final Integer type) {
         eventType = type;
         return this;
