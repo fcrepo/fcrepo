@@ -26,18 +26,15 @@ import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.observer.FedoraEvent;
-import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.slf4j.Logger;
 import com.google.common.base.Function;
 import com.google.common.collect.Multimap;
 
 /**
  * Maps all JCR {@link Event}s concerning one JCR node to one
- * {@link FedoraEvent}. Adds the types of those JCR events together to
- * calculate the final type of the emitted FedoraEvent.
- *
- * TODO stop aggregating events in the heap and make this a
- * purely iterative algorithm, if possible
+ * {@link FedoraEvent}. Adds the types of those JCR events together to calculate
+ * the final type of the emitted FedoraEvent. TODO stop aggregating events in
+ * the heap and make this a purely iterative algorithm, if possible
  *
  * @author ajs6f
  * @date Feb 27, 2014
@@ -62,12 +59,12 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
     };
 
     @Override
-    public Iterator<FedoraEvent> apply(final EventIterator events) {
+    public Iterator<FedoraEvent> apply(final Iterator<Event> events) {
 
         return new Iterator<FedoraEvent>() {
 
             // sort JCR events into a Multimap keyed on the node ID involved
-            final Multimap<String, Event> sortedEvents = index(events.iterator(), EXTRACT_NODE_ID);
+            final Multimap<String, Event> sortedEvents = index(events, EXTRACT_NODE_ID);
 
             final Iterator<String> nodeIds = sortedEvents.keySet().iterator();
 
@@ -79,12 +76,16 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
             @Override
             public FedoraEvent next() {
                 final Iterator<Event> nodeSpecificEvents = sortedEvents.get(nodeIds.next()).iterator();
-                // we can safely call next() immediately on nodeSpecificEvents because if
-                // there was no event at all, there would appear no entry in our Multimap under this key
+                // we can safely call next() immediately on nodeSpecificEvents
+                // because if
+                // there was no event at all, there would appear no entry in our
+                // Multimap under this key
                 final FedoraEvent fedoraEvent = new FedoraEvent(nodeSpecificEvents.next());
                 while (nodeSpecificEvents.hasNext()) {
-                    // add the type of the event in hand to the event we are building up to emit
-                    // we could aggregate other information here if that seems useful
+                    // add the type of the event in hand to the event we are
+                    // building up to emit
+                    // we could aggregate other information here if that seems
+                    // useful
                     fedoraEvent.setType(fedoraEvent.getType() + nodeSpecificEvents.next().getType());
                 }
                 return fedoraEvent;

@@ -44,11 +44,6 @@ public class EventIterator extends ForwardingIterator<Event> implements Iterable
         this.i = i;
     }
 
-    public EventIterator(final Iterator<Event> i) {
-        super();
-        this.i = i;
-    }
-
     @Override
     public Iterator<Event> iterator() {
         return this;

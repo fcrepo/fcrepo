@@ -39,7 +39,6 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
 import org.fcrepo.kernel.observer.eventmappings.InternalExternalEventMapper;
-import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
@@ -80,7 +79,7 @@ public class SimpleObserver implements EventListener {
     private EventFilter eventFilter;
 
     // THIS SESSION SHOULD NOT BE USED TO LOOK UP NODES
-    //  it is used only to register and deregister this observer to the JCR
+    // it is used only to register and deregister this observer to the JCR
     private Session session;
 
     /**
@@ -119,9 +118,9 @@ public class SimpleObserver implements EventListener {
         Session lookupSession = null;
         try {
             lookupSession = repository.login();
-            final Iterator<Event> filteredEvents =
-                filter(new EventIterator(events), eventFilter.getFilter(lookupSession));
-            final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(new EventIterator(filteredEvents));
+            @SuppressWarnings("unchecked")
+            final Iterator<Event> filteredEvents = filter(events, eventFilter.getFilter(lookupSession));
+            final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(filteredEvents);
             while (publishableEvents.hasNext()) {
                 eventBus.post(publishableEvents.next());
                 EVENT_COUNTER.inc();
