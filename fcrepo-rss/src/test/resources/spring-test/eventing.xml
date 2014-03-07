@@ -17,6 +17,9 @@
     <!-- used by bean above to filter which events get put on the bus -->
     <bean name="fedoraEventFilter" class="org.fcrepo.kernel.observer.DefaultFilter"/>
 
+    <!-- used by observer bean to map JCR events into Fedora events -->
+    <bean name="fedoraEventMapper" class="org.fcrepo.kernel.observer.eventmappings.AllNodeEventsOneEvent"/>
+    
     <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
     <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
 

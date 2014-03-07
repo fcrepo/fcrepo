@@ -105,7 +105,7 @@ public class HeadersJMSIT implements MessageListener {
                 while ((currentTimeMillis() - start < TIMEOUT) && (!success)) {
                     for (final Message message : messages) {
                         if (getIdentifier(message).equals(pid)) {
-                            if (getEventType(message).equals(expectedEventType)) {
+                            if (getEventTypes(message).contains(expectedEventType)) {
                                 success = true;
                             }
                         }
@@ -145,7 +145,7 @@ public class HeadersJMSIT implements MessageListener {
                 while ((currentTimeMillis() - start < TIMEOUT) && (!success)) {
                     for (final Message message : messages) {
                         if (getIdentifier(message).equals(pid)) {
-                            if (getEventType(message).equals(expectedEventType)) {
+                            if (getEventTypes(message).contains(expectedEventType)) {
                                 success = true;
                             }
                         }
@@ -168,7 +168,7 @@ public class HeadersJMSIT implements MessageListener {
             LOGGER.debug(
                     "Received JMS message: {} with identifier: {}, timestamp: {}, and event type: {}",
                     message.getJMSMessageID(), getIdentifier(message),
-                    getTimestamp(message), getEventType(message));
+                    getTimestamp(message), getEventTypes(message));
         } catch (final JMSException e) {
             propagate(e);
         }
@@ -201,11 +201,15 @@ public class HeadersJMSIT implements MessageListener {
     }
 
     private static String getIdentifier(final Message msg) throws JMSException {
-        return msg.getStringProperty(IDENTIFIER_HEADER_NAME);
+        final String id = msg.getStringProperty(IDENTIFIER_HEADER_NAME);
+        LOGGER.debug("Processing an event with identifier: {}", id);
+        return id;
     }
 
-    private static String getEventType(final Message msg) throws JMSException {
-        return msg.getStringProperty(EVENT_TYPE_HEADER_NAME);
+    private static String getEventTypes(final Message msg) throws JMSException {
+        final String type = msg.getStringProperty(EVENT_TYPE_HEADER_NAME);
+        LOGGER.debug("Processing an event with type: {}", type);
+        return type;
     }
 
     private static Long getTimestamp(final Message msg) throws JMSException {

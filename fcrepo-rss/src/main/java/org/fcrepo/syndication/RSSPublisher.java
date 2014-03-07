@@ -19,22 +19,22 @@ package org.fcrepo.syndication;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.jcr.RepositoryException;
-import javax.jcr.observation.Event;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.xml.transform.stream.StreamSource;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.utils.EventType;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 
@@ -65,8 +65,7 @@ public class RSSPublisher extends AbstractResource {
 
     private static final String FEED_DESCRIPTION = FEED_TITLE;
 
-    private final BlockingQueue<Event> feedQueue =
-            new ArrayBlockingQueue<Event>(FEED_LENGTH);
+    private final BlockingQueue<FedoraEvent> feedQueue = new ArrayBlockingQueue<>(FEED_LENGTH);
 
     private final SyndFeed feed = new SyndFeedImpl();
 
@@ -83,14 +82,14 @@ public class RSSPublisher extends AbstractResource {
         feed.setEntries(transform(copyOf(feedQueue).reverse(), event2entry));
         // TODO ought to make this stream, not go through a string
         return new StreamSource(new ByteArrayInputStream(new SyndFeedOutput()
-                .outputString(feed).getBytes(StandardCharsets.UTF_8)));
+                .outputString(feed).getBytes(UTF_8)));
     }
 
-    private final Function<Event, SyndEntry> event2entry =
-            new Function<Event, SyndEntry>() {
+    private final Function<FedoraEvent, SyndEntry> event2entry =
+            new Function<FedoraEvent, SyndEntry>() {
 
                 @Override
-                public SyndEntry apply(final Event event) {
+                public SyndEntry apply(final FedoraEvent event) {
                     final SyndEntry entry = new SyndEntryImpl();
                     try {
                         entry.setTitle(event.getIdentifier());
@@ -99,8 +98,7 @@ public class RSSPublisher extends AbstractResource {
                                 .toDate());
                         final SyndContent description = new SyndContentImpl();
                         description.setType("text/plain");
-                        description.setValue(EventType.valueOf(event.getType())
-                                .toString());
+                        description.setValue(event.getTypes().toString());
                         entry.setDescription(description);
                     } catch (final RepositoryException e) {
                         throw propagate(e);
@@ -135,7 +133,7 @@ public class RSSPublisher extends AbstractResource {
      * @param event
      */
     @Subscribe
-    public void newEvent(final Event event) {
+    public void newEvent(final FedoraEvent event) {
         if (feedQueue.remainingCapacity() > 0) {
             feedQueue.offer(event);
         } else {

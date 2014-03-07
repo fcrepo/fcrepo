@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.observer;
 
+import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
@@ -28,7 +29,7 @@ import com.google.common.collect.ImmutableMap;
 
 public class FedoraEventTest {
 
-    Event e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",
+    FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
 
@@ -39,7 +40,7 @@ public class FedoraEventTest {
 
     @Test
     public void testGetType() throws Exception {
-        assertEquals(1, e.getType());
+        assertEquals(singleton(1), e.getTypes());
     }
 
     @Test

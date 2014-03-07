@@ -24,7 +24,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
-import javax.jcr.observation.Event;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -32,6 +31,7 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.slf4j.Logger;
 
 import com.google.common.eventbus.EventBus;
@@ -70,7 +70,7 @@ public class JMSTopicPublisher {
      * @throws IOException
      */
     @Subscribe
-    public void publishJCREvent(final Event fedoraEvent) throws JMSException,
+    public void publishJCREvent(final FedoraEvent fedoraEvent) throws JMSException,
         RepositoryException, IOException {
         LOGGER.debug("Received an event from the internal bus.");
         final Message tm =

@@ -86,7 +86,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
                     // building up to emit
                     // we could aggregate other information here if that seems
                     // useful
-                    fedoraEvent.setType(fedoraEvent.getType() + nodeSpecificEvents.next().getType());
+                    fedoraEvent.addType(nodeSpecificEvents.next().getType());
                 }
                 return fedoraEvent;
             }

@@ -16,6 +16,7 @@
 
 package org.fcrepo.jms.headers;
 
+import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
@@ -26,14 +27,15 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
+import java.util.Set;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +47,7 @@ public class DefaultMessageFactoryTest {
     private Session mockSession;
 
     @Mock
-    private Event mockEvent;
+    private FedoraEvent mockEvent;
 
     private DefaultMessageFactory testDefaultMessageFactory;
 
@@ -64,10 +66,10 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getDate()).thenReturn(testDate);
         final String testPath = "super/calli/fragi/listic";
         when(mockEvent.getPath()).thenReturn(testPath);
-        final Integer testType = NODE_ADDED;
+        final Set<Integer> testTypes = singleton(NODE_ADDED);
         final String testReturnType =
             REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
-        when(mockEvent.getType()).thenReturn(testType);
+        when(mockEvent.getTypes()).thenReturn(testTypes);
         final Message testMessage =
             testDefaultMessageFactory.getMessage(mockEvent, mockSession);
         assertEquals("Got wrong date in message!", testDate, (Long) testMessage

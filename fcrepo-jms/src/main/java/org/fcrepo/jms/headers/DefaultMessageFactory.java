@@ -17,20 +17,27 @@
 package org.fcrepo.jms.headers;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.Set;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.observation.Event;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
+import org.slf4j.Logger;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
 
 /**
  * Generates JMS {@link Message}s composed entirely of headers, based entirely
- * on information found in the JCR {@link Event} that triggers publication.
+ * on information found in the {@link FedoraEvent} that triggers publication.
  *
  * @author ajs6f
  * @date Dec 2, 2013
@@ -47,19 +54,29 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
             + "eventType";
 
     @Override
-    public Message getMessage(final Event jcrEvent,
+    public Message getMessage(final FedoraEvent jcrEvent,
         final javax.jms.Session jmsSession) throws RepositoryException,
         IOException, JMSException {
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
         message.setStringProperty(IDENTIFIER_HEADER_NAME, jcrEvent.getPath());
-        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURI(jcrEvent
-                .getType()));
+        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
+                .getTypes()));
         return message;
     }
 
-    private static String getEventURI(final int type) {
-        return REPOSITORY_NAMESPACE + EventType.valueOf(type);
+    private static String getEventURIs(final Set<Integer> types) {
+        final String uris = Joiner.on(',').join(Iterables.transform(types, new Function<Integer, String>() {
+
+            @Override
+            public String apply(final Integer type) {
+                return REPOSITORY_NAMESPACE + EventType.valueOf(type);
+            }
+        }));
+        log.debug("Constructed event type URIs: {}", uris);
+        return uris;
     }
+
+    private static final Logger log = getLogger(DefaultMessageFactory.class);
 
 }

@@ -11,7 +11,10 @@
   <logger name="org.fcrepo.syndication" additivity="false" level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo" additivity="false" level="INFO">
+  <logger name="org.fcrepo.integration.syndication" additivity="false" level="DEBUG">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo" additivity="false" level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </logger>
   <root additivity="false" level="WARN">
