@@ -110,15 +110,13 @@ public abstract class AbstractRolesPEP implements FedoraAuthorizationDelegate {
     public boolean hasPermission(Session session, final Path absPath,
             final String[] actions) {
         final Set<String> roles;
-        final Principal userPrincipal;
-        final Set<Principal> allPrincipals;
 
-        userPrincipal = getUserPrincipal(session);
+        final Principal userPrincipal = getUserPrincipal(session);
         if (userPrincipal == null) {
             return false;
         }
 
-        allPrincipals = getPrincipals(session);
+        final Set<Principal> allPrincipals = getPrincipals(session);
         if (allPrincipals == null) {
             return false;
         }
