@@ -20,12 +20,12 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
 
+import org.apache.http.client.ClientProtocolException;
+import org.fcrepo.auth.roles.common.integration.RolesFadTestObjectBean;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.List;
-
-import org.apache.http.client.ClientProtocolException;
-import org.fcrepo.auth.roles.common.integration.RolesPepTestObjectBean;
-import org.junit.Test;
 
 /**
  * Verifies that role for unauthenticated users is properly enforced.
@@ -33,12 +33,12 @@ import org.junit.Test;
  * @author Scott Prater
  * @author Gregory Jansen
  */
-public class BasicRolesPepUnauthenticatedUserIT extends AbstractBasicRolesIT {
+public class BasicRolesUnauthenticatedUserIT extends AbstractBasicRolesIT {
 
     private final static String TESTDS = "uutestds";
 
     @Override
-    protected List<RolesPepTestObjectBean> getTestObjs() {
+    protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
     }
 

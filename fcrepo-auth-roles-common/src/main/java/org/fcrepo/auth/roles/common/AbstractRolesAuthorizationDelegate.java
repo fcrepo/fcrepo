@@ -41,10 +41,10 @@ import java.util.Set;
  * Policy enforcement point for roles-based authentication
  * @author Gregory Jansen
  */
-public abstract class AbstractRolesPEP implements FedoraAuthorizationDelegate {
+public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthorizationDelegate {
 
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(AbstractRolesPEP.class);
+            .getLogger(AbstractRolesAuthorizationDelegate.class);
 
     protected static final String AUTHZ_DETECTION = "/{" +
             Constants.JcrName.NS_URI + "}";

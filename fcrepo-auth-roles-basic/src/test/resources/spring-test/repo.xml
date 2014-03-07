@@ -20,7 +20,7 @@
     <property name="fad" ref="fad"/>
   </bean>
   
-  <bean name="fad" class="org.fcrepo.auth.roles.basic.BasicRolesPEP"/>
+  <bean name="fad" class="org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate"/>
 
   <bean class="org.modeshape.jcr.JcrRepositoryFactory" />
 

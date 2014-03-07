@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public abstract class AbstractCommonRolesIT extends AbstractRolesIT {
 
-    protected final static List<RolesPepTestObjectBean> test_objs =
+    protected final static List<RolesFadTestObjectBean> test_objs =
             defineTestObjects();
 
     protected static Map<String, List<String>> t_roles =
@@ -47,15 +47,15 @@ public abstract class AbstractCommonRolesIT extends AbstractRolesIT {
 
     protected String admin_json_role = makeJson(admin_role);
 
-    private static List<RolesPepTestObjectBean> defineTestObjects() {
-        final List<RolesPepTestObjectBean> test_objs =
+    private static List<RolesFadTestObjectBean> defineTestObjects() {
+        final List<RolesFadTestObjectBean> test_objs =
                 new ArrayList<>();
-        final RolesPepTestObjectBean objA = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objA = new RolesFadTestObjectBean();
         /* parent object */
         objA.setPath("testcommonobj1");
         test_objs.add(objA);
 
-        final RolesPepTestObjectBean objB = new RolesPepTestObjectBean();
+        final RolesFadTestObjectBean objB = new RolesFadTestObjectBean();
         /* child object */
         objA.setPath("testcommonobj1/testchildobj1");
         test_objs.add(objB);

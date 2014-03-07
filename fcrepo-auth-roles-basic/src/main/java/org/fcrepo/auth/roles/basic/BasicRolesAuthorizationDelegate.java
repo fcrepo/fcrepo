@@ -16,7 +16,7 @@
 
 package org.fcrepo.auth.roles.basic;
 
-import org.fcrepo.auth.roles.common.AbstractRolesPEP;
+import org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,14 +25,14 @@ import java.util.Set;
 /**
  * @author Gregory Jansen
  */
-public class BasicRolesPEP extends AbstractRolesPEP {
+public class BasicRolesAuthorizationDelegate extends AbstractRolesAuthorizationDelegate {
 
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(BasicRolesPEP.class);
+            .getLogger(BasicRolesAuthorizationDelegate.class);
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.auth.roles.AbstractRolesPEP#rolesHavePermission(final
+     * @see org.fcrepo.auth.roles.AbstractRolesAuthorizationDelegate#rolesHavePermission(final
      * String absPath, final String[] actions, final Set<String> roles)
      */
     @Override
@@ -62,7 +62,7 @@ public class BasicRolesPEP extends AbstractRolesPEP {
             LOGGER.debug("Denying reader role permission to perform a non-read action.");
             return false;
         }
-        LOGGER.error("There are roles in session that aren't recognized by this PEP: {}",
+        LOGGER.error("There are roles in session that aren't recognized by this authorization delegate: {}",
                      roles);
         return false;
     }

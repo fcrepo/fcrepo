@@ -22,14 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import javax.jcr.AccessDeniedException;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.security.Privilege;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
@@ -46,6 +38,15 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.jcr.AccessDeniedException;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.security.Privilege;
+import javax.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
 
 /**
  * @author Gregory Jansen
@@ -76,14 +77,14 @@ public class ModeShapeHonorsFADResponseIT {
     }
 
     @Test
-    public void testPEPFactory() {
+    public void testFADFactory() {
         Assert.assertNotNull(
                 "AuthenticationProvider must return a AuthenticationProvider",
                 ServletContainerAuthenticationProvider.getInstance());
     }
 
     @Test
-    public void testPermissivePEP() throws RepositoryException {
+    public void testPermissiveFAD() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
         when(request.getUserPrincipal()).thenReturn(
                 new BasicUserPrincipal("fred"));
@@ -108,7 +109,7 @@ public class ModeShapeHonorsFADResponseIT {
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void testRestrictivePEP() throws RepositoryException {
+    public void testRestrictiveFAD() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
         when(request.getUserPrincipal()).thenReturn(
                 new BasicUserPrincipal("fred"));

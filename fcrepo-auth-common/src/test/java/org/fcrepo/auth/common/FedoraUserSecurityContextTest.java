@@ -58,7 +58,7 @@ public class FedoraUserSecurityContextTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testNoPEP() {
+    public void testNoFAD() {
         new FedoraUserSecurityContext(principal, null);
     }
 

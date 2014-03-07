@@ -42,7 +42,7 @@ public class BasicRolesWriterIT extends AbstractBasicRolesIT {
     private final static String TESTDS = "writertestds";
 
     @Override
-    protected List<RolesPepTestObjectBean> getTestObjs() {
+    protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
     }
 

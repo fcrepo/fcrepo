@@ -64,7 +64,7 @@ public interface FedoraAuthorizationDelegate {
      * Note that calls to, e.g., session#getNode in hasPermission will result in
      * permission checks using that session instance and thus an infinite loop.
      * Instead, obtain a new session instance if your implementation requires
-     * access to nodes. See AbstractRolesPEP for an example.
+     * access to nodes. See AbstractRolesAuthorizationDelegate for an example.
      * </p>
      *
      * @param session

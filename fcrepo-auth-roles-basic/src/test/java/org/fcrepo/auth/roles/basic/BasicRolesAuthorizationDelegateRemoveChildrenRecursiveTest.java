@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.auth.roles.basic;
 
 import static java.util.Arrays.asList;
@@ -46,11 +47,11 @@ import java.util.Set;
 /**
  * @author Mike Daines
  */
-public class BasicRolesPEPRemoveChildrenRecursiveTest {
+public class BasicRolesAuthorizationDelegateRemoveChildrenRecursiveTest {
 
-    private static final String[] REMOVE_ACTION = { "remove" };
+    private static final String[] REMOVE_ACTION = {"remove"};
 
-    private BasicRolesPEP pep;
+    private BasicRolesAuthorizationDelegate authorizationDelegate;
 
     @Mock
     private AccessRolesProvider accessRolesProvider;
@@ -94,17 +95,20 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        pep = new BasicRolesPEP();
-        setField(pep, "accessRolesProvider", accessRolesProvider);
-        setField(pep, "sessionFactory", sessionFactory);
+        authorizationDelegate = new BasicRolesAuthorizationDelegate();
+        setField(authorizationDelegate, "accessRolesProvider",
+                accessRolesProvider);
+        setField(authorizationDelegate, "sessionFactory", sessionFactory);
 
         when(sessionFactory.getInternalSession()).thenReturn(mockSession);
 
         when(principal.getName()).thenReturn("user");
         allPrincipals = singleton(principal);
 
-        when(mockSession.getAttribute(FEDORA_USER_PRINCIPAL)).thenReturn(principal);
-        when(mockSession.getAttribute(FEDORA_ALL_PRINCIPALS)).thenReturn(allPrincipals);
+        when(mockSession.getAttribute(FEDORA_USER_PRINCIPAL)).thenReturn(
+                principal);
+        when(mockSession.getAttribute(FEDORA_ALL_PRINCIPALS)).thenReturn(
+                allPrincipals);
 
         // ACLs for paths and nodes
 
@@ -156,8 +160,9 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
     public void shouldPermitForChildlessNode() throws RepositoryException {
         when(parentNode.hasNodes()).thenReturn(false);
 
-        assertTrue("Should permit remove for childless writable node", pep
-                .hasPermission(mockSession, parentPath, REMOVE_ACTION));
+        assertTrue("Should permit remove for childless writable node",
+                authorizationDelegate.hasPermission(mockSession, parentPath,
+                        REMOVE_ACTION));
     }
 
     @Test
@@ -167,7 +172,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertTrue(
                 "Should permit remove for writable node with writable child",
-                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
+                authorizationDelegate.hasPermission(mockSession, parentPath,
+                        REMOVE_ACTION));
     }
 
     @Test
@@ -178,7 +184,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertFalse(
                 "Should deny remove for writable node with unwritable child",
-                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
+                authorizationDelegate.hasPermission(mockSession, parentPath,
+                        REMOVE_ACTION));
     }
 
     @Test
@@ -188,7 +195,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertTrue(
                 "Should permit remove for writable node with child without an ACL",
-                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
+                authorizationDelegate.hasPermission(mockSession, parentPath,
+                        REMOVE_ACTION));
     }
 
     @Test
@@ -201,8 +209,8 @@ public class BasicRolesPEPRemoveChildrenRecursiveTest {
 
         assertFalse(
                 "Should deny remove for a writable node which has an unwritable child with depth greater than one level",
-                pep.hasPermission(mockSession, parentPath, REMOVE_ACTION));
+                authorizationDelegate.hasPermission(mockSession, parentPath,
+                        REMOVE_ACTION));
     }
 
 }
-
