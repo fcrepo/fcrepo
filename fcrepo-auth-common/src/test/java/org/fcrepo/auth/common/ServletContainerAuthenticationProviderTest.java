@@ -79,7 +79,7 @@ public class ServletContainerAuthenticationProviderTest {
         when(request.getUserPrincipal()).thenReturn(principal);
         when(creds.getRequest()).thenReturn(request);
         context = new ExecutionContext();
-        sessionAttributes = new HashMap<String, Object>();
+        sessionAttributes = new HashMap<>();
     }
 
     @Test
