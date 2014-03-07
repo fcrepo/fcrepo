@@ -22,19 +22,27 @@ import java.security.Principal;
 import java.util.Set;
 
 /**
- * Implementations of this interface extract principals from credentials, e.g.
- * from HTTP request headers. Principals that will be assigned roles or
- * privileges must have a unique name.
+ * This interface provides a way for authentication code to communicate generic
+ * credentials to authorization delegates. An implementation of this interface
+ * could perform a query to determine group membership, for example.
+ * <p>
+ * The ServletContainerAuthenticationProvider may be configured with one or more
+ * implementations of this class, which it will consult during authentication.
+ * The results will be assigned to the FEDORA_ALL_PRINCIPALS session attribute.
+ * </p>
  *
  * @author Gregory Jansen
+ * @see HttpHeaderPrincipalProvider
  */
 public interface PrincipalProvider {
 
     /**
-     * Extract principals from credentials. If no principals can be extracted,
-     * for example because the credentials are of a different type than
-     * expected, implementations of this method should return the empty set
-     * rather than null.
+     * Extract principals from the provided credentials.
+     * <p>
+     * If no principals can be extracted, for example because the credentials
+     * are of a different type than expected, implementations of this method
+     * should return the empty set rather than null.
+     * </p>
      *
      * @param credentials the credentials
      * @return a set of security principals

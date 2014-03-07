@@ -119,18 +119,22 @@ public class ServletContainerAuthenticationProvider implements
      * SecurityContext.
      * </p>
      * <p>
-     * If user has the fedoraUser role, add additional information to the
-     * session attributes so that authorization can be performed by the
-     * authorization delegate. Currently, this includes the servlet request, a
-     * principal instance representing the authenticated user, and a set of all
-     * principals representing the credentials given (e.g. the authenticated
-     * user and their groups).
+     * If the authenticated user does not have the fedoraAdmin role, session
+     * attributes will be assigned in the sessionAttributes map:
      * </p>
-     * <p>
-     * If the user has neither the fedoraUser or fedoraAdmin role, add only the
-     * singleton set containing the EVERYONE principal to the session
-     * attributes.
-     * </p>
+     * <ul>
+     * <li>FEDORA_SERVLET_REQUEST will be assigned the ServletRequest instance
+     * associated with credentials if the authenticated user has the fedoraUser
+     * role.</li>
+     * <li>FEDORA_USER_PRINCIPAL will be assigned the authenticated user's
+     * principal if the authenticated user has the fedoraUser role, and the
+     * EVERYONE principal otherwise.</li>
+     * <li>FEDORA_ALL_PRINCIPALS will be assigned the union of all principals
+     * obtained from configured PrincipalProvider instances plus the
+     * authenticated user's principal if the authenticated user has the
+     * fedoraUser role; FEDORA_ALL_PRINCIPALS will be assigned the singleton set
+     * containing the EVERYONE principal otherwise.</li>
+     * </ul>
      */
     @Override
     public ExecutionContext authenticate(final Credentials credentials,

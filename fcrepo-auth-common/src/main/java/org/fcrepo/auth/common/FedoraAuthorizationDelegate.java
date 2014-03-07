@@ -21,11 +21,18 @@ import org.modeshape.jcr.value.Path;
 import javax.jcr.Session;
 
 /**
- * Authorization delegates implement the various authorization decisions needed
- * by Fedora. Implementations will translate enforcement calls into their given
- * policy framework.
- * 
+ * An interface that can authorize access to specific resources within
+ * repositories.
+ * <p>
+ * An implementation has the opportunity to inspect nodes and the session, which
+ * may have additional information assigned as session attributes, such as the
+ * associated servlet request. This interface defines the Fedora-specific
+ * attributes which may be added.
+ * </p>
+ *
  * @author Gregory Jansen
+ * @see org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate
+ * @see org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate
  */
 public interface FedoraAuthorizationDelegate {
 
@@ -44,9 +51,8 @@ public interface FedoraAuthorizationDelegate {
 
     /**
      * The name of the session attribute containing a set of instances of
-     * Principal, representing the current user's credentials. This includes the
-     * value of the FEDORA_USER_PRINCIPAL attribute (if present) and any
-     * Principal instances obtained by configured PrincipalProviders.
+     * Principal, representing the current user's credentials, including the
+     * value of the FEDORA_USER_PRINCIPAL session attribute.
      */
     public static final String FEDORA_ALL_PRINCIPALS = "fedora-all-principals";
 
@@ -61,16 +67,17 @@ public interface FedoraAuthorizationDelegate {
      * implementation should usually return false.
      * </p>
      * <p>
-     * Note that calls to, e.g., session#getNode in hasPermission will result in
-     * permission checks using that session instance and thus an infinite loop.
-     * Instead, obtain a new session instance if your implementation requires
-     * access to nodes. See AbstractRolesAuthorizationDelegate for an example.
+     * Note that accessing nodes using the provided session will result in
+     * additional calls to this method and thus an infinite loop. Instead,
+     * obtain a new session instance if your implementation requires access to
+     * nodes. See AbstractRolesAuthorizationDelegate for an example.
      * </p>
      *
      * @param session
      * @param absPath
      * @param actions
-     * @return
+     * @return true if the given session has permission at absPath for all of
+     *         the given actions, or false otherwise
      */
     boolean hasPermission(Session session, Path absPath, String[] actions);
 
