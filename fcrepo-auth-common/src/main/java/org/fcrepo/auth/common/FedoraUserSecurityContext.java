@@ -48,8 +48,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     /**
      * Constructs a new security context.
-     * 
-     * @param principal the user principal associated with this security context
+     *
+     * @param userPrincipal the user principal associated with this security
+     *        context
      * @param fad the authorization delegate
      */
     protected FedoraUserSecurityContext(final Principal userPrincipal,
