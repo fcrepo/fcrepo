@@ -164,8 +164,7 @@ public class ServletContainerAuthenticationProvider implements
                     FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
                     userPrincipal);
 
-            final Set<Principal> principals = new HashSet<>();
-            addPrincipals(credentials, principals);
+            final Set<Principal> principals = collectPrincipals(credentials);
             principals.add(userPrincipal);
             principals.add(EVERYONE);
 
@@ -199,11 +198,18 @@ public class ServletContainerAuthenticationProvider implements
         this.fad = fad;
     }
 
-    private void addPrincipals(final Credentials credentials,
-            final Set<Principal> principals) {
+    private Set<Principal> collectPrincipals(final Credentials credentials) {
+        final HashSet<Principal> principals = new HashSet<>();
+
         // TODO add exception handling for principal providers
         for (final PrincipalProvider p : this.getPrincipalProviders()) {
-            principals.addAll(p.getPrincipals(credentials));
+            final Set<Principal> ps = p.getPrincipals(credentials);
+
+            if (ps != null) {
+                principals.addAll(p.getPrincipals(credentials));
+            }
         }
+
+        return principals;
     }
 }
