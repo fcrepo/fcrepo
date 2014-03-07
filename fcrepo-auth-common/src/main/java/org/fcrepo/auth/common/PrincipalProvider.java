@@ -31,8 +31,11 @@ import java.util.Set;
 public interface PrincipalProvider {
 
     /**
-     * Extract principals from credentials.
-     * 
+     * Extract principals from credentials. If no principals can be extracted,
+     * for example because the credentials are of a different type than
+     * expected, implementations of this method should return the empty set
+     * rather than null.
+     *
      * @param credentials the credentials
      * @return a set of security principals
      */

@@ -31,7 +31,7 @@ import java.security.Principal;
  * necessarily authenticated by the container, i.e. users may include the
  * general public. This security context delegates all access decisions to the
  * configured authorization delegate.
- * 
+ *
  * @author Gregory Jansen
  */
 public class FedoraUserSecurityContext implements SecurityContext,
