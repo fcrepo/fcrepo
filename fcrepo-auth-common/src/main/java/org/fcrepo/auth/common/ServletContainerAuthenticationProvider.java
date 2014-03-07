@@ -174,6 +174,10 @@ public class ServletContainerAuthenticationProvider implements
 
         } else {
 
+            sessionAttributes
+                    .put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
+                            EVERYONE);
+
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
                     Collections.singleton(EVERYONE));
