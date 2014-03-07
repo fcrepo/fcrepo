@@ -15,7 +15,7 @@
         class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:classpath:/config/minimal-default/repository.json}"/>
 
-    <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
+    <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
     <!-- For the time being, load annotation config here too -->
     <bean class="org.fcrepo.metrics.MetricsConfig"/>

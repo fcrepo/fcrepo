@@ -22,6 +22,6 @@
   
   <bean name="pep" class="org.fcrepo.auth.roles.basic.BasicRolesPEP"/>
 
-  <bean class="org.modeshape.jcr.JcrRepositoryFactory" />
+  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
 </beans>

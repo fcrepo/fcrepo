@@ -20,6 +20,6 @@
   <context:component-scan
     base-package="org.fcrepo.kernel.services, org.fcrepo.storage.policy"/>
 
-  <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
+  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
 </beans>

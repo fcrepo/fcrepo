@@ -15,6 +15,12 @@
  */
 package org.fcrepo.integration;
 
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -24,50 +30,42 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
-import javax.jcr.Repository;
-import javax.jcr.Session;
 
-import java.io.ByteArrayInputStream;
-
-import static org.junit.Assert.assertEquals;
-
-
-@ContextConfiguration({"/spring-test/master.xml", "/spring-test/test-container.xml"})
+@ContextConfiguration({"/spring-test/test-container.xml"})
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class FedoraTransformIT extends AbstractResourceIT {
 
-
-    @Autowired
-    Repository repo;
-
-    @Autowired
-    ObjectService objectService;
+    protected HttpResponse createObject(final String pid) throws IOException {
+        final HttpResponse response =
+                AbstractResourceIT.client.execute(new HttpPost(
+                        AbstractResourceIT.serverAddress + pid));
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+        return response;
+    }
 
     @Test
     public void testLdpathWithConfiguredProgram() throws Exception {
 
-        final Session session = repo.login();
-        objectService.createObject(session, "/ldpathConfigTestObject");
-        session.save();
-        session.logout();
-
-        HttpGet postLdpathProgramRequest = new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
-        HttpResponse response = client.execute(postLdpathProgramRequest);
+        createObject("/ldpathConfigTestObject");
+        final HttpGet postLdpathProgramRequest = new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
+        final HttpResponse response = client.execute(postLdpathProgramRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved ldpath feed:\n" + content);
 
-        JsonFactory jsonFactory = new JsonFactory();
+        final JsonFactory jsonFactory = new JsonFactory();
 
-        ObjectMapper mapper = new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
         final JsonParser jsonParser = jsonFactory.createJsonParser(content);
 
-        JsonNode rootNode = mapper.readTree(jsonParser);
+        final JsonNode rootNode = mapper.readTree(jsonParser);
 
         assertEquals(serverAddress + "/ldpathConfigTestObject", rootNode.get(0).get("id").getElements().next().asText());
 
@@ -76,31 +74,28 @@ public class FedoraTransformIT extends AbstractResourceIT {
     @Test
     public void testLdpathWithProgramBody() throws Exception {
 
-        final Session session = repo.login();
-        objectService.createObject(session, "/ldpathTestObject");
-        session.save();
-        session.logout();
+        createObject("/ldpathTestObject");
 
-        HttpPost postLdpathProgramRequest = new HttpPost(serverAddress + "/ldpathTestObject/fcr:transform");
-        BasicHttpEntity e = new BasicHttpEntity();
+        final HttpPost postLdpathProgramRequest = new HttpPost(serverAddress + "/ldpathTestObject/fcr:transform");
+        final BasicHttpEntity e = new BasicHttpEntity();
 
-        String s = "id      = . :: xsd:string ;\n";
+        final String s = "id      = . :: xsd:string ;\n";
 
         e.setContent(new ByteArrayInputStream(s.getBytes()));
 
         postLdpathProgramRequest.setEntity(e);
         postLdpathProgramRequest.setHeader("Content-Type", LDPathTransform.APPLICATION_RDF_LDPATH);
-        HttpResponse response = client.execute(postLdpathProgramRequest);
+        final HttpResponse response = client.execute(postLdpathProgramRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved ldpath feed:\n" + content);
 
-        JsonFactory jsonFactory = new JsonFactory();
+        final JsonFactory jsonFactory = new JsonFactory();
 
-        ObjectMapper mapper = new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
         final JsonParser jsonParser = jsonFactory.createJsonParser(content);
 
-        JsonNode rootNode = mapper.readTree(jsonParser);
+        final JsonNode rootNode = mapper.readTree(jsonParser);
 
         assertEquals(serverAddress + "/ldpathTestObject", rootNode.get(0).get("id").getElements().next().asText());
 

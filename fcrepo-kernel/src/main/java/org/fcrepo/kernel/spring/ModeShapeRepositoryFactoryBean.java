@@ -16,19 +16,21 @@
 
 package org.fcrepo.kernel.spring;
 
-import static java.util.Collections.singletonMap;
-import static org.modeshape.jcr.api.RepositoryFactory.URL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 
 import org.modeshape.jcr.JcrRepository;
-import org.modeshape.jcr.JcrRepositoryFactory;
-import org.modeshape.jcr.api.Repository;
+import org.modeshape.jcr.ModeShapeEngine;
+import org.modeshape.jcr.NoSuchRepositoryException;
+import org.modeshape.jcr.RepositoryConfiguration;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.ClassPathResource;
@@ -37,7 +39,7 @@ import org.springframework.core.io.Resource;
 /**
  * A Modeshape factory shim to make it play nice with our Spring-based
  * configuration
- * 
+ *
  * @author Edwin Shin
  * @date Feb 7, 2013
  */
@@ -50,7 +52,7 @@ public class ModeShapeRepositoryFactoryBean implements
     private DefaultPropertiesLoader propertiesLoader;
 
     @Inject
-    private JcrRepositoryFactory jcrRepositoryFactory;
+    private ModeShapeEngine modeShapeEngine;
 
     private Resource repositoryConfiguration;
 
@@ -63,7 +65,7 @@ public class ModeShapeRepositoryFactoryBean implements
      * @throws IOException
      */
     @PostConstruct
-    public void buildRepository() throws RepositoryException, IOException {
+    public void buildRepository() throws Exception {
         if (repositoryConfiguration instanceof ClassPathResource) {
             LOGGER.info("Using repo config: {}",
                     ((ClassPathResource) repositoryConfiguration).getPath());
@@ -71,11 +73,49 @@ public class ModeShapeRepositoryFactoryBean implements
 
         getPropertiesLoader().loadSystemProperties();
 
-        repository =
-                (JcrRepository) jcrRepositoryFactory
-                        .getRepository(singletonMap(URL,
-                                repositoryConfiguration.getURL()));
+        final RepositoryConfiguration config =
+                RepositoryConfiguration.read(repositoryConfiguration.getURL());
+        repository = modeShapeEngine.deploy(config);
 
+        // next line ensures that repository starts before the factory is used.
+        final org.modeshape.common.collection.Problems problems =
+                repository.getStartupProblems();
+        for (final org.modeshape.common.collection.Problem p : problems) {
+            LOGGER.error("ModeShape Start Problem: {}", p.getMessageString());
+            // TODO determine problems that should be runtime errors
+        }
+    }
+
+    /**
+     * Attempts to undeploy the repository and shutdown the ModeShape engine on
+     * context destroy.
+     *
+     * @throws InterruptedException
+     */
+    @PreDestroy
+    public void stopRepository() throws InterruptedException {
+        LOGGER.info("Initiating shutdown of ModeShape");
+        final String repoName = repository.getName();
+        try {
+            final Future<Boolean> futureUndeployRepo =
+                    modeShapeEngine.undeploy(repoName);
+            final Boolean success = futureUndeployRepo.get();
+            LOGGER.info("Repository {} undeployed.", repoName);
+        } catch (final NoSuchRepositoryException e) {
+            LOGGER.error("Repository {} unknown, cannot undeploy.", repoName, e);
+        } catch (final ExecutionException e) {
+            LOGGER.error("Repository {} cannot undeploy.", repoName, e);
+        }
+        final Future<Boolean> futureShutdownEngine = modeShapeEngine.shutdown();
+        try {
+            if (futureShutdownEngine.get()) {
+                LOGGER.info("ModeShape Engine has shutdown.");
+            } else {
+                LOGGER.error("ModeShape Engine shutdown failed without an exception, still running.");
+            }
+        } catch (final ExecutionException e) {
+            LOGGER.error("ModeShape Engine shutdown failed.", e);
+        }
     }
 
     @Override
@@ -85,7 +125,7 @@ public class ModeShapeRepositoryFactoryBean implements
 
     @Override
     public Class<?> getObjectType() {
-        return Repository.class;
+        return JcrRepository.class;
     }
 
     @Override
@@ -95,7 +135,7 @@ public class ModeShapeRepositoryFactoryBean implements
 
     /**
      * Set the configuration to use for creating the repository
-     * 
+     *
      * @param repositoryConfiguration
      */
     public void setRepositoryConfiguration(

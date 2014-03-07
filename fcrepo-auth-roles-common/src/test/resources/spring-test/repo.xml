@@ -15,6 +15,6 @@
     <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:config/minimal-default/repository.json}" />
   </bean>
 
-  <bean class="org.modeshape.jcr.JcrRepositoryFactory" />
+  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
 </beans>
