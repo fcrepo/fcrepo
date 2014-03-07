@@ -100,8 +100,8 @@ public class FedoraUserSecurityContextTest {
     public void testGetAnonymousUserName() {
         final FedoraUserSecurityContext context =
                 new FedoraUserSecurityContext(null, fad);
-        assertEquals(ServletContainerAuthenticationProvider.EVERYONE, context
-                .getUserName());
+        assertEquals(ServletContainerAuthenticationProvider.EVERYONE.getName(),
+                context.getUserName());
     }
 
     @Test
