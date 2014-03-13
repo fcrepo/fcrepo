@@ -45,7 +45,7 @@ public class TransformationFactoryTest {
     @Test
     public void testLDPathCreation() {
 
-        final Transformation<?> transform = transformationFactory.getTransform(MediaType.valueOf(LDPathTransform.APPLICATION_RDF_LDPATH), mockInputStream);
+        final Transformation transform = transformationFactory.getTransform(MediaType.valueOf(LDPathTransform.APPLICATION_RDF_LDPATH), mockInputStream);
 
         assertEquals(new LDPathTransform(mockInputStream), transform);
 
@@ -54,7 +54,7 @@ public class TransformationFactoryTest {
     @Test
     public void testSparqlCreation() {
 
-        final Transformation<?> transform = transformationFactory.getTransform(MediaType.valueOf(WebContent.contentTypeSPARQLQuery), mockInputStream);
+        final Transformation transform = transformationFactory.getTransform(MediaType.valueOf(WebContent.contentTypeSPARQLQuery), mockInputStream);
         assertEquals(new SparqlQueryTransform(mockInputStream), transform);
 
     }

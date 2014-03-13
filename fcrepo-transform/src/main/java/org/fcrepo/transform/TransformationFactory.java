@@ -22,12 +22,9 @@ import org.fcrepo.transform.transformations.SparqlQueryTransform;
 import javax.ws.rs.core.MediaType;
 
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Throwables.propagate;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
 import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
 
@@ -36,21 +33,15 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
  */
 public class TransformationFactory {
 
-    private static Map<String, Constructor<?>> mimeToTransform = new HashMap<>();
-
-    static {
-
-
-    }
+    private Map<String, Transformation> mimeToTransform = new HashMap<>();
 
     /**
      * Get a new TransformationFactory with the default classes
      * @throws SecurityException
-     * @throws NoSuchMethodException
      */
-    public TransformationFactory() throws NoSuchMethodException, SecurityException {
-        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform.class.getConstructor(InputStream.class));
-        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform.class.getConstructor(InputStream.class));
+    public TransformationFactory() {
+        mimeToTransform.put(contentTypeSPARQLQuery, new SparqlQueryTransform(null));
+        mimeToTransform.put(APPLICATION_RDF_LDPATH, new LDPathTransform(null));
     }
 
     /**
@@ -60,17 +51,9 @@ public class TransformationFactory {
      * @param inputStream
      * @return
      */
-    public Transformation<?> getTransform(final MediaType contentType, final InputStream inputStream) {
-
+    public Transformation getTransform(final MediaType contentType, final InputStream inputStream) {
         if (mimeToTransform.containsKey(contentType.toString())) {
-            final Constructor<?> transform = mimeToTransform.get(contentType.toString());
-
-            try {
-                return (Transformation<?>) (transform.newInstance(inputStream));
-            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                throw propagate(e);
-            }
-
+            return mimeToTransform.get(contentType.toString()).newTransform(inputStream);
         }
         throw new UnsupportedOperationException("No transform type exists for that media type!");
     }

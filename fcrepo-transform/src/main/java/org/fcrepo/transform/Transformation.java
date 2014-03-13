@@ -25,7 +25,7 @@ import java.io.InputStream;
  * Generic interface for transforming a resource's property dataset
  * to an implementation-defined type
  */
-public interface Transformation<T> extends Function<Dataset, T> {
+public interface Transformation extends Function<Dataset, Object> {
 
     /**
      * Execute a transform on a dataset
@@ -33,12 +33,17 @@ public interface Transformation<T> extends Function<Dataset, T> {
      * @return
      */
     @Override
-    T apply(final Dataset dataset);
+    Object apply(final Dataset dataset);
 
     /**
      * Get the Query the transformation is using
      * @return
      */
     InputStream getQuery();
+
+    /**
+     * @return a new Transform of this type, for use as a factory
+     */
+    Transformation newTransform(InputStream query);
 
 }

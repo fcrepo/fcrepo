@@ -56,7 +56,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Utilities for working with LDPath
  */
-public class LDPathTransform implements Transformation<Map<String, Collection<Object>>>  {
+public class LDPathTransform implements Transformation  {
 
     public static final String CONFIGURATION_FOLDER = "/fedora:system/fedora:transform/fedora:ldpath/";
 
@@ -211,4 +211,9 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
                 return input;
             }
         };
+
+    @Override
+    public Transformation newTransform(final InputStream query) {
+        return new LDPathTransform(query);
+    }
 }
