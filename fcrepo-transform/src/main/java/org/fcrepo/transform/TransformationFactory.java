@@ -33,7 +33,7 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
  */
 public class TransformationFactory {
 
-    private Map<String, Transformation> mimeToTransform = new HashMap<>();
+    private Map<String, Transformation<?>> mimeToTransform = new HashMap<>();
 
     /**
      * Get a new TransformationFactory with the default classes
@@ -51,9 +51,12 @@ public class TransformationFactory {
      * @param inputStream
      * @return
      */
-    public Transformation getTransform(final MediaType contentType, final InputStream inputStream) {
+    @SuppressWarnings("unchecked")
+    // this suppression is in place representing the condition that the generator
+    // map actually maps the mimetypes proffered to legitimate Transformations for those mimetype
+    public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
         if (mimeToTransform.containsKey(contentType.toString())) {
-            return mimeToTransform.get(contentType.toString()).newTransform(inputStream);
+            return (Transformation<T>) mimeToTransform.get(contentType.toString()).newTransform(inputStream);
         }
         throw new UnsupportedOperationException("No transform type exists for that media type!");
     }

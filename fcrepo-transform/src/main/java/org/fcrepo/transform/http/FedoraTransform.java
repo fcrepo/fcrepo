@@ -92,11 +92,9 @@ public class FedoraTransform extends AbstractResource {
      * @throws RepositoryException
      * @throws java.io.IOException
      * @throws SecurityException
-     * @throws NoSuchMethodException
      */
     @PostConstruct
-    public void setUpRepositoryConfiguration() throws RepositoryException, IOException, NoSuchMethodException,
-        SecurityException {
+    public void setUpRepositoryConfiguration() throws RepositoryException, IOException {
 
         if (transformationFactory == null) {
             transformationFactory = new TransformationFactory();

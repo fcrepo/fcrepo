@@ -35,7 +35,7 @@ import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 /**
  * SPARQL Query-based transforms
  */
-public class SparqlQueryTransform implements Transformation {
+public class SparqlQueryTransform implements Transformation<QueryExecution> {
 
     private final InputStream query;
 
@@ -79,7 +79,7 @@ public class SparqlQueryTransform implements Transformation {
     }
 
     @Override
-    public Transformation newTransform(final InputStream query) {
+    public SparqlQueryTransform newTransform(final InputStream query) {
         return new SparqlQueryTransform(query);
     }
 

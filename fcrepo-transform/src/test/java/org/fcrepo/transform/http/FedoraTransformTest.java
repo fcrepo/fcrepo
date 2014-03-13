@@ -20,7 +20,7 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.WebContent;
+
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.NodeService;
@@ -39,6 +39,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -68,7 +69,7 @@ public class FedoraTransformTest {
     private TransformationFactory mockTransformationFactory;
 
     @Mock
-    Transformation mockTransform;
+    Transformation<Object> mockTransform;
 
     @Before
     public void setUp() {
@@ -100,9 +101,9 @@ public class FedoraTransformTest {
                                                           "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
                                                           "} ").getBytes());
 
-        when(mockTransformationFactory.getTransform(MediaType.valueOf(WebContent.contentTypeSPARQLQuery), query)).thenReturn(mockTransform);
+        when(mockTransformationFactory.getTransform(MediaType.valueOf(contentTypeSPARQLQuery), query)).thenReturn(mockTransform);
 
-        testObj.evaluateTransform(createPathList("testObject"), MediaType.valueOf(WebContent.contentTypeSPARQLQuery), query);
+        testObj.evaluateTransform(createPathList("testObject"), MediaType.valueOf(contentTypeSPARQLQuery), query);
 
         verify(mockTransform).apply(dataset);
     }
