@@ -23,10 +23,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.ws.rs.core.MediaType;
+
 import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TransformationFactoryTest {
@@ -37,7 +37,7 @@ public class TransformationFactoryTest {
     TransformationFactory transformationFactory;
 
     @Before
-    public void setUp() {
+    public void setUp() throws NoSuchMethodException, SecurityException {
         initMocks(this);
         transformationFactory = new TransformationFactory();
     }
@@ -45,7 +45,7 @@ public class TransformationFactoryTest {
     @Test
     public void testLDPathCreation() {
 
-        final Transformation transform = transformationFactory.getTransform(MediaType.valueOf(LDPathTransform.APPLICATION_RDF_LDPATH), mockInputStream);
+        final Transformation<?> transform = transformationFactory.getTransform(MediaType.valueOf(LDPathTransform.APPLICATION_RDF_LDPATH), mockInputStream);
 
         assertEquals(new LDPathTransform(mockInputStream), transform);
 
@@ -54,19 +54,16 @@ public class TransformationFactoryTest {
     @Test
     public void testSparqlCreation() {
 
-        final Transformation transform = transformationFactory.getTransform(MediaType.valueOf(WebContent.contentTypeSPARQLQuery), mockInputStream);
-
+        final Transformation<?> transform = transformationFactory.getTransform(MediaType.valueOf(WebContent.contentTypeSPARQLQuery), mockInputStream);
         assertEquals(new SparqlQueryTransform(mockInputStream), transform);
 
     }
 
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testOtherCreation() {
 
-        final Transformation transform = transformationFactory.getTransform(MediaType.valueOf("some/mime-type"), mockInputStream);
-
-        assertNull(transform);
+        transformationFactory.getTransform(MediaType.valueOf("some/mime-type"), mockInputStream);
 
     }
 }

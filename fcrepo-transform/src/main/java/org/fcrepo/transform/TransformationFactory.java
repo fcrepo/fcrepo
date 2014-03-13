@@ -20,7 +20,9 @@ import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 
 import javax.ws.rs.core.MediaType;
+
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,24 +36,21 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
  */
 public class TransformationFactory {
 
-    private Map<String, Class<?>> mimeToTransform;
+    private static Map<String, Constructor<?>> mimeToTransform = new HashMap<>();
 
-    /**
-     * Get a new TransformationFactory with the default classes
-     */
-    public TransformationFactory() {
-        mimeToTransform = new HashMap<>();
-        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform.class);
-        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform.class);
+    static {
+
 
     }
 
     /**
-     * Get a new TransformationFactory using the provided mapping
-     * @param mimeToTransform
+     * Get a new TransformationFactory with the default classes
+     * @throws SecurityException
+     * @throws NoSuchMethodException
      */
-    public TransformationFactory(final Map<String, Class<?>> mimeToTransform) {
-        this.mimeToTransform = mimeToTransform;
+    public TransformationFactory() throws NoSuchMethodException, SecurityException {
+        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform.class.getConstructor(InputStream.class));
+        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform.class.getConstructor(InputStream.class));
     }
 
     /**
@@ -61,26 +60,18 @@ public class TransformationFactory {
      * @param inputStream
      * @return
      */
-    public Transformation<?> getTransform(final MediaType contentType,
-                                              final InputStream inputStream) {
+    public Transformation<?> getTransform(final MediaType contentType, final InputStream inputStream) {
 
         if (mimeToTransform.containsKey(contentType.toString())) {
-            final Class<?> transform = mimeToTransform.get(contentType.toString());
+            final Constructor<?> transform = mimeToTransform.get(contentType.toString());
 
-            if (Transformation.class.isAssignableFrom(transform)) {
-                try {
-                    return (Transformation<?>)(transform.getConstructor(InputStream.class).newInstance(inputStream));
-                } catch (NoSuchMethodException
-                        | InvocationTargetException
-                        | InstantiationException
-                        | IllegalAccessException e) {
-                    throw propagate(e);
-                }
+            try {
+                return (Transformation<?>) (transform.newInstance(inputStream));
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                throw propagate(e);
             }
 
         }
-
-        return null;
-
+        throw new UnsupportedOperationException("No transform type exists for that media type!");
     }
 }
