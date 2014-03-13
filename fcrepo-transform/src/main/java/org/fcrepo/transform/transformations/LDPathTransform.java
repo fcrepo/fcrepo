@@ -19,7 +19,6 @@ package org.fcrepo.transform.transformations;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -40,6 +39,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.google.common.collect.Collections2.transform;
@@ -56,7 +56,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Utilities for working with LDPath
  */
-public class LDPathTransform implements Transformation  {
+public class LDPathTransform implements Transformation<Map<String, Collection<Object>>>  {
 
     public static final String CONFIGURATION_FOLDER = "/fedora:system/fedora:transform/fedora:ldpath/";
 
@@ -136,7 +136,7 @@ public class LDPathTransform implements Transformation  {
     }
 
     @Override
-    public List<Map<String, Collection<Object>>> apply(final Dataset dataset) {
+    public Map<String, Collection<Object>> apply(final Dataset dataset) {
         try {
             final LDPath<RDFNode> ldpathForResource =
                 getLdpathResource(dataset);
@@ -148,7 +148,7 @@ public class LDPathTransform implements Transformation  {
                 ldpathForResource.programQuery(context, new InputStreamReader(
                         query));
 
-            return ImmutableList.of(transformLdpathOutputToSomethingSerializable(wildcardCollection));
+            return transformLdpathOutputToSomethingSerializable(wildcardCollection);
         } catch (final LDPathParseException e) {
             throw new RuntimeException(e);
         }
@@ -167,7 +167,7 @@ public class LDPathTransform implements Transformation  {
 
     @Override
     public int hashCode() {
-        return 3 + 5 * query.hashCode();
+        return Objects.hashCode(getQuery());
     }
 
     /**
@@ -177,13 +177,8 @@ public class LDPathTransform implements Transformation  {
      */
     private LDPath<RDFNode> getLdpathResource(final Dataset dataset) {
 
-        final Model model = unifyDatasetModel(dataset);
+        return new LDPath<>(new GenericJenaBackend(unifyDatasetModel(dataset)));
 
-        final GenericJenaBackend genericJenaBackend = new GenericJenaBackend(model);
-
-        final LDPath<RDFNode> ldpath = new LDPath<>(genericJenaBackend);
-
-        return ldpath;
     }
 
     /**
@@ -216,4 +211,9 @@ public class LDPathTransform implements Transformation  {
                 return input;
             }
         };
+
+    @Override
+    public LDPathTransform newTransform(final InputStream query) {
+        return new LDPathTransform(query);
+    }
 }
