@@ -150,7 +150,7 @@ public class FedoraTransform extends AbstractResource {
             final String path = toPath(pathList);
             final FedoraResource object = nodeService.getObject(session, path);
 
-            final Transformation t =
+            final Transformation<?> t =
                 getNodeTypeTransform(object.getNode(), program);
 
             final Dataset propertiesDataset =
@@ -192,7 +192,7 @@ public class FedoraTransform extends AbstractResource {
                     object.getPropertiesDataset(new HttpGraphSubjects(
                             session, FedoraNodes.class, uriInfo));
 
-            final Transformation t =
+            final Transformation<?> t =
                     transformationFactory.getTransform(contentType,
                             requestBodyStream);
             return t.apply(propertiesDataset);

@@ -17,6 +17,7 @@
 package org.fcrepo.integration;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.transformations.LDPathTransform;
@@ -31,13 +32,14 @@ import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -74,19 +76,17 @@ public class LDPathServiceIT {
         testObj = new LDPathTransform(stringReader);
 
         final DefaultGraphSubjects subjects = new DefaultGraphSubjects(session);
-        final List<Map<String, Collection<Object>>> list = testObj.apply(object.getPropertiesDataset(subjects));
+        final Map<String, Collection<Object>> stuff = testObj.apply(object.getPropertiesDataset(subjects));
 
-        assert(list != null);
-        assertEquals(1, list.size());
-        final Map<String, Collection<Object>> stuff = list.get(0);
+        assertNotNull("Failed to retrieve results!", stuff);
 
-        assertTrue(stuff.containsKey("id"));
-        assertTrue(stuff.containsKey("title"));
+        assertTrue("Results didn't contain an identifier!", stuff.containsKey("id"));
+        assertTrue("Results didn't contain a title!", stuff.containsKey("title"));
 
-        assertEquals(1, stuff.get("id").size());
-        assertEquals(subjects.getGraphSubject("/testObject").getURI(),
-                stuff.get("id").iterator().next());
-        assertEquals("some-title", stuff.get("title").iterator().next());
-        assertEquals(object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());
+        assertEquals("Received more than one identifier!", 1, stuff.get("id").size());
+        assertEquals("Got wrong subject in identifier!", subjects.getGraphSubject("/testObject").getURI(), stuff.get(
+                "id").iterator().next());
+        assertEquals("Got wrong title!", "some-title", stuff.get("title").iterator().next());
+        assertEquals("Got wrong UUID!", object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());
     }
 }

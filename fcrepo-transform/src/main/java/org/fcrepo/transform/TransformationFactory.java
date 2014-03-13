@@ -61,7 +61,7 @@ public class TransformationFactory {
      * @param inputStream
      * @return
      */
-    public Transformation getTransform(final MediaType contentType,
+    public Transformation<?> getTransform(final MediaType contentType,
                                               final InputStream inputStream) {
 
         if (mimeToTransform.containsKey(contentType.toString())) {
@@ -69,7 +69,7 @@ public class TransformationFactory {
 
             if (Transformation.class.isAssignableFrom(transform)) {
                 try {
-                    return (Transformation)(transform.getConstructor(InputStream.class).newInstance(inputStream));
+                    return (Transformation<?>)(transform.getConstructor(InputStream.class).newInstance(inputStream));
                 } catch (NoSuchMethodException
                         | InvocationTargetException
                         | InstantiationException

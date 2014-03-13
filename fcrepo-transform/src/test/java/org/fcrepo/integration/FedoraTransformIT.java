@@ -56,20 +56,21 @@ public class FedoraTransformIT extends AbstractResourceIT {
         session.save();
         session.logout();
 
-        HttpGet postLdpathProgramRequest = new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
-        HttpResponse response = client.execute(postLdpathProgramRequest);
+        final HttpGet postLdpathProgramRequest = new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
+        final HttpResponse response = client.execute(postLdpathProgramRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved ldpath feed:\n" + content);
 
-        JsonFactory jsonFactory = new JsonFactory();
+        final JsonFactory jsonFactory = new JsonFactory();
 
-        ObjectMapper mapper = new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
         final JsonParser jsonParser = jsonFactory.createJsonParser(content);
 
-        JsonNode rootNode = mapper.readTree(jsonParser);
+        final JsonNode rootNode = mapper.readTree(jsonParser);
 
-        assertEquals(serverAddress + "/ldpathConfigTestObject", rootNode.get(0).get("id").getElements().next().asText());
+        assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/ldpathConfigTestObject",
+                rootNode.get("id").getElements().next().asText());
 
     }
 
@@ -81,28 +82,29 @@ public class FedoraTransformIT extends AbstractResourceIT {
         session.save();
         session.logout();
 
-        HttpPost postLdpathProgramRequest = new HttpPost(serverAddress + "/ldpathTestObject/fcr:transform");
-        BasicHttpEntity e = new BasicHttpEntity();
+        final HttpPost postLdpathProgramRequest = new HttpPost(serverAddress + "/ldpathTestObject/fcr:transform");
+        final BasicHttpEntity e = new BasicHttpEntity();
 
-        String s = "id      = . :: xsd:string ;\n";
+        final String s = "id      = . :: xsd:string ;\n";
 
         e.setContent(new ByteArrayInputStream(s.getBytes()));
 
         postLdpathProgramRequest.setEntity(e);
         postLdpathProgramRequest.setHeader("Content-Type", LDPathTransform.APPLICATION_RDF_LDPATH);
-        HttpResponse response = client.execute(postLdpathProgramRequest);
+        final HttpResponse response = client.execute(postLdpathProgramRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
-        String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved ldpath feed:\n" + content);
 
-        JsonFactory jsonFactory = new JsonFactory();
+        final JsonFactory jsonFactory = new JsonFactory();
 
-        ObjectMapper mapper = new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
         final JsonParser jsonParser = jsonFactory.createJsonParser(content);
 
-        JsonNode rootNode = mapper.readTree(jsonParser);
+        final JsonNode rootNode = mapper.readTree(jsonParser);
 
-        assertEquals(serverAddress + "/ldpathTestObject", rootNode.get(0).get("id").getElements().next().asText());
+        assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/ldpathTestObject", rootNode
+                .get("id").getElements().next().asText());
 
     }
 }
