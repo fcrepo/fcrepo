@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.api.rdf;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
@@ -223,7 +224,15 @@ public class HttpGraphSubjects implements GraphSubjects {
 
     private boolean isValidJcrPath(final String absPath) {
         try {
-            session.getValueFactory().createValue(absPath, PATH);
+            String pathToValidate = absPath;
+            String txId = getCurrentTransactionId(session);
+            if (txId != null) {
+                String txIdWithSlash = "/" + txId;
+                pathToValidate = StringUtils.removeStart(txIdWithSlash, absPath);
+                LOGGER.debug("removed {} from URI {}. Path for JCR validation is now: {}",
+                        txIdWithSlash, absPath, pathToValidate);
+            }
+            session.getValueFactory().createValue(pathToValidate, PATH);
             return true;
         } catch (final ValueFormatException e) {
             LOGGER.trace("Unable to validate JCR path", e);
