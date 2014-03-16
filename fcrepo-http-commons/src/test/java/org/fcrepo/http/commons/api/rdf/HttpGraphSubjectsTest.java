@@ -16,21 +16,22 @@
 
 package org.fcrepo.http.commons.api.rdf;
 
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.net.URI;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
+import java.util.UUID;
+import javax.jcr.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -39,10 +40,17 @@ import com.sun.jersey.api.uri.UriBuilderImpl;
 
 public class HttpGraphSubjectsTest extends GraphSubjectsTest {
 
+    @Override
     protected HttpGraphSubjects getTestObj() {
         return new HttpGraphSubjects(mockSession, MockNodeController.class,
                 uriInfo);
     }
+
+    protected HttpGraphSubjects getTestObjTx(final String path) {
+        return new HttpGraphSubjects(mockSessionTx, MockNodeController.class,
+                getUriInfoImpl(path));
+    }
+
 
     @Test
     public void testGetGraphSubject() throws RepositoryException {
@@ -112,6 +120,22 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockSubject.getURI()).thenReturn("http://fedora/foo");
         actual = testObj.isFedoraGraphSubject(mockSubject);
         assertEquals(false, actual);
+    }
+
+    @Test
+    public void testIsFedoraGraphSubjectWithTx() throws RepositoryException {
+        final String txId = UUID.randomUUID().toString();
+        final String testPathTx = "/" + txId + "/hello";
+
+        when(mockSessionTx.getValueFactory()).thenReturn(mockValueFactory);
+        GraphSubjects testObjTx = getTestObjTx(testPathTx);
+        when(mockSessionTx.getTxId()).thenReturn(txId);
+        when(mockSubject.getURI()).thenReturn(
+                "http://localhost:8080/fcrepo/rest/tx:" + txId + "/hello");
+        when(mockSubject.isURIResource()).thenReturn(true);
+        boolean actual = testObjTx.isFedoraGraphSubject(mockSubject);
+        verify(mockValueFactory).createValue("/hello", PropertyType.PATH);
+        assertTrue("Must be valid GraphSubject", actual);
     }
 
     @Test

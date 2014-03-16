@@ -23,10 +23,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
@@ -37,6 +40,8 @@ import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.jgroups.util.Util.assertFalse;
 import static org.fcrepo.kernel.TransactionImpl.DEFAULT_TIMEOUT;
 import static org.fcrepo.kernel.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
@@ -264,6 +269,75 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                            .contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
 
     }
+
+    /**
+     * Tests whether a Sparql update is visible within a transaction
+     * and if the update is made persistent along with the commit.
+     * @throws Exception
+     */
+    @Test
+    public void testIngestNewWithSparqlPatchWithinTransaction() throws Exception {
+        final String objectInTxCommit = randomUUID().toString();
+
+        /* create new tx */
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        final HttpResponse response = execute(createTx);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+
+        /* create a new object inside the tx */
+        final String txLocation =
+                response.getFirstHeader("Location").getValue();
+
+        client = createClient();
+        final String newObjectLocation = txLocation + "/" + objectInTxCommit;
+        final HttpPost postNew =
+                new HttpPost(newObjectLocation);
+        HttpResponse resp = execute(postNew);
+        assertEquals(201, resp.getStatusLine().getStatusCode());
+
+        /* update sparql */
+        final HttpPatch method = new HttpPatch(newObjectLocation);
+        method.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String title = "this is a new title";
+        entity.setContent(new ByteArrayInputStream(
+                ("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"" + title + "\" } WHERE {}")
+                        .getBytes()));
+        method.setEntity(entity);
+        final HttpResponse responseFromPatch = client.execute(method);
+        final int status = responseFromPatch.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a 204 status! Got status:\n" + status,
+                NO_CONTENT.getStatusCode(), status);
+
+        /* make sure the change was made within the tx */
+        final HttpGet httpGet = new HttpGet(newObjectLocation);
+        final GraphStore graphStore = getGraphStore(httpGet);
+        assertTrue("The sparql update did not succeed within a transaction",
+                graphStore.contains(ANY, createResource(newObjectLocation).asNode(),
+                DC_TITLE.asNode(), createPlainLiteral(title)
+                .asNode()));
+
+        /* commit */
+        client = createClient();
+        final HttpPost commitTx =
+                new HttpPost(txLocation + "/fcr:tx/fcr:commit");
+        resp = execute(commitTx);
+
+        assertEquals(204, resp.getStatusLine().getStatusCode());
+
+        /* it must exist after commit */
+        client = createClient();
+        final HttpGet getObjCommitted =
+                new HttpGet(serverAddress + objectInTxCommit);
+        final GraphStore graphStoreAfterCommit = getGraphStore(getObjCommitted);
+        assertTrue("The inserted triple does not exist after the transaction has committed",
+                graphStoreAfterCommit.contains(ANY, ANY,
+                DC_TITLE.asNode(), createPlainLiteral(title)
+                .asNode()));
+
+
+    }
+
 
     /**
      * Tests that transactions are treated as atomic with regards to nodes.
