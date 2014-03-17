@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
+import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.NameFactory;
@@ -92,6 +93,9 @@ public class FedoraFileSystemConnectorTest {
 
     @Mock
     private BinaryValue binaryValue;
+
+    @Mock
+    private DocumentReader documentReader;
 
     private ExecutionContext mockContext = new ExecutionContext();
 
