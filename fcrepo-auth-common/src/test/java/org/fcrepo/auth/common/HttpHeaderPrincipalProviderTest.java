@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -69,9 +70,9 @@ public class HttpHeaderPrincipalProviderTest {
 
         assertEquals(2, principals.size());
         assertTrue("The principals should contain 'a'", principals
-                .contains(provider.new HttpHeaderPrincipal("a")));
+                .contains(new HttpHeaderPrincipal("a")));
         assertTrue("The principals should contain 'b'", principals
-                .contains(provider.new HttpHeaderPrincipal("b")));
+                .contains(new HttpHeaderPrincipal("b")));
 
     }
 
@@ -87,9 +88,9 @@ public class HttpHeaderPrincipalProviderTest {
 
         assertEquals(2, principals.size());
         assertTrue("The principals should contain 'a'", principals
-                .contains(provider.new HttpHeaderPrincipal("a")));
+                .contains(new HttpHeaderPrincipal("a")));
         assertTrue("The principals should contain 'b'", principals
-                .contains(provider.new HttpHeaderPrincipal("b")));
+                .contains(new HttpHeaderPrincipal("b")));
 
     }
 

@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
-    public class HttpHeaderPrincipal implements Principal {
+    protected static class HttpHeaderPrincipal implements Principal {
 
         private final String name;
 
