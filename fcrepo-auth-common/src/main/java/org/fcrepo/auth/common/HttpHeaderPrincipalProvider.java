@@ -31,6 +31,7 @@ import java.util.Set;
  * An example principal provider that extracts principals from request headers.
  *
  * @author Gregory Jansen
+ * @author Mike Daines
  */
 public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
