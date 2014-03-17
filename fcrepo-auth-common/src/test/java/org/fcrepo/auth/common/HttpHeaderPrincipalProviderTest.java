@@ -77,12 +77,12 @@ public class HttpHeaderPrincipalProviderTest {
     }
 
     @Test
-    public void testRegularExpressionSeparator() {
+    public void testShouldTrimPrincipalNames() {
 
-        when(request.getHeader("Groups")).thenReturn("a ,b");
+        when(request.getHeader("Groups")).thenReturn(" a ,b");
 
         provider.setHeaderName("Groups");
-        provider.setSeparator("\\s*,\\s*");
+        provider.setSeparator(",");
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 

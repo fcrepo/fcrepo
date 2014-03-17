@@ -143,7 +143,7 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
         final Set<Principal> principals = new HashSet<>();
 
         for (final String name : names) {
-            principals.add(new HttpHeaderPrincipal(name));
+            principals.add(new HttpHeaderPrincipal(name.trim()));
         }
 
         return principals;
