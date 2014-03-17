@@ -19,8 +19,8 @@ package org.fcrepo.auth.common;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.junit.Before;
@@ -64,6 +64,24 @@ public class HttpHeaderPrincipalProviderTest {
 
         provider.setHeaderName("Groups");
         provider.setSeparator(",");
+
+        final Set<Principal> principals = provider.getPrincipals(credentials);
+
+        assertEquals(2, principals.size());
+        assertTrue("The principals should contain 'a'", principals
+                .contains(provider.new HttpHeaderPrincipal("a")));
+        assertTrue("The principals should contain 'b'", principals
+                .contains(provider.new HttpHeaderPrincipal("b")));
+
+    }
+
+    @Test
+    public void testRegularExpressionSeparator() {
+
+        when(request.getHeader("Groups")).thenReturn("a ,b");
+
+        provider.setHeaderName("Groups");
+        provider.setSeparator("\\s*,\\s*");
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
