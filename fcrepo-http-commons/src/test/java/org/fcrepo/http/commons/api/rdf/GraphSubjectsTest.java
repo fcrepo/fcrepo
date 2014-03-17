@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.sun.jersey.api.uri.UriBuilderImpl;
+import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -47,6 +48,9 @@ public abstract class GraphSubjectsTest {
     protected Session mockSession;
 
     @Mock
+    protected TxSession mockSessionTx;
+
+    @Mock
     protected Repository mockRepository;
 
     @Mock
@@ -72,6 +76,7 @@ public abstract class GraphSubjectsTest {
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         testObj = getTestObj();
+
     }
 
     /**

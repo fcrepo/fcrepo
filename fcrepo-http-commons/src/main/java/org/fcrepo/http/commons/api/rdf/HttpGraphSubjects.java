@@ -227,8 +227,9 @@ public class HttpGraphSubjects implements GraphSubjects {
             String pathToValidate = absPath;
             String txId = getCurrentTransactionId(session);
             if (txId != null) {
-                String txIdWithSlash = "/" + txId;
-                pathToValidate = StringUtils.removeStart(txIdWithSlash, absPath);
+                String txIdWithSlash = "/" + TX_PREFIX + txId;
+                /* replace the first occurrence of tx within the path */
+                pathToValidate = StringUtils.replaceOnce(absPath, txIdWithSlash, StringUtils.EMPTY);
                 LOGGER.debug("removed {} from URI {}. Path for JCR validation is now: {}",
                         txIdWithSlash, absPath, pathToValidate);
             }
