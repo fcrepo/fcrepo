@@ -80,24 +80,10 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
     private String separator = "";
 
     /**
-     * @return The name of the header from which to extract principals
-     */
-    public String getHeaderName() {
-        return headerName;
-    }
-
-    /**
      * @param headerName The name of the header from which to extract principals
      */
     public void setHeaderName(String headerName) {
         this.headerName = headerName;
-    }
-
-    /**
-     * @return The string by which to split header values
-     */
-    public String getSeparator() {
-        return separator;
     }
 
     /**
