@@ -32,6 +32,7 @@ import java.util.Set;
  *
  * @author Gregory Jansen
  * @author Mike Daines
+ * @see PrincipalProvider
  */
 public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
