@@ -54,37 +54,8 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
     @Autowired
     private AccessRolesProvider accessRolesProvider = null;
 
-    /**
-     * @return the accessRolesProvider
-     */
-    public AccessRolesProvider getAccessRolesProvider() {
-        return accessRolesProvider;
-    }
-
-    /**
-     * @param accessRolesProvider the accessRolesProvider to set
-     */
-    public void setAccessRolesProvider(
-            final AccessRolesProvider accessRolesProvider) {
-        this.accessRolesProvider = accessRolesProvider;
-    }
-
     @Autowired
     private SessionFactory sessionFactory = null;
-
-    /**
-     * @return the sessionFactory
-     */
-    public SessionFactory getSessionFactory() {
-        return sessionFactory;
-    }
-
-    /**
-     * @param sessionFactory the sessionFactory to set
-     */
-    public void setSessionFactory(final SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
 
     /**
      * Gather effectives roles
@@ -155,9 +126,7 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
         if (actions.length == 1 && "remove".equals(actions[0])) {
             // you must be able to delete all the children
             // TODO make recursive/ACL-query-based check configurable
-            return canRemoveChildrenRecursive(absPath.toString(), session,
-                    allPrincipals,
-                    userPrincipal, roles);
+            return canRemoveChildrenRecursive(absPath.toString(), allPrincipals, roles);
         }
         return true;
     }
@@ -182,15 +151,14 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
     }
 
     /**
-     * @param absPath
-     * @param actions
+     * @param parentPath
      * @param allPrincipals
-     * @param userPrincipal
+     * @param parentRoles
      * @return
      */
     private boolean canRemoveChildrenRecursive(final String parentPath,
-            final Session session, final Set<Principal> allPrincipals,
-            final Principal userPrincipal, final Set<String> parentRoles) {
+                                               final Set<Principal> allPrincipals,
+                                               final Set<String> parentRoles) {
         try {
             final Session internalSession = sessionFactory.getInternalSession();
             LOGGER.debug("Recursive child remove permission checks for: {}",
@@ -218,8 +186,7 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
                 if (rolesHavePermission(n.getPath(), REMOVE_ACTIONS,
                         roles)) {
 
-                    if (!canRemoveChildrenRecursive(n.getPath(), session,
-                            allPrincipals, userPrincipal, roles)) {
+                    if (!canRemoveChildrenRecursive(n.getPath(), allPrincipals, roles)) {
                         return false;
                     }
                 } else {
