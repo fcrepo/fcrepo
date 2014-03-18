@@ -372,6 +372,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Entering verifyFullSetOfRdfTypes()...");
         final String pid = "FedoraGraphWithRdfTypes";
         createObject(pid);
+        addMixin( "FedoraGraphWithRdfTypes", MIX_NAMESPACE + "versionable" );
 
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + pid);
@@ -984,4 +985,86 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
 
     }
+
+    /**
+     * I should be able to upload a file to a read/write federated filesystem.
+    **/
+    @Test
+    public void testUploadToProjection() throws IOException {
+        // upload file to federated filesystem using rest api
+        final String uploadLocation = serverAddress + "files/upload/ds1/fcr:content";
+        final String uploadContent = "abc123";
+        logger.debug("Uploading to federated filesystem via rest api: " + uploadLocation);
+        final HttpPost post = postDSMethod("files/upload", "ds1", uploadContent);
+        final HttpResponse response = client.execute(post);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        final String actualLocation = response.getFirstHeader("Location").getValue();
+        assertEquals("Wrong URI in Location header", uploadLocation, actualLocation);
+
+        // validate content
+        final HttpGet get = new HttpGet(uploadLocation);
+        final HttpResponse getResponse = client.execute(get);
+        final String actualContent = EntityUtils.toString( getResponse.getEntity() );
+        assertEquals(OK.getStatusCode(), getResponse.getStatusLine().getStatusCode());
+        assertEquals("Content doesn't match", actualContent, uploadContent);
+
+        // validate object profile
+        final HttpGet objGet = new HttpGet(serverAddress + "files/upload");
+        final HttpResponse objResponse = client.execute(objGet);
+        assertEquals(OK.getStatusCode(), objResponse.getStatusLine().getStatusCode());
+    }
+
+    /**
+     * I should be able to copy objects from the repository to a federated filesystem.
+    **/
+    @Test
+    public void testCopyToProjection() throws IOException {
+        // create object in the repository
+        final HttpPost post = postDSMethod("repoObject", "ds1", "abc123");
+        final HttpResponse response = client.execute(post);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // copy to federated filesystem
+        final HttpCopy request = new HttpCopy(serverAddress + "repoObject");
+        request.addHeader("Destination", serverAddress + "files/projCopy");
+        final HttpResponse copyResponse = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), copyResponse.getStatusLine().getStatusCode());
+
+        // federated copy should now exist
+        final HttpGet copyGet = new HttpGet(serverAddress + "files/projCopy");
+        final HttpResponse copiedResult = client.execute(copyGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        // repository copy should still exist
+        final HttpGet originalGet = new HttpGet(serverAddress + "repoObject");
+        final HttpResponse originalResult = client.execute(originalGet);
+        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
+    /**
+     * I should be able to copy objects from a federated filesystem to the repository.
+    **/
+    @Test
+    public void testCopyFromProjection() throws IOException {
+        // create object in federated filesystem
+        final HttpPost post = postDSMethod("files/projObject", "ds1", "abc123");
+        final HttpResponse response = client.execute(post);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // copy to repository
+        final HttpCopy request = new HttpCopy(serverAddress + "files/projObject");
+        request.addHeader("Destination", serverAddress + "repoCopy");
+        client.execute(request);
+
+        // repository copy should now exist
+        final HttpGet copyGet = new HttpGet(serverAddress + "repoCopy");
+        final HttpResponse copiedResult = client.execute(copyGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        // federated filesystem copy should still exist
+        final HttpGet originalGet = new HttpGet(serverAddress + "files/projObject");
+        final HttpResponse originalResult = client.execute(originalGet);
+        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
 }

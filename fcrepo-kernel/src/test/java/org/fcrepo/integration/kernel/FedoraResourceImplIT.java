@@ -422,6 +422,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             objectService.createObject(session, "/testObjectVersionLabel");
 
+        object.getNode().addMixin("mix:versionable");
+
         session.save();
 
         object.addVersionLabel("v0.0.1");
@@ -438,6 +440,8 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final FedoraResource object =
             objectService.createObject(session, "/testObjectVersionGraph");
+
+        object.getNode().addMixin("mix:versionable");
 
         session.save();
 

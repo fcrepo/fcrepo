@@ -49,6 +49,7 @@ import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
+import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -61,6 +62,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String pid = UUID.randomUUID().toString();
 
         createObject(pid);
+        addMixin( pid, MIX_NAMESPACE + "versionable" );
         final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
         logger.debug("Retrieved version profile:");
@@ -74,6 +76,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     public void testAddAndRetrieveVersion() throws Exception {
         final String pid = UUID.randomUUID().toString();
         createObject(pid);
+        addMixin( pid, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
         patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "First Title");
@@ -102,6 +105,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     public void testVersioningANodeWithAVersionableChild() throws Exception {
         final String pid = UUID.randomUUID().toString();
         createObject(pid);
+        addMixin( pid, MIX_NAMESPACE + "versionable" );
 
         logger.info("Adding a child");
         createDatastream(pid, "ds", "This DS will not be versioned");
@@ -132,6 +136,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         logger.info("Creating an object");
         final String objId = UUID.randomUUID().toString();
         createObject(objId);
+        addMixin( objId, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
         patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Example Title");
@@ -145,6 +150,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         logger.info("creating an object");
         final String objId = UUID.randomUUID().toString();
         createObject(objId);
+        addMixin( objId, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
         patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "First title");
@@ -174,7 +180,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String pid = randomUUID().toString();
 
         createObject(pid);
+        addMixin( pid, MIX_NAMESPACE + "versionable" );
         createDatastream(pid, "ds1", "foo");
+        addMixin( pid + "/ds1", MIX_NAMESPACE + "versionable" );
 
         final HttpGet getVersion =
             new HttpGet(serverAddress
@@ -205,6 +213,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         createObject(objName);
         createDatastream(objName, dsName, firstVersionText);
+        addMixin( objName + "/" + dsName, MIX_NAMESPACE + "versionable" );
 
         setAutoVersioning(serverAddress + objName + "/" + dsName);
 
@@ -238,7 +247,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String objName = UUID.randomUUID().toString();
 
         createObject(objName);
-        addMixin(serverAddress + objName, "http://fedora.info/definitions/v4/rest-api#autoVersioned");
+        addMixin(objName, "http://fedora.info/definitions/v4/rest-api#autoVersioned");
 
         final GraphStore initialVersion = getContent(serverAddress + objName);
         assertTrue("Should find auto-created versioning policy", initialVersion
@@ -346,22 +355,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         updateObjectGraphMethod.setEntity(e);
         final HttpResponse response = client.execute(updateObjectGraphMethod);
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-    }
-
-    private static void addMixin(final String url, final String mixinUrl) throws IOException {
-        final HttpPatch updateObjectGraphMethod =
-                new HttpPatch(url);
-        updateObjectGraphMethod.addHeader("Content-Type",
-                "application/sparql-update");
-        final BasicHttpEntity e = new BasicHttpEntity();
-
-        e.setContent(new ByteArrayInputStream(
-                ("INSERT DATA { <> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + mixinUrl + "> . } ")
-                        .getBytes()));
-        updateObjectGraphMethod.setEntity(e);
-        final HttpResponse response = client.execute(updateObjectGraphMethod);
-        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
     }
 
