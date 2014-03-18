@@ -1014,4 +1014,56 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), objResponse.getStatusLine().getStatusCode());
     }
 
+    /**
+     * I should be able to copy objects from the repository to a federated filesystem.
+    **/
+    @Test
+    public void testCopyToProjection() throws IOException {
+        // create object in the repository
+        final HttpPost post = postDSMethod("repoObject", "ds1", "abc123");
+        final HttpResponse response = client.execute(post);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // copy to federated filesystem
+        final HttpCopy request = new HttpCopy(serverAddress + "repoObject");
+        request.addHeader("Destination", serverAddress + "files/projCopy");
+        client.execute(request);
+
+        // federated copy should now exist
+        final HttpGet copyGet = new HttpGet(serverAddress + "files/projCopy");
+        final HttpResponse copiedResult = client.execute(copyGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        // repository copy should still exist
+        final HttpGet originalGet = new HttpGet(serverAddress + "repoObject");
+        final HttpResponse originalResult = client.execute(originalGet);
+        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
+    /**
+     * I should be able to copy objects from a federated filesystem to the repository.
+    **/
+    @Test
+    public void testCopyFromProjection() throws IOException {
+        // create object in federated filesystem
+        final HttpPost post = postDSMethod("files/projObject", "ds1", "abc123");
+        final HttpResponse response = client.execute(post);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // copy to repository
+        final HttpCopy request = new HttpCopy(serverAddress + "files/projObject");
+        request.addHeader("Destination", serverAddress + "repoCopy");
+        client.execute(request);
+
+        // repository copy should now exist
+        final HttpGet copyGet = new HttpGet(serverAddress + "repoCopy");
+        final HttpResponse copiedResult = client.execute(copyGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        // federated filesystem copy should still exist
+        final HttpGet originalGet = new HttpGet(serverAddress + "files/projObject");
+        final HttpResponse originalResult = client.execute(originalGet);
+        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
 }
