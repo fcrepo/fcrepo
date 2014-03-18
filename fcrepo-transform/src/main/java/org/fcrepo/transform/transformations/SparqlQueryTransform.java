@@ -22,18 +22,20 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.transform.Transformation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 
 /**
  * SPARQL Query-based transforms
  */
-public class SparqlQueryTransform implements Transformation {
+public class SparqlQueryTransform implements Transformation<QueryExecution> {
 
     private final InputStream query;
 
@@ -55,7 +57,7 @@ public class SparqlQueryTransform implements Transformation {
                 QueryFactory.create(IOUtils.toString(query));
 
             return QueryExecutionFactory.create(sparqlQuery, model);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -66,14 +68,19 @@ public class SparqlQueryTransform implements Transformation {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(final Object other) {
         return other instanceof SparqlQueryTransform &&
                    query.equals(((SparqlQueryTransform)other).getQuery());
     }
 
     @Override
     public int hashCode() {
-        return 5 + 7 * query.hashCode();
+        return Objects.hashCode(getQuery());
+    }
+
+    @Override
+    public SparqlQueryTransform newTransform(final InputStream query) {
+        return new SparqlQueryTransform(query);
     }
 
 }

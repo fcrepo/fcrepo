@@ -36,6 +36,7 @@ import javax.ws.rs.core.UriInfo;
  */
 @Component
 public class TransformResources implements UriAwareResourceModelFactory {
+
     @Override
     public Model createModelForResource(final FedoraResource resource,
          final UriInfo uriInfo, final GraphSubjects graphSubjects) throws RepositoryException {
@@ -47,7 +48,6 @@ public class TransformResources implements UriAwareResourceModelFactory {
                     .getBaseUriBuilder().path(FedoraSparql.class).build()
                     .toASCIIString()));
         }
-
         return model;
     }
 }

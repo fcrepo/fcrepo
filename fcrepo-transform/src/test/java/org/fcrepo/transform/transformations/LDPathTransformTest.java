@@ -35,7 +35,6 @@ import javax.ws.rs.WebApplicationException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import static org.fcrepo.transform.transformations.LDPathTransform.CONFIGURATION_FOLDER;
@@ -134,11 +133,11 @@ public class LDPathTransformTest {
         final InputStream testReader = new ByteArrayInputStream("title = dc:title :: xsd:string ;".getBytes());
 
         testObj = new LDPathTransform(testReader);
-        final List<Map<String,Collection<Object>>> stringCollectionMap = testObj.apply(testDataset);
+        final Map<String,Collection<Object>> stringCollectionMap = testObj.apply(testDataset);
 
         assert(stringCollectionMap != null);
         assertEquals(1, stringCollectionMap.size());
-        assertEquals(1, stringCollectionMap.get(0).get("title").size());
-        assertTrue(stringCollectionMap.get(0).get("title").contains("some-title"));
+        assertEquals(1, stringCollectionMap.get("title").size());
+        assertTrue(stringCollectionMap.get("title").contains("some-title"));
     }
 }

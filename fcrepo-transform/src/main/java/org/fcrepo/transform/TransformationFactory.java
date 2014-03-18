@@ -20,12 +20,11 @@ import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 
 import javax.ws.rs.core.MediaType;
+
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Throwables.propagate;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
 import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
 
@@ -34,24 +33,15 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
  */
 public class TransformationFactory {
 
-    private Map<String, Class<?>> mimeToTransform;
+    private Map<String, Transformation<?>> mimeToTransform = new HashMap<>();
 
     /**
      * Get a new TransformationFactory with the default classes
+     * @throws SecurityException
      */
     public TransformationFactory() {
-        mimeToTransform = new HashMap<>();
-        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform.class);
-        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform.class);
-
-    }
-
-    /**
-     * Get a new TransformationFactory using the provided mapping
-     * @param mimeToTransform
-     */
-    public TransformationFactory(final Map<String, Class<?>> mimeToTransform) {
-        this.mimeToTransform = mimeToTransform;
+        mimeToTransform.put(contentTypeSPARQLQuery, new SparqlQueryTransform(null));
+        mimeToTransform.put(APPLICATION_RDF_LDPATH, new LDPathTransform(null));
     }
 
     /**
@@ -61,26 +51,15 @@ public class TransformationFactory {
      * @param inputStream
      * @return
      */
-    public Transformation getTransform(final MediaType contentType,
-                                              final InputStream inputStream) {
-
-        if (mimeToTransform.containsKey(contentType.toString())) {
-            final Class<?> transform = mimeToTransform.get(contentType.toString());
-
-            if (Transformation.class.isAssignableFrom(transform)) {
-                try {
-                    return (Transformation)(transform.getConstructor(InputStream.class).newInstance(inputStream));
-                } catch (NoSuchMethodException
-                        | InvocationTargetException
-                        | InstantiationException
-                        | IllegalAccessException e) {
-                    throw propagate(e);
-                }
-            }
-
+    @SuppressWarnings("unchecked")
+    // this suppression is in place representing the condition that the generator
+    // map actually maps the mimetypes proffered to legitimate Transformations for those mimetype
+    public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
+        final String mimeType = contentType.toString();
+        if (mimeToTransform.containsKey(mimeType)) {
+            return (Transformation<T>) mimeToTransform.get(contentType.toString()).newTransform(inputStream);
         }
-
-        return null;
-
+        throw new UnsupportedOperationException(
+                "No transform type exists for media type" + mimeType + "!");
     }
 }
