@@ -55,9 +55,11 @@ public class TransformationFactory {
     // this suppression is in place representing the condition that the generator
     // map actually maps the mimetypes proffered to legitimate Transformations for those mimetype
     public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
-        if (mimeToTransform.containsKey(contentType.toString())) {
+        final String mimeType = contentType.toString();
+        if (mimeToTransform.containsKey(mimeType)) {
             return (Transformation<T>) mimeToTransform.get(contentType.toString()).newTransform(inputStream);
         }
-        throw new UnsupportedOperationException("No transform type exists for that media type!");
+        throw new UnsupportedOperationException(
+                "No transform type exists for media type" + mimeType + "!");
     }
 }
