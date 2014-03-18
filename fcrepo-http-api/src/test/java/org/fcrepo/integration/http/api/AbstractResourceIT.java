@@ -19,11 +19,13 @@ package org.fcrepo.integration.http.api;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -35,6 +37,7 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -178,6 +181,22 @@ public abstract class AbstractResourceIT {
                 204, dcResp.getStatusLine().getStatusCode());
         postProp.releaseConnection();
         return dcResp;
+    }
+
+    protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
+        final HttpPatch updateObjectGraphMethod =
+                new HttpPatch(serverAddress + pid);
+        updateObjectGraphMethod.addHeader("Content-Type",
+                "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+
+        e.setContent(new ByteArrayInputStream(
+                ("INSERT DATA { <> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + mixinUrl + "> . } ")
+                        .getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
     }
 
 }

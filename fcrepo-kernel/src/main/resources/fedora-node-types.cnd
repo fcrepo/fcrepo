@@ -88,7 +88,7 @@
 /*
  * Any Fedora resource.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, dc:describable mixin
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:referenceable, dc:describable mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)
