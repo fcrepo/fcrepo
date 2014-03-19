@@ -145,6 +145,11 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return actions.length == 1 && "read".equals(actions[0]);
         }
 
+        //this permission is required for root access
+        if (absPath.isRoot()) {
+            return actions.length == 1 && "read".equals(actions[0]);
+        }
+
         // delegate
         if (fad != null) {
             return fad.hasPermission(context.getSession(), absPath, actions);

@@ -137,17 +137,30 @@ public class FedoraUserSecurityContextTest {
         final FedoraUserSecurityContext context =
                 new FedoraUserSecurityContext(principal, fad);
 
-        assertFalse("Granted permission with no action on root", context
+        assertFalse("Granted permission with no action on null path", context
                 .hasPermission(null, null, new String[] {}));
 
-        assertFalse("Granted write permission on root", context.hasPermission(
+        assertFalse("Granted write permission on null path", context.hasPermission(
                 null, null, new String[] {"write"}));
 
-        assertTrue("Failed to granted read permission on root", context
+        assertTrue("Failed to grant read permission on null path", context
                 .hasPermission(null, null, new String[] {"read"}));
 
-        assertFalse("Granted write permission on root", context.hasPermission(
+        assertFalse("Granted write permission on null path", context.hasPermission(
                 null, null, new String[] {"read", "write"}));
+
+        Path rootPath = Path.ROOT_PATH;
+        assertFalse("Granted permission with no action on root", context
+                .hasPermission(null, rootPath, new String[] {}));
+
+        assertFalse("Granted write permission on root", context.hasPermission(
+                null, rootPath, new String[] {"write"}));
+
+        assertTrue("Failed to granted read permission on root", context
+                .hasPermission(null, rootPath, new String[] {"read"}));
+
+        assertFalse("Granted write permission on root", context.hasPermission(
+                null, rootPath, new String[] {"read", "write"}));
 
         when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true);
 
