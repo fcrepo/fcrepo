@@ -32,6 +32,12 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-connector-file</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-serialization</artifactId>
       <version>${project.version}</version>
     </dependency>

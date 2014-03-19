@@ -17,7 +17,7 @@
     },
     "externalSources" : {
       "fileSystem" : {
-        "classname" : "org.modeshape.connector.filesystem.FileSystemConnector",
+        "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
         "directoryPath" : "target/test-classes/test-objects",
         "readonly" : false,
         "extraPropertiesStorage": "json",

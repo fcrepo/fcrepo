@@ -372,7 +372,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Entering verifyFullSetOfRdfTypes()...");
         final String pid = "FedoraGraphWithRdfTypes";
         createObject(pid);
-        addMixin( "FedoraGraphWithRdfTypes", "http://www.jcp.org/jcr/mix/1.0versionable");
+        addMixin( "FedoraGraphWithRdfTypes", MIX_NAMESPACE + "versionable" );
 
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + pid);
@@ -1027,7 +1027,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         // copy to federated filesystem
         final HttpCopy request = new HttpCopy(serverAddress + "repoObject");
         request.addHeader("Destination", serverAddress + "files/projCopy");
-        client.execute(request);
+        final HttpResponse copyResponse = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), copyResponse.getStatusLine().getStatusCode());
 
         // federated copy should now exist
         final HttpGet copyGet = new HttpGet(serverAddress + "files/projCopy");
