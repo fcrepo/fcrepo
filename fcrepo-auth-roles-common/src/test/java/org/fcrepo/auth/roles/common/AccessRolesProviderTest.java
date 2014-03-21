@@ -69,15 +69,10 @@ public class AccessRolesProviderTest {
     private Node node;
 
     @Mock
-    private Node rbaclNode;
-
-    @Mock
     private Node principalNode1;
 
     @Mock
     private Property principalProperty1;
-
-    private NodeIterator rbaclIterator;
 
     private AccessRolesProvider provider;
 
@@ -88,12 +83,8 @@ public class AccessRolesProviderTest {
 
         provider = new AccessRolesProvider();
 
-        setupPrincipalNode(principalNode1, principalProperty1, "principal",
+        setupPrincipalNode(node, principalProperty1, "principal",
                 "role");
-
-        // Set up parent node acl node
-        rbaclIterator = nodeIterator(principalNode1);
-        when(rbaclNode.getNodes()).thenReturn(rbaclIterator);
 
         when(node.isNodeType(anyString())).thenReturn(false);
     }
@@ -103,7 +94,7 @@ public class AccessRolesProviderTest {
             final String roleName) throws RepositoryException {
         // Set up principal for parent node
         when(principalProperty.getString()).thenReturn(principalName);
-        when(principalNode.getProperty(eq(principal.getQualified())))
+        when(principalNode.getProperty(eq(principal.getQualified() + Integer.toString(1))))
                 .thenReturn(principalProperty);
 
         // Roles for parent
@@ -111,64 +102,35 @@ public class AccessRolesProviderTest {
         final Value roleValue = mock(Value.class);
         when(roleValue.toString()).thenReturn(roleName);
         when(roleProperty.getValues()).thenReturn(new Value[] {roleValue});
-        when(principalNode.getProperty(eq(role.getQualified())))
+        when(principalNode.getProperty(eq(role.getQualified() + Integer.toString(1))))
                 .thenReturn(roleProperty);
     }
 
     @Test
-    public void testGetRolesNoRBACLs() throws RepositoryException {
-        when(node.isNodeType(anyString())).thenReturn(true);
-        when(node.getNode(anyString())).thenReturn(rbaclNode);
-
-        rbaclIterator = nodeIterator();
-        when(rbaclNode.getNodes()).thenReturn(rbaclIterator);
-
-        final Map<String, List<String>> data = provider.getRoles(node, true);
-
-        assertTrue(
-                "Role response for node with no rbacl nodes should be empty",
-                data.isEmpty());
-    }
-
-    @Test
-    public void testGetRolesRBACLsNullPrincipalName()
+    public void testGetRolesNullPrincipalName()
             throws RepositoryException {
         when(node.isNodeType(anyString())).thenReturn(true);
-        when(node.getNode(anyString())).thenReturn(rbaclNode);
 
         when(principalProperty1.getString()).thenReturn(null);
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
 
-        assertTrue(
+        assertNull(
                 "Role response for node with an rbacl nodes containing no principal names should be empty",
-                data.isEmpty());
+                data);
     }
 
     @Test
-    public void testGetRolesRBACLsNoPrincipalName() throws RepositoryException {
+    public void testGetRolesNoPrincipalName() throws RepositoryException {
         when(node.isNodeType(anyString())).thenReturn(true);
-        when(node.getNode(anyString())).thenReturn(rbaclNode);
 
         when(principalProperty1.getString()).thenReturn("");
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
 
-        assertTrue(
-                "Role response for node with an rbacl nodes containing no principal names should be empty",
-                data.isEmpty());
-    }
-
-    @Test
-    public void testGetRolesRBACLPathNotFound() throws RepositoryException {
-        when(node.isNodeType(anyString())).thenReturn(true);
-
-        when(node.getNode(anyString())).thenThrow(new PathNotFoundException());
-
-        final Map<String, List<String>> data = provider.getRoles(node, true);
-
-        assertTrue("Roles data must be empty when rbacl path is not found",
-                data.isEmpty());
+        assertNull(
+                "Role response for node with no principal names should be null",
+                data);
     }
 
     @Test
@@ -229,7 +191,18 @@ public class AccessRolesProviderTest {
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(anyString())).thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
+
+        // Roles for parent
+        final Property principalProperty = mock(Property.class);
+        final Property roleProperty = mock(Property.class);
+        final Value roleValue = mock(Value.class);
+        when(principalProperty.getString()).thenReturn("principal");
+        when(roleValue.toString()).thenReturn("role");
+        when(roleProperty.getValues()).thenReturn(new Value[] {roleValue});
+        when(parentNode1.getProperty(eq(principal.getQualified() + Integer.toString(1))))
+                .thenReturn(principalProperty);
+        when(parentNode1.getProperty(eq(JcrName.role.getQualified() + Integer.toString(1))))
+                .thenReturn(roleProperty);
 
         when(node.getParent()).thenReturn(parentNode1);
 
@@ -249,7 +222,6 @@ public class AccessRolesProviderTest {
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(anyString())).thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
 
         // Set up immediate parent node
         final Node parentNode2 = mock(Node.class);
@@ -257,6 +229,9 @@ public class AccessRolesProviderTest {
         when(parentNode2.getParent()).thenReturn(parentNode1);
 
         when(node.getParent()).thenReturn(parentNode2);
+
+        setupPrincipalNode(parentNode1, principalProperty1, "principal",
+                "role");
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
 
@@ -275,16 +250,17 @@ public class AccessRolesProviderTest {
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(eq(rbaclAssignable.getQualified())))
                 .thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
 
         // Set up immediate parent node
         final Node parentNode2 = mock(Node.class);
         when(parentNode2.isNodeType(eq(rbaclAssignable.getQualified())))
                 .thenReturn(true);
-        when(parentNode2.getNode(anyString())).thenReturn(rbaclNode);
         when(parentNode2.getParent()).thenReturn(parentNode1);
 
         when(node.getParent()).thenReturn(parentNode2);
+
+        setupPrincipalNode(parentNode2, principalProperty1, "principal",
+                "role");
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
 
@@ -294,29 +270,22 @@ public class AccessRolesProviderTest {
         assertEquals(
                 "Principal should only contain role from immediate parent", 1,
                 data.get("principal").size());
-
-        // Verify that the distant parent never attempted to get assignments
-        verify(parentNode1, never()).getNode(anyString());
     }
 
     @Test
     public void testGetRolesEffectiveMultipleRoles()
             throws RepositoryException {
 
-        final Node principalNode2 = mock(Node.class);
-        final Property principalProperty2 = mock(Property.class);
-
-        setupPrincipalNode(principalNode2, principalProperty2, "principal",
-                "role2");
-
-        // Set up parent node acl node
-        rbaclIterator = nodeIterator(principalNode1, principalNode2);
-        when(rbaclNode.getNodes()).thenReturn(rbaclIterator);
 
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(anyString())).thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
+
+        when(node.isNodeType(anyString())).thenReturn(true);
+        setupPrincipalNode(node, principalProperty1, "principal",
+                "role");
+        setupPrincipalNode(parentNode1, principalProperty1, "principal",
+                "role2");
 
         when(node.getParent()).thenReturn(parentNode1);
 
@@ -337,20 +306,29 @@ public class AccessRolesProviderTest {
     public void testGetRolesEffectiveMultiplePrincipals()
             throws RepositoryException {
 
-        final Node principalNode2 = mock(Node.class);
-        final Property principalProperty2 = mock(Property.class);
-
-        setupPrincipalNode(principalNode2, principalProperty2, "principal2",
-                "role");
-
-        // Set up parent node acl node
-        rbaclIterator = nodeIterator(principalNode1, principalNode2);
-        when(rbaclNode.getNodes()).thenReturn(rbaclIterator);
-
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(anyString())).thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
+
+        // principle 1 and role
+        final Property principalProperty = mock(Property.class);
+        final Property roleProperty = mock(Property.class);
+        final Value roleValue = mock(Value.class);
+        when(principalProperty.getString()).thenReturn("principal");
+        when(roleValue.toString()).thenReturn("role");
+        when(roleProperty.getValues()).thenReturn(new Value[] {roleValue});
+        when(parentNode1.getProperty(eq(principal.getQualified() + Integer.toString(1))))
+                .thenReturn(principalProperty);
+        when(parentNode1.getProperty(eq(JcrName.role.getQualified() + Integer.toString(1))))
+                .thenReturn(roleProperty);
+
+        //principle 2 and role
+        final Property principalProperty2 = mock(Property.class);
+        when(principalProperty2.getString()).thenReturn("principal2");
+        when(parentNode1.getProperty(eq(principal.getQualified() + Integer.toString(2))))
+                .thenReturn(principalProperty2);
+        when(parentNode1.getProperty(eq(JcrName.role.getQualified() + Integer.toString(2))))
+                .thenReturn(roleProperty);
 
         when(node.getParent()).thenReturn(parentNode1);
 
@@ -374,14 +352,18 @@ public class AccessRolesProviderTest {
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(anyString())).thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
 
         when(node.getParent()).thenReturn(parentNode1);
 
-        // Roles for parent
+        // Role and principal for parent
+        final Property principalProperty = mock(Property.class);
         final Property roleProperty = mock(Property.class);
+        final Value roleValue = mock(Value.class);
+        when(principalProperty.getString()).thenReturn("principal");
         when(roleProperty.getValues()).thenReturn(new Value[] {null});
-        when(principalNode1.getProperty(eq(role.getQualified())))
+        when(parentNode1.getProperty(eq(principal.getQualified() + Integer.toString(1))))
+                .thenReturn(principalProperty);
+        when(parentNode1.getProperty(eq(JcrName.role.getQualified() + Integer.toString(1))))
                 .thenReturn(roleProperty);
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
@@ -396,16 +378,19 @@ public class AccessRolesProviderTest {
         // Set up parent node
         final Node parentNode1 = mock(Node.class);
         when(parentNode1.isNodeType(anyString())).thenReturn(true);
-        when(parentNode1.getNode(anyString())).thenReturn(rbaclNode);
 
         when(node.getParent()).thenReturn(parentNode1);
 
         // Roles for parent
+        final Property principalProperty = mock(Property.class);
         final Property roleProperty = mock(Property.class);
         final Value roleValue = mock(Value.class);
+        when(principalProperty.getString()).thenReturn("principal");
         when(roleValue.toString()).thenReturn("");
         when(roleProperty.getValues()).thenReturn(new Value[] {roleValue});
-        when(principalNode1.getProperty(eq(JcrName.role.getQualified())))
+        when(parentNode1.getProperty(eq(principal.getQualified() + Integer.toString(1))))
+                .thenReturn(principalProperty);
+        when(parentNode1.getProperty(eq(JcrName.role.getQualified() + Integer.toString(1))))
                 .thenReturn(roleProperty);
 
         final Map<String, List<String>> data = provider.getRoles(node, true);
@@ -419,19 +404,12 @@ public class AccessRolesProviderTest {
     public void testPostRolesNonassignableEmptyData()
             throws RepositoryException {
 
-        final Node aclNode = mock(Node.class);
-        when(node.addNode(anyString(), anyString())).thenReturn(aclNode);
-
         final Map<String, Set<String>> data =
                 new HashMap<>();
         provider.postRoles(node, data);
 
         // Node should be given node types to make it assignable
         verify(node).addMixin(eq(JcrName.rbaclAssignable.getQualified()));
-        verify(node).addNode(eq(JcrName.rbacl.getQualified()),
-                eq(JcrName.Rbacl.getQualified()));
-        // No acl assignments should be made since data was empty
-        verify(aclNode, never()).addNode(anyString());
     }
 
     @Test
@@ -448,59 +426,36 @@ public class AccessRolesProviderTest {
         // Mixin should not be added
         verify(node, never()).addMixin(
                 eq(rbaclAssignable.getQualified()));
-        verify(node).addNode(eq(rbacl.getQualified()),
-                eq(Rbacl.getQualified()));
     }
 
     @Test
-    public void testPostRolesToNonRBACLNode() throws RepositoryException {
+    public void testPostRolesPrincipleAndRole() throws RepositoryException {
         final Map<String, Set<String>> data = new HashMap<>();
         final Set<String> roles = new HashSet<>();
         roles.add("role");
         data.put("principal", roles);
 
-        final Node aclNode = mock(Node.class);
-        when(node.addNode(anyString(), anyString())).thenReturn(aclNode);
-        final Node assignNode = mock(Node.class);
-        when(aclNode.addNode(anyString(), anyString())).thenReturn(assignNode);
-
         provider.postRoles(node, data);
 
         // Verify that node was setup to be assignable
         verify(node).addMixin(eq(JcrName.rbaclAssignable.getQualified()));
-        verify(node).addNode(eq(JcrName.rbacl.getQualified()),
-                eq(JcrName.Rbacl.getQualified()));
 
-        // Verify that the new principals and roles were added
-        verify(aclNode).addNode(eq(JcrName.assignment.getQualified()),
-                eq(JcrName.Assignment.getQualified()));
-        verify(assignNode).setProperty(eq(JcrName.principal.getQualified()),
+        // Verify that the new principal and role were added
+        verify(node).setProperty(eq(JcrName.principal.getQualified() + Integer.toString(1)),
                 eq("principal"));
-        verify(assignNode).setProperty(eq(JcrName.role.getQualified()),
+        verify(node).setProperty(eq(JcrName.role.getQualified() + Integer.toString(1)),
                 any(String[].class));
     }
 
     @Test
-    public void testPostRolesToRBACLNode() throws RepositoryException {
+    public void testPostRolesNoData() throws RepositoryException {
 
         final Map<String, Set<String>> data = new HashMap<>();
-
-        when(node.hasNode(eq(rbacl.getQualified()))).thenReturn(true);
-
-        final Node aclNode = mock(Node.class);
-        when(aclNode.getNodes()).thenReturn(rbaclIterator);
-        when(node.getNode(eq(rbacl.getQualified())))
-                .thenReturn(aclNode);
 
         provider.postRoles(node, data);
 
         verify(node).addMixin(eq(rbaclAssignable.getQualified()));
 
-        // Check that it attempted to remove existing principals
-        verify(principalNode1).remove();
-
-        // Verify that no new nodes were added since data is empty
-        verify(node, never()).addNode(anyString(), anyString());
     }
 
     @Test
@@ -514,38 +469,28 @@ public class AccessRolesProviderTest {
         // No work occurs since there are no roles to delete
         verify(node, never()).removeMixin(
                 eq(JcrName.rbaclAssignable.getQualified()));
-        verify(node, never()).getNode(anyString());
     }
 
     @Test
-    public void testDeleteRolesRBACLPathNotFound() throws RepositoryException {
+    public void testDeleteRolesAssignable() throws RepositoryException {
 
         when(node.isNodeType(eq(JcrName.rbaclAssignable.getQualified())))
                 .thenReturn(true);
-
-        when(node.getNode(eq(JcrName.rbacl.getQualified()))).thenThrow(new PathNotFoundException());
 
         provider.deleteRoles(node);
 
         // Verify that mixin still gets removed
         verify(node).removeMixin(eq(JcrName.rbaclAssignable.getQualified()));
-        // Verify that it attempted to get the rbacl node, and threw exception
-        verify(node).getNode(eq(JcrName.rbacl.getQualified()));
     }
 
     @Test
     public void testDeleteRoles() throws RepositoryException {
-
         when(node.isNodeType(eq(JcrName.rbaclAssignable.getQualified())))
                 .thenReturn(true);
 
-        when(node.getNode(eq(JcrName.rbacl.getQualified()))).thenReturn(
-                rbaclNode);
-
         provider.deleteRoles(node);
-
+        // todo really delete something
         // Check that mixin and rbacl node were removed
-        verify(rbaclNode).remove();
         verify(node).removeMixin(eq(JcrName.rbaclAssignable.getQualified()));
     }
 
@@ -589,15 +534,24 @@ public class AccessRolesProviderTest {
 
         final Node parentNode = mock(Node.class);
         when(parentNode.isNodeType(anyString())).thenReturn(true);
-        when(parentNode.getNode(anyString())).thenReturn(rbaclNode);
+        //when(parentNode.getNode(anyString())).thenReturn(rbaclNode);
 
         when(node.getParent()).thenReturn(parentNode);
 
+        // Role and principal for parent
+        final Property principalProperty = mock(Property.class);
+        final Property roleProperty = mock(Property.class);
+        final Value roleValue = mock(Value.class);
+        when(principalProperty.getString()).thenReturn("principal");
+        when(roleValue.toString()).thenReturn("role");
+        when(roleProperty.getValues()).thenReturn(new Value[] {roleValue});
+        when(parentNode.getProperty(eq(principal.getQualified() + Integer.toString(1))))
+                .thenReturn(principalProperty);
+        when(parentNode.getProperty(eq(JcrName.role.getQualified() + Integer.toString(1))))
+                .thenReturn(roleProperty);
+
         final Map<String, List<String>> data =
                 provider.findRolesForPath(path, session);
-
-        // Verify lookup of node by path
-        verify(session).getNode(eq(pathString));
 
         assertEquals("One principal should be retrieved", 1, data.size());
     }
@@ -624,7 +578,7 @@ public class AccessRolesProviderTest {
         when(node.isNodeType(eq(JcrName.rbaclAssignable.getQualified())))
                 .thenReturn(true);
 
-        when(node.getNode(anyString())).thenReturn(rbaclNode);
+        //when(node.getNode(anyString())).thenReturn(rbaclNode);
 
         final Map<String, List<String>> data =
                 provider.findRolesForPath(path, session);
