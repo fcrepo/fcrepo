@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultMessageFactory.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository JMS Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jms.headers</a> &gt; <span class="el_source">DefaultMessageFactory.java</span></div><h1>DefaultMessageFactory.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.jms.headers;
+
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.util.Set;
+
+import javax.jcr.RepositoryException;
+import javax.jms.JMSException;
+import javax.jms.Message;
+
+import org.fcrepo.jms.observer.JMSEventMessageFactory;
+import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.utils.EventType;
+import org.slf4j.Logger;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+
+/**
+ * Generates JMS {@link Message}s composed entirely of headers, based entirely
+ * on information found in the {@link FedoraEvent} that triggers publication.
+ *
+ * @author ajs6f
+ * @date Dec 2, 2013
+ */
+<span class="fc" id="L45">public class DefaultMessageFactory implements JMSEventMessageFactory {</span>
+
+    public static final String TIMESTAMP_HEADER_NAME = REPOSITORY_NAMESPACE
+            + &quot;timestamp&quot;;
+
+    public static final String IDENTIFIER_HEADER_NAME = REPOSITORY_NAMESPACE
+            + &quot;identifier&quot;;
+
+    public static final String EVENT_TYPE_HEADER_NAME = REPOSITORY_NAMESPACE
+            + &quot;eventType&quot;;
+
+    @Override
+    public Message getMessage(final FedoraEvent jcrEvent,
+        final javax.jms.Session jmsSession) throws RepositoryException,
+        IOException, JMSException {
+<span class="fc" id="L60">        final Message message = jmsSession.createMessage();</span>
+<span class="fc" id="L61">        message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());</span>
+<span class="fc" id="L62">        message.setStringProperty(IDENTIFIER_HEADER_NAME, jcrEvent.getPath());</span>
+<span class="fc" id="L63">        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent</span>
+                .getTypes()));
+<span class="fc" id="L65">        return message;</span>
+    }
+
+    private static String getEventURIs(final Set&lt;Integer&gt; types) {
+<span class="fc" id="L69">        final String uris = Joiner.on(',').join(Iterables.transform(types, new Function&lt;Integer, String&gt;() {</span>
+
+            @Override
+            public String apply(final Integer type) {
+<span class="fc" id="L73">                return REPOSITORY_NAMESPACE + EventType.valueOf(type);</span>
+            }
+        }));
+<span class="fc" id="L76">        log.debug(&quot;Constructed event type URIs: {}&quot;, uris);</span>
+<span class="fc" id="L77">        return uris;</span>
+    }
+
+<span class="fc" id="L80">    private static final Logger log = getLogger(DefaultMessageFactory.class);</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
