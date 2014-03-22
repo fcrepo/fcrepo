@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RSSPublisher.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository RSS Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.syndication</a> &gt; <span class="el_source">RSSPublisher.java</span></div><h1>RSSPublisher.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.syndication;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Lists.transform;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.ByteArrayInputStream;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.jcr.RepositoryException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.xml.transform.stream.StreamSource;
+
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.observer.FedoraEvent;
+import org.joda.time.DateTime;
+import org.springframework.stereotype.Component;
+
+import com.google.common.base.Function;
+import com.google.common.eventbus.Subscribe;
+import com.sun.syndication.feed.synd.SyndContent;
+import com.sun.syndication.feed.synd.SyndContentImpl;
+import com.sun.syndication.feed.synd.SyndEntry;
+import com.sun.syndication.feed.synd.SyndEntryImpl;
+import com.sun.syndication.feed.synd.SyndFeed;
+import com.sun.syndication.feed.synd.SyndFeedImpl;
+import com.sun.syndication.io.FeedException;
+import com.sun.syndication.io.SyndFeedOutput;
+
+/**
+ * Listen to the event bus and record the most recent 10
+ * events, and provide them as an RSS feed.
+ */
+@Component
+@Path(&quot;/fcr:rss&quot;)
+<span class="fc" id="L58">public class RSSPublisher extends AbstractResource {</span>
+
+<span class="fc" id="L60">    private static final Integer FEED_LENGTH = 10;</span>
+
+    private static final String FEED_TYPE = &quot;rss_2.0&quot;;
+
+    private static final String FEED_TITLE = &quot;What's happening in Fedora&quot;;
+
+    private static final String FEED_DESCRIPTION = FEED_TITLE;
+
+<span class="fc" id="L68">    private final BlockingQueue&lt;FedoraEvent&gt; feedQueue = new ArrayBlockingQueue&lt;&gt;(FEED_LENGTH);</span>
+
+<span class="fc" id="L70">    private final SyndFeed feed = new SyndFeedImpl();</span>
+
+    /**
+     * Get the RSS feed
+     *
+     * @return
+     * @throws FeedException
+     */
+    @GET
+    @Produces(&quot;application/rss+xml&quot;)
+    public StreamSource getFeed() throws FeedException {
+<span class="fc" id="L81">        feed.setLink(uriInfo.getBaseUri().toString());</span>
+<span class="fc" id="L82">        feed.setEntries(transform(copyOf(feedQueue).reverse(), event2entry));</span>
+        // TODO ought to make this stream, not go through a string
+<span class="fc" id="L84">        return new StreamSource(new ByteArrayInputStream(new SyndFeedOutput()</span>
+                .outputString(feed).getBytes(UTF_8)));
+    }
+
+<span class="fc" id="L88">    private final Function&lt;FedoraEvent, SyndEntry&gt; event2entry =</span>
+<span class="fc" id="L89">            new Function&lt;FedoraEvent, SyndEntry&gt;() {</span>
+
+                @Override
+                public SyndEntry apply(final FedoraEvent event) {
+<span class="fc" id="L93">                    final SyndEntry entry = new SyndEntryImpl();</span>
+                    try {
+<span class="fc" id="L95">                        entry.setTitle(event.getIdentifier());</span>
+<span class="fc" id="L96">                        entry.setLink(event.getPath());</span>
+<span class="fc" id="L97">                        entry.setPublishedDate(new DateTime(event.getDate())</span>
+                                .toDate());
+<span class="fc" id="L99">                        final SyndContent description = new SyndContentImpl();</span>
+<span class="fc" id="L100">                        description.setType(&quot;text/plain&quot;);</span>
+<span class="fc" id="L101">                        description.setValue(event.getTypes().toString());</span>
+<span class="fc" id="L102">                        entry.setDescription(description);</span>
+<span class="nc" id="L103">                    } catch (final RepositoryException e) {</span>
+<span class="nc" id="L104">                        throw propagate(e);</span>
+<span class="fc" id="L105">                    }</span>
+<span class="fc" id="L106">                    return entry;</span>
+                }
+
+            };
+
+    /**
+     * Engage the eventbus listener and set basic feed properties
+     */
+    @PostConstruct
+    public void initialize() {
+<span class="fc" id="L116">        eventBus.register(this);</span>
+<span class="fc" id="L117">        feed.setFeedType(FEED_TYPE);</span>
+<span class="fc" id="L118">        feed.setTitle(FEED_TITLE);</span>
+<span class="fc" id="L119">        feed.setDescription(FEED_DESCRIPTION);</span>
+<span class="fc" id="L120">    }</span>
+
+    /**
+     * Remove our EventBus listener
+     */
+    @PreDestroy
+    public void shutDown() {
+<span class="fc" id="L127">        eventBus.unregister(this);</span>
+<span class="fc" id="L128">    }</span>
+
+    /**
+     * When a new event is received, add it to the buffer.
+     *
+     * @param event
+     */
+    @Subscribe
+    public void newEvent(final FedoraEvent event) {
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (feedQueue.remainingCapacity() &gt; 0) {</span>
+<span class="fc" id="L138">            feedQueue.offer(event);</span>
+        } else {
+<span class="nc" id="L140">            feedQueue.poll();</span>
+<span class="nc" id="L141">            feedQueue.offer(event);</span>
+        }
+<span class="fc" id="L143">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
