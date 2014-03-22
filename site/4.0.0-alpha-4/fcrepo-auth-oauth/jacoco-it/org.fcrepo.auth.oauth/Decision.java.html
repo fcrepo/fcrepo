@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Decision.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository OAuth 2.0 Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.oauth</a> &gt; <span class="el_source">Decision.java</span></div><h1>Decision.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.oauth;
+
+import java.security.Principal;
+
+import org.apache.oltu.oauth2.rsfilter.OAuthClient;
+import org.apache.oltu.oauth2.rsfilter.OAuthDecision;
+
+/**
+ * @author ajs6f
+ * @date Jul 1, 2013
+ */
+public class Decision implements OAuthDecision {
+
+    private OAuthClient oAuthClient;
+
+    private Principal principal;
+
+    private boolean isAuthorized;
+
+    /**
+     * Initialize the decision for a client and principal
+     * @param client
+     * @param principal
+     */
+<span class="fc" id="L40">    public Decision(final String client, final String principal) {</span>
+<span class="fc" id="L41">        this.oAuthClient = new OAuthClient() {</span>
+
+            @Override
+            public String getClientId() {
+<span class="fc" id="L45">                return client;</span>
+            }
+
+        };
+<span class="fc" id="L49">        this.principal = new Principal() {</span>
+
+            @Override
+            public String getName() {
+<span class="nc" id="L53">                return principal;</span>
+            }
+
+        };
+<span class="fc" id="L57">    }</span>
+
+    @Override
+    public OAuthClient getOAuthClient() {
+<span class="fc" id="L61">        return oAuthClient;</span>
+    }
+
+    @Override
+    public Principal getPrincipal() {
+<span class="nc" id="L66">        return principal;</span>
+    }
+
+    @Override
+    public boolean isAuthorized() {
+<span class="nc" id="L71">        return isAuthorized;</span>
+    }
+
+    /**
+     * Set whether the principal is authorized
+     * @param isAuthorized
+     */
+    public void setAuthorized(final boolean isAuthorized) {
+<span class="nc" id="L79">        this.isAuthorized = isAuthorized;</span>
+<span class="nc" id="L80">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultTokenRequestValidations.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository OAuth 2.0 Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.oauth.impl</a> &gt; <span class="el_source">DefaultTokenRequestValidations.java</span></div><h1>DefaultTokenRequestValidations.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.oauth.impl;
+
+import static com.google.common.collect.Sets.intersection;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.fcrepo.auth.oauth.Constants.CLIENT_PROPERTY;
+import static org.fcrepo.auth.oauth.Constants.OAUTH_WORKSPACE;
+import static org.fcrepo.auth.oauth.Constants.SCOPES_PROPERTY;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.security.AccessControlException;
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.apache.oltu.oauth2.as.request.OAuthTokenRequest;
+import org.fcrepo.auth.oauth.TokenRequestValidations;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.slf4j.Logger;
+
+/**
+ * Default audits and validations for an OAuth token request
+ */
+public class DefaultTokenRequestValidations implements TokenRequestValidations {
+
+<span class="fc" id="L45">    private static final Logger LOGGER =</span>
+        getLogger(DefaultTokenRequestValidations.class);
+
+    private SessionFactory sessions;
+
+    /**
+     * Instantiate the default audits and validations for an OAuth
+     * token request, using information stored in a jcr workspace
+     * accessible via the given session factory.
+     * @param sessions
+     */
+<span class="fc" id="L56">    public DefaultTokenRequestValidations(final SessionFactory sessions) {</span>
+<span class="fc" id="L57">        this.sessions = sessions;</span>
+<span class="fc" id="L58">    }</span>
+
+    /**
+     * @param oauthRequest
+     * @return An answer to whether or not this request matches up with an
+     *         authorization code issued at the {@link AuthzEndpoint}
+     * @throws RepositoryException
+     */
+    @Override
+    public boolean isValidAuthCode(final OAuthTokenRequest oauthRequest)
+        throws RepositoryException {
+<span class="fc" id="L69">        final String client = oauthRequest.getClientId();</span>
+<span class="fc" id="L70">        LOGGER.debug(&quot;Request has authorization client: {}&quot;, client);</span>
+<span class="fc" id="L71">        final String code = oauthRequest.getCode();</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (code == null) {</span>
+<span class="nc" id="L73">            return false;</span>
+        }
+<span class="fc" id="L75">        final Set&lt;String&gt; scopes = oauthRequest.getScopes();</span>
+<span class="fc" id="L76">        final Session session = sessions.getInternalSession(OAUTH_WORKSPACE);</span>
+        try {
+<span class="fc" id="L78">            final Node authCodeNode =</span>
+                    session.getNode(&quot;/authorization-codes/&quot; + code);
+<span class="fc" id="L80">            LOGGER.debug(&quot;Found authorization code node stored: {}&quot;,</span>
+                    authCodeNode.getPath());
+            // if the client is right
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">            if (authCodeNode.getProperty(CLIENT_PROPERTY).getString().equals(</span>
+                    client)) {
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">                if (authCodeNode.getProperty(SCOPES_PROPERTY) != null) {</span>
+
+<span class="fc" id="L87">                    final Set&lt;String&gt; storedScopes =</span>
+                        newHashSet(
+                            map(authCodeNode.getProperty(SCOPES_PROPERTY)
+                                .getValues(),
+                                value2string));
+                    // and if there is at least one scope in common
+<span class="pc bpc" id="L93" title="3 of 4 branches missed.">                    return (storedScopes.isEmpty() || !intersection(storedScopes, scopes).isEmpty());</span>
+                }
+<span class="nc" id="L95">                return true;</span>
+            }
+<span class="nc" id="L97">        } catch (final PathNotFoundException e) {</span>
+            // this wasn't a code we stored
+<span class="nc" id="L99">            LOGGER.trace(&quot;Missing authorization token for code {}&quot;, code, e);</span>
+<span class="nc" id="L100">            return false;</span>
+        } finally {
+<span class="pc" id="L102">            session.logout();</span>
+<span class="nc" id="L103">        }</span>
+<span class="nc" id="L104">        throw new AccessControlException(</span>
+                &quot;Could not establish validity or invalidity of&quot; +
+                 &quot; authorization code! Code:&quot; + code);
+    }
+
+    @Override
+    public boolean isValidClient(final OAuthTokenRequest oauthRequest) {
+        // TODO actually do some checking of client ID and secret and so forth
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        return oauthRequest != null;</span>
+    }
+
+    @Override
+    public boolean isValidSecret(final OAuthTokenRequest oauthRequest) {
+        // TODO actually do some checking of client ID and secret and so forth
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        return oauthRequest != null;</span>
+    }
+
+    @Override
+    public boolean isValidCredentials(final OAuthTokenRequest oauthRequest) {
+        // TODO actually do some credentials?
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        return oauthRequest != null;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
