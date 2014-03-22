@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraIdentifiers.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraIdentifiers.java</span></div><h1>FedoraIdentifiers.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.http.api;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ContiguousSet.create;
+import static com.google.common.collect.DiscreteDomain.integers;
+import static com.google.common.collect.Range.closed;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+
+import java.util.Collection;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Function;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+
+/**
+ * JAX-RS Resource offering identifier creation.
+ *
+ * @author ajs6f
+ * @author cbeer
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:identifier&quot;)
+<span class="fc" id="L74">public class FedoraIdentifiers extends AbstractResource {</span>
+
+    @InjectedSession
+    protected Session session;
+
+    /**
+     * Mint identifiers (without creating the objects)
+     *
+     * POST /path/to/mint/from/fcr:identifier?count=15
+     *
+     * @param count number of PIDs to return
+     * @return HTTP 200 with block of PIDs
+     */
+    @POST
+    @Timed
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+                      TEXT_HTML, APPLICATION_XHTML_XML})
+    public RdfStream getNextPid(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @QueryParam(&quot;count&quot;)
+            @DefaultValue(&quot;1&quot;)
+            final Integer count,
+            @Context
+            final UriInfo uriInfo) {
+
+
+<span class="fc" id="L100">        final String path = toPath(pathList);</span>
+
+<span class="fc" id="L102">        final Node pidsResult =</span>
+            createURI(uriInfo.getAbsolutePath().toASCIIString());
+
+<span class="fc" id="L105">        final Collection&lt;String&gt; identifiers =</span>
+            transform(create(closed(1, count), integers()), pidMinter
+                    .makePid());
+
+<span class="fc" id="L109">        final HttpGraphSubjects subjects =</span>
+                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+
+<span class="fc" id="L112">        return new RdfStream(transform(</span>
+                transform(identifiers, absolutize(path)), identifier2triple(
+                        subjects, pidsResult))).topic(pidsResult).session(
+                session);
+
+    }
+
+    private static Function&lt;String, String&gt; absolutize(final String path) {
+<span class="fc" id="L120">        return new Function&lt;String, String&gt;() {</span>
+
+            @Override
+            public String apply(final String identifier) {
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">                return path.equals(&quot;/&quot;) ? &quot;/&quot; + identifier : path + &quot;/&quot;</span>
+                        + identifier;
+            }
+        };
+    }
+
+    private static Function&lt;String, Triple&gt; identifier2triple(
+        final GraphSubjects subjects, final Node pidsResult) {
+<span class="fc" id="L132">        return new Function&lt;String, Triple&gt;() {</span>
+
+            @Override
+            public Triple apply(final String identifier) {
+
+                try {
+<span class="fc" id="L138">                    final Node s =</span>
+                        subjects.getGraphSubject(identifier).asNode();
+<span class="fc" id="L140">                    return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT</span>
+                            .asNode(), s);
+<span class="nc" id="L142">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L143">                    throw propagate(e);</span>
+                }
+            }
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
