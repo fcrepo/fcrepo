@@ -1,0 +1,6 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository Storage Strategies Module,org.fcrepo.storage.policy,FedoraStoragePolicy.InputPattern,0,43,0,0,0,5,0,4,0,4
+Fedora Repository Storage Strategies Module,org.fcrepo.storage.policy,MimeTypeStoragePolicy,92,78,22,2,26,14,13,5,2,4
+Fedora Repository Storage Strategies Module,org.fcrepo.storage.policy,FedoraStoragePolicy,82,343,19,20,11,66,19,17,2,14
+Fedora Repository Storage Strategies Module,org.fcrepo.storage.policy,StoragePolicyDecisionPointImpl,10,73,0,6,4,19,2,12,2,9
+Fedora Repository Storage Strategies Module,org.fcrepo.storage.policy,StoragePolicyTypeException,0,4,0,0,0,2,0,1,0,1
