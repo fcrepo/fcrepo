@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BasicRolesAuthorizationDelegate.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Basic Role Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.roles.basic</a> &gt; <span class="el_source">BasicRolesAuthorizationDelegate.java</span></div><h1>BasicRolesAuthorizationDelegate.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.auth.roles.basic;
+
+import org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Set;
+
+/**
+ * @author Gregory Jansen
+ */
+<span class="fc" id="L28">public class BasicRolesAuthorizationDelegate extends AbstractRolesAuthorizationDelegate {</span>
+
+<span class="fc" id="L30">    private static final Logger LOGGER = LoggerFactory</span>
+            .getLogger(BasicRolesAuthorizationDelegate.class);
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.auth.roles.AbstractRolesAuthorizationDelegate#rolesHavePermission(final
+     * String absPath, final String[] actions, final Set&lt;String&gt; roles)
+     */
+    @Override
+    public boolean rolesHavePermission(final String absPath,
+            final String[] actions, final Set&lt;String&gt; roles) {
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (roles.isEmpty()) {</span>
+<span class="fc" id="L42">            LOGGER.debug(&quot;A caller without content roles can do nothing in the repository.&quot;);</span>
+<span class="fc" id="L43">            return false;</span>
+        }
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        if (roles.contains(&quot;admin&quot;)) {</span>
+<span class="fc" id="L46">            LOGGER.debug(&quot;Granting an admin role permission to perform any action.&quot;);</span>
+<span class="fc" id="L47">            return true;</span>
+        }
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (roles.contains(&quot;writer&quot;)) {</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">            if (absPath.contains(AUTHZ_DETECTION)) {</span>
+<span class="fc" id="L51">                LOGGER.debug(&quot;Denying writer role permission to perform an action on an ACL node.&quot;);</span>
+<span class="fc" id="L52">                return false;</span>
+            }
+<span class="fc" id="L54">            LOGGER.debug(&quot;Granting writer role permission to perform any action on a non-ACL node.&quot;);</span>
+<span class="fc" id="L55">            return true;</span>
+        }
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if (roles.contains(&quot;reader&quot;)) {</span>
+<span class="pc bpc" id="L58" title="1 of 4 branches missed.">            if (actions.length == 1 &amp;&amp; &quot;read&quot;.equals(actions[0])) {</span>
+<span class="fc" id="L59">                LOGGER.debug(&quot;Granting reader role permission to perform a read action.&quot;);</span>
+<span class="fc" id="L60">                return true;</span>
+            }
+<span class="fc" id="L62">            LOGGER.debug(&quot;Denying reader role permission to perform a non-read action.&quot;);</span>
+<span class="fc" id="L63">            return false;</span>
+        }
+<span class="nc" id="L65">        LOGGER.error(&quot;There are roles in session that aren't recognized by this authorization delegate: {}&quot;,</span>
+                     roles);
+<span class="nc" id="L67">        return false;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
