@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TransactionServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.services</a> &gt; <span class="el_source">TransactionServiceImpl.java</span></div><h1>TransactionServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ *
+ */
+
+package org.fcrepo.kernel.services;
+
+import static java.lang.System.currentTimeMillis;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.TransactionImpl;
+import org.fcrepo.kernel.TxSession;
+import org.fcrepo.kernel.exception.TransactionMissingException;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/**
+ * This is part of the strawman implementation for Fedora transactions This
+ * service implements a simple {@link Transaction} service which is able to
+ * create/commit/rollback {@link Transaction} objects A {@link Scheduled}
+ * annotation is used for removing timed out Transactions
+ *
+ * @author frank asseg
+ */
+@Component
+<span class="fc" id="L51">public class TransactionServiceImpl extends AbstractService implements TransactionService {</span>
+
+<span class="fc" id="L53">    private static final Logger LOGGER = getLogger(TransactionService.class);</span>
+
+    /**
+     * A key for looking up the transaction id in a session key-value pair
+     */
+    static final String FCREPO4_TX_ID = &quot;fcrepo4.tx.id&quot;;
+
+    @Autowired
+    private VersionService versionService;
+
+    /**
+     * TODO since transactions have to be available on all nodes, they have to
+     * be either persisted or written to a distributed map or sth, not just this
+     * plain hashmap that follows
+     */
+<span class="fc" id="L68">    private static Map&lt;String, Transaction&gt; transactions = new ConcurrentHashMap&lt;&gt;();</span>
+
+    public static final long REAP_INTERVAL = 1000;
+
+    /**
+     * Every REAP_INTERVAL milliseconds, check for expired transactions. If the
+     * tx is expired, roll it back and remove it from the registry.
+     */
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.TransactionService#removeAndRollbackExpired()
+     */
+    @Override
+    @Scheduled(fixedRate = REAP_INTERVAL)
+    public void removeAndRollbackExpired() {
+<span class="nc" id="L84">        synchronized (transactions) {</span>
+<span class="nc" id="L85">            final Iterator&lt;Entry&lt;String, Transaction&gt;&gt; txs =</span>
+                    transactions.entrySet().iterator();
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            while (txs.hasNext()) {</span>
+<span class="nc" id="L88">                final Transaction tx = txs.next().getValue();</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                if (tx.getExpires().getTime() &lt;= currentTimeMillis()) {</span>
+                    try {
+<span class="nc" id="L91">                        tx.rollback();</span>
+<span class="nc" id="L92">                    } catch (final RepositoryException e) {</span>
+<span class="nc" id="L93">                        LOGGER.error(</span>
+                                &quot;Got exception rolling back expired&quot; +
+                                        &quot; transaction {}: {}&quot;,
+                                        tx, e);
+<span class="nc" id="L97">                    }</span>
+<span class="nc" id="L98">                    txs.remove();</span>
+                }
+<span class="nc" id="L100">            }</span>
+<span class="nc" id="L101">        }</span>
+<span class="nc" id="L102">    }</span>
+
+    /**
+     * Create a new Transaction and add it to the currently open ones
+     *
+     * @param sess The session to use for this Transaction
+     * @return the {@link Transaction}
+     */
+    @Override
+    public Transaction beginTransaction(final Session sess, final String userName)
+        throws RepositoryException {
+<span class="nc" id="L113">        final Transaction tx = new TransactionImpl(sess, userName);</span>
+<span class="nc" id="L114">        final String txId = tx.getId();</span>
+<span class="nc" id="L115">        transactions.put(txId, tx);</span>
+<span class="nc" id="L116">        sess.setNamespacePrefix(FCREPO4_TX_ID, txId);</span>
+<span class="nc" id="L117">        return tx;</span>
+    }
+
+    /**
+     * Retrieve an open {@link Transaction}
+     *
+     * @param txid the Id of the {@link Transaction}
+     * @return the {@link Transaction}
+     */
+    @Override
+    public Transaction getTransaction(final String txid)
+        throws TransactionMissingException {
+
+<span class="nc" id="L130">        final Transaction tx = transactions.get(txid);</span>
+
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        if (tx == null) {</span>
+<span class="nc" id="L133">            throw new TransactionMissingException(</span>
+                    &quot;Transaction is not available&quot;);
+        }
+
+<span class="nc" id="L137">        return tx;</span>
+    }
+
+    /**
+     * Get the current Transaction for a session
+     *
+     * @param session
+     * @return
+     * @throws TransactionMissingException
+     */
+    @Override
+    public Transaction getTransaction(final Session session)
+        throws TransactionMissingException {
+
+<span class="nc" id="L151">        final String txId = getCurrentTransactionId(session);</span>
+
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (txId == null) {</span>
+<span class="nc" id="L154">            throw new TransactionMissingException(</span>
+                    &quot;Transaction is not available&quot;);
+        }
+
+<span class="nc" id="L158">        return getTransaction(txId);</span>
+    }
+
+    /**
+     * Get the current Transaction ID for a session
+     *
+     * @param session
+     * @return
+     */
+    public static String getCurrentTransactionId(final Session session) {
+        try {
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (session instanceof TxSession) {</span>
+<span class="nc" id="L170">                return ((TxSession) session).getTxId();</span>
+            }
+<span class="nc" id="L172">            return session.getNamespaceURI(FCREPO4_TX_ID);</span>
+<span class="nc" id="L173">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L174">            LOGGER.trace(&quot;Unable to retrieve current transaction ID from session&quot;, e);</span>
+<span class="nc" id="L175">            return null;</span>
+        }
+    }
+
+    /**
+     * Check if a Transaction exists
+     *
+     * @param txid the Id of the {@link Transaction}
+     * @return the {@link Transaction}
+     */
+    @Override
+    public boolean exists(final String txid) {
+<span class="nc" id="L187">        return transactions.containsKey(txid);</span>
+    }
+
+    /**
+     * Commit a {@link Transaction} with the given id
+     *
+     * @param txid the id of the {@link Transaction}
+     * @throws RepositoryException
+     */
+    @Override
+    public Transaction commit(final String txid) throws RepositoryException {
+<span class="nc" id="L198">        final Transaction tx = transactions.remove(txid);</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (tx == null) {</span>
+<span class="nc" id="L200">            throw new RepositoryException(&quot;Transaction with id &quot; + txid +</span>
+                    &quot; is not available&quot;);
+        }
+<span class="nc" id="L203">        tx.commit(versionService);</span>
+<span class="nc" id="L204">        return tx;</span>
+    }
+
+    /**
+     * Roll a {@link Transaction} back
+     *
+     * @param txid the id of the {@link Transaction}
+     * @return the {@link Transaction} object
+     * @throws RepositoryException if the {@link Transaction} could not be found
+     */
+    @Override
+    public Transaction rollback(final String txid) throws RepositoryException {
+<span class="nc" id="L216">        final Transaction tx = transactions.remove(txid);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">        if (tx == null) {</span>
+<span class="nc" id="L218">            throw new RepositoryException(&quot;Transaction with id &quot; + txid +</span>
+                    &quot; is not available&quot;);
+        }
+<span class="nc" id="L221">        tx.rollback();</span>
+<span class="nc" id="L222">        return tx;</span>
+    }
+
+    /**
+     * Checks if a user is bound to a {@link Transaction}
+     *
+     * @param txId the id of the {@link Transaction}
+     * @param userName the name  of the {@link java.security.Principal}
+     * @return if the transaction was created by this user
+    */
+    @Override
+    public boolean isAssociatedWithUser(final String txId, final String userName) {
+<span class="nc" id="L234">        boolean existsForUser = false;</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        if (exists(txId)) {</span>
+<span class="nc" id="L236">            final Transaction transaction = transactions.get(txId);</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">            if (transaction.isAssociatedWithUser(userName)) {</span>
+<span class="nc" id="L238">                existsForUser = true;</span>
+            }
+        }
+<span class="nc" id="L241">        return existsForUser;</span>
+    }
+
+    /**
+     * @param versionService the versionService to set
+     */
+    @Override
+    public void setVersionService(final VersionService versionService) {
+<span class="nc" id="L249">        this.versionService = versionService;</span>
+<span class="nc" id="L250">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

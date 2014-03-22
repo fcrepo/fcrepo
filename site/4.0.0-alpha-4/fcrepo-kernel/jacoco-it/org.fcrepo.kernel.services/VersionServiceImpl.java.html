@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VersionServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.services</a> &gt; <span class="el_source">VersionServiceImpl.java</span></div><h1>VersionServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.services;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Collection;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Workspace;
+
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.exception.TransactionMissingException;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ * This service exposes management of node versioning.  Instead of invoking
+ * the JCR VersionManager methods, this provides a level of indirection that
+ * allows for special handling of features built on top of JCR such as user
+ * transactions.
+ * @author Mike Durbin
+ */
+
+@Component
+<span class="fc" id="L47">public class VersionServiceImpl extends AbstractService implements VersionService {</span>
+
+<span class="fc" id="L49">    private static final Logger LOGGER = getLogger(VersionService.class);</span>
+
+    protected static final String VERSIONABLE = &quot;mix:versionable&quot;;
+
+    protected static final String VERSION_POLICY = &quot;fedoraconfig:versioningPolicy&quot;;
+
+    protected static final String AUTO_VERSION = &quot;auto-version&quot;;
+
+    @Autowired
+    private TransactionService txService;
+
+    /**
+     * Notifies the version manager that the node at a given path was updated
+     * so that if automatic versioning is set for that node, a version
+     * checkpoint will be made.  When a node object is available, use of
+     * {@link #nodeUpdated(javax.jcr.Node)} will save the overhead of a
+     * redundant node lookup.
+     * @param session
+     * @param absPath the absolute path to the node that was created or
+     *                modified
+     * @throws RepositoryException
+     */
+    @Override
+    public void nodeUpdated(final Session session, final String absPath) throws RepositoryException {
+<span class="nc" id="L73">        nodeUpdated(session.getNode(absPath));</span>
+<span class="nc" id="L74">    }</span>
+
+    /**
+     * Notifies the version manager that the given node was updated
+     * so that if automatic versioning is set for that node, a version
+     * checkpoint will be made.
+     * @param n the node that was updated
+     * @throws RepositoryException
+     */
+    @Override
+    public void nodeUpdated(final Node n) throws RepositoryException {
+<span class="nc bnc" id="L85" title="All 4 branches missed.">        if (isVersioningEnabled(n)</span>
+                &amp;&amp; isImplicitVersioningEnabled(n)) {
+<span class="nc" id="L87">            queueOrCommitCheckpoint(n.getSession(), n.getPath());</span>
+        } else {
+<span class="nc" id="L89">            LOGGER.trace(&quot;No implicit version checkpoint set for {}&quot;, n.getPath());</span>
+        }
+<span class="nc" id="L91">    }</span>
+
+    /**
+     * Explicitly creates a version for the nodes at each path provided.
+     * @param workspace the workspace in which the node resides
+     * @param paths absolute paths to the nodes within the workspace
+     * @throws RepositoryException
+     */
+    @Override
+    public void createVersion(final Workspace workspace,
+            final Collection&lt;String&gt; paths) throws RepositoryException {
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        for (final String absPath : paths) {</span>
+<span class="nc" id="L103">            checkpoint(workspace, absPath);</span>
+<span class="nc" id="L104">        }</span>
+<span class="nc" id="L105">    }</span>
+
+    private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
+<span class="nc" id="L108">        return n.isNodeType(VERSIONABLE);</span>
+    }
+
+    private static boolean isImplicitVersioningEnabled(final Node n) throws RepositoryException {
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (!n.hasProperty(VERSION_POLICY)) {</span>
+<span class="nc" id="L113">            return false;</span>
+        }
+<span class="nc" id="L115">        final Property p = n.getProperty(VERSION_POLICY);</span>
+<span class="nc" id="L116">        return propertyContains(p, AUTO_VERSION);</span>
+    }
+
+    private void queueOrCommitCheckpoint(final Session session, final String absPath) throws RepositoryException {
+<span class="nc" id="L120">        final String txId = getCurrentTransactionId(session);</span>
+
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (txId == null) {</span>
+<span class="nc" id="L123">            checkpoint(session.getWorkspace(), absPath);</span>
+        } else {
+<span class="nc" id="L125">            queueCheckpoint(txId, absPath);</span>
+        }
+<span class="nc" id="L127">    }</span>
+
+    private static void checkpoint(final Workspace workspace, final String absPath) throws RepositoryException {
+<span class="nc" id="L130">        LOGGER.trace(&quot;Setting implicit version checkpoint set for {}&quot;, absPath);</span>
+<span class="nc" id="L131">        workspace.getVersionManager().checkpoint(absPath);</span>
+<span class="nc" id="L132">    }</span>
+
+    private void queueCheckpoint(final String txId, final String absPath) throws TransactionMissingException {
+<span class="nc" id="L135">        final Transaction tx = txService.getTransaction(txId);</span>
+<span class="nc" id="L136">        LOGGER.trace(&quot;Queuing implicit version checkpoint set for {}&quot;, absPath);</span>
+<span class="nc" id="L137">        tx.addPathToVersion(absPath);</span>
+<span class="nc" id="L138">    }</span>
+    /**
+     * Creates a version checkpoint for the given node if versioning is enabled
+     * for that node type.  When versioning is enabled this is the equivalent of
+     * VersionManager#checkpoint(node.getPath()), except that it is aware of
+     * TxSessions and queues these operations accordingly.
+     *
+     * @param node the node for whom a new version is
+     *                to be minted
+     * @throws RepositoryException
+     */
+    @Override
+    public void checkpoint(final Node node) throws RepositoryException {
+
+<span class="nc" id="L152">        checkNotNull(node, &quot;Cannot checkpoint null nodes&quot;);</span>
+
+<span class="nc" id="L154">        final Session session = node.getSession();</span>
+<span class="nc" id="L155">        final String absPath = node.getPath();</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (node.isNodeType(VERSIONABLE)) {</span>
+<span class="nc" id="L157">            LOGGER.trace(&quot;Setting checkpoint for {}&quot;, absPath);</span>
+
+<span class="nc" id="L159">            final String txId = getCurrentTransactionId(session);</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            if (txId != null) {</span>
+<span class="nc" id="L161">                final Transaction tx = txService.getTransaction(txId);</span>
+<span class="nc" id="L162">                tx.addPathToVersion(absPath);</span>
+<span class="nc" id="L163">            } else {</span>
+<span class="nc" id="L164">                session.getWorkspace().getVersionManager().checkpoint(absPath);</span>
+            }
+<span class="nc" id="L166">        } else {</span>
+<span class="nc" id="L167">            LOGGER.trace(&quot;No checkpoint set for unversionable {}&quot;, absPath);</span>
+        }
+<span class="nc" id="L169">    }</span>
+
+    /**
+     * @param txService the txService to set
+     */
+    @Override
+    public void setTxService(final TransactionService txService) {
+<span class="nc" id="L176">        this.txService = txService;</span>
+<span class="nc" id="L177">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

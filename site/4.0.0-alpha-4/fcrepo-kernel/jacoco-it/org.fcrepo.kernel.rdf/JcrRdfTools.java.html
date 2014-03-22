@@ -1,0 +1,649 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>JcrRdfTools.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.rdf</a> &gt; <span class="el_source">JcrRdfTools.java</span></div><h1>JcrRdfTools.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.rdf;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterables.any;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singleton;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.STRING;
+import static javax.jcr.PropertyType.UNDEFINED;
+import static javax.jcr.PropertyType.URI;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.PropertyDefinition;
+
+import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
+import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
+import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
+import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.rdf.impl.WorkspaceRdfContext;
+import org.fcrepo.kernel.services.LowLevelStorageService;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.modeshape.jcr.api.Namespaced;
+import org.slf4j.Logger;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+/**
+ * A set of helpful tools for converting JCR properties to RDF
+ *
+ * @author Chris Beer
+ * @date May 10, 2013
+ */
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">public class JcrRdfTools {</span>
+
+<span class="fc" id="L86">    private static final Logger LOGGER = getLogger(JcrRdfTools.class);</span>
+
+    /**
+     * A map of JCR namespaces to Fedora's RDF namespaces
+     */
+<span class="fc" id="L91">    public static BiMap&lt;String, String&gt; jcrNamespacesToRDFNamespaces =</span>
+        ImmutableBiMap.of(JCR_NAMESPACE,
+                RdfLexicon.REPOSITORY_NAMESPACE);
+
+    /**
+     * A map of Fedora's RDF namespaces to the JCR equivalent
+     */
+<span class="fc" id="L98">    public static BiMap&lt;String, String&gt; rdfNamespacesToJcrNamespaces =</span>
+        jcrNamespacesToRDFNamespaces.inverse();
+
+    private LowLevelStorageService llstore;
+
+    private final GraphSubjects graphSubjects;
+
+    private Session session;
+
+    /**
+     * Factory method to create a new JcrRdfTools utility with a graph subjects
+     * converter
+     *
+     * @param graphSubjects
+     */
+    public JcrRdfTools(final GraphSubjects graphSubjects) {
+<span class="nc" id="L114">        this(graphSubjects, null, null);</span>
+<span class="nc" id="L115">    }</span>
+
+    /**
+     * Factory method to create a new JcrRdfTools utility with a graph subjects
+     * converter
+     *
+     * @param graphSubjects
+     * @param session
+     */
+    public JcrRdfTools(final GraphSubjects graphSubjects, final Session session) {
+<span class="fc" id="L125">        this(graphSubjects, session, null);</span>
+<span class="fc" id="L126">    }</span>
+
+    /**
+     * Contructor with even more context.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param lls
+     */
+    public JcrRdfTools(final GraphSubjects graphSubjects,
+<span class="fc" id="L136">            final Session session, final LowLevelStorageService lls) {</span>
+<span class="fc" id="L137">        this.graphSubjects = graphSubjects;</span>
+<span class="fc" id="L138">        this.session = session;</span>
+<span class="fc" id="L139">        this.llstore = lls;</span>
+<span class="fc" id="L140">    }</span>
+
+    /**
+     * Factory method to create a new JcrRdfTools instance
+     *
+     * @param graphSubjects
+     * @return
+     */
+    public static JcrRdfTools withContext(final GraphSubjects graphSubjects) {
+<span class="nc" id="L149">        return new JcrRdfTools(graphSubjects);</span>
+    }
+
+    /**
+     * Factory method to create a new JcrRdfTools instance
+     *
+     * @param graphSubjects
+     * @param session
+     * @return
+     */
+    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+        final Session session) {
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        if (graphSubjects == null) {</span>
+<span class="fc" id="L162">            return new JcrRdfTools(new DefaultGraphSubjects(session), session);</span>
+        }
+<span class="fc" id="L164">        return new JcrRdfTools(graphSubjects, session);</span>
+    }
+
+    /**
+     * Factory method to create a new JcrRdfTools instance with full context.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param lls
+     * @return
+     */
+    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+            final Session session, final LowLevelStorageService lls) {
+<span class="nc" id="L177">        return new JcrRdfTools(graphSubjects, session, lls);</span>
+    }
+
+    /**
+     * Convert a Fedora RDF Namespace into its JCR equivalent
+     *
+     * @param rdfNamespaceUri a namespace from an RDF document
+     * @return the JCR namespace, or the RDF namespace if no matching JCR
+     *         namespace is found
+     */
+    public static String getJcrNamespaceForRDFNamespace(
+            final String rdfNamespaceUri) {
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {</span>
+<span class="nc" id="L190">            return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);</span>
+        }
+<span class="fc" id="L192">        return rdfNamespaceUri;</span>
+    }
+
+    /**
+     * Convert a JCR namespace into an RDF namespace fit for downstream
+     * consumption.
+     *
+     * @param jcrNamespaceUri a namespace from the JCR NamespaceRegistry
+     * @return an RDF namespace for downstream consumption.
+     */
+    public static String getRDFNamespaceForJcrNamespace(
+            final String jcrNamespaceUri) {
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {</span>
+<span class="fc" id="L205">            return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);</span>
+        }
+<span class="fc" id="L207">        return jcrNamespaceUri;</span>
+    }
+
+    /**
+     * Get a model in which to collect statements of RDF extraction problems
+     *
+     * @return
+     */
+    public static Model getProblemsModel() {
+<span class="nc" id="L216">        return createDefaultModel();</span>
+    }
+
+    /**
+     * Using the same graph subjects, create a new JcrRdfTools with the given
+     * session
+     *
+     * @param session
+     * @return
+     */
+    public JcrRdfTools withSession(final Session session) {
+<span class="nc" id="L227">        return new JcrRdfTools(graphSubjects, session);</span>
+    }
+
+    /**
+     * Get an {@link RdfStream} for the given JCR NodeIterator
+     *
+     * @param nodeIterator
+     * @param iteratorSubject
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getJcrPropertiesModel(final Iterator&lt;Node&gt; nodeIterator,
+            final Resource iteratorSubject) throws RepositoryException {
+
+<span class="nc" id="L241">        final RdfStream results = new RdfStream();</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        while (nodeIterator.hasNext()) {</span>
+<span class="nc" id="L243">            final Node node = nodeIterator.next();</span>
+<span class="nc" id="L244">            results.concat(new PropertiesRdfContext(node, graphSubjects,</span>
+                    llstore));
+<span class="nc bnc" id="L246" title="All 2 branches missed.">            if (iteratorSubject != null) {</span>
+<span class="nc" id="L247">                results.concat(singleton(create(iteratorSubject.asNode(),</span>
+                        HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
+                                .getGraphSubject(node).asNode())));
+            }
+<span class="nc" id="L251">        }</span>
+<span class="nc" id="L252">        return results;</span>
+    }
+
+    /**
+     * Get an {@link RdfStream} for a node that includes all its own JCR properties,
+     * as well as the properties of its immediate children. TODO add triples for
+     * root node, ala addRepositoryMetricsToModel()
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getJcrTriples(final Node node) throws RepositoryException {
+<span class="fc" id="L265">        return new PropertiesRdfContext(node, graphSubjects, llstore);</span>
+    }
+
+    /**
+     * Get an {@link RdfStream} for the JCR version history information for a node
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getVersionTriples(final Node node)
+        throws RepositoryException {
+<span class="fc" id="L277">        return new VersionsRdfContext(node, graphSubjects, llstore);</span>
+    }
+
+    /**
+     * Serialize the JCR fixity information in an {@link RdfStream}
+     *
+     * @param node
+     * @param blobs
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getJcrTriples(final Node node,
+            final Iterable&lt;FixityResult&gt; blobs) throws RepositoryException {
+<span class="nc" id="L290">        return new FixityRdfContext(node, graphSubjects, llstore, blobs);</span>
+    }
+
+    /**
+     * Get an {@link RdfStream} of the registered JCR namespaces
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getNamespaceTriples() throws RepositoryException {
+<span class="fc" id="L300">        return new NamespaceRdfContext(session);</span>
+    }
+
+    /**
+     * Get an {@link RdfStream} of the registered JCR workspaces
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getWorkspaceTriples(final GraphSubjects subjects) throws RepositoryException {
+<span class="nc" id="L310">        return new WorkspaceRdfContext(session, subjects);</span>
+    }
+
+    /**
+     * Add the properties of a Node's parent and immediate children (as well as
+     * the jcr:content of children) to the given {@link RdfStream}
+     *
+     * @param node
+     * @throws RepositoryException
+     */
+    public RdfStream getTreeTriples(final Node node) throws RepositoryException {
+<span class="fc" id="L321">        return new HierarchyRdfContext(node, graphSubjects, llstore);</span>
+    }
+
+    /**
+     * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.
+     *
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean isContainer(final Node node) throws RepositoryException {
+<span class="pc bpc" id="L332" title="3 of 4 branches missed.">        return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())</span>
+                || any(ImmutableList.copyOf(node.getMixinNodeTypes()),
+                        HAS_CHILD_NODE_DEFINITIONS);
+    }
+
+<span class="fc" id="L337">    static Predicate&lt;NodeType&gt; HAS_CHILD_NODE_DEFINITIONS =</span>
+<span class="fc" id="L338">        new Predicate&lt;NodeType&gt;() {</span>
+
+            @Override
+            public boolean apply(final NodeType input) {
+<span class="pc bpc" id="L342" title="1 of 2 branches missed.">                return input.getChildNodeDefinitions().length &gt; 0;</span>
+            }
+        };
+
+    /**
+     * Determine if a predicate is an internal property of a node (and should
+     * not be modified from external sources)
+     *
+     * @param subjectNode
+     * @param predicate
+     * @return
+     */
+    public boolean isInternalProperty(final Node subjectNode,
+            final Resource predicate) {
+<span class="pc bpc" id="L356" title="10 of 12 branches missed.">        switch (predicate.getNameSpace()) {</span>
+            case REPOSITORY_NAMESPACE:
+            case JCR_NAMESPACE:
+            case LDP_NAMESPACE:
+<span class="nc" id="L360">                return true;</span>
+            default:
+<span class="fc" id="L362">                return false;</span>
+        }
+    }
+
+    /**
+     * Create a JCR value from an RDFNode, either by using the given JCR
+     * PropertyType or by looking at the RDFNode Datatype
+     *
+     * @param data an RDF Node (possibly with a DataType)
+     * @param type a JCR PropertyType value
+     * @return a JCR Value
+     * @throws javax.jcr.RepositoryException
+     */
+    public Value createValue(final Node node, final RDFNode data, final int type)
+        throws RepositoryException {
+<span class="fc" id="L377">        final ValueFactory valueFactory = node.getSession().getValueFactory();</span>
+<span class="fc" id="L378">        return createValue(valueFactory, data, type);</span>
+
+    }
+
+    /**
+     * Create a JCR value (with an undefined type) from a RDFNode
+     * @param data
+     * @return
+     * @throws RepositoryException
+     */
+    public Value createValue(final RDFNode data) throws RepositoryException {
+<span class="nc" id="L389">        return createValue(data, UNDEFINED);</span>
+    }
+
+    /**
+     * Create a JCR value from an RDFNode with the given JCR type
+     * @param data
+     * @param type
+     * @return
+     * @throws RepositoryException
+     */
+    public Value createValue(final RDFNode data, final int type) throws RepositoryException {
+<span class="nc" id="L400">        return createValue(session.getValueFactory(), data, type);</span>
+    }
+
+    /**
+     * Create a JCR value from an RDF node with the given JCR type
+     * @param valueFactory
+     * @param data
+     * @param type
+     * @return
+     * @throws RepositoryException
+     */
+    public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
+        throws RepositoryException {
+<span class="pc bpc" id="L413" title="2 of 4 branches missed.">        assert (valueFactory != null);</span>
+
+<span class="pc bpc" id="L415" title="1 of 6 branches missed.">        if (data.isURIResource()</span>
+                &amp;&amp; (type == REFERENCE || type == WEAKREFERENCE)) {
+            // reference to another node (by path)
+<span class="fc" id="L418">            final Node nodeFromGraphSubject =</span>
+                graphSubjects.getNodeFromGraphSubject(data.asResource());
+<span class="pc bpc" id="L420" title="1 of 2 branches missed.">            return valueFactory.createValue(nodeFromGraphSubject,</span>
+                    type == WEAKREFERENCE);
+<span class="pc bpc" id="L422" title="1 of 4 branches missed.">        } else if (data.isURIResource() || type == URI) {</span>
+            // some random opaque URI
+<span class="fc" id="L424">            return valueFactory.createValue(data.toString(), PropertyType.URI);</span>
+<span class="pc bpc" id="L425" title="1 of 2 branches missed.">        } else if (data.isResource()) {</span>
+            // a non-URI resource (e.g. a blank node)
+<span class="nc" id="L427">            return valueFactory.createValue(data.toString(), UNDEFINED);</span>
+<span class="pc bpc" id="L428" title="1 of 4 branches missed.">        } else if (data.isLiteral() &amp;&amp; type == UNDEFINED) {</span>
+            // the JCR schema doesn't know what this should be; so introspect
+            // the RDF and try to figure it out
+<span class="fc" id="L431">            final Literal literal = data.asLiteral();</span>
+<span class="fc" id="L432">            final RDFDatatype dataType = literal.getDatatype();</span>
+<span class="fc" id="L433">            final Object rdfValue = literal.getValue();</span>
+
+<span class="pc bpc" id="L435" title="1 of 2 branches missed.">            if (rdfValue instanceof Boolean) {</span>
+<span class="nc" id="L436">                return valueFactory.createValue((Boolean) rdfValue);</span>
+<span class="pc bpc" id="L437" title="2 of 6 branches missed.">            } else if (rdfValue instanceof Byte</span>
+                    || (dataType != null &amp;&amp; dataType.getJavaClass() == Byte.class)) {
+<span class="nc" id="L439">                return valueFactory.createValue(literal.getByte());</span>
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">            } else if (rdfValue instanceof Double) {</span>
+<span class="nc" id="L441">                return valueFactory.createValue((Double) rdfValue);</span>
+<span class="pc bpc" id="L442" title="1 of 2 branches missed.">            } else if (rdfValue instanceof Float) {</span>
+<span class="nc" id="L443">                return valueFactory.createValue((Float) rdfValue);</span>
+<span class="pc bpc" id="L444" title="1 of 6 branches missed.">            } else if (rdfValue instanceof Long</span>
+                    || (dataType != null &amp;&amp; dataType.getJavaClass() == Long.class)) {
+<span class="fc" id="L446">                return valueFactory.createValue(literal.getLong());</span>
+<span class="pc bpc" id="L447" title="2 of 6 branches missed.">            } else if (rdfValue instanceof Short</span>
+                    || (dataType != null &amp;&amp; dataType.getJavaClass() == Short.class)) {
+<span class="nc" id="L449">                return valueFactory.createValue(literal.getShort());</span>
+<span class="pc bpc" id="L450" title="1 of 2 branches missed.">            } else if (rdfValue instanceof Integer) {</span>
+<span class="nc" id="L451">                return valueFactory.createValue((Integer) rdfValue);</span>
+<span class="pc bpc" id="L452" title="1 of 2 branches missed.">            } else if (rdfValue instanceof XSDDateTime) {</span>
+<span class="nc" id="L453">                return valueFactory.createValue(((XSDDateTime) rdfValue)</span>
+                        .asCalendar());
+            } else {
+<span class="fc" id="L456">                return valueFactory.createValue(literal.getString(), STRING);</span>
+            }
+
+        } else {
+<span class="fc" id="L460">            LOGGER.debug(&quot;Using default JCR value creation for RDF literal: {}&quot;,</span>
+                    data);
+<span class="fc" id="L462">            return valueFactory.createValue(data.asLiteral().getString(), type);</span>
+        }
+    }
+
+    /**
+     * Given an RDF predicate value (namespace URI + local name), figure out
+     * what JCR property to use
+     *
+     * @param node the JCR node we want a property for
+     * @param predicate the predicate to map to a property name
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final Node node,
+        final com.hp.hpl.jena.rdf.model.Property predicate)
+        throws RepositoryException {
+<span class="fc" id="L478">        final Map&lt;String, String&gt; s = emptyMap();</span>
+<span class="fc" id="L479">        return getPropertyNameFromPredicate(node, predicate, s);</span>
+
+    }
+
+    /**
+     * Given an RDF predicate value (namespace URI + local name), figure out
+     * what JCR property to use
+     *
+     * @param node the JCR node we want a property for
+     * @param predicate the predicate to map to a property name
+     * @param namespaceMapping prefix =&gt; uri namespace mapping
+     * @return the JCR property name
+     * @throws RepositoryException
+     */
+
+    public String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map&lt;String, String&gt; namespaceMapping) throws RepositoryException {
+
+<span class="fc" id="L497">        final NamespaceRegistry namespaceRegistry =</span>
+            getNamespaceRegistry.apply(node);
+
+<span class="fc" id="L500">        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);</span>
+    }
+
+    /**
+     * Get the property name for an RDF predicate
+     * @param predicate
+     * @param namespaceMapping
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map&lt;String, String&gt; namespaceMapping) throws RepositoryException {
+
+<span class="nc" id="L513">        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace()</span>
+                .getNamespaceRegistry();
+
+<span class="nc" id="L516">        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);</span>
+    }
+
+    /**
+     * Get a property name for an RDF predicate
+     * @param predicate
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
+        throws RepositoryException {
+
+
+<span class="nc" id="L529">        final Map&lt;String, String&gt; emptyNamespaceMapping = emptyMap();</span>
+<span class="nc" id="L530">        return getPropertyNameFromPredicate(predicate, emptyNamespaceMapping);</span>
+    }
+
+
+    /**
+     * Get the JCR property name for an RDF predicate
+     * @param namespaceRegistry
+     * @param predicate
+     * @param namespaceMapping
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
+                                               final com.hp.hpl.jena.rdf.model.Property predicate,
+                                               final Map&lt;String, String&gt; namespaceMapping) throws RepositoryException {
+
+        final String prefix;
+
+<span class="fc" id="L548">        final String namespace =</span>
+            getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
+
+<span class="pc bpc" id="L551" title="2 of 4 branches missed.">        assert (namespaceRegistry != null);</span>
+
+<span class="fc bfc" id="L553" title="All 2 branches covered.">        if (namespaceRegistry.isRegisteredUri(namespace)) {</span>
+<span class="fc" id="L554">            LOGGER.debug(&quot;Discovered namespace: {} in namespace registry.&quot;,namespace);</span>
+<span class="fc" id="L555">            prefix = namespaceRegistry.getPrefix(namespace);</span>
+        } else {
+<span class="fc" id="L557">            LOGGER.debug(&quot;Didn't discover namespace: {} in namespace registry.&quot;,namespace);</span>
+<span class="fc" id="L558">            final ImmutableBiMap&lt;String, String&gt; nsMap =</span>
+                ImmutableBiMap.copyOf(namespaceMapping);
+<span class="fc bfc" id="L560" title="All 2 branches covered.">            if (nsMap.containsValue(namespace)) {</span>
+<span class="fc" id="L561">                LOGGER.debug(&quot;Discovered namespace: {} in namespace map: {}.&quot;, namespace,</span>
+                        nsMap);
+<span class="fc" id="L563">                prefix = nsMap.inverse().get(namespace);</span>
+<span class="fc" id="L564">                namespaceRegistry.registerNamespace(prefix, namespace);</span>
+            } else {
+<span class="fc" id="L566">                prefix = namespaceRegistry.registerNamespace(namespace);</span>
+            }
+        }
+
+<span class="fc" id="L570">        final String localName = predicate.getLocalName();</span>
+
+<span class="fc" id="L572">        final String propertyName = prefix + &quot;:&quot; + localName;</span>
+
+<span class="fc" id="L574">        LOGGER.debug(&quot;Took RDF predicate {} and translated it to JCR property {}&quot;, predicate, propertyName);</span>
+
+<span class="fc" id="L576">        return propertyName;</span>
+
+    }
+
+    /**
+     * Set the Low-level storage server implementation
+     */
+    public void setLlstore(final LowLevelStorageService lowLevelStorageService) {
+<span class="nc" id="L584">        llstore = lowLevelStorageService;</span>
+<span class="nc" id="L585">    }</span>
+
+    /**
+     * Given a node type and a property name, figure out an appropriate jcr value type
+     * @param nodeType
+     * @param propertyName
+     * @return
+     * @throws RepositoryException
+     */
+    public int getPropertyType(final String nodeType, final String propertyName) throws RepositoryException {
+<span class="nc" id="L595">        return getPropertyType(session.getWorkspace().getNodeTypeManager().getNodeType(nodeType), propertyName);</span>
+
+    }
+
+    /**
+     * Given a node type and a property name, figure out an appropraite jcr value type
+     * @param nodeType
+     * @param propertyName
+     * @return
+     */
+    public int getPropertyType(final NodeType nodeType, final String propertyName) {
+<span class="nc" id="L606">        final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();</span>
+<span class="nc" id="L607">        int type = UNDEFINED;</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">        for (final PropertyDefinition propertyDefinition : propertyDefinitions) {</span>
+<span class="nc bnc" id="L609" title="All 2 branches missed.">            if (propertyDefinition.getName().equals(propertyName)) {</span>
+<span class="nc bnc" id="L610" title="All 2 branches missed.">                if (type != UNDEFINED) {</span>
+<span class="nc" id="L611">                    return UNDEFINED;</span>
+                }
+
+<span class="nc" id="L614">                type = propertyDefinition.getRequiredType();</span>
+            }
+        }
+
+<span class="nc" id="L618">        return type;</span>
+    }
+
+    /**
+     * Map a JCR property to an RDF property with the right namespace URI and
+     * local name
+     */
+<span class="fc" id="L625">    public static Function&lt;Property, com.hp.hpl.jena.rdf.model.Property&gt; getPredicateForProperty =</span>
+<span class="fc" id="L626">            new Function&lt;Property, com.hp.hpl.jena.rdf.model.Property&gt;() {</span>
+
+                @Override
+                public com.hp.hpl.jena.rdf.model.Property apply(
+                        final Property property) {
+<span class="fc" id="L631">                    LOGGER.trace(&quot;Creating predicate for property: {}&quot;,</span>
+                            property);
+                    try {
+<span class="pc bpc" id="L634" title="1 of 2 branches missed.">                        if (property instanceof Namespaced) {</span>
+<span class="fc" id="L635">                            final Namespaced nsProperty = (Namespaced) property;</span>
+<span class="fc" id="L636">                            final String uri = nsProperty.getNamespaceURI();</span>
+<span class="fc" id="L637">                            return createProperty(</span>
+                                    getRDFNamespaceForJcrNamespace(uri),
+                                    nsProperty.getLocalName());
+                        }
+<span class="nc" id="L641">                        return createProperty(property.getName());</span>
+<span class="nc" id="L642">                    } catch (final RepositoryException e) {</span>
+<span class="nc" id="L643">                        throw propagate(e);</span>
+                    }
+
+                }
+            };
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

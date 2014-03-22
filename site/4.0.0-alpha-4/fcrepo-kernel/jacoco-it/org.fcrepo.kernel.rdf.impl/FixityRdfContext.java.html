@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FixityRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.rdf.impl</a> &gt; <span class="el_source">FixityRdfContext.java</span></div><h1>FixityRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.rdf.impl;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.ImmutableSet.builder;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.kernel.RdfLexicon.CONTENT_LOCATION_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.FIXITY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
+
+import java.util.Calendar;
+import java.util.Iterator;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import com.hp.hpl.jena.vocabulary.RDF;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.services.LowLevelStorageService;
+import org.fcrepo.kernel.utils.FixityResult;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+
+/**
+ * An {@link RdfStream} containing information about the fixity of a
+ * {@link Node}.
+ *
+ * @author ajs6f
+ * @date Oct 15, 2013
+ */
+public class FixityRdfContext extends NodeRdfContext {
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param node
+     * @param graphSubjects
+     * @param lowLevelStorageService
+     * @param blobs
+     * @throws RepositoryException
+     */
+    public FixityRdfContext(final Node node, final GraphSubjects graphSubjects,
+            final LowLevelStorageService lowLevelStorageService,
+            final Iterable&lt;FixityResult&gt; blobs) throws RepositoryException {
+<span class="nc" id="L71">        super(node, graphSubjects, lowLevelStorageService);</span>
+
+<span class="nc" id="L73">        concat(Iterators.concat(Iterators.transform(blobs.iterator(),</span>
+<span class="nc" id="L74">                new Function&lt;FixityResult, Iterator&lt;Triple&gt;&gt;() {</span>
+
+                    @Override
+                    public Iterator&lt;Triple&gt; apply(final FixityResult blob) {
+<span class="nc" id="L78">                        final com.hp.hpl.jena.graph.Node resultSubject = getTransientFixitySubject();</span>
+<span class="nc" id="L79">                        final ImmutableSet.Builder&lt;Triple&gt; b = builder();</span>
+                        try {
+<span class="nc" id="L81">                            b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));</span>
+<span class="nc" id="L82">                            b.add(create(graphSubjects.getGraphSubject(node)</span>
+                                    .asNode(), HAS_FIXITY_RESULT.asNode(),
+                                    resultSubject));
+<span class="nc" id="L85">                            final String storeIdentifier = blob.getStoreIdentifier();</span>
+<span class="nc" id="L86">                            final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)</span>
+                                                                     .asNode();
+<span class="nc" id="L88">                            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),</span>
+                                            contentLocation));
+<span class="nc" id="L90">                            b.add(create(contentLocation,</span>
+                                            RDF.type.asNode(),
+                                            CONTENT_LOCATION_TYPE.asNode()));
+<span class="nc" id="L93">                            b.add(create(contentLocation,</span>
+                                            HAS_CONTENT_LOCATION_VALUE.asNode(),
+                                            createLiteral(storeIdentifier)));
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">                            for (final FixityResult.FixityState state : blob.getStatus()) {</span>
+<span class="nc" id="L98">                                b.add(create(resultSubject, HAS_FIXITY_STATE</span>
+                                        .asNode(), createLiteral(state
+                                        .toString())));
+<span class="nc" id="L101">                            }</span>
+<span class="nc" id="L102">                            final String checksum =</span>
+                                    blob.getComputedChecksum().toString();
+<span class="nc" id="L104">                            b.add(create(resultSubject, HAS_MESSAGE_DIGEST</span>
+                                    .asNode(), createURI(checksum)));
+<span class="nc" id="L106">                            b.add(create(resultSubject, HAS_SIZE.asNode(),</span>
+                                    createTypedLiteral(
+                                            blob.getComputedSize())
+                                    .asNode()));
+<span class="nc" id="L110">                            return b.build().iterator();</span>
+<span class="nc" id="L111">                        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L112">                            throw propagate(e);</span>
+                        }
+                    }
+                })));
+<span class="nc" id="L116">    }</span>
+
+    private com.hp.hpl.jena.graph.Node getTransientFixitySubject() {
+<span class="nc" id="L119">        return createURI(subject().getURI() + &quot;#fixity/&quot; + Calendar.getInstance().getTimeInMillis());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

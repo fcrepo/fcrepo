@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DatastreamServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.services</a> &gt; <span class="el_source">DatastreamServiceImpl.java</span></div><h1>DatastreamServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.services;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static com.google.common.collect.Collections2.filter;
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Sets.difference;
+import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Set;
+
+import javax.jcr.Binary;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.DatastreamImpl;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.BinaryCacheEntry;
+import org.fcrepo.kernel.utils.CacheEntry;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.ProjectedCacheEntry;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.value.binary.ExternalBinaryValue;
+import org.modeshape.jcr.value.binary.InMemoryBinaryValue;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Timer;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
+
+/**
+ * Service for creating and retrieving Datastreams without using the JCR API.
+ *
+ * @author cbeer
+ * @date Feb 11, 2013
+ */
+@Component
+<span class="fc" id="L71">public class DatastreamServiceImpl extends AbstractService implements DatastreamService {</span>
+
+    @Autowired(required = false)
+    StoragePolicyDecisionPoint storagePolicyDecisionPoint;
+
+    @Autowired
+    private LowLevelStorageService llStoreService;
+
+<span class="fc" id="L79">    static final Counter fixityCheckCounter = getMetrics().counter(</span>
+            name(LowLevelStorageService.class, &quot;fixity-check-counter&quot;));
+
+<span class="fc" id="L82">    static final Timer timer = getMetrics().timer(</span>
+            name(Datastream.class, &quot;fixity-check-time&quot;));
+
+<span class="fc" id="L85">    static final Counter fixityRepairedCounter = getMetrics().counter(</span>
+            name(LowLevelStorageService.class, &quot;fixity-repaired-counter&quot;));
+
+<span class="fc" id="L88">    static final Counter fixityErrorCounter = getMetrics().counter(</span>
+            name(LowLevelStorageService.class, &quot;fixity-error-counter&quot;));
+
+<span class="fc" id="L91">    private static final Logger LOGGER = getLogger(DatastreamService.class);</span>
+
+    /**
+     * Create a stub datastream without content
+     * @param session
+     * @param dsPath
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public Datastream createDatastream(final Session session, final String dsPath) throws RepositoryException {
+<span class="fc" id="L102">        return new DatastreamImpl(session, dsPath);</span>
+    }
+    /**
+     * Create a new Datastream node in the JCR store
+     *
+     * @param session the jcr session to use
+     * @param dsPath the absolute path to put the datastream
+     * @param contentType the mime-type for the requestBodyStream
+     * @param requestBodyStream binary payload for the datastream
+     * @return
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     */
+    @Override
+    public Node createDatastreamNode(final Session session,
+            final String dsPath, final String contentType,
+            final String originalFileName,
+            final InputStream requestBodyStream) throws RepositoryException,
+            InvalidChecksumException {
+
+<span class="fc" id="L122">        return createDatastreamNode(session, dsPath, contentType,</span>
+                                       originalFileName, requestBodyStream, null);
+    }
+
+    /**
+     * Create a new Datastream node in the JCR store
+     *
+     *
+     * @param session the jcr session to use
+     * @param dsPath the absolute path to put the datastream
+     * @param contentType the mime-type for the requestBodyStream
+     * @param originalFileName the original file name for the input stream
+     * @param requestBodyStream binary payload for the datastream
+     * @param checksum the digest for the binary payload (as urn:sha1:xyz)   @return
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     */
+    @Override
+    public Node createDatastreamNode(final Session session,
+                                     final String dsPath, final String contentType,
+                                     final String originalFileName, final InputStream requestBodyStream,
+                                     final URI checksum)
+        throws RepositoryException, InvalidChecksumException {
+
+<span class="fc" id="L146">        final Datastream ds = createDatastream(session, dsPath);</span>
+<span class="fc" id="L147">        ds.setContent(requestBodyStream, contentType, checksum,</span>
+                         originalFileName, getStoragePolicyDecisionPoint());
+<span class="fc" id="L149">        return ds.getNode();</span>
+    }
+
+    /**
+     * Retrieve the JCR node for a Datastream by pid and dsid
+     *
+     * @param path
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public Node getDatastreamNode(final Session session, final String path)
+        throws RepositoryException {
+<span class="nc" id="L162">        LOGGER.trace(&quot;Executing getDatastreamNode() with path: {}&quot;, path);</span>
+<span class="nc" id="L163">        final Node dsNode = getDatastream(session, path).getNode();</span>
+<span class="nc" id="L164">        LOGGER.trace(&quot;Retrieved datastream node: {}&quot;, dsNode.getName());</span>
+<span class="nc" id="L165">        return dsNode;</span>
+    }
+
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param path jcr path to the datastream
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public Datastream getDatastream(final Session session, final String path)
+        throws RepositoryException {
+<span class="fc" id="L178">        return new DatastreamImpl(session, path);</span>
+    }
+
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param node datastream node
+     * @return
+     */
+    @Override
+    public Datastream asDatastream(final Node node) {
+<span class="nc" id="L189">        return new DatastreamImpl(node);</span>
+    }
+
+    /**
+     * Get the fixity results for the datastream as a RDF Dataset
+     *
+     * @param subjects
+     * @param datastream
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public RdfStream getFixityResultsModel(final GraphSubjects subjects,
+            final Datastream datastream) throws RepositoryException {
+<span class="nc" id="L203">        final Collection&lt;FixityResult&gt; blobs = runFixityAndFixProblems(datastream);</span>
+
+<span class="nc" id="L205">        return JcrRdfTools.withContext(subjects,</span>
+                datastream.getNode().getSession()).getJcrTriples(
+                datastream.getNode(), blobs).topic(
+                subjects.getGraphSubject(datastream.getNode()).asNode());
+    }
+
+    /**
+     * Run the fixity check on the datastream and attempt to automatically
+     * correct failures if additional copies of the bitstream are available
+     *
+     * @param datastream
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public Collection&lt;FixityResult&gt; runFixityAndFixProblems(
+            final Datastream datastream) throws RepositoryException {
+
+        Set&lt;FixityResult&gt; fixityResults;
+        Set&lt;FixityResult&gt; goodEntries;
+<span class="fc" id="L225">        final URI digestUri = datastream.getContentDigest();</span>
+<span class="fc" id="L226">        final long size = datastream.getContentSize();</span>
+
+<span class="fc" id="L228">        fixityCheckCounter.inc();</span>
+
+<span class="fc" id="L230">        final Timer.Context context = timer.time();</span>
+
+        try {
+<span class="fc" id="L233">            fixityResults =</span>
+                    copyOf(getFixity(datastream.getNode().getNode(JCR_CONTENT),
+                            digestUri, size));
+
+<span class="fc" id="L237">            goodEntries =</span>
+<span class="fc" id="L238">                    copyOf(filter(fixityResults, new Predicate&lt;FixityResult&gt;() {</span>
+
+                        @Override
+                        public boolean apply(
+                                final FixityResult input) {
+<span class="fc" id="L243">                            return input.matches(size, digestUri);</span>
+                        }
+                    }));
+
+        } finally {
+<span class="pc" id="L248">            context.stop();</span>
+<span class="fc" id="L249">        }</span>
+
+<span class="pc bpc" id="L251" title="1 of 2 branches missed.">        if (goodEntries.isEmpty()) {</span>
+<span class="nc" id="L252">            LOGGER.error(&quot;ALL COPIES OF &quot; + datastream.getNode().getPath() +</span>
+                             &quot; HAVE FAILED FIXITY CHECKS.&quot;);
+<span class="nc" id="L254">            return fixityResults;</span>
+        }
+
+<span class="fc" id="L257">        final CacheEntry anyGoodCacheEntry =</span>
+                goodEntries.iterator().next().getEntry();
+
+<span class="fc" id="L260">        final Set&lt;FixityResult&gt; badEntries =</span>
+                difference(fixityResults, goodEntries);
+
+<span class="fc bfc" id="L263" title="All 2 branches covered.">        for (final FixityResult result : badEntries) {</span>
+            try {
+                // we can safely cast to a LowLevelCacheEntry here, since
+                // other entries have to be filtered out before
+<span class="fc" id="L267">                final LowLevelCacheEntry lle = (LowLevelCacheEntry) result.getEntry();</span>
+<span class="fc" id="L268">                lle.storeValue(anyGoodCacheEntry.getInputStream());</span>
+<span class="fc" id="L269">                final FixityResult newResult =</span>
+                        result.getEntry().checkFixity(digestUri, size);
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">                if (newResult.isSuccess()) {</span>
+<span class="fc" id="L272">                    result.setRepaired();</span>
+<span class="fc" id="L273">                    fixityRepairedCounter.inc();</span>
+                } else {
+<span class="nc" id="L275">                    fixityErrorCounter.inc();</span>
+                }
+<span class="nc" id="L277">            } catch (final IOException e) {</span>
+<span class="nc" id="L278">                LOGGER.warn(&quot;Exception repairing low-level cache entry: {}&quot;, e);</span>
+<span class="fc" id="L279">            }</span>
+<span class="fc" id="L280">        }</span>
+
+<span class="fc" id="L282">        return fixityResults;</span>
+    }
+
+    /**
+     * Get the fixity results for this datastream's bitstream, and compare it
+     * against the given checksum and size.
+     *
+     * @param resource
+     * @param dsChecksum -the checksum and algorithm represented as a URI
+     * @param dsSize
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public Collection&lt;FixityResult&gt; getFixity(final Node resource,
+            final URI dsChecksum, final long dsSize) throws RepositoryException {
+<span class="fc" id="L298">        LOGGER.debug(&quot;Checking resource: &quot; + resource.getPath());</span>
+
+<span class="fc" id="L300">        final Binary bin = resource.getProperty(JCR_DATA).getBinary();</span>
+
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">        if (bin instanceof ExternalBinaryValue) {</span>
+<span class="nc" id="L303">            return ImmutableSet.of(new ProjectedCacheEntry(bin, resource.getPath())</span>
+                                    .checkFixity(dsChecksum, dsSize));
+
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        } else if (bin instanceof InMemoryBinaryValue) {</span>
+<span class="fc" id="L307">            return ImmutableSet.of(new BinaryCacheEntry(bin, resource.getPath())</span>
+                                    .checkFixity(dsChecksum, dsSize));
+        } else {
+<span class="fc" id="L310">            final Function&lt;LowLevelCacheEntry, FixityResult&gt; checkCacheFunc =</span>
+                getCheckCacheFixityFunction(dsChecksum, dsSize);
+<span class="fc" id="L312">            return llStoreService.transformLowLevelCacheEntries(resource,</span>
+                                                                   checkCacheFunc);
+        }
+
+    }
+
+    /**
+     * Set the low-level storage service (if Spring didn't wire it in)
+     *
+     * @param llStoreService
+     */
+    public void setLlStoreService(final LowLevelStorageService llStoreService) {
+<span class="fc" id="L324">        this.llStoreService = llStoreService;</span>
+<span class="fc" id="L325">    }</span>
+
+    /**
+     * Set the storage policy decision point (if Spring didn't wire it in for
+     * us)
+     *
+     * @param pdp
+     */
+    public void setStoragePolicyDecisionPoint(final StoragePolicyDecisionPoint pdp) {
+<span class="fc" id="L334">        this.storagePolicyDecisionPoint = pdp;</span>
+<span class="fc" id="L335">    }</span>
+
+    /**
+     * Get the StoragePolicy Decision Point for this service.
+     *
+     * @return a PolicyDecisionPoint
+     */
+    private StoragePolicyDecisionPoint getStoragePolicyDecisionPoint() {
+
+<span class="fc" id="L344">        return storagePolicyDecisionPoint;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

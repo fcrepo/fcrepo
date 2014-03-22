@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StoreChunkOutputStream.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.utils.infinispan</a> &gt; <span class="el_source">StoreChunkOutputStream.java</span></div><h1>StoreChunkOutputStream.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.utils.infinispan;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * A near-copy of a Modeshape class (of the same name, but is
+ * unfortunately hidden from us) that takes a single OutputStream
+ * and chunks it into 1MB chunks for Infinispan
+ *
+ * @author Chris Beer
+ * @date Mar 14, 2013
+ */
+public class StoreChunkOutputStream extends OutputStream {
+
+<span class="fc" id="L42">    private static final Logger LOGGER = getLogger(StoreChunkOutputStream.class);</span>
+
+    // 1 MB
+    public static final int CHUNKSIZE = 1024 * 1024 * 1;
+
+    private static final int CHUNK_BUFFER_SIZE = 1024;
+
+    protected final CacheStore blobCache;
+
+    protected final String keyPrefix;
+
+    private final ByteArrayOutputStream chunkBuffer;
+
+    private boolean closed;
+
+    protected int chunkIndex;
+
+<span class="fc" id="L59">    private final InternalEntryFactory entryFactory =</span>
+        new InternalEntryFactoryImpl();
+
+    /**
+     * Prepare to store the OutputStream in the given CacheStore
+     * with the given prefix
+     * @param blobCache
+     * @param keyPrefix
+     */
+    public StoreChunkOutputStream(final CacheStore blobCache,
+                                  final String keyPrefix) {
+<span class="fc" id="L70">        super();</span>
+<span class="fc" id="L71">        this.blobCache = blobCache;</span>
+<span class="fc" id="L72">        this.keyPrefix = keyPrefix;</span>
+<span class="fc" id="L73">        chunkBuffer = new ByteArrayOutputStream(CHUNK_BUFFER_SIZE);</span>
+<span class="fc" id="L74">    }</span>
+
+    /**
+     * @return Number of chunks stored.
+     */
+    public int getNumberChunks() {
+<span class="nc" id="L80">        return chunkIndex;</span>
+    }
+
+    @Override
+    public void write(final int b) throws IOException {
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (chunkBuffer.size() == CHUNKSIZE) {</span>
+<span class="nc" id="L86">            storeBufferInBLOBCache();</span>
+        }
+<span class="nc" id="L88">        chunkBuffer.write(b);</span>
+<span class="nc" id="L89">    }</span>
+
+    @Override
+    public void write(final byte[] b, final int off, final int len)
+        throws IOException {
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (len + chunkBuffer.size() &lt;= CHUNKSIZE) {</span>
+<span class="fc" id="L95">            chunkBuffer.write(b, off, len);</span>
+        } else {
+<span class="nc" id="L97">            final int storeLength = CHUNKSIZE - chunkBuffer.size();</span>
+<span class="nc" id="L98">            write(b, off, storeLength);</span>
+<span class="nc" id="L99">            storeBufferInBLOBCache();</span>
+<span class="nc" id="L100">            write(b, off + storeLength, len - storeLength);</span>
+        }
+<span class="fc" id="L102">    }</span>
+
+    @Override
+    public void close() throws IOException {
+<span class="fc" id="L106">        LOGGER.debug(&quot;Close. Buffer size at close: {0}&quot;, chunkBuffer.size());</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (closed) {</span>
+<span class="nc" id="L108">            LOGGER.debug(&quot;Stream already closed.&quot;);</span>
+<span class="nc" id="L109">            return;</span>
+        }
+<span class="fc" id="L111">        closed = true;</span>
+        // store last chunk
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (chunkBuffer.size() &gt; 0) {</span>
+<span class="fc" id="L114">            storeBufferInBLOBCache();</span>
+        }
+<span class="fc" id="L116">    }</span>
+
+    private void storeBufferInBLOBCache() throws IOException {
+<span class="fc" id="L119">        final byte[] chunk = chunkBuffer.toByteArray();</span>
+        try {
+<span class="fc" id="L121">            final String chunkKey = keyPrefix + &quot;-&quot; + chunkIndex;</span>
+<span class="fc" id="L122">            final InternalCacheEntry c = blobCache.load(chunkKey);</span>
+            final InternalCacheEntry cacheEntry;
+<span class="fc bfc" id="L124" title="All 2 branches covered.">            if (c == null) {</span>
+<span class="fc" id="L125">                cacheEntry =</span>
+                    entryFactory.create(chunkKey,
+                                        chunk,
+                                        new EmbeddedMetadata
+                                        .Builder().build());
+            } else {
+<span class="fc" id="L131">                cacheEntry = entryFactory.create(chunkKey, chunk, c);</span>
+            }
+
+<span class="fc" id="L134">            LOGGER.debug(&quot;Store chunk {0}&quot;, chunkKey);</span>
+<span class="fc" id="L135">            blobCache.store(cacheEntry);</span>
+<span class="fc" id="L136">            chunkIndex++;</span>
+<span class="fc" id="L137">            chunkBuffer.reset();</span>
+<span class="nc" id="L138">        } catch (final CacheLoaderException e) {</span>
+<span class="nc" id="L139">            throw new IOException(e);</span>
+<span class="fc" id="L140">        }</span>
+<span class="fc" id="L141">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

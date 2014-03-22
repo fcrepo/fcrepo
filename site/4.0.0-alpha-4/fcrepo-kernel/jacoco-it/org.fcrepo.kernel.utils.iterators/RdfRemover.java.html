@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RdfRemover.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.utils.iterators</a> &gt; <span class="el_source">RdfRemover.java</span></div><h1>RdfRemover.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.utils.iterators;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
+
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.utils.NodePropertiesTools;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+/**
+ * Consumes an {@link RdfStream} by removing its contents from the
+ * JCR.
+ *
+ * @see {@link RdfAdder} for contrast
+ * @author ajs6f
+ * @date Oct 24, 2013
+ */
+public class RdfRemover extends PersistingRdfStreamConsumer {
+
+<span class="nc" id="L44">    private static final Logger LOGGER = getLogger(RdfRemover.class);</span>
+<span class="nc" id="L45">    private final NodePropertiesTools propertiesTools = new NodePropertiesTools();</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param stream
+     */
+    public RdfRemover(final GraphSubjects graphSubjects, final Session session,
+        final RdfStream stream) {
+<span class="nc" id="L56">        super(graphSubjects, session, stream);</span>
+<span class="nc" id="L57">    }</span>
+
+    @Override
+    protected void operateOnMixin(final Resource mixinResource,
+        final Node subjectNode) throws RepositoryException {
+
+<span class="nc" id="L63">        final String mixinName = jcrMixinNameFromRdfResource(mixinResource);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {</span>
+<span class="nc" id="L65">            LOGGER.debug(&quot;Removing mixin: {} from node: {}.&quot;, mixinName,</span>
+                    subjectNode.getPath());
+            try {
+<span class="nc" id="L68">                subjectNode.removeMixin(mixinName);</span>
+<span class="nc" id="L69">            } catch (final NoSuchNodeTypeException e) {</span>
+<span class="nc" id="L70">                LOGGER.debug(&quot;which that node turned out not to have.&quot;);</span>
+<span class="nc" id="L71">                LOGGER.trace(&quot;Backtrace: &quot;, e);</span>
+<span class="nc" id="L72">            }</span>
+        }
+<span class="nc" id="L74">    }</span>
+
+    @Override
+    protected void operateOnProperty(final Statement t, final Node n)
+        throws RepositoryException {
+<span class="nc" id="L79">        LOGGER.debug(&quot;Trying to remove property from triple: {} on node: {}.&quot;, t, n</span>
+                .getPath());
+<span class="nc" id="L81">        final String propertyName =</span>
+            getPropertyNameFromPredicate(n, t.getPredicate());
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (n.hasProperty(propertyName)) {</span>
+<span class="nc" id="L84">            final Value v =</span>
+                jcrRdfTools().createValue(n, t.getObject(),
+                        propertiesTools.getPropertyType(n, propertyName));
+<span class="nc" id="L87">            propertiesTools.removeNodeProperty(idTranslator(), n, propertyName,</span>
+                    v);
+        }
+<span class="nc" id="L90">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

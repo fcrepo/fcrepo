@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VersionsRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.rdf.impl</a> &gt; <span class="el_source">VersionsRdfContext.java</span></div><h1>VersionsRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.rdf.impl;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+
+import java.util.Iterator;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
+
+import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.services.LowLevelStorageService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.utils.iterators.VersionIterator;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+
+
+/**
+ * An {@link NodeRdfContext} that supplies {@link Triple}s concerning
+ * the versions of a selected {@link Node}.
+ *
+ * @author ajs6f
+ * @date Oct 15, 2013
+ */
+public class VersionsRdfContext extends RdfStream {
+
+    private final VersionManager versionManager;
+
+    private final VersionHistory versionHistory;
+
+    private final GraphSubjects graphSubjects;
+
+    private final LowLevelStorageService lowLevelStorageService;
+
+    private final com.hp.hpl.jena.graph.Node subject;
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param node
+     * @param graphSubjects
+     * @param lowLevelStorageService
+     * @throws RepositoryException
+     */
+    public VersionsRdfContext(final Node node, final GraphSubjects graphSubjects,
+        final LowLevelStorageService lowLevelStorageService)
+        throws RepositoryException {
+<span class="fc" id="L72">        super();</span>
+<span class="fc" id="L73">        this.lowLevelStorageService = lowLevelStorageService;</span>
+<span class="fc" id="L74">        this.graphSubjects = graphSubjects;</span>
+<span class="fc" id="L75">        this.subject = graphSubjects.getGraphSubject(node).asNode();</span>
+<span class="fc" id="L76">        versionManager = node.getSession().getWorkspace().getVersionManager();</span>
+<span class="fc" id="L77">        versionHistory = versionManager.getVersionHistory(node.getPath());</span>
+
+<span class="fc" id="L79">        concat(versionTriples());</span>
+<span class="fc" id="L80">    }</span>
+
+    private Iterator&lt;Triple&gt; versionTriples() throws RepositoryException {
+<span class="fc" id="L83">        return Iterators.concat(Iterators.transform(new VersionIterator(versionHistory</span>
+                .getAllVersions()), version2triples));
+    }
+
+<span class="fc" id="L87">    private Function&lt;Version, Iterator&lt;Triple&gt;&gt; version2triples =</span>
+<span class="fc" id="L88">        new Function&lt;Version, Iterator&lt;Triple&gt;&gt;() {</span>
+
+            @Override
+            public Iterator&lt;Triple&gt; apply(final Version version) {
+
+                try {
+<span class="fc" id="L94">                    final Node frozenNode = version.getFrozenNode();</span>
+<span class="fc" id="L95">                    final com.hp.hpl.jena.graph.Node versionSubject =</span>
+                        graphSubjects.getGraphSubject(frozenNode).asNode();
+
+<span class="fc" id="L98">                    final RdfStream results =</span>
+                            new RdfStream(new PropertiesRdfContext(frozenNode,
+                                    graphSubjects, lowLevelStorageService)
+                                    .iterator());
+
+<span class="fc" id="L103">                    results.concat(create(subject, HAS_VERSION.asNode(),</span>
+                            versionSubject));
+
+<span class="fc bfc" id="L106" title="All 2 branches covered.">                    for (final String label : versionHistory</span>
+                            .getVersionLabels(version)) {
+<span class="fc" id="L108">                        results.concat(create(versionSubject, HAS_VERSION_LABEL</span>
+                                .asNode(), createLiteral(label)));
+                    }
+
+<span class="fc" id="L112">                    return results;</span>
+
+<span class="nc" id="L114">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L115">                    throw propagate(e);</span>
+                }
+            }
+
+        };
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
