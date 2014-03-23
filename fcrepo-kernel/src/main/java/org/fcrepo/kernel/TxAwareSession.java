@@ -19,6 +19,7 @@ package org.fcrepo.kernel;
 import static java.lang.reflect.Proxy.newProxyInstance;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.jcr.Session;
@@ -32,7 +33,7 @@ public class TxAwareSession implements InvocationHandler {
 
     private final String txId;
 
-    private Session session;
+    private final Session session;
 
     /**
      * @param session a JCR session
@@ -58,16 +59,24 @@ public class TxAwareSession implements InvocationHandler {
 
     @Override
     public Object invoke(final Object proxy, final Method method,
-        final Object[] args) throws ReflectiveOperationException {
-        if (method.getName().equals("logout") ||
-                method.getName().equals("save")) {
+            final Object[] args) throws Throwable {
+        final String name = method.getName();
+        if (name.equals("logout") || name.equals("save")) {
             return null;
-        } else if (method.getName().equals("getTxId")) {
+        } else if (name.equals("getTxId")) {
             return txId;
-        } else if (method.getName().equals("impersonate")) {
-            return newInstance((Session) method.invoke(session, args), txId);
         } else {
-            return method.invoke(session, args);
+            final Object invocationResult;
+            try {
+                invocationResult = method.invoke(session, args);
+            } catch (final InvocationTargetException e) {
+                throw e.getCause();
+            }
+            if (name.equals("impersonate")) {
+                return newInstance((Session) invocationResult, txId);
+            } else {
+                return invocationResult;
+            }
         }
     }
 }
