@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Credentials;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -40,6 +41,7 @@ public class TxAwareSessionTest {
 
     private Session testObj;
 
+    private static final String PATH = "/xyz";
     @Before
     public void setUp() {
         initMocks(this);
@@ -49,8 +51,8 @@ public class TxAwareSessionTest {
 
     @Test
     public void shouldProxyMethods() throws RepositoryException {
-        testObj.getItem("/xyz");
-        verify(mockSession).getItem("/xyz");
+        testObj.getItem(PATH);
+        verify(mockSession).getItem(PATH);
     }
 
     @Test
@@ -76,5 +78,12 @@ public class TxAwareSessionTest {
         testObj.save();
         verify(mockSession, never()).save();
     }
+    
+	@Test(expected=PathNotFoundException.class)
+	public void shouldThrowUnderlyingException() throws RepositoryException {
+		when(testObj.getNode(PATH)).thenThrow(
+				new PathNotFoundException());
+		testObj.getNode(PATH);
+	}
 
 }

@@ -338,6 +338,24 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testGetNonExistingObject() throws Exception {
+    	/* create new tx */
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        final HttpResponse response = execute(createTx);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+
+        /* try to retrieve a non existing object inside the tx */
+        final String txLocation =
+                response.getFirstHeader("Location").getValue();
+        final String newObjectLocation = txLocation + "/idontexist";
+        final HttpGet httpGet = new HttpGet(newObjectLocation);
+        client = createClient();
+        HttpResponse responseFromGet = client.execute(httpGet);
+        int status = responseFromGet.getStatusLine().getStatusCode();
+        assertEquals("Status should be 404", 404, status);
+    }
+
 
     /**
      * Tests that transactions are treated as atomic with regards to nodes.
