@@ -85,7 +85,7 @@ public class ExternalIdentifierTranslator extends IdentifierTranslator<Resource>
 
 
     /**
-     * @param translationChain the translationChain to use
+     * @param chain the translationChain to use
      */
     public void setTranslationChain(final List<InternalIdentifierTranslator> chain) {
         this.translationChain = chain;

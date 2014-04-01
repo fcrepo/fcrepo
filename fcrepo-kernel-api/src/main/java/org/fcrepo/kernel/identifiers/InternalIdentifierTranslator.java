@@ -48,6 +48,9 @@ public abstract class InternalIdentifierTranslator extends IdentifierTranslator<
         return b;
     }
 
+    /**
+     * @return an identity translation
+     */
     public static InternalIdentifierTranslator identityTranslation() {
         return identity;
     }

@@ -106,14 +106,14 @@ public class HierarchyTranslator extends InternalIdentifierTranslator {
     }
 
     /**
-     * @param separator the separator to use
+     * @param sep the separator to use
      */
     public void setSeparator(final String sep) {
         this.separator = sep;
     }
 
     /**
-     * @param length the length to set
+     * @param l the length to set
      */
     public void setLength(final int l) {
         if (l < 1) {
@@ -123,14 +123,14 @@ public class HierarchyTranslator extends InternalIdentifierTranslator {
     }
 
     /**
-     * @param levels the levels to set
+     * @param l the levels to set
      */
-    public void setLevels(final int c) {
-        this.levels = c;
+    public void setLevels(final int l) {
+        this.levels = l;
     }
 
     /**
-     * @param prefix the prefix to set
+     * @param p the prefix to set
      */
     public void setPrefix(final String p) {
         this.prefix = p;
