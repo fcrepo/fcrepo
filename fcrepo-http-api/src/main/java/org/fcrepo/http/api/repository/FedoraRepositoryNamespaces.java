@@ -42,9 +42,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -84,8 +84,10 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
         throws RepositoryException, IOException {
 
         try {
+            final HttpIdentifierTranslator idTranslator = new HttpIdentifierTranslator(session,
+                    FedoraRepositoryNamespaces.class, uriInfo);
             final Dataset dataset =
-                repositoryService.getNamespaceRegistryDataset(session);
+                repositoryService.getNamespaceRegistryDataset(session, idTranslator);
             parseExecute(IOUtils.toString(requestBodyStream), dataset);
             session.save();
             return status(SC_NO_CONTENT).build();
@@ -104,6 +106,8 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
                       TEXT_HTML, APPLICATION_XHTML_XML})
     @HtmlTemplate("jcr:namespaces")
     public RdfStream getNamespaces() throws RepositoryException {
-        return repositoryService.getNamespaceRegistryStream(session).session(session);
+        final HttpIdentifierTranslator idTranslator = new HttpIdentifierTranslator(session,
+                FedoraRepositoryNamespaces.class, uriInfo);
+        return repositoryService.getNamespaceRegistryStream(session, idTranslator).session(session);
     }
 }

@@ -47,7 +47,7 @@ import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects.RESOURCE_NAMESPACE;
+import static org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
@@ -99,9 +99,9 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
 import org.junit.Before;
@@ -127,7 +127,7 @@ public class JcrRdfToolsTest {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
 
-    private GraphSubjects testSubjects;
+    private IdentifierTranslator testSubjects;
 
     private JcrRdfTools testObj;
 
@@ -143,7 +143,7 @@ public class JcrRdfToolsTest {
     @Before
     public final void setUp() throws RepositoryException {
         initMocks(this);
-        testSubjects = new DefaultGraphSubjects(mockSession);
+        testSubjects = new DefaultIdentifierTranslator();
         testObj = new JcrRdfTools(testSubjects, mockSession);
         buildMockNodeAndSurroundings();
     }
@@ -189,10 +189,8 @@ public class JcrRdfToolsTest {
         when(mockNode.hasProperties()).thenReturn(true);
         final Model actual = testObj.getJcrTriples(mockNode).asModel();
         logRDF(actual);
-        assertTrue("Didn't find appropriate triple!", actual.contains(
-                testSubjects.getGraphSubject(mockNode), actual
-                        .getProperty(mockPredicateName), actual
-                        .createLiteral("abc")));
+        assertTrue("Didn't find appropriate triple!", actual.contains(testSubjects.getSubject(mockNode.getPath()),
+                actual.getProperty(mockPredicateName), actual.createLiteral("abc")));
 
     }
 
@@ -237,10 +235,9 @@ public class JcrRdfToolsTest {
                 .thenReturn(mockNodeTypeManager);
 
         final Model actual = testObj.getJcrTriples(mockNode).asModel();
-        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
-                actual.createProperty(REPOSITORY_NAMESPACE
-                        + "repository/some-descriptor-key"), actual
-                        .createLiteral("some-descriptor-value")));
+        assertTrue(actual.contains(testSubjects.getSubject(mockNode.getPath()), actual
+                .createProperty(REPOSITORY_NAMESPACE + "repository/some-descriptor-key"), actual
+                .createLiteral("some-descriptor-value")));
     }
 
     @Test
@@ -285,7 +282,7 @@ public class JcrRdfToolsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockMixinNodeType});
-        
+
         when(mockPrimaryNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
         when(mockMixinNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
 
@@ -301,7 +298,7 @@ public class JcrRdfToolsTest {
                 .createProperty(LDP_NAMESPACE + "membersInlined"),
                 actual.createLiteral(TRUE.toString())));
 
-        final Resource graphSubject = testSubjects.getGraphSubject(mockNode);
+        final Resource graphSubject = testSubjects.getSubject(mockNode.getPath());
         assertTrue(actual.contains(graphSubject, type, actual
                 .createProperty(LDP_NAMESPACE + "Container")));
 
@@ -527,11 +524,9 @@ public class JcrRdfToolsTest {
         final Model actual =
             testObj.getVersionTriples(mockNode).asModel();
 
-        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode),
-                HAS_VERSION, testSubjects.getGraphSubject(mockFrozenNode)));
-        assertTrue(actual.contains(
-                testSubjects.getGraphSubject(mockFrozenNode),
-                HAS_VERSION_LABEL, actual.createLiteral("abc")));
+        assertTrue(actual.contains(testSubjects.getSubject(mockNode.getPath()), HAS_VERSION, testSubjects
+                .getSubject(mockFrozenNode.getPath())));
+        assertTrue(actual.contains(testSubjects.getSubject(mockFrozenNode.getPath()), HAS_VERSION_LABEL, actual.createLiteral("abc")));
     }
 
     @Test
@@ -650,7 +645,7 @@ public class JcrRdfToolsTest {
     private NamespaceRegistry mockNsRegistry;
 
     @Mock
-    private GraphSubjects mockFactory;
+    private IdentifierTranslator mockFactory;
 
     @Mock
     private Resource mockSubject;

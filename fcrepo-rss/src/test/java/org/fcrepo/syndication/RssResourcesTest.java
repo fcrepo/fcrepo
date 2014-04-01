@@ -17,9 +17,10 @@ package org.fcrepo.syndication;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.Before;
@@ -27,7 +28,6 @@ import org.junit.Test;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
@@ -41,7 +41,7 @@ public class RssResourcesTest {
     private Node mockNode;
     private FedoraResourceImpl mockResource;
     private UriInfo uriInfo;
-    private GraphSubjects mockSubjects;
+    private IdentifierTranslator mockSubjects;
 
     @Before
     public void setUp() {
@@ -50,7 +50,7 @@ public class RssResourcesTest {
         mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
-        mockSubjects = new DefaultGraphSubjects(mock(Session.class));
+        mockSubjects = new DefaultIdentifierTranslator();
     }
 
     @Test
@@ -61,7 +61,7 @@ public class RssResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
 
         final Model model = testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 

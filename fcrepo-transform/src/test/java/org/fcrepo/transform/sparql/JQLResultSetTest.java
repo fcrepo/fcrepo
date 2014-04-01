@@ -25,7 +25,7 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -62,7 +62,7 @@ public class JQLResultSetTest {
     QueryResult mockQueryResult;
 
     @Mock
-    GraphSubjects mockGraphSubjects;
+    IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private RowIterator mockRows;
@@ -165,7 +165,7 @@ public class JQLResultSetTest {
     public void testNextWithResource() throws Exception {
         when(mockValue.getType()).thenReturn(PropertyType.PATH);
         when(mockValue.getString()).thenReturn("/x");
-        when(mockGraphSubjects.getGraphSubject("/x")).thenReturn(ResourceFactory.createResource("info:x"));
+        when(mockGraphSubjects.getSubject("/x")).thenReturn(ResourceFactory.createResource("info:x"));
         final QuerySolution solution = testObj.next();
 
         assertTrue(solution.contains("a"));
@@ -178,7 +178,7 @@ public class JQLResultSetTest {
         when(mockValue.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockValue.getString()).thenReturn("uuid");
         when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(ResourceFactory.createResource("http://localhost:8080/xyz"));
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(ResourceFactory.createResource("http://localhost:8080/xyz"));
         final QuerySolution solution = testObj.next();
 
         assertEquals("http://localhost:8080/xyz", solution.get("a").asResource().getURI());

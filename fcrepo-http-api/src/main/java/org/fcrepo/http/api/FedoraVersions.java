@@ -17,9 +17,9 @@
 package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
-import org.fcrepo.http.api.versioning.VersionAwareHttpGraphSubjects;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.api.versioning.VersionAwareHttpIdentifierTranslator;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.http.commons.session.SessionFactory;
@@ -112,7 +112,7 @@ public class FedoraVersions extends ContentExposingResource {
         final FedoraResource resource = nodeService.getObject(session, path);
 
         return resource.getVersionTriples(nodeTranslator()).session(session).topic(
-                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
+                nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
 
     /**
@@ -236,7 +236,7 @@ public class FedoraVersions extends ContentExposingResource {
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
         return resource.getTriples(nodeTranslator()).session(session).topic(
-                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
+                nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
 
     /**
@@ -259,8 +259,8 @@ public class FedoraVersions extends ContentExposingResource {
                     uriInfo.getRequestUri().toString().replace("/" + FCR_CONTENT, ""));
             final Datastream ds =
                     datastreamService.asDatastream(frozenNode);
-            final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(session, FedoraNodes.class,
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
             return getDatastreamContentResponse(ds, rangeValue, request, subjects);
 
@@ -272,8 +272,8 @@ public class FedoraVersions extends ContentExposingResource {
     /**
      * A translator suitable for subjects that represent nodes.
      */
-    protected VersionAwareHttpGraphSubjects nodeTranslator() throws RepositoryException {
-        return new VersionAwareHttpGraphSubjects(session,
+    protected VersionAwareHttpIdentifierTranslator nodeTranslator() throws RepositoryException {
+        return new VersionAwareHttpIdentifierTranslator(session,
                 sessionFactory.getInternalSession(), FedoraNodes.class,
                 uriInfo);
     }

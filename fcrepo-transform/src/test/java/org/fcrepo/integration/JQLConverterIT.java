@@ -16,8 +16,8 @@
 
 package org.fcrepo.integration;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,12 +43,12 @@ public class JQLConverterIT {
     Repository repo;
 
     private Session session;
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     @Before
     public void setUp() throws Exception {
         session = repo.login();
-        subjects = new DefaultGraphSubjects(session);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @Test
@@ -118,7 +118,7 @@ public class JQLConverterIT {
 
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> " +
                                   "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>" +
-                                  "SELECT ?title WHERE { ?subject dc:title ?title . ?subject fedorarelsext:isPartOf <" + subjects.getGraphSubject("/xyz") + "> }";
+                                  "SELECT ?title WHERE { ?subject dc:title ?title . ?subject fedorarelsext:isPartOf <" + subjects.getSubject("/xyz") + "> }";
         JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
         assertEquals("SELECT [fedoraResource_subject].[dc:title] AS title FROM [fedora:resource] AS [fedoraResource_subject] WHERE ([fedoraResource_subject].[dc:title] IS NOT NULL AND [fedoraResource_subject].[fedorarelsext:isPartOf] = CAST('" + orCreateNode.getIdentifier() + "' AS REFERENCE))", testObj.getStatement());
     }

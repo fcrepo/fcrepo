@@ -28,7 +28,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.slf4j.Logger;
 
@@ -53,7 +53,7 @@ public class JcrPropertyStatementListener extends StatementListener {
     private static final Logger LOGGER =
             getLogger(JcrPropertyStatementListener.class);
 
-    private final GraphSubjects subjects;
+    private final IdentifierTranslator subjects;
 
     private final Session session;
 
@@ -65,7 +65,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @return
      */
     public static JcrPropertyStatementListener getListener(
-            final GraphSubjects subjects, final Session session, final Model problemModel) {
+            final IdentifierTranslator subjects, final Session session, final Model problemModel) {
         return new JcrPropertyStatementListener(subjects, session, problemModel);
     }
 
@@ -75,7 +75,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param subjects
      * @param session
      */
-    private JcrPropertyStatementListener(final GraphSubjects subjects,
+    private JcrPropertyStatementListener(final IdentifierTranslator subjects,
             final Session session, final Model problems) {
         super();
         this.session = session;
@@ -101,9 +101,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            final Node subjectNode =
-                    subjects.getNodeFromGraphSubject(subject);
-
+            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -175,8 +173,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            final Node subjectNode =
-                    subjects.getNodeFromGraphSubject(subject);
+            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update

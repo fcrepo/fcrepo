@@ -16,6 +16,8 @@
 
 package org.fcrepo.webhooks;
 
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.webhooks.FedoraWebhooks.WEBHOOK_CALLBACK_PROPERTY;
 import static org.fcrepo.webhooks.FedoraWebhooks.WEBHOOK_JCR_TYPE;
 import static org.fcrepo.webhooks.FedoraWebhooks.WEBHOOK_PREFIX;
@@ -51,7 +53,7 @@ public class FedoraWebhooksTest {
     @Before
     public void setUp() throws Exception {
         testObj = new FedoraWebhooks();
-        mockSession = TestHelpers.mockSession(testObj);
+        mockSession = mockSession(testObj);
         mockRoot = mock(Node.class);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         final Repository mockRepo = mock(Repository.class);
@@ -62,16 +64,16 @@ public class FedoraWebhooksTest {
         when(mockWS.getNodeTypeManager()).thenReturn(mockNT);
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         TestHelpers.setField(testObj, "session", mockSession);
-        TestHelpers.setField(testObj, "readOnlySession", mockSession);
+        setField(testObj, "readOnlySession", mockSession);
         final SessionFactory mockSessions = mock(SessionFactory.class);
         when(mockSessions.getInternalSession()).thenReturn(mockSession);
-        TestHelpers.setField(testObj, "sessions", mockSessions);
+        setField(testObj, "sessions", mockSessions);
     }
 
     @Test
     public void testInitialize() throws Exception {
         final EventBus mockBus = mock(EventBus.class);
-        TestHelpers.setField(testObj, "eventBus", mockBus);
+        setField(testObj, "eventBus", mockBus);
         testObj.initialize();
         verify(mockBus).register(testObj);
     }
@@ -140,10 +142,10 @@ public class FedoraWebhooksTest {
     }
 
     @Test
-    public void testSessions() throws NoSuchFieldException {
+    public void testSessions() {
 
         final EventBus mockBus = mock(EventBus.class);
-        TestHelpers.setField(testObj, "eventBus", mockBus);
+        setField(testObj, "eventBus", mockBus);
 
         testObj.logoutSession();
         verify(mockSession).logout();

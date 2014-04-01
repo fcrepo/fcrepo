@@ -16,13 +16,13 @@
 
 package org.fcrepo.integration.generator;
 
-import static java.lang.System.err;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -30,12 +30,15 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.io.ByteArrayInputStream;
 
 @ContextConfiguration({"/spring-test/test-container.xml"})
 public class DublinCoreGeneratorIT extends AbstractResourceIT {
+
+    private static final Logger log = getLogger(DublinCoreGeneratorIT.class);
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
@@ -50,8 +53,7 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
                         .getBytes()));
         post.setEntity(entity);
         assertEquals(204, getStatus(post));
-        final HttpGet getWorstCaseOaiMethod =
-                new HttpGet(serverOAIAddress + "DublinCoreTest1/oai:dc");
+        final HttpGet getWorstCaseOaiMethod = new HttpGet(serverOAIAddress + "DublinCoreTest1/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         final HttpResponse response = client.execute(getWorstCaseOaiMethod);
 
@@ -59,11 +61,9 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Got content: {}", content);
-        assertTrue("Didn't find oai_dc!", compile("oai_dc", DOTALL).matcher(
-                content).find());
+        assertTrue("Didn't find oai_dc!", compile("oai_dc", DOTALL).matcher(content).find());
 
-        assertTrue("Didn't find dc:identifier!", compile("dc:identifier",
-                DOTALL).matcher(content).find());
+        assertTrue("Didn't find dc:identifier!", compile("dc:identifier", DOTALL).matcher(content).find());
     }
 
     @Test
@@ -73,21 +73,18 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
         HttpResponse response = client.execute(postObjMethod(pid));
         assertEquals(201, response.getStatusLine().getStatusCode());
-        response =
-            client.execute(postDSMethod(pid, "DC", "marbles for everyone"));
+        response = client.execute(postDSMethod(pid, "DC", "marbles for everyone"));
         final int status = response.getStatusLine().getStatusCode();
         if (status != 201) {
-            err.println(EntityUtils.toString(response.getEntity()));
+            log.error(EntityUtils.toString(response.getEntity()));
         }
         assertEquals(201, status);
 
-        final HttpGet getWorstCaseOaiMethod =
-            new HttpGet(serverOAIAddress + pid + "/oai:dc");
+        final HttpGet getWorstCaseOaiMethod = new HttpGet(serverOAIAddress + pid + "/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
         response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
-        assertTrue("Didn't find our datastream!", compile(
-                "marbles for everyone", DOTALL).matcher(content).find());
+        assertTrue("Didn't find our datastream!", compile("marbles for everyone", DOTALL).matcher(content).find());
     }
 }

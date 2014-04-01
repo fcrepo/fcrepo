@@ -40,7 +40,7 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
         private final String name;
 
-        HttpHeaderPrincipal(String name) {
+        HttpHeaderPrincipal(final String name) {
             this.name = name;
         }
 
@@ -55,22 +55,20 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(final Object o) {
             if (o instanceof HttpHeaderPrincipal) {
                 return ((HttpHeaderPrincipal) o).getName().equals(
                         this.getName());
-            } else {
-                return false;
             }
+            return false;
         }
 
         @Override
         public int hashCode() {
             if (name == null) {
                 return 0;
-            } else {
-                return name.hashCode();
             }
+            return name.hashCode();
         }
 
     }
@@ -82,14 +80,14 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
     /**
      * @param headerName The name of the header from which to extract principals
      */
-    public void setHeaderName(String headerName) {
+    public void setHeaderName(final String headerName) {
         this.headerName = headerName;
     }
 
     /**
      * @param separator The string by which to split header values
      */
-    public void setSeparator(String separator) {
+    public void setSeparator(final String separator) {
         this.separator = separator;
     }
 

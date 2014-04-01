@@ -57,7 +57,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
@@ -194,12 +194,9 @@ public class HierarchyRdfContextTest {
         when(mockNode.getNodes()).thenReturn(mockNodes);
         when(mockParentNode.hasProperties()).thenReturn(false);
         when(mockNode.hasProperties()).thenReturn(false);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                testSubject);
-        when(mockGraphSubjects.getGraphSubject(mockParentNode)).thenReturn(
-                testParentSubject);
-        when(mockGraphSubjects.getGraphSubject(mockChildNode)).thenReturn(
-                testChildSubject);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(testSubject);
+        when(mockGraphSubjects.getSubject(mockParentNode.getPath())).thenReturn(testParentSubject);
+        when(mockGraphSubjects.getSubject(mockChildNode.getPath())).thenReturn(testChildSubject);
         when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
         when(mockSession.getRepository()).thenReturn(mockRepository);
@@ -251,19 +248,21 @@ public class HierarchyRdfContextTest {
         when(mockChildNode4.getParent()).thenReturn(mockNode);
         when(mockChildNode5.getParent()).thenReturn(mockNode);
 
-        when(mockChildNode.getPath()).thenReturn(MOCK_CHILD_NODE_PATH);
+        when(mockChildNode.getPath()).thenReturn(MOCK_NODE_PATH + "/1");
         when(mockChildNode2.getPath()).thenReturn(MOCK_NODE_PATH + "/2");
-        when(mockChildNode3.getPath()).thenReturn(MOCK_NODE_PATH + "3");
-        when(mockChildNode4.getPath()).thenReturn(MOCK_NODE_PATH + "4");
-        when(mockChildNode5.getPath()).thenReturn(MOCK_NODE_PATH + "5");
+        when(mockChildNode3.getPath()).thenReturn(MOCK_NODE_PATH + "/3");
+        when(mockChildNode4.getPath()).thenReturn(MOCK_NODE_PATH + "/4");
+        when(mockChildNode5.getPath()).thenReturn(MOCK_NODE_PATH + "/5");
 
-        when(mockGraphSubjects.getGraphSubject(mockChildNode2)).thenReturn(
+        when(mockGraphSubjects.getSubject(mockChildNode.getPath())).thenReturn(
+                createResource(RESOURCE_PREFIX + "/1"));
+        when(mockGraphSubjects.getSubject(mockChildNode2.getPath())).thenReturn(
                 createResource(RESOURCE_PREFIX + "/2"));
-        when(mockGraphSubjects.getGraphSubject(mockChildNode3)).thenReturn(
+        when(mockGraphSubjects.getSubject(mockChildNode3.getPath())).thenReturn(
                 createResource(RESOURCE_PREFIX + "/3"));
-        when(mockGraphSubjects.getGraphSubject(mockChildNode4)).thenReturn(
+        when(mockGraphSubjects.getSubject(mockChildNode4.getPath())).thenReturn(
                 createResource(RESOURCE_PREFIX + "/4"));
-        when(mockGraphSubjects.getGraphSubject(mockChildNode5)).thenReturn(
+        when(mockGraphSubjects.getSubject(mockChildNode5.getPath())).thenReturn(
                 createResource(RESOURCE_PREFIX + "/5"));
 
         when(mockChildNode.getSession()).thenReturn(mockSession);
@@ -363,7 +362,7 @@ public class HierarchyRdfContextTest {
     private NodeType mockNodeType;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private LowLevelStorageService mockLowLevelStorageService;

@@ -43,7 +43,7 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -184,7 +184,7 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     @Test
     public void testGetFixityResultsModel() throws Exception {
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
         final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
@@ -213,7 +213,7 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
                         .<Iterable<FixityResult>> any())).thenReturn(
                 new RdfStream());
 
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(
                 createResource("abc"));
         final RdfStream fixityResults =
                 testObj.getFixityResultsModel(mockSubjects, mockDatastream);

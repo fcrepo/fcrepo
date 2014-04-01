@@ -10,6 +10,12 @@
 
   <!-- Mints PIDs-->
   <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
+  
+  <!-- Identifier translation chain -->
+  <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
+    <bean class="org.fcrepo.kernel.identifiers.NamespaceConverter"/>
+  </util:list>
+  
 
   <context:annotation-config/>
 

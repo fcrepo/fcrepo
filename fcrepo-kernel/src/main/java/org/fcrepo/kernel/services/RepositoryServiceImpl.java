@@ -21,6 +21,7 @@ import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.limit;
 import static com.google.common.collect.Maps.asMap;
 import static com.google.common.collect.Sets.newHashSet;
+import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
@@ -45,7 +46,7 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -64,7 +65,7 @@ import com.hp.hpl.jena.sparql.util.Context;
 
 /**
  * Service for repository-wide management and querying
- * 
+ *
  * @author Chris Beer
  * @date Mar 11, 2013
  */
@@ -145,13 +146,15 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * (javax.jcr.Session)
      */
     @Override
-    public Dataset getNamespaceRegistryDataset(final Session session) throws RepositoryException {
+    public Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator)
+        throws RepositoryException {
 
-        final Model model = JcrRdfTools.withContext(null, session).getNamespaceTriples().asModel();
+        final Model model =
+            JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples().asModel();
 
         model.register(new NamespaceChangedStatementListener(session));
 
-        final Dataset dataset = DatasetFactory.create(model);
+        final Dataset dataset = create(model);
 
         return dataset;
 
@@ -164,9 +167,10 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * (javax.jcr.Session)
      */
     @Override
-    public RdfStream getNamespaceRegistryStream(final Session session) throws RepositoryException {
+    public RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator)
+        throws RepositoryException {
 
-        return JcrRdfTools.withContext(null, session).getNamespaceTriples();
+        return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();
 
     }
 
@@ -178,7 +182,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * javax.jcr.Session, java.lang.String, int, long)
      */
     @Override
-    public Dataset searchRepository(final GraphSubjects subjectFactory,
+    public Dataset searchRepository(final IdentifierTranslator subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset)
         throws RepositoryException {

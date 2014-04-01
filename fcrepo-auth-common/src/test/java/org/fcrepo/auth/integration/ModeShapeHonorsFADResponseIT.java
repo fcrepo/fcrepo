@@ -46,8 +46,6 @@ import javax.jcr.Session;
 import javax.jcr.security.Privilege;
 import javax.servlet.http.HttpServletRequest;
 
-import java.io.IOException;
-
 /**
  * @author Gregory Jansen
  */
@@ -67,7 +65,7 @@ public class ModeShapeHonorsFADResponseIT {
     HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
 
     @Before
-    public void setUp() throws RepositoryException, IOException {
+    public void setUp() {
         // final Map<String, String> config = new HashMap<String, String>();
         // config.put(JcrRepositoryFactory.URL,
         // "file:src/test/resources/repository.json");

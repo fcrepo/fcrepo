@@ -17,6 +17,7 @@
 package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
+import static javax.jcr.PropertyType.PATH;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -56,6 +57,7 @@ import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
@@ -72,7 +74,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -145,6 +147,12 @@ public class FedoraNodesTest {
 
     private UriInfo mockUriInfo;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -201,13 +209,15 @@ public class FedoraNodesTest {
     public void testCreateChildObject() throws Exception {
 
         setField(testObj, "pidMinter", mockPidMinter);
-        final String pid = "testObject";
+        final String pid = "testCreateChildObject";
         final String path = "/" + pid + "/a";
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
         when(mockPidMinter.mintPid()).thenReturn("a");
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, null, getUriInfoImpl(), null);
@@ -222,12 +232,15 @@ public class FedoraNodesTest {
     public void testCreateChildObjectWithSlug() throws Exception {
         setField(testObj, "pidMinter", mockPidMinter);
 
-        final String pid = "testObject";
+        final String pid = "testCreateChildObjectWithSlug";
         final String path = "/" + pid + "/some-slug";
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, "some-slug", getUriInfoImpl(), null);
@@ -322,9 +335,9 @@ public class FedoraNodesTest {
         when(mockDataset.getContext()).thenReturn(mockContext);
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
         when(mockObject.getEtagValue()).thenReturn("");
-        when(mockObject.getTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
-        when(mockObject.getHierarchyTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
@@ -349,9 +362,9 @@ public class FedoraNodesTest {
 
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
-        when(mockObject.getTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
-        when(mockObject.getHierarchyTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
@@ -371,7 +384,7 @@ public class FedoraNodesTest {
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
-        when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
+        when(mockObject.updatePropertiesDataset(any(IdentifierTranslator.class), any(String.class)))
             .thenReturn(mockDataset);
         when(mockObject.getEtagValue()).thenReturn("");
 
@@ -381,7 +394,7 @@ public class FedoraNodesTest {
         when(mockModel.isEmpty()).thenReturn(true);
         testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest);
 
-        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
+        verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class),
                 eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
@@ -402,7 +415,7 @@ public class FedoraNodesTest {
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest);
-        verify(mockObject).replaceProperties(any(GraphSubjects.class), any(Model.class));
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
     }
 
     @Test
@@ -427,7 +440,7 @@ public class FedoraNodesTest {
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
-        verify(mockObject).replaceProperties(any(GraphSubjects.class),
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class),
                 any(Model.class));
         verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();

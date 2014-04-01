@@ -212,8 +212,7 @@ public class FedoraWebhooks extends AbstractResource {
     @Path("{id}")
     public Response registerWebhook(@PathParam("id")
         final String id) throws RepositoryException {
-        final Node n =
-                jcrTools.findOrCreateChild(session.getRootNode(), getWebhookName(id), WEBHOOK_JCR_TYPE);
+        final Node n = jcrTools.findOrCreateChild(session.getRootNode(), getWebhookName(id), WEBHOOK_JCR_TYPE);
         n.remove();
 
         session.save();
@@ -262,7 +261,7 @@ public class FedoraWebhooks extends AbstractResource {
         readOnlySession.logout();
     }
 
-    private String getWebhookName(String id) {
+    private static String getWebhookName(final String id) {
         return WEBHOOK_PREFIX + id;
     }
 

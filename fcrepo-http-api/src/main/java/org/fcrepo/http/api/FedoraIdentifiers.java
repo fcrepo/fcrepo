@@ -50,9 +50,9 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -99,20 +99,15 @@ public class FedoraIdentifiers extends AbstractResource {
 
         final String path = toPath(pathList);
 
-        final Node pidsResult =
-            createURI(uriInfo.getAbsolutePath().toASCIIString());
+        final Node pidsResult = createURI(uriInfo.getAbsolutePath().toASCIIString());
 
-        final Collection<String> identifiers =
-            transform(create(closed(1, count), integers()), pidMinter
-                    .makePid());
+        final Collection<String> identifiers = transform(create(closed(1, count), integers()), pidMinter.makePid());
 
-        final HttpGraphSubjects subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-        return new RdfStream(transform(
-                transform(identifiers, absolutize(path)), identifier2triple(
-                        subjects, pidsResult))).topic(pidsResult).session(
-                session);
+        return new RdfStream(transform(transform(identifiers, absolutize(path)),
+                identifier2triple(subjects, pidsResult))).topic(pidsResult).session(session);
 
     }
 
@@ -128,7 +123,7 @@ public class FedoraIdentifiers extends AbstractResource {
     }
 
     private static Function<String, Triple> identifier2triple(
-        final GraphSubjects subjects, final Node pidsResult) {
+        final IdentifierTranslator subjects, final Node pidsResult) {
         return new Function<String, Triple>() {
 
             @Override
@@ -136,7 +131,7 @@ public class FedoraIdentifiers extends AbstractResource {
 
                 try {
                     final Node s =
-                        subjects.getGraphSubject(identifier).asNode();
+                        subjects.getSubject(identifier).asNode();
                     return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT
                             .asNode(), s);
                 } catch (final RepositoryException e) {

@@ -46,7 +46,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -361,8 +361,7 @@ public class PropertyToTripleTest {
         when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
         when(mockProperty.getSession()).thenReturn(mockSession);
         when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                TEST_NODE_SUBJECT);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(TEST_NODE_SUBJECT);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
     }
 
@@ -376,7 +375,7 @@ public class PropertyToTripleTest {
     private Session mockSession;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private Property mockProperty;

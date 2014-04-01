@@ -34,7 +34,7 @@ import javax.jcr.AccessDeniedException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.rdf.impl.mappings.ZippingIterator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
@@ -68,7 +68,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
 
-    public PropertiesRdfContext(final javax.jcr.Node node, final GraphSubjects graphSubjects,
+    public PropertiesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects,
         final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         property2triple = new PropertyToTriple(graphSubjects);
@@ -97,10 +97,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
             LOGGER.trace("Access denied to content node", e);
         }
         if (contentNode != null) {
-            final Node contentSubject =
-                graphSubjects().getGraphSubject(contentNode).asNode();
-            final Node subject =
-                graphSubjects().getGraphSubject(node()).asNode();
+            final Node contentSubject = graphSubjects().getSubject(contentNode.getPath()).asNode();
+            final Node subject = graphSubjects().getSubject(node().getPath()).asNode();
             // add triples representing parent-to-content-child relationship
             concat(new Triple[] {
                     create(subject, HAS_CONTENT.asNode(), contentSubject),

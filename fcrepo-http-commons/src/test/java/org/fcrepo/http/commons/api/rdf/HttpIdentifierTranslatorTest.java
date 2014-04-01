@@ -17,38 +17,48 @@
 package org.fcrepo.http.commons.api.rdf;
 
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.net.URI;
 import java.util.UUID;
+
 import javax.jcr.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+
+import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
+import org.fcrepo.kernel.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 
-public class HttpGraphSubjectsTest extends GraphSubjectsTest {
+public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
 
     @Override
-    protected HttpGraphSubjects getTestObj() {
-        return new HttpGraphSubjects(mockSession, MockNodeController.class,
-                uriInfo);
+    protected HttpIdentifierTranslator getTestObj() {
+        final HttpIdentifierTranslator testObj =
+            new HttpIdentifierTranslator(mockSession, MockNodeController.class, uriInfo);
+        testObj.setTranslationChain(singletonList((InternalIdentifierConverter) new NamespaceConverter()));
+        return testObj;
     }
 
-    protected HttpGraphSubjects getTestObjTx(final String path) {
-        return new HttpGraphSubjects(mockSessionTx, MockNodeController.class,
-                getUriInfoImpl(path));
+    protected HttpIdentifierTranslator getTestObjTx(final String path) {
+        final HttpIdentifierTranslator testObj =
+            new HttpIdentifierTranslator(mockSessionTx, MockNodeController.class, getUriInfoImpl(path));
+        testObj.setTranslationChain(singletonList((InternalIdentifierConverter) new NamespaceConverter()));
+        return testObj;
     }
 
 
@@ -59,10 +69,10 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockNode.getSession()).thenReturn(mockSession);
-        Resource actual = testObj.getGraphSubject(mockNode);
+        Resource actual = testObj.getSubject(mockNode.getPath());
         assertEquals(expected, actual.getURI());
         when(mockNode.getPath()).thenReturn(testPath + "/jcr:content");
-        actual = testObj.getGraphSubject(mockNode);
+        actual = testObj.getSubject(mockNode.getPath());
         assertEquals(expected + "/fcr:content", actual.getURI());
     }
 
@@ -78,18 +88,18 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest" + testPath);
         when(mockSubject.isURIResource()).thenReturn(true);
-        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        Mockito.verify(mockSession).getNode(testPath);
+        Node actual = mockSession.getNode(testObj.getPathFromSubject(mockSubject));
+        verify(mockSession).getNode(testPath);
         assertEquals(mockNode, actual);
         // test a bad subject
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest2" + testPath + "/bad");
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
+        actual = mockSession.getNode(testObj.getPathFromSubject(mockSubject));
         assertEquals(null, actual);
         // test a non-existent path
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest" + testPath + "/bad");
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
+        actual = mockSession.getNode(testObj.getPathFromSubject(mockSubject));
         assertEquals(null, actual);
         // test a fcr:content path
         when(mockSession.nodeExists(testPath + "/jcr:content")).thenReturn(true);
@@ -97,7 +107,7 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
                 .thenReturn(
                         "http://localhost:8080/fcrepo/rest" + testPath +
                                 "/fcr:content");
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
+        actual = mockSession.getNode(testObj.getPathFromSubject(mockSubject));
         verify(mockSession).getNode(testPath + "/jcr:content");
     }
 
@@ -107,7 +117,7 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
 
-        assertNull(testObj.getNodeFromGraphSubject(ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc/fcr:export?format=jcr/xml")));
+        assertNull(mockSession.getNode(testObj.getPathFromSubject(createResource("http://localhost:8080/fcrepo/rest/abc/fcr:export?format=jcr/xml"))));
     }
 
     @Test
@@ -128,12 +138,12 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
         final String testPathTx = "/" + txId + "/hello";
 
         when(mockSessionTx.getValueFactory()).thenReturn(mockValueFactory);
-        GraphSubjects testObjTx = getTestObjTx(testPathTx);
+        final IdentifierTranslator testObjTx = getTestObjTx(testPathTx);
         when(mockSessionTx.getTxId()).thenReturn(txId);
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest/tx:" + txId + "/hello");
         when(mockSubject.isURIResource()).thenReturn(true);
-        boolean actual = testObjTx.isFedoraGraphSubject(mockSubject);
+        final boolean actual = testObjTx.isFedoraGraphSubject(mockSubject);
         verify(mockValueFactory).createValue("/hello", PropertyType.PATH);
         assertTrue("Must be valid GraphSubject", actual);
     }
@@ -145,12 +155,12 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
 
     @Test
     public void testGetPathFromGraphSubject() throws RepositoryException {
-        assertEquals("/abc", testObj.getPathFromGraphSubject(ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc")));
+        assertEquals("/abc", testObj.getPathFromSubject(ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc")));
     }
 
     @Test
     public void testGetPathFromGraphSubjectForNonJcrUrl() throws RepositoryException {
-        assertNull(testObj.getPathFromGraphSubject(ResourceFactory.createResource("who-knows-what-this-is")));
+        assertNull(testObj.getPathFromSubject(ResourceFactory.createResource("who-knows-what-this-is")));
     }
 
     protected static UriInfo getUriInfoImpl(final String path) {

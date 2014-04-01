@@ -44,7 +44,7 @@ public class DefaultPropertiesLoaderTest {
         clearProps();
     }
 
-    private void clearProps() {
+    private static void clearProps() {
         System.clearProperty(PROP_FLAG);
         System.clearProperty(PROP_TEST);
         System.clearProperty(HOME_PROP);
@@ -81,7 +81,7 @@ public class DefaultPropertiesLoaderTest {
 
         loader.loadSystemProperties();
 
-        File home = new File(asTempPath("test"));
+        final File home = new File(asTempPath("test"));
         Assert.assertTrue("Relative subdirs are within fcrepo.home directory.",
                 containsPath(System.getProperty(PROP_TEST),
                         home.getAbsolutePath()));
@@ -95,7 +95,7 @@ public class DefaultPropertiesLoaderTest {
 
         loader.loadSystemProperties();
 
-        File home = new File(asTempPath("test"));
+        final File home = new File(asTempPath("test"));
         Assert.assertFalse("Absolute subdirs are idependent of fcrepo.home.",
                 containsPath(System.getProperty(PROP_TEST),
                         home.getAbsolutePath()));
@@ -114,7 +114,7 @@ public class DefaultPropertiesLoaderTest {
         clearProps();
     }
 
-    private boolean containsPath(String path, String parentPath) {
+    private static boolean containsPath(final String path, final String parentPath) {
         final File parent = new File(parentPath);
         for (File f = new File(path) ; f.getParentFile() != null ; f = f.getParentFile()) {
             if (f.getParentFile().equals(parent)) {
@@ -124,7 +124,7 @@ public class DefaultPropertiesLoaderTest {
         return false;
     }
 
-    private String asTempPath(final String file) {
+    private static String asTempPath(final String file) {
        return System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + file;
     }
 }

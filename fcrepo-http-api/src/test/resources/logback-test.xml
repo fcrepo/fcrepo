@@ -20,6 +20,9 @@
   <logger name="org.fcrepo.integration.http" additivity="false" level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </logger>
+  <logger name="org.fcrepo.kernel.identifiers" additivity="false" level="DEBUG">
+    <appender-ref ref="STDOUT"/>
+  </logger>
   <logger name="org.fcrepo" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>

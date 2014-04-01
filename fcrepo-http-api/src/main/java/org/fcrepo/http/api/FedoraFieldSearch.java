@@ -56,7 +56,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.jcr.FedoraJcrTypes;
@@ -179,7 +179,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                                   .build().toString());
             }
 
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             final Dataset dataset =
                     repositoryService.searchRepository(subjects, searchResult,

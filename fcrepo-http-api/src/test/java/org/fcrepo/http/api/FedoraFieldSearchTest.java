@@ -37,7 +37,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -84,7 +84,7 @@ public class FedoraFieldSearchTest {
         when(
                 mockService
                         .searchRepository(
-                                any(GraphSubjects.class),
+                                any(IdentifierTranslator.class),
                                 eq(createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
                                 eq(mockSession), eq("ZZZ"), eq(0), eq(0L)))
                 .thenReturn(createMem());
@@ -94,7 +94,7 @@ public class FedoraFieldSearchTest {
 
         verify(mockService)
                 .searchRepository(
-                        any(GraphSubjects.class),
+                        any(IdentifierTranslator.class),
                 eq(createResource("http://localhost/fcrepo/fcr:search?q=ZZZ")),
                         eq(mockSession), eq("ZZZ"), eq(0), eq(0L));
     }

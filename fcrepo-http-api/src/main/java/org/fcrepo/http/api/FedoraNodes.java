@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.sun.jersey.api.Responses.clientError;
 import static com.sun.jersey.api.Responses.notAcceptable;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -50,6 +51,7 @@ import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -90,10 +92,11 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.COPY;
@@ -101,9 +104,8 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -175,8 +177,8 @@ public class FedoraNodes extends AbstractResource {
             throw new WebApplicationException(builder.cacheControl(cc)
                     .lastModified(date).tag(etag).build());
         }
-        final HttpGraphSubjects subjects =
-            new HttpGraphSubjects(session, this.getClass(), uriInfo);
+        final HttpIdentifierTranslator subjects =
+            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
         final int realLimit;
         if (nonMemberProperties != null && limit == NO_LIMIT) {
@@ -188,7 +190,7 @@ public class FedoraNodes extends AbstractResource {
         final RdfStream rdfStream =
             resource.getTriples(subjects).concat(
                     resource.getHierarchyTriples(subjects)).session(session)
-                    .topic(subjects.getGraphSubject(resource.getNode())
+                    .topic(subjects.getSubject(resource.getNode().getPath())
                             .asNode());
         if (realLimit != NO_MEMBER_PROPERTIES) {
             final Node firstPage =
@@ -274,7 +276,7 @@ public class FedoraNodes extends AbstractResource {
                     throw new WebApplicationException(builder.build());
                 }
 
-                final Dataset properties = resource.updatePropertiesDataset(new HttpGraphSubjects(
+                final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
                         session, FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
 
@@ -352,7 +354,8 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.build());
             }
 
-            final HttpGraphSubjects graphSubjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final HttpIdentifierTranslator graphSubjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             if (requestContentType != null && requestBodyStream != null)  {
                 final String contentType = requestContentType.toString();
@@ -360,10 +363,9 @@ public class FedoraNodes extends AbstractResource {
                 final String format = contentTypeToLang(contentType).getName()
                                           .toUpperCase();
 
-                final Model inputModel = createDefaultModel()
-                                             .read(requestBodyStream,
-                                                      graphSubjects.getGraphSubject(resource.getNode()).toString(),
-                                                      format);
+                final Model inputModel =
+                    createDefaultModel().read(requestBodyStream,
+                            graphSubjects.getSubject(resource.getNode().getPath()).toString(), format);
 
                 resource.replaceProperties(graphSubjects, inputModel);
             }
@@ -405,16 +407,25 @@ public class FedoraNodes extends AbstractResource {
         final String newObjectPath;
         final String path = toPath(pathList);
 
+        final HttpIdentifierTranslator idTranslator =
+            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
         if (nodeService.exists(session, path)) {
-            final String pid;
+            String pid;
 
             if (slug != null) {
                 pid = slug;
-            }  else {
+            } else {
                 pid = pidMinter.mintPid();
             }
-
+            // reverse translate the proffered or created identifier
+            LOGGER.trace("Using external identifier {} to create new resource.", pid);
+            LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
+                    + pid);
+            pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
+            // remove leading slash left over from translation
+            pid = pid.substring(1, pid.length());
+            LOGGER.trace("Using internal identifier {} to create new resource.", pid);
             newObjectPath = path + "/" + pid;
         } else {
             newObjectPath = path;
@@ -435,8 +446,6 @@ public class FedoraNodes extends AbstractResource {
             } else {
                 checksumURI = null;
             }
-
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             final String objectType;
 
@@ -478,7 +487,7 @@ public class FedoraNodes extends AbstractResource {
                 final String contentTypeString = contentType.toString();
 
                 if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
+                    result.updatePropertiesDataset(idTranslator, IOUtils.toString(requestBodyStream));
                 } else if (contentTypeToLang(contentTypeString) != null) {
 
                     final Lang lang = contentTypeToLang(contentTypeString);
@@ -492,12 +501,10 @@ public class FedoraNodes extends AbstractResource {
                                               .toUpperCase();
 
                     final Model inputModel =
-                        createDefaultModel()
-                                                 .read(requestBodyStream,
-                                                          subjects.getGraphSubject(result.getNode()).toString(),
-                                                          format);
+                        createDefaultModel().read(requestBodyStream,
+                                idTranslator.getSubject(result.getNode().getPath()).toString(), format);
 
-                    result.replaceProperties(subjects, inputModel);
+                    result.replaceProperties(idTranslator, inputModel);
                 } else if (result instanceof Datastream) {
 
                     final String originalFileName;
@@ -522,11 +529,9 @@ public class FedoraNodes extends AbstractResource {
 
             final URI location;
             if (result.hasContent()) {
-                location = new URI(subjects.getGraphSubject(result.getNode().getNode(JcrConstants.JCR_CONTENT))
-                                                 .getURI());
+                location = new URI(idTranslator.getSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());
             } else {
-                location = new URI(subjects.getGraphSubject(result.getNode())
-                                                 .getURI());
+                location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());
             }
 
             return created(location).entity(location.toString()).build();
@@ -616,15 +621,15 @@ public class FedoraNodes extends AbstractResource {
 
         try {
 
-            final GraphSubjects subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final IdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             if (!nodeService.exists(session, toPath(path))) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
             }
 
             final String destination =
-                subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
+                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
@@ -685,11 +690,11 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.build());
             }
 
-            final GraphSubjects subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final IdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             final String destination =
-                subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
+                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();

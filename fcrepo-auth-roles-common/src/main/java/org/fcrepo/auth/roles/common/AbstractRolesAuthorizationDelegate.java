@@ -78,7 +78,7 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
     }
 
     @Override
-    public boolean hasPermission(Session session, final Path absPath,
+    public boolean hasPermission(final Session session, final Path absPath,
             final String[] actions) {
         final Set<String> roles;
 
@@ -131,23 +131,21 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
         return true;
     }
 
-    private Principal getUserPrincipal(Session session) {
+    private static Principal getUserPrincipal(final Session session) {
         final Object value = session.getAttribute(FEDORA_USER_PRINCIPAL);
         if (value instanceof Principal) {
             return (Principal) value;
-        } else {
-            return null;
         }
+        return null;
     }
 
     @SuppressWarnings("unchecked")
-    private Set<Principal> getPrincipals(Session session) {
+    private static Set<Principal> getPrincipals(final Session session) {
         final Object value = session.getAttribute(FEDORA_ALL_PRINCIPALS);
         if (value instanceof Set<?>) {
             return (Set<Principal>) value;
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**

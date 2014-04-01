@@ -20,7 +20,7 @@ import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -42,6 +42,6 @@ public interface UriAwareResourceModelFactory {
      * @throws RepositoryException
      */
     Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final GraphSubjects graphSubjects)
+            final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
         throws RepositoryException;
 }

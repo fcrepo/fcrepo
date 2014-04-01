@@ -43,7 +43,7 @@ import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,12 +64,12 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final GraphSubjects graphSubjects)
+        final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
         throws RepositoryException {
 
         final Model model = createDefaultModel();
 
-        final Resource s = graphSubjects.getGraphSubject(resource.getNode());
+        final Resource s = graphSubjects.getSubject(resource.getNode().getPath());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
             addRepositoryStatements(uriInfo, model, s);

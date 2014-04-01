@@ -20,7 +20,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -32,9 +31,10 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -49,7 +49,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class AccessRolesResourcesTest {
 
     @Mock
-    private GraphSubjects graphSubjects;
+    private IdentifierTranslator graphSubjects;
 
     @Mock
     private FedoraResource fedoraResource;
@@ -77,7 +77,7 @@ public class AccessRolesResourcesTest {
         model = ModelFactory.createDefaultModel();
         graphResource = model.createResource("/" + pathString);
 
-        when(graphSubjects.getGraphSubject(any(Node.class))).thenReturn(
+        when(graphSubjects.getSubject(Matchers.anyString())).thenReturn(
                 graphResource);
         when(fedoraResource.getNode()).thenReturn(resourceNode);
 

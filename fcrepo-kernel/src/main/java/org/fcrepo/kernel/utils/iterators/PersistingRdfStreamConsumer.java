@@ -35,7 +35,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.slf4j.Logger;
 
@@ -57,7 +57,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final RdfStream stream;
 
-    private final GraphSubjects idTranslator;
+    private final IdentifierTranslator idTranslator;
 
     private final Session session;
 
@@ -77,7 +77,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public PersistingRdfStreamConsumer(final GraphSubjects graphSubjects,
+    public PersistingRdfStreamConsumer(final IdentifierTranslator graphSubjects,
             final Session session, final RdfStream stream) {
         this.idTranslator = graphSubjects;
         this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);
@@ -121,7 +121,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement t)
         throws RepositoryException {
         final Resource subject = t.getSubject();
-        final Node subjectNode = idTranslator().getNodeFromGraphSubject(subject);
+        final Node subjectNode = session().getNode(idTranslator().getPathFromSubject(subject));
 
         // if this is a user-managed RDF type assertion, update the node's
         // mixins. If it isn't, treat it as a "data" property.
@@ -223,7 +223,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * @return the idTranslator
      */
-    public GraphSubjects idTranslator() {
+    public IdentifierTranslator idTranslator() {
         return idTranslator;
     }
 

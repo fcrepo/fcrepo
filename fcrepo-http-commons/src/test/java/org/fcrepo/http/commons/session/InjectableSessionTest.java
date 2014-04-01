@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
@@ -40,15 +39,11 @@ public class InjectableSessionTest {
     private SessionFactory mockSessionFactory;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
-        final HttpServletRequest mockHttpServletRequest =
-            mock(HttpServletRequest.class);
-        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(
-                mockSession);
-        testObj =
-            new InjectableSession(mockSessionFactory,
-                    mockHttpServletRequest);
+        final HttpServletRequest mockHttpServletRequest = mock(HttpServletRequest.class);
+        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
+        testObj = new InjectableSession(mockSessionFactory, mockHttpServletRequest);
 
     }
 

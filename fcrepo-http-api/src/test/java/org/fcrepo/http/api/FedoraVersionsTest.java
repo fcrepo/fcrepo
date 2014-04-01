@@ -46,7 +46,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Variant;
 
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.services.NodeService;
@@ -118,7 +118,7 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        when(mockResource.getVersionTriples(any(HttpGraphSubjects.class)))
+        when(mockResource.getVersionTriples(any(HttpIdentifierTranslator.class)))
                 .thenReturn(mockRdfStream);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));

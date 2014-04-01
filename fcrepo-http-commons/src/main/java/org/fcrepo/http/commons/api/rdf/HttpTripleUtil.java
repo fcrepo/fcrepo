@@ -25,7 +25,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -61,7 +61,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      */
     public void addHttpComponentModelsForResource(final Dataset dataset,
             final FedoraResourceImpl resource, final UriInfo uriInfo,
-            final GraphSubjects graphSubjects) throws RepositoryException {
+            final IdentifierTranslator graphSubjects) throws RepositoryException {
 
         LOGGER.debug("Adding additional HTTP context triples to dataset");
         for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()
@@ -90,7 +90,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      */
     public void addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
             final FedoraResource resource, final UriInfo uriInfo,
-            final GraphSubjects graphSubjects) throws RepositoryException {
+            final IdentifierTranslator graphSubjects) throws RepositoryException {
 
         LOGGER.debug("Adding additional HTTP context triples to dataset");
         for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()
