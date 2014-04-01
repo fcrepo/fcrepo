@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package org.fcrepo.kernel.identifiers;
 
@@ -20,7 +35,7 @@ public class HierarchyTranslatorTest {
 
     private static final String separator = "/";
 
-    private HierarchyTranslator testHierarchyTranslator;
+    private HierarchyTranslator testTranslator;
 
     private static final String[] testIdSegments = {"test1", "test2", "test3"};
 
@@ -34,52 +49,62 @@ public class HierarchyTranslatorTest {
 
     @Before
     public void setUp() {
-        testHierarchyTranslator = new HierarchyTranslator();
-        testHierarchyTranslator.setPrefix("");
-        testHierarchyTranslator.setLevels(0);
-        testHierarchyTranslator.setLength(1);
-        testHierarchyTranslator.setSeparator(separator);
+        testTranslator = new HierarchyTranslator();
+        testTranslator.setPrefix("");
+        testTranslator.setLevels(0);
+        testTranslator.setLength(1);
+        testTranslator.setSeparator(separator);
     }
 
     @Test
     public void testNullForward() {
-        assertNull("Should get null forward for null input!", testHierarchyTranslator.convert(null));
+        assertNull("Should get null forward for null input!", testTranslator.convert(null));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBadSegmentLength() {
-        testHierarchyTranslator.setLength(0);
+        testTranslator.setLength(0);
     }
 
     @Test
     public void testNoOpForward() {
-        assertEquals("Should not have altered input identifier!", testId, testHierarchyTranslator.convert(testId));
+        assertEquals("Should not have altered input identifier!", testId, testTranslator.convert(testId));
     }
 
     @Test
     public void testVaryingSegments() {
         for (byte length = 1; length < 5; length++) {
             for (byte levels = 1; levels < 5; levels++) {
-                testNSegments(levels, length);
+                testRoundTrip(levels, length);
             }
         }
     }
 
-    public void testNSegments(final byte levels, final byte length) {
-        testHierarchyTranslator.setLevels(levels);
-        testHierarchyTranslator.setLength(length);
-        final String result = testHierarchyTranslator.convert(testId);
+    public void testRoundTrip(final byte levels, final byte length) {
+        testTranslator.setLevels(levels);
+        testTranslator.setLength(length);
+        final String result = testTranslator.convert(testId);
         final String testRegexp =
             startingSegments + separator + hierarchyRegexpSection(levels, length) + separator + endingSegment;
         final Matcher matches = compile(testRegexp).matcher(result);
         log.debug("Got result of translation: {}", result);
         log.debug("Matching against test pattern: {}", testRegexp);
         assertTrue("Did not find the appropriate modification to the input identifier!", matches.matches());
-        final String shouldBeOriginal = testHierarchyTranslator.reverse().convert(result);
+        final String shouldBeOriginal = testTranslator.reverse().convert(result);
         assertEquals("Didn't get original back!", testId, shouldBeOriginal);
     }
 
     private static String hierarchyRegexpSection(final byte levels, final byte length) {
         return on(separator).join(nCopies(levels, repeat("\\w", length)));
+    }
+
+    @Test
+    public void testRecurse() {
+        testTranslator.setLevels(3);
+        testTranslator.setLength(3);
+        final String firstPass = testTranslator.convert(testId);
+        final String secondPass = testTranslator.convert(firstPass);
+        assertEquals("Failed to retrieve original after two stages of translation!", testId, testTranslator.reverse()
+                .convert(testTranslator.reverse().convert(secondPass)));
     }
 }
