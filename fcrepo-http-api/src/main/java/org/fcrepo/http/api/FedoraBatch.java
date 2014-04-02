@@ -226,7 +226,8 @@ public class FedoraBatch extends AbstractResource {
                 switch (realContentDisposition) {
                     case INLINE:
 
-                        final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+                        final HttpIdentifierTranslator subjects =
+                            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
                         final FedoraResource resource;
 
