@@ -165,7 +165,7 @@ public class JQLResultSetTest {
     public void testNextWithResource() throws Exception {
         when(mockValue.getType()).thenReturn(PropertyType.PATH);
         when(mockValue.getString()).thenReturn("/x");
-        when(mockGraphSubjects.getGraphSubject("/x")).thenReturn(ResourceFactory.createResource("info:x"));
+        when(mockGraphSubjects.getSubject("/x")).thenReturn(ResourceFactory.createResource("info:x"));
         final QuerySolution solution = testObj.next();
 
         assertTrue(solution.contains("a"));
@@ -178,7 +178,7 @@ public class JQLResultSetTest {
         when(mockValue.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockValue.getString()).thenReturn("uuid");
         when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
-        when(mockGraphSubjects.getGraphSubject(mockNode.getPath())).thenReturn(ResourceFactory.createResource("http://localhost:8080/xyz"));
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(ResourceFactory.createResource("http://localhost:8080/xyz"));
         final QuerySolution solution = testObj.next();
 
         assertEquals("http://localhost:8080/xyz", solution.get("a").asResource().getURI());

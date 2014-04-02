@@ -101,7 +101,7 @@ public class HttpGraphSubjects implements IdentifierTranslator {
     }
 
     @Override
-    public Resource getGraphSubject(final String absPath)
+    public Resource getSubject(final String absPath)
         throws RepositoryException {
         final URI result =
                 nodesBuilder.buildFromMap(getPathMap(absPath));
@@ -124,7 +124,7 @@ public class HttpGraphSubjects implements IdentifierTranslator {
     }
 
     @Override
-    public String getPathFromGraphSubject(final Resource subject) throws RepositoryException {
+    public String getPathFromSubject(final Resource subject) throws RepositoryException {
         final String subjectUri = getResourceURI(subject);
         if (subjectUri == null) {
             return null;

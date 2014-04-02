@@ -136,7 +136,7 @@ public class FedoraIdentifiers extends AbstractResource {
 
                 try {
                     final Node s =
-                        subjects.getGraphSubject(identifier).asNode();
+                        subjects.getSubject(identifier).asNode();
                     return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT
                             .asNode(), s);
                 } catch (final RepositoryException e) {

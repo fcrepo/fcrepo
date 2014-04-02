@@ -154,7 +154,7 @@ public class RdfRemoverTest {
         when(mockPropertyDefinition.isMultiple()).thenReturn(false);
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
-        when(mockGraphSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         testStream = new RdfStream(mockTriples);

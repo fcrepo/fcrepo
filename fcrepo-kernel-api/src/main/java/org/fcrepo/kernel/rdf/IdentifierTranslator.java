@@ -34,7 +34,7 @@ public interface IdentifierTranslator {
      * @return
      * @throws RepositoryException
      */
-    String getPathFromGraphSubject(final Resource subject) throws RepositoryException;
+    String getPathFromSubject(final Resource subject) throws RepositoryException;
 
     /**
      * Predicate for determining whether this {@link Resource} is a Fedora object.
@@ -50,7 +50,7 @@ public interface IdentifierTranslator {
      * @return an RDF URI resource
      * @throws RepositoryException
      */
-    Resource getGraphSubject(final String absPath) throws RepositoryException;
+    Resource getSubject(final String absPath) throws RepositoryException;
 
     /**
      * Get a context resource

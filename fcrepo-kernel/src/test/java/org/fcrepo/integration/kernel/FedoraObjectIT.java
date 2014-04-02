@@ -84,7 +84,7 @@ public class FedoraObjectIT extends AbstractIT {
         final IdentifierTranslator subjects = new DefaultGraphSubjects();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
-        final String graphSubject = subjects.getGraphSubject("/graphObject").getURI();
+        final String graphSubject = subjects.getSubject("/graphObject").getURI();
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
@@ -162,7 +162,7 @@ public class FedoraObjectIT extends AbstractIT {
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
         final IdentifierTranslator subjects = new DefaultGraphSubjects();
-        final String graphSubject = subjects.getGraphSubject("/graphObject").getURI();
+        final String graphSubject = subjects.getSubject("/graphObject").getURI();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
         parseExecute("PREFIX some: <info:some#>\n" +

@@ -62,21 +62,21 @@ public class WorkspaceRdfContextTest {
 
         final Model model = testObj.asModel();
 
-        assertTrue(model.contains(subjects.getGraphSubject("/"),
+        assertTrue(model.contains(subjects.getSubject("/"),
                                       RdfLexicon.HAS_DEFAULT_WORKSPACE,
-                                     subjects.getGraphSubject("/workspace:default" )));
+                                     subjects.getSubject("/workspace:default" )));
 
-        assertTrue(model.contains(subjects.getGraphSubject("/workspace:default" ),
+        assertTrue(model.contains(subjects.getSubject("/workspace:default" ),
                                      RdfLexicon.DC_TITLE,
                                      "default"));
 
-        assertTrue(model.contains(subjects.getGraphSubject("/"),
+        assertTrue(model.contains(subjects.getSubject("/"),
                                      RdfLexicon.HAS_WORKSPACE,
-                                     subjects.getGraphSubject("/workspace:a")));
+                                     subjects.getSubject("/workspace:a")));
 
-        assertTrue(model.contains(subjects.getGraphSubject("/"),
+        assertTrue(model.contains(subjects.getSubject("/"),
                                      RdfLexicon.HAS_WORKSPACE,
-                                     subjects.getGraphSubject("/workspace:b" )));
+                                     subjects.getSubject("/workspace:b" )));
 
     }
 

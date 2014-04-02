@@ -173,7 +173,7 @@ public class PropertyToTriple implements
 
     private Node getGraphSubject(final javax.jcr.Node n)
         throws RepositoryException {
-        return graphSubjects.getGraphSubject(n.getPath()).asNode();
+        return graphSubjects.getSubject(n.getPath()).asNode();
     }
 
 }

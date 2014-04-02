@@ -141,11 +141,11 @@ public class PersistingRdfStreamConsumerTest {
         initMocks(this);
 
         for (final Statement fedoraStatement : fedoraStatements) {
-            when(mockSession.getNode(mockGraphSubjects.getPathFromGraphSubject(fedoraStatement.getSubject())))
+            when(mockSession.getNode(mockGraphSubjects.getPathFromSubject(fedoraStatement.getSubject())))
                     .thenReturn(mockNode);
             when(mockGraphSubjects.isFedoraGraphSubject(fedoraStatement.getSubject())).thenReturn(true);
         }
-        when(mockSession.getNode(mockGraphSubjects.getPathFromGraphSubject(foreignStatement.getSubject()))).thenReturn(
+        when(mockSession.getNode(mockGraphSubjects.getPathFromSubject(foreignStatement.getSubject()))).thenReturn(
                 mockNode);
         when(mockGraphSubjects.isFedoraGraphSubject(foreignStatement.getSubject())).thenReturn(false);
     }

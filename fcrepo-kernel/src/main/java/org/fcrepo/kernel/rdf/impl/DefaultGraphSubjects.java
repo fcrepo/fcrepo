@@ -51,7 +51,7 @@ public class DefaultGraphSubjects implements IdentifierTranslator {
     }
 
     @Override
-    public Resource getGraphSubject(final String absPath) throws RepositoryException {
+    public Resource getSubject(final String absPath) throws RepositoryException {
         if (absPath.endsWith(JCR_CONTENT)) {
             return createResource(RESOURCE_NAMESPACE + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
         }
@@ -64,7 +64,7 @@ public class DefaultGraphSubjects implements IdentifierTranslator {
     }
 
     @Override
-    public String getPathFromGraphSubject(final Resource subject) throws RepositoryException {
+    public String getPathFromSubject(final Resource subject) throws RepositoryException {
         if (!isFedoraGraphSubject(subject)) {
             return null;
         }

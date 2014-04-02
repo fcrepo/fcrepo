@@ -102,7 +102,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -123,7 +123,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
-        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -141,7 +141,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
-        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -159,7 +159,7 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,
                         mockSubjects);
@@ -178,7 +178,7 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
-        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,
                         mockSubjects);

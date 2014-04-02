@@ -84,7 +84,7 @@ public class LDPathServiceIT {
         assertTrue("Results didn't contain a title!", stuff.containsKey("title"));
 
         assertEquals("Received more than one identifier!", 1, stuff.get("id").size());
-        assertEquals("Got wrong subject in identifier!", subjects.getGraphSubject("/testObject").getURI(), stuff.get(
+        assertEquals("Got wrong subject in identifier!", subjects.getSubject("/testObject").getURI(), stuff.get(
                 "id").iterator().next());
         assertEquals("Got wrong title!", "some-title", stuff.get("title").iterator().next());
         assertEquals("Got wrong UUID!", object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());

@@ -80,7 +80,7 @@ public class JcrGraphPropertiesTest {
 
         final Resource mockResource =
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
-        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
@@ -110,7 +110,7 @@ public class JcrGraphPropertiesTest {
         when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession())).thenReturn(mockJcrRdfTools);
         final Resource mockResource =
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
-        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
@@ -143,7 +143,7 @@ public class JcrGraphPropertiesTest {
                 .thenReturn(mockJcrRdfTools);
 
         final Resource mockResource = new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
-        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTriples(mockNode))

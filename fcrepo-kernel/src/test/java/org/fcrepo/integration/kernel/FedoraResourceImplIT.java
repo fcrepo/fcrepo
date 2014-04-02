@@ -115,7 +115,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     private Node createGraphSubjectNode(final String absPath) throws RepositoryException {
-        return subjects.getGraphSubject(absPath).asNode();
+        return subjects.getSubject(absPath).asNode();
     }
 
     @Test
@@ -389,11 +389,11 @@ public class FedoraResourceImplIT extends AbstractIT {
             objectService.createObject(session, "/testObjectGraphUpdates");
 
         object.updatePropertiesDataset(subjects, "INSERT { " + "<"
-                + subjects.getGraphSubject("/testObjectGraphUpdates").getURI() + "> "
+                + subjects.getSubject("/testObjectGraphUpdates").getURI() + "> "
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
         // jcr property
-        final Resource s = subjects.getGraphSubject("/testObjectGraphUpdates");
+        final Resource s = subjects.getSubject("/testObjectGraphUpdates");
         final Property p = createProperty("info:fcrepo/zyx");
         Literal o = createPlainLiteral("a");
         assertTrue(object.getPropertiesDataset(subjects).getDefaultModel()
@@ -454,7 +454,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.info(graphStore.toString());
 
         // go querying for the version URI
-        Resource s = subjects.getGraphSubject("/testObjectVersionGraph");
+        Resource s = subjects.getSubject("/testObjectVersionGraph");
         Property p = createProperty(REPOSITORY_NAMESPACE + "hasVersion");
         final ExtendedIterator<Statement> triples = graphStore.listStatements(s, p, (RDFNode)null);
 

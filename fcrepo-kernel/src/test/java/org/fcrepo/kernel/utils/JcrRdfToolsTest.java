@@ -189,7 +189,7 @@ public class JcrRdfToolsTest {
         when(mockNode.hasProperties()).thenReturn(true);
         final Model actual = testObj.getJcrTriples(mockNode).asModel();
         logRDF(actual);
-        assertTrue("Didn't find appropriate triple!", actual.contains(testSubjects.getGraphSubject(mockNode.getPath()),
+        assertTrue("Didn't find appropriate triple!", actual.contains(testSubjects.getSubject(mockNode.getPath()),
                 actual.getProperty(mockPredicateName), actual.createLiteral("abc")));
 
     }
@@ -235,7 +235,7 @@ public class JcrRdfToolsTest {
                 .thenReturn(mockNodeTypeManager);
 
         final Model actual = testObj.getJcrTriples(mockNode).asModel();
-        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode.getPath()), actual
+        assertTrue(actual.contains(testSubjects.getSubject(mockNode.getPath()), actual
                 .createProperty(REPOSITORY_NAMESPACE + "repository/some-descriptor-key"), actual
                 .createLiteral("some-descriptor-value")));
     }
@@ -298,7 +298,7 @@ public class JcrRdfToolsTest {
                 .createProperty(LDP_NAMESPACE + "membersInlined"),
                 actual.createLiteral(TRUE.toString())));
 
-        final Resource graphSubject = testSubjects.getGraphSubject(mockNode.getPath());
+        final Resource graphSubject = testSubjects.getSubject(mockNode.getPath());
         assertTrue(actual.contains(graphSubject, type, actual
                 .createProperty(LDP_NAMESPACE + "Container")));
 
@@ -524,9 +524,9 @@ public class JcrRdfToolsTest {
         final Model actual =
             testObj.getVersionTriples(mockNode).asModel();
 
-        assertTrue(actual.contains(testSubjects.getGraphSubject(mockNode.getPath()), HAS_VERSION, testSubjects
-                .getGraphSubject(mockFrozenNode.getPath())));
-        assertTrue(actual.contains(testSubjects.getGraphSubject(mockFrozenNode.getPath()), HAS_VERSION_LABEL, actual.createLiteral("abc")));
+        assertTrue(actual.contains(testSubjects.getSubject(mockNode.getPath()), HAS_VERSION, testSubjects
+                .getSubject(mockFrozenNode.getPath())));
+        assertTrue(actual.contains(testSubjects.getSubject(mockFrozenNode.getPath()), HAS_VERSION_LABEL, actual.createLiteral("abc")));
     }
 
     @Test

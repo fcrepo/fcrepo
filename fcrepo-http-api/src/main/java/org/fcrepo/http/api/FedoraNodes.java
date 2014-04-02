@@ -189,7 +189,7 @@ public class FedoraNodes extends AbstractResource {
         final RdfStream rdfStream =
             resource.getTriples(subjects).concat(
                     resource.getHierarchyTriples(subjects)).session(session)
-                    .topic(subjects.getGraphSubject(resource.getNode().getPath())
+                    .topic(subjects.getSubject(resource.getNode().getPath())
                             .asNode());
         if (realLimit != NO_MEMBER_PROPERTIES) {
             final Node firstPage =
@@ -363,7 +363,7 @@ public class FedoraNodes extends AbstractResource {
 
                 final Model inputModel =
                     createDefaultModel().read(requestBodyStream,
-                            graphSubjects.getGraphSubject(resource.getNode().getPath()).toString(), format);
+                            graphSubjects.getSubject(resource.getNode().getPath()).toString(), format);
 
                 resource.replaceProperties(graphSubjects, inputModel);
             }
@@ -493,7 +493,7 @@ public class FedoraNodes extends AbstractResource {
 
                     final Model inputModel =
                         createDefaultModel().read(requestBodyStream,
-                                subjects.getGraphSubject(result.getNode().getPath()).toString(), format);
+                                subjects.getSubject(result.getNode().getPath()).toString(), format);
 
                     result.replaceProperties(subjects, inputModel);
                 } else if (result instanceof Datastream) {
@@ -520,9 +520,9 @@ public class FedoraNodes extends AbstractResource {
 
             final URI location;
             if (result.hasContent()) {
-                location = new URI(subjects.getGraphSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());
+                location = new URI(subjects.getSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());
             } else {
-                location = new URI(subjects.getGraphSubject(result.getNode().getPath()).getURI());
+                location = new URI(subjects.getSubject(result.getNode().getPath()).getURI());
             }
 
             return created(location).entity(location.toString()).build();
@@ -620,7 +620,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             final String destination =
-                subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
+                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
@@ -685,7 +685,7 @@ public class FedoraNodes extends AbstractResource {
                 new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             final String destination =
-                subjects.getPathFromGraphSubject(ResourceFactory.createResource(destinationUri));
+                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();

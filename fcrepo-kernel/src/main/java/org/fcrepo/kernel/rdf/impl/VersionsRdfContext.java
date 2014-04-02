@@ -72,7 +72,7 @@ public class VersionsRdfContext extends RdfStream {
         super();
         this.lowLevelStorageService = lowLevelStorageService;
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getGraphSubject(node.getPath()).asNode();
+        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
         versionManager = node.getSession().getWorkspace().getVersionManager();
         versionHistory = versionManager.getVersionHistory(node.getPath());
 
@@ -93,7 +93,7 @@ public class VersionsRdfContext extends RdfStream {
                 try {
                     final Node frozenNode = version.getFrozenNode();
                     final com.hp.hpl.jena.graph.Node versionSubject =
-                        graphSubjects.getGraphSubject(frozenNode.getPath()).asNode();
+                        graphSubjects.getSubject(frozenNode.getPath()).asNode();
 
                     final RdfStream results =
                             new RdfStream(new PropertiesRdfContext(frozenNode,

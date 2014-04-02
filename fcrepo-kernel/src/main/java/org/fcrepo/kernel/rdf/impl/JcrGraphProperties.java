@@ -64,7 +64,7 @@ public class JcrGraphProperties implements GraphProperties {
         final Dataset dataset = DatasetFactory.create(model);
         dataset.addNamedModel(MODEL_NAME, model);
 
-        final Resource subject = subjects.getGraphSubject(node.getPath());
+        final Resource subject = subjects.getSubject(node.getPath());
         final String uri = subject.getURI();
         final com.hp.hpl.jena.sparql.util.Context context = dataset.getContext();
         context.set(URI_SYMBOL,uri);

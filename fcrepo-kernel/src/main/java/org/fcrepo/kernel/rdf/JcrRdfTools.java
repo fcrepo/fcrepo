@@ -245,7 +245,7 @@ public class JcrRdfTools {
                     llstore));
             if (iteratorSubject != null) {
                 results.concat(singleton(create(iteratorSubject.asNode(), HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
-                        .getGraphSubject(node.getPath()).asNode())));
+                        .getSubject(node.getPath()).asNode())));
             }
         }
         return results;
@@ -414,7 +414,7 @@ public class JcrRdfTools {
         if (data.isURIResource()
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
-            final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromGraphSubject(data.asResource()));
+            final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));
             return valueFactory.createValue(nodeFromGraphSubject,
                     type == WEAKREFERENCE);
         } else if (data.isURIResource() || type == URI) {

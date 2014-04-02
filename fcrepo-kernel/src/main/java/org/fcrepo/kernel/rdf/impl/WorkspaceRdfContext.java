@@ -64,10 +64,10 @@ public class WorkspaceRdfContext extends RdfStream {
             session.getWorkspace().getAccessibleWorkspaceNames();
 
         final String defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
-        final Node repositorySubject = subjects.getGraphSubject("/").asNode();
+        final Node repositorySubject = subjects.getSubject("/").asNode();
 
         for (final String workspace : workspaces) {
-            final Node resource = subjects.getGraphSubject(
+            final Node resource = subjects.getSubject(
                         "/workspace:" + workspace).asNode();
             LOGGER.debug("Discovered workspace: {}", resource);
 

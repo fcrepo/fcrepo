@@ -94,7 +94,7 @@ public class FedoraImport extends AbstractResource {
             serializers.getSerializer(format)
                     .deserialize(session, path, stream);
             session.save();
-            return created(new URI(subjects.getGraphSubject(path).getURI())).build();
+            return created(new URI(subjects.getSubject(path).getURI())).build();
         } finally {
             session.logout();
         }

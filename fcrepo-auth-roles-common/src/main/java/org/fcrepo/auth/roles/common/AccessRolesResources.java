@@ -53,7 +53,7 @@ public class AccessRolesResources implements UriAwareResourceModelFactory {
             final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
         throws RepositoryException {
         final Model model = ModelFactory.createDefaultModel();
-        final Resource s = graphSubjects.getGraphSubject(resource.getNode().getPath());
+        final Resource s = graphSubjects.getSubject(resource.getNode().getPath());
 
         if (resource.getNode().isNodeType(
                 FedoraJcrTypes.FEDORA_RESOURCE)) {

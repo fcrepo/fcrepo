@@ -91,8 +91,8 @@ public class PropertiesRdfContextTest {
                 ImmutableSet.of(mockLowLevelCacheEntry));
         when(mockLowLevelCacheEntry.getExternalIdentifier()).thenReturn(
                 MOCK_EXTERNAL_IDENTIFIER);
-        when(mockGraphSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockSubject);
-        when(mockGraphSubjects.getGraphSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockSubject);
+        when(mockGraphSubjects.getSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockContentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});

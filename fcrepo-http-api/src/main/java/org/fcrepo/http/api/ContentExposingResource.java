@@ -122,7 +122,7 @@ public abstract class ContentExposingResource extends AbstractResource {
 
         return builder.type(ds.getMimeType()).header(
                 "Link",
-                subjects.getGraphSubject(ds.getNode().getPath()) +
+                subjects.getSubject(ds.getNode().getPath()) +
                         ";rel=\"meta\"").header("Accept-Ranges",
                 "bytes").cacheControl(cc).lastModified(date).tag(etag)
                 .header("Content-Disposition", contentDisposition)

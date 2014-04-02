@@ -120,7 +120,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
                 new HttpGraphSubjects(session.getRepository().login(path), FedoraNodes.class, uriInfo);
 
 
-            return created(new URI(subjects.getGraphSubject("/").getURI())).build();
+            return created(new URI(subjects.getSubject("/").getURI())).build();
         } finally {
             session.logout();
         }

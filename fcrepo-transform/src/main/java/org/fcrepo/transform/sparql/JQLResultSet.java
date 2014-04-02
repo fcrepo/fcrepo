@@ -257,11 +257,11 @@ public class JQLResultSet implements ResultSet {
                     case URI:
                         return createResource(v.getString());
                     case PATH:
-                        return subjects.getGraphSubject(v.getString());
+                        return subjects.getSubject(v.getString());
                     case REFERENCE:
                     case WEAKREFERENCE:
                         // cheat and just return the UUID syntax
-                        return subjects.getGraphSubject(session.getNodeByIdentifier(v.getString()).getPath());
+                        return subjects.getSubject(session.getNodeByIdentifier(v.getString()).getPath());
                     default:
                         return createTypedLiteral(v.getString());
                 }

@@ -219,7 +219,7 @@ public class FedoraResourceImplTest {
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
-        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream(mockTriple);
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
@@ -247,7 +247,7 @@ public class FedoraResourceImplTest {
         mockStatic(JcrRdfTools.class);
         final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream(mockTriple);
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
@@ -271,7 +271,7 @@ public class FedoraResourceImplTest {
         final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream versionsStream = new RdfStream();
         when(mockJcrRdfTools.getVersionTriples(any(Node.class)))

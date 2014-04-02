@@ -101,7 +101,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            final Node subjectNode = session.getNode(subjects.getPathFromGraphSubject(subject));
+            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -173,7 +173,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            final Node subjectNode = session.getNode(subjects.getPathFromGraphSubject(subject));
+            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update

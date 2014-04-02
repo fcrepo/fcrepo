@@ -96,7 +96,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
     }
 
     @Override
-    public Resource getGraphSubject(final String absPath) throws RepositoryException {
+    public Resource getSubject(final String absPath) throws RepositoryException {
         if (absPath.contains("jcr:versionStorage")) {
             final Node probableFrozenNode = internalSession.getNode(absPath);
             if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
@@ -106,7 +106,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
             }
             LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
         }
-        return super.getGraphSubject(absPath);
+        return super.getSubject(absPath);
     }
 
     /**

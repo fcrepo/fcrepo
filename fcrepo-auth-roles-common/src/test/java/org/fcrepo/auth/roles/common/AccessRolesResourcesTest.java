@@ -77,7 +77,7 @@ public class AccessRolesResourcesTest {
         model = ModelFactory.createDefaultModel();
         graphResource = model.createResource("/" + pathString);
 
-        when(graphSubjects.getGraphSubject(Matchers.anyString())).thenReturn(
+        when(graphSubjects.getSubject(Matchers.anyString())).thenReturn(
                 graphResource);
         when(fedoraResource.getNode()).thenReturn(resourceNode);
 

@@ -41,7 +41,7 @@ public class WebhooksResources implements UriAwareResourceModelFactory {
     public Model createModelForResource(final FedoraResource resource, final UriInfo uriInfo,
         final IdentifierTranslator graphSubjects) throws RepositoryException {
         final Model model = createDefaultModel();
-        final Resource s = graphSubjects.getGraphSubject(resource.getNode().getPath());
+        final Resource s = graphSubjects.getSubject(resource.getNode().getPath());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType(
                 FedoraJcrTypes.ROOT)) {

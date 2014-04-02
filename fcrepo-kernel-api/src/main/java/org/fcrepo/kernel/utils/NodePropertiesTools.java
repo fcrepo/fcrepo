@@ -130,7 +130,7 @@ public class NodePropertiesTools {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
             if (subjects.isFedoraGraphSubject(resource)) {
-                final Node refNode = node.getSession().getNode(subjects.getPathFromGraphSubject(resource));
+                final Node refNode = node.getSession().getNode(subjects.getPathFromSubject(resource));
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
@@ -156,7 +156,7 @@ public class NodePropertiesTools {
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
                     node.setProperty(referencePropertyName, (Value[])null);
                 } else {
-                    final Node refNode = node.getSession().getNode(subjects.getPathFromGraphSubject(resource));
+                    final Node refNode = node.getSession().getNode(subjects.getPathFromSubject(resource));
                     final Value v = node.getSession().getValueFactory().createValue(refNode, true);
                     removeNodeProperty(subjects, node, referencePropertyName, v);
                 }

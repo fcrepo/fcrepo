@@ -205,7 +205,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         return JcrRdfTools.withContext(subjects,
                 datastream.getNode().getSession()).getJcrTriples(
                 datastream.getNode(), blobs).topic(
-                subjects.getGraphSubject(datastream.getNode().getPath()).asNode());
+                subjects.getSubject(datastream.getNode().getPath()).asNode());
     }
 
     /**
