@@ -47,7 +47,7 @@ import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -240,7 +240,7 @@ public class RdfAdderTest {
     private RdfStream testStream;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private Property mockProperty;

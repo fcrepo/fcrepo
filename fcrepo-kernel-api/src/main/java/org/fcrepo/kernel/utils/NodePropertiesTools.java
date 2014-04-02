@@ -33,7 +33,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.slf4j.Logger;
 
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -60,7 +60,7 @@ public class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public void appendOrReplaceNodeProperty(final GraphSubjects subjects,
+    public void appendOrReplaceNodeProperty(final IdentifierTranslator subjects,
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
@@ -122,7 +122,7 @@ public class NodePropertiesTools {
 
     }
 
-    private void addReferencePlaceholders(final GraphSubjects subjects,
+    private void addReferencePlaceholders(final IdentifierTranslator subjects,
                                           final Node node,
                                           final Property property,
                                           final Value newValue) throws RepositoryException {
@@ -143,7 +143,7 @@ public class NodePropertiesTools {
         }
     }
 
-    private void removeReferencePlaceholders(final GraphSubjects subjects,
+    private void removeReferencePlaceholders(final IdentifierTranslator subjects,
                                              final Node node,
                                              final Property property,
                                              final Value newValue) throws RepositoryException {
@@ -174,7 +174,7 @@ public class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public void removeNodeProperty(final GraphSubjects subjects,
+    public void removeNodeProperty(final IdentifierTranslator subjects,
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)

@@ -17,7 +17,7 @@ package org.fcrepo.kernel.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -35,7 +35,7 @@ public class WorkspaceRdfContextTest {
 
 
     @Mock
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     @Mock
     private Session session;

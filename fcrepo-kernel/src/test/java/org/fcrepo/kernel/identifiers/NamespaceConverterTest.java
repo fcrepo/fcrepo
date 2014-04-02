@@ -29,19 +29,19 @@ import org.slf4j.Logger;
  * @author ajs6f
  * @date Apr 2, 2014
  */
-public class NamespaceTranslatorTest {
+public class NamespaceConverterTest {
 
-    private NamespaceTranslator testTranslator;
+    private NamespaceConverter testTranslator;
 
     private static final String testId1 = JCR_NAMESPACE + "test1";
 
     private static final String testId2 = JCR_NAMESPACE + "test2/" + JCR_CONTENT;
 
-    private static final Logger log = getLogger(NamespaceTranslatorTest.class);
+    private static final Logger log = getLogger(NamespaceConverterTest.class);
 
     @Before
     public void setUp() {
-        testTranslator = new NamespaceTranslator();
+        testTranslator = new NamespaceConverter();
     }
 
     @Test

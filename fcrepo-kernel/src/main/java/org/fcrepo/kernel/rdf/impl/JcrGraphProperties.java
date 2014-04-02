@@ -20,7 +20,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 
@@ -45,7 +45,7 @@ public class JcrGraphProperties implements GraphProperties {
     }
 
     @Override
-    public Dataset getProperties(final Node node, final GraphSubjects subjects,
+    public Dataset getProperties(final Node node, final IdentifierTranslator subjects,
             final int offset, final int limit)
         throws RepositoryException {
         final JcrRdfTools jcrRdfTools = JcrRdfTools.withContext(subjects, node.getSession());
@@ -77,7 +77,7 @@ public class JcrGraphProperties implements GraphProperties {
     }
 
     @Override
-    public Dataset getProperties(final Node node, final GraphSubjects subjects)
+    public Dataset getProperties(final Node node, final IdentifierTranslator subjects)
         throws RepositoryException {
         return getProperties(node, subjects, 0, -1);
     }

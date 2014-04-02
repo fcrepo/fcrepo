@@ -37,7 +37,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -210,7 +210,7 @@ public class PersistingRdfStreamConsumerTest {
     private Node mockNode;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private Iterator<Triple> mockTriples;

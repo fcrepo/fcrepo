@@ -20,39 +20,51 @@
 package org.fcrepo.kernel.identifiers;
 
 /**
- * Translates internal {@link String} identifiers to internal {@link String}
- * identifiers.
+ * A simple {@link InternalIdentifierConverter} that adds or subtracts a
+ * prefix.
  *
  * @author ajs6f
  * @date Apr 1, 2014
  */
-public abstract class InternalIdentifierTranslator extends IdentifierTranslator<String> {
+public class PrefixingConverter extends InternalIdentifierConverter {
 
-    private static final InternalIdentifierTranslator identity = new InternalIdentifierTranslator() {};
+    private String prefix;
 
     /*
      * (non-Javadoc)
-     * @see com.google.common.base.Converter#doForward(java.lang.Object)
+     * @see
+     * org.fcrepo.kernel.identifiers.InternalIdentifierConverter#doForward(
+     * java.lang.String)
      */
     @Override
     protected String doForward(final String a) {
-        return a;
+        return getPrefix() + a;
     }
 
     /*
      * (non-Javadoc)
-     * @see com.google.common.base.Converter#doBackward(java.lang.Object)
+     * @see
+     * org.fcrepo.kernel.identifiers.InternalIdentifierConverter#doBackward
+     * (java.lang.String)
      */
     @Override
     protected String doBackward(final String b) {
-        return b;
+        return b.substring(getPrefix().length());
     }
 
     /**
-     * @return an identity translation
+     * @param p the prefix to use
      */
-    public static InternalIdentifierTranslator identityTranslation() {
-        return identity;
+    public void setPrefix(final String p) {
+        this.prefix = p;
+    }
+
+
+    /**
+     * @return the prefix
+     */
+    public String getPrefix() {
+        return prefix;
     }
 
 }

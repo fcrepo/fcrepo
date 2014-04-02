@@ -40,7 +40,7 @@ import com.google.common.base.Function;
  * @author ajs6f
  * @date Mar 26, 2014
  */
-public class HierarchyTranslator extends InternalIdentifierTranslator {
+public class HierarchyConverter extends InternalIdentifierConverter {
 
     private String separator;
 

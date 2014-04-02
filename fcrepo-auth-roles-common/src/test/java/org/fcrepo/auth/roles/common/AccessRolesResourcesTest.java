@@ -31,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -49,7 +49,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class AccessRolesResourcesTest {
 
     @Mock
-    private GraphSubjects graphSubjects;
+    private IdentifierTranslator graphSubjects;
 
     @Mock
     private FedoraResource fedoraResource;

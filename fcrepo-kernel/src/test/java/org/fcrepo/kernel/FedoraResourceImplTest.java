@@ -52,7 +52,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
@@ -215,7 +215,7 @@ public class FedoraResourceImplTest {
     public void testGetPropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
@@ -245,7 +245,7 @@ public class FedoraResourceImplTest {
         throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
         when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);
 
@@ -268,7 +268,7 @@ public class FedoraResourceImplTest {
     public void testGetVersionDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
         when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockResource);

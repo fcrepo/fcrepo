@@ -41,7 +41,7 @@ import java.util.Iterator;
 
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
@@ -73,7 +73,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
     public HierarchyRdfContext(final javax.jcr.Node node,
-            final GraphSubjects graphSubjects,
+            final IdentifierTranslator graphSubjects,
             final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
 

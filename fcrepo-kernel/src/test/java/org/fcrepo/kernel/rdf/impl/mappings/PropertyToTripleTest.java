@@ -46,7 +46,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -375,7 +375,7 @@ public class PropertyToTripleTest {
     private Session mockSession;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private Property mockProperty;

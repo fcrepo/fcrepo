@@ -25,7 +25,7 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -62,7 +62,7 @@ public class JQLResultSetTest {
     QueryResult mockQueryResult;
 
     @Mock
-    GraphSubjects mockGraphSubjects;
+    IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private RowIterator mockRows;

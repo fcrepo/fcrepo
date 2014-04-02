@@ -47,7 +47,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
@@ -205,10 +205,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#updatePropertiesDataset
-     *     (org.fcrepo.kernel.rdf.GraphSubjects, java.lang.String)
+     *     (org.fcrepo.kernel.rdf.IdentifierTranslator, java.lang.String)
      */
     @Override
-    public Dataset updatePropertiesDataset(final GraphSubjects subjects,
+    public Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
             final String sparqlUpdateStatement) throws RepositoryException {
         final Dataset dataset = getPropertiesDataset(subjects);
         final UpdateRequest request =
@@ -220,10 +220,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.GraphSubjects, int, int)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.IdentifierTranslator, int, int)
      */
     @Override
-    public Dataset getPropertiesDataset(final GraphSubjects graphSubjects,
+    public Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
         final int offset, final int limit)
         throws RepositoryException {
 
@@ -254,19 +254,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.GraphSubjects)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public Dataset getPropertiesDataset(final GraphSubjects subjects)
+    public Dataset getPropertiesDataset(final IdentifierTranslator subjects)
         throws RepositoryException {
         return getPropertiesDataset(subjects, 0, -1);
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getTriples(org.fcrepo.kernel.rdf.GraphSubjects)
+     * @see org.fcrepo.kernel.FedoraResource#getTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public RdfStream getTriples(final GraphSubjects graphSubjects)
+    public RdfStream getTriples(final IdentifierTranslator graphSubjects)
         throws RepositoryException {
 
         final JcrRdfTools jcrRdfTools =
@@ -276,10 +276,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getHierarchyTriples(org.fcrepo.kernel.rdf.GraphSubjects)
+     * @see org.fcrepo.kernel.FedoraResource#getHierarchyTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
+    public RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects)
         throws RepositoryException {
 
         final JcrRdfTools jcrRdfTools =
@@ -289,10 +289,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getVersionTriples(org.fcrepo.kernel.rdf.GraphSubjects)
+     * @see org.fcrepo.kernel.FedoraResource#getVersionTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public RdfStream getVersionTriples(final GraphSubjects graphSubjects)
+    public RdfStream getVersionTriples(final IdentifierTranslator graphSubjects)
         throws RepositoryException {
         return JcrRdfTools.withContext(graphSubjects, node.getSession())
                 .getVersionTriples(node);
@@ -338,10 +338,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.rdf.GraphSubjects, com.hp.hpl.jena.rdf.model.Model)
+     *     (org.fcrepo.kernel.rdf.IdentifierTranslator, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public RdfStream replaceProperties(final GraphSubjects graphSubjects,
+    public RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
         final Model inputModel) throws RepositoryException {
         final RdfStream originalTriples = getTriples(graphSubjects);
 

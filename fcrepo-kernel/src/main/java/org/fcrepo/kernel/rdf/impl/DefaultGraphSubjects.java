@@ -23,7 +23,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -34,7 +34,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author barmintor
  * @date May 15, 2013
  */
-public class DefaultGraphSubjects implements GraphSubjects {
+public class DefaultGraphSubjects implements IdentifierTranslator {
 
     /**
      * Default namespace to use for node URIs

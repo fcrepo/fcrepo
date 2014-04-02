@@ -22,7 +22,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ public class RssResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final GraphSubjects graphSubjects)
+            final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
         throws RepositoryException {
 
         final Model model = ModelFactory.createDefaultModel();

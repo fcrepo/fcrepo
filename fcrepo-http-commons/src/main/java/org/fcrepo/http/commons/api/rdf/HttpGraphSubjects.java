@@ -20,7 +20,7 @@ import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
 
@@ -56,7 +56,7 @@ import javax.ws.rs.core.UriInfo;
  * </ul>
  *
  */
-public class HttpGraphSubjects implements GraphSubjects {
+public class HttpGraphSubjects implements IdentifierTranslator {
 
     private static final Logger LOGGER = getLogger(HttpGraphSubjects.class);
     public static final String WORKSPACE_PREFIX = "workspace:";

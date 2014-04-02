@@ -35,7 +35,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Test;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -131,7 +131,7 @@ public class HttpGraphSubjectsTest extends GraphSubjectsTest {
         final String testPathTx = "/" + txId + "/hello";
 
         when(mockSessionTx.getValueFactory()).thenReturn(mockValueFactory);
-        final GraphSubjects testObjTx = getTestObjTx(testPathTx);
+        final IdentifierTranslator testObjTx = getTestObjTx(testPathTx);
         when(mockSessionTx.getTxId()).thenReturn(txId);
         when(mockSubject.getURI()).thenReturn(
                 "http://localhost:8080/fcrepo/rest/tx:" + txId + "/hello");

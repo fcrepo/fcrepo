@@ -24,7 +24,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.NodePropertiesTools;
 import org.slf4j.Logger;
 
@@ -52,7 +52,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public RdfAdder(final GraphSubjects graphSubjects, final Session session,
+    public RdfAdder(final IdentifierTranslator graphSubjects, final Session session,
         final RdfStream stream) {
         super(graphSubjects, session, stream);
     }

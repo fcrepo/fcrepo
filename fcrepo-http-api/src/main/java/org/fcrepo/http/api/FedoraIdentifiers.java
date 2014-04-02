@@ -52,7 +52,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -128,7 +128,7 @@ public class FedoraIdentifiers extends AbstractResource {
     }
 
     private static Function<String, Triple> identifier2triple(
-        final GraphSubjects subjects, final Node pidsResult) {
+        final IdentifierTranslator subjects, final Node pidsResult) {
         return new Function<String, Triple>() {
 
             @Override

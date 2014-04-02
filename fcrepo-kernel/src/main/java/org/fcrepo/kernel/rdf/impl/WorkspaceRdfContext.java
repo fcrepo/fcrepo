@@ -29,7 +29,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import com.google.common.base.Function;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class WorkspaceRdfContext extends RdfStream {
      * @param uriInfo
      * @throws RepositoryException
      */
-    public WorkspaceRdfContext(final Session session, final GraphSubjects subjects)
+    public WorkspaceRdfContext(final Session session, final IdentifierTranslator subjects)
         throws RepositoryException {
         super();
 

@@ -99,7 +99,7 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.LowLevelStorageService;
@@ -127,7 +127,7 @@ public class JcrRdfToolsTest {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
 
-    private GraphSubjects testSubjects;
+    private IdentifierTranslator testSubjects;
 
     private JcrRdfTools testObj;
 
@@ -645,7 +645,7 @@ public class JcrRdfToolsTest {
     private NamespaceRegistry mockNsRegistry;
 
     @Mock
-    private GraphSubjects mockFactory;
+    private IdentifierTranslator mockFactory;
 
     @Mock
     private Resource mockSubject;

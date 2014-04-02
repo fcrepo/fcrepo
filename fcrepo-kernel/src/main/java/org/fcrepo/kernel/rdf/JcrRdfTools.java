@@ -100,7 +100,7 @@ public class JcrRdfTools {
 
     private LowLevelStorageService llstore;
 
-    private final GraphSubjects graphSubjects;
+    private final IdentifierTranslator graphSubjects;
 
     private Session session;
 
@@ -110,7 +110,7 @@ public class JcrRdfTools {
      *
      * @param graphSubjects
      */
-    public JcrRdfTools(final GraphSubjects graphSubjects) {
+    public JcrRdfTools(final IdentifierTranslator graphSubjects) {
         this(graphSubjects, null, null);
     }
 
@@ -121,7 +121,7 @@ public class JcrRdfTools {
      * @param graphSubjects
      * @param session
      */
-    public JcrRdfTools(final GraphSubjects graphSubjects, final Session session) {
+    public JcrRdfTools(final IdentifierTranslator graphSubjects, final Session session) {
         this(graphSubjects, session, null);
     }
 
@@ -132,7 +132,7 @@ public class JcrRdfTools {
      * @param session
      * @param lls
      */
-    public JcrRdfTools(final GraphSubjects graphSubjects,
+    public JcrRdfTools(final IdentifierTranslator graphSubjects,
             final Session session, final LowLevelStorageService lls) {
         this.graphSubjects = graphSubjects;
         this.session = session;
@@ -145,7 +145,7 @@ public class JcrRdfTools {
      * @param graphSubjects
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects) {
+    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects) {
         return new JcrRdfTools(graphSubjects);
     }
 
@@ -156,7 +156,7 @@ public class JcrRdfTools {
      * @param session
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects,
         final Session session) {
         if (graphSubjects == null) {
             return new JcrRdfTools(new DefaultGraphSubjects(), session);
@@ -172,7 +172,7 @@ public class JcrRdfTools {
      * @param lls
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects,
             final Session session, final LowLevelStorageService lls) {
         return new JcrRdfTools(graphSubjects, session, lls);
     }
@@ -305,7 +305,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getWorkspaceTriples(final GraphSubjects subjects) throws RepositoryException {
+    public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {
         return new WorkspaceRdfContext(session, subjects);
     }
 

@@ -43,7 +43,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.JcrRepository;
@@ -71,7 +71,7 @@ public class RootRdfContext extends NodeRdfContext {
      * @param llsService
      * @throws RepositoryException
      */
-    public RootRdfContext(final Node node, final GraphSubjects graphSubjects,
+    public RootRdfContext(final Node node, final IdentifierTranslator graphSubjects,
             final LowLevelStorageService llsService) throws RepositoryException {
 
         super(node, graphSubjects, llsService);

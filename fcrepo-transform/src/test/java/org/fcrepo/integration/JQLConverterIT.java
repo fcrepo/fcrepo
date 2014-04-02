@@ -16,7 +16,7 @@
 
 package org.fcrepo.integration;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
@@ -43,7 +43,7 @@ public class JQLConverterIT {
     Repository repo;
 
     private Session session;
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     @Before
     public void setUp() throws Exception {

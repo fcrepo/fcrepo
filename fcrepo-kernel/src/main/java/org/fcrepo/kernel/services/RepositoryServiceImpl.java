@@ -45,7 +45,7 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -178,7 +178,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * javax.jcr.Session, java.lang.String, int, long)
      */
     @Override
-    public Dataset searchRepository(final GraphSubjects subjectFactory,
+    public Dataset searchRepository(final IdentifierTranslator subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset)
         throws RepositoryException {

@@ -72,7 +72,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -322,9 +322,9 @@ public class FedoraNodesTest {
         when(mockDataset.getContext()).thenReturn(mockContext);
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
         when(mockObject.getEtagValue()).thenReturn("");
-        when(mockObject.getTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
-        when(mockObject.getHierarchyTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
@@ -349,9 +349,9 @@ public class FedoraNodesTest {
 
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
-        when(mockObject.getTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
-        when(mockObject.getHierarchyTriples(any(GraphSubjects.class))).thenReturn(
+        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
@@ -371,7 +371,7 @@ public class FedoraNodesTest {
         final InputStream mockStream =
                 new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
-        when(mockObject.updatePropertiesDataset(any(GraphSubjects.class), any(String.class)))
+        when(mockObject.updatePropertiesDataset(any(IdentifierTranslator.class), any(String.class)))
             .thenReturn(mockDataset);
         when(mockObject.getEtagValue()).thenReturn("");
 
@@ -381,7 +381,7 @@ public class FedoraNodesTest {
         when(mockModel.isEmpty()).thenReturn(true);
         testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest);
 
-        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
+        verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class),
                 eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
@@ -402,7 +402,7 @@ public class FedoraNodesTest {
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest);
-        verify(mockObject).replaceProperties(any(GraphSubjects.class), any(Model.class));
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
     }
 
     @Test
@@ -427,7 +427,7 @@ public class FedoraNodesTest {
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
-        verify(mockObject).replaceProperties(any(GraphSubjects.class),
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class),
                 any(Model.class));
         verify(mockObjects).createObject(mockSession, path);
         verify(mockSession).save();

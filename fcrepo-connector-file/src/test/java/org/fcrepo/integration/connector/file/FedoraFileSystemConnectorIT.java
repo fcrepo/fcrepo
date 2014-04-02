@@ -48,7 +48,7 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
@@ -190,7 +190,7 @@ public class FedoraFileSystemConnectorIT {
                 "'some-property-to-remove' }";
 
         // Write the properties
-        final GraphSubjects graphSubjects = new DefaultGraphSubjects();
+        final IdentifierTranslator graphSubjects = new DefaultGraphSubjects();
         object.updatePropertiesDataset(graphSubjects, sparql);
 
         // Verify property exists
@@ -206,7 +206,7 @@ public class FedoraFileSystemConnectorIT {
                 "}";
 
         // Remove the properties
-        final GraphSubjects graphSubjectsRemove = new DefaultGraphSubjects();
+        final IdentifierTranslator graphSubjectsRemove = new DefaultGraphSubjects();
         object.updatePropertiesDataset(graphSubjectsRemove, sparqlRemove);
 
         // Persist the object (although the propery will be removed from memory without this.)

@@ -103,7 +103,7 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -612,7 +612,7 @@ public class FedoraNodes extends AbstractResource {
 
         try {
 
-            final GraphSubjects subjects =
+            final IdentifierTranslator subjects =
                 new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             if (!nodeService.exists(session, toPath(path))) {
@@ -681,7 +681,7 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.build());
             }
 
-            final GraphSubjects subjects =
+            final IdentifierTranslator subjects =
                 new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
             final String destination =

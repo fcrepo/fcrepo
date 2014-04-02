@@ -31,11 +31,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-public class HierarchyTranslatorTest {
+public class HierarchyConverterTest {
 
     private static final String separator = "/";
 
-    private HierarchyTranslator testTranslator;
+    private HierarchyConverter testTranslator;
 
     private static final String[] testIdSegments = {"test1", "test2", "test3"};
 
@@ -45,11 +45,11 @@ public class HierarchyTranslatorTest {
 
     private final String testId = on(separator).join(testIdSegments);
 
-    private static final Logger log = getLogger(HierarchyTranslatorTest.class);
+    private static final Logger log = getLogger(HierarchyConverterTest.class);
 
     @Before
     public void setUp() {
-        testTranslator = new HierarchyTranslator();
+        testTranslator = new HierarchyConverter();
         testTranslator.setPrefix("");
         testTranslator.setLevels(0);
         testTranslator.setLength(1);

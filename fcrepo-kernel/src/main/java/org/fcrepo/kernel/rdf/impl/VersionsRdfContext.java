@@ -29,7 +29,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;
@@ -52,7 +52,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final VersionHistory versionHistory;
 
-    private final GraphSubjects graphSubjects;
+    private final IdentifierTranslator graphSubjects;
 
     private final LowLevelStorageService lowLevelStorageService;
 
@@ -66,7 +66,7 @@ public class VersionsRdfContext extends RdfStream {
      * @param lowLevelStorageService
      * @throws RepositoryException
      */
-    public VersionsRdfContext(final Node node, final GraphSubjects graphSubjects,
+    public VersionsRdfContext(final Node node, final IdentifierTranslator graphSubjects,
         final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
         super();

@@ -47,7 +47,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -203,7 +203,7 @@ public class RdfRemoverTest {
 
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     private static final Model m = createDefaultModel();
 

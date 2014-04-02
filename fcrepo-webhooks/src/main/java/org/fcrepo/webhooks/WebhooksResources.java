@@ -24,7 +24,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ public class WebhooksResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource, final UriInfo uriInfo,
-        final GraphSubjects graphSubjects) throws RepositoryException {
+        final IdentifierTranslator graphSubjects) throws RepositoryException {
         final Model model = createDefaultModel();
         final Resource s = graphSubjects.getGraphSubject(resource.getNode().getPath());
 

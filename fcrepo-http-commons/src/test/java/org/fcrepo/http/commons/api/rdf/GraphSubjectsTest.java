@@ -19,7 +19,7 @@ package org.fcrepo.http.commons.api.rdf;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.fcrepo.kernel.TxSession;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.mockito.Mock;
 import javax.jcr.Node;
@@ -42,7 +42,7 @@ public abstract class GraphSubjectsTest {
 
     protected String testPath = "/foo/bar";
 
-    protected GraphSubjects testObj;
+    protected IdentifierTranslator testObj;
 
     @Mock
     protected Session mockSession;
@@ -81,9 +81,9 @@ public abstract class GraphSubjectsTest {
 
     /**
      * Provides the test object instance which must be an instance of
-     * GraphSubjects.
+     * IdentifierTranslator.
      */
-    protected abstract GraphSubjects getTestObj();
+    protected abstract IdentifierTranslator getTestObj();
 
     protected static UriInfo getUriInfoImpl(final String path) {
         // UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());

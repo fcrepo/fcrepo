@@ -26,7 +26,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -108,7 +108,7 @@ public interface DatastreamService extends Service {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getFixityResultsModel(GraphSubjects subjects, Datastream datastream) throws RepositoryException;
+    RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream) throws RepositoryException;
 
     /**
      * Run the fixity check on the datastream and attempt to automatically

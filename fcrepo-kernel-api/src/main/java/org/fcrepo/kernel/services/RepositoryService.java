@@ -22,7 +22,7 @@ import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.Problems;
 
@@ -89,7 +89,7 @@ public interface RepositoryService extends Service {
      * @return
      * @throws RepositoryException
      */
-    Dataset searchRepository(GraphSubjects subjectFactory, Resource searchSubject, Session session, String terms,
+    Dataset searchRepository(IdentifierTranslator subjectFactory, Resource searchSubject, Session session, String terms,
             int limit, long offset) throws RepositoryException;
 
     /**

@@ -34,7 +34,7 @@ import javax.jcr.AccessDeniedException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.rdf.impl.mappings.ZippingIterator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
@@ -68,7 +68,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
 
-    public PropertiesRdfContext(final javax.jcr.Node node, final GraphSubjects graphSubjects,
+    public PropertiesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects,
         final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
         property2triple = new PropertyToTriple(graphSubjects);

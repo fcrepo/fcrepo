@@ -30,7 +30,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import javax.jcr.Node;
 
 import org.fcrepo.kernel.DummyURIResource;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -69,7 +69,7 @@ public class JcrGraphPropertiesTest {
     Node mockNode;
 
     @Mock
-    GraphSubjects mockSubjects;
+    IdentifierTranslator mockSubjects;
 
     @Test
     public void testGetPropertiesDataset() throws Exception {

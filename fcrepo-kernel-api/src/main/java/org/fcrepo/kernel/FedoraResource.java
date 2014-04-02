@@ -24,7 +24,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -95,7 +95,7 @@ public interface FedoraResource {
      * @param sparqlUpdateStatement
      * @throws RepositoryException
      */
-    Dataset updatePropertiesDataset(final GraphSubjects subjects,
+    Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
             final String sparqlUpdateStatement) throws RepositoryException;
 
     /**
@@ -107,7 +107,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    Dataset getPropertiesDataset(final GraphSubjects graphSubjects,
+    Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
        final int offset, final int limit) throws RepositoryException;
 
     /**
@@ -116,7 +116,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    Dataset getPropertiesDataset(final GraphSubjects subjects)
+    Dataset getPropertiesDataset(final IdentifierTranslator subjects)
         throws RepositoryException;
 
     /**
@@ -125,7 +125,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getTriples(final GraphSubjects graphSubjects) throws RepositoryException;
+    RdfStream getTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
@@ -133,7 +133,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getHierarchyTriples(final GraphSubjects graphSubjects)
+    RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects)
         throws RepositoryException;
 
     /**
@@ -142,7 +142,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getVersionTriples(final GraphSubjects graphSubjects)
+    RdfStream getVersionTriples(final IdentifierTranslator graphSubjects)
         throws RepositoryException;
 
     /**
@@ -185,7 +185,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    RdfStream replaceProperties(final GraphSubjects graphSubjects,
+    RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
         final Model inputModel) throws RepositoryException;
 
     /**

@@ -28,7 +28,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Before;
@@ -47,7 +47,7 @@ public class WebhooksResourcesTest {
 
     private UriInfo uriInfo;
 
-    private GraphSubjects mockSubjects;
+    private IdentifierTranslator mockSubjects;
 
     @Before
     public void setUp() {

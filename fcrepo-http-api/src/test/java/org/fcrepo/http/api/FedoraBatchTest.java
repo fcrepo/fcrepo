@@ -64,7 +64,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
@@ -156,7 +156,7 @@ public class FedoraBatchTest {
         multipart.bodyPart(part);
 
         testObj.batchModify(createPathList(pid), multipart);
-        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class), eq("xyz"));
+        verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class), eq("xyz"));
         verify(mockSession).save();
     }
 
@@ -187,7 +187,7 @@ public class FedoraBatchTest {
 
         testObj.batchModify(createPathList(pid), multipart);
         final ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
-        verify(mockObject).replaceProperties(any(GraphSubjects.class), captor.capture());
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), captor.capture());
         final Model capturedModel = captor.getValue();
         assertTrue(capturedModel.contains(capturedModel.createResource("http://localhost/fcrepo/" + pid),
                                              capturedModel.createProperty("info:a"),

@@ -19,7 +19,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.jcr.FedoraJcrTypes;
@@ -41,7 +41,7 @@ public class RssResourcesTest {
     private Node mockNode;
     private FedoraResourceImpl mockResource;
     private UriInfo uriInfo;
-    private GraphSubjects mockSubjects;
+    private IdentifierTranslator mockSubjects;
 
     @Before
     public void setUp() {

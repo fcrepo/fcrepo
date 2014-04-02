@@ -44,7 +44,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,7 +85,7 @@ public class NodePropertiesToolsTest {
     private Value previousValue;
 
     @Mock
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     @Mock
     private Session mockSession;

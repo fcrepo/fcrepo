@@ -41,7 +41,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,7 +70,7 @@ public class HttpApiResourcesTest {
     @Mock
     private NodeType mockNodeType;
 
-    private GraphSubjects mockSubjects;
+    private IdentifierTranslator mockSubjects;
 
     @Mock
     private SerializerUtil mockSerializers;

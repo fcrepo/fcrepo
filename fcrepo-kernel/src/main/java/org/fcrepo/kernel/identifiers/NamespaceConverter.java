@@ -28,20 +28,20 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
 
 /**
- * A simple {@link InternalIdentifierTranslator} that replaces internal JCR
+ * A simple {@link InternalIdentifierConverter} that replaces internal JCR
  * namespaces with external namespaces, and replaces the term for content.
  *
  * @author ajs6f
  * @date Apr 1, 2014
  */
-public class NamespaceTranslator extends InternalIdentifierTranslator {
+public class NamespaceConverter extends InternalIdentifierConverter {
 
-    private static final Logger log = getLogger(NamespaceTranslator.class);
+    private static final Logger log = getLogger(NamespaceConverter.class);
 
     /*
      * (non-Javadoc)
      * @see
-     * org.fcrepo.kernel.identifiers.InternalIdentifierTranslator#doForward(
+     * org.fcrepo.kernel.identifiers.InternalIdentifierConverter#doForward(
      * java.lang.String)
      */
     @Override
@@ -61,7 +61,7 @@ public class NamespaceTranslator extends InternalIdentifierTranslator {
     /*
      * (non-Javadoc)
      * @see
-     * org.fcrepo.kernel.identifiers.InternalIdentifierTranslator#doBackward
+     * org.fcrepo.kernel.identifiers.InternalIdentifierConverter#doBackward
      * (java.lang.String)
      */
     @Override

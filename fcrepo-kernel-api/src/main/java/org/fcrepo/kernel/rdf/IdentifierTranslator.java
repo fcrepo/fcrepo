@@ -26,7 +26,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @date May 15, 2013
  */
-public interface GraphSubjects {
+public interface IdentifierTranslator {
 
     /**
      * Translate an RDF resource into a JCR path

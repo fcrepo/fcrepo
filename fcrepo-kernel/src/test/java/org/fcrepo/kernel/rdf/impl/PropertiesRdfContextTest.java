@@ -39,7 +39,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
@@ -122,7 +122,7 @@ public class PropertiesRdfContextTest {
     private NodeType mockNodeType;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private LowLevelStorageService mockLowLevelStorageService;

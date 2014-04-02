@@ -20,13 +20,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public class PrefixingTranslatorTest {
+public class PrefixingConverterTest {
 
     private static final String testPrefix = "info:";
 
     private static final String testId = "test1";
 
-    private PrefixingTranslator testTranslator = new PrefixingTranslator();
+    private PrefixingConverter testTranslator = new PrefixingConverter();
 
     @Test
     public void testRoundTrip() {

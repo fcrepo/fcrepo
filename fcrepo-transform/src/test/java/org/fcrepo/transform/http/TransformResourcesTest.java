@@ -21,7 +21,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +49,7 @@ public class TransformResourcesTest {
 
     private UriInfo uriInfo;
 
-    private GraphSubjects mockSubjects;
+    private IdentifierTranslator mockSubjects;
 
     @Before
     public void setUp() {

@@ -39,10 +39,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @date Apr 1, 2014
  */
-public class ExternalIdentifierTranslator extends IdentifierTranslator<Resource> {
+public class ExternalIdentifierConverter extends IdentifierConverter<Resource> {
 
     @Inject
-    private List<InternalIdentifierTranslator> translationChain;
+    private List<InternalIdentifierConverter> translationChain;
 
     private Converter<String, String> forward = identity();
 
@@ -71,10 +71,10 @@ public class ExternalIdentifierTranslator extends IdentifierTranslator<Resource>
      */
     @PostConstruct
     public void accumulateTranslations() {
-        for (final InternalIdentifierTranslator t : translationChain) {
+        for (final InternalIdentifierConverter t : translationChain) {
             forward = forward.andThen(t);
         }
-        for (final InternalIdentifierTranslator t : Lists.reverse(translationChain)) {
+        for (final InternalIdentifierConverter t : Lists.reverse(translationChain)) {
             reverse = reverse.andThen(t.reverse());
         }
     }
@@ -82,7 +82,7 @@ public class ExternalIdentifierTranslator extends IdentifierTranslator<Resource>
     /**
      * @param chain the translation chain to use
      */
-    public void setTranslationChain(final List<InternalIdentifierTranslator> chain) {
+    public void setTranslationChain(final List<InternalIdentifierConverter> chain) {
         this.translationChain = chain;
         accumulateTranslations();
     }
