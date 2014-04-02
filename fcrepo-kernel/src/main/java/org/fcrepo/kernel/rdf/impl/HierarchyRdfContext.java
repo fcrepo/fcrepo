@@ -114,8 +114,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
 
     private Iterator<Triple> parentContext() throws RepositoryException {
         final javax.jcr.Node parentNode = node().getParent();
-        final Node parentNodeSubject =
-            graphSubjects().getGraphSubject(parentNode).asNode();
+        final Node parentNodeSubject = graphSubjects().getGraphSubject(parentNode.getPath()).asNode();
         return new PropertiesRdfContext(parentNode, graphSubjects(), lowLevelStorageService())
                 .concat(new Triple[] {
                                 create(subject(), HAS_PARENT.asNode(),
@@ -146,8 +145,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
             @Override
             public Iterator<Triple> apply(final javax.jcr.Node child) {
                 try {
-                    final Node childSubject =
-                        graphSubjects().getGraphSubject(child).asNode();
+                    final Node childSubject = graphSubjects().getGraphSubject(child.getPath()).asNode();
                     LOGGER.trace("Creating triples for child node: {}", child);
                     return new PropertiesRdfContext(child, graphSubjects(),
                         lowLevelStorageService()).concat(new Triple[] {

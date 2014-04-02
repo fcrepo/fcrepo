@@ -72,7 +72,7 @@ public class NodeRdfContext extends RdfStream {
         super();
         this.node = node;
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getGraphSubject(node).asNode();
+        this.subject = graphSubjects.getGraphSubject(node.getPath()).asNode();
 
         // TODO fix GraphProperties to allow for LowLevelStorageServices to pass
         // through it

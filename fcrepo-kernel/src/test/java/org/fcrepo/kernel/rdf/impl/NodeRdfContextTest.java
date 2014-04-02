@@ -122,8 +122,7 @@ public class NodeRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                mockNodeSubject);
+        when(mockGraphSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
     }
 
     @Test

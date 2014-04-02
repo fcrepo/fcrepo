@@ -33,6 +33,7 @@ public interface GraphSubjects {
      * @return an RDF URI resource
      * @throws RepositoryException
      */
+    @Deprecated
     Resource getGraphSubject(final Node node) throws RepositoryException;
 
     /**
@@ -41,6 +42,7 @@ public interface GraphSubjects {
      * @return a JCR node, or null if one couldn't be found
      * @throws RepositoryException
      */
+    @Deprecated
     Node getNodeFromGraphSubject(final Resource subject)
         throws RepositoryException;
 

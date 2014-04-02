@@ -247,9 +247,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
 
-        dataset.getContext().set(URI_SYMBOL,
-                graphSubjects.getGraphSubject(getNode()));
-
+        dataset.getContext().set(URI_SYMBOL, graphSubjects.getGraphSubject(getNode().getPath()));
 
 
         return dataset;

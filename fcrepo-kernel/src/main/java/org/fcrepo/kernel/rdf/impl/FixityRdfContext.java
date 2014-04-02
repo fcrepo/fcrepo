@@ -79,9 +79,8 @@ public class FixityRdfContext extends NodeRdfContext {
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
                             b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
-                            b.add(create(graphSubjects.getGraphSubject(node)
-                                    .asNode(), HAS_FIXITY_RESULT.asNode(),
-                                    resultSubject));
+                            b.add(create(graphSubjects.getGraphSubject(node.getPath()).asNode(),
+                                    HAS_FIXITY_RESULT.asNode(), resultSubject));
                             final String storeIdentifier = blob.getStoreIdentifier();
                             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
                                                                      .asNode();

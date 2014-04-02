@@ -213,7 +213,7 @@ public class DatastreamServiceTest implements FedoraJcrTypes {
                         .<Iterable<FixityResult>> any())).thenReturn(
                 new RdfStream());
 
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
+        when(mockSubjects.getGraphSubject(mockNode.getPath())).thenReturn(
                 createResource("abc"));
         final RdfStream fixityResults =
                 testObj.getFixityResultsModel(mockSubjects, mockDatastream);

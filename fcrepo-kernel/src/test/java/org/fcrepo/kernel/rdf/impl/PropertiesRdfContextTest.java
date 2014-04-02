@@ -73,6 +73,7 @@ public class PropertiesRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/mockNode");
         when(mockContentNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -90,10 +91,8 @@ public class PropertiesRdfContextTest {
                 ImmutableSet.of(mockLowLevelCacheEntry));
         when(mockLowLevelCacheEntry.getExternalIdentifier()).thenReturn(
                 MOCK_EXTERNAL_IDENTIFIER);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                mockSubject);
-        when(mockGraphSubjects.getGraphSubject(mockContentNode)).thenReturn(
-                mockContentSubject);
+        when(mockGraphSubjects.getGraphSubject(mockNode.getPath())).thenReturn(mockSubject);
+        when(mockGraphSubjects.getGraphSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockContentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});

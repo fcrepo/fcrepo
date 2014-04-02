@@ -244,9 +244,8 @@ public class JcrRdfTools {
             results.concat(new PropertiesRdfContext(node, graphSubjects,
                     llstore));
             if (iteratorSubject != null) {
-                results.concat(singleton(create(iteratorSubject.asNode(),
-                        HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
-                                .getGraphSubject(node).asNode())));
+                results.concat(singleton(create(iteratorSubject.asNode(), HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
+                        .getGraphSubject(node.getPath()).asNode())));
             }
         }
         return results;

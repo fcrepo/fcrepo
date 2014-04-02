@@ -97,10 +97,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
             LOGGER.trace("Access denied to content node", e);
         }
         if (contentNode != null) {
-            final Node contentSubject =
-                graphSubjects().getGraphSubject(contentNode).asNode();
-            final Node subject =
-                graphSubjects().getGraphSubject(node()).asNode();
+            final Node contentSubject = graphSubjects().getGraphSubject(contentNode.getPath()).asNode();
+            final Node subject = graphSubjects().getGraphSubject(node().getPath()).asNode();
             // add triples representing parent-to-content-child relationship
             concat(new Triple[] {
                     create(subject, HAS_CONTENT.asNode(), contentSubject),
