@@ -121,7 +121,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement t)
         throws RepositoryException {
         final Resource subject = t.getSubject();
-        final Node subjectNode = idTranslator().getNodeFromGraphSubject(subject);
+        final Node subjectNode = session().getNode(idTranslator().getPathFromGraphSubject(subject));
 
         // if this is a user-managed RDF type assertion, update the node's
         // mixins. If it isn't, treat it as a "data" property.

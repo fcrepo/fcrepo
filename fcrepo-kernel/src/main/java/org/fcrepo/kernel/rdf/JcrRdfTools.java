@@ -414,8 +414,7 @@ public class JcrRdfTools {
         if (data.isURIResource()
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
-            final Node nodeFromGraphSubject =
-                graphSubjects.getNodeFromGraphSubject(data.asResource());
+            final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromGraphSubject(data.asResource()));
             return valueFactory.createValue(nodeFromGraphSubject,
                     type == WEAKREFERENCE);
         } else if (data.isURIResource() || type == URI) {

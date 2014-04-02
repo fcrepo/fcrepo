@@ -105,12 +105,11 @@ public class DefaultPropertiesLoader {
         }
     }
 
-    private void setProperty(final String prop, final String baseDir) {
+    private static void setProperty(final String prop, final String baseDir) {
         System.setProperty(prop, baseDir + prop);
     }
 
-    private void updateRelativePropertyPath(String prop, String value,
-                                            String baseDir) {
+    private static void updateRelativePropertyPath(final String prop, final String value, final String baseDir) {
         if (!new File(value).isAbsolute()) {
             System.setProperty(prop, baseDir + value);
         }
