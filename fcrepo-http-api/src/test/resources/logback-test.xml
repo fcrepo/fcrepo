@@ -7,6 +7,10 @@
         </encoder>
     </appender>
 
+
+  <logger name="org.fcrepo.kernel.services.VersionService" additivity="false" level="TRACE">
+    <appender-ref ref="STDOUT"/>
+  </logger>
   <logger name="org.fcrepo.connector.file" additivity="false" level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </logger>
