@@ -48,7 +48,7 @@ public class DublinCoreGeneratorTest {
     Session mockSession;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException {
+    public void setUp() {
         mockNodeService = mock(NodeService.class);
         testObj = new DublinCoreGenerator();
         setField(testObj, "nodeService", mockNodeService);

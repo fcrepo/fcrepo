@@ -61,9 +61,8 @@ public class WellKnownDatastreamGenerator implements DCGenerator {
                     dc.getNode(JCR_CONTENT).getProperty(JCR_DATA).getBinary();
 
             return binary.getStream();
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**

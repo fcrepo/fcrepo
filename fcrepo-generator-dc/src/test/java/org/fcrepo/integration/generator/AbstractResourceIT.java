@@ -16,9 +16,13 @@
 
 package org.fcrepo.integration.generator;
 
+import static java.lang.Integer.MAX_VALUE;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.impl.client.HttpClientBuilder.create;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -26,9 +30,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.fcrepo.jcr.FedoraJcrTypes;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -56,16 +58,15 @@ public abstract class AbstractResourceIT {
     protected static final String serverOAIAddress = "http://" + HOSTNAME +
             ":" + SERVER_PORT + "/";
 
-    protected final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
+    protected final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
 
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        connectionManager.setMaxTotal(Integer.MAX_VALUE);
+        connectionManager.setMaxTotal(MAX_VALUE);
         connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        connectionManager.closeIdleConnections(3, SECONDS);
+        client = create().setConnectionManager(connectionManager).build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {
@@ -76,14 +77,14 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + pid + "/" + ds +
-                        "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+                        "?mixin=" + FEDORA_DATASTREAM);
         post.setEntity(new StringEntity(content));
         return post;
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds) {
         return new HttpPut(serverAddress + pid + "/" + ds +
-                "?mixin=" + FedoraJcrTypes.FEDORA_DATASTREAM);
+                "?mixin=" + FEDORA_DATASTREAM);
     }
 
     protected int getStatus(final HttpUriRequest method)
