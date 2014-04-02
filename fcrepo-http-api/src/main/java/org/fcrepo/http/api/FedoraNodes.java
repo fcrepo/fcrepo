@@ -50,6 +50,7 @@ import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -90,6 +91,7 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
@@ -103,7 +105,6 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -188,7 +189,7 @@ public class FedoraNodes extends AbstractResource {
         final RdfStream rdfStream =
             resource.getTriples(subjects).concat(
                     resource.getHierarchyTriples(subjects)).session(session)
-                    .topic(subjects.getGraphSubject(resource.getNode())
+                    .topic(subjects.getGraphSubject(resource.getNode().getPath())
                             .asNode());
         if (realLimit != NO_MEMBER_PROPERTIES) {
             final Node firstPage =
@@ -360,10 +361,9 @@ public class FedoraNodes extends AbstractResource {
                 final String format = contentTypeToLang(contentType).getName()
                                           .toUpperCase();
 
-                final Model inputModel = createDefaultModel()
-                                             .read(requestBodyStream,
-                                                      graphSubjects.getGraphSubject(resource.getNode()).toString(),
-                                                      format);
+                final Model inputModel =
+                    createDefaultModel().read(requestBodyStream,
+                            graphSubjects.getGraphSubject(resource.getNode().getPath()).toString(), format);
 
                 resource.replaceProperties(graphSubjects, inputModel);
             }
@@ -492,10 +492,8 @@ public class FedoraNodes extends AbstractResource {
                                               .toUpperCase();
 
                     final Model inputModel =
-                        createDefaultModel()
-                                                 .read(requestBodyStream,
-                                                          subjects.getGraphSubject(result.getNode()).toString(),
-                                                          format);
+                        createDefaultModel().read(requestBodyStream,
+                                subjects.getGraphSubject(result.getNode().getPath()).toString(), format);
 
                     result.replaceProperties(subjects, inputModel);
                 } else if (result instanceof Datastream) {
@@ -522,11 +520,9 @@ public class FedoraNodes extends AbstractResource {
 
             final URI location;
             if (result.hasContent()) {
-                location = new URI(subjects.getGraphSubject(result.getNode().getNode(JcrConstants.JCR_CONTENT))
-                                                 .getURI());
+                location = new URI(subjects.getGraphSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());
             } else {
-                location = new URI(subjects.getGraphSubject(result.getNode())
-                                                 .getURI());
+                location = new URI(subjects.getGraphSubject(result.getNode().getPath()).getURI());
             }
 
             return created(location).entity(location.toString()).build();

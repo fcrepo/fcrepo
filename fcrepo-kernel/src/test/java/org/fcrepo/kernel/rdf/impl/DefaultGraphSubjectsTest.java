@@ -60,10 +60,10 @@ public class DefaultGraphSubjectsTest {
         final String testPath = "/foo/bar";
         final String expected = RESOURCE_NAMESPACE + testPath.substring(1);
         when(mockNode.getPath()).thenReturn(testPath);
-        Resource actual = testObj.getGraphSubject(mockNode);
+        Resource actual = testObj.getGraphSubject(mockNode.getPath());
         assertEquals(expected, actual.getURI());
         when(mockNode.getPath()).thenReturn(testPath + "/jcr:content");
-        actual = testObj.getGraphSubject(mockNode);
+        actual = testObj.getGraphSubject(mockNode.getPath());
         assertEquals(expected + "/fcr:content", actual.getURI());
     }
 
@@ -76,22 +76,22 @@ public class DefaultGraphSubjectsTest {
         // test a good subject
         when(mockSubject.getURI()).thenReturn(RESOURCE_NAMESPACE + expected.substring(1));
         when(mockSubject.isURIResource()).thenReturn(true);
-        Node actual = testObj.getNodeFromGraphSubject(mockSubject);
+        Node actual = mockSession.getNode(testObj.getPathFromGraphSubject(mockSubject));
         assertEquals(mockNode, actual);
         // test a bad subject
         when(mockSubject.getURI()).thenReturn(
                 "info:fedora2" + expected + "/bad");
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
+        actual = mockSession.getNode(testObj.getPathFromGraphSubject(mockSubject));
         assertEquals("Somehow got a Node from a bad RDF subject!", null, actual);
         // test a non-existent path
         when(mockSubject.getURI()).thenReturn(RESOURCE_NAMESPACE + expected.substring(1) + "/bad");
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
+        actual = mockSession.getNode(testObj.getPathFromGraphSubject(mockSubject));
         assertEquals("Somehow got a Node from a non-existent RDF subject!",
                 null, actual);
         // test a fcr:content path
         when(mockSubject.getURI()).thenReturn(RESOURCE_NAMESPACE + expected.substring(1) + "/fcr:content");
         when(mockSession.nodeExists(expected + "/jcr:content")).thenReturn(true);
-        actual = testObj.getNodeFromGraphSubject(mockSubject);
+        actual = mockSession.getNode(testObj.getPathFromGraphSubject(mockSubject));
         verify(mockSession).getNode(expected + "/jcr:content");
     }
 

@@ -69,8 +69,7 @@ public class AccessRolesTypesTest {
     private NodeType mockNodeType;
 
     @Before
-    public void setUp() throws RepositoryException, NoSuchFieldException,
-            IOException {
+    public void setUp() throws RepositoryException, IOException {
         initMocks(this);
 
         when(session.getWorkspace()).thenReturn(workspace);

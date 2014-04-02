@@ -175,7 +175,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
      * @param dataset
      * @return
      */
-    private LDPath<RDFNode> getLdpathResource(final Dataset dataset) {
+    private static LDPath<RDFNode> getLdpathResource(final Dataset dataset) {
 
         return new LDPath<>(new GenericJenaBackend(unifyDatasetModel(dataset)));
 
@@ -187,7 +187,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
      * @param collectionMap
      * @return
      */
-    private Map<String, Collection<Object>> transformLdpathOutputToSomethingSerializable(
+    private static Map<String, Collection<Object>> transformLdpathOutputToSomethingSerializable(
         final Map<String, Collection<?>> collectionMap) {
 
         return transformValues(collectionMap,

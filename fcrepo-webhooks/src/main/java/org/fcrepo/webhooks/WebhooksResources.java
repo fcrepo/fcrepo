@@ -16,11 +16,13 @@
 
 package org.fcrepo.webhooks;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
+
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.jcr.FedoraJcrTypes;
@@ -36,15 +38,14 @@ import javax.ws.rs.core.UriInfo;
 public class WebhooksResources implements UriAwareResourceModelFactory {
 
     @Override
-    public Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final GraphSubjects graphSubjects)
-        throws RepositoryException {
-        final Model model = ModelFactory.createDefaultModel();
-        final Resource s = graphSubjects.getGraphSubject(resource.getNode());
+    public Model createModelForResource(final FedoraResource resource, final UriInfo uriInfo,
+        final GraphSubjects graphSubjects) throws RepositoryException {
+        final Model model = createDefaultModel();
+        final Resource s = graphSubjects.getGraphSubject(resource.getNode().getPath());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType(
                 FedoraJcrTypes.ROOT)) {
-            model.add(s, RdfLexicon.HAS_SUBSCRIPTION_SERVICE, model
+            model.add(s, HAS_SUBSCRIPTION_SERVICE, model
                     .createResource(uriInfo.getBaseUriBuilder().path(
                             FedoraWebhooks.class).build().toASCIIString()));
         }

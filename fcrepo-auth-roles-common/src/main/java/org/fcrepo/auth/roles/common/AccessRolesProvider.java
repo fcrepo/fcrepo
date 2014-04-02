@@ -17,7 +17,6 @@
 package org.fcrepo.auth.roles.common;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +33,19 @@ import javax.jcr.Value;
 import org.fcrepo.auth.roles.common.Constants.JcrName;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.collect.Iterables.toArray;
+import static java.util.Collections.emptyMap;
 import static org.fcrepo.auth.roles.common.Constants.registerPrefixes;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.Assignment;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.Rbacl;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.assignment;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.principal;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.rbacl;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbaclAssignable;
+import static org.fcrepo.auth.roles.common.Constants.JcrName.role;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Provides the effective access roles for authorization.
@@ -50,11 +55,9 @@ import static org.fcrepo.auth.roles.common.Constants.JcrName.rbaclAssignable;
 @Component
 public class AccessRolesProvider {
 
-    private static final Logger LOGGER = LoggerFactory
-            .getLogger(AccessRolesProvider.class);
+    private static final Logger LOGGER = getLogger(AccessRolesProvider.class);
 
-    public static final Map<String, List<String>> DEFAULT_ACCESS_ROLES =
-            Collections.emptyMap();
+    public static final Map<String, List<String>> DEFAULT_ACCESS_ROLES = emptyMap();
 
     /**
      * Get the roles assigned to this Node. Optionally search up the tree for
@@ -64,14 +67,11 @@ public class AccessRolesProvider {
      * @param effective if true then search for effective roles
      * @return a set of roles for each principal
      */
-    public Map<String, List<String>>
-    getRoles(Node node, final boolean effective)
-        throws RepositoryException {
-        final Map<String, List<String>> data =
-                new HashMap<>();
+    public Map<String, List<String>> getRoles(Node node, final boolean effective) throws RepositoryException {
+        final Map<String, List<String>> data = new HashMap<>();
         final Session session = node.getSession();
         registerPrefixes(session);
-        if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
+        if (node.isNodeType(rbaclAssignable.getQualified())) {
             getAssignments(node, data);
             return data;
         }
@@ -79,8 +79,7 @@ public class AccessRolesProvider {
             try {
                 for (node = node.getParent(); node != null; node =
                         node.getParent()) {
-                    if (node.isNodeType(JcrName.rbaclAssignable
-                            .getQualified())) {
+                    if (node.isNodeType(rbaclAssignable.getQualified())) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("effective roles are assigned at node: {}",
                                          node.getPath());
@@ -130,7 +129,7 @@ public class AccessRolesProvider {
                             data.put(principalName, roles);
                         }
                         for (final Value v : assign.getProperty(
-                                JcrName.role.getQualified()).getValues()) {
+                                role.getQualified()).getValues()) {
                             if (v == null || v.toString().trim().length() == 0) {
                                 LOGGER.warn("found empty role name on node {}",
                                             node.getPath());
@@ -158,30 +157,27 @@ public class AccessRolesProvider {
     public void postRoles(final Node node, final Map<String, Set<String>> data)
         throws RepositoryException {
         final Session session = node.getSession();
-        Constants.registerPrefixes(session);
-        if (!node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
-            node.addMixin(JcrName.rbaclAssignable.getQualified());
+        registerPrefixes(session);
+        if (!node.isNodeType(rbaclAssignable.getQualified())) {
+            node.addMixin(rbaclAssignable.getQualified());
             LOGGER.debug("added rbaclAssignable type");
         }
 
         Node acl;
 
-        if (node.hasNode(JcrName.rbacl.getQualified())) {
-            acl = node.getNode(JcrName.rbacl.getQualified());
+        if (node.hasNode(rbacl.getQualified())) {
+            acl = node.getNode(rbacl.getQualified());
             for (final NodeIterator ni = acl.getNodes(); ni.hasNext();) {
                 ni.nextNode().remove();
             }
         } else {
-            acl = node.addNode(JcrName.rbacl.getQualified(), JcrName.Rbacl
-                                                                 .getQualified());
+            acl = node.addNode(rbacl.getQualified(), Rbacl.getQualified());
         }
 
         for (final Map.Entry<String, Set<String>> entry : data.entrySet()) {
-            final Node assign =
-                    acl.addNode(JcrName.assignment.getQualified(),
-                            JcrName.Assignment.getQualified());
-            assign.setProperty(JcrName.principal.getQualified(), entry.getKey());
-            assign.setProperty(JcrName.role.getQualified(), toArray(entry.getValue(), String.class));
+            final Node assign = acl.addNode(assignment.getQualified(), Assignment.getQualified());
+            assign.setProperty(principal.getQualified(), entry.getKey());
+            assign.setProperty(role.getQualified(), toArray(entry.getValue(), String.class));
         }
     }
 
@@ -192,8 +188,8 @@ public class AccessRolesProvider {
      */
     public void deleteRoles(final Node node) throws RepositoryException {
         final Session session = node.getSession();
-        Constants.registerPrefixes(session);
-        if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
+        registerPrefixes(session);
+        if (node.isNodeType(rbaclAssignable.getQualified())) {
             // remove rbacl child
             try {
                 final Node rbacl = node.getNode(JcrName.rbacl.getQualified());
@@ -202,7 +198,7 @@ public class AccessRolesProvider {
                 LOGGER.debug("Cannot find node: {}", node, e);
             }
             // remove mixin
-            node.removeMixin(JcrName.rbaclAssignable.getQualified());
+            node.removeMixin(rbaclAssignable.getQualified());
         }
     }
 

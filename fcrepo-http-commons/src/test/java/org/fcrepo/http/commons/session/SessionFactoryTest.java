@@ -108,8 +108,7 @@ public class SessionFactoryTest {
     }
 
     @Test
-    public void testGetSessionWithTransaction() throws LoginException,
-                                               RepositoryException {
+    public void testGetSessionWithTransaction() throws RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);

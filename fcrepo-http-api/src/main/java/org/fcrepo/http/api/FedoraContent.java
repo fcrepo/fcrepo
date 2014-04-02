@@ -152,9 +152,7 @@ public class FedoraContent extends ContentExposingResource {
 
             session.save();
             versionService.nodeUpdated(datastreamNode);
-            return created(
-                    new URI(subjects.getGraphSubject(
-                            datastreamNode.getNode(JCR_CONTENT)).getURI()))
+            return created(new URI(subjects.getGraphSubject(datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()))
                     .build();
 
         } finally {
@@ -240,11 +238,8 @@ public class FedoraContent extends ContentExposingResource {
                                 uriInfo);
 
                 return created(
-                        new URI(
-                                subjects.getGraphSubject(
-                                        datastreamNode
-                                                .getNode(JCR_CONTENT))
-                                        .getURI())).build();
+                        new URI(subjects.getGraphSubject(datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()))
+                        .build();
             }
             return noContent().build();
         } finally {

@@ -261,7 +261,7 @@ public class JQLResultSet implements ResultSet {
                     case REFERENCE:
                     case WEAKREFERENCE:
                         // cheat and just return the UUID syntax
-                        return subjects.getGraphSubject(session.getNodeByIdentifier(v.getString()));
+                        return subjects.getGraphSubject(session.getNodeByIdentifier(v.getString()).getPath());
                     default:
                         return createTypedLiteral(v.getString());
                 }

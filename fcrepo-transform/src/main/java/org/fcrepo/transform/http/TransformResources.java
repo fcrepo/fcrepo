@@ -41,7 +41,7 @@ public class TransformResources implements UriAwareResourceModelFactory {
     public Model createModelForResource(final FedoraResource resource,
          final UriInfo uriInfo, final GraphSubjects graphSubjects) throws RepositoryException {
         final Model model = createDefaultModel();
-        final Resource s = graphSubjects.getGraphSubject(resource.getNode());
+        final Resource s = graphSubjects.getGraphSubject(resource.getNode().getPath());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
             model.add(s, HAS_SPARQL_ENDPOINT, model.createResource(uriInfo

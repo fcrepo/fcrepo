@@ -61,7 +61,7 @@ public class RssResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
+        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
 
         final Model model = testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 

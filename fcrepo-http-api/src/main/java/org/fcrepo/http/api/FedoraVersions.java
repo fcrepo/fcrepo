@@ -108,7 +108,7 @@ public class FedoraVersions extends ContentExposingResource {
         final FedoraResource resource = nodeService.getObject(session, path);
 
         return resource.getVersionTriples(nodeTranslator()).session(session).topic(
-                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
+                nodeTranslator().getGraphSubject(resource.getNode().getPath()).asNode());
     }
 
     /**
@@ -186,7 +186,7 @@ public class FedoraVersions extends ContentExposingResource {
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
         return resource.getTriples(nodeTranslator()).session(session).topic(
-                nodeTranslator().getGraphSubject(resource.getNode()).asNode());
+                nodeTranslator().getGraphSubject(resource.getNode().getPath()).asNode());
     }
 
     /**

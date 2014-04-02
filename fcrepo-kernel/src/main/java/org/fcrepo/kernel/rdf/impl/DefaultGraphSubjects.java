@@ -13,31 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
-import org.slf4j.Logger;
-
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * Translates JCR names into "fedora" subjects (by replacing jcr-specific names
  * with fedora names)
+ *
  * @author barmintor
  * @date May 15, 2013
  */
 public class DefaultGraphSubjects implements GraphSubjects {
-
 
     /**
      * Default namespace to use for node URIs
@@ -45,24 +42,18 @@ public class DefaultGraphSubjects implements GraphSubjects {
     public static final String RESOURCE_NAMESPACE = "info:fedora/";
 
     private final Resource context;
-    private final Session session;
-
-    private static final Logger LOGGER = getLogger(DefaultGraphSubjects.class);
-
 
     /**
      * Construct the graph with a placeholder context resource
      */
     public DefaultGraphSubjects(final Session session) {
-        this.session = session;
         this.context = createResource();
     }
 
     @Override
     public Resource getGraphSubject(final String absPath) throws RepositoryException {
         if (absPath.endsWith(JCR_CONTENT)) {
-            return createResource(RESOURCE_NAMESPACE
-                    + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
+            return createResource(RESOURCE_NAMESPACE + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
         }
         return createResource(RESOURCE_NAMESPACE + absPath.substring(1));
     }
@@ -73,25 +64,15 @@ public class DefaultGraphSubjects implements GraphSubjects {
     }
 
     @Override
-    public Resource getGraphSubject(final Node node) throws RepositoryException {
-        LOGGER.trace("Returning RDF subject for: {}", node);
-        return getGraphSubject(node.getPath());
+    @Deprecated
+    public Resource getGraphSubject(final Node node) {
+        throw new UnsupportedOperationException("Deprecated method!");
     }
 
     @Override
-    public Node getNodeFromGraphSubject(final Resource subject)
-        throws RepositoryException {
-
-        final String absPath = getPathFromGraphSubject(subject);
-
-        if (absPath == null) {
-            return null;
-        }
-
-        if (session.nodeExists(absPath)) {
-            return session.getNode(absPath);
-        }
-        return null;
+    @Deprecated
+    public Node getNodeFromGraphSubject(final Resource subject) {
+        throw new UnsupportedOperationException("Deprecated method!");
     }
 
     @Override
@@ -100,8 +81,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
             return null;
         }
 
-        final String absPath = subject.getURI()
-                                   .substring(RESOURCE_NAMESPACE.length() - 1);
+        final String absPath = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
 
         if (absPath.endsWith(FCR_CONTENT)) {
             return absPath.replace(FCR_CONTENT, JCR_CONTENT);
@@ -112,8 +92,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
     @Override
     public boolean isFedoraGraphSubject(final Resource subject) {
         checkNotNull(subject, "null cannot be a Fedora object!");
-        return subject.isURIResource() &&
-            subject.getURI().startsWith(RESOURCE_NAMESPACE);
+        return subject.isURIResource() && subject.getURI().startsWith(RESOURCE_NAMESPACE);
     }
 
 }

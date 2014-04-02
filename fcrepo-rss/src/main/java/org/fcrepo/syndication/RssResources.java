@@ -42,7 +42,7 @@ public class RssResources implements UriAwareResourceModelFactory {
         throws RepositoryException {
 
         final Model model = ModelFactory.createDefaultModel();
-        final Resource s = graphSubjects.getGraphSubject(resource.getNode());
+        final Resource s = graphSubjects.getGraphSubject(resource.getNode().getPath());
 
         if (resource.getNode().getPrimaryNodeType().isNodeType(
                 FedoraJcrTypes.ROOT)) {

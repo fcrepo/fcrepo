@@ -114,7 +114,7 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
     public void testGetGraphSubjectForVersion() throws RepositoryException {
         mockVersion(UUID.randomUUID().toString());
 
-        final Resource actual = testObj.getGraphSubject(mockFrozenNode);
+        final Resource actual = testObj.getGraphSubject(mockFrozenNode.getPath());
         assertEquals("http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath() + "/fcr:versions/"
                 + mockFrozenNode.getIdentifier(), actual.getURI());
     }
@@ -129,8 +129,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
                 + "/fcr:versions/" + mockFrozenNode.getIdentifier();
         mockSubject(uri);
 
-        final Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockFrozenNode, actual);
+        final String actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertEquals(mockFrozenNode.getPath(), actual);
 
     }
 
@@ -153,8 +153,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
                 + "/fcr:versions/" + label;
         mockSubject(uri);
 
-        final Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockFrozenNode, actual);
+        final String actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertEquals(mockFrozenNode.getPath(), actual);
     }
 
     @Test
@@ -174,8 +174,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockSession.nodeExists(mockVersionChildNodePath)).thenReturn(true);
         when(mockSession.getNode(mockVersionChildNodePath)).thenReturn(mockVersionChildNode);
 
-        final Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockVersionChildNode, actual);
+        final String actual = testObj.getPathFromGraphSubject(mockSubject);
+        assertEquals(mockVersionChildNode.getPath(), actual);
     }
 
     private void mockSubject(final String uri) {

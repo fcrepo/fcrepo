@@ -112,39 +112,18 @@ public class HttpGraphSubjects implements GraphSubjects {
     }
 
     @Override
+    @Deprecated
     public Resource getGraphSubject(final Node node) throws RepositoryException {
-        final URI result = nodesBuilder.buildFromMap(getPathMap(node));
-        LOGGER.debug("Translated node {} into RDF subject {}", node, result);
-        return createResource(result.toString());
+        throw new UnsupportedOperationException("Deprecated method!");
     }
 
     @Override
+    @Deprecated
     public Node getNodeFromGraphSubject(final Resource subject) throws RepositoryException {
-        final String subjectUri = getResourceURI(subject);
-        if (subjectUri == null) {
-            return null;
-        }
-        final String absPath = getPathFromGraphSubject(subjectUri);
-
-        if (absPath == null) {
-            return null;
-        }
-
-        final Node node;
-
-        if (session.nodeExists(absPath)) {
-            node = session.getNode(absPath);
-            LOGGER.trace("RDF resource {} maps to JCR node {}", subjectUri, node);
-        } else {
-            node = null;
-            LOGGER.debug("RDF resource {} looks like a Fedora node, but when we checked was not in the repository",
-                    subjectUri);
-        }
-
-        return node;
+        throw new UnsupportedOperationException("Deprecated method!");
     }
 
-    private String getResourceURI(final Resource subject) {
+    private static String getResourceURI(final Resource subject) {
         if (!subject.isURIResource()) {
             LOGGER.debug("RDF resource {} was not a URI resource: returning null.",
                     subject);
@@ -225,9 +204,9 @@ public class HttpGraphSubjects implements GraphSubjects {
     private boolean isValidJcrPath(final String absPath) {
         try {
             String pathToValidate = absPath;
-            String txId = getCurrentTransactionId(session);
+            final String txId = getCurrentTransactionId(session);
             if (txId != null) {
-                String txIdWithSlash = "/" + TX_PREFIX + txId;
+                final String txIdWithSlash = "/" + TX_PREFIX + txId;
                 /* replace the first occurrence of tx within the path */
                 pathToValidate = StringUtils.replaceOnce(absPath, txIdWithSlash, StringUtils.EMPTY);
                 LOGGER.debug("removed {} from URI {}. Path for JCR validation is now: {}",

@@ -16,6 +16,7 @@
 
 package org.fcrepo.webhooks;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SUBSCRIPTION_SERVICE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -31,7 +32,6 @@ import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,11 +65,11 @@ public class WebhooksResourcesTest {
         throws RepositoryException {
 
         final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.isNodeType(FedoraJcrTypes.ROOT)).thenReturn(true);
+        when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        Resource graphSubject = mockSubjects.getGraphSubject(mockNode);
+        final Resource graphSubject = mockSubjects.getGraphSubject(mockNode.getPath());
 
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,

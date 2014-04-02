@@ -110,13 +110,14 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
     }
 
     @Override
+    @Deprecated
     public Resource getGraphSubject(final Node node) throws RepositoryException {
         if (node.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
             final URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(node));
             LOGGER.debug("Translated node {} into RDF subject {}", node, result);
             return createResource(result.toString());
         }
-        return super.getGraphSubject(node);
+        return super.getGraphSubject(node.getPath());
     }
 
     /**

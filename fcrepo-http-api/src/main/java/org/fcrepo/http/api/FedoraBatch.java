@@ -244,10 +244,8 @@ public class FedoraBatch extends AbstractResource {
                             final String format = lang.getName().toUpperCase();
 
                             final Model inputModel =
-                                createDefaultModel()
-                                    .read(src,
-                                             subjects.getGraphSubject(resource.getNode()).toString(),
-                                             format);
+                                createDefaultModel().read(src,
+                                        subjects.getGraphSubject(resource.getNode().getPath()).toString(), format);
 
                             resource.replaceProperties(subjects, inputModel);
                         } else {
@@ -296,9 +294,7 @@ public class FedoraBatch extends AbstractResource {
             final HttpGraphSubjects subjects =
                     new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
 
-            return created(
-                    new URI(subjects.getGraphSubject(session.getNode(path))
-                            .getURI())).build();
+            return created(new URI(subjects.getGraphSubject(path).getURI())).build();
 
         } finally {
             session.logout();
