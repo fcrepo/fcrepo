@@ -143,7 +143,7 @@ public class JcrRdfToolsTest {
     @Before
     public final void setUp() throws RepositoryException {
         initMocks(this);
-        testSubjects = new DefaultGraphSubjects(mockSession);
+        testSubjects = new DefaultGraphSubjects();
         testObj = new JcrRdfTools(testSubjects, mockSession);
         buildMockNodeAndSurroundings();
     }

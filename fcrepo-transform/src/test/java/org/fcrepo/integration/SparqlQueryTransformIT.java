@@ -68,7 +68,7 @@ public class SparqlQueryTransformIT {
 
         testObj = new SparqlQueryTransform(stringReader);
 
-        final QueryExecution qexec = testObj.apply(object.getPropertiesDataset(new DefaultGraphSubjects(session)));
+        final QueryExecution qexec = testObj.apply(object.getPropertiesDataset(new DefaultGraphSubjects()));
 
         assert(qexec != null);
 

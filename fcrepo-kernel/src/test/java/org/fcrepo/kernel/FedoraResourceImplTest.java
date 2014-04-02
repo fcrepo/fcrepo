@@ -356,7 +356,7 @@ public class FedoraResourceImplTest {
     public void testReplacePropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final DefaultGraphSubjects defaultGraphSubjects = new DefaultGraphSubjects(mockSession);
+        final DefaultGraphSubjects defaultGraphSubjects = new DefaultGraphSubjects();
         when(JcrRdfTools.withContext(defaultGraphSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         when(mockNode.getPath()).thenReturn("/xyz");

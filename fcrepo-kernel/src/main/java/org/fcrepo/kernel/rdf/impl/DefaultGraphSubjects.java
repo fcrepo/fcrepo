@@ -20,11 +20,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import javax.jcr.Node;
+
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.kernel.rdf.GraphSubjects;
+
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -46,7 +46,7 @@ public class DefaultGraphSubjects implements GraphSubjects {
     /**
      * Construct the graph with a placeholder context resource
      */
-    public DefaultGraphSubjects(final Session session) {
+    public DefaultGraphSubjects() {
         this.context = createResource();
     }
 
@@ -61,18 +61,6 @@ public class DefaultGraphSubjects implements GraphSubjects {
     @Override
     public Resource getContext() {
         return context;
-    }
-
-    @Override
-    @Deprecated
-    public Resource getGraphSubject(final Node node) {
-        throw new UnsupportedOperationException("Deprecated method!");
-    }
-
-    @Override
-    @Deprecated
-    public Node getNodeFromGraphSubject(final Resource subject) {
-        throw new UnsupportedOperationException("Deprecated method!");
     }
 
     @Override

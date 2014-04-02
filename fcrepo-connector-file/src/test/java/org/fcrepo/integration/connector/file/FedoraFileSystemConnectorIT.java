@@ -164,7 +164,7 @@ public class FedoraFileSystemConnectorIT {
                 "'some-test-name' }";
 
         // Write the properties
-        object.updatePropertiesDataset(new DefaultGraphSubjects(session),
+        object.updatePropertiesDataset(new DefaultGraphSubjects(),
                 sparql);
 
         // Verify
@@ -178,7 +178,7 @@ public class FedoraFileSystemConnectorIT {
 
     @Test
     public void testRemoveProperty() throws RepositoryException {
-        Session session = repo.login();
+        final Session session = repo.login();
 
         final FedoraResource object = nodeService.getObject(session, testFile);
         assertNotNull(object);
@@ -190,7 +190,7 @@ public class FedoraFileSystemConnectorIT {
                 "'some-property-to-remove' }";
 
         // Write the properties
-        final GraphSubjects graphSubjects = new DefaultGraphSubjects(session);
+        final GraphSubjects graphSubjects = new DefaultGraphSubjects();
         object.updatePropertiesDataset(graphSubjects, sparql);
 
         // Verify property exists
@@ -206,7 +206,7 @@ public class FedoraFileSystemConnectorIT {
                 "}";
 
         // Remove the properties
-        final GraphSubjects graphSubjectsRemove = new DefaultGraphSubjects(session);
+        final GraphSubjects graphSubjectsRemove = new DefaultGraphSubjects();
         object.updatePropertiesDataset(graphSubjectsRemove, sparqlRemove);
 
         // Persist the object (although the propery will be removed from memory without this.)
@@ -216,7 +216,7 @@ public class FedoraFileSystemConnectorIT {
         boolean thrown = false;
         try{
             object.getNode().getProperty("fedora:remove");
-        } catch (PathNotFoundException e){
+        } catch (final PathNotFoundException e){
             thrown = true;
         }
         assertTrue("Exception expected - property should be missing", thrown);

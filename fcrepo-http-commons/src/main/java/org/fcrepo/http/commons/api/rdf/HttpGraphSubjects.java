@@ -18,14 +18,17 @@ package org.fcrepo.http.commons.api.rdf;
 
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.apache.commons.lang.StringUtils;
+
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
+
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singletonMap;
 import static javax.jcr.PropertyType.PATH;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -109,18 +112,6 @@ public class HttpGraphSubjects implements GraphSubjects {
     @Override
     public Resource getContext() {
         return createResource(context.toString());
-    }
-
-    @Override
-    @Deprecated
-    public Resource getGraphSubject(final Node node) throws RepositoryException {
-        throw new UnsupportedOperationException("Deprecated method!");
-    }
-
-    @Override
-    @Deprecated
-    public Node getNodeFromGraphSubject(final Resource subject) throws RepositoryException {
-        throw new UnsupportedOperationException("Deprecated method!");
     }
 
     private static String getResourceURI(final Resource subject) {
@@ -208,7 +199,7 @@ public class HttpGraphSubjects implements GraphSubjects {
             if (txId != null) {
                 final String txIdWithSlash = "/" + TX_PREFIX + txId;
                 /* replace the first occurrence of tx within the path */
-                pathToValidate = StringUtils.replaceOnce(absPath, txIdWithSlash, StringUtils.EMPTY);
+                pathToValidate = replaceOnce(absPath, txIdWithSlash, EMPTY);
                 LOGGER.debug("removed {} from URI {}. Path for JCR validation is now: {}",
                         txIdWithSlash, absPath, pathToValidate);
             }

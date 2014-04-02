@@ -17,6 +17,7 @@ package org.fcrepo.syndication;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.GraphSubjects;
 import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
@@ -27,7 +28,6 @@ import org.junit.Test;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
@@ -50,7 +50,7 @@ public class RssResourcesTest {
         mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
-        mockSubjects = new DefaultGraphSubjects(mock(Session.class));
+        mockSubjects = new DefaultGraphSubjects();
     }
 
     @Test

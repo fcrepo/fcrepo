@@ -159,7 +159,7 @@ public class JcrRdfTools {
     public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
         final Session session) {
         if (graphSubjects == null) {
-            return new JcrRdfTools(new DefaultGraphSubjects(session), session);
+            return new JcrRdfTools(new DefaultGraphSubjects(), session);
         }
         return new JcrRdfTools(graphSubjects, session);
     }

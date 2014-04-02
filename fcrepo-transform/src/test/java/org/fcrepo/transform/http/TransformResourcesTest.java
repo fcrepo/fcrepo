@@ -17,6 +17,7 @@ package org.fcrepo.transform.http;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResourceImpl;
@@ -27,7 +28,6 @@ import org.junit.Test;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
@@ -58,7 +58,7 @@ public class TransformResourcesTest {
         mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
-        mockSubjects = new DefaultGraphSubjects(mock(Session.class));
+        mockSubjects = new DefaultGraphSubjects();
     }
 
     @Test

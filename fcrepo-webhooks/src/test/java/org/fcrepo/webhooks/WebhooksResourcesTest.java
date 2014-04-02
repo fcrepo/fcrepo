@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
@@ -57,7 +56,7 @@ public class WebhooksResourcesTest {
         mockResource = new FedoraResourceImpl(mockNode);
 
         uriInfo = TestHelpers.getUriInfoImpl();
-        mockSubjects = new DefaultGraphSubjects(mock(Session.class));
+        mockSubjects = new DefaultGraphSubjects();
     }
 
     @Test

@@ -48,7 +48,7 @@ public class JQLConverterIT {
     @Before
     public void setUp() throws Exception {
         session = repo.login();
-        subjects = new DefaultGraphSubjects(session);
+        subjects = new DefaultGraphSubjects();
     }
 
     @Test

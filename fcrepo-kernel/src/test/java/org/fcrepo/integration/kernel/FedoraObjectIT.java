@@ -81,7 +81,7 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final GraphSubjects subjects = new DefaultGraphSubjects(session);
+        final GraphSubjects subjects = new DefaultGraphSubjects();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
         final String graphSubject = subjects.getGraphSubject("/graphObject").getURI();
@@ -161,7 +161,7 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final GraphSubjects subjects = new DefaultGraphSubjects(session);
+        final GraphSubjects subjects = new DefaultGraphSubjects();
         final String graphSubject = subjects.getGraphSubject("/graphObject").getURI();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 

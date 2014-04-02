@@ -109,12 +109,6 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
         return super.getGraphSubject(absPath);
     }
 
-    @Override
-    @Deprecated
-    public Resource getGraphSubject(final Node node) throws RepositoryException {
-        throw new UnsupportedOperationException("Deprecated method!");
-    }
-
     /**
      * For frozen nodes (which represent version snapshots) we translate the
      * paths from their frozen storage URI to

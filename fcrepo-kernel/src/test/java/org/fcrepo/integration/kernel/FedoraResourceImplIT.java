@@ -98,7 +98,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultGraphSubjects(session);
+        subjects = new DefaultGraphSubjects();
     }
 
     @After
@@ -124,7 +124,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             nodeService.findOrCreateObject(session, "/testNodeGraph");
 
         logger.warn(object.getPropertiesDataset(
-                new DefaultGraphSubjects(session)).toString());
+                new DefaultGraphSubjects()).toString());
         final Node s = createGraphSubjectNode("/testNodeGraph");
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         final Node o = createLiteral("nt:unstructured");

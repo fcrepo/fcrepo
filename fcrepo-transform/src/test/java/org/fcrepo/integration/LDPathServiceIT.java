@@ -75,7 +75,7 @@ public class LDPathServiceIT {
 
         testObj = new LDPathTransform(stringReader);
 
-        final DefaultGraphSubjects subjects = new DefaultGraphSubjects(session);
+        final DefaultGraphSubjects subjects = new DefaultGraphSubjects();
         final Map<String, Collection<Object>> stuff = testObj.apply(object.getPropertiesDataset(subjects));
 
         assertNotNull("Failed to retrieve results!", stuff);
