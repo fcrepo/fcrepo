@@ -44,13 +44,13 @@ import com.sun.jersey.api.uri.UriBuilderImpl;
 public class HttpGraphSubjectsTest extends GraphSubjectsTest {
 
     @Override
-    protected HttpGraphSubjects getTestObj() {
-        return new HttpGraphSubjects(mockSession, MockNodeController.class,
+    protected HttpIdentifierTranslator getTestObj() {
+        return new HttpIdentifierTranslator(mockSession, MockNodeController.class,
                 uriInfo);
     }
 
-    protected HttpGraphSubjects getTestObjTx(final String path) {
-        return new HttpGraphSubjects(mockSessionTx, MockNodeController.class,
+    protected HttpIdentifierTranslator getTestObjTx(final String path) {
+        return new HttpIdentifierTranslator(mockSessionTx, MockNodeController.class,
                 getUriInfoImpl(path));
     }
 

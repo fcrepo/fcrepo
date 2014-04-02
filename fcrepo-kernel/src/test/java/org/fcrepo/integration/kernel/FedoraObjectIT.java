@@ -31,7 +31,7 @@ import javax.jcr.Value;
 
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -81,7 +81,7 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final IdentifierTranslator subjects = new DefaultGraphSubjects();
+        final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
         final String graphSubject = subjects.getSubject("/graphObject").getURI();
@@ -161,7 +161,7 @@ public class FedoraObjectIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.createObject(session, "/graphObject");
-        final IdentifierTranslator subjects = new DefaultGraphSubjects();
+        final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final String graphSubject = subjects.getSubject("/graphObject").getURI();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 

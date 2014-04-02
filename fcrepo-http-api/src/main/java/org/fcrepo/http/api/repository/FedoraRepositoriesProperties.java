@@ -37,7 +37,7 @@ import javax.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                     nodeService.getObject(session, "/");
 
                 final Dataset dataset =
-                    result.updatePropertiesDataset(new HttpGraphSubjects(
+                    result.updatePropertiesDataset(new HttpIdentifierTranslator(
                             session, FedoraNodes.class, uriInfo), IOUtils
                             .toString(requestBodyStream));
                 if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {

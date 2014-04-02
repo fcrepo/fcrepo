@@ -39,7 +39,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
@@ -89,7 +89,7 @@ public class HttpApiResourcesTest {
         uriInfo = getUriInfoImpl();
         when(mockSession.getRepository()).thenReturn(mockRepository);
         mockSubjects =
-            new HttpGraphSubjects(mockSession, FedoraNodes.class,
+            new HttpIdentifierTranslator(mockSession, FedoraNodes.class,
                     uriInfo);
         setField(testObj, "serializers", mockSerializers);
     }

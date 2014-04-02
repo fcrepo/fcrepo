@@ -32,9 +32,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * with fedora names)
  *
  * @author barmintor
+ * @author ajs6f
  * @date May 15, 2013
  */
-public class DefaultGraphSubjects implements IdentifierTranslator {
+public class DefaultIdentifierTranslator implements IdentifierTranslator {
 
     /**
      * Default namespace to use for node URIs
@@ -46,7 +47,7 @@ public class DefaultGraphSubjects implements IdentifierTranslator {
     /**
      * Construct the graph with a placeholder context resource
      */
-    public DefaultGraphSubjects() {
+    public DefaultIdentifierTranslator() {
         this.context = createResource();
     }
 

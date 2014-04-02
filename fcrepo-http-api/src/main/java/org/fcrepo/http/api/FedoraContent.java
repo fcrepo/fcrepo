@@ -18,7 +18,7 @@ package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
 import com.sun.jersey.core.header.ContentDisposition;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -146,8 +146,8 @@ public class FedoraContent extends ContentExposingResource {
                             contentType.toString(), originalFileName, requestBodyStream,
                             checksumURI);
 
-            final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(session, FedoraNodes.class,
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
 
             session.save();
@@ -233,8 +233,8 @@ public class FedoraContent extends ContentExposingResource {
             versionService.nodeUpdated(datastreamNode);
 
             if (isNew) {
-                final HttpGraphSubjects subjects =
-                        new HttpGraphSubjects(session, FedoraNodes.class,
+                final HttpIdentifierTranslator subjects =
+                        new HttpIdentifierTranslator(session, FedoraNodes.class,
                                 uriInfo);
 
                 return created(
@@ -267,8 +267,8 @@ public class FedoraContent extends ContentExposingResource {
 
             final Datastream ds =
                     datastreamService.getDatastream(session, path);
-            final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(session, FedoraNodes.class,
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
             return getDatastreamContentResponse(ds, rangeValue, request,
                     subjects);

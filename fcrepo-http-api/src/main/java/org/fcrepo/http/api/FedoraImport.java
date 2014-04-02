@@ -36,7 +36,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.serialization.SerializerUtil;
@@ -87,8 +87,8 @@ public class FedoraImport extends AbstractResource {
         final String path = toPath(pathList);
         LOGGER.debug("Deserializing at {}", path);
 
-        final HttpGraphSubjects subjects =
-            new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+        final HttpIdentifierTranslator subjects =
+            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
         try {
             serializers.getSerializer(format)

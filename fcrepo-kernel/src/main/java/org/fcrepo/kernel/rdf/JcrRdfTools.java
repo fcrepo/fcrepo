@@ -49,7 +49,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
@@ -159,7 +159,7 @@ public class JcrRdfTools {
     public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects,
         final Session session) {
         if (graphSubjects == null) {
-            return new JcrRdfTools(new DefaultGraphSubjects(), session);
+            return new JcrRdfTools(new DefaultIdentifierTranslator(), session);
         }
         return new JcrRdfTools(graphSubjects, session);
     }

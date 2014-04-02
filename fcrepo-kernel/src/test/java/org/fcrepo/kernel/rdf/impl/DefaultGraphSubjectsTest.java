@@ -17,7 +17,7 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects.RESOURCE_NAMESPACE;
+import static org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -38,7 +38,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 public class DefaultGraphSubjectsTest {
 
-    private DefaultGraphSubjects testObj;
+    private DefaultIdentifierTranslator testObj;
 
     @Mock
     Node mockNode;
@@ -52,7 +52,7 @@ public class DefaultGraphSubjectsTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new DefaultGraphSubjects();
+        testObj = new DefaultIdentifierTranslator();
     }
 
     @Test

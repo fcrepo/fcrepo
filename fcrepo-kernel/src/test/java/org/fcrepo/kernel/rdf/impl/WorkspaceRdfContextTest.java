@@ -50,7 +50,7 @@ public class WorkspaceRdfContextTest {
     @Before
     public void setUp() {
         initMocks(this);
-        subjects = new DefaultGraphSubjects();
+        subjects = new DefaultIdentifierTranslator();
         when(session.getRepository()).thenReturn(repository);
         when(session.getWorkspace()).thenReturn(mockWorkspace);
     }

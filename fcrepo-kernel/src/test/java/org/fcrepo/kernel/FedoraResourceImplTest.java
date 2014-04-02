@@ -54,7 +54,7 @@ import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
@@ -356,7 +356,7 @@ public class FedoraResourceImplTest {
     public void testReplacePropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final DefaultGraphSubjects defaultGraphSubjects = new DefaultGraphSubjects();
+        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
         when(JcrRdfTools.withContext(defaultGraphSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         when(mockNode.getPath()).thenReturn("/xyz");

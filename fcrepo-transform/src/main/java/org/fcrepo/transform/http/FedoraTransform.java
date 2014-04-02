@@ -57,7 +57,7 @@ import javax.ws.rs.core.PathSegment;
 
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.transform.TransformationFactory;
@@ -144,7 +144,7 @@ public class FedoraTransform extends AbstractResource {
             final FedoraResource object = nodeService.getObject(session, path);
 
             final Dataset propertiesDataset =
-                object.getPropertiesDataset(new HttpGraphSubjects(session, FedoraNodes.class, uriInfo));
+                object.getPropertiesDataset(new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
 
             return getNodeTypeTransform(object.getNode(), program).apply(propertiesDataset);
 
@@ -177,7 +177,7 @@ public class FedoraTransform extends AbstractResource {
             final String path = toPath(pathList);
             final FedoraResource object = nodeService.getObject(session, path);
             final Dataset propertiesDataset =
-                object.getPropertiesDataset(new HttpGraphSubjects(session, FedoraNodes.class, uriInfo));
+                object.getPropertiesDataset(new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
 
             return transformationFactory.getTransform(contentType, requestBodyStream).apply(propertiesDataset);
 

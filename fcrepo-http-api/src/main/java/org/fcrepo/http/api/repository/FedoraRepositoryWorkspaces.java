@@ -50,7 +50,7 @@ import com.google.common.collect.ImmutableSet;
 import com.sun.jersey.api.NotFoundException;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
@@ -85,7 +85,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
         throws RepositoryException {
 
         final IdentifierTranslator subjects =
-            new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
         return JcrRdfTools.withContext(null, session).getWorkspaceTriples(subjects).session(session);
 
@@ -117,7 +117,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
             workspace.createWorkspace(path);
 
             final IdentifierTranslator subjects =
-                new HttpGraphSubjects(session.getRepository().login(path), FedoraNodes.class, uriInfo);
+                new HttpIdentifierTranslator(session.getRepository().login(path), FedoraNodes.class, uriInfo);
 
 
             return created(new URI(subjects.getSubject("/").getURI())).build();

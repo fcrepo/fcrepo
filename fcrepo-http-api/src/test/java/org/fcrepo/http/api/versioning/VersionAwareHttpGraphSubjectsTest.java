@@ -18,7 +18,7 @@ package org.fcrepo.http.api.versioning;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.GraphSubjectsTest;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -58,8 +58,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
     }
 
     @Override
-    protected HttpGraphSubjects getTestObj() {
-        return new VersionAwareHttpGraphSubjects(mockSession, mockSession,
+    protected HttpIdentifierTranslator getTestObj() {
+        return new VersionAwareHttpIdentifierTranslator(mockSession, mockSession,
                 MockNodeController.class,
                 uriInfo);
     }

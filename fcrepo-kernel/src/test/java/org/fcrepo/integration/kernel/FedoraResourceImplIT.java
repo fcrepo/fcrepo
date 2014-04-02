@@ -53,7 +53,7 @@ import javax.jcr.nodetype.NodeTypeManager;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -93,12 +93,12 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     private Session session;
 
-    private DefaultGraphSubjects subjects;
+    private DefaultIdentifierTranslator subjects;
 
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultGraphSubjects();
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @After
@@ -124,7 +124,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             nodeService.findOrCreateObject(session, "/testNodeGraph");
 
         logger.warn(object.getPropertiesDataset(
-                new DefaultGraphSubjects()).toString());
+                new DefaultIdentifierTranslator()).toString());
         final Node s = createGraphSubjectNode("/testNodeGraph");
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         final Node o = createLiteral("nt:unstructured");

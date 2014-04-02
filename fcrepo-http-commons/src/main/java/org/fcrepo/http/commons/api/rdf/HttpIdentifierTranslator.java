@@ -56,9 +56,14 @@ import javax.ws.rs.core.UriInfo;
  * </ul>
  *
  */
-public class HttpGraphSubjects implements IdentifierTranslator {
+/**
+ * @author barmintor
+ * @author ajs6f
+ * @date Apr 2, 2014
+ */
+public class HttpIdentifierTranslator implements IdentifierTranslator {
 
-    private static final Logger LOGGER = getLogger(HttpGraphSubjects.class);
+    private static final Logger LOGGER = getLogger(HttpIdentifierTranslator.class);
     public static final String WORKSPACE_PREFIX = "workspace:";
     public static final String TX_PREFIX = "tx:";
 
@@ -85,7 +90,7 @@ public class HttpGraphSubjects implements IdentifierTranslator {
      * @param relativeTo
      * @param uris
      */
-    public HttpGraphSubjects(final Session session, final Class<?> relativeTo, final UriInfo uris) {
+    public HttpIdentifierTranslator(final Session session, final Class<?> relativeTo, final UriInfo uris) {
         this.context = uris.getRequestUri();
         this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
         String normalizedBasePath = nodesBuilder.build("").toString();

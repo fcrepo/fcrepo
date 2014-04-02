@@ -19,7 +19,7 @@ package org.fcrepo.integration;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Before;
@@ -75,7 +75,7 @@ public class LDPathServiceIT {
 
         testObj = new LDPathTransform(stringReader);
 
-        final DefaultGraphSubjects subjects = new DefaultGraphSubjects();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final Map<String, Collection<Object>> stuff = testObj.apply(object.getPropertiesDataset(subjects));
 
         assertNotNull("Failed to retrieve results!", stuff);

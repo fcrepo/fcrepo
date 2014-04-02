@@ -41,7 +41,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -91,7 +91,7 @@ public class FedoraFixity extends AbstractResource {
         final Datastream ds = datastreamService.getDatastream(session, path);
 
         return datastreamService.getFixityResultsModel(
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo), ds)
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo), ds)
                 .session(session);
 
     }

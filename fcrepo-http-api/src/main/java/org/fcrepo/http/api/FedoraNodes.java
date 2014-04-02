@@ -95,7 +95,7 @@ import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.COPY;
@@ -176,8 +176,8 @@ public class FedoraNodes extends AbstractResource {
             throw new WebApplicationException(builder.cacheControl(cc)
                     .lastModified(date).tag(etag).build());
         }
-        final HttpGraphSubjects subjects =
-            new HttpGraphSubjects(session, this.getClass(), uriInfo);
+        final HttpIdentifierTranslator subjects =
+            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
         final int realLimit;
         if (nonMemberProperties != null && limit == NO_LIMIT) {
@@ -275,7 +275,7 @@ public class FedoraNodes extends AbstractResource {
                     throw new WebApplicationException(builder.build());
                 }
 
-                final Dataset properties = resource.updatePropertiesDataset(new HttpGraphSubjects(
+                final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
                         session, FedoraNodes.class, uriInfo), IOUtils
                         .toString(requestBodyStream));
 
@@ -353,7 +353,7 @@ public class FedoraNodes extends AbstractResource {
                 throw new WebApplicationException(builder.build());
             }
 
-            final HttpGraphSubjects graphSubjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final HttpIdentifierTranslator graphSubjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             if (requestContentType != null && requestBodyStream != null)  {
                 final String contentType = requestContentType.toString();
@@ -436,7 +436,7 @@ public class FedoraNodes extends AbstractResource {
                 checksumURI = null;
             }
 
-            final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             final String objectType;
 
@@ -613,7 +613,7 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             final IdentifierTranslator subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             if (!nodeService.exists(session, toPath(path))) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
@@ -682,7 +682,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             final IdentifierTranslator subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             final String destination =
                 subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));

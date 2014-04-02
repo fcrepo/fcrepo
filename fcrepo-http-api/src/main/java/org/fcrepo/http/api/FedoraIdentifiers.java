@@ -50,7 +50,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -106,8 +106,8 @@ public class FedoraIdentifiers extends AbstractResource {
             transform(create(closed(1, count), integers()), pidMinter
                     .makePid());
 
-        final HttpGraphSubjects subjects =
-                new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
         return new RdfStream(transform(
                 transform(identifiers, absolutize(path)), identifier2triple(
