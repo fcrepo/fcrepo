@@ -44,18 +44,16 @@ public class ExternalIdentifierTranslator extends IdentifierTranslator<Resource>
     @Inject
     private List<InternalIdentifierTranslator> translationChain;
 
-    private Converter<String, String> accumulatedForwardTranslator;
-
-    private Converter<String, String> accumulatedReverseTranslator;
+    private Converter<String, String> forward, reverse = identity();
 
     @Override
     protected Resource doForward(final String a) {
-        return doRdfForward(accumulatedForwardTranslator.convert(a));
+        return doRdfForward(forward.convert(a));
     }
 
     @Override
     protected String doBackward(final Resource a) {
-        return accumulatedReverseTranslator.convert(doRdfBackward(a));
+        return reverse.convert(doRdfBackward(a));
     }
 
     protected Resource doRdfForward(final String a) {
@@ -67,29 +65,25 @@ public class ExternalIdentifierTranslator extends IdentifierTranslator<Resource>
     }
 
     /**
-     * We accumulate the translators once and store the resulting calculation.
+     * We fold the list of translators once in each direction and store the
+     * resulting calculation.
      */
     @PostConstruct
-    public void simpleFoldLikeAccumulation() {
-        Converter<String, String> accumulatedForward = identity();
+    public void accumulateTranslations() {
         for (final InternalIdentifierTranslator t : translationChain) {
-            accumulatedForward = accumulatedForward.andThen(t);
+            forward = forward.andThen(t);
         }
-        accumulatedForwardTranslator = accumulatedForward;
-        Converter<String, String> accumulatedReverse = identity();
         for (final InternalIdentifierTranslator t : Lists.reverse(translationChain)) {
-            accumulatedReverse = accumulatedReverse.andThen(t.reverse());
+            reverse = reverse.andThen(t.reverse());
         }
-        accumulatedReverseTranslator = accumulatedReverse;
     }
 
-
     /**
-     * @param chain the translationChain to use
+     * @param chain the translation chain to use
      */
     public void setTranslationChain(final List<InternalIdentifierTranslator> chain) {
         this.translationChain = chain;
-        simpleFoldLikeAccumulation();
+        accumulateTranslations();
     }
 
 }
