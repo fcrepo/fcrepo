@@ -29,6 +29,8 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
@@ -50,7 +52,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
 
     private String separator = DEFAULT_SEPARATOR;
 
-    private String prefix;
+    private String prefix = "";
 
     private final Function<String, String> addPrefix = new Function<String, String>() {
 
@@ -75,18 +77,32 @@ public class HierarchyConverter extends InternalIdentifierConverter {
      * @see com.google.common.base.Converter#doForward(java.lang.Object)
      */
     @Override
-    protected String doForward(final String flat) {
-        log.debug("Converting input identifier: {}", flat);
-        // adds hierarchy
+    protected String doBackward(final String flat) {
+        log.debug("Converting incoming identifier: {}", flat);
+        String nonContentSuffixed = flat;
+        // strip content-indicating suffix
+        if (flat.endsWith(FCR_CONTENT)) {
+            nonContentSuffixed = flat.substring(0, flat.length() - (FCR_CONTENT.length()));
+        }
         final List<String> hierarchySegments = createHierarchySegments();
-        final List<String> flatSegments = asList(flat.split(separator));
-        Iterable<String> firstSegments = emptyList();
-        Iterable<String> lastSegment = emptyList();
-        if (flatSegments.size() > 0) {
+        final List<String> flatSegments = asList(nonContentSuffixed.split(separator));
+        List<String> firstSegments = emptyList();
+        List<String> lastSegment = emptyList();
+        if (flatSegments.size() == 0) {
+            // either empty identifier or separator identifier
+            return on(separator).join(hierarchySegments);
+        }
+        if (flatSegments.size() > 1) {
             lastSegment = singletonList(getLast(flatSegments));
             firstSegments = flatSegments.subList(0, flatSegments.size() - 1);
+        } else {
+            // just one segment
+            lastSegment = singletonList(flatSegments.get(0));
         }
         final Iterable<String> allSegments = concat(firstSegments, hierarchySegments, lastSegment);
+        if (flat.endsWith(FCR_CONTENT)) {
+            return on(separator).join(concat(allSegments, singletonList(JCR_CONTENT)));
+        }
         return on(separator).join(allSegments);
     }
 
@@ -95,13 +111,34 @@ public class HierarchyConverter extends InternalIdentifierConverter {
      * @see com.google.common.base.Converter#doBackward(java.lang.Object)
      */
     @Override
-    protected String doBackward(final String hierarchical) {
-        // removes hierarchy
-        final List<String> segments = asList(hierarchical.split(separator));
-        // we subtract one for the final segment, then levels for the inserted
-        // hierarchy segments we want to remove
-        final List<String> firstSegments = segments.subList(0, segments.size() - 1 - levels);
-        final List<String> lastSegment = singletonList(getLast(segments));
+    protected String doForward(final String hierarchical) {
+        log.debug("Converting outgoing identifier: {}", hierarchical);
+        String nonContentSuffixed = hierarchical;
+        // strip content-indicating suffix
+        if (hierarchical.endsWith(JCR_CONTENT)) {
+            nonContentSuffixed = hierarchical.substring(0, hierarchical.length() - (JCR_CONTENT.length()));
+        }
+        final List<String> segments = asList(nonContentSuffixed.split(separator));
+        if (segments.size() <= levels) {
+            // must be a root identifier
+            return "";
+        }
+        List<String> firstSegments = emptyList();
+        List<String> lastSegment = emptyList();
+        if (segments.size() > levels) {
+            if (segments.size() > levels + 1) {
+                // we subtract one for the final segment, then levels for the
+                // inserted hierarchy segments we want to remove
+                firstSegments = segments.subList(0, segments.size() - 1 - levels);
+                lastSegment = singletonList(getLast(segments));
+            } else {
+                // just the trailing non-hierarchical segment
+                lastSegment = singletonList(getLast(segments));
+            }
+        }
+        if (hierarchical.endsWith(JCR_CONTENT)) {
+            return on(separator).join(concat(firstSegments, lastSegment, singletonList(JCR_CONTENT)));
+        }
         return on(separator).join(concat(firstSegments, lastSegment));
     }
 

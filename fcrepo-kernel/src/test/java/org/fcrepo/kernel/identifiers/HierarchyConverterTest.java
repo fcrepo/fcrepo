@@ -83,14 +83,14 @@ public class HierarchyConverterTest {
     public void testRoundTrip(final byte levels, final byte length) {
         testTranslator.setLevels(levels);
         testTranslator.setLength(length);
-        final String result = testTranslator.convert(testId);
+        final String result = testTranslator.reverse().convert(testId);
         final String testRegexp =
             startingSegments + separator + hierarchyRegexpSection(levels, length) + separator + endingSegment;
         final Matcher matches = compile(testRegexp).matcher(result);
         log.debug("Got result of translation: {}", result);
         log.debug("Matching against test pattern: {}", testRegexp);
         assertTrue("Did not find the appropriate modification to the input identifier!", matches.matches());
-        final String shouldBeOriginal = testTranslator.reverse().convert(result);
+        final String shouldBeOriginal = testTranslator.convert(result);
         assertEquals("Didn't get original back!", testId, shouldBeOriginal);
     }
 
@@ -102,9 +102,25 @@ public class HierarchyConverterTest {
     public void testRecurse() {
         testTranslator.setLevels(3);
         testTranslator.setLength(3);
-        final String firstPass = testTranslator.convert(testId);
-        final String secondPass = testTranslator.convert(firstPass);
-        assertEquals("Failed to retrieve original after two stages of translation!", testId, testTranslator.reverse()
-                .convert(testTranslator.reverse().convert(secondPass)));
+        final String firstPass = testTranslator.reverse().convert(testId);
+        final String secondPass = testTranslator.reverse().convert(firstPass);
+        assertEquals("Failed to retrieve original after two stages of translation!", testId, testTranslator
+                .convert(testTranslator.convert(secondPass)));
+    }
+
+    @Test
+    public void testWeirdIds() {
+        testTranslator.setLevels(3);
+        testTranslator.setLength(3);
+        String result;
+
+        result = testTranslator.reverse().convert("");
+        log.debug("Empty identifier translated into {}.", "", result);
+        assertEquals("Should not have altered empty identifier!", "", testTranslator.convert(result));
+
+        result = testTranslator.reverse().convert(separator);
+        log.debug("Separator identifier translated into {}.", separator, result);
+        assertEquals("Should have altered separator identifier to empty identifier!", "", testTranslator
+                .convert(result));
     }
 }
