@@ -42,11 +42,11 @@ public class TxAwareSessionTest {
     private Session testObj;
 
     private static final String PATH = "/xyz";
+
     @Before
     public void setUp() {
         initMocks(this);
         testObj = newInstance(mockSession, "txid");
-
     }
 
     @Test
@@ -78,12 +78,12 @@ public class TxAwareSessionTest {
         testObj.save();
         verify(mockSession, never()).save();
     }
-    
-	@Test(expected=PathNotFoundException.class)
-	public void shouldThrowUnderlyingException() throws RepositoryException {
-		when(testObj.getNode(PATH)).thenThrow(
-				new PathNotFoundException());
-		testObj.getNode(PATH);
-	}
+
+    @Test(expected=PathNotFoundException.class)
+    public void shouldThrowUnderlyingException() throws RepositoryException {
+        when(mockSession.getNode(PATH)).thenThrow(
+                new PathNotFoundException());
+        testObj.getNode(PATH);
+    }
 
 }
