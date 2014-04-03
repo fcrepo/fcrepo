@@ -19,17 +19,24 @@ package org.fcrepo.kernel.identifiers;
 import static java.util.regex.Pattern.compile;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class UUIDPidMinterTest {
 
     private static final String PID_PATTERN =
             "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+    private UUIDPidMinter testMinter;
+
+    @Before
+    public void setUp() {
+        testMinter = new UUIDPidMinter();
+    }
 
     @Test
     public void testMintPid() throws Exception {
 
-        final String pid = new UUIDPidMinter().mintPid();
+        final String pid = testMinter.mintPid();
 
         assertTrue("PID wasn't a UUID", compile(PID_PATTERN).matcher(pid)
                 .find());

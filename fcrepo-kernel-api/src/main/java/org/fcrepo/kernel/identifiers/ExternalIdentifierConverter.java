@@ -44,9 +44,10 @@ public class ExternalIdentifierConverter extends IdentifierConverter<Resource> {
     @Inject
     protected List<InternalIdentifierConverter> translationChain;
 
-    private Converter<String, String> forward = identity();
+    protected Converter<String, String> forward = identity();
 
-    private Converter<String, String> reverse = identity();
+    protected  Converter<String, String> reverse = identity();
+
     @Override
     protected Resource doForward(final String a) {
         return doRdfForward(forward.convert(a));

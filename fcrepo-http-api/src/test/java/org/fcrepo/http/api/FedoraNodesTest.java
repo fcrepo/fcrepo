@@ -17,6 +17,7 @@
 package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
+import static javax.jcr.PropertyType.PATH;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -56,6 +57,7 @@ import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
@@ -145,6 +147,12 @@ public class FedoraNodesTest {
 
     private UriInfo mockUriInfo;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -201,13 +209,15 @@ public class FedoraNodesTest {
     public void testCreateChildObject() throws Exception {
 
         setField(testObj, "pidMinter", mockPidMinter);
-        final String pid = "testObject";
+        final String pid = "testCreateChildObject";
         final String path = "/" + pid + "/a";
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
         when(mockPidMinter.mintPid()).thenReturn("a");
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, null, getUriInfoImpl(), null);
@@ -222,12 +232,15 @@ public class FedoraNodesTest {
     public void testCreateChildObjectWithSlug() throws Exception {
         setField(testObj, "pidMinter", mockPidMinter);
 
-        final String pid = "testObject";
+        final String pid = "testCreateChildObjectWithSlug";
         final String path = "/" + pid + "/some-slug";
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, "some-slug", getUriInfoImpl(), null);

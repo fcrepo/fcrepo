@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.sun.jersey.api.Responses.clientError;
 import static com.sun.jersey.api.Responses.notAcceptable;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -406,16 +407,25 @@ public class FedoraNodes extends AbstractResource {
         final String newObjectPath;
         final String path = toPath(pathList);
 
+        final HttpIdentifierTranslator idTranslator =
+            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
         if (nodeService.exists(session, path)) {
-            final String pid;
+            String pid;
 
             if (slug != null) {
                 pid = slug;
-            }  else {
+            } else {
                 pid = pidMinter.mintPid();
             }
-
+            // reverse translate the proffered or created identifier
+            LOGGER.trace("Using external identifier {} to create new resource.", pid);
+            LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
+                    + pid);
+            pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
+            // remove leading slash left over from translation
+            pid = pid.substring(1, pid.length());
+            LOGGER.trace("Using internal identifier {} to create new resource.", pid);
             newObjectPath = path + "/" + pid;
         } else {
             newObjectPath = path;
@@ -436,9 +446,6 @@ public class FedoraNodes extends AbstractResource {
             } else {
                 checksumURI = null;
             }
-
-            final HttpIdentifierTranslator idTranslator =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             final String objectType;
 
