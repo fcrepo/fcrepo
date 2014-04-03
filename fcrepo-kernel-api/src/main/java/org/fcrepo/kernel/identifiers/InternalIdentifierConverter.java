@@ -51,7 +51,7 @@ public abstract class InternalIdentifierConverter extends IdentifierConverter<St
     /**
      * @return an identity translation
      */
-    public static InternalIdentifierConverter identityTranslation() {
+    public static InternalIdentifierConverter identityConverter() {
         return identity;
     }
 

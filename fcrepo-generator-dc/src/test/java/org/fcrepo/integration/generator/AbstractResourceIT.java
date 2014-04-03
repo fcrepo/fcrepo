@@ -20,6 +20,7 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.http.impl.client.HttpClientBuilder.create;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -34,7 +35,6 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -44,7 +44,7 @@ public abstract class AbstractResourceIT {
 
     @Before
     public void setLogger() {
-        logger = LoggerFactory.getLogger(this.getClass());
+        logger = getLogger(this.getClass());
     }
 
     protected static final int SERVER_PORT = Integer.parseInt(System

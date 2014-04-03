@@ -101,7 +101,7 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
         if (absPath.contains("jcr:versionStorage")) {
             final Node probableFrozenNode = internalSession.getNode(absPath);
             if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-                final URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
+                final URI result = uriBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
                 LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
                 return createResource(result.toString());
             }

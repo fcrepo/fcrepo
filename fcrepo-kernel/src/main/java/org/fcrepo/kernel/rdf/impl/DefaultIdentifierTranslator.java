@@ -28,8 +28,10 @@ import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * Translates JCR names into "fedora" subjects (by replacing jcr-specific names
- * with fedora names)
+ * A very simple {@link IdentifierTranslator} which translates JCR paths into
+ * un-dereference-able Fedora subjects (by replacing JCR-specific names with
+ * Fedora names). Should not be used except in "embedded" deployments in which
+ * no publication of translated identifiers is expected!
  *
  * @author barmintor
  * @author ajs6f

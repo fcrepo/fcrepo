@@ -84,10 +84,10 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     public RdfStream getWorkspaces()
         throws RepositoryException {
 
-        final IdentifierTranslator subjects =
+        final IdentifierTranslator idTranslator =
             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(subjects).session(session);
+        return JcrRdfTools.withContext(idTranslator, session).getWorkspaceTriples(idTranslator).session(session);
 
     }
 

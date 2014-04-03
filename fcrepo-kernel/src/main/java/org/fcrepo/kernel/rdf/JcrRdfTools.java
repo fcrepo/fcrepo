@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.rdf;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -49,7 +50,6 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
@@ -156,12 +156,10 @@ public class JcrRdfTools {
      * @param session
      * @return
      */
-    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects,
+    public static JcrRdfTools withContext(final IdentifierTranslator idTranslator,
         final Session session) {
-        if (graphSubjects == null) {
-            return new JcrRdfTools(new DefaultIdentifierTranslator(), session);
-        }
-        return new JcrRdfTools(graphSubjects, session);
+        checkNotNull(idTranslator, "JcrRdfTools must operate with a non-null IdentifierTranslator for context!");
+        return new JcrRdfTools(idTranslator, session);
     }
 
     /**

@@ -99,20 +99,15 @@ public class FedoraIdentifiers extends AbstractResource {
 
         final String path = toPath(pathList);
 
-        final Node pidsResult =
-            createURI(uriInfo.getAbsolutePath().toASCIIString());
+        final Node pidsResult = createURI(uriInfo.getAbsolutePath().toASCIIString());
 
-        final Collection<String> identifiers =
-            transform(create(closed(1, count), integers()), pidMinter
-                    .makePid());
+        final Collection<String> identifiers = transform(create(closed(1, count), integers()), pidMinter.makePid());
 
         final HttpIdentifierTranslator subjects =
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-        return new RdfStream(transform(
-                transform(identifiers, absolutize(path)), identifier2triple(
-                        subjects, pidsResult))).topic(pidsResult).session(
-                session);
+        return new RdfStream(transform(transform(identifiers, absolutize(path)),
+                identifier2triple(subjects, pidsResult))).topic(pidsResult).session(session);
 
     }
 

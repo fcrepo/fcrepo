@@ -21,6 +21,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -31,6 +32,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
@@ -67,7 +69,7 @@ public class FedoraRepositoryNamespacesTest {
 
     @Test
     public void testGetNamespaces() throws RepositoryException {
-        when(mockService.getNamespaceRegistryStream(mockSession))
+        when(mockService.getNamespaceRegistryStream(any(Session.class), any(IdentifierTranslator.class)))
                 .thenReturn(testRdfStream);
         assertEquals(testRdfStream, testObj.getNamespaces());
     }
@@ -77,8 +79,8 @@ public class FedoraRepositoryNamespacesTest {
 
         final Model model = createDefaultModel();
         final Dataset mockDataset = DatasetFactory.create(model);
-        when(mockService.getNamespaceRegistryDataset(mockSession))
-                .thenReturn(mockDataset);
+        when(mockService.getNamespaceRegistryDataset(any(Session.class), any(IdentifierTranslator.class))).thenReturn(
+                mockDataset);
 
         testObj.updateNamespaces(new ByteArrayInputStream(
                 "INSERT { <http://example.com/this> <http://example.com/is> \"abc\"} WHERE { }"

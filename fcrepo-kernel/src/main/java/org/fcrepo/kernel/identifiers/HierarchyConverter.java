@@ -29,8 +29,12 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
+
+import org.slf4j.Logger;
+
 import com.google.common.base.Function;
 
 /**
@@ -42,7 +46,9 @@ import com.google.common.base.Function;
  */
 public class HierarchyConverter extends InternalIdentifierConverter {
 
-    private String separator;
+    public static final String DEFAULT_SEPARATOR = "/";
+
+    private String separator = DEFAULT_SEPARATOR;
 
     private String prefix;
 
@@ -62,18 +68,24 @@ public class HierarchyConverter extends InternalIdentifierConverter {
 
     private int levels = DEFAULT_COUNT;
 
+    private static final Logger log = getLogger(HierarchyConverter.class);
+
     /*
      * (non-Javadoc)
      * @see com.google.common.base.Converter#doForward(java.lang.Object)
      */
     @Override
     protected String doForward(final String flat) {
+        log.debug("Converting input identifier: {}", flat);
         // adds hierarchy
         final List<String> hierarchySegments = createHierarchySegments();
         final List<String> flatSegments = asList(flat.split(separator));
-
-        final Iterable<String> lastSegment = singletonList(getLast(flatSegments));
-        final Iterable<String> firstSegments = flatSegments.subList(0, flatSegments.size() - 1);
+        Iterable<String> firstSegments = emptyList();
+        Iterable<String> lastSegment = emptyList();
+        if (flatSegments.size() > 0) {
+            lastSegment = singletonList(getLast(flatSegments));
+            firstSegments = flatSegments.subList(0, flatSegments.size() - 1);
+        }
         final Iterable<String> allSegments = concat(firstSegments, hierarchySegments, lastSegment);
         return on(separator).join(allSegments);
     }

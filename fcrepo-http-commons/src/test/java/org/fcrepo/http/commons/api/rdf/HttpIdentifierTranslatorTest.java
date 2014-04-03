@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.api.rdf;
 
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -35,23 +36,29 @@ import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
+import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
+import org.fcrepo.kernel.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Test;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 
-public class HttpGraphSubjectsTest extends GraphSubjectsTest {
+public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
 
     @Override
     protected HttpIdentifierTranslator getTestObj() {
-        return new HttpIdentifierTranslator(mockSession, MockNodeController.class,
-                uriInfo);
+        final HttpIdentifierTranslator testObj =
+            new HttpIdentifierTranslator(mockSession, MockNodeController.class, uriInfo);
+        testObj.setTranslationChain(singletonList((InternalIdentifierConverter) new NamespaceConverter()));
+        return testObj;
     }
 
     protected HttpIdentifierTranslator getTestObjTx(final String path) {
-        return new HttpIdentifierTranslator(mockSessionTx, MockNodeController.class,
-                getUriInfoImpl(path));
+        final HttpIdentifierTranslator testObj =
+            new HttpIdentifierTranslator(mockSessionTx, MockNodeController.class, getUriInfoImpl(path));
+        testObj.setTranslationChain(singletonList((InternalIdentifierConverter) new NamespaceConverter()));
+        return testObj;
     }
 
 

@@ -17,7 +17,7 @@
 package org.fcrepo.kernel.identifiers;
 
 import static java.util.Collections.singletonList;
-import static org.fcrepo.kernel.identifiers.InternalIdentifierConverter.identityTranslation;
+import static org.fcrepo.kernel.identifiers.InternalIdentifierConverter.identityConverter;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
@@ -40,7 +40,7 @@ public class ExternalIdentifierTranslatorTest {
 
     @Test
     public void testRoundTrip() {
-        testTranslator.setTranslationChain(singletonList(identityTranslation()));
+        testTranslator.setTranslationChain(singletonList(identityConverter()));
         assertEquals("Should have received our original identifier back!", testId, testTranslator
                 .reverse().convert(testTranslator.convert(testId)));
     }

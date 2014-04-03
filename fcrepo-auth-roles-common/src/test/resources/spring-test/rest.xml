@@ -7,8 +7,14 @@
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
+ 
   <!-- Mints PIDs-->
   <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
+ 
+  <!-- Identifier translation chain -->
+  <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
+    <bean class="org.fcrepo.kernel.identifiers.NamespaceConverter"/>
+  </util:list>
   
   <context:component-scan base-package="org.fcrepo.kernel.services, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.auth.roles.common"  />  
 </beans>

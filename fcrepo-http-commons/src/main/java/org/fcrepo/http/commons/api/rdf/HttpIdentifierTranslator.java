@@ -20,11 +20,14 @@ import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
+import org.fcrepo.kernel.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
 
+import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static javax.jcr.PropertyType.PATH;
 import static org.apache.commons.lang.StringUtils.EMPTY;
@@ -35,9 +38,9 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -61,13 +64,13 @@ import javax.ws.rs.core.UriInfo;
  * @author ajs6f
  * @date Apr 2, 2014
  */
-public class HttpIdentifierTranslator implements IdentifierTranslator {
+public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTranslator {
 
     private static final Logger LOGGER = getLogger(HttpIdentifierTranslator.class);
     public static final String WORKSPACE_PREFIX = "workspace:";
     public static final String TX_PREFIX = "tx:";
 
-    protected final UriBuilder nodesBuilder;
+    protected final UriBuilder uriBuilder;
 
     private final String basePath;
 
@@ -92,8 +95,8 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
      */
     public HttpIdentifierTranslator(final Session session, final Class<?> relativeTo, final UriInfo uris) {
         this.context = uris.getRequestUri();
-        this.nodesBuilder = uris.getBaseUriBuilder().path(relativeTo);
-        String normalizedBasePath = nodesBuilder.build("").toString();
+        this.uriBuilder = uris.getBaseUriBuilder().path(relativeTo);
+        String normalizedBasePath = uriBuilder.build("").toString();
         if (!normalizedBasePath.endsWith("/")) {
             normalizedBasePath = normalizedBasePath + "/";
         }
@@ -106,12 +109,10 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
     }
 
     @Override
-    public Resource getSubject(final String absPath)
-        throws RepositoryException {
-        final URI result =
-                nodesBuilder.buildFromMap(getPathMap(absPath));
-        LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
-        return createResource(result.toString());
+    public Resource getSubject(final String absPath) throws RepositoryException {
+        resetTranslationChain();
+        LOGGER.debug("Creating RDF subject from identifier: {}", absPath);
+        return doForward(absPath);
     }
 
     @Override
@@ -121,8 +122,7 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
 
     private static String getResourceURI(final Resource subject) {
         if (!subject.isURIResource()) {
-            LOGGER.debug("RDF resource {} was not a URI resource: returning null.",
-                    subject);
+            LOGGER.debug("RDF resource {} was not a URI resource: returning null.", subject);
             return null;
         }
         return subject.getURI();
@@ -130,11 +130,8 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
 
     @Override
     public String getPathFromSubject(final Resource subject) throws RepositoryException {
-        final String subjectUri = getResourceURI(subject);
-        if (subjectUri == null) {
-            return null;
-        }
-        return getPathFromGraphSubject(subjectUri);
+        resetTranslationChain();
+        return doBackward(subject);
     }
 
     /**
@@ -145,8 +142,7 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
     protected String getPathFromGraphSubject(@NotNull final String subjectUri) throws RepositoryException {
 
         if (!isFedoraGraphSubject(subjectUri)) {
-            LOGGER.debug(
-                    "RDF resource {} was not a URI resource with our expected basePath {}, returning null.",
+            LOGGER.debug("RDF resource {} was not a URI resource with our expected basePath {}, returning null.",
                     subjectUri, basePath);
             return null;
         }
@@ -159,19 +155,16 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
         for (final String segment : pathSegments) {
             if (segment.startsWith(TX_PREFIX)) {
                 final String tx = segment.substring(TX_PREFIX.length());
-
                 final String currentTxId = getCurrentTransactionId(session);
 
                 if (currentTxId == null || !tx.equals(currentTxId)) {
-                    throw new RepositoryException(
-                            "Subject is not in this transaction");
+                    throw new RepositoryException("Subject is not in this transaction");
                 }
 
             } else if (segment.startsWith(WORKSPACE_PREFIX)) {
                 final String workspace = segment.substring(WORKSPACE_PREFIX.length());
                 if (!session.getWorkspace().getName().equals(workspace)) {
-                    throw new RepositoryException(
-                            "Subject is not in this workspace");
+                    throw new RepositoryException("Subject is not in this workspace");
                 }
             } else if (segment.equals(FCR_CONTENT)) {
                 pathBuilder.append("/");
@@ -194,7 +187,6 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
             return absPath;
         }
         return null;
-
     }
 
     private boolean isValidJcrPath(final String absPath) {
@@ -205,42 +197,31 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
                 final String txIdWithSlash = "/" + TX_PREFIX + txId;
                 /* replace the first occurrence of tx within the path */
                 pathToValidate = replaceOnce(absPath, txIdWithSlash, EMPTY);
-                LOGGER.debug("removed {} from URI {}. Path for JCR validation is now: {}",
-                        txIdWithSlash, absPath, pathToValidate);
+                LOGGER.debug("removed {} from URI {}. Path for JCR validation is now: {}", txIdWithSlash, absPath,
+                        pathToValidate);
             }
             session.getValueFactory().createValue(pathToValidate, PATH);
             return true;
         } catch (final ValueFormatException e) {
-            LOGGER.trace("Unable to validate JCR path", e);
+            LOGGER.trace("Unable to validate JCR path: ", e);
             return false;
         } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException("Unable to validate JCR path", e);
+            throw new RepositoryRuntimeException("Unable to validate JCR path: ", e);
         }
     }
 
     @Override
     public boolean isFedoraGraphSubject(final Resource subject) {
-        return subject.isURIResource()
-                && isFedoraGraphSubject(subject.getURI());
+        return subject.isURIResource() && isFedoraGraphSubject(subject.getURI());
     }
 
     private boolean isFedoraGraphSubject(final String subjectUri) {
-        return subjectUri.startsWith(basePath)
-                && isValidJcrPath(subjectUri.substring(pathIx));
-    }
-
-    protected Map<String, String> getPathMap(final Node node)
-        throws RepositoryException {
-        return getPathMap(node.getPath());
+        return subjectUri.startsWith(basePath) && isValidJcrPath(subjectUri.substring(pathIx));
     }
 
     private Map<String, String> getPathMap(final String absPath) {
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
-        if (path.endsWith(JCR_CONTENT)) {
-            path = path.replace(JCR_CONTENT, FCR_CONTENT);
-        }
-
         if (session != null) {
             final Workspace workspace = session.getWorkspace();
 
@@ -248,12 +229,50 @@ public class HttpIdentifierTranslator implements IdentifierTranslator {
 
             if (txId != null) {
                 path = TX_PREFIX + txId + "/" + path;
-            } else if (workspace != null &&
-                    !workspace.getName().equals(defaultWorkspace)) {
+            } else if (workspace != null && !workspace.getName().equals(defaultWorkspace)) {
                 path = WORKSPACE_PREFIX + workspace.getName() + "/" + path;
             }
         }
 
         return singletonMap("path", path);
     }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.identifiers.ExternalIdentifierConverter#doRdfForward(java.lang.String)
+     */
+    @Override
+    protected Resource doRdfForward(final String inputId) {
+        final URI result = uriBuilder.buildFromMap(getPathMap(inputId));
+        return createResource(result.toString());
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.identifiers.ExternalIdentifierConverter#doRdfBackward(com.hp.hpl.jena.rdf.model.Resource)
+     */
+    @Override
+    protected String doRdfBackward(final Resource subject) {
+        final String subjectUri = getResourceURI(subject);
+        if (subjectUri == null) {
+            return null;
+        }
+        try {
+            return getPathFromGraphSubject(subjectUri);
+        } catch (final RepositoryException e) {
+            throw propagate(e);
+        }
+    }
+
+
+    protected void resetTranslationChain() {
+        if (translationChain == null) {
+            if (getTranslationChain() != null) {
+                setTranslationChain(getTranslationChain());
+            } else {
+                setTranslationChain(minimalTranslationChain);
+            }
+        }
+    }
+
+    private static final List<InternalIdentifierConverter> minimalTranslationChain =
+        singletonList((InternalIdentifierConverter) new NamespaceConverter());
 }

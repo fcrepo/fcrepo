@@ -437,7 +437,8 @@ public class FedoraNodes extends AbstractResource {
                 checksumURI = null;
             }
 
-            final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final HttpIdentifierTranslator idTranslator =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             final String objectType;
 
@@ -479,7 +480,7 @@ public class FedoraNodes extends AbstractResource {
                 final String contentTypeString = contentType.toString();
 
                 if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    result.updatePropertiesDataset(subjects, IOUtils.toString(requestBodyStream));
+                    result.updatePropertiesDataset(idTranslator, IOUtils.toString(requestBodyStream));
                 } else if (contentTypeToLang(contentTypeString) != null) {
 
                     final Lang lang = contentTypeToLang(contentTypeString);
@@ -494,9 +495,9 @@ public class FedoraNodes extends AbstractResource {
 
                     final Model inputModel =
                         createDefaultModel().read(requestBodyStream,
-                                subjects.getSubject(result.getNode().getPath()).toString(), format);
+                                idTranslator.getSubject(result.getNode().getPath()).toString(), format);
 
-                    result.replaceProperties(subjects, inputModel);
+                    result.replaceProperties(idTranslator, inputModel);
                 } else if (result instanceof Datastream) {
 
                     final String originalFileName;
@@ -521,9 +522,9 @@ public class FedoraNodes extends AbstractResource {
 
             final URI location;
             if (result.hasContent()) {
-                location = new URI(subjects.getSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());
+                location = new URI(idTranslator.getSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());
             } else {
-                location = new URI(subjects.getSubject(result.getNode().getPath()).getURI());
+                location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());
             }
 
             return created(location).entity(location.toString()).build();

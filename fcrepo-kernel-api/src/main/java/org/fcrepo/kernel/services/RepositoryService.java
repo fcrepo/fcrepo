@@ -65,7 +65,8 @@ public interface RepositoryService extends Service {
      * @return
      * @throws RepositoryException
      */
-    Dataset getNamespaceRegistryDataset(final Session session) throws RepositoryException;
+    Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator)
+        throws RepositoryException;
 
     /**
      * Serialize the JCR namespace information as an {@link RdfStream}
@@ -74,7 +75,8 @@ public interface RepositoryService extends Service {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getNamespaceRegistryStream(final Session session) throws RepositoryException;
+    RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator)
+        throws RepositoryException;
 
     /**
      * Perform a full-text search on the whole repository and return the

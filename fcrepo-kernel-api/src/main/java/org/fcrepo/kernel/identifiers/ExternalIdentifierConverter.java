@@ -42,7 +42,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class ExternalIdentifierConverter extends IdentifierConverter<Resource> {
 
     @Inject
-    private List<InternalIdentifierConverter> translationChain;
+    protected List<InternalIdentifierConverter> translationChain;
 
     private Converter<String, String> forward = identity();
 

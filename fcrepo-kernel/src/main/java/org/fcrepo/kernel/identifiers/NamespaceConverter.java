@@ -45,9 +45,9 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      * java.lang.String)
      */
     @Override
-    protected String doForward(final String a) {
-        log.debug("Converting identifier from internal to external...");
-        String result = a;
+    protected String doForward(final String inputId) {
+        log.debug("Converting identifier {} from internal to external...", inputId);
+        String result = inputId;
         for (final String jcrNamespace : jcrNamespacesToRDFNamespaces.keySet()) {
             log.debug("Replacing namespace: {} with: {}", jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
             result = result.replace(jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
@@ -55,6 +55,7 @@ public class NamespaceConverter extends InternalIdentifierConverter {
         if (result.endsWith(JCR_CONTENT)) {
             result = result.replace(JCR_CONTENT, FCR_CONTENT);
         }
+        log.debug("Converted identifier {} from internal to external {}...", inputId, result);
         return result;
     }
 
