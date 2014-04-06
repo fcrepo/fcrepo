@@ -29,7 +29,7 @@ import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -152,7 +152,7 @@ public abstract class AbstractResource {
 
     protected void addResponseInformationToStream(
             final FedoraResource resource, final RdfStream dataset,
-            final UriInfo uriInfo, final GraphSubjects subjects)
+            final UriInfo uriInfo, final IdentifierTranslator subjects)
         throws RepositoryException {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,

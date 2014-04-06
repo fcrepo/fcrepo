@@ -29,7 +29,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;
@@ -52,7 +52,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final VersionHistory versionHistory;
 
-    private final GraphSubjects graphSubjects;
+    private final IdentifierTranslator graphSubjects;
 
     private final LowLevelStorageService lowLevelStorageService;
 
@@ -66,13 +66,13 @@ public class VersionsRdfContext extends RdfStream {
      * @param lowLevelStorageService
      * @throws RepositoryException
      */
-    public VersionsRdfContext(final Node node, final GraphSubjects graphSubjects,
+    public VersionsRdfContext(final Node node, final IdentifierTranslator graphSubjects,
         final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
         super();
         this.lowLevelStorageService = lowLevelStorageService;
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getGraphSubject(node).asNode();
+        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
         versionManager = node.getSession().getWorkspace().getVersionManager();
         versionHistory = versionManager.getVersionHistory(node.getPath());
 
@@ -93,7 +93,7 @@ public class VersionsRdfContext extends RdfStream {
                 try {
                     final Node frozenNode = version.getFrozenNode();
                     final com.hp.hpl.jena.graph.Node versionSubject =
-                        graphSubjects.getGraphSubject(frozenNode).asNode();
+                        graphSubjects.getSubject(frozenNode.getPath()).asNode();
 
                     final RdfStream results =
                             new RdfStream(new PropertiesRdfContext(frozenNode,

@@ -25,6 +25,7 @@ import com.codahale.metrics.Timer;
  * Simple PidMinter that replies on Java's inbuilt UUID minting.
  *
  * @author eddies
+ * @author ajs6f
  * @date Feb 7, 2013
  */
 public class UUIDPidMinter extends BasePidMinter {

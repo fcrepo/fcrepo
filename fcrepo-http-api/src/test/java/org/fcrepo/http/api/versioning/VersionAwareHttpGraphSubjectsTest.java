@@ -18,7 +18,7 @@ package org.fcrepo.http.api.versioning;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.GraphSubjectsTest;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -58,8 +58,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
     }
 
     @Override
-    protected HttpGraphSubjects getTestObj() {
-        return new VersionAwareHttpGraphSubjects(mockSession, mockSession,
+    protected HttpIdentifierTranslator getTestObj() {
+        return new VersionAwareHttpIdentifierTranslator(mockSession, mockSession,
                 MockNodeController.class,
                 uriInfo);
     }
@@ -71,7 +71,7 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
         final String uri = "http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath()
                 + "/fcr:versions/" + mockFrozenNode.getIdentifier();
 
-        final Resource actual = testObj.getGraphSubject(mockFrozenNode.getPath());
+        final Resource actual = testObj.getSubject(mockFrozenNode.getPath());
         assertEquals(uri, actual.getURI());
     }
 
@@ -105,7 +105,7 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockFrozenChildNode.getParent()).thenReturn(mockFrozenNode);
 
-        final Resource actual = testObj.getGraphSubject(mockFrozenChildNodePath);
+        final Resource actual = testObj.getSubject(mockFrozenChildNodePath);
         assertEquals(uri, actual.getURI());
     }
 
@@ -114,7 +114,7 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
     public void testGetGraphSubjectForVersion() throws RepositoryException {
         mockVersion(UUID.randomUUID().toString());
 
-        final Resource actual = testObj.getGraphSubject(mockFrozenNode);
+        final Resource actual = testObj.getSubject(mockFrozenNode.getPath());
         assertEquals("http://localhost:8080/fcrepo/rest" + mockVersionableNode.getPath() + "/fcr:versions/"
                 + mockFrozenNode.getIdentifier(), actual.getURI());
     }
@@ -129,8 +129,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
                 + "/fcr:versions/" + mockFrozenNode.getIdentifier();
         mockSubject(uri);
 
-        final Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockFrozenNode, actual);
+        final String actual = testObj.getPathFromSubject(mockSubject);
+        assertEquals(mockFrozenNode.getPath(), actual);
 
     }
 
@@ -153,8 +153,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
                 + "/fcr:versions/" + label;
         mockSubject(uri);
 
-        final Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockFrozenNode, actual);
+        final String actual = testObj.getPathFromSubject(mockSubject);
+        assertEquals(mockFrozenNode.getPath(), actual);
     }
 
     @Test
@@ -174,8 +174,8 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
         when(mockSession.nodeExists(mockVersionChildNodePath)).thenReturn(true);
         when(mockSession.getNode(mockVersionChildNodePath)).thenReturn(mockVersionChildNode);
 
-        final Node actual = testObj.getNodeFromGraphSubject(mockSubject);
-        assertEquals(mockVersionChildNode, actual);
+        final String actual = testObj.getPathFromSubject(mockSubject);
+        assertEquals(mockVersionChildNode.getPath(), actual);
     }
 
     private void mockSubject(final String uri) {

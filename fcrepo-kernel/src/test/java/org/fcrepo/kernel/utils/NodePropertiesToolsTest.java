@@ -44,7 +44,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,7 +85,7 @@ public class NodePropertiesToolsTest {
     private Value previousValue;
 
     @Mock
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     @Mock
     private Session mockSession;
@@ -124,7 +124,7 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(subjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(subjects.getNodeFromGraphSubject(resource)).thenReturn(mockNode);
+        when(mockSession.getNode(subjects.getPathFromSubject(resource))).thenReturn(mockNode);
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE)).thenReturn(mockRefProperty);
@@ -155,7 +155,7 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(subjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(subjects.getNodeFromGraphSubject(resource)).thenReturn(mockNode);
+        when(mockSession.getNode(subjects.getPathFromSubject(resource))).thenReturn(mockNode);
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
 
@@ -191,7 +191,7 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(subjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(subjects.getNodeFromGraphSubject(resource)).thenReturn(mockNode);
+        when(mockSession.getNode(subjects.getPathFromSubject(resource))).thenReturn(mockNode);
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE)).thenReturn(mockRefProperty);
@@ -233,7 +233,7 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(subjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(subjects.getNodeFromGraphSubject(resource)).thenReturn(mockNode);
+        when(mockSession.getNode(subjects.getPathFromSubject(resource))).thenReturn(mockNode);
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
 
@@ -334,7 +334,7 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(subjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(subjects.getNodeFromGraphSubject(resource)).thenReturn(mockNode);
+        when(mockSession.getNode(subjects.getPathFromSubject(resource))).thenReturn(mockNode);
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         final Value[] values = new Value[] {mockValue};
         when(mockProperty.getValues()).thenReturn(values);

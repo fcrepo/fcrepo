@@ -67,7 +67,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
@@ -226,7 +226,8 @@ public class FedoraBatch extends AbstractResource {
                 switch (realContentDisposition) {
                     case INLINE:
 
-                        final HttpGraphSubjects subjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+                        final HttpIdentifierTranslator subjects =
+                            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
                         final FedoraResource resource;
 
@@ -244,10 +245,8 @@ public class FedoraBatch extends AbstractResource {
                             final String format = lang.getName().toUpperCase();
 
                             final Model inputModel =
-                                createDefaultModel()
-                                    .read(src,
-                                             subjects.getGraphSubject(resource.getNode()).toString(),
-                                             format);
+                                createDefaultModel().read(src,
+                                        subjects.getSubject(resource.getNode().getPath()).toString(), format);
 
                             resource.replaceProperties(subjects, inputModel);
                         } else {
@@ -293,12 +292,10 @@ public class FedoraBatch extends AbstractResource {
                 versionService.nodeUpdated(n);
             }
 
-            final HttpGraphSubjects subjects =
-                    new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-            return created(
-                    new URI(subjects.getGraphSubject(session.getNode(path))
-                            .getURI())).build();
+            return created(new URI(subjects.getSubject(path).getURI())).build();
 
         } finally {
             session.logout();

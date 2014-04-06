@@ -16,10 +16,6 @@
 
 package org.fcrepo.auth.integration;
 
-import java.security.Principal;
-import java.util.Iterator;
-import java.util.Set;
-
 import javax.jcr.Session;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;

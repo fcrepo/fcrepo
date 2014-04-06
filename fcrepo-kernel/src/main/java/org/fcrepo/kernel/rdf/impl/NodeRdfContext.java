@@ -30,7 +30,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class NodeRdfContext extends RdfStream {
 
     private final Node node;
 
-    private final GraphSubjects graphSubjects;
+    private final IdentifierTranslator graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -66,13 +66,13 @@ public class NodeRdfContext extends RdfStream {
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public NodeRdfContext(final Node node, final GraphSubjects graphSubjects,
+    public NodeRdfContext(final Node node, final IdentifierTranslator graphSubjects,
         final LowLevelStorageService lowLevelStorageService)
         throws RepositoryException {
         super();
         this.node = node;
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getGraphSubject(node).asNode();
+        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
 
         // TODO fix GraphProperties to allow for LowLevelStorageServices to pass
         // through it
@@ -101,9 +101,9 @@ public class NodeRdfContext extends RdfStream {
     }
 
     /**
-     * @return local {@link GraphSubjects}
+     * @return local {@link IdentifierTranslator}
      */
-    public GraphSubjects graphSubjects() {
+    public IdentifierTranslator graphSubjects() {
         return graphSubjects;
     }
 

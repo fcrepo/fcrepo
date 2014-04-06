@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.rdf;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -24,25 +23,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * Translate internal JCR node identifiers to external Fedora identifiers
  * (and vice versa)
  * @author barmintor
+ * @author ajs6f
  * @date May 15, 2013
  */
-public interface GraphSubjects {
-    /**
-     * Translate a JCR node into an RDF Resource
-     * @param node
-     * @return an RDF URI resource
-     * @throws RepositoryException
-     */
-    Resource getGraphSubject(final Node node) throws RepositoryException;
-
-    /**
-     * Translate an RDF resource into a JCR node
-     * @param subject an RDF URI resource
-     * @return a JCR node, or null if one couldn't be found
-     * @throws RepositoryException
-     */
-    Node getNodeFromGraphSubject(final Resource subject)
-        throws RepositoryException;
+public interface IdentifierTranslator {
 
     /**
      * Translate an RDF resource into a JCR path
@@ -50,7 +34,7 @@ public interface GraphSubjects {
      * @return
      * @throws RepositoryException
      */
-    String getPathFromGraphSubject(final Resource subject) throws RepositoryException;
+    String getPathFromSubject(final Resource subject) throws RepositoryException;
 
     /**
      * Predicate for determining whether this {@link Resource} is a Fedora object.
@@ -66,7 +50,7 @@ public interface GraphSubjects {
      * @return an RDF URI resource
      * @throws RepositoryException
      */
-    Resource getGraphSubject(final String absPath) throws RepositoryException;
+    Resource getSubject(final String absPath) throws RepositoryException;
 
     /**
      * Get a context resource

@@ -32,7 +32,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,11 +71,11 @@ public class FedoraRepositoriesPropertiesTest {
             new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, "/")).thenReturn(mockObject);
         when(
-                mockObject.updatePropertiesDataset(any(GraphSubjects.class),
+                mockObject.updatePropertiesDataset(any(IdentifierTranslator.class),
                         any(String.class))).thenReturn(mockDataset);
         testObj.updateSparql(mockStream);
 
-        verify(mockObject).updatePropertiesDataset(any(GraphSubjects.class),
+        verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class),
                 eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();

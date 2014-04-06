@@ -16,6 +16,7 @@
 
 package org.fcrepo.kernel.rdf;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.any;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -49,7 +50,6 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
 import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
@@ -100,7 +100,7 @@ public class JcrRdfTools {
 
     private LowLevelStorageService llstore;
 
-    private final GraphSubjects graphSubjects;
+    private final IdentifierTranslator graphSubjects;
 
     private Session session;
 
@@ -110,7 +110,7 @@ public class JcrRdfTools {
      *
      * @param graphSubjects
      */
-    public JcrRdfTools(final GraphSubjects graphSubjects) {
+    public JcrRdfTools(final IdentifierTranslator graphSubjects) {
         this(graphSubjects, null, null);
     }
 
@@ -121,7 +121,7 @@ public class JcrRdfTools {
      * @param graphSubjects
      * @param session
      */
-    public JcrRdfTools(final GraphSubjects graphSubjects, final Session session) {
+    public JcrRdfTools(final IdentifierTranslator graphSubjects, final Session session) {
         this(graphSubjects, session, null);
     }
 
@@ -132,7 +132,7 @@ public class JcrRdfTools {
      * @param session
      * @param lls
      */
-    public JcrRdfTools(final GraphSubjects graphSubjects,
+    public JcrRdfTools(final IdentifierTranslator graphSubjects,
             final Session session, final LowLevelStorageService lls) {
         this.graphSubjects = graphSubjects;
         this.session = session;
@@ -145,7 +145,7 @@ public class JcrRdfTools {
      * @param graphSubjects
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects) {
+    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects) {
         return new JcrRdfTools(graphSubjects);
     }
 
@@ -156,12 +156,10 @@ public class JcrRdfTools {
      * @param session
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+    public static JcrRdfTools withContext(final IdentifierTranslator idTranslator,
         final Session session) {
-        if (graphSubjects == null) {
-            return new JcrRdfTools(new DefaultGraphSubjects(session), session);
-        }
-        return new JcrRdfTools(graphSubjects, session);
+        checkNotNull(idTranslator, "JcrRdfTools must operate with a non-null IdentifierTranslator for context!");
+        return new JcrRdfTools(idTranslator, session);
     }
 
     /**
@@ -172,7 +170,7 @@ public class JcrRdfTools {
      * @param lls
      * @return
      */
-    public static JcrRdfTools withContext(final GraphSubjects graphSubjects,
+    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects,
             final Session session, final LowLevelStorageService lls) {
         return new JcrRdfTools(graphSubjects, session, lls);
     }
@@ -244,9 +242,8 @@ public class JcrRdfTools {
             results.concat(new PropertiesRdfContext(node, graphSubjects,
                     llstore));
             if (iteratorSubject != null) {
-                results.concat(singleton(create(iteratorSubject.asNode(),
-                        HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
-                                .getGraphSubject(node).asNode())));
+                results.concat(singleton(create(iteratorSubject.asNode(), HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
+                        .getSubject(node.getPath()).asNode())));
             }
         }
         return results;
@@ -306,7 +303,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public RdfStream getWorkspaceTriples(final GraphSubjects subjects) throws RepositoryException {
+    public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {
         return new WorkspaceRdfContext(session, subjects);
     }
 
@@ -415,8 +412,7 @@ public class JcrRdfTools {
         if (data.isURIResource()
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
-            final Node nodeFromGraphSubject =
-                graphSubjects.getNodeFromGraphSubject(data.asResource());
+            final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));
             return valueFactory.createValue(nodeFromGraphSubject,
                     type == WEAKREFERENCE);
         } else if (data.isURIResource() || type == URI) {

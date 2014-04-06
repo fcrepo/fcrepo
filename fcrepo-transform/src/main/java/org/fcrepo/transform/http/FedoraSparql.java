@@ -24,10 +24,10 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.LogoutCallback;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
@@ -156,7 +156,7 @@ public class FedoraSparql extends AbstractResource {
         @Context final Request request, @Context final UriInfo uriInfo)
         throws IOException, RepositoryException {
 
-        final GraphSubjects graphSubjects = new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+        final IdentifierTranslator graphSubjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
         final Variant bestPossibleResponse =
             request.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS);

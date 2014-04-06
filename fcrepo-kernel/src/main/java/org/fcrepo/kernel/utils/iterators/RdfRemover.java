@@ -24,7 +24,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NoSuchNodeTypeException;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.NodePropertiesTools;
 import org.slf4j.Logger;
 
@@ -51,7 +51,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public RdfRemover(final GraphSubjects graphSubjects, final Session session,
+    public RdfRemover(final IdentifierTranslator graphSubjects, final Session session,
         final RdfStream stream) {
         super(graphSubjects, session, stream);
     }

@@ -38,7 +38,7 @@ import java.util.Iterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.slf4j.Logger;
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
@@ -53,17 +53,17 @@ import com.hp.hpl.jena.graph.Triple;
 public class PropertyToTriple implements
         Function<Property, Function<Iterator<Value>, Iterator<Triple>>> {
 
-    private GraphSubjects graphSubjects;
+    private IdentifierTranslator graphSubjects;
 
     private static final Logger LOGGER = getLogger(PropertyToTriple.class);
 
     /**
-     * Default constructor. We require a {@link GraphSubjects} in order to
+     * Default constructor. We require a {@link IdentifierTranslator} in order to
      * construct the externally-meaningful RDF subjects of our triples.
      *
      * @param graphSubjects
      */
-    public PropertyToTriple(final GraphSubjects graphSubjects) {
+    public PropertyToTriple(final IdentifierTranslator graphSubjects) {
         this.graphSubjects = graphSubjects;
     }
 
@@ -173,7 +173,7 @@ public class PropertyToTriple implements
 
     private Node getGraphSubject(final javax.jcr.Node n)
         throws RepositoryException {
-        return graphSubjects.getGraphSubject(n).asNode();
+        return graphSubjects.getSubject(n.getPath()).asNode();
     }
 
 }

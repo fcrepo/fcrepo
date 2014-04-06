@@ -23,6 +23,7 @@ import com.google.common.base.Function;
  * Subclass {@link BasePidMinter} instead.
  *
  * @author eddies
+ * @author ajs6f
  * @date Feb 7, 2013
  */
 public interface PidMinter {

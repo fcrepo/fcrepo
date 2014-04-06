@@ -26,7 +26,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.slf4j.Logger;
 
 import javax.jcr.ItemNotFoundException;
@@ -68,7 +68,7 @@ public class JQLResultSet implements ResultSet {
 
     private Session session;
 
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     private QueryResult queryResult;
 
@@ -76,12 +76,12 @@ public class JQLResultSet implements ResultSet {
 
     /**
      * Translate a JCR QueryResult to a SPARQL ResultSet, respecting any
-     * GraphSubjects translation for JCR Paths
+     * IdentifierTranslator translation for JCR Paths
      * @param subjects
      * @param queryResult
      * @throws RepositoryException
      */
-    public JQLResultSet(final Session session, final GraphSubjects subjects,
+    public JQLResultSet(final Session session, final IdentifierTranslator subjects,
         final QueryResult queryResult) throws RepositoryException {
         this.session = session;
         this.subjects = subjects;
@@ -150,7 +150,7 @@ public class JQLResultSet implements ResultSet {
      * Maps a JCR Query's Row to a QuerySolution
      */
     private class JQLQuerySolution implements QuerySolution, Binding {
-        private GraphSubjects subjects;
+        private IdentifierTranslator subjects;
         private Row row;
         private List<String> columns;
 
@@ -160,7 +160,7 @@ public class JQLResultSet implements ResultSet {
          * @param row
          * @param columns
          */
-        public JQLQuerySolution(final GraphSubjects subjects, final Row row, final List<String> columns) {
+        public JQLQuerySolution(final IdentifierTranslator subjects, final Row row, final List<String> columns) {
             this.subjects = subjects;
             this.row = row;
             this.columns = columns;
@@ -257,11 +257,11 @@ public class JQLResultSet implements ResultSet {
                     case URI:
                         return createResource(v.getString());
                     case PATH:
-                        return subjects.getGraphSubject(v.getString());
+                        return subjects.getSubject(v.getString());
                     case REFERENCE:
                     case WEAKREFERENCE:
                         // cheat and just return the UUID syntax
-                        return subjects.getGraphSubject(session.getNodeByIdentifier(v.getString()));
+                        return subjects.getSubject(session.getNodeByIdentifier(v.getString()).getPath());
                     default:
                         return createTypedLiteral(v.getString());
                 }

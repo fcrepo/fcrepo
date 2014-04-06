@@ -52,9 +52,9 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
@@ -215,11 +215,11 @@ public class FedoraResourceImplTest {
     public void testGetPropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream(mockTriple);
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
@@ -245,9 +245,9 @@ public class FedoraResourceImplTest {
         throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream(mockTriple);
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
@@ -268,10 +268,10 @@ public class FedoraResourceImplTest {
     public void testGetVersionDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final GraphSubjects mockSubjects = mock(GraphSubjects.class);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream versionsStream = new RdfStream();
         when(mockJcrRdfTools.getVersionTriples(any(Node.class)))
@@ -356,7 +356,7 @@ public class FedoraResourceImplTest {
     public void testReplacePropertiesDataset() throws Exception {
 
         mockStatic(JcrRdfTools.class);
-        final DefaultGraphSubjects defaultGraphSubjects = new DefaultGraphSubjects(mockSession);
+        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
         when(JcrRdfTools.withContext(defaultGraphSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         when(mockNode.getPath()).thenReturn("/xyz");

@@ -54,7 +54,7 @@ public interface GraphProperties {
      * @return
      * @throws RepositoryException
      */
-    Dataset getProperties(final Node node, final GraphSubjects subjects,
+    Dataset getProperties(final Node node, final IdentifierTranslator subjects,
             final int offset, final int limit) throws RepositoryException;
 
     /**
@@ -65,6 +65,6 @@ public interface GraphProperties {
      * @return
      * @throws RepositoryException
      */
-    Dataset getProperties(final Node node, final GraphSubjects subjects)
+    Dataset getProperties(final Node node, final IdentifierTranslator subjects)
         throws RepositoryException;
 }

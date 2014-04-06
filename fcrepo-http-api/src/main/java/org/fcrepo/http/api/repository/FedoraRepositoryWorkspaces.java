@@ -50,10 +50,10 @@ import com.google.common.collect.ImmutableSet;
 import com.sun.jersey.api.NotFoundException;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
@@ -84,10 +84,10 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     public RdfStream getWorkspaces()
         throws RepositoryException {
 
-        final GraphSubjects subjects =
-            new HttpGraphSubjects(session, FedoraNodes.class, uriInfo);
+        final IdentifierTranslator idTranslator =
+            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-        return JcrRdfTools.withContext(null, session).getWorkspaceTriples(subjects).session(session);
+        return JcrRdfTools.withContext(idTranslator, session).getWorkspaceTriples(idTranslator).session(session);
 
     }
 
@@ -116,11 +116,11 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
 
             workspace.createWorkspace(path);
 
-            final GraphSubjects subjects =
-                new HttpGraphSubjects(session.getRepository().login(path), FedoraNodes.class, uriInfo);
+            final IdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session.getRepository().login(path), FedoraNodes.class, uriInfo);
 
 
-            return created(new URI(subjects.getGraphSubject("/").getURI())).build();
+            return created(new URI(subjects.getSubject("/").getURI())).build();
         } finally {
             session.logout();
         }

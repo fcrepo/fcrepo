@@ -39,7 +39,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
@@ -73,6 +73,7 @@ public class PropertiesRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/mockNode");
         when(mockContentNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -90,10 +91,8 @@ public class PropertiesRdfContextTest {
                 ImmutableSet.of(mockLowLevelCacheEntry));
         when(mockLowLevelCacheEntry.getExternalIdentifier()).thenReturn(
                 MOCK_EXTERNAL_IDENTIFIER);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                mockSubject);
-        when(mockGraphSubjects.getGraphSubject(mockContentNode)).thenReturn(
-                mockContentSubject);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockSubject);
+        when(mockGraphSubjects.getSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockContentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
@@ -123,7 +122,7 @@ public class PropertiesRdfContextTest {
     private NodeType mockNodeType;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private LowLevelStorageService mockLowLevelStorageService;

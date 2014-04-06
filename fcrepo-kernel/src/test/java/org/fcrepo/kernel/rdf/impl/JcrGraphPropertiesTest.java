@@ -30,7 +30,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import javax.jcr.Node;
 
 import org.fcrepo.kernel.DummyURIResource;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -69,7 +69,7 @@ public class JcrGraphPropertiesTest {
     Node mockNode;
 
     @Mock
-    GraphSubjects mockSubjects;
+    IdentifierTranslator mockSubjects;
 
     @Test
     public void testGetPropertiesDataset() throws Exception {
@@ -80,7 +80,7 @@ public class JcrGraphPropertiesTest {
 
         final Resource mockResource =
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
@@ -110,7 +110,7 @@ public class JcrGraphPropertiesTest {
         when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession())).thenReturn(mockJcrRdfTools);
         final Resource mockResource =
                 new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(mockResource);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
@@ -142,10 +142,8 @@ public class JcrGraphPropertiesTest {
         when(JcrRdfTools.withContext(mockSubjects, mockNode.getSession()))
                 .thenReturn(mockJcrRdfTools);
 
-        final Resource mockResource =
-                new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
-        when(mockSubjects.getGraphSubject(mockNode)).thenReturn(
-                mockResource);
+        final Resource mockResource = new DummyURIResource(RESTAPI_NAMESPACE + "xyz");
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream();
         when(mockJcrRdfTools.getJcrTriples(mockNode))

@@ -18,7 +18,7 @@ package org.fcrepo.http.api;
 
 import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.Datastream;
@@ -52,8 +52,8 @@ public abstract class ContentExposingResource extends AbstractResource {
      * A helper method that does most of the work associated with processing a request
      * for content (or a range of the content) into a Response
      */
-    protected Response getDatastreamContentResponse(Datastream ds, String rangeValue, Request request,
-                                                    HttpGraphSubjects subjects) throws
+    protected Response getDatastreamContentResponse(final Datastream ds, final String rangeValue, final Request request,
+                                                    final HttpIdentifierTranslator subjects) throws
             RepositoryException, IOException {
         final EntityTag etag =
                 new EntityTag(ds.getContentDigest().toString());
@@ -122,7 +122,7 @@ public abstract class ContentExposingResource extends AbstractResource {
 
         return builder.type(ds.getMimeType()).header(
                 "Link",
-                subjects.getGraphSubject(ds.getNode()) +
+                subjects.getSubject(ds.getNode().getPath()) +
                         ";rel=\"meta\"").header("Accept-Ranges",
                 "bytes").cacheControl(cc).lastModified(date).tag(etag)
                 .header("Content-Disposition", contentDisposition)

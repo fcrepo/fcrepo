@@ -16,7 +16,7 @@
 package org.fcrepo.http.api.versioning;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.slf4j.Logger;
 
 import javax.jcr.ItemNotFoundException;
@@ -38,7 +38,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * An extension of HttpGraphSubjects that includes mapping from JCR frozen nodes
+ * An extension of HttpIdentifierTranslator that includes mapping from JCR frozen nodes
  * that represent versions of versionable nodes to a URI pattern that presents
  * them as children of the original node.  The URL patterns are as follows:
  *
@@ -55,16 +55,17 @@ import static org.slf4j.LoggerFactory.getLogger;
  * JCR nodes, either the user label or cannonical ID are supported.
  *
  * @author Mike Durbin
+ * @author ajs6f
  */
-public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
+public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslator {
 
-    private static final Logger LOGGER = getLogger(VersionAwareHttpGraphSubjects.class);
+    private static final Logger LOGGER = getLogger(VersionAwareHttpIdentifierTranslator.class);
 
     private Session internalSession;
 
     /**
      * Creates a GraphSubject implementation that has all of the functionality
-     * of HttpGraphSubjects with the additional mapping versioned frozen nodes
+     * of HttpIdentifierTranslator with the additional mapping versioned frozen nodes
      * to URIs that appear in the hierarchy of the original node.
      *
      * This mapping can be heavyweight in that it has to do version lookups and
@@ -77,7 +78,7 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
      * @param uris a UriInfo implementation with information about the request
      *             URI.
      */
-    public VersionAwareHttpGraphSubjects(final Session session,
+    public VersionAwareHttpIdentifierTranslator(final Session session,
         final Session internalSession, final Class<?> relativeTo, final UriInfo uris) {
         super(session, relativeTo, uris);
         this.internalSession = internalSession;
@@ -96,27 +97,17 @@ public class VersionAwareHttpGraphSubjects extends HttpGraphSubjects {
     }
 
     @Override
-    public Resource getGraphSubject(final String absPath) throws RepositoryException {
+    public Resource getSubject(final String absPath) throws RepositoryException {
         if (absPath.contains("jcr:versionStorage")) {
             final Node probableFrozenNode = internalSession.getNode(absPath);
             if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-                final URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
+                final URI result = uriBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
                 LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
                 return createResource(result.toString());
             }
             LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
         }
-        return super.getGraphSubject(absPath);
-    }
-
-    @Override
-    public Resource getGraphSubject(final Node node) throws RepositoryException {
-        if (node.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-            final URI result = nodesBuilder.buildFromMap(getPathMapForVersionNode(node));
-            LOGGER.debug("Translated node {} into RDF subject {}", node, result);
-            return createResource(result.toString());
-        }
-        return super.getGraphSubject(node);
+        return super.getSubject(absPath);
     }
 
     /**

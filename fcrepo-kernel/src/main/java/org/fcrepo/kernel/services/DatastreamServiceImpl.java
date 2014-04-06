@@ -40,7 +40,7 @@ import javax.jcr.Session;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.DatastreamImpl;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.BinaryCacheEntry;
@@ -198,14 +198,14 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws RepositoryException
      */
     @Override
-    public RdfStream getFixityResultsModel(final GraphSubjects subjects,
+    public RdfStream getFixityResultsModel(final IdentifierTranslator subjects,
             final Datastream datastream) throws RepositoryException {
         final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
 
         return JcrRdfTools.withContext(subjects,
                 datastream.getNode().getSession()).getJcrTriples(
                 datastream.getNode(), blobs).topic(
-                subjects.getGraphSubject(datastream.getNode()).asNode());
+                subjects.getSubject(datastream.getNode().getPath()).asNode());
     }
 
     /**

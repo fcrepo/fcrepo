@@ -37,7 +37,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,7 +65,7 @@ public class NodeRdfContextTest {
     private NodeType mockMixinSuperNodeType;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private Session mockSession;
@@ -122,8 +122,7 @@ public class NodeRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                mockNodeSubject);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
     }
 
     @Test

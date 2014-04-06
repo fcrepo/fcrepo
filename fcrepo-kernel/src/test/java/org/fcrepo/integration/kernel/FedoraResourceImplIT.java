@@ -53,7 +53,7 @@ import javax.jcr.nodetype.NodeTypeManager;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -93,12 +93,12 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     private Session session;
 
-    private DefaultGraphSubjects subjects;
+    private DefaultIdentifierTranslator subjects;
 
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultGraphSubjects(session);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @After
@@ -115,7 +115,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     private Node createGraphSubjectNode(final String absPath) throws RepositoryException {
-        return subjects.getGraphSubject(absPath).asNode();
+        return subjects.getSubject(absPath).asNode();
     }
 
     @Test
@@ -124,7 +124,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             nodeService.findOrCreateObject(session, "/testNodeGraph");
 
         logger.warn(object.getPropertiesDataset(
-                new DefaultGraphSubjects(session)).toString());
+                new DefaultIdentifierTranslator()).toString());
         final Node s = createGraphSubjectNode("/testNodeGraph");
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         final Node o = createLiteral("nt:unstructured");
@@ -389,11 +389,11 @@ public class FedoraResourceImplIT extends AbstractIT {
             objectService.createObject(session, "/testObjectGraphUpdates");
 
         object.updatePropertiesDataset(subjects, "INSERT { " + "<"
-                + subjects.getGraphSubject("/testObjectGraphUpdates").getURI() + "> "
+                + subjects.getSubject("/testObjectGraphUpdates").getURI() + "> "
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
         // jcr property
-        final Resource s = subjects.getGraphSubject("/testObjectGraphUpdates");
+        final Resource s = subjects.getSubject("/testObjectGraphUpdates");
         final Property p = createProperty("info:fcrepo/zyx");
         Literal o = createPlainLiteral("a");
         assertTrue(object.getPropertiesDataset(subjects).getDefaultModel()
@@ -454,7 +454,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.info(graphStore.toString());
 
         // go querying for the version URI
-        Resource s = subjects.getGraphSubject("/testObjectVersionGraph");
+        Resource s = subjects.getSubject("/testObjectVersionGraph");
         Property p = createProperty(REPOSITORY_NAMESPACE + "hasVersion");
         final ExtendedIterator<Statement> triples = graphStore.listStatements(s, p, (RDFNode)null);
 

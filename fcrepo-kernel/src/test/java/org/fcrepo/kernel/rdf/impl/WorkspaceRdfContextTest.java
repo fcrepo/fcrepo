@@ -17,7 +17,7 @@ package org.fcrepo.kernel.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -35,7 +35,7 @@ public class WorkspaceRdfContextTest {
 
 
     @Mock
-    private GraphSubjects subjects;
+    private IdentifierTranslator subjects;
 
     @Mock
     private Session session;
@@ -50,7 +50,7 @@ public class WorkspaceRdfContextTest {
     @Before
     public void setUp() {
         initMocks(this);
-        subjects = new DefaultGraphSubjects(session);
+        subjects = new DefaultIdentifierTranslator();
         when(session.getRepository()).thenReturn(repository);
         when(session.getWorkspace()).thenReturn(mockWorkspace);
     }
@@ -62,21 +62,21 @@ public class WorkspaceRdfContextTest {
 
         final Model model = testObj.asModel();
 
-        assertTrue(model.contains(subjects.getGraphSubject("/"),
+        assertTrue(model.contains(subjects.getSubject("/"),
                                       RdfLexicon.HAS_DEFAULT_WORKSPACE,
-                                     subjects.getGraphSubject("/workspace:default" )));
+                                     subjects.getSubject("/workspace:default" )));
 
-        assertTrue(model.contains(subjects.getGraphSubject("/workspace:default" ),
+        assertTrue(model.contains(subjects.getSubject("/workspace:default" ),
                                      RdfLexicon.DC_TITLE,
                                      "default"));
 
-        assertTrue(model.contains(subjects.getGraphSubject("/"),
+        assertTrue(model.contains(subjects.getSubject("/"),
                                      RdfLexicon.HAS_WORKSPACE,
-                                     subjects.getGraphSubject("/workspace:a")));
+                                     subjects.getSubject("/workspace:a")));
 
-        assertTrue(model.contains(subjects.getGraphSubject("/"),
+        assertTrue(model.contains(subjects.getSubject("/"),
                                      RdfLexicon.HAS_WORKSPACE,
-                                     subjects.getGraphSubject("/workspace:b" )));
+                                     subjects.getSubject("/workspace:b" )));
 
     }
 

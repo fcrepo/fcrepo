@@ -31,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -51,7 +51,7 @@ public class HttpTripleUtilTest {
     private UriInfo mockUriInfo;
 
     @Mock
-    private GraphSubjects mockSubjects;
+    private IdentifierTranslator mockSubjects;
 
     @Mock
     private UriAwareResourceModelFactory mockBean1;

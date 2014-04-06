@@ -37,7 +37,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -141,21 +141,14 @@ public class PersistingRdfStreamConsumerTest {
         initMocks(this);
 
         for (final Statement fedoraStatement : fedoraStatements) {
-            when(
-                    mockGraphSubjects.getNodeFromGraphSubject(fedoraStatement
-                            .getSubject())).thenReturn(mockNode);
-            when(
-                    mockGraphSubjects.isFedoraGraphSubject(fedoraStatement
-                            .getSubject())).thenReturn(true);
+            when(mockSession.getNode(mockGraphSubjects.getPathFromSubject(fedoraStatement.getSubject())))
+                    .thenReturn(mockNode);
+            when(mockGraphSubjects.isFedoraGraphSubject(fedoraStatement.getSubject())).thenReturn(true);
         }
-        when(
-                mockGraphSubjects.getNodeFromGraphSubject(foreignStatement
-                        .getSubject())).thenReturn(mockNode);
-        when(
-                mockGraphSubjects.isFedoraGraphSubject(foreignStatement
-                        .getSubject())).thenReturn(false);
+        when(mockSession.getNode(mockGraphSubjects.getPathFromSubject(foreignStatement.getSubject()))).thenReturn(
+                mockNode);
+        when(mockGraphSubjects.isFedoraGraphSubject(foreignStatement.getSubject())).thenReturn(false);
     }
-
 
     private static final Model m = createDefaultModel();
 
@@ -217,7 +210,7 @@ public class PersistingRdfStreamConsumerTest {
     private Node mockNode;
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     @Mock
     private Iterator<Triple> mockTriples;

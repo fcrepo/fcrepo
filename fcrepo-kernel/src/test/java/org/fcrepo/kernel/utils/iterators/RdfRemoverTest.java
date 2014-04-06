@@ -47,7 +47,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -154,8 +154,7 @@ public class RdfRemoverTest {
         when(mockPropertyDefinition.isMultiple()).thenReturn(false);
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
-        when(mockGraphSubjects.getGraphSubject(mockNode)).thenReturn(
-                mockNodeSubject);
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         testStream = new RdfStream(mockTriples);
@@ -204,7 +203,7 @@ public class RdfRemoverTest {
 
 
     @Mock
-    private GraphSubjects mockGraphSubjects;
+    private IdentifierTranslator mockGraphSubjects;
 
     private static final Model m = createDefaultModel();
 

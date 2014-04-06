@@ -38,7 +38,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.vocabulary.RDF;
-import org.fcrepo.kernel.rdf.GraphSubjects;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.FixityResult;
 
@@ -65,7 +65,7 @@ public class FixityRdfContext extends NodeRdfContext {
      * @param blobs
      * @throws RepositoryException
      */
-    public FixityRdfContext(final Node node, final GraphSubjects graphSubjects,
+    public FixityRdfContext(final Node node, final IdentifierTranslator graphSubjects,
             final LowLevelStorageService lowLevelStorageService,
             final Iterable<FixityResult> blobs) throws RepositoryException {
         super(node, graphSubjects, lowLevelStorageService);
@@ -79,9 +79,8 @@ public class FixityRdfContext extends NodeRdfContext {
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
                             b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
-                            b.add(create(graphSubjects.getGraphSubject(node)
-                                    .asNode(), HAS_FIXITY_RESULT.asNode(),
-                                    resultSubject));
+                            b.add(create(graphSubjects.getSubject(node.getPath()).asNode(),
+                                    HAS_FIXITY_RESULT.asNode(), resultSubject));
                             final String storeIdentifier = blob.getStoreIdentifier();
                             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
                                                                      .asNode();

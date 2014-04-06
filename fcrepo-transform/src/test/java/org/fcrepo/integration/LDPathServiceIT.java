@@ -19,7 +19,7 @@ package org.fcrepo.integration;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.impl.DefaultGraphSubjects;
+import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Before;
@@ -75,7 +75,7 @@ public class LDPathServiceIT {
 
         testObj = new LDPathTransform(stringReader);
 
-        final DefaultGraphSubjects subjects = new DefaultGraphSubjects(session);
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final Map<String, Collection<Object>> stuff = testObj.apply(object.getPropertiesDataset(subjects));
 
         assertNotNull("Failed to retrieve results!", stuff);
@@ -84,7 +84,7 @@ public class LDPathServiceIT {
         assertTrue("Results didn't contain a title!", stuff.containsKey("title"));
 
         assertEquals("Received more than one identifier!", 1, stuff.get("id").size());
-        assertEquals("Got wrong subject in identifier!", subjects.getGraphSubject("/testObject").getURI(), stuff.get(
+        assertEquals("Got wrong subject in identifier!", subjects.getSubject("/testObject").getURI(), stuff.get(
                 "id").iterator().next());
         assertEquals("Got wrong title!", "some-title", stuff.get("title").iterator().next());
         assertEquals("Got wrong UUID!", object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());
