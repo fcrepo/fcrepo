@@ -39,7 +39,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 /**
  * @author Mike Durbin
  */
-public class VersionServiceTest {
+public class VersionServiceImplTest {
 
     private static final String USER_NAME = "test";
 

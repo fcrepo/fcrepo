@@ -37,7 +37,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class DatastreamIT extends AbstractIT {
+public class DatastreamImplIT extends AbstractIT {
 
     @Inject
     Repository repo;

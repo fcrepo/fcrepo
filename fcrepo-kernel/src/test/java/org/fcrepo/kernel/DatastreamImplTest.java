@@ -57,7 +57,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.ValueFactory;
 
-public class DatastreamTest implements FedoraJcrTypes {
+public class DatastreamImplTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
 

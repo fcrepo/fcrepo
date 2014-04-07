@@ -69,7 +69,7 @@ import com.google.common.base.Function;
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
         "org.xml.sax.*", "javax.management.*"})
 @PrepareForTest({JcrRdfTools.class})
-public class DatastreamServiceTest implements FedoraJcrTypes {
+public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     private static final String MOCK_CONTENT_TYPE = "application/test-data";
 

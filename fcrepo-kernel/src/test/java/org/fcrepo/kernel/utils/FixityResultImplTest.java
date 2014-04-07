@@ -26,7 +26,7 @@ import java.net.URI;
 
 import org.junit.Test;
 
-public class FixityResultTest {
+public class FixityResultImplTest {
 
     @Test
     public void testEquals() throws Exception {
