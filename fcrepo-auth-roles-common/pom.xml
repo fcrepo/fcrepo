@@ -157,6 +157,11 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <excludes>
+            <exclude>logback-test.xml</exclude>
+          </excludes>
+        </configuration>
       </plugin>    
     </plugins>
   </build>
