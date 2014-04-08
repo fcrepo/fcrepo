@@ -39,7 +39,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
-public class ObjectServiceTest implements FedoraJcrTypes {
+public class ObjectServiceImplTest implements FedoraJcrTypes {
 
     @Mock
     private Session mockSession;

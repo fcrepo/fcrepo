@@ -39,7 +39,7 @@ import org.springframework.test.context.ContextConfiguration;
 import com.hp.hpl.jena.query.Dataset;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class FedoraObjectIT extends AbstractIT {
+public class FedoraObjectImplIT extends AbstractIT {
 
     @Inject
     Repository repo;

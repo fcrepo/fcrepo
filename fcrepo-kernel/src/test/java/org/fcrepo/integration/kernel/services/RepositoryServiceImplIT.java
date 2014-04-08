@@ -44,7 +44,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.UpdateAction;
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class RepositoryServiceIT extends AbstractIT {
+public class RepositoryServiceImplIT extends AbstractIT {
 
     @Inject
     private Repository repository;

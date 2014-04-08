@@ -45,7 +45,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
-public class NodeServiceTest {
+public class NodeServiceImplTest {
 
     @Mock
     private NodeTypeIterator mockNTI;

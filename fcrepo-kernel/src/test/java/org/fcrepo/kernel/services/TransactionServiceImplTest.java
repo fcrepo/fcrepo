@@ -45,7 +45,7 @@ import org.mockito.Mock;
 /**
  * @author frank asseg
  */
-public class TransactionServiceTest {
+public class TransactionServiceImplTest {
 
     private static final String IS_A_TX = "foo";
 

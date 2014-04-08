@@ -51,7 +51,7 @@ import com.google.common.base.Predicate;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})
-public class FedoraObjectTest implements FedoraJcrTypes {
+public class FedoraObjectImplTest implements FedoraJcrTypes {
 
     private static final String testPid = "testObj";
 

@@ -75,7 +75,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
         "org.xml.sax.*", "javax.management.*"})
 @PrepareForTest({JcrRdfTools.class})
-public class RepositoryServiceTest implements FedoraJcrTypes {
+public class RepositoryServiceImplTest implements FedoraJcrTypes {
 
     private static final String TESTPID = "testObj";
 
