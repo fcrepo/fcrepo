@@ -21,7 +21,6 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
@@ -30,8 +29,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,12 +41,13 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -278,6 +276,50 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         testDatastreamContentUpdatesCreateNewVersions(objName, dsName);
     }
 
+    @Test
+    public void testInvalidVersionReversion() throws Exception {
+        final String objId = UUID.randomUUID().toString();
+        final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/invalid-version-label");
+        execute(patch);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    public void testVersionReversion() throws Exception {
+        final String objId = UUID.randomUUID().toString();
+
+        final Resource subject = createResource(serverAddress + objId);
+
+        final String title1 = "foo";
+        final String firstVersionLabel = "v1";
+        final String title2 = "bar";
+        final String secondVersionLabel = "v2";
+
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
+        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", title1);
+        postObjectVersion(objId, firstVersionLabel);
+
+        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", title2);
+        postObjectVersion(objId, secondVersionLabel);
+
+        final GraphStore preRollback = getGraphStore(new HttpGet(serverAddress + objId));
+        assertTrue("First title must be present!", preRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title1)));
+        assertTrue("Second title must be present!", preRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title2)));
+
+        revertToVersion(objId, firstVersionLabel);
+
+        final GraphStore postRollback = getGraphStore(new HttpGet(serverAddress + objId));
+        assertTrue("First title must be present!", postRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title1)));
+        assertFalse("Second title must NOT be present!", postRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title2)));
+
+        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "aditional change");
+    }
+
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
         final String firstVersionText = "foo";
         final String secondVersionText = "bar";
@@ -382,4 +424,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(postVersion));
     }
 
+    private void revertToVersion(String objId, String versionLabel) throws IOException {
+        final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/" + versionLabel);
+        execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+    }
 }

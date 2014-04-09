@@ -16,24 +16,28 @@
 
 package org.fcrepo.kernel.services;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Collection;
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.exception.TransactionMissingException;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionException;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
+import javax.jcr.version.VersionManager;
+import java.util.Collection;
 
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * This service exposes management of node versioning.  Instead of invoking
@@ -102,6 +106,41 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         for (final String absPath : paths) {
             checkpoint(workspace, absPath);
         }
+    }
+
+    @Override
+    public void revertToVersion(Workspace workspace, String absPath,
+                                String label) throws RepositoryException {
+        final Version v = getVersionForLabel(workspace, absPath, label);
+        if (v == null) {
+            throw new RuntimeException("Unknown version!");
+        } else {
+            final VersionManager versionManager = workspace.getVersionManager();
+            versionManager.checkin(absPath);
+            versionManager.restore(v, true);
+            versionManager.checkout(absPath);
+
+            nodeUpdated(workspace.getSession(), absPath);
+        }
+    }
+
+    private Version getVersionForLabel(Workspace workspace, String absPath, String label) throws RepositoryException {
+        // first see if there's a version label
+        final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);
+        try {
+            return history.getVersionByLabel(label);
+        } catch (VersionException ex) {
+            // there was no version with the given JCR Version Label, check to see if
+            // there's a version whose UUID is equal to the label
+            VersionIterator versionIt = history.getAllVersions();
+            while (versionIt.hasNext()) {
+                Version v = versionIt.nextVersion();
+                if (v.getFrozenNode().getIdentifier().equals(label)) {
+                    return v;
+                }
+            }
+        }
+        return null;
     }
 
     private static boolean isVersioningEnabled(final Node n) throws RepositoryException {

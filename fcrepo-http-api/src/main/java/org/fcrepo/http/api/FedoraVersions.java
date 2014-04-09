@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 import com.codahale.metrics.annotation.Timed;
 import org.fcrepo.http.api.versioning.VersionAwareHttpGraphSubjects;
 import org.fcrepo.http.commons.api.rdf.HttpGraphSubjects;
+import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.http.commons.session.SessionFactory;
@@ -128,6 +129,29 @@ public class FedoraVersions extends ContentExposingResource {
             @PathParam("label")
             final String label) throws RepositoryException {
         return addVersion(toPath(pathList), label);
+    }
+
+    /**
+     * Reverts the resource at the given path to the version specified by
+     * the label.
+     * @param pathList
+     * @param label
+     * @return
+     * @throws RepositoryException
+     */
+    @PATCH
+    @Path("/{label:.+}")
+    public Response revertToVersion(@PathParam("path") final List<PathSegment> pathList,
+                                    @PathParam("label") final String label) throws RepositoryException {
+        final String path = toPath(pathList);
+        LOGGER.info("Reverting {} to version {}.", path,
+                label);
+        try {
+            versionService.revertToVersion(session.getWorkspace(), path, label);
+            return noContent().build();
+        } finally {
+            session.logout();
+        }
     }
 
     /**

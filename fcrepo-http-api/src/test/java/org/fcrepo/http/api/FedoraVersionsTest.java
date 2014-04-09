@@ -23,13 +23,17 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Collection;
+import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -136,6 +140,34 @@ public class FedoraVersionsTest {
         verify(mockVersions).createVersion(any(Workspace.class),
                 Matchers.<Collection<String>>any());
         assertNotNull(response);
+    }
+
+    @Test
+    public void testRevertToVersion() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final String versionLabel = UUID.randomUUID().toString();
+        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+                mockResource);
+        final Response response = testObj.revertToVersion(createPathList(pid), versionLabel);
+        verify(mockVersions).revertToVersion(testObj.session.getWorkspace(), "/" + pid, versionLabel);
+        assertNotNull(response);
+    }
+
+    @Test
+    public void testRevertToVersionFailure() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final String versionLabel = UUID.randomUUID().toString();
+        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+                mockResource);
+        doThrow(RuntimeException.class)
+                .when(mockVersions).revertToVersion(any(Workspace.class), anyString(), anyString());
+        try {
+            final Response response =
+                    testObj.revertToVersion(createPathList(pid), versionLabel);
+            fail("Exception should have been thrown!");
+        } catch (RuntimeException ex) {
+
+        }
     }
 
 }

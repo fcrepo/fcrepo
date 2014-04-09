@@ -112,6 +112,7 @@ $(function() {
     $('#action_import').submit(sendImport);
     $('#action_cnd_update').submit(sendCndUpdate);
     $('#action_sparql_select').submit(sendSparqlQuery);
+    $('#action_revert').submit(patchAndReload);
 
 });
 
@@ -123,6 +124,17 @@ function submitAndFollowLocation() {
     $.post(postURI, "some-data-to-make-chrome-happy", function(data, textStatus, request) {
         window.location = request.getResponseHeader('Location');
     }).fail( ajaxErrorHandler);
+
+    return false;
+}
+
+function patchAndReload() {
+    var $form = $(this);
+    var patchURI = $form.attr('action');
+
+    $.ajax({url: patchURI, type: "PATCH", data: "", success: function(data, textStatus, request) {
+        window.location = $form.attr('data-redirect-after-submit');
+    }, error: ajaxErrorHandler});
 
     return false;
 }

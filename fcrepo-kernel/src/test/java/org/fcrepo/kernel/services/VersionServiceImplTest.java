@@ -23,12 +23,18 @@ import org.mockito.Mock;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.Workspace;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionException;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.only;
@@ -68,6 +74,7 @@ public class VersionServiceImplTest {
 
         s = mock(Session.class);
         mockWorkspace = mock(Workspace.class);
+        when(mockWorkspace.getSession()).thenReturn(s);
         when(mockWorkspace.getName()).thenReturn("default");
         when(s.getWorkspace()).thenReturn(mockWorkspace);
         mockVM = mock(VersionManager.class);
@@ -210,4 +217,79 @@ public class VersionServiceImplTest {
         // ensure that the version was made
         verify(mockVM, only()).checkpoint("/example-auto-versioned");
     }
+
+    @Test
+    public void testRevertToVersionByLabel() throws RepositoryException {
+        String versionLabel = "v";
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion1 = mock(Version.class);
+        when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
+
+        testObj.revertToVersion(mockWorkspace, "/example-versioned", versionLabel);
+        verify(mockVersionManager).restore(mockVersion1, true);
+
+        verify(mockVersionManager, never()).checkpoint("/example-versioned");
+    }
+
+    @Test
+    public void testRevertToVersionByUUID() throws RepositoryException {
+        String versionUUID = "uuid";
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion1 = mock(Version.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockVersionIterator.hasNext()).thenReturn(true);
+        when(mockVersionIterator.nextVersion()).thenReturn(mockVersion1);
+        Node mockFrozenNode = mock(Node.class);
+        when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
+        when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
+
+        testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
+        verify(mockVersionManager).restore(mockVersion1, true);
+    }
+
+    @Test
+    public void testRevertToUnknownVersion() throws RepositoryException {
+        String versionUUID = "uuid";
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion1 = mock(Version.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockVersionIterator.hasNext()).thenReturn(false);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
+
+        try {
+            testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
+            fail("Exception should have been thrown!");
+        } catch (RuntimeException ex) {
+        }
+    }
+
+    @Test
+    public void testRevertToVersionByLabelWithAutoVersioning() throws RepositoryException {
+        String versionLabel = "v";
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion1 = mock(Version.class);
+        when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example-auto-versioned")).thenReturn(mockHistory);
+
+        testObj.revertToVersion(mockWorkspace, "/example-auto-versioned", versionLabel);
+        verify(mockVersionManager).restore(mockVersion1, true);
+
+        verify(mockVersionManager).checkpoint("/example-auto-versioned");
+    }
+
+
 }
