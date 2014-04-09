@@ -87,6 +87,25 @@ public class ViewHelpers {
     }
 
     /**
+     * Gets the URL of the node whose version is represented by the
+     * current node.  The current implementation assumes the URI
+     * of that node will be the same as the breadcrumb entry that
+     * precedes one with the path "fcr:versions".
+     */
+    public String getVersionSubjectUrl(final UriInfo uriInfo,
+                                       final Node subject) {
+        Map<String, String> breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);
+        String lastUrl = null;
+        for (Map.Entry<String, String> entry : breadcrumbs.entrySet()) {
+            if (entry.getValue().equals("fcr:versions")) {
+                return lastUrl;
+            }
+            lastUrl = entry.getKey();
+        }
+        return null;
+    }
+
+    /**
      * Gets a version label of a subject from the graph
      *
      * @param dataset

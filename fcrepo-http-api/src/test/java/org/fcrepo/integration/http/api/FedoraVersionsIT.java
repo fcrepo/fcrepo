@@ -21,7 +21,6 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
@@ -30,8 +29,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,12 +41,13 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -79,7 +77,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin( pid, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "First Title");
+        patchLiteralProperty(serverAddress + pid, DC_TITLE.getURI(), "First Title");
 
         final GraphStore nodeResults = getContent(serverAddress + pid);
         assertTrue("Should find original title", nodeResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), NodeFactory.createLiteral("First Title")));
@@ -88,7 +86,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         postObjectVersion(pid, "v0.0.1");
 
         logger.info("Replacing the title");
-        patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "Second Title");
+        patchLiteralProperty(serverAddress + pid, DC_TITLE.getURI(), "Second Title");
 
         final GraphStore versionResults = getContent(serverAddress + pid + "/fcr:versions/v0.0.1");
         logger.info("Got version profile:");
@@ -139,7 +137,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin( objId, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Example Title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Example Title");
 
         logger.info("Posting an unlabeled version");
         postObjectVersion(objId);
@@ -153,19 +151,19 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin( objId, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "First title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "First title");
 
         logger.info("posting a version with label \"label\"");
         postObjectVersion(objId, "label");
 
         logger.info("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Second title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Second title");
 
         logger.info("posting a version with label \"label\"");
         postObjectVersion(objId, "label");
 
         logger.info("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Third title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Third title");
 
         final GraphStore versionResults = getContent(serverAddress + objId + "/fcr:versions/label");
         logger.info("Got version profile:");
@@ -288,6 +286,60 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         postNodeTypeCNDSnippet(defaultResource);
     }
 
+    @Test
+    public void testInvalidVersionReversion() throws Exception {
+        final String objId = UUID.randomUUID().toString();
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
+        final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/invalid-version-label");
+        execute(patch);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    public void testVersionReversion() throws Exception {
+        final String objId = UUID.randomUUID().toString();
+
+        final Resource subject = createResource(serverAddress + objId);
+
+        final String title1 = "foo";
+        final String firstVersionLabel = "v1";
+        final String title2 = "bar";
+        final String secondVersionLabel = "v2";
+
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title1);
+        postObjectVersion(objId, firstVersionLabel);
+
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title2);
+        postObjectVersion(objId, secondVersionLabel);
+
+        final GraphStore preRollback = getGraphStore(new HttpGet(serverAddress + objId));
+        assertTrue("First title must be present!", preRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title1)));
+        assertTrue("Second title must be present!", preRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title2)));
+
+        revertToVersion(objId, firstVersionLabel);
+
+        final GraphStore postRollback = getGraphStore(new HttpGet(serverAddress + objId));
+        assertTrue("First title must be present!", postRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title1)));
+        assertFalse("Second title must NOT be present!", postRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
+                NodeFactory.createLiteral(title2)));
+
+        /*
+         * Make the sure the node is checked out and able to be updated.
+         *
+         * Because the JCR concept of checked-out is something we don't
+         * intend to expose through Fedora in the future, the following
+         * line is simply to test that writes can be completed after a
+         * reversion.
+         */
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "additional change");
+    }
+
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
         final String firstVersionText = "foo";
         final String secondVersionText = "bar";
@@ -392,4 +444,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(postVersion));
     }
 
+    private void revertToVersion(String objId, String versionLabel) throws IOException {
+        final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/" + versionLabel);
+        execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+    }
 }

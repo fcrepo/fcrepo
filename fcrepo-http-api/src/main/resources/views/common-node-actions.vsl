@@ -6,6 +6,9 @@
     <span class="glyphicon glyphicon-warning-sign"></span>
     This is a <strong>historic version</strong> and cannot be modified.
 </div>
+<form id="action_revert" method="PATCH" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)" >
+    <button type="submit" class="btn btn-primary">Revert to this Version</button>
+</form>
 #end
 
 #if ($content != "")
