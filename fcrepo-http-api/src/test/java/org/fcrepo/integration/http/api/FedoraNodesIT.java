@@ -990,7 +990,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
      * I should be able to upload a file to a read/write federated filesystem.
     **/
     @Test
-    @Ignore("Until ticket is resolved: https://www.pivotaltracker.com/story/show/68689198")
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
         final String pid = randomUUID().toString();
@@ -1020,7 +1019,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
      * I should be able to copy objects from the repository to a federated filesystem.
     **/
     @Test
-    @Ignore("Until ticket is resolved: https://www.pivotaltracker.com/story/show/68689198")
     public void testCopyToProjection() throws IOException {
         // create object in the repository
         final String pid = randomUUID().toString();
@@ -1049,7 +1047,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
      * I should be able to copy objects from a federated filesystem to the repository.
     **/
     @Test
-    @Ignore("Until ticket is resolved: https://www.pivotaltracker.com/story/show/68689198")
     public void testCopyFromProjection() throws IOException {
         // create object in federated filesystem
         final String pid = randomUUID().toString();
