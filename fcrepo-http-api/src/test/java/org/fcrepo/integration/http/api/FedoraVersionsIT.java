@@ -29,7 +29,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -259,14 +258,20 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore
     public void testRepositoryWideAutoVersioning() throws IOException {
-        postNodeTypeCNDSnippet("[fedora:autoVersioned] mixin\n" +
-                "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
-        postNodeTypeCNDSnippet("[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, fedora:autoVersioned, dc:describable mixin\n" +
-                "  - rdf:type (URI) multiple\n" +
-                "  - * (undefined) multiple\n" +
-                "  - * (undefined)");
+        final String autoVersionedType = "[fedora:autoVersioned] mixin\n" +
+                "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated";
+        final String autoVersionedResource = "[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, fedora:autoVersioned, dc:describable mixin\n" +
+                "- rdf:type (URI) multiple\n" +
+                "- * (undefined) multiple\n" +
+                "- * (undefined)";
+        final String defaultResource = "[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:referenceable, dc:describable mixin\n" +
+                "- rdf:type (URI) multiple\n" +
+                "- * (undefined) multiple\n" +
+                "- * (undefined)";
+
+        postNodeTypeCNDSnippet(autoVersionedType);
+        postNodeTypeCNDSnippet(autoVersionedResource);
 
         final String objName = "testRepositoryWideAutoVersioning";
         final String dsName = "datastream";
@@ -278,6 +283,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 initialVersion.contains(Node.ANY, createResource(serverAddress + objName).asNode(), VERSIONING_POLICY.asNode(), NodeFactory.createLiteral("auto-version")));
 
         testDatastreamContentUpdatesCreateNewVersions(objName, dsName);
+
+        // undo auto-versioning
+        postNodeTypeCNDSnippet(defaultResource);
     }
 
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
